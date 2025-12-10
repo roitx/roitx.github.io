@@ -1,20 +1,64 @@
+:root{
+  --bg:#f4f6f8; --card:#fff; --text:#072033; --muted:#6b7280;
+  --accent: #0b74ff; --accent2:#0fb3a3; --glow: rgba(11,116,255,0.22);
+}
+body{margin:0;font-family:Inter,system-ui,Arial,sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
+.dark{--bg:#071022;--card:#0f1720;--text:#e6eef8;--muted:#9aa6b2}
 
-body{font-family:Arial;margin:0;background:#f4f6fa}
-.dark{background:#0b1220;color:#eee}
-.top{display:flex;justify-content:space-between;align-items:center;padding:10px}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;position:sticky;top:0;background:transparent;z-index:10}
 .brand{display:flex;align-items:center;gap:10px}
-.brand img{width:40px}
-.glow{color:#1e90ff;text-shadow:0 0 10px rgba(30,144,255,.6)}
-.container{padding:20px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:15px}
-.card,.card-btn{background:#fff;padding:20px;border-radius:15px;box-shadow:0 0 20px rgba(0,0,0,.1);text-align:center}
-.card-btn{cursor:pointer;transition:.3s}
-.card-btn:hover{box-shadow:0 0 25px #1e90ff}
-.big{font-size:18px}
-.login-box{max-width:300px;margin:80px auto;background:#fff;padding:20px;border-radius:15px}
-.pw-wrap{position:relative}
-#eye{position:absolute;right:10px;top:12px;cursor:pointer}
-.home-btn{position:fixed;right:20px;bottom:20px;font-size:20px;padding:12px;border-radius:50%;border:none;background:#1e90ff;color:#fff}
-.switch{position:relative;width:50px;height:24px}
+.logo{width:46px;height:46px}
+.brand-text{font-weight:700;font-size:18px}
+.glow{color:var(--accent);text-shadow:0 0 12px rgba(11,116,255,0.18)}
+
+.controls{display:flex;gap:8px;align-items:center}
+.mode-wrap{display:flex;align-items:center;gap:6px}
+
+/* switch */
+.switch{position:relative;display:inline-block;width:44px;height:24px}
 .switch input{display:none}
-.slider{position:absolute;inset:0;background:#ccc;border-radius:24px}
+.slider{position:relative;display:inline-block;width:100%;height:100%;background:#cbd5e1;border-radius:24px}
+.switch .slider::after{content:'';position:absolute;left:3px;top:3px;width:18px;height:18px;background:white;border-radius:50%;transition:transform .2s}
+input:checked + .slider{background:linear-gradient(90deg,var(--accent),var(--accent2))}
+input:checked + .slider::after{transform:translateX(20px)}
+
+/* layout */
+.container{padding:14px;max-width:980px;margin:8px auto}
+.hero{padding:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px}
+
+.card, .card-btn{background:var(--card);padding:16px;border-radius:12px;box-shadow:0 8px 28px rgba(2,6,23,0.06);text-align:center}
+.card-btn{cursor:pointer;transition:all .18s;border:none}
+.card-btn:hover{transform:translateY(-4px);box-shadow:0 14px 40px var(--glow)}
+.big-card{padding:20px;font-size:18px}
+
+/* login */
+.center{display:flex;align-items:center;justify-content:center;min-height:68vh}
+.login-card{width:92%;max-width:420px}
+.lab{display:block;text-align:left;margin-top:8px;font-weight:600}
+.pw-row{position:relative;display:flex;align-items:center}
+.pw-row input{flex:1;padding-right:48px}
+.eye-btn{position:absolute;right:6px;top:6px;border:0;background:transparent;font-size:18px;cursor:pointer}
+
+/* notes list */
+.notes-list{display:flex;flex-direction:column;gap:10px}
+.note-row{display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:10px;border:1px dashed rgba(0,0,0,0.06)}
+
+/* modal */
+.modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(2,6,23,0.45);z-index:50}
+.modal .modal-box{width:96%;max-width:520px;padding:14px;border-radius:12px}
+
+/* calc */
+.calc{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.calc button{padding:12px;border-radius:8px;border:0;color:#fff;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+
+/* small */
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.ai-answer{padding:8px;border-radius:8px;background:linear-gradient(90deg,rgba(11,116,255,0.04),transparent);margin-top:8px}
+
+/* home floating */
+.home-fab{position:fixed;right:16px;bottom:16px;background:linear-gradient(90deg,var(--accent),var(--accent2));color:#fff;border:0;padding:12px;border-radius:50%;font-size:18px;box-shadow:0 10px 30px var(--glow);}
+
+/* responsive */
+@media (max-width:520px){ .logo{width:38px;height:38px}.brand-text{font-size:16px} .calc{grid-template-columns:repeat(4,1fr)} }
