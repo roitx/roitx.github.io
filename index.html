@@ -1,35 +1,49 @@
 <!doctype html>
-<html><head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Roitx-study hub</title>
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<header class="top">
+
+<header class="topbar">
   <div class="brand">
-    <img src="assets/logo.svg">
-    <span class="glow">Roitx-study hub</span>
+    <img src="assets/logo.svg" alt="logo" class="logo">
+    <span class="brand-text glow">Roitx-study hub</span>
   </div>
-  <div class="actions">
-    <label class="switch">
-      <input type="checkbox" id="modeToggle">
-      <span class="slider"></span>
-    </label>
-    <button class="card-btn" onclick="location.href='login.html'">Login</button>
+
+  <div class="controls">
+    <div class="mode-wrap">
+      <label class="mode-label">☀︎</label>
+      <label class="switch">
+        <input id="modeToggle" type="checkbox">
+        <span class="slider"></span>
+      </label>
+      <label class="mode-label">☾</label>
+    </div>
+
+    <button class="card-btn" onclick="location.href='login.html'">🔐 Login</button>
   </div>
 </header>
 
 <main class="container">
-  <div class="card big">📘 Welcome to Roitx Study Hub</div>
-  <div class="grid">
-    <div class="card-btn" onclick="location.href='notes.html'">Browse Notes</div>
-    <div class="card-btn" onclick="location.href='learning.html'">Start Learning</div>
-    <div class="card-btn" onclick="location.href='calculator.html'">Calculator</div>
-    <div class="card-btn" onclick="location.href='ask.html'">Ask AI</div>
-  </div>
+  <section class="hero card big-card">
+    <h1>Welcome to Roitx-study hub</h1>
+    <p class="muted">Professional notes & study tools — mobile first</p>
+  </section>
+
+  <section class="grid">
+    <div class="card-btn" onclick="location.href='notes.html'">📚 Browse Notes</div>
+    <div class="card-btn" onclick="location.href='learning.html'">📘 Start Learning</div>
+    <div class="card-btn" onclick="location.href='calculator.html'">🧮 Calculator</div>
+    <div class="card-btn" onclick="location.href='ask.html'">🤖 Ask AI</div>
+  </section>
 </main>
 
-<button class="home-btn" onclick="location.href='index.html'">🏠</button>
+<button class="home-fab" onclick="location.href='index.html'">🏠</button>
+
 <script src="js/main.js"></script>
-</body></html>
+</body>
+</html>
