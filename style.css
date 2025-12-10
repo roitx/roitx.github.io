@@ -1,0 +1,20 @@
+
+body{font-family:Arial;margin:0;background:#f4f6fa}
+.dark{background:#0b1220;color:#eee}
+.top{display:flex;justify-content:space-between;align-items:center;padding:10px}
+.brand{display:flex;align-items:center;gap:10px}
+.brand img{width:40px}
+.glow{color:#1e90ff;text-shadow:0 0 10px rgba(30,144,255,.6)}
+.container{padding:20px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:15px}
+.card,.card-btn{background:#fff;padding:20px;border-radius:15px;box-shadow:0 0 20px rgba(0,0,0,.1);text-align:center}
+.card-btn{cursor:pointer;transition:.3s}
+.card-btn:hover{box-shadow:0 0 25px #1e90ff}
+.big{font-size:18px}
+.login-box{max-width:300px;margin:80px auto;background:#fff;padding:20px;border-radius:15px}
+.pw-wrap{position:relative}
+#eye{position:absolute;right:10px;top:12px;cursor:pointer}
+.home-btn{position:fixed;right:20px;bottom:20px;font-size:20px;padding:12px;border-radius:50%;border:none;background:#1e90ff;color:#fff}
+.switch{position:relative;width:50px;height:24px}
+.switch input{display:none}
+.slider{position:absolute;inset:0;background:#ccc;border-radius:24px}
