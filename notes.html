@@ -1,13 +1,48 @@
 <!doctype html>
-<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Notes</title><link rel="stylesheet" href="css/style.css"></head>
+<html lang="en">
+<head>
+<meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Notes — Roitx-study hub</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
 <body>
-<h2 class="center glow">Notes Section</h2>
-<div id="uploadArea" style="display:none">
-<input type="file" id="file">
-<button class="card-btn" onclick="upload()">Upload</button>
+<header class="topbar">
+  <div class="brand"><img src="assets/logo.svg" class="logo"><span class="brand-text glow">Roitx-study hub</span></div>
+  <div class="controls">
+    <button class="card-btn" onclick="location.href='index.html'">Home</button>
+    <button id="openUploadBtn" class="card-btn primary" style="display:none" onclick="openUpload()">⬆ Upload</button>
+  </div>
+</header>
+
+<main class="container">
+  <section class="card">
+    <h3>Notes Explorer</h3>
+    <div class="muted small">Select Class → Subject → Chapter (demo uses preset items)</div>
+    <div id="notesFilters" style="margin-top:12px"></div>
+  </section>
+
+  <section class="card" id="notesList">
+    <h4>Available Notes</h4>
+    <div id="notesArea" class="notes-list muted">No notes yet.</div>
+  </section>
+</main>
+
+<!-- Upload modal (hidden by default) -->
+<div id="uploadModal" class="modal">
+  <div class="modal-box card">
+    <h4>Upload Note</h4>
+    <label>Class<select id="upClass"></select></label>
+    <label>Subject<select id="upSubject"></select></label>
+    <label>Chapter<select id="upChapter"></select></label>
+    <input id="fileInput" type="file" accept=".pdf,.doc,.docx,.txt">
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="card-btn primary" onclick="uploadNote()">Upload</button>
+      <button class="card-btn" onclick="closeUpload()">Close</button>
+    </div>
+  </div>
 </div>
-<div id="list"></div>
-<button class="home-btn" onclick="location.href='index.html'">🏠</button>
+
+<button class="home-fab" onclick="location.href='index.html'">🏠</button>
 <script src="js/main.js"></script>
-</body></html>
+</body>
+</html>
