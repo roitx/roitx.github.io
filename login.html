@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Login - Roitx</title>
+<link rel="stylesheet" href="index.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+<script src="auth.js"></script>
+</head>
+<body>
+<h1>Welcome Back !</h1>
+<h2>ROITX</h2>
+<input id="email" placeholder="Email"><br> <input id="password" type="password" placeholder="Password"><br><button id="toggleSign" class="eye">👁️</button>
+<button onclick="loginUser()">Login</button>
+<script>
+const toggleBtn = document.getElementById("toggleSign");
+const password = document.getElementById("password");
+
+toggleBtn.addEventListener("click", () => {
+  if (password.type === "password") {
+    password.type = "text";
+    toggleBtn.textContent = "🙈"; // ON (show)
+  } else {
+    password.type = "password";
+    toggleBtn.textContent = "👁️"; // OFF (hide)
+  }
+});
+</script>
+ </body>
+</html>

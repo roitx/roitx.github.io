@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Notes Viewer</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+
+<style>
+body{
+  margin:0;
+  font-family:system-ui, Arial;
+  background:#0b1025;
+  color:#fff;
+}
+.container{
+  max-width:420px;
+  margin:40px auto;
+  padding:20px;
+  background:#11183a;
+  border-radius:14px;
+  box-shadow:0 0 25px rgba(0,0,0,.4);
+}
+h2{margin:0 0 10px}
+p{color:#b8c2ff;font-size:14px}
+button{
+  width:100%;
+  margin-top:20px;
+  padding:14px;
+  font-size:16px;
+  border:none;
+  border-radius:10px;
+  background:linear-gradient(135deg,#4a8bff,#7b6bff);
+  color:#fff;
+  cursor:pointer;
+}
+.info{
+  margin-top:15px;
+  font-size:13px;
+  color:#aaa;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <h2 id="title">📄 Notes</h2>
+  <p id="sub">Loading file info...</p>
+
+  <button onclick="openPDF()">📥 Open / Download PDF</button>
+
+  <div class="info">
+    ℹ️ File download hone ke baad<br>
+    PDF automatically phone ke viewer me open ho jayegi
+  </div>
+</div>
+
+<script>
+const params = new URLSearchParams(location.search);
+const file = params.get("file");
+
+document.getElementById("title").innerText = file || "PDF Notes";
+document.getElementById("sub").innerText = "Secure notes file";
+
+async function openPDF(){
+  if(!file){
+    alert("File not found");
+    return;
+  }
+
+  const { data } = window.supabaseClient.storage
+    .from("admin-files")
+    .getPublicUrl(`notes/${file}`);
+
+  if(!data?.publicUrl){
+    alert("PDF not available");
+    return;
+  }
+
+  // 🔥 BEST WAY (mobile friendly)
+  window.location.href = data.publicUrl;
+}
+</script>
+
+</body>
+</html>

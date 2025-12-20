@@ -1,0 +1,75 @@
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:system-ui, Inter, sans-serif;
+}
+
+body{
+  background:#070b12;
+  color:#eaf1ff;
+  height:100vh;
+  display:flex;
+  flex-direction:column;
+}
+
+/* TOP BAR */
+.topbar{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:14px 16px;
+  background:#0d1320;
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+
+.topbar h1{
+  flex:1;
+  font-size:15px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.topbar button,
+.topbar a{
+  background:none;
+  border:none;
+  color:#fff;
+  font-size:20px;
+  text-decoration:none;
+}
+
+/* VIEWER */
+.viewer{
+  flex:1;
+  overflow:auto;
+  padding:12px;
+}
+
+/* PDF */
+.viewer iframe{
+  width:100%;
+  height:100%;
+  border:none;
+  border-radius:14px;
+  background:#000;
+}
+
+/* IMAGE */
+.viewer img{
+  max-width:100%;
+  display:block;
+  margin:auto;
+  border-radius:14px;
+}
+
+/* TEXT */
+.viewer pre{
+  white-space:pre-wrap;
+  background:#0d1320;
+  padding:16px;
+  border-radius:14px;
+  font-size:14px;
+  line-height:1.6;
+}

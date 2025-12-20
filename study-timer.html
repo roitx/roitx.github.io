@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Study Timer — Roitx</title>
+<style>
+  :root{
+    --bg:#081020; --card: rgba(255,255,255,0.04);
+    --glass: rgba(255,255,255,0.06);
+    --accent:#3aa0ff; --accent-2:#7b6bff; --muted:#bfcbe0;
+    --glass-2: rgba(255,255,255,0.03);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family:Inter,system-ui,Arial,sans-serif;
+    background: linear-gradient(180deg,#07101b,#05101a); color:#eaf2ff;
+    -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+    padding:28px;
+  }
+
+  header{
+    display:flex; align-items:center; gap:14px; margin-bottom:18px;
+  }
+  header img{ width:56px; height:56px; border-radius:50%; object-fit:cover; box-shadow:0 8px 30px rgba(58,160,255,0.08); }
+  header h1{ font-size:18px; margin:0; font-weight:700; letter-spacing:0.2px; }
+
+  .wrap{ max-width:1060px; margin:0 auto; display:grid; grid-template-columns: 1fr 420px; gap:26px; align-items:start; }
+
+  /* left column = clocks + timer + stopwatch */
+  .panel{ background: linear-gradient(180deg,var(--glass), rgba(255,255,255,0.02)); border-radius:14px; padding:18px; box-shadow: 0 10px 40px rgba(2,6,12,0.6); border:1px solid rgba(255,255,255,0.04); }
+  .panel h2{ margin:0 0 10px 0; font-size:16px; color:#eaf6ff; }
+  .clock-large{ font-weight:800; font-size:40px; letter-spacing:1px; color:var(--accent); text-shadow:0 6px 28px rgba(58,160,255,0.06); }
+
+  .hms{ font-size:20px; color:var(--muted); margin-top:8px; }
+
+  /* Timer big display */
+  .timer-display{ font-size:48px; font-weight:800; margin:14px 0; color:#fff; }
+  .btn-row{ display:flex; gap:10px; flex-wrap:wrap; }
+
+  .btn{
+    background: linear-gradient(90deg,var(--accent),var(--accent-2));
+    border:0; color:#041227; padding:10px 14px; border-radius:10px; cursor:pointer; font-weight:700;
+    box-shadow: 0 8px 30px rgba(59,130,246,0.08);
+  }
+  .btn.ghost{ background:transparent; color:var(--muted); border:1px solid rgba(255,255,255,0.04); font-weight:600; }
+
+  .small-input{ width:86px; padding:8px 10px; border-radius:10px; border:1px solid rgba(255,255,255,0.04); background:transparent; color:var(--muted); }
+
+  /* stopwatch */
+  .stopwatch-display{ font-size:36px; font-weight:800; margin:10px 0; color:#fff; }
+  .laps{ max-height:160px; overflow:auto; margin-top:10px; display:flex; flex-direction:column; gap:8px; }
+  .lap{ background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); padding:8px 10px; border-radius:8px; font-weight:600; color:var(--muted); display:flex; justify-content:space-between; }
+
+  /* right column = quick presets + info */
+  .side{
+    display:flex; flex-direction:column; gap:16px;
+  }
+  .card{ background:linear-gradient(180deg,var(--glass-2), rgba(255,255,255,0.01)); padding:16px; border-radius:12px; border:1px solid rgba(255,255,255,0.02); }
+  .preset-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:8px; }
+  .preset{ padding:12px; border-radius:10px; background:transparent; border:1px dashed rgba(255,255,255,0.03); color:var(--muted); text-align:center; cursor:pointer; font-weight:700; }
+  .muted{ color:var(--muted); font-size:14px; }
+
+  footer{ margin-top:28px; text-align:center; color:var(--muted); font-size:13px; }
+
+  /* responsive */
+  @media (max-width:960px){
+    .wrap{ grid-template-columns: 1fr; }
+    body{ padding:16px; }
+  }
+  /* UNIVERSAL HOME BUTTON */
+.home-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 55px;
+    height: 55px;
+    background: #007bff;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 26px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.25);
+    cursor: pointer;
+    z-index: 9999;
+    transition: 0.2s;
+}
+
+.home-btn:active {
+    transform: scale(0.88);
+}
+
+</style>
+</head>
+<body>
+
+<header>
+  <img src="profile.jpg" alt="Profile">
+  <h1>Roitx — Study Timer</h1>
+</header>
+
+<div class="wrap">
+
+  <!-- LEFT: clocks + timer + stopwatch -->
+  <div>
+
+    <div class="panel">
+      <h2>Live Clock</h2>
+      <div id="liveClock" class="clock-large" aria-live="polite">--:--:--</div>
+      <div id="hms" class="hms">HH : MM : SS </div>
+    </div>
+
+    <div style="height:18px"></div>
+
+    <div class="panel" aria-labelledby="timer">
+      <h2 id="timer">Timer</h2>
+      <div id="timerDisplay" class="timer-display">25:00</div>
+
+      <div class="btn-row" style="margin-bottom:8px;">
+        <button class="btn" id="pomBtn">Pomodoro 25m</button>
+        <button class="btn" id="shortBtn">Short 5m</button>
+        <button class="btn" id="longBtn">Long 15m</button>
+      </div>
+        <!-- RIGHT side -->
+  <aside class="side">
+    <div class="card">
+      <h3>Quick Presets</h3>
+      <div class="preset-grid">
+        <div class="preset" data-min="10">10 min</div>
+        <div class="preset" data-min="20">20 min</div>
+        <div class="preset" data-min="30">30 min</div>
+        <div class="preset" data-min="45">45 min</div>
+      </div>
+    </div>
+
+      <div style="display:flex; gap:10px; align-items:center; margin-bottom:10px;">
+        <input id="customMin" class="small-input" type="number" placeholder="Min" min="1">
+        <button class="btn" id="startCustomBtn">Start</button>
+        <button class="btn ghost" id="pauseBtn">Pause</button>
+        <button class="btn ghost" id="resetBtn">Reset</button>
+      </div>
+
+      <div class="muted">Alarm will play when timer finishes (sound via browser)</div>
+    </div>
+
+    <div style="height:18px"></div>
+
+    <div class="panel" aria-labelledby="stopwatch">
+      <h2 id="stopwatch">Stopwatch</h2>
+      <div id="stopwatchDisplay" class="stopwatch-display">00:00:00.000</div>
+      <div class="btn-row">
+        <button class="btn" id="swStart">Start</button>
+        <button class="btn ghost" id="swLap">Lap</button>
+        <button class="btn ghost" id="swStop">Stop</button>
+        <button class="btn ghost" id="swReset">Reset</button>
+      </div>
+
+      <div class="laps" id="laps"></div>
+    </div>
+
+  </div>
+
+
+
+    <div class="card">
+      <h3>How to use</h3>
+      <p class="muted">Choose a preset or set custom minutes. Use the stopwatch for practice runs. Timer alarm uses a short beep sound generated in-browser.</p>
+    </div>
+
+    <div class="card">
+      <h3>Shortcuts</h3>
+      <p class="muted">P: Pomodoro · Space: Start/Stop stopwatch · L: Lap · R: Reset stopwatch</p>
+    </div>
+  </aside>
+
+</div>
+<div class="home-btn" onclick="location.href='index.html'">🏠</div>
+
+<footer>© <span id="yr"></span> Rohit ki Notes</footer>
+
+<script>
+/* ====== Utilities & Year ====== */
+document.getElementById('yr').textContent = new Date().getFullYear();
+
+/* ====== Live clocks ====== */
+function pad(n, d=2){ return String(n).padStart(d,'0'); }
+setInterval(()=>{
+  const now = new Date();
+  document.getElementById('liveClock').textContent = now.toLocaleTimeString();
+}, 1000);
+
+setInterval(()=>{
+  const now = new Date();
+  const h = pad(now.getHours()), m = pad(now.getMinutes()), s = pad(now.getSeconds()), ms = String(now.getMilliseconds()).padStart(3,'0');
+  document.getElementById('hms').textContent = `${h} : ${m} : ${s}`;
+}, 50);
+
+/* ====== Timer (with WebAudio beep) ====== */
+let timerInterval = null;
+let timeRemaining = 25*60;
+const timerDisplay = document.getElementById('timerDisplay');
+
+function formatMMSS(sec){
+  const m = Math.floor(sec/60), s=sec%60;
+  return pad(m)+':'+pad(s);
+}
+
+function setTimerDisplay(sec){
+  timerDisplay.textContent = formatMMSS(sec);
+}
+
+/* start/stop/reset functions */
+function startTimerMinutes(min){
+  clearInterval(timerInterval);
+  timeRemaining = Math.max(1, Math.floor(min))*60;
+  setTimerDisplay(timeRemaining);
+  timerInterval = setInterval(()=>{
+    timeRemaining--;
+    if(timeRemaining < 0){ clearInterval(timerInterval); timerInterval=null; setTimerDisplay(0); playBeep(); return; }
+    setTimerDisplay(timeRemaining);
+  }, 1000);
+}
+
+function pauseTimer(){ if(timerInterval) { clearInterval(timerInterval); timerInterval=null; } }
+function resetTimer(){ clearInterval(timerInterval); timerInterval=null; timeRemaining = 25*60; setTimerDisplay(timeRemaining); }
+
+/* Buttons */
+document.getElementById('pomBtn').addEventListener('click', ()=> startTimerMinutes(25));
+document.getElementById('shortBtn').addEventListener('click', ()=> startTimerMinutes(5));
+document.getElementById('longBtn').addEventListener('click', ()=> startTimerMinutes(15));
+document.getElementById('startCustomBtn').addEventListener('click', ()=>{
+  const v = Number(document.getElementById('customMin').value);
+  if(v && v>0) startTimerMinutes(v);
+});
+document.getElementById('pauseBtn').addEventListener('click', pauseTimer);
+document.getElementById('resetBtn').addEventListener('click', resetTimer);
+
+/* quick presets */
+document.querySelectorAll('.preset').forEach(el=>{
+  el.addEventListener('click', ()=> startTimerMinutes(Number(el.dataset.min)));
+});
+
+/* ====== WebAudio beep (short pleasant tone) ====== */
+function playBeep(){
+  try{
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = 'sine';
+    o.frequency.value = 880;
+    g.gain.value = 0.0015;
+    o.connect(g);
+    g.connect(ctx.destination);
+    const now = ctx.currentTime;
+    g.gain.setValueAtTime(0.0015, now);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.9);
+    o.start(now);
+    o.stop(now + 0.9);
+  }catch(e){
+    // fallback alert
+    alert("Time's up!");
+  }
+}
+
+/* ====== Stopwatch with laps ====== */
+let swRunning=false, swStart=0, swElapsed=0, swTimer=null;
+const swDisplay = document.getElementById('stopwatchDisplay'), lapsBox = document.getElementById('laps');
+
+function formatHMSms(ms){
+  const total = Math.max(0, Math.floor(ms));
+  const h = Math.floor(total/3600000); const m = Math.floor(total/60000)%60;
+  const s = Math.floor(total/1000)%60; const msr = total%1000;
+  return `${pad(h)}:${pad(m)}:${pad(s)}.${String(msr).padStart(3,'0')}`;
+}
+
+function swStartFn(){
+  if(swRunning) return;
+  swRunning = true;
+  swStart = performance.now() - swElapsed;
+  swTimer = setInterval(()=>{
+    swElapsed = performance.now() - swStart;
+    swDisplay.textContent = formatHMSms(swElapsed);
+  }, 16);
+}
+function swStopFn(){
+  if(!swRunning) return;
+  swRunning=false;
+  clearInterval(swTimer);
+}
+function swResetFn(){
+  swRunning=false; clearInterval(swTimer); swElapsed=0; swDisplay.textContent='00:00:00.000'; lapsBox.innerHTML='';
+}
+function swLapFn(){
+  const time = formatHMSms(swElapsed);
+  const d = document.createElement('div'); d.className='lap';
+  d.innerHTML = `<div>${time}</div><div class="muted">Lap ${lapsBox.children.length+1}</div>`;
+  lapsBox.prepend(d);
+}
+
+/* stopwatch buttons */
+document.getElementById('swStart').addEventListener('click', swStartFn);
+document.getElementById('swStop').addEventListener('click', swStopFn);
+document.getElementById('swReset').addEventListener('click', swResetFn);
+document.getElementById('swLap').addEventListener('click', swLapFn);
+
+/* Keyboard shortcuts */
+window.addEventListener('keydown', (e)=>{
+  if(e.code === 'Space'){ e.preventDefault(); swRunning? swStopFn() : swStartFn(); }
+  if(e.key.toLowerCase() === 'l') swLapFn();
+  if(e.key.toLowerCase() === 'r') swResetFn();
+  if(e.key.toLowerCase() === 'p') startTimerMinutes(25);
+});
+</script>
+  
+</body>
+</html>

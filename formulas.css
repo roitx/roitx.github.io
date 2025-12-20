@@ -1,0 +1,94 @@
+body{
+  margin:0;
+  background:#0e1a2a;
+  color:#e9f2ff;
+  font-family:Segoe UI, sans-serif;
+}
+
+.topbar{
+  background:#15263c;
+  padding:14px 20px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  box-shadow:0 0 10px #000;
+}
+
+.back{
+  color:#fff;
+  text-decoration:none;
+  background:#3aa0ff;
+  padding:8px 14px;
+  border-radius:8px;
+}
+
+main{
+  padding:20px;
+}
+
+/* FILTERS */
+.filters{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-bottom:20px;
+}
+
+select, button{
+  padding:10px 14px;
+  border-radius:8px;
+  border:1px solid #2f4d77;
+  background:#1f3554;
+  color:#fff;
+  font-size:14px;
+}
+
+button{
+  cursor:pointer;
+  background:#3aa0ff;
+}
+
+button:hover{
+  background:#5ab2ff;
+}
+
+/* FORMULA CARD */
+.formula-card{
+  background:#15263c;
+  padding:14px;
+  border-radius:12px;
+  margin-bottom:14px;
+  box-shadow:0 0 10px rgba(0,0,0,.4);
+}
+
+.formula-head{
+  font-size:13px;
+  opacity:.85;
+  margin-bottom:8px;
+}
+
+/* TEXT FORMULA */
+.formula-text{
+  background:#1f3554;
+  padding:12px;
+  border-radius:10px;
+  font-size:15px;
+}
+
+/* IMAGE */
+.formula-img{
+  max-width:100%;
+  border-radius:10px;
+  margin-top:8px;
+}
+
+/* PDF */
+.pdf-btn{
+  margin-top:10px;
+  display:inline-block;
+  background:#ff4b4b;
+  padding:8px 14px;
+  border-radius:8px;
+  color:#fff;
+  text-decoration:none;
+}

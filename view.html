@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Notes Viewer</title>
+
+<!-- Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+
+<style>
+:root{
+  --bg:#070f1d;
+  --card:rgba(255,255,255,0.06);
+  --border:rgba(255,255,255,0.12);
+  --text:#eaf1ff;
+  --muted:#9fb4d6;
+  --accent:#4a8bff;
+}
+
+*{
+  box-sizing:border-box;
+  font-family:system-ui,Segoe UI,Arial;
+}
+
+body{
+  margin:0;
+  min-height:100vh;
+  background:
+    radial-gradient(circle at top,#101c3a,#070f1d);
+  color:var(--text);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+/* MAIN CARD */
+.viewer-box{
+  width:100%;
+  max-width:420px;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:20px;
+  padding:24px;
+  backdrop-filter:blur(14px);
+  box-shadow:0 0 35px rgba(0,0,0,.45);
+}
+
+/* HEADER */
+.viewer-box h2{
+  margin:0 0 8px;
+  text-align:center;
+  font-size:24px;
+  font-weight:800;
+}
+.viewer-box p{
+  margin:0 0 22px;
+  text-align:center;
+  font-size:13px;
+  color:var(--muted);
+}
+
+/* SELECTS */
+.select-group{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+
+select{
+  width:100%;
+  padding:14px 14px;
+  border-radius:12px;
+  background:#0b1633;
+  color:var(--text);
+  border:1px solid var(--border);
+  outline:none;
+  font-size:15px;
+}
+
+select:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 14px rgba(74,139,255,.5);
+}
+
+/* BUTTON */
+button{
+  width:100%;
+  margin-top:22px;
+  padding:14px;
+  font-size:16px;
+  font-weight:700;
+  border:none;
+  border-radius:14px;
+  background:linear-gradient(135deg,#4a8bff,#7b6bff);
+  color:#fff;
+  cursor:pointer;
+  box-shadow:0 0 25px rgba(74,139,255,.7);
+  transition:.25s;
+}
+button:hover{
+  transform:translateY(-2px);
+  box-shadow:0 0 35px rgba(123,107,255,.9);
+}
+
+/* FOOT NOTE */
+.note{
+  margin-top:16px;
+  font-size:12px;
+  color:#a8b6ff;
+  text-align:center;
+}
+</style>
+</head>
+
+<body>
+
+<div class="viewer-box">
+  <h2>📚 Notes Viewer</h2>
+  <p>Select class, subject & chapter</p>
+
+  <div class="select-group">
+    <select id="classSelect">
+      <option value="">Select Class</option>
+      <option value="9">Class 9</option>
+      <option value="10">Class 10</option>
+      <option value="11">Class 11</option>
+      <option value="12">Class 12</option>
+    </select>
+
+    <select id="subjectSelect">
+      <option value="">Select Subject</option>
+    <option value="physics">Physics</option>
+    <option value="chemistry">Chemistry</option>
+    <option value="maths">Maths</option>
+    <option value="biology">Biology</option>
+    <option value="history">History</option>
+    <option value="geography">Geography</option>
+    <option value="civics">Civics</option>
+    <option value="economics">Economics</option>
+    <option value="hindi">Hindi</option>
+    <option value="english">English</option>
+    </select>
+
+    <select id="chapterSelect">
+      <option value="">Select Chapter</option>
+    <option value="ch1">Chapter 1</option>
+    <option value="ch2">Chapter 2</option>
+    <option value="ch3">Chapter 3</option>
+    <option value="ch4">Chapter 4</option>
+    <option value="ch5">Chapter 5</option>
+    <option value="ch6">Chapter 6</option>
+    <option value="ch7">Chapter 7</option>
+    <option value="ch8">Chapter 8</option>
+    </select>
+  </div>
+
+  <button onclick="loadPdf()">📄 Open Notes</button>
+
+  <div class="note">
+    PDF will open in your phone / browser viewer
+  </div>
+</div>
+
+<script src="view.js"></script>
+</body>
+</html>

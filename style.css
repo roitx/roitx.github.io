@@ -1,0 +1,389 @@
+/* ========== ROOT VARIABLES ========== */
+:root {
+  --bg: #070f1d;
+  --bg-soft: #0c1830;
+  --text: #e9f2ff;
+  --muted: #9fb4d6;
+  --accent: #3aa0ff;
+  --card: rgba(255,255,255,0.04);
+  --border: rgba(255,255,255,0.08);
+}
+
+/* 🌞 LIGHT MODE */
+body.light {
+  --bg: #f4f7fb;
+  --bg-soft: #ffffff;
+  --text: #081427;
+  --muted: #5a6b88;
+  --accent: #2563eb;
+  --card: #ffffff;
+  --border: rgba(0,0,0,0.08);
+}
+
+/* ========== RESET ========== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Segoe UI", system-ui, sans-serif;
+}
+
+/* ========== BODY ========== */
+body {
+  background: radial-gradient(circle at top, var(--bg-soft), var(--bg));
+  color: var(--text);
+  min-height: 100vh;
+  transition: background .4s, color .4s;
+}
+
+/* ========== TOPBAR ========== */
+/* TOPBAR FIXED */
+.topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: 12px 15px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  background: var(--topbar-bg);
+  color: var(--text-color);
+  backdrop-filter: blur(6px);   /* glass effect */
+  box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+
+  z-index: 1000; /* Wave se upar */
+}
+
+/* Ensure content starts below topbar */
+main {
+  margin-top: 70px;  /* adjust topbar height */
+}
+:root {
+  --topbar-bg: #ffffffcc;
+  --text-color: #222;
+}
+
+body.dark {
+  --topbar-bg: #1a1a1acc;
+  --text-color: #fff;
+}
+.topbar {
+  border-bottom: 1px solid rgba(255,255,255,0.3);
+  box-shadow: 0 0 10px rgba(0,0,0,0.2);
+}
+
+body.dark .topbar {
+  box-shadow: 0 0 12px rgba(0, 150, 255, 0.4); /* blue glow in dark */
+}
+main {
+  margin-top: 70px;
+}
+/* ========== BRAND ========== */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+}
+
+.brand-name {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+/* 🔥 GLOW EFFECT */
+.glow {
+  text-shadow:
+    0 0 10px rgba(58,160,255,0.8),
+    0 0 25px rgba(58,160,255,0.6);
+}
+
+.brand-sub {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ========== DARK / LIGHT SWITCH ========== */
+.switch {
+  position: relative;
+  width: 52px;
+  height: 26px;
+}
+
+.switch input {
+  display: none;
+}
+
+.slider {
+  position: absolute;
+  inset: 0;
+  background: var(--bg-soft);
+  border-radius: 50px;
+  cursor: pointer;
+  border: 1px solid var(--border);
+}
+
+.slider::before {
+  content: "";
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  left: 3px;
+  top: 2px;
+  background: var(--accent);
+  border-radius: 50%;
+  transition: .3s;
+}
+
+.switch input:checked + .slider::before {
+  transform: translateX(26px);
+}
+
+.icon {
+  position: absolute;
+  font-size: 12px;
+  top: 5px;
+}
+
+.sun { left: 7px; }
+.moon { right: 7px; }
+/* THEME SELECT */
+.theme-select{
+  margin-left:auto;
+  padding:6px 10px;
+  border-radius:8px;
+  border:none;
+  font-weight:600;
+  background:#00ff9c;
+  color:#003;
+  cursor:pointer;
+}
+
+/* THEMES */
+body.green{
+  background:radial-gradient(circle at top,#022,#000);
+}
+body.dark{
+  background:linear-gradient(180deg,#000,#111);
+}
+body.blue{
+  background:radial-gradient(circle at top,#021b3a,#000);
+}
+
+/* Blue accent override */
+body.blue .op,
+body.blue .equal{
+  background:#3aa0ff;
+  color:#002;
+} 
+
+/* ========== SIDE MENU ========== */
+.menu-icon{
+  position:relative;     /* 🔥 fixed → relative */
+  top:0;
+  right:0;
+
+  width:36px;
+  height:36px;
+  border:none;
+  border-radius:12px;
+
+  background:linear-gradient(135deg,#6a5cff,#9b7cff);
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  gap:5px;
+  cursor:pointer;
+
+  box-shadow:
+    0 4px 12px rgba(0,0,0,0.35),
+    0 0 18px rgba(106,92,255,0.8);
+
+  transition:all .3s ease;
+}
+
+.menu-icon span{
+  width:22px;
+  height:2.5px;
+  background:#fff;
+  border-radius:3px;
+  transition:all .35s ease;
+}
+
+/* Hover glow */
+.menu-icon:hover{
+  transform:scale(1.08);
+  box-shadow:
+    0 0 15px rgba(138,108,255,0.6),
+    0 0 35px rgba(138,108,255,0.9);
+}
+
+/* Active press */
+.menu-icon:active{
+  transform:scale(0.95);
+}
+
+/* 🔁 Menu Open Animation */
+.menu-icon.active span:nth-child(1){
+  transform:rotate(45deg) translate(5px,5px);
+}
+.menu-icon.active span:nth-child(2){
+  opacity:0;
+}
+.menu-icon.active span:nth-child(3){
+  transform:rotate(-45deg) translate(6px,-6px);
+}
+.side-menu {
+  position: fixed;
+  top: 0;
+  left: -240px;
+  width: 240px;
+  height: 100%;
+  background: var(--bg-soft);
+  padding: 20px;
+  z-index: 3000;  /* topbar से ऊपर */
+  transition: 0.3s ease;
+}
+.side-menu.open {
+  left: 0;
+}
+
+.side-menu a {
+  display: block;
+  padding: 10px;
+  margin-bottom: 6px;
+  color: var(--text);
+  text-decoration: none;
+  border-radius: 8px;
+}
+
+.side-menu a:hover {
+  background: var(--card);
+}
+
+.side-menu.show {
+  left: 0;
+}
+#overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(2px);
+  z-index: 2500;   /* menu ke neeche, topbar se upar */
+  display: none;
+}
+
+#overlay.show {
+  display: block;
+}
+
+
+/* ========== HERO ========== */
+.hero {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.hero h1 {
+  font-size: 42px;
+}
+
+.accent {
+  color: var(--accent);
+}
+
+.hero p {
+  margin-top: 10px;
+  color: var(--muted);
+}
+
+/* ========== BUTTONS ========== */
+.btn {
+  padding: 12px 20px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  background: var(--card);
+  color: var(--text);
+  margin: 10px;
+}
+
+.btn.primary {
+  background: linear-gradient(135deg, var(--accent), #6f7bff);
+  box-shadow: 0 0 30px rgba(58,160,255,.6);
+}
+
+/* ========== CARDS ========== */
+.card-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit,minmax(200px,1fr));
+  gap: 20px;
+  max-width: 900px;
+  margin: 40px auto 0;
+}
+
+.card {
+  background: var(--card);
+  padding: 22px;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: .3s;
+}
+
+.card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 0 35px rgba(58,160,255,.3);
+}
+
+.card .emoji {
+  font-size: 32px;
+}
+
+/* ========== MOTIVATION ========== */
+.motivation {
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.mot-box {
+  margin-top: 14px;
+  color: var(--accent);
+}
+
+/* ========== FOOTER ========== */
+footer {
+  padding: 16px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+
+/* Wave background */
+#waveBottom {
+  position: fixed;         /* background जैसा behave करेगा */
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 120px;
+  z-index: -1;             /* BACKGROUND layer */
+  display: block;
+  pointer-events: none;    /* क्लिक block ना करे */
+}#bgCanvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -2;      /* wave ke neeche */
+  pointer-events: none;
+}

@@ -1,0 +1,169 @@
+body{
+  background:#0e1a2a;
+  font-family:Segoe UI;
+  color:#e9f2ff;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+
+.box{
+  width:90%;
+  max-width:500px;
+  background:#15263c;
+  padding:20px;
+  border-radius:12px;
+}
+
+textarea{
+  width:100%;
+  height:90px;
+  background:#1f3554;
+  border:none;
+  color:white;
+  padding:10px;
+  border-radius:8px;
+}
+
+button{
+  margin-top:10px;
+  padding:10px;
+  width:100%;
+  background:#3aa0ff;
+  border:none;
+  color:white;
+  border-radius:8px;
+}
+
+#answer{
+  margin-top:15px;
+  background:#0e1a2a;
+  padding:10px;
+  border-radius:8px;
+}
+.doubt-fab {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+  background: #3aa0ff;
+  color: white;
+  box-shadow: 0 0 15px rgba(58,160,255,0.6);
+}
+
+.my-doubt-panel {
+  position: fixed;
+  bottom: 90px;
+  right: 20px;
+  width: 260px;
+  background: #15263c;
+  border-radius: 12px;
+  padding: 14px;
+  color: #e9f2ff;
+  box-shadow: 0 0 20px rgba(0,0,0,0.6);
+}
+.pending {
+  color: orange;
+  font-weight: bold;
+}
+
+.solved {
+  color: #4cff7a;
+  font-weight: bold;
+}
+
+.doubt-item {
+  background: #1f3554;
+  padding: 8px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+.notify-dot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 10px;
+  height: 10px;
+  background: red;
+  border-radius: 50%;
+}
+/* ================================
+   GREETING + ANSWER BUBBLE (SOLVER)
+   ================================ */
+.greet-bubble{
+  background:#1f6fff;
+  color:#fff;
+  padding:6px 12px;
+  border-radius:14px;
+  display:inline-block;
+  margin-top:6px;
+  font-size:14px;
+}
+
+.answer-box {
+  margin-top: 6px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #1f3cff, #3aa0ff);
+  color: #fff;
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  box-shadow: 0 6px 16px rgba(58,160,255,0.35);
+  animation: popIn 0.25s ease;
+}
+
+/* Greeting line (first line) */
+.answer-box br:first-child {
+  margin-bottom: 6px;
+}
+
+/* Bubble animation */
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Pending / Solved color hint */
+.doubt-item.solved .answer-box {
+  background: linear-gradient(135deg, #19c37d, #0ea5e9);
+}
+
+.doubt-item.pending {
+  opacity: 0.75;
+}.steps-box{
+  background:#0f1c33;
+  padding:14px;
+  border-radius:12px;
+  margin-top:12px;
+}
+.steps-box h4{
+  margin:0 0 8px;
+  color:#3aa0ff;
+}
+.steps-box ol{
+  padding-left:18px;
+}
+.steps-box li{
+  margin:6px 0;
+}
+
+.ncert-box{
+  background:#12203a;
+  margin-top:10px;
+  padding:10px;
+  border-left:4px solid #3aa0ff;
+  border-radius:6px;
+}

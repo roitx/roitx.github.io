@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>📐 Formula Viewer</title>
+
+<link rel="stylesheet" href="formulas.css">
+
+<!-- Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+<script defer src="formulas.js"></script>
+</head>
+
+<body>
+
+<header class="topbar">
+  <h2>📐 Formula Viewer</h2>
+  <a href="dashboard.html" class="back">⬅ Home</a>
+</header>
+
+<main>
+
+<!-- FILTERS -->
+<section class="filters">
+  <select id="fClass">
+    <option value="">Class</option>
+    <option value="9">Class 9</option>
+    <option value="10">Class 10</option>
+    <option value="11">Class 11</option>
+    <option value="12">Class 12</option>
+  </select>
+
+  <select id="fSubject">
+    <option value="">Subject</option>
+    <option value="physics">Physics</option>
+    <option value="chemistry">Chemistry</option>
+    <option value="maths">Maths</option>
+    <option value="biology">Biology</option>
+  </select>
+
+  <select id="fChapter">
+    <option value="">Chapter</option>
+    <option value="ch1">Chapter 1</option>
+    <option value="ch2">Chapter 2</option>
+    <option value="ch3">Chapter 3</option>
+    <option value="ch4">Chapter 4</option>
+    <option value="ch5">Chapter 5</option>
+  </select>
+
+  <button onclick="loadFormulas()">🔍 Search</button>
+</section>
+
+<!-- FORMULA LIST -->
+<section class="formula-list" id="formulaList">
+  ⏳ Loading formulas...
+</section>
+
+</main>
+
+</body>
+</html>

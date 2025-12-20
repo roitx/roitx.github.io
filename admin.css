@@ -1,0 +1,569 @@
+/* ================= ROOT ================= */
+:root {
+  --bg-main: #0b1423;
+  --bg-card: rgba(21, 38, 60, 0.85);
+  --bg-input: #1f3554;
+  --border: #2f4d77;
+  --accent: #3aa0ff;
+  --accent-soft: rgba(58,160,255,0.35);
+  --danger: #ff4b4b;
+  --text-main: #e9f2ff;
+  --text-muted: #b9c9e0;
+  --radius: 14px;
+  --blur: blur(12px);
+}
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+/* ================= GLOBAL ================= */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: radial-gradient(circle at top, #10203a, #070d18);
+  color: var(--text-main);
+  font-family: "Segoe UI", system-ui, sans-serif;
+  margin: 0;
+}
+
+/* ================= TOPBAR ================= */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: linear-gradient(180deg, #162a45, #0f1f35);
+  padding: 14px 22px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+}
+
+.logout {
+  background: linear-gradient(135deg, #ff5b5b, #ff2f2f);
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.logout:hover {
+  transform: scale(1.05);
+}
+
+/* ================= Side Menu ================= */
+.side-menu::-webkit-scrollbar{
+  width:0;
+}
+/* ================= LAYOUT ================= */
+main {
+  padding: 24px;
+  max-width: 1100px;
+  margin: auto;
+}
+/* ================= OVERLAY ================= */
+.overlay{
+  transition:.3s;
+  opacity:0;
+}
+.overlay.show{
+  opacity:1;
+}
+/* ================= CARDS ================= */
+.box {
+  background: var(--bg-card);
+  backdrop-filter: var(--blur);
+  padding: 22px;
+  margin-bottom: 26px;
+  border-radius: var(--radius);
+  border: 1px solid rgba(255,255,255,0.06);
+  box-shadow:
+    0 15px 40px rgba(0,0,0,0.55),
+    inset 0 0 0 1px rgba(255,255,255,0.03);
+  transition: 0.35s ease;
+}
+
+.box:hover {
+  transform: translateY(-2px);
+}
+
+/* ================= BUTTONS ================= */
+button {
+  margin-top: 10px;
+  padding: 11px 20px;
+  background: linear-gradient(135deg, var(--accent), #5fb5ff);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  transition: 0.3s ease;
+  box-shadow: 0 0 0 rgba(58,160,255,0);
+}
+.calculator button{
+  padding:14px;
+  font-size:18px;
+  background:#1b254f;
+}
+button:hover{
+  box-shadow:0 0 12px var(--accent);
+}
+
+/* Danger buttons */
+#formulaList button {
+  background: linear-gradient(135deg, #ff5a5a, #ff3030);
+  padding: 6px 12px;
+  font-size: 12px;
+  border-radius: 8px;
+}
+
+#formulaList button:hover {
+  box-shadow: 0 0 15px rgba(255,75,75,0.6);
+}
+
+/* ================= INPUTS ================= */
+select,
+input[type="file"],
+input[type="text"],
+input[type="date"],
+textarea {
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px 14px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-main);
+  font-size: 14px;
+  outline: none;
+  transition: 0.25s;
+}
+
+select:focus,
+input:focus,
+textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(58,160,255,0.25);
+}
+
+/* ================= FORMULA TEXT ================= */
+#formulaText {
+  min-height: 130px;
+  resize: vertical;
+}
+
+/* ================= MATH TOOLBAR ================= */
+#mathToolbar {
+  margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+#mathToolbar button {
+  background: #1c3252;
+  border: 1px solid var(--border);
+  padding: 7px 12px;
+  border-radius: 8px;
+  font-size: 15px;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
+}
+
+#mathToolbar button:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* ================= PREVIEW ================= */
+#formulaPreview {
+  margin-top: 16px;
+  padding: 14px;
+  background: linear-gradient(180deg, #0c182d, #0a1426);
+  border: 1px dashed var(--accent);
+  border-radius: 12px;
+  min-height: 70px;
+  color: #cfe7ff;
+  font-style: italic;
+}
+
+/* ================= LISTS ================= */
+#fileList div,
+#eventList div,
+#formulaList div {
+  background: rgba(31,53,84,0.75);
+  padding: 10px 14px;
+  border-radius: 10px;
+  margin-top: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: 0.25s;
+}
+
+#fileList div:hover,
+#eventList div:hover,
+#formulaList div:hover {
+  background: rgba(58,160,255,0.12);
+}
+
+/* ================= STATUS TEXT ================= */
+#uploadStatus,
+#uploadMsg,
+#eventMsg {
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* ================= CHECKBOX ================= */
+label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 14px;
+}
+/* FLOATING DOUBT BUTTON */
+#doubtBtn {
+  position: fixed;
+  bottom: 22px;
+  right: 22px;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: #3aa0ff;
+  color: #fff;
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 9999;
+  box-shadow: 0 0 18px rgba(58,160,255,0.6);
+}
+
+/* COUNTER BADGE */
+#pendingCount {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: red;
+  color: #fff;
+  font-size: 11px;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+/* DOUBT PANEL */
+#doubtPanel {
+  position: absolute;
+  top: 60px;
+  right: 20px;
+  width: 320px;
+  background: #0b1220;
+  border-radius: 14px;
+  padding: 12px;
+  box-shadow: 0 0 25px rgba(0,0,0,0.4);
+  z-index: 999;
+}
+
+/* LIST SCROLL */
+#doubtList {
+  max-height: 45vh;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+/* VIEW ALL WRAP */
+#viewAllWrap {
+  position: sticky;
+  bottom: 0;
+  background: linear-gradient(to top, #0b1220 70%, transparent);
+  padding-top: 10px;
+  margin-top: 10px;
+}
+
+/* VIEW ALL BUTTON */
+.view-all-btn {
+  display: block;
+  width: 100%;
+  text-align: center;
+  padding: 10px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #3aa0ff, #6bc6ff);
+  color: #021;
+  font-weight: bold;
+  text-decoration: none;
+  box-shadow: 0 0 15px rgba(58,160,255,0.6);
+  transition: 0.2s ease;
+}
+
+.view-all-btn:hover {
+  transform: scale(1.03);
+  box-shadow: 0 0 25px rgba(58,160,255,0.9);
+}
+/* ===============================
+   VIEW ALL DOUBTS BUTTON
+   =============================== */
+
+.open-doubts{
+  display:block;
+  margin-top:12px;
+  padding:10px 12px;
+  text-align:center;
+  text-decoration:none;
+
+  font-size:14px;
+  font-weight:600;
+  color:#9fd3ff;
+
+  border-radius:10px;
+  background:rgba(58,160,255,0.15);
+  border:1px solid rgba(58,160,255,0.4);
+
+  transition:0.25s;
+}
+
+.open-doubts:hover{
+  background:#3aa0ff;
+  color:#001b33;
+  box-shadow:0 0 14px rgba(58,160,255,0.7);
+}
+
+.open-doubts:active{
+  transform:scale(0.96);
+}
+/* ===== FULL SCREEN DOUBT OVERLAY ===== */
+.doubt-overlay {
+  position: fixed;
+  inset: 0;
+  background: #050b18;
+  z-index: 99999;
+  display: none;
+  flex-direction: column;
+}
+
+.doubt-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  background: #0f1b35;
+  font-size: 18px;
+}
+
+.doubt-header button {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 20px;
+}
+
+.doubt-overlay-list {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-doubt-card {
+  background: rgba(255,255,255,0.06);
+  padding: 12px;
+  border-radius: 10px;
+}
+/* ===== FULL SCREEN DOUBT OVERLAY ===== */
+.doubt-overlay {
+  position: fixed;
+  inset: 0;
+  background: #050b18;
+  z-index: 99999;
+  display: none;
+  flex-direction: column;
+}
+
+.doubt-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  background: #0f1b35;
+  font-size: 18px;
+}
+
+.doubt-header button {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 20px;
+}
+
+.doubt-overlay-list {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-doubt-card {
+  background: rgba(255,255,255,0.06);
+  padding: 12px;
+  border-radius: 10px;
+}
+/* ===== DOUBT CARD CONTENT ===== */
+
+.admin-doubt-card p {
+  margin: 6px 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* GREETING INPUT */
+.admin-doubt-card input[type="text"] {
+  width: 100%;
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #2f4d77;
+  background: #1a2b4a;
+  color: #fff;
+  font-size: 13px;
+}
+
+/* ANSWER TEXTAREA */
+.admin-doubt-card textarea {
+  width: 100%;
+  min-height: 90px;
+  margin-top: 8px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #2f4d77;
+  background: #1a2b4a;
+  color: #fff;
+  font-size: 14px;
+  resize: vertical;
+}
+
+/* ACTION BUTTONS */
+.admin-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.admin-actions button {
+  flex: 1;
+  padding: 8px;
+  border-radius: 8px;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.admin-actions button.publish {
+  background: linear-gradient(135deg, #3aa0ff, #5fb5ff);
+  color: #fff;
+}
+
+.admin-actions button.delete {
+  background: linear-gradient(135deg, #ff5a5a, #ff2f2f);
+  color: #fff;
+}
+
+/* STATUS */
+.status {
+  margin-top: 6px;
+  font-size: 12px;
+}
+
+.status.pending {
+  color: #ffcc66;
+}
+
+.status.solved {
+  color: #4cff8f;
+}
+/* ===== SOLVED BADGE ===== */
+.solved-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  margin-top:8px;
+  padding:6px 12px;
+  background:linear-gradient(135deg,#18c964,#4ade80);
+  color:#03210f;
+  font-weight:600;
+  font-size:13px;
+  border-radius:999px;
+  box-shadow:0 0 18px rgba(24,201,100,.45);
+  animation:solvedPulse .9s ease-out;
+}
+
+@keyframes solvedPulse{
+  0%{transform:scale(.9);opacity:0}
+  60%{transform:scale(1.05)}
+  100%{transform:scale(1);opacity:1}
+}
+/* ===== GREETING INPUT ===== */
+input[id^="greet_"]{
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: linear-gradient(180deg,#0f1e3a,#0b162d);
+  color: #eaf2ff;
+  font-size: 14px;
+  outline: none;
+  margin: 8px 0 6px;
+}
+
+input[id^="greet_"]::placeholder{
+  color:#9bb0d1;
+}
+
+/* ===== ANSWER TEXTAREA ===== */
+textarea[id^="ans_"]{
+  width: 100%;
+  min-height: 90px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: linear-gradient(180deg,#0b1936,#07142b);
+  color:#eaf2ff;
+  font-size:14px;
+  resize:none;
+  outline:none;
+  margin-bottom:10px;
+}
+
+textarea[id^="ans_"]::placeholder{
+  color:#9bb0d1;
+}
+
+/* ===== GREETING DISPLAY BUBBLE (USER SIDE) ===== */
+.greet-bubble{
+  display:inline-block;
+  max-width:90%;
+  margin:6px 0 10px;
+  padding:8px 14px;
+  background:linear-gradient(135deg,#1e90ff,#4aa3ff);
+  color:#fff;
+  font-size:14px;
+  font-weight:500;
+  border-radius:18px 18px 18px 4px;
+  box-shadow:0 6px 18px rgba(30,144,255,.35);
+  animation:greetPop .25s ease-out;
+}
+
+/* ===== ANIMATION ===== */
+@keyframes greetPop{
+  from{transform:scale(.95);opacity:0}
+  to{transform:scale(1);opacity:1}
+}

@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Calendar — Roitx</title>
+<link rel="preconnect" href="https://fonts.gstatic.com">
+<style>
+  :root{
+    --bg:#07101a; --card: rgba(255,255,255,0.04);
+    --accent:#3aa0ff; --muted:#b9c9e0;
+  }
+  *{box-sizing:border-box}
+  body{ margin:0; font-family:Inter,system-ui,Arial; background:linear-gradient(180deg,#04101a,#071829); color:#e9f5ff; padding:28px; -webkit-font-smoothing:antialiased; }
+  header{ display:flex; align-items:center; gap:12px; margin-bottom:18px }
+  header img{ width:52px; height:52px; border-radius:50%; object-fit:cover; box-shadow:0 8px 28px rgba(58,160,255,0.06) }
+  header h1{ font-size:18px; margin:0 }
+
+  .container{ max-width:980px; margin:0 auto; display:grid; grid-template-columns: 1fr 320px; gap:22px; align-items:start }
+
+  .cal-card{ background:linear-gradient(180deg,var(--card), rgba(255,255,255,0.02)); padding:18px; border-radius:14px; border:1px solid rgba(255,255,255,0.03); box-shadow: 0 14px 40px rgba(2,6,12,0.6) }
+
+  /* header controls */
+  .cal-header{ display:flex; justify-content:space-between; align-items:center; gap:10px }
+  .cal-nav{ display:flex; gap:8px }
+  .cal-btn{ padding:8px 12px; border-radius:8px; border:0; background:transparent; color:var(--muted); cursor:pointer; font-weight:700; border:1px solid rgba(255,255,255,0.02) }
+  .cal-title{ font-weight:800; font-size:18px; color:#eaf6ff }
+/event box/
+  .event-box {
+    padding: 8px;
+    margin: 5px 0;
+    background: #f4f4f4;
+    border-radius: 6px;
+  }
+  /* grid */
+  .weekdays{ display:grid; grid-template-columns: repeat(7,1fr); gap:6px; margin-top:12px; color:var(--muted); font-weight:700; text-align:center }
+  .days{ display:grid; grid-template-columns: repeat(7,1fr); gap:8px; margin-top:8px; }
+  .day{
+    min-height:92px; border-radius:10px; padding:8px; background:linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));
+    border:1px solid rgba(255,255,255,0.02); transition:transform .15s, box-shadow .15s; position:relative; overflow:hidden;
+  }
+  .day:hover{ transform:translateY(-6px); box-shadow:0 18px 40px rgba(0,0,0,0.6) }
+  .day .date{ font-weight:800; color:var(--accent) }
+  .other-month{ opacity:0.28; filter:grayscale(.2) }
+
+  /* side panel */
+  .side{ display:flex; flex-direction:column; gap:12px; }
+  .mini{ padding:12px; border-radius:10px; background:transparent; border:1px dashed rgba(255,255,255,0.03); color:var(--muted) }
+
+  .legend{ display:flex; gap:8px; align-items:center; flex-wrap:wrap }
+  .legend .dot{ width:10px; height:10px; border-radius:50% }
+
+  /* responsive */
+  @media (max-width:900px){
+    .container{ grid-template-columns: 1fr; }
+    .day{ min-height:72px }
+  }
+  .day{
+  position: relative; 
+}
+/* ===== TODAY ===== */
+.day.today{
+  background: linear-gradient(135deg,#3aa0ff,#7b6bff);
+  box-shadow:0 0 12px rgba(58,160,255,.9),0 0 32px rgba(123,107,255,.9);
+  animation:pulse 1.6s infinite alternate;
+}
+.day.today::after{
+  content:"roitx";
+  position:absolute;
+  bottom:6px;
+  right:2px;
+  font-size:9px;
+  padding:2px 6px;
+  border-radius:6px;
+  background:rgba(0,0,0,.35);
+  color:#fff;
+}
+/* EVENT PURPLE GLOW + PULSE */
+.day.event-glow {
+  box-shadow: 0 0 16px #7b6bff, 0 0 28px #a48aff;
+  animation: pulseEvent 1.5s infinite alternate;
+}
+
+@keyframes pulseEvent {
+  from { box-shadow: 0 0 8px #7b6bff; }
+  to   { box-shadow: 0 0 24px #b79aff; }
+}
+
+.event-item.title-glow {
+  background: rgba(123,107,255,0.18);
+  border-left: 4px solid #7b6bff;
+  padding-left: 8px;
+  animation: pulseTitle 1.4s infinite alternate;
+}
+
+@keyframes pulseTitle {
+  from { background: rgba(123,107,255,0.10); }
+  to   { background: rgba(123,107,255,0.25); }
+}
+/* ===== SELECTED DATE ===== */
+.day.selected{
+  outline:2px solid #3aa0ff;
+  box-shadow:0 12px 40px rgba(58,160,255,.6);
+  transform:scale(1.04);
+}
+
+/* ===== EVENT DOT ===== */
+.day.has-event .date::after{
+  content:"event";
+  display:block;
+  width:6px;
+  height:6px;
+  margin:6px auto 0;
+  border-radius:50%;
+  background:#7b6bff;
+}
+#eventDate.filled {
+  border-color: #00ffea;
+  box-shadow: 0 0 10px #00ffe4;
+}
+/* ===== SUNDAY / HOLIDAY ===== */
+.day.holiday{
+  box-shadow: 0 0 18px rgba(255,60,60,.9);
+  border:1px solid rgba(255,60,60,.8);
+}
+
+/* ===== HOVER EXTRA ===== */
+.day:hover{
+  box-shadow:0 16px 45px rgba(0,0,0,.7);
+}
+
+/* ===== ANIMATION ===== */
+@keyframes pulse{
+  from{box-shadow:0 0 10px rgba(58,160,255,.6)}
+  to{box-shadow:0 0 32px rgba(123,107,255,1)}
+}
+.cal-nav input[type="date"]{
+  background:rgba(255,255,255,0.08);
+  color:#e9f5ff;
+  border-radius:8px;
+  border:1px solid rgba(255,255,255,0.15);
+}
+
+.cal-nav input[type="date"]::-webkit-calendar-picker-indicator{
+  filter:invert(1);
+  cursor:pointer;
+}
+/* FIX DATE INPUT LOOK */
+.cal-nav{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+
+#gotoDate{
+  background: rgba(255,255,255,0.04);
+  color: #e9f5ff;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  font-weight: 700;
+  height: 36px;
+}
+
+/* calendar icon color (mobile + chrome) */
+#gotoDate::-webkit-calendar-picker-indicator{
+  filter: invert(1);
+  opacity: 0.8;
+  cursor: pointer;
+}
+@media(max-width:600px){
+  #gotoDate{
+    width:100%;
+  }
+}
+/* ===== FIX CALENDAR HEADER LOOK ===== */
+.cal-header{
+  background: linear-gradient(
+    180deg,
+    rgba(255,255,255,0.04),
+    rgba(255,255,255,0.02)
+  );
+  padding: 12px;
+  border-radius: 12px;
+}
+
+/* Proper contrast for nav */
+.cal-nav{
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:8px;
+}
+
+/* Fix ALL buttons look */
+.cal-btn{
+  background: rgba(255,255,255,0.04);
+  color: #e9f5ff;
+  border: 1px solid rgba(255,255,255,0.08);
+  backdrop-filter: blur(6px);
+}
+
+/* ===== DATE PICKER FULL FIX ===== */
+#gotoDate{
+  appearance:none;
+  -webkit-appearance:none;
+  background: rgba(255,255,255,0.04);
+  color:#e9f5ff;
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:8px;
+  padding:6px 10px;
+  height:36px;
+  font-weight:700;
+}
+
+/* calendar icon visible */
+#gotoDate::-webkit-calendar-picker-indicator{
+  filter: invert(1);
+  opacity: 0.9;
+  cursor: pointer;
+}
+
+
+/* HOLIDAY (RED GLOW) */
+/* ===== STEP 2 : HOLIDAY TOOLTIP ===== */
+.day.holiday{
+  position: relative;
+  box-shadow: 0 0 12px rgba(255,0,0,.6);
+}
+
+.day.holiday::after{
+  content: attr(data-holiday);
+  position: absolute;
+  bottom: 110%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #111;
+  color: #fff;
+  padding: 6px 10px;
+  font-size: 12px;
+  border-radius: 6px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: .25s;
+  z-index: 100;
+}
+
+.day.holiday:hover::after{
+  opacity: 1;
+}
+/* GO TO DATE (ORANGE GLOW) */
+.day.goto{
+  box-shadow: 0 0 18px rgba(255,165,0,.95);
+  border:1px solid orange;
+}
+/* mobile fix */
+@media(max-width:700px){
+  .cal-header{ gap:10px }
+  #gotoDate{ width:100% }
+}
+
+/* ✅ FULL POPUP */
+.popup-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.6);
+  display:none;
+  justify-content:center;
+  align-items:center;
+  z-index:999;
+}
+
+.popup-box{
+  background:#0b1a2b;
+  color:#fff;
+  padding:20px;
+  border-radius:14px;
+  width:80%;
+  max-width:320px;
+  text-align:center;
+  box-shadow:0 0 30px rgba(255,60,60,.6);
+  animation:pop .3s ease;
+}
+
+.popup-box h3{
+  margin:0 0 10px;
+  color:#ff6464;
+}
+
+.popup-box button{
+  margin-top:12px;
+  padding:8px 16px;
+  border:0;
+  border-radius:8px;
+  background:#ff4d4d;
+  color:#fff;
+  font-weight:700;
+}
+
+@keyframes pop{
+  from{transform:scale(.7);opacity:0}
+  to{transform:scale(1);opacity:1}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <img src="profile.jpg" alt="Profile">
+  <h1>Roitx — Calendar</h1>
+</header>
+
+<div class="container">
+
+  <div class="cal-header">
+  <div class="cal-title" id="calTitle">Month Year</div>
+
+  <div class="cal-nav">
+ <button class="cal-btn" id="prevBtn">◀</button><button class="cal-btn" id="todayBtn">Today</button> <button class="cal-btn" id="nextBtn">▶</button>
+Go to date
+<input type="date" id="gotoDate" class="cal-btn" title="Go to date">
+  </div>
+</div>
+
+    <div class="weekdays">
+      <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+    </div>
+
+    <div class="days" id="daysGrid"></div>
+  </div>
+
+  <aside class="side">
+    <div class="mini">
+      <h3 style="margin:0 0 8px 0">Month Overview</h3>
+      <div class="muted">Use ◀ ▶ to change months. Click any date to highlight it.</div>
+    </div>
+
+    <div class="mini">
+      <h4 style="margin:0 0 8px 0">Legend</h4>
+      <div class="legend">
+        <div style="display:flex;gap:8px;align-items:center"><span class="dot" style="background:var(--accent)"></span> Selected</div>
+        <div style="display:flex;gap:8px;align-items:center"><span class="dot" style="background:#7b6bff"></span> Events (future)</div>
+      </div>
+    </div>
+    <div id="eventList"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+    <div class="mini">
+      <a href="index.html" style="color:#9fcfff">⬅ Back to Home</a>
+    </div>
+  </aside>
+<!-- ✅ HOLIDAY POPUP -->
+<div id="holidayPopup" class="popup-overlay">
+  <div class="popup-box">
+    <h3 id="popupTitle">Holiday</h3>
+    <p id="popupText"></p>
+    <button onclick="closePopup()">Close</button>
+  </div>
+</div>
+</div>
+<script>
+/* -----------------------------------------------
+   HOLIDAYS 2026
+-------------------------------------------------*/
+const holidays = {
+  "2026-01-26": "Republic Day 🇮🇳",
+  "2026-08-15": "Independence Day 🇮🇳",
+  "2026-10-02": "Gandhi Jayanti 🇮🇳",
+
+  "2026-01-14": "Makar Sankranti",
+  "2026-01-26": "Vasant Panchami",
+  "2026-02-18": "Maha Shivratri",
+  "2026-03-04": "Holi",
+  "2026-03-25": "Good Friday",
+  "2026-04-02": "Ram Navami",
+  "2026-04-14": "Ambedkar Jayanti",
+  "2026-04-22": "Mahavir Jayanti",
+  "2026-05-01": "Labour Day",
+  "2026-05-25": "Buddha Purnima",
+  "2026-07-21": "Bakrid / Eid-ul-Adha",
+  "2026-08-28": "Janmashtami",
+  "2026-09-17": "Ganesh Chaturthi",
+  "2026-10-20": "Dussehra",
+  "2026-11-08": "Diwali 🪔",
+  "2026-11-09": "Govardhan Puja",
+  "2026-11-10": "Bhai Dooj",
+  "2026-11-27": "Guru Nanak Jayanti",
+  "2026-12-25": "Christmas 🎄"
+};
+
+
+/* -----------------------------------------------
+   CALENDAR RENDER SYSTEM
+-------------------------------------------------*/
+(function(){
+
+  const daysGrid = document.getElementById('daysGrid');
+  const title = document.getElementById('calTitle');
+  const gotoDate = document.getElementById('gotoDate');
+
+  let cur = new Date();
+  cur.setDate(1);
+
+  function render(){
+
+    daysGrid.innerHTML = '';
+
+    const year = cur.getFullYear();
+    const month = cur.getMonth();
+
+    /* Current Month Title */
+    title.textContent = cur.toLocaleString('default',{
+      month:'long', year:'numeric'
+    });
+
+    /* TODAY KEY (yyyy-mm-dd) */
+    const today = new Date();
+    const todayKey =
+      `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+
+    /* Calendar Calculations */
+    const firstIndex = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const prevDays = new Date(year, month, 0).getDate();
+
+
+    /* Previous Month */
+    for(let i = firstIndex - 1; i >= 0; i--){
+      const el = document.createElement('div');
+      el.className = 'day other-month';
+      el.innerHTML = `<div class="date">${prevDays - i}</div>`;
+      daysGrid.appendChild(el);
+    }
+
+
+    /* Current Month */
+    for(let d = 1; d <= daysInMonth; d++){
+
+      const el = document.createElement('div');
+      el.className = 'day';
+      el.setAttribute("data-day", d);
+      el.innerHTML = `<div class="date">${d}</div>`;
+
+      const dateObj = new Date(year, month, d);
+
+      const dateKey =
+        `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+
+
+      /* ⭐ TODAY GLOW SYSTEM ⭐ */
+      if(dateKey === todayKey){
+        el.classList.add('today');
+      }
+
+      /* 🔴 SUNDAY HOLIDAY */
+      if(dateObj.getDay() === 0){
+        el.classList.add('holiday');
+        el.setAttribute('data-holiday','Sunday');
+      }
+
+      /* 🎉 Named Holiday */
+      if(holidays[dateKey]){
+        el.classList.add('holiday');
+        el.setAttribute('data-holiday', holidays[dateKey]);
+      }
+
+      /* POPUP on holiday tap */
+      if(el.classList.contains('holiday')){
+        el.addEventListener('click', ()=>{
+          showPopup(el.getAttribute('data-holiday'));
+        });
+      }
+
+      daysGrid.appendChild(el);
+    }
+
+  } // END render()
+
+
+  /* ------------ NAVIGATION ------------ */
+  prevBtn.onclick = () => { cur.setMonth(cur.getMonth() - 1); render(); };
+  nextBtn.onclick = () => { cur.setMonth(cur.getMonth() + 1); render(); };
+  todayBtn.onclick = () => { cur = new Date(); cur.setDate(1); render(); };
+
+  /* ------------ GO TO DATE ------------ */
+  if(gotoDate){
+    gotoDate.addEventListener('change', function(){
+      const d = new Date(this.value);
+      if(isNaN(d)) return;
+
+      cur = new Date(d.getFullYear(), d.getMonth(), 1);
+      render();
+
+      /* Highlight selected date */
+      setTimeout(()=>{
+        document.querySelectorAll('.day').forEach(x=> x.classList.remove('goto'));
+
+        const target = [...document.querySelectorAll('.day .date')]
+          .find(el => el.textContent == d.getDate());
+
+        if(target){
+          target.parentElement.classList.add('goto');
+        }
+      },30);
+
+    });
+  }
+
+  render();
+
+})();
+  
+
+/* -----------------------------------------------
+   POPUP SYSTEM
+-------------------------------------------------*/
+const popup = document.getElementById('holidayPopup');
+const popupText = document.getElementById('popupText');
+
+function showPopup(text){
+  popupText.textContent = text;
+  popup.style.display = 'flex';
+}
+
+function closePopup(){
+  popup.style.display = 'none';
+}
+  /// ---------- LOAD EVENTS (FINAL COMBINED FUNCTION) ----------
+async function loadEvents() {
+  const list = document.getElementById("eventList");
+  const user = await getCurrentUser();
+
+  if (!user) {
+    list.innerHTML = "<em>Login to view events</em>";
+    return;
+  }
+
+  // Fetch from Supabase
+  const { data, error } = await window.supabaseClient
+    .from("events")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("event_date", { ascending: true });
+
+  if (error) {
+    list.innerHTML = "<em>Error loading events</em>";
+    console.error(error);
+    return;
+  }
+
+  list.innerHTML = "";
+  const eventDates = [];
+
+  data.forEach(ev => {
+    const d = new Date(ev.event_date);
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    const dateKey = `${yyyy}-${mm}-${dd}`;
+
+    eventDates.push(dateKey);
+
+    const row = document.createElement("div");
+    row.className = "event-item";
+    row.dataset.date = dateKey;
+
+    row.innerHTML = `
+      <div class="event-text">${dateKey} — ${ev.event_name}</div>
+    `;
+
+    list.appendChild(row);
+  });
+
+  // Highlight dates on calendar
+  highlightEventCells(eventDates);
+}
+
+
+// ---------- HIGHLIGHT EVENT DATES ON CALENDAR ----------
+function highlightEventCells(eventDates) {
+  document.querySelectorAll(".day.event-glow")
+    .forEach(x => x.classList.remove("event-glow"));
+
+  eventDates.forEach(dateKey => {
+    const d = new Date(dateKey);
+    const dayNum = d.getDate();
+
+    const cell = document.querySelector(`.day[data-day="${dayNum}"]`);
+    if (cell) {
+      cell.classList.add("event-glow");
+
+      // Click => highlight event items
+      cell.onclick = () => glowTitlesForDate(dateKey);
+    }
+  });
+}
+
+
+// ---------- TITLE GLOW ----------
+function glowTitlesForDate(dateKey) {
+  document.querySelectorAll(".event-item.title-glow")
+    .forEach(el => el.classList.remove("title-glow"));
+
+  const items = document.querySelectorAll(`.event-item[data-date="${dateKey}"]`);
+  items.forEach(i => i.classList.add("title-glow"));
+
+  if (items.length > 0)
+    items[0].scrollIntoView({ behavior: "smooth", block: "center" });
+}
+/* -----------------------------------------------
+   SUPABASE EVENT SYSTEM (FIXED)
+-------------------------------------------------*/
+async function getCurrentUser() {
+  const { data } = await window.supabaseClient.auth.getUser();
+  return data?.user ?? null;
+}
+
+function setTodayOnInput() {
+  const today = new Date().toISOString().split("T")[0];
+  const el = document.getElementById("eventDate");
+  if (el) el.value = today;
+}
+
+async function addEvent() {
+  const date = eventDate.value;
+  const name = eventName.value.trim();
+
+  if (!date || !name){
+    eventMsg.textContent = "❌ Fill date & name";
+    eventMsg.style.color = "red";
+    return;
+  }
+
+  const user = await getCurrentUser();
+  if (!user){
+    eventMsg.textContent = "❌ Login first";
+    eventMsg.style.color = "red";
+    return;
+  }
+
+  const { error } = await window.supabaseClient
+    .from("events")
+    .insert([
+      { user_id:user.id, event_date:date, event_name:name }
+    ]);
+
+  if (error){
+    eventMsg.textContent = "❌ " + error.message;
+    eventMsg.style.color = "red";
+  } else {
+    eventMsg.textContent = "✅ Event added";
+    eventMsg.style.color = "lightgreen";
+    eventDate.value = "";
+    eventName.value = "";
+    loadEvents();
+  }
+}
+
+async function deleteEvent(id){
+  await window.supabaseClient.from("events").delete().eq("id",id);
+  loadEvents();
+}
+
+document.addEventListener("DOMContentLoaded", ()=>{
+  setTodayOnInput();
+  loadEvents();
+});
+</script>
+
+</body>
+</html>

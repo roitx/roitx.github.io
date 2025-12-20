@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tests</title>
+    <link rel="stylesheet" href="tests.css">
+</head>
+<body>
+
+<header>
+    <h2>📘 Tests Center</h2>
+
+    <label class="switch">
+  <input type="checkbox" id="modeToggle">
+  <span class="slider">
+    <span class="icon sun">🔆</span>
+    <span class="icon moon">🌙</span>
+  </span>
+    </label>
+</header>
+
+<section class="tests-container">
+
+    <!-- Test Card 1 -->
+    <div class="test-card">
+        <h3>Chapter Test</h3>
+        <p>10 Questions • Auto-check • Instant Score</p>
+        <button onclick="startTest('chapter')">Start Test</button>
+        <span class="badge-new">NEW</span>
+    </div>
+
+    <!-- Test Card 2 -->
+    <div class="test-card">
+        <h3>Unit Test</h3>
+        <p>20 Questions • Timer Enabled • Detailed Review</p>
+        <button onclick="startTest('unit')">Start Test</button>
+    </div>
+
+    <!-- Test Card 3 -->
+    <div class="test-card">
+        <h3>Full Syllabus Test</h3>
+        <p>50 Questions • Advanced Mode • Leaderboard</p>
+        <button onclick="startTest('full')">Start Test</button>
+    </div>
+
+</section>
+
+<div class="popup" id="testPopup">
+    <div class="popup-box">
+        <h3 id="testTitle"></h3>
+        <p>This feature will open the test window.</p>
+        <button onclick="closePopup()">OK</button>
+    </div>
+</div>
+
+<script src="tests.js"></script>
+</body>
+</html>

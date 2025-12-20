@@ -1,0 +1,37 @@
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,Arial,sans-serif}
+body{background:linear-gradient(180deg,#0b0f14,#0d1118);color:#fff;min-height:100vh;}
+.topbar{display:flex;align-items:center;gap:12px;padding:14px 16px;background:#12151b;box-shadow:0 1px 0 rgba(255,255,255,.06);}
+.topbar h1{font-size:16px;font-weight:600;flex:1;text-align:center;}
+.back{background:none;border:none;color:#fff;font-size:22px;cursor:pointer;}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;padding:14px;}
+.card{background:rgba(255,255,255,.04);border-radius:16px;padding:16px 10px;text-align:center;box-shadow:0 0 0 1px rgba(255,255,255,.06),0 10px 30px rgba(0,0,0,.45);transition:.25s ease;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;word-break:break-word;min-height:80px;}
+.card.subject,.card.chapter{min-height:100px;padding:18px 10px;}
+.book{width:54px;height:70px;margin:0 auto 10px;border-radius:6px 12px 12px 6px;display:flex;align-items:center;justify-content:center;font-weight:700;letter-spacing:.5px;box-shadow:inset -6px 0 rgba(255,255,255,.3),0 6px 14px rgba(0,0,0,.5);}
+.book span{background:rgba(255,255,255,.25);padding:3px 7px;border-radius:4px;font-size:12px;}
+.card p, .card span{font-size:13px;line-height:1.4;color:#dbe2f1;}
+.card:hover{transform:translateY(-4px);box-shadow:0 15px 35px rgba(0,0,0,.5);}
+.card:active{transform:scale(0.97);box-shadow:0 10px 20px rgba(0,0,0,.4);}
+
+/* Class / Subject / Chapter cards professional, lamba text wrap */
+.card.subject, .card.chapter{
+  min-height:100px;
+  padding:18px 10px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  word-break:break-word;
+}
+
+/* Roman numeral for class card */
+.card .roman{
+  font-weight:700;
+  font-size:16px;
+  padding:6px 10px;
+  border:1px solid rgba(255,255,255,.3);
+  border-radius:6px;
+  margin-bottom:6px;
+  display:inline-block;
+  text-shadow:0 0 4px rgba(255,255,255,.4);
+  color:#ffd166;
+}

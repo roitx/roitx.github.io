@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ROITX Calculator</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="calculator.css">
+</head>
+
+<body class="green">
+
+<!-- OVERLAY -->
+<div id="overlay" class="overlay"></div>
+
+<!-- SIDE MENU -->
+<div id="sideMenu" class="side-menu">
+  <h3>📘 History</h3>
+  <div id="historyList"></div>
+
+  <div class="shortcuts">
+    <h4>✨ Shortcuts</h4>
+    <p>➡ Swipe Right → Open History</p>
+    <p>⬅ Swipe Left → Close History</p>
+    <p>👆 Tap Result → Copy</p>
+    <p>🔁 Double Tap → Clear</p>
+  </div>
+
+  <button class="clear-btn" onclick="clearHistory()">Clear History</button>
+</div>
+
+<!-- HEADER -->
+<header class="topbar">
+  <button id="menuBtn" class="menu-icon">
+    <span>➖</span>
+    <span> </span>
+    <span> </span>
+  </button>
+
+
+  <div class="title glow">ROITX Calculator</div>
+
+  <select id="themeSelect" class="theme-select">
+    <option value="green">Green 💚</option>
+    <option value="blue">Blue 💙</option>
+    <option value="dark">Purple 💜</option>
+  </select>
+
+  <button id="degBtn" class="deg-btn" onclick="toggleDegRad()">DEG</button>
+</header>
+
+<!-- CALCULATOR -->
+<div class="calculator">
+
+  <div class="display">
+    <div id="expression" class="expression"></div>
+    <div id="result" class="result">0</div>
+  </div>
+
+  <button class="mode-btn" onclick="toggleSci()">Scientific</button>
+
+  <!-- SCIENTIFIC -->
+  <div id="sciPanel" class="sci-panel">
+    <button onclick="append('Math.sin(')">sin</button>
+    <button onclick="append('Math.cos(')">cos</button>
+    <button onclick="append('Math.tan(')">tan</button>
+    <button onclick="append('Math.sqrt(')">√</button>
+    <button onclick="append('**2')">x²</button>
+    <button onclick="append('Math.log(')">log</button>
+    <button onclick="append('Math.PI')">π</button>
+    <button onclick="append('Math.E')">e</button>
+  </div>
+
+  <!-- MAIN -->
+  <div class="buttons">
+    <button class="op" onclick="clearAll()">AC</button>
+    <button class="op" onclick="del()">⌫</button>
+    <button class="op" onclick="append('%')">%</button>
+    <button class="op" onclick="append('/')">÷</button>
+
+    <button onclick="append('7')">7</button>
+    <button onclick="append('8')">8</button>
+    <button onclick="append('9')">9</button>
+    <button class="op" onclick="append('*')">×</button>
+
+    <button onclick="append('4')">4</button>
+    <button onclick="append('5')">5</button>
+    <button onclick="append('6')">6</button>
+    <button class="op" onclick="append('-')">−</button>
+
+    <button onclick="append('1')">1</button>
+    <button onclick="append('2')">2</button>
+    <button onclick="append('3')">3</button>
+    <button class="op" onclick="append('+')">+</button>
+
+    <button onclick="append('(')">(</button>
+    <button onclick="append('0')">0</button>
+    <button onclick="append(')')">)</button>
+    <button class="equal" onclick="calculate()">=</button>
+  </div>
+</div>
+
+<script src="calculator.js"></script>
+</body>
+</html>

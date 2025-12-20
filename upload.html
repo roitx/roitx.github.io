@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Upload Reference Book</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="upload.css">
+
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+</head>
+<body>
+
+<div class="upload-card">
+
+  <h2>📘 Upload Reference Book</h2>
+  <p class="sub">Admin only • Chapter based • Auto naming</p>
+
+  <label class="label">Author / Book Name</label>
+  <input type="text" id="authorInput" placeholder="e.g. RD Sharma">
+
+  <label class="label">Class</label>
+  <select id="classSelect">
+    <option value="8">Class 8</option>
+    <option value="9">Class 9</option>
+    <option value="10">Class 10</option>
+    <option value="11">Class 11</option>
+    <option value="12">Class 12</option>
+  </select>
+
+  <label class="label">Subject</label>
+  <select id="subjectSelect">
+    <option value="Math">Mathematics</option>
+    <option value="Physics">Physics</option>
+    <option value="Chemistry">Chemistry</option>
+  </select>
+
+  <label class="label">Chapter No</label>
+  <input type="number" id="chapter_noInput" placeholder="e.g. 1">
+
+  <label class="label">Chapter Name</label>
+  <input type="text" id="chapterInput" placeholder="e.g. Motion">
+
+  <label class="label">PDF File</label>
+  <input type="file" id="bookFile" accept=".pdf">
+
+  <div class="preview">
+    <div class="preview-title">📖 Auto Generated Name</div>
+    <div id="previewName" class="preview-name">
+      Fill details to preview name
+    </div>
+  </div>
+
+  <button onclick="uploadBook()">⬆ Upload Chapter</button>
+
+  <p id="status" class="status"></p>
+
+  <hr class="divider">
+
+  <h3 class="list-title">📚 Uploaded Chapters</h3>
+  <div id="bookList" class="book-list">⏳ Loading...</div>
+
+</div>
+
+<script src="upload.js"></script>
+</body>
+</html>

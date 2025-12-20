@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Step Solver</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="solver.css">
+
+  <!-- Supabase CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Supabase Config -->
+  <script src="supabase.js"></script>
+</head>
+<body>
+
+  <div class="box">
+    <h2>🧠 Step-by-Step Solver</h2>
+
+    <p class="hint">
+      ✏️ Simple maths likho (2+3, 10/2)<br>
+      ❓ Tough doubt admin ko bhej sakte ho
+    </p>
+
+    <!-- QUESTION INPUT -->
+    <textarea
+      id="question"
+      placeholder="Type your question here..."
+    ></textarea>
+
+    <!-- ACTION BUTTONS -->
+    <div class="btn-row">
+      <button id="solveBtn" onclick="solve()">🔍 Solve</button>
+
+      <!-- MY DOUBTS BUTTON -->
+      <button class="doubt-fab" onclick="toggleMyDoubt()">❓</button>
+
+<div id="myDoubtPanel" class="my-doubt-panel" style="display:none;">
+  <h3>📝 My Doubts</h3>
+  <div id="doubtList">Loading...</div>
+  <span id="notifyDot" class="notify-dot" style="display:none;"></span>
+</div>
+    </div>
+
+    <!-- ANSWER -->
+    <div id="answer"></div>
+
+    <!-- =========================
+         MY DOUBTS PANEL
+         ========================= -->
+    <div id="myDoubtsPanel" style="display:none;">
+      <h3>📬 My Doubts</h3>
+      <div id="myDoubtsList">Loading...</div>
+    </div>
+
+  </div>
+
+  <!-- Solver Logic -->
+  <script src="solver.js"></script>
+
+</body>
+</html>
