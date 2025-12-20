@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Class 10 Biology – Chapters</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="chapter.css">
+</head>
+
+<body>
+
+<div class="header">
+  <h1>🧬 Class 10 – Biology</h1>
+  <p>Choose a chapter to open notes</p>
+</div>
+
+<div class="chapters">
+
+  <div class="chapter" onclick="openPdf('10_biology_ch1.pdf')">
+    <h3>Ch 1 – Life Processes</h3>
+    <span>Nutrition, respiration & transport</span>
+  </div>
+
+  <div class="chapter" onclick="openPdf('10_biology_ch2.pdf')">
+    <h3>Ch 2 – Control & Coordination</h3>
+    <span>Nervous & hormonal system</span>
+  </div>
+
+  <div class="chapter" onclick="openPdf('10_biology_ch3.pdf')">
+    <h3>Ch 3 – How do Organisms Reproduce</h3>
+    <span>Sexual & asexual reproduction</span>
+  </div>
+
+  <div class="chapter" onclick="openPdf('10_biology_ch4.pdf')">
+    <h3>Ch 4 – Heredity & Evolution</h3>
+    <span>Mendel & evolution concepts</span>
+  </div>
+
+  <div class="chapter" onclick="openPdf('10_biology_ch5.pdf')">
+    <h3>Ch 5 – Environment</h3>
+    <span>Ecosystem & food chain</span>
+  </div>
+
+  <div class="chapter" onclick="openPdf('10_biology_ch6.pdf')">
+    <h3>Ch 6 – Resources & Their Conservation</h3>
+    <span>Natural resource management</span>
+  </div>
+
+</div>
+
+<div class="footer">
+  © Notes by Roitx
+</div>
+
+<script>
+function openPdf(file){
+  window.location.href = "notes-viewer.html?file=" + file;
+}
+</script>
+
+</body>
+</html>

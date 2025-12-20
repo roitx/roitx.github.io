@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Class 12 Science</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f2f2f2;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .card {
+            background: white;
+            padding: 18px;
+            margin: 12px 0;
+            font-size: 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            box-shadow: 0px 3px 6px rgba(0,0,0,0.15);
+            transition: 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-3px);
+            background: #e8faff;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Class 12 — Science Subjects</h1>
+
+<div class="card" onclick="goto('12-physics-chapters.html')">Physics</div>
+<div class="card" onclick="goto('12-chemistry-chapters.html')">Chemistry</div>
+<div class="card" onclick="goto('12-biology-chapters.html')">Biology</div>
+<div class="card" onclick="goto('12-maths-chapters.html')">Maths</div>
+<div class="card" onclick="goto('12-english-chapters.html')">English</div>
+<div class="card" onclick="goto('12-hindi-chapters.html')">Hindi</div>
+<div class="card" onclick="goto('12-computer-chapters.html')">Computer</div>
+
+<script>
+function goto(page) {
+    window.location.href = page;
+}
+</script>
+
+</body>
+</html>

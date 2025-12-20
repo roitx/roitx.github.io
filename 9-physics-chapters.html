@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Class 9 Physics – Chapters</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="chapter.css">
+</head>
+<body>
+
+<div class="header">
+  <h1>📘 Class 9 – Physics</h1>
+  <p>Select a chapter to open notes</p>
+</div>
+
+<div class="chapters">
+  <div class="chapter" onclick="openPdf('9_physics_ch1.pdf')"><h3>Chapter 1</h3><span>Motion</span></div>
+  <div class="chapter" onclick="openPdf('9_physics_ch2.pdf')"><h3>Chapter 2</h3><span>Force & Laws</span></div>
+  <div class="chapter" onclick="openPdf('9_physics_ch3.pdf')"><h3>Chapter 3</h3><span>Gravitation</span></div>
+  <div class="chapter" onclick="openPdf('9_physics_ch4.pdf')"><h3>Chapter 4</h3><span>Work & Energy</span></div>
+</div>
+
+<div class="footer">© Notes by Roitx</div>
+
+<script>
+function openPdf(f){location.href="notes-viewer.html?file="+f}
+</script>
+</body>
+</html>

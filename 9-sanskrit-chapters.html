@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Class 9 Sanskrit Chapters</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f3f6ff;
+            padding: 20px;
+            margin: 0;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 30px;
+            font-weight: 700;
+        }
+
+        h2 {
+            font-size: 22px;
+            margin-top: 25px;
+            color: #333;
+        }
+
+        .chapter-card {
+            background: #ffffff;
+            margin: 10px 0;
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: .3s ease;
+        }
+
+        .chapter-card:hover {
+            background: #e4f1ff;
+            transform: translateY(-3px);
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>Class 9 – संस्कृत</h1>
+<h2>📘 शेमुषी — भाग 1</h2>
+
+<div class="chapter-card" onclick="openNotes('9-san-ch1.pdf')">पाठ 1 – वन्दे मातरम्</div>
+<div class="chapter-card" onclick="openNotes('9-san-ch2.pdf')">पाठ 2 – स्वावलम्बनम्</div>
+<div class="chapter-card" onclick="openNotes('9-san-ch3.pdf')">पाठ 3 – गविद्या</div>
+<div class="chapter-card" onclick="openNotes('9-san-ch4.pdf')">पाठ 4 – सदाचरणम्</div>
+<div class="chapter-card" onclick="openNotes('9-san-ch5.pdf')">पाठ 5 – कक्षा</div>
+<div class="chapter-card" onclick="openNotes('9-san-ch6.pdf')">पाठ 6 – मित्रं परीक्ष्यते</div>
+<div class="chapter-card" onclick="openNotes('9-san-ch7.pdf')">पाठ 7 – दशानाम् अपि</div>
+<div class="chapter-card" onclick="openNotes('9-san-ch8.pdf')">पाठ 8 – साहसस्य कथा</div>
+<div class="chapter-card" onclick="openNotes('9-san-ch9.pdf')">पाठ 9 – जननी तुल्यवत्सला</div>
+<div class="chapter-card" onclick="openNotes('9-san-ch10.pdf')">पाठ 10 – पर्यावरणम्</div>
+<div class="chapter-card" onclick="openNotes('9-san-ch11.pdf')">पाठ 11 – समवायः</div>
+<div class="chapter-card" onclick="openNotes('9-san-ch12.pdf')">पाठ 12 – ग्राम्यजीवनम्</div>
+
+
+<script>
+function openNotes(file) {
+    window.location.href = "notes-viewer.html?file=" + file;
+}
+</script>
+
+</body>
+</html>

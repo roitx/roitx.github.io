@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Class 10 Physics – Chapters</title>
+
+<!-- Google Font -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+
+<!-- External CSS -->
+<link rel="stylesheet" href="chapter.css">
+</head>
+
+<body>
+
+<div class="header">
+  <h1>📘 Class 10 – Physics</h1>
+  <p>Select a chapter to open notes</p>
+</div>
+
+<div class="chapters">
+
+  <div class="chapter" onclick="openPdf('10_physics_ch1.pdf')">
+    <h3>Ch 1 – Electricity</h3>
+    <span>Current, resistance, Ohm’s law</span>
+  </div>
+
+  <div class="chapter" onclick="openPdf('10_physics_ch2.pdf')">
+    <h3>Ch 2 – Magnetic Effects of Electric Current</h3>
+    <span>Magnetic field & electromagnetism</span>
+  </div>
+
+  <div class="chapter" onclick="openPdf('10_physics_ch3.pdf')">
+    <h3>Ch 3 – Light: Reflection & Refraction</h3>
+    <span>Mirrors & lenses</span>
+  </div>
+
+  <div class="chapter" onclick="openPdf('10_physics_ch4.pdf')">
+    <h3>Ch 4 – Human Eye & Colourful World</h3>
+    <span>Vision defects & dispersion</span>
+  </div>
+
+</div>
+
+<div class="footer">
+  © Notes by Roitx
+</div>
+
+<script>
+function openPdf(file){
+  window.location.href = "notes-viewer.html?file=" + file;
+}
+</script>
+
+</body>
+</html>

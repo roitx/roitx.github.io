@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Class 11 Arts Subjects</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f2f2f2;
+        }
+
+        h1 { text-align: center; margin-bottom: 25px; }
+
+        .card {
+            background: white;
+            padding: 18px;
+            margin: 12px 0;
+            border-radius: 10px;
+            font-size: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+            transition: 0.3s;
+        }
+        .card:hover {
+            background: #fff5e6;
+            transform: translateY(-3px);
+        }
+    </style>
+</head>
+<body>
+
+<h1>Class 11 — Arts Subjects</h1>
+
+<div class="card" onclick="goto('11-history-chapters.html')">History</div>
+<div class="card" onclick="goto('11-geography-chapters.html')">Geography</div>
+
+<div class="card" onclick="goto('11-economics-chapters.html')">Economics</div>
+<div class="card" onclick="goto('11-english-chapters.html')">English</div>
+<div class="card" onclick="goto('11-hindi-chapters.html')">Hindi</div>
+
+<script>
+function goto(page) { window.location.href = page; }
+</script>
+
+</body>
+</html>

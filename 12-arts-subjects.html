@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Class 12 – Arts Subjects</title>
+
+<style>
+    body{
+        font-family: Arial, sans-serif;
+        background:#f2f2f2;
+        margin:0;
+        padding:20px;
+    }
+
+    h1{
+        text-align:center;
+        margin-bottom:25px;
+        font-size:26px;
+    }
+
+    .card{
+        background:white;
+        padding:18px;
+        margin:12px 0;
+        border-radius:10px;
+        font-size:20px;
+        font-weight:600;
+        box-shadow:0 3px 8px rgba(0,0,0,0.15);
+        cursor:pointer;
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        transition:0.25s;
+    }
+
+    .card:hover{
+        background:#e7ffe7;
+        transform:translateY(-3px);
+        box-shadow:0 5px 12px rgba(0,0,0,0.25);
+    }
+
+    .arrow{
+        font-size:22px;
+        color:#d81b60;
+        font-weight:bold;
+    }
+</style>
+
+</head>
+
+<body>
+
+<h1>Class 12 – Arts Subjects</h1>
+
+<div class="card" onclick="openPage('12-history-chapters.html')">
+    History <span class="arrow">›</span>
+</div>
+
+<div class="card" onclick="openPage('12-geography-chapters.html')">
+    Geography <span class="arrow">›</span>
+</div>
+
+
+
+<div class="card" onclick="openPage('12-economics-chapters.html')">
+    Economics <span class="arrow">›</span>
+</div>
+
+
+<div class="card" onclick="openPage('12-english-chapters.html')">
+    English <span class="arrow">›</span>
+</div>
+
+<div class="card" onclick="openPage('12-hindi-chapters.html')">
+    Hindi <span class="arrow">›</span>
+</div>
+
+
+
+
+<script>
+function openPage(page){
+    window.location.href = page;
+}
+</script>
+
+</body>
+</html>

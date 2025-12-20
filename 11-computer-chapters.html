@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Class 11 – Computer Science</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="chapter.css">
+</head>
+
+<body>
+
+<div class="header">
+  <h1>💻 Class 11 – Computer Science</h1>
+  <p>Select a chapter</p>
+</div>
+
+<div class="chapters">
+
+  <div class="chapter" onclick="openPdf('11_computer_ch1.pdf')">
+    <h3>Ch 1 – Computer System</h3>
+    <span>Basics of computer</span>
+  </div>
+
+  <div class="chapter" onclick="openPdf('11_computer_ch2.pdf')">
+    <h3>Ch 2 – Encoding Schemes</h3>
+    <span>Binary, ASCII</span>
+  </div>
+
+  <div class="chapter" onclick="openPdf('11_computer_ch3.pdf')">
+    <h3>Ch 3 – Emerging Trends</h3>
+    <span>AI, Cloud, IoT</span>
+  </div>
+
+  <div class="chapter" onclick="openPdf('11_computer_ch4.pdf')">
+    <h3>Ch 4 – Python Basics</h3>
+    <span>Programming basics</span>
+  </div>
+
+</div>
+
+<div class="footer">© Notes by Roitx</div>
+
+<script>
+function openPdf(f){
+  location.href = "notes-viewer.html?file=" + f;
+}
+</script>
+
+</body>
+</html>
