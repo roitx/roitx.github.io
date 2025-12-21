@@ -1,30 +1,180 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+<meta charset="UTF-8">
 <title>Login - Roitx</title>
-<link rel="stylesheet" href="index.css">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- SUPABASE -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js"></script>
 <script src="auth.js"></script>
-</head>
-<body>
-<h1>Welcome Back !</h1>
-<h2>ROITX</h2>
-<input id="email" placeholder="Email"><br> <input id="password" type="password" placeholder="Password"><br><button id="toggleSign" class="eye">👁️</button>
-<button onclick="loginUser()">Login</button>
-<script>
-const toggleBtn = document.getElementById("toggleSign");
-const password = document.getElementById("password");
 
-toggleBtn.addEventListener("click", () => {
-  if (password.type === "password") {
-    password.type = "text";
-    toggleBtn.textContent = "🙈"; // ON (show)
-  } else {
-    password.type = "password";
-    toggleBtn.textContent = "👁️"; // OFF (hide)
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}
+body{
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:#e0e5ec;
+  overflow:hidden;
+}
+
+/* BACKGROUND */
+.bg span{
+  position:absolute;
+  width:300px;height:300px;
+  border-radius:50%;
+  filter:blur(70px);
+  opacity:.45;
+  animation:float 10s infinite alternate;
+}
+.bg span:nth-child(1){background:#ff7a3d;top:10%;left:5%}
+.bg span:nth-child(2){background:#5a2eff;bottom:10%;right:5%}
+@keyframes float{to{transform:translateY(-80px)}}
+
+/* WRAPPER */
+.wrapper{position:relative}
+
+/* CHARACTER */
+.character{
+  width:150px;height:150px;
+  background:#e0e5ec;
+  border-radius:50%;
+  position:absolute;
+  top:-80px;left:50%;
+  transform:translateX(-50%);
+  box-shadow:10px 10px 20px #b8bec7,-10px -10px 20px #fff;
+  transition:.3s;
+}
+.eye{
+  width:12px;height:12px;background:#333;border-radius:50%;
+  position:absolute;top:60px;transition:.2s;
+}
+.eye.left{left:50px}
+.eye.right{right:50px}
+
+.mouth{
+  width:30px;height:10px;
+  border-bottom:3px solid #333;
+  border-radius:0 0 20px 20px;
+  position:absolute;top:90px;left:50%;
+  transform:translateX(-50%);
+  transition:.3s;
+}
+
+.hand{
+  width:55px;height:22px;
+  background:#e0e5ec;border-radius:20px;
+  position:absolute;top:60px;opacity:0;
+  box-shadow:5px 5px 10px #b8bec7,-5px -5px 10px #fff;
+  transition:.3s;
+}
+.hand.left{left:-6px;transform:rotate(-25deg)}
+.hand.right{right:-6px;transform:rotate(25deg)}
+
+/* STATES */
+.cover .eye{opacity:0}
+.cover .hand{opacity:1}
+.wrong .mouth{
+  border-bottom:none;
+  border-top:3px solid #333;
+  border-radius:20px 20px 0 0;
+}
+
+/* CARD */
+.card{
+  width:340px;
+  padding:100px 26px 34px;
+  border-radius:24px;
+  background:#e0e5ec;
+  box-shadow:14px 14px 28px #b8bec7,-14px -14px 28px #fff;
+  text-align:center;
+}
+
+h1{font-size:22px;color:#444}
+h2{margin-bottom:20px;color:#777}
+
+input{
+  width:100%;padding:14px;margin-bottom:16px;
+  border:none;border-radius:16px;background:#e0e5ec;
+  box-shadow:inset 7px 7px 14px #b8bec7,inset -7px -7px 14px #fff;
+  outline:none;
+}
+
+.eyeBtn{
+  background:none;border:none;
+  font-size:20px;cursor:pointer;
+  margin-bottom:10px;
+}
+
+button.login{
+  width:100%;padding:14px;border:none;border-radius:16px;
+  background:#e0e5ec;font-weight:600;
+  box-shadow:8px 8px 16px #b8bec7,-8px -8px 16px #fff;
+}
+button.login:active{
+  box-shadow:inset 8px 8px 16px #b8bec7,inset -8px -8px 16px #fff;
+}
+
+@media(max-width:420px){
+  .card{width:90%}
+}
+</style>
+</head>
+
+<body>
+
+<div class="bg"><span></span><span></span></div>
+
+<div class="wrapper">
+  <div class="character" id="char">
+    <div class="eye left"></div>
+    <div class="eye right"></div>
+    <div class="mouth"></div>
+    <div class="hand left"></div>
+    <div class="hand right"></div>
+  </div>
+
+  <div class="card">
+    <h1>Welcome Back!</h1>
+    <h2>ROITX</h2>
+
+    <input id="email" placeholder="Email">
+    <input id="password" type="password" placeholder="Password">
+
+    <button id="toggleSign" class="eyeBtn">👁️</button>
+    <button class="login" onclick="loginUser()">Login</button>
+  </div>
+</div>
+
+<script>
+const password=document.getElementById("password");
+const toggleBtn=document.getElementById("toggleSign");
+const char=document.getElementById("char");
+
+toggleBtn.onclick=()=>{
+  if(password.type==="password"){
+    password.type="text";
+    toggleBtn.textContent="🙈";
+    char.classList.add("cover");
+  }else{
+    password.type="password";
+    toggleBtn.textContent="👁️";
+    char.classList.remove("cover");
   }
-});
+};
+
+password.addEventListener("focus",()=>char.classList.add("cover"));
+password.addEventListener("blur",()=>char.classList.remove("cover"));
+
+/* OPTIONAL: call this from auth.js on error */
+window.loginError=()=>{
+  char.classList.add("wrong");
+  setTimeout(()=>char.classList.remove("wrong"),1500);
+};
 </script>
- </body>
+
+</body>
 </html>
