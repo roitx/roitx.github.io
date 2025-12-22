@@ -111,12 +111,12 @@ body {
 /* SAD FACE STATE */
 .wrong .mouth {
   border-bottom: none;
-  border-top: 3px solid #ff4d4d; /* Red Sad Mouth */
+  border-top: 3px solid #ff4d4d; /* Sad face in red */
   border-radius: 20px 20px 0 0;
   top: 100px;
 }
 
-/* CARD SHAKE ANIMATION */
+/* SHAKE ANIMATION */
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
   25% { transform: translateX(-10px); }
@@ -135,7 +135,6 @@ body {
   background: #e0e5ec;
   box-shadow: 18px 18px 30px #b8bec7, -18px -18px 30px #fff;
   text-align: center;
-  transition: 0.3s;
 }
 
 h1 { font-size: 24px; color: #444; margin-bottom: 5px; }
@@ -220,7 +219,7 @@ const toggleBtn = document.getElementById("toggleSign");
 const char = document.getElementById("char");
 const card = document.getElementById("loginCard");
 
-// Toggle Password Visibility
+// Character Face Animations
 toggleBtn.onclick = () => {
   if (passwordInput.type === "password") {
     passwordInput.type = "text";
@@ -233,24 +232,22 @@ toggleBtn.onclick = () => {
   }
 };
 
-// Character Animations
 passwordInput.addEventListener("focus", () => {
     if(passwordInput.type === "password") char.classList.add("cover");
 });
 passwordInput.addEventListener("blur", () => char.classList.remove("cover"));
 
-// Error Animation Function
+// Error Animation (Sad + Shake)
 window.loginError = () => {
   char.classList.add("wrong");
   card.classList.add("shake");
-  
   setTimeout(() => {
     char.classList.remove("wrong");
     card.classList.remove("shake");
   }, 1500);
 };
 
-// Login Function
+// Merged Supabase Login Logic
 async function loginUser() {
   const email = emailInput.value;
   const password = passwordInput.value;
@@ -261,18 +258,18 @@ async function loginUser() {
   }
 
   try {
-    // Note: 'supabase' variable must be defined in your supabase.js
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: email,
-      password: password,
+    // Using window.supabaseClient as per your script
+    const { error } = await window.supabaseClient.auth.signInWithPassword({
+      email,
+      password
     });
 
     if (error) {
       console.error(error.message);
-      loginError(); // Sad Face + Shake on failure
+      loginError(); // Triggers Sad Face and Shake
+      alert(error.message);
     } else {
-      alert("Login Successful!");
-      window.location.href = "dashboard.html"; 
+      window.location.href = "admin-panel.html";
     }
   } catch (err) {
     loginError();
