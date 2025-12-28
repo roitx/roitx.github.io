@@ -1,0 +1,166 @@
+/* --- Base Setup --- */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+body {
+  background: radial-gradient(circle at top, #1a1f26, #0b0f14);
+  color: #fff;
+  min-height: 100vh;
+  line-height: 1.5;
+}
+
+/* --- Topbar (Sticky & Glassy) --- */
+.topbar {
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
+  background: rgba(18, 21, 27, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  gap: 12px;
+}
+
+/* Navigation Buttons Container */
+.nav-btns {
+  display: flex;
+  align-items: center;
+  min-width: 40px; /* Space reserved for icons */
+}
+
+/* Common style for Back and Home Nav buttons */
+.back, .home-nav {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-size: 20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.back:hover, .home-nav:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
+}
+
+.back:active, .home-nav:active {
+  transform: scale(0.9);
+}
+
+/* Title Styling */
+.topbar h1 {
+  font-size: 17px;
+  font-weight: 600;
+  flex: 1;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-right: 40px; /* Offset to keep title centered relative to the back button */
+}
+
+/* --- Grid System --- */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 16px;
+  padding: 20px 16px;
+}
+
+/* --- Professional Card Design --- */
+.card {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 20px;
+  padding: 20px 12px;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 110px;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+.card:active {
+  transform: scale(0.96);
+}
+
+/* --- Elements inside Cards --- */
+
+/* Book Cover Style (for Main Authors) */
+.book {
+  width: 52px;
+  height: 70px;
+  border-radius: 4px 10px 10px 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+  box-shadow: inset -5px 0 rgba(255, 255, 255, 0.2), 5px 10px 20px rgba(0, 0, 0, 0.4);
+}
+
+.book span {
+  font-size: 12px;
+  font-weight: 800;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 3px 6px;
+  border-radius: 4px;
+}
+
+/* Roman Numerals (for Classes) */
+.roman {
+  font-weight: 800;
+  color: #ffd166;
+  font-size: 22px;
+  margin-bottom: 4px;
+  text-shadow: 0 0 10px rgba(255, 209, 102, 0.3);
+}
+
+/* Card Text */
+.card p {
+  font-size: 14px;
+  font-weight: 500;
+  color: #dbe2f1;
+  word-wrap: break-word;
+  width: 100%;
+}
+
+/* Subject/Chapter Specific spacing */
+.card span {
+  font-size: 13px;
+  color: rgba(219, 226, 241, 0.8);
+}
+
+/* --- Responsive Fix --- */
+@media (max-width: 380px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .topbar h1 {
+    font-size: 15px;
+  }
+}

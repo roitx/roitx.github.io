@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Admin Panel</title>
+
+<link rel="stylesheet" href="admin.css">
+
+<!-- Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+</head>
+
+<body>
+
+<header class="topbar">
+  <h2>⚙️ Admin Panel</h2>
+
+<!-- DOUBT FLOATING BUTTON -->
+<div id="doubtBtn" class="floating-btn" title="View Doubts">
+  ❓
+  <span id="pendingCount" class="badge">0</span>
+</div>
+
+<div id="bookBtn" class="floating-btn" title="Reference Books" onclick="goUpload()">
+  📚
+</div>
+
+
+<!-- DOUBT PANEL -->
+<div id="doubtPanel">
+  <h3>🤔 Recent Doubts</h3>
+
+  <div id="doubtList">Loading...</div>
+  <div id="viewAllWrap">
+  <button id="viewAllDoubts" class="view-all-btn">
+  📂 View All Doubts
+</button>
+</div>
+</div>
+  <button class="logout" onclick="logout()">Logout</button>
+
+</header>
+<!-- FULL SCREEN DOUBT OVERLAY -->
+<div id="doubtOverlay" class="doubt-overlay">
+  <div class="doubt-header">
+    <span>❓ All Doubts</span>
+    <button id="closeDoubt">✖</button>
+  </div>
+
+  <div id="doubtOverlayList" class="doubt-overlay-list">
+    ⏳ Loading doubts...
+  </div>
+</div>
+<main>
+
+<!-- ================= FILE UPLOAD ================= -->
+<section class="box">
+  <h3>📤 Upload Notes (PDF)</h3>
+
+  <select id="classSelect">
+    <option value="">Select Class</option>
+    <option value="class9">Class 9</option>
+    <option value="class10">Class 10</option>
+    <option value="class11">Class 11</option>
+    <option value="class12">Class 12</option>
+  </select><br><br>
+
+  <select id="subjectSelect">
+    <option value="">Select Subject</option>
+    <option value="physics">Physics</option>
+    <option value="chemistry">Chemistry</option>
+    <option value="maths">Maths</option>
+    <option value="biology">Biology</option>
+    <option value="history">History</option>
+    <option value="geography">Geography</option>
+    <option value="civics">Civics</option>
+    <option value="economics">Economics</option>
+    <option value="hindi">Hindi</option>
+    <option value="english">English</option>
+  </select><br><br>
+
+  <select id="chapterSelect">
+    <option value="">Select Chapter</option>
+    <option value="ch1">Chapter 1</option>
+    <option value="ch2">Chapter 2</option>
+    <option value="ch3">Chapter 3</option>
+    <option value="ch4">Chapter 4</option>
+    <option value="ch5">Chapter 5</option>
+    <option value="ch6">Chapter 6</option>
+    <option value="ch7">Chapter 7</option>
+    <option value="ch8">Chapter 8</option>
+  </select><br><br>
+
+  <input type="file" id="fileUpload" accept=".pdf"><br><br>
+  <button onclick="uploadFile()">Upload</button>
+  <div id="uploadMsg"></div>
+</section>
+
+<section class="box">
+  <h3>🗂 Uploaded Files</h3>
+  <div id="fileList">Loading...</div>
+</section>
+
+<!-- ================= EVENTS ================= -->
+<section class="box">
+  <h3>📅 Add Calendar Event</h3>
+  <input type="date" id="eventDate"><br><br>
+  <input type="text" id="eventName" placeholder="Event Name"><br><br>
+  <button onclick="addEvent()">Add Event</button>
+  <div id="eventMsg"></div>
+</section>
+
+<section class="box">
+  <h3>🗑 Delete Event</h3>
+  <input type="date" id="deleteEventDate"><br><br>
+  <button onclick="loadEventsForDelete()">Load Events</button>
+  <div id="eventDeleteList"></div>
+</section>
+
+<section class="box">
+  <h3>📋 All Events</h3>
+  <div id="eventList">Loading...</div>
+</section>
+
+<script src="events.js"></script>
+
+<!-- ================= FORMULA UPLOAD ================= -->
+<section class="box formula-box">
+  <h2>📐 Upload Formula</h2>
+
+  <!-- CLASS -->
+  <select id="fClass">
+    <option value="">Select Class</option>
+    <option value="9">Class 9</option>
+    <option value="10">Class 10</option>
+    <option value="11">Class 11</option>
+    <option value="12">Class 12</option>
+  </select>
+
+  <!-- SUBJECT (FORMULA ONLY SUBJECTS) -->
+  <select id="fSubject">
+    <option value="">Select Subject</option>
+    <option value="physics">Physics</option>
+    <option value="chemistry">Chemistry</option>
+    <option value="maths">Maths</option>
+    <option value="biology">Biology</option>
+  </select>
+
+  <!-- CHAPTER -->
+  <select id="fChapter">
+    <option value="">Select Chapter</option>
+    <option value="ch1">Chapter 1</option>
+    <option value="ch2">Chapter 2</option>
+    <option value="ch3">Chapter 3</option>
+    <option value="ch4">Chapter 4</option>
+    <option value="ch5">Chapter 5</option>
+  </select>
+
+  <!-- TYPE -->
+  <select id="fType">
+    <option value="">Formula Type</option>
+    <option value="text">Text Formula</option>
+    <option value="pdf">PDF</option>
+    <option value="image">Image (JPG / PNG)</option>
+  </select>
+
+  <!-- 🔢 MATH SYMBOL TOOLBAR -->
+  <div id="mathToolbar">
+    <button type="button" data-sym="π">π</button>
+    <button type="button" data-sym="√">√</button>
+    <button type="button" data-sym="²">x²</button>
+    <button type="button" data-sym="∑">∑</button>
+    <button type="button" data-sym="∫">∫</button>
+    <button type="button" data-sym="≤">≤</button>
+    <button type="button" data-sym="≥">≥</button>
+  </div>
+
+  <!-- TEXT FORMULA -->
+  <textarea id="formulaText" placeholder="Type formula here..." style="display:none"></textarea>
+
+  <!-- FILE FORMULA -->
+  <input type="file" id="formulaFile" accept=".pdf,.jpg,.png" style="display:none">
+
+  <!-- PREVIEW -->
+  <div id="formulaPreview">
+    <em>Preview will appear here…</em>
+  </div>
+
+  <label>
+    <input type="checkbox" id="publishCheck" checked>
+    Publish Formula
+  </label>
+
+  <br><br>
+  <button onclick="uploadFormula()">Upload Formula</button>
+  <div id="uploadStatus"></div>
+</section>
+
+<section class="box">
+  <h2>📄 Formula List</h2>
+  <div id="formulaList">Loading...</div>
+</section>
+
+</main>
+<script src="admin.js"></script>
+</body>
+</html>
