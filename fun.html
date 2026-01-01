@@ -1,153 +1,165 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Ultra Glassy Hex-Shatter</title>
+    <title>Neon Gravity Chaos - Ultra Max</title>
     <style>
-        body { margin: 0; background: #050505; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: 'Segoe UI', sans-serif; }
-        #timer-ui { position: absolute; top: 20px; color: #0ff; font-size: 30px; letter-spacing: 5px; text-shadow: 0 0 15px #0ff; font-weight: bold; }
-        canvas { border-radius: 20px; box-shadow: 0 0 50px rgba(0, 255, 255, 0.1); }
+        body { margin: 0; background: #050505; overflow: hidden; font-family: 'Orbitron', sans-serif; }
+        #overlay { position: absolute; top: 10px; width: 100%; text-align: center; color: #0ff; text-shadow: 0 0 10px #0ff; pointer-events: none; }
+        canvas { display: block; }
     </style>
 </head>
 <body>
-    <div id="timer-ui">SYSTEM STABLE: <span id="clock">15.0</span></div>
+    <div id="overlay">
+        <h1>NEON GRAVITY CHAOS</h1>
+        <p>Use Arrow Keys to Change Gravity | Click to Spawn</p>
+        <h2 id="count">Objects: 0</h2>
+    </div>
     <canvas id="world"></canvas>
 
 <script>
 const canvas = document.getElementById('world');
 const ctx = canvas.getContext('2d');
-const clock = document.getElementById('clock');
+const countDisp = document.getElementById('count');
 
-canvas.width = window.innerWidth * 0.8;
-canvas.height = window.innerHeight * 0.8;
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
-let entities = [];
-let fragments = [];
-let start = Date.now();
-const limit = 15000;
+let shapes = [];
+let particles = [];
+let hazards = []; 
+let multipliers = [];
+let gravity = { x: 0, y: 0.3 };
 
-class Hexagon {
-    constructor(x, y) {
-        this.x = x; this.y = y;
-        this.size = 20 + Math.random() * 20;
-        this.v = { x: (Math.random()-0.5)*6, y: (Math.random()-0.5)*6 };
-        this.hue = Math.random() * 360;
-        this.angle = 0;
-        this.rotSpeed = (Math.random()-0.5)*0.1;
-    }
-
+// --- Objects Configuration ---
+class Hazard {
+    constructor(x, y) { this.x = x; this.y = y; this.r = 20; }
     draw() {
-        ctx.save();
-        ctx.translate(this.x, this.y);
-        ctx.rotate(this.angle);
+        ctx.shadowBlur = 20; ctx.shadowColor = "red";
+        ctx.fillStyle = "#ff2222";
         ctx.beginPath();
-        for (let i = 0; i < 6; i++) {
-            ctx.lineTo(this.size * Math.cos(i * Math.PI / 3), this.size * Math.sin(i * Math.PI / 3));
-        }
-        ctx.closePath();
-        ctx.strokeStyle = `hsla(${this.hue}, 100%, 50%, 0.8)`;
-        ctx.lineWidth = 3;
-        ctx.stroke();
-        // Inner Glow
-        ctx.fillStyle = `hsla(${this.hue}, 100%, 50%, 0.1)`;
-        ctx.fill();
-        ctx.restore();
-    }
-
-    update(isCollapse) {
-        this.x += this.v.x;
-        this.y += this.v.y;
-        this.angle += this.rotSpeed;
-
-        // Bounce from walls
-        if(this.x < 0 || this.x > canvas.width) {
-            this.v.x *= -1;
-            if(isCollapse) this.shatter();
-        }
-        if(this.y < 0 || this.y > canvas.height) {
-            this.v.y *= -1;
-            if(isCollapse) this.shatter();
-        }
-    }
-
-    shatter() {
         for(let i=0; i<6; i++) {
-            fragments.push(new Fragment(this.x, this.y, this.hue));
+            let a = i * Math.PI / 3;
+            ctx.lineTo(this.x + Math.cos(a)*this.r, this.y + Math.sin(a)*this.r);
         }
-        this.dead = true;
+        ctx.fill();
+        ctx.shadowBlur = 0;
     }
 }
 
-class Fragment {
-    constructor(x, y, hue) {
+class Portal {
+    constructor(x, y) { this.x = x; this.y = y; this.r = 30; this.hue = 120; }
+    draw() {
+        ctx.strokeStyle = `hsla(${this.hue}, 100%, 50%, 0.8)`;
+        ctx.lineWidth = 4;
+        ctx.shadowBlur = 20; ctx.shadowColor = "#0f0";
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.r, 0, Math.PI*2);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+    }
+}
+
+class NeonShape {
+    constructor(x, y, vx, vy) {
         this.x = x; this.y = y;
-        this.v = { x: (Math.random()-0.5)*12, y: (Math.random()-0.5)*12 };
-        this.life = 1.0;
-        this.hue = hue;
+        this.v = { x: vx, y: vy };
+        this.r = 10;
+        this.hue = Math.random() * 360;
+        this.dead = false;
     }
     update() {
-        this.x += this.v.x; this.y += this.v.y;
-        this.v.y += 0.2; // Gravity for fragments
-        this.life -= 0.02;
-    }
-    draw() {
-        ctx.fillStyle = `hsla(${this.hue}, 100%, 50%, ${this.life})`;
-        ctx.fillRect(this.x, this.y, 4, 4);
-    }
-}
+        this.v.x += gravity.x;
+        this.v.y += gravity.y;
+        this.x += this.v.x;
+        this.y += this.v.y;
 
-// Initial Spawn
-for(let i=0; i<15; i++) entities.push(new Hexagon(Math.random()*canvas.width, Math.random()*canvas.height));
+        // Bounce
+        if(this.x < 0 || this.x > canvas.width) this.v.x *= -0.7;
+        if(this.y < 0 || this.y > canvas.height) this.v.y *= -0.7;
 
-function animate() {
-    // Glassy Trail Effect
-    ctx.fillStyle = 'rgba(5, 5, 5, 0.2)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    const now = Date.now();
-    const elapsed = now - start;
-    const isCollapse = elapsed > limit;
-    const rem = Math.max(0, (limit - elapsed)/1000);
-    
-    clock.innerText = rem.toFixed(1);
-    if(isCollapse) {
-        document.getElementById('timer-ui').innerText = "SYSTEM COLLAPSE!";
-        document.getElementById('timer-ui').style.color = "#f00";
-    }
-
-    entities.forEach((h, i) => {
-        h.update(isCollapse);
-        h.draw();
-        if(h.dead) entities.splice(i, 1);
-    });
-
-    fragments.forEach((f, i) => {
-        f.update();
-        f.draw();
-        if(f.life <= 0) fragments.splice(i, 1);
-    });
-
-    // Interaction Line (Connect hexes if close)
-    if(!isCollapse) {
-        for(let i=0; i<entities.length; i++) {
-            for(let j=i+1; j<entities.length; j++) {
-                let dx = entities[i].x - entities[j].x;
-                let dy = entities[i].y - entities[j].y;
-                let d = Math.sqrt(dx*dx + dy*dy);
-                if(d < 150) {
-                    ctx.strokeStyle = `rgba(0, 255, 255, ${1 - d/150})`;
-                    ctx.beginPath();
-                    ctx.moveTo(entities[i].x, entities[i].y);
-                    ctx.lineTo(entities[j].x, entities[j].y);
-                    ctx.stroke();
-                }
+        // Hazard Collision
+        hazards.forEach(h => {
+            if(Math.hypot(this.x - h.x, this.y - h.y) < this.r + h.r) {
+                this.dead = true;
+                this.explode();
             }
+        });
+
+        // Portal Collision
+        multipliers.forEach(p => {
+            if(Math.hypot(this.x - p.x, this.y - p.y) < this.r + p.r && shapes.length < 150) {
+                this.v.y *= -1.2;
+                spawn(this.x, this.y);
+            }
+        });
+    }
+    explode() {
+        for(let i=0; i<10; i++) {
+            particles.push({
+                x: this.x, y: this.y,
+                vx: (Math.random()-0.5)*15, vy: (Math.random()-0.5)*15,
+                life: 1.0, hue: this.hue
+            });
         }
     }
-
-    if(entities.length > 0 || fragments.length > 0) requestAnimationFrame(animate);
+    draw() {
+        ctx.fillStyle = `hsla(${this.hue}, 100%, 50%, 1)`;
+        ctx.shadowBlur = 15; ctx.shadowColor = `hsla(${this.hue}, 100%, 50%, 0.5)`;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.r, 0, Math.PI*2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+    }
 }
 
+// --- Setup Level ---
+function init() {
+    for(let i=0; i<12; i++) hazards.push(new Hazard(Math.random()*canvas.width, Math.random()*canvas.height));
+    for(let i=0; i<6; i++) multipliers.push(new Portal(Math.random()*canvas.width, Math.random()*canvas.height));
+}
+
+function spawn(x, y) {
+    shapes.push(new NeonShape(x, y, (Math.random()-0.5)*10, -5));
+}
+
+// --- Inputs ---
+window.addEventListener('keydown', (e) => {
+    if(e.key === "ArrowUp") gravity = { x: 0, y: -0.3 };
+    if(e.key === "ArrowDown") gravity = { x: 0, y: 0.3 };
+    if(e.key === "ArrowLeft") gravity = { x: -0.3, y: 0 };
+    if(e.key === "ArrowRight") gravity = { x: 0.3, y: 0 };
+});
+
+canvas.addEventListener('mousedown', (e) => spawn(e.clientX, e.clientY));
+
+// --- Main Loop ---
+function animate() {
+    ctx.fillStyle = 'rgba(5, 5, 5, 0.2)'; // Glassy Trail
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    hazards.forEach(h => h.draw());
+    multipliers.forEach(p => p.draw());
+
+    for(let i=shapes.length-1; i>=0; i--) {
+        shapes[i].update();
+        shapes[i].draw();
+        if(shapes[i].dead) shapes.splice(i, 1);
+    }
+
+    particles.forEach((p, i) => {
+        p.x += p.vx; p.y += p.vy; p.life -= 0.02;
+        ctx.fillStyle = `hsla(${p.hue}, 100%, 50%, ${p.life})`;
+        ctx.fillRect(p.x, p.y, 2, 2);
+        if(p.life <= 0) particles.splice(i, 1);
+    });
+
+    countDisp.innerText = `Objects: ${shapes.length}`;
+    requestAnimationFrame(animate);
+}
+
+init();
+spawn(canvas.width/2, 100);
 animate();
 </script>
 </body>
