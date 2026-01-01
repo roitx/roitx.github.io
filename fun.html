@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exact Marble Run Clone</title>
+    <style>
+        body { background: #000; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; font-family: 'Arial Black', sans-serif; overflow: hidden; }
+        canvas { border: 2px solid #333; background: #000; border-radius: 10px; box-shadow: 0 0 20px rgba(255,255,255,0.1); }
+        .ui { margin-top: 20px; }
+        button { padding: 12px 35px; font-size: 18px; cursor: pointer; border: none; border-radius: 50px; margin: 0 10px; font-weight: bold; transition: 0.2s; }
+        #startBtn { background: #00ff88; color: #000; }
+        #resetBtn { background: #ff4444; color: #fff; }
+        #counter { font-size: 24px; color: #ffdd00; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+    <div id="counter">BALLS: 0</div>
+    <canvas id="canvas" width="450" height="550"></canvas>
+
+    <div class="ui">
+        <button id="startBtn">START</button>
+        <button id="resetBtn">RESET</button>
+    </div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const counterDisp = document.getElementById('counter');
+const startBtn = document.getElementById('startBtn');
+const resetBtn = document.getElementById('resetBtn');
+
+let balls = [];
+let animationId;
+let running = false;
+
+const centerX = 225;
+const centerY = 250;
+const outerRadius = 200;
+const gravity = 0.2;
+
+// Screenshot Multipliers Configuration
+const multipliers = [
+    { r: 40,  y: 40,  label: 'x7', color: '#eaff00', val: 7 },
+    { r: 80,  y: 80,  label: 'x5', color: '#a200ff', val: 5 },
+    { r: 120, y: 120, label: 'x3', color: '#00ff88', val: 3 },
+    { r: 160, y: 160, label: 'x1', color: '#ff0000', val: 1 }
+];
+
+class Ball {
+    constructor(x, y, vx, vy, color) {
+        this.x = x; this.y = y;
+        this.vx = vx; this.vy = vy;
+        this.radius = 7;
+        this.color = color;
+        this.toDelete = false;
+    }
+
+    draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+        ctx.strokeStyle = "white";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+    }
+
+    update() {
+        this.vy += gravity;
+        this.x += this.vx;
+        this.y += this.vy;
+
+        let dx = this.x - centerX;
+        let dy = this.y - centerY;
+        let dist = Math.sqrt(dx*dx + dy*dy);
+
+        // 1. Boundary & Spike Logic
+        if (dist + this.radius > outerRadius) {
+            let angle = Math.atan2(dy, dx);
+            let degrees = angle * (180 / Math.PI);
+
+            // Killer Zone: Right side spikes (approx -60 to 120 deg)
+            if (degrees > -60 && degrees < 120) {
+                this.toDelete = true;
+            } else {
+                // Normal Bounce
+                let nx = dx / dist;
+                let ny = dy / dist;
+                let dot = this.vx * nx + this.vy * ny;
+                this.vx = (this.vx - 2 * dot * nx) * 0.8;
+                this.vy = (this.vy - 2 * dot * ny) * 0.8;
+                
+                let overlap = (dist + this.radius) - outerRadius;
+                this.x -= nx * overlap;
+                this.y -= ny * overlap;
+            }
+        }
+
+        // 2. Bubble Multiplication Logic
+        multipliers.forEach(m => {
+            let mY = centerY + m.y;
+            let distToBubble = Math.sqrt(Math.pow(this.x - centerX, 2) + Math.pow(this.y - mY, 2));
+
+            if (distToBubble < this.radius + 15) {
+                if (balls.length < 500) {
+                    for(let i=0; i < m.val; i++) {
+                        let launchAngle = Math.random() * Math.PI + Math.PI; // Launch up
+                        let speed = 4 + Math.random() * 4;
+                        balls.push(new Ball(centerX, mY, Math.cos(launchAngle)*speed, Math.sin(launchAngle)*speed, this.color));
+                    }
+                }
+                this.toDelete = true;
+            }
+        });
+    }
+}
+
+function drawLayout() {
+    // White Outer Circle
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, outerRadius, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Spikes (Triangles) on the right
+    for (let i = -60; i < 120; i += 12) {
+        let angle = i * Math.PI / 180;
+        let x1 = centerX + Math.cos(angle) * outerRadius;
+        let y1 = centerY + Math.sin(angle) * outerRadius;
+        let xSpike = centerX + Math.cos(angle) * (outerRadius - 15);
+        let ySpike = centerY + Math.sin(angle) * (outerRadius - 15);
+        
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(xSpike, ySpike);
+        ctx.strokeStyle = `hsl(${i + 60}, 100%, 50%)`;
+        ctx.lineWidth = 4;
+        ctx.stroke();
+    }
+
+    // Arcs and Multiplier Bubbles
+    multipliers.forEach(m => {
+        // Draw Arc
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, m.r, 0.15 * Math.PI, 0.85 * Math.PI);
+        ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Draw Multiplier Bubble
+        ctx.beginPath();
+        ctx.arc(centerX, centerY + m.y, 16, 0, Math.PI * 2);
+        ctx.fillStyle = m.color;
+        ctx.fill();
+        ctx.fillStyle = 'black';
+        ctx.font = 'bold 12px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(m.label, centerX, centerY + m.y + 5);
+    });
+}
+
+function loop() {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)'; // Motion trail
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    drawLayout();
+    
+    for (let i = balls.length - 1; i >= 0; i--) {
+        balls[i].update();
+        balls[i].draw();
+        if (balls[i].toDelete) balls.splice(i, 1);
+    }
+
+    counterDisp.innerText = `BALLS: ${balls.length}`;
+    animationId = requestAnimationFrame(loop);
+}
+
+startBtn.onclick = () => {
+    if(!running) {
+        // Launch initial ball
+        balls.push(new Ball(centerX - 80, centerY - 100, 5, 0, '#00ffff'));
+        loop();
+        running = true;
+    }
+};
+
+resetBtn.onclick = () => {
+    cancelAnimationFrame(animationId);
+    balls = [];
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    counterDisp.innerText = `BALLS: 0`;
+    running = false;
+};
+</script>
+</body>
+</html>
