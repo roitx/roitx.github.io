@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bouncing Ball Multiplier</title>
+    <style>
+        body {
+            background-color: #111;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            border: 2px solid #444;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+        .controls {
+            margin-top: 20px;
+        }
+        button {
+            padding: 10px 25px;
+            font-size: 16px;
+            margin: 0 10px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            transition: 0.3s;
+        }
+        #startBtn { background-color: #28a745; color: white; }
+        #resetBtn { background-color: #dc3545; color: white; }
+        button:hover { opacity: 0.8; }
+        button:disabled { background-color: #555; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+    <canvas id="gameCanvas" width="500" height="500"></canvas>
+
+    <div class="controls">
+        <button id="startBtn">Start</button>
+        <button id="resetBtn">Reset</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const startBtn = document.getElementById('startBtn');
+        const resetBtn = document.getElementById('resetBtn');
+
+        let balls = [];
+        let animationId;
+        let isRunning = false;
+
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const outerRadius = 200;
+        const gravity = 0.25;
+        const friction = 0.98;
+
+        class Ball {
+            constructor(x, y, vx, vy, color) {
+                this.x = x;
+                this.y = y;
+                this.vx = vx;
+                this.vy = vy;
+                this.radius = 8;
+                this.color = color;
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                ctx.closePath();
+            }
+
+            update() {
+                this.vy += gravity;
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vx *= friction;
+                this.vy *= friction;
+
+                // Collision with Outer Circle
+                let dx = this.x - centerX;
+                let dy = this.y - centerY;
+                let distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance + this.radius >= outerRadius) {
+                    // Collision Physics
+                    let nx = dx / distance;
+                    let ny = dy / distance;
+                    let dot = this.vx * nx + this.vy * ny;
+                    
+                    this.vx -= 2 * dot * nx;
+                    this.vy -= 2 * dot * ny;
+
+                    // Wall ke bahar na nikal jaye
+                    let overlap = (distance + this.radius) - outerRadius;
+                    this.x -= nx * overlap;
+                    this.y -= ny * overlap;
+
+                    // Multiplication Logic (Limit 50 balls)
+                    if (balls.length < 50) {
+                        spawnBall(this.x, this.y);
+                    }
+                }
+            }
+        }
+
+        function spawnBall(x, y) {
+            const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
+            let vx = (Math.random() - 0.5) * 10;
+            let vy = (Math.random() - 0.5) * 10;
+            let color = colors[Math.floor(Math.random() * colors.length)];
+            balls.push(new Ball(x, y, vx, vy, color));
+        }
+
+        function init() {
+            balls = [];
+            spawnBall(centerX, centerY - 50);
+        }
+
+        function animate() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)'; // Trail effect ke liye
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Main Circle
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, outerRadius, 0, Math.PI * 2);
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            ctx.closePath();
+
+            balls.forEach(ball => {
+                ball.update();
+                ball.draw();
+            });
+
+            animationId = requestAnimationFrame(animate);
+        }
+
+        startBtn.addEventListener('click', () => {
+            if (!isRunning) {
+                init();
+                animate();
+                isRunning = true;
+                startBtn.disabled = true;
+            }
+        });
+
+        resetBtn.addEventListener('click', () => {
+            cancelAnimationFrame(animationId);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            balls = [];
+            isRunning = false;
+            startBtn.disabled = false;
+        });
+    </script>
+</body>
+</html>
