@@ -3,168 +3,168 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bouncing Ball Multiplier</title>
+    <title>Marble Run Multiplier</title>
     <style>
-        body {
-            background-color: #111;
-            color: white;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            font-family: Arial, sans-serif;
-        }
-        canvas {
-            border: 2px solid #444;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
-        }
-        .controls {
-            margin-top: 20px;
-        }
-        button {
-            padding: 10px 25px;
-            font-size: 16px;
-            margin: 0 10px;
-            cursor: pointer;
-            border: none;
-            border-radius: 5px;
-            transition: 0.3s;
-        }
-        #startBtn { background-color: #28a745; color: white; }
-        #resetBtn { background-color: #dc3545; color: white; }
-        button:hover { opacity: 0.8; }
-        button:disabled { background-color: #555; cursor: not-allowed; }
+        body { background: #000; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; font-family: sans-serif; overflow: hidden; }
+        canvas { border: 2px solid #333; background: #000; box-shadow: 0 0 20px rgba(255,255,255,0.1); }
+        .ui { margin-top: 15px; }
+        button { padding: 10px 30px; font-size: 16px; cursor: pointer; border: none; border-radius: 5px; margin: 0 10px; font-weight: bold; }
+        #startBtn { background: #00ff88; color: #000; }
+        #resetBtn { background: #ff4444; color: #fff; }
+        button:active { transform: scale(0.95); }
     </style>
 </head>
 <body>
 
-    <canvas id="gameCanvas" width="500" height="500"></canvas>
+    <h2 id="counter">Balls: 0</h2>
+    <canvas id="canvas" width="450" height="600"></canvas>
 
-    <div class="controls">
-        <button id="startBtn">Start</button>
-        <button id="resetBtn">Reset</button>
+    <div class="ui">
+        <button id="startBtn">START</button>
+        <button id="resetBtn">RESET</button>
     </div>
 
-    <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const startBtn = document.getElementById('startBtn');
-        const resetBtn = document.getElementById('resetBtn');
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const counter = document.getElementById('counter');
+const startBtn = document.getElementById('startBtn');
+const resetBtn = document.getElementById('resetBtn');
 
-        let balls = [];
-        let animationId;
-        let isRunning = false;
+let balls = [];
+let animationId;
+let running = false;
 
-        const centerX = canvas.width / 2;
-        const centerY = canvas.height / 2;
-        const outerRadius = 200;
-        const gravity = 0.25;
-        const friction = 0.98;
+const gravity = 0.2;
+const friction = 0.99;
+const centerX = 225;
+const centerY = 250;
+const outerRadius = 200;
 
-        class Ball {
-            constructor(x, y, vx, vy, color) {
-                this.x = x;
-                this.y = y;
-                this.vx = vx;
-                this.vy = vy;
-                this.radius = 8;
-                this.color = color;
-            }
+// Multiplier Zones (x7, x5, x3, x1)
+const zones = [
+    { r: 40, label: 'x7', color: '#eaff00', mult: 7, hit: false },
+    { r: 80, label: 'x5', color: '#a200ff', mult: 5, hit: false },
+    { r: 120, label: 'x3', color: '#00ff88', mult: 3, hit: false },
+    { r: 160, label: 'x1', color: '#ff0000', mult: 1, hit: false }
+];
 
-            draw() {
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                ctx.fillStyle = this.color;
-                ctx.fill();
-                ctx.closePath();
-            }
+class Ball {
+    constructor(x, y, vx, vy, color) {
+        this.x = x; this.y = y;
+        this.vx = vx; this.vy = vy;
+        this.radius = 6;
+        this.color = color;
+    }
 
-            update() {
-                this.vy += gravity;
-                this.x += this.vx;
-                this.y += this.vy;
-                this.vx *= friction;
-                this.vy *= friction;
+    draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+        ctx.closePath();
+    }
 
-                // Collision with Outer Circle
-                let dx = this.x - centerX;
-                let dy = this.y - centerY;
-                let distance = Math.sqrt(dx * dx + dy * dy);
+    update() {
+        this.vy += gravity;
+        this.x += this.vx;
+        this.y += this.vy;
 
-                if (distance + this.radius >= outerRadius) {
-                    // Collision Physics
-                    let nx = dx / distance;
-                    let ny = dy / distance;
-                    let dot = this.vx * nx + this.vy * ny;
-                    
-                    this.vx -= 2 * dot * nx;
-                    this.vy -= 2 * dot * ny;
+        // Wall collision
+        let dx = this.x - centerX;
+        let dy = this.y - centerY;
+        let dist = Math.sqrt(dx*dx + dy*dy);
 
-                    // Wall ke bahar na nikal jaye
-                    let overlap = (distance + this.radius) - outerRadius;
-                    this.x -= nx * overlap;
-                    this.y -= ny * overlap;
+        if (dist + this.radius > outerRadius) {
+            let nx = dx / dist;
+            let ny = dy / dist;
+            let dot = this.vx * nx + this.vy * ny;
+            this.vx = (this.vx - 2 * dot * nx) * friction;
+            this.vy = (this.vy - 2 * dot * ny) * friction;
+            
+            let overlap = (dist + this.radius) - outerRadius;
+            this.x -= nx * overlap;
+            this.y -= ny * overlap;
+        }
 
-                    // Multiplication Logic (Limit 50 balls)
-                    if (balls.length < 50) {
-                        spawnBall(this.x, this.y);
-                    }
+        // Zone Detection (Bottom semi-circles)
+        zones.forEach(zone => {
+            let zDist = Math.sqrt(Math.pow(this.x - centerX, 2) + Math.pow(this.y - centerY, 2));
+            // Agar ball zone ke radius ke paas hai aur niche wale hisse mein hai
+            if (Math.abs(zDist - zone.r) < 5 && this.y > centerY && balls.length < 200) {
+                for(let i=0; i<zone.mult - 1; i++) {
+                    spawnBall(this.x, this.y, (Math.random()-0.5)*5, -2);
                 }
             }
-        }
-
-        function spawnBall(x, y) {
-            const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
-            let vx = (Math.random() - 0.5) * 10;
-            let vy = (Math.random() - 0.5) * 10;
-            let color = colors[Math.floor(Math.random() * colors.length)];
-            balls.push(new Ball(x, y, vx, vy, color));
-        }
-
-        function init() {
-            balls = [];
-            spawnBall(centerX, centerY - 50);
-        }
-
-        function animate() {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)'; // Trail effect ke liye
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Draw Main Circle
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, outerRadius, 0, Math.PI * 2);
-            ctx.strokeStyle = 'white';
-            ctx.lineWidth = 3;
-            ctx.stroke();
-            ctx.closePath();
-
-            balls.forEach(ball => {
-                ball.update();
-                ball.draw();
-            });
-
-            animationId = requestAnimationFrame(animate);
-        }
-
-        startBtn.addEventListener('click', () => {
-            if (!isRunning) {
-                init();
-                animate();
-                isRunning = true;
-                startBtn.disabled = true;
-            }
         });
+    }
+}
 
-        resetBtn.addEventListener('click', () => {
-            cancelAnimationFrame(animationId);
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            balls = [];
-            isRunning = false;
-            startBtn.disabled = false;
-        });
-    </script>
+function spawnBall(x, y, vx, vy) {
+    const colors = ['#00dbff', '#ff0055', '#ffdd00', '#00ff66'];
+    let color = colors[Math.floor(Math.random() * colors.length)];
+    balls.push(new Ball(x, y, vx, vy, color));
+}
+
+function drawStatic() {
+    // Outer Circle
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, outerRadius, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Bottom Arcs & Bubbles
+    zones.forEach(zone => {
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, zone.r, 0, Math.PI, false); // Half circles
+        ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+        ctx.stroke();
+
+        // Label Bubble
+        ctx.beginPath();
+        ctx.arc(centerX, centerY + zone.r, 15, 0, Math.PI * 2);
+        ctx.fillStyle = zone.color;
+        ctx.fill();
+        ctx.fillStyle = 'black';
+        ctx.font = 'bold 12px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(zone.label, centerX, centerY + zone.r + 5);
+    });
+}
+
+function loop() {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.2)'; // Smooth trail
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    drawStatic();
+    
+    balls.forEach((ball, index) => {
+        ball.update();
+        ball.draw();
+        // Remove balls that go crazy out of bounds
+        if(ball.y > canvas.height) balls.splice(index, 1);
+    });
+
+    counter.innerText = `Balls: ${balls.length}`;
+    animationId = requestAnimationFrame(loop);
+}
+
+startBtn.onclick = () => {
+    if(!running) {
+        spawnBall(centerX + 20, centerY - 150, 3, 0);
+        loop();
+        running = true;
+    }
+};
+
+resetBtn.onclick = () => {
+    cancelAnimationFrame(animationId);
+    balls = [];
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    counter.innerText = `Balls: 0`;
+    running = false;
+};
+</script>
 </body>
 </html>
