@@ -3,55 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Same to Same Marble Run</title>
+    <title>Exact Marble Run Simulation</title>
     <style>
-        body { background: #000; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; font-family: 'Arial', sans-serif; overflow: hidden; }
-        canvas { border: 2px solid #333; background: #000; }
-        .ui { margin-top: 15px; }
-        button { padding: 10px 25px; font-size: 16px; cursor: pointer; border: none; border-radius: 5px; margin: 0 10px; font-weight: bold; }
+        body { background: #000; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; font-family: 'Arial Black', sans-serif; }
+        canvas { border: 2px solid #333; background: #000; cursor: crosshair; }
+        .controls { margin-top: 15px; }
+        button { padding: 12px 25px; font-size: 16px; cursor: pointer; border: none; border-radius: 5px; margin: 0 10px; font-weight: bold; transition: 0.2s; }
         #startBtn { background: #00ff88; color: #000; }
         #resetBtn { background: #ff4444; color: #fff; }
+        button:hover { opacity: 0.8; transform: scale(1.05); }
+        #status { color: #ffdd00; font-size: 20px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
-    <h2 id="counter">BALLS: 0</h2>
-    <canvas id="canvas" width="450" height="500"></canvas>
+    <div id="status">BALLS: 0</div>
+    <canvas id="canvas" width="450" height="550"></canvas>
 
-    <div class="ui">
-        <button id="startBtn">START</button>
+    <div class="controls">
+        <button id="startBtn">START GAME</button>
         <button id="resetBtn">RESET</button>
     </div>
 
 <script>
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
-const counterDisp = document.getElementById('counter');
+const statusDisp = document.getElementById('status');
 const startBtn = document.getElementById('startBtn');
 const resetBtn = document.getElementById('resetBtn');
 
 let balls = [];
-let animationId;
 let running = false;
+let animationId;
 
 const centerX = 225;
 const centerY = 250;
 const outerRadius = 200;
-const spikeSize = 15;
+const gravity = 0.2;
 
-// Multiplier Arcs (Screenshot jaisa layout)
-const arcs = [
-    { r: 40, label: 'x7', color: '#eaff00', mult: 7 },
-    { r: 80, label: 'x5', color: '#a200ff', mult: 5 },
-    { r: 120, label: 'x3', color: '#00ff88', mult: 3 },
-    { r: 160, label: 'x1', color: '#ff0000', mult: 1 }
+// Exact Multipliers from Image
+const multipliers = [
+    { r: 40, yOffset: 40, label: 'x7', color: '#eaff00', val: 7 },
+    { r: 80, yOffset: 80, label: 'x5', color: '#a200ff', val: 5 },
+    { r: 120, yOffset: 120, label: 'x3', color: '#00ff88', val: 3 },
+    { r: 160, yOffset: 160, label: 'x1', color: '#ff0000', val: 1 }
 ];
 
 class Ball {
     constructor(x, y, vx, vy, color) {
         this.x = x; this.y = y;
         this.vx = vx; this.vy = vy;
-        this.radius = 6;
+        this.radius = 7;
         this.color = color;
         this.toDelete = false;
     }
@@ -65,7 +67,7 @@ class Ball {
     }
 
     update() {
-        this.vy += 0.2; // Gravity
+        this.vy += gravity;
         this.x += this.vx;
         this.y += this.vy;
 
@@ -73,69 +75,75 @@ class Ball {
         let dy = this.y - centerY;
         let dist = Math.sqrt(dx*dx + dy*dy);
 
-        // Killer Spikes Logic (Boundary collision)
-        if (dist + this.radius > outerRadius - 5) {
-            // Agar ball boundary ke bahut paas hai, to wo "Kanto" se takra gayi
-            this.toDelete = true;
+        // 1. Spike Collision (Outer Boundary)
+        if (dist + this.radius > outerRadius - 10) {
+            this.toDelete = true; // Ball dies on spikes
         }
 
-        // Multiplier Collision
-        arcs.forEach(arc => {
-            let aDist = Math.sqrt(Math.pow(this.x - centerX, 2) + Math.pow(this.y - centerY, 2));
-            if (Math.abs(aDist - arc.r) < 6 && this.y > centerY) {
-                if(balls.length < 300) {
-                    for(let i=0; i<arc.mult; i++) {
-                        balls.push(new Ball(this.x, this.y, (Math.random()-0.5)*10, -5, this.color));
+        // 2. Exact Multiplier Ball Collision
+        multipliers.forEach(m => {
+            let mX = centerX;
+            let mY = centerY + m.yOffset;
+            let mDx = this.x - mX;
+            let mDy = this.y - mY;
+            let mDist = Math.sqrt(mDx*mDx + mDy*mDy);
+
+            // Sirf niche wale color bubbles se takrane par multiplication
+            if (mDist < (this.radius + 15)) {
+                if (balls.length < 400) {
+                    for(let i=0; i < m.val; i++) {
+                        let angle = Math.random() * Math.PI * 2;
+                        let speed = 4 + Math.random() * 4;
+                        balls.push(new Ball(mX, mY, Math.cos(angle)*speed, Math.sin(angle)*speed, this.color));
                     }
-                    this.toDelete = true; // Original ball multiply hokar delete
+                    this.toDelete = true; // Original ball replaced
                 }
             }
         });
     }
 }
 
-function drawDesign() {
-    // Outer Circle
+function drawLayout() {
+    // Outer Circle White Line
     ctx.strokeStyle = 'white';
     ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.arc(centerX, centerY, outerRadius, 0, Math.PI * 2);
     ctx.stroke();
 
-    // Side Spikes (Kante) - Sirf left aur right sides par
-    for (let i = 0; i < 360; i += 15) {
-        // Sirf side waale areas mein kante dikhane ke liye condition
-        if ((i > 45 && i < 135) || (i > 225 && i < 315)) continue; 
-
+    // Spikes (Triangles) on the right side
+    for (let i = -60; i < 120; i += 12) {
         let angle = i * Math.PI / 180;
         let x1 = centerX + Math.cos(angle) * outerRadius;
         let y1 = centerY + Math.sin(angle) * outerRadius;
-        let x2 = centerX + Math.cos(angle) * (outerRadius - spikeSize);
-        let y2 = centerY + Math.sin(angle) * (outerRadius - spikeSize);
+        let x2 = centerX + Math.cos(angle) * (outerRadius - 15);
+        let y2 = centerY + Math.sin(angle) * (outerRadius - 15);
         
         ctx.beginPath();
         ctx.moveTo(x1, y1);
         ctx.lineTo(x2, y2);
-        ctx.strokeStyle = 'red';
+        ctx.strokeStyle = `hsl(${i}, 100%, 50%)`; // Rainbow spikes as in image
         ctx.lineWidth = 4;
         ctx.stroke();
     }
 
-    // Arcs & Multiplier Bubbles
-    arcs.forEach(arc => {
+    // Concentric Arcs
+    multipliers.forEach(m => {
         ctx.beginPath();
-        ctx.arc(centerX, centerY, arc.r, 0, Math.PI);
-        ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+        ctx.arc(centerX, centerY, m.r, Math.PI * 0.1, Math.PI * 0.9);
+        ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+        ctx.lineWidth = 2;
         ctx.stroke();
 
+        // Multiplier Bubbles (The Target)
         ctx.beginPath();
-        ctx.arc(centerX, centerY + arc.r, 14, 0, Math.PI * 2);
-        ctx.fillStyle = arc.color;
+        ctx.arc(centerX, centerY + m.yOffset, 15, 0, Math.PI * 2);
+        ctx.fillStyle = m.color;
         ctx.fill();
         ctx.fillStyle = 'black';
         ctx.font = 'bold 12px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText(arc.label, centerX, centerY + arc.r + 5);
+        ctx.fillText(m.label, centerX, centerY + m.yOffset + 5);
     });
 }
 
@@ -143,7 +151,7 @@ function loop() {
     ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    drawDesign();
+    drawLayout();
     
     for (let i = balls.length - 1; i >= 0; i--) {
         balls[i].update();
@@ -151,15 +159,16 @@ function loop() {
         if (balls[i].toDelete) balls.splice(i, 1);
     }
 
-    counterDisp.innerText = `BALLS: ${balls.length}`;
+    statusDisp.innerText = `BALLS: ${balls.length}`;
     animationId = requestAnimationFrame(loop);
 }
 
 startBtn.onclick = () => {
     if(!running) {
-        balls.push(new Ball(centerX, 100, 2, 0, '#00ffff'));
+        balls.push(new Ball(centerX - 100, centerY - 100, 5, 0, '#ffaa00'));
         loop();
         running = true;
+        startBtn.disabled = true;
     }
 };
 
@@ -167,8 +176,9 @@ resetBtn.onclick = () => {
     cancelAnimationFrame(animationId);
     balls = [];
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    counterDisp.innerText = `BALLS: 0`;
+    statusDisp.innerText = `BALLS: 0`;
     running = false;
+    startBtn.disabled = false;
 };
 </script>
 </body>
