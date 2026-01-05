@@ -1,0 +1,338 @@
+/* =========================================================
+   ROITX – ULTRA GLASS / CINEMATIC UI
+   POLISHED & FULL-WIDTH BOTTOM WAVES
+   ========================================================= */
+
+/* ================= ROOT ================= */
+:root{
+  --bg-dark-1:#050b18;
+  --bg-dark-2:#0a1b3d;
+
+  --text:#e9f2ff;
+  --muted:#9fb4d6;
+  --accent:#3aa0ff;
+
+  --glass:rgba(255,255,255,0.14);
+  --glass-border:rgba(255,255,255,0.35);
+}
+
+/* ================= LIGHT MODE ================= */
+body.light{
+  --bg-dark-1:#eef3ff;
+  --bg-dark-2:#ffffff;
+  --text:#081427;
+  --muted:#5a6b88;
+  --accent:#2563eb;
+
+  --glass:rgba(255,255,255,0.78);
+  --glass-border:rgba(255,255,255,0.6);
+}
+
+/* ================= RESET ================= */
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:Segoe UI,system-ui,-apple-system,BlinkMacSystemFont;
+}
+
+html, body{
+  width:100%;
+  min-height:100%;
+  overflow-x:hidden;
+  scroll-behavior:smooth;
+}
+
+/* ================= BODY ================= */
+body{
+  color:var(--text);
+  background:
+    radial-gradient(1200px at 10% 10%, rgba(58,160,255,0.35), transparent 60%),
+    radial-gradient(1000px at 90% 25%, rgba(0,255,204,0.28), transparent 55%),
+    radial-gradient(900px at 50% 90%, rgba(255,58,136,0.25), transparent 60%),
+    linear-gradient(180deg,var(--bg-dark-1),var(--bg-dark-2));
+  transition:background .6s,color .4s;
+  position:relative;
+  min-height:100vh;
+}
+
+/* ================= FLOATING BLOBS / WAVES ================= */
+body::before,
+body::after{
+  content:"";
+  position:fixed;
+  width:100vw;        /* Full width */
+  height:300px;       /* Adjust height for wave effect */
+  left:0;
+  filter:blur(120px);
+  opacity:.55;
+  z-index:-2;
+  animation:floatWave 25s ease-in-out infinite;
+}
+
+/* TOP LEFT WAVE */
+body::before{
+  background:linear-gradient(135deg, #3aa0ff, #00ffd4);
+  top:auto;
+  bottom:0;          /* Stick at bottom */
+  transform:translateY(40px);
+}
+
+/* BOTTOM RIGHT WAVE */
+body::after{
+  background:linear-gradient(135deg, #ff3a88, #ffb3d6);
+  top:auto;
+  bottom:0;
+  animation-delay:-12s;
+  transform:translateY(60px);
+}
+
+@keyframes floatWave{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-20px)}
+}
+
+/* ================= TOPBAR ================= */
+.topbar{
+  position:fixed;
+  top:0;
+  width:100%;
+  padding:12px 18px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  background:var(--glass);
+  backdrop-filter:blur(24px) saturate(180%);
+  border-bottom:1px solid var(--glass-border);
+  box-shadow:0 10px 40px rgba(0,0,0,.45);
+  z-index:1000;
+}
+
+/* ================= BRAND ================= */
+.brand{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.logo{
+  width:42px;
+  height:42px;
+  border-radius:50%;
+}
+.brand-name{
+  font-size:18px;
+  font-weight:800;
+}
+.brand-sub{
+  font-size:12px;
+  color:var(--muted);
+}
+.glow{
+  text-shadow:0 0 12px rgba(58,160,255,.9),0 0 28px rgba(58,160,255,.6);
+}
+
+/* ================= SWITCH ================= */
+.switch{
+  width:52px;
+  height:26px;
+  position:relative;
+}
+.switch input{display:none}
+.slider{
+  position:absolute;
+  inset:0;
+  border-radius:50px;
+  background:rgba(255,255,255,.2);
+}
+.slider::before{
+  content:"";
+  position:absolute;
+  width:20px;
+  height:20px;
+  top:3px;
+  left:3px;
+  border-radius:50%;
+  background:var(--accent);
+  transition:.35s;
+}
+.switch input:checked + .slider::before{
+  transform:translateX(26px);
+}
+
+/* ================= MENU ICON ================= */
+.menu-icon{
+  width:36px;
+  height:36px;
+  border-radius:12px;
+  background:linear-gradient(135deg,#6a5cff,#9b7cff);
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  gap:5px;
+  box-shadow:0 8px 22px rgba(0,0,0,.45);
+}
+.menu-icon span{
+  width:22px;
+  height:2.5px;
+  background:#fff;
+  border-radius:4px;
+}
+
+/* ================= SIDE MENU ================= */
+.side-menu{
+  position:fixed;
+  top:0;
+  left:-270px;
+  width:270px;
+  height:100%;
+  padding:22px;
+  background:var(--glass);
+  backdrop-filter:blur(28px) saturate(180%);
+  border-right:1px solid var(--glass-border);
+  transition:.35s ease;
+  z-index:3000;
+}
+.side-menu.open{left:0}
+.side-menu a{
+  display:block;
+  padding:12px;
+  border-radius:14px;
+  color:var(--text);
+  text-decoration:none;
+}
+.side-menu a:hover{
+  background:rgba(255,255,255,.16);
+}
+
+/* ================= OVERLAY ================= */
+#overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.45);
+  backdrop-filter:blur(3px);
+  display:none;
+  z-index:2500;
+}
+#overlay.show{display:block}
+
+/* ================= MAIN ================= */
+main{
+  margin-top:80px;
+  padding-bottom:40px;
+  position:relative;
+  z-index:1;
+}
+
+/* ================= HERO ================= */
+.hero{
+  text-align:center;
+  padding:clamp(36px,6vw,70px) 16px;
+}
+.hero h1{
+  font-size:clamp(28px,5.5vw,44px);
+}
+.hero p{
+  margin-top:10px;
+  color:var(--muted);
+}
+.accent{color:var(--accent)}
+
+/* ================= BUTTONS ================= */
+.btn{
+  padding:12px 22px;
+  border-radius:16px;
+  border:none;
+  cursor:pointer;
+  background:var(--glass);
+  color:var(--text);
+  margin:8px;
+}
+.btn.primary{
+  background:linear-gradient(135deg,var(--accent),#6f7bff);
+  box-shadow:0 0 32px rgba(58,160,255,.6);
+}
+
+/* ================= CARDS ================= */
+.card-container{
+  margin-top:42px;
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:20px;
+}
+.card{
+  padding:22px;
+  border-radius:24px;
+  background:var(--glass);
+  backdrop-filter:blur(22px) saturate(180%);
+  border:1px solid var(--glass-border);
+  transition:.35s ease, transform .3s ease;
+}
+.card:hover{
+  transform:translateY(-6px);
+  box-shadow:0 30px 60px rgba(0,0,0,.45);
+}
+.emoji{font-size:32px}
+
+/* ================= MOTIVATION ================= */
+.motivation{
+  padding:40px 16px;
+  text-align:center;
+}
+.mot-btn{
+  padding:12px 26px;
+  border-radius:18px;
+  border:none;
+  background:linear-gradient(135deg,var(--accent),#6f7bff);
+  color:#fff;
+  box-shadow:0 0 28px rgba(58,160,255,.6);
+}
+
+/* ================= POPUP ================= */
+.popup{
+  position:fixed;
+  inset:0;
+  display:none;
+  justify-content:center;
+  align-items:center;
+  background:rgba(0,0,0,.6);
+  backdrop-filter:blur(12px);
+  z-index:6000;
+}
+.popup-content{
+  width:min(90%,380px);
+  padding:28px;
+  border-radius:28px;
+  background:var(--glass);
+  border:1px solid var(--glass-border);
+  backdrop-filter:blur(30px) saturate(220%);
+  text-align:center;
+  box-shadow:0 0 40px rgba(58,160,255,.45);
+}
+
+/* ================= FOOTER ================= */
+footer{
+  text-align:center;
+  padding:20px;
+  font-size:13px;
+  color:var(--muted);
+}
+
+/* ================= RESPONSIVE ================= */
+@media(max-width:480px){
+  .brand-name{font-size:16px}
+  .logo{width:38px;height:38px}
+  .card{padding:18px}
+  .card-container{gap:16px}
+}
+@media(min-width:600px){
+  .hero{padding:80px 20px}
+}
+@media(min-width:1024px){
+  main{max-width:1200px;margin:80px auto 0}
+  .card-container{grid-template-columns:repeat(3,1fr)}
+}
+@media(min-width:1400px){
+  .hero h1{font-size:48px}
+  .card-container{grid-template-columns:repeat(4,1fr)}
+}
