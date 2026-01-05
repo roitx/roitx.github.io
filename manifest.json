@@ -19,6 +19,18 @@
       "sizes": "512x512",
       "type": "image/jpeg",
       "purpose": "any maskable"
+    },
+    {
+      "src": "profile.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "profile.jpg",
+      "sizes": "96x96",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
     }
   ],
   "shortcuts": [
@@ -27,14 +39,29 @@
       "short_name": "Timer",
       "description": "Start focused study timer",
       "url": "/study-timer.html",
-      "icons": [{ "src": "profile.jpg", "sizes": "96x96", "type": "image/jpeg" }]
+      "icons": [
+        { "src": "profile.jpg", "sizes": "96x96", "type": "image/jpeg" }
+      ]
     },
     {
       "name": "Notes",
       "short_name": "Notes",
       "description": "View notes quickly",
       "url": "/view.html",
-      "icons": [{ "src": "profile.jpg", "sizes": "96x96", "type": "image/jpeg" }]
+      "icons": [
+        { "src": "profile.jpg", "sizes": "96x96", "type": "image/jpeg" }
+      ]
+    },
+    {
+      "name": "Reference Book",
+      "short_name": "Book",
+      "description": "Quick access to reference books",
+      "url": "/reference-book.html",
+      "icons": [
+        { "src": "profile.jpg", "sizes": "96x96", "type": "image/jpeg" }
+      ]
     }
-  ]
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
 }
