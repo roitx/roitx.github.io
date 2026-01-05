@@ -33,7 +33,7 @@ self.addEventListener("activate", e => {
   self.clients.claim();
 });
 
-// FETCH — smart strategy
+// FETCH — cache-first with dynamic fallback
 self.addEventListener("fetch", e => {
   if (e.request.method !== "GET") return;
 
@@ -53,14 +53,14 @@ self.addEventListener("fetch", e => {
   );
 });
 
-// BACKGROUND SYNC (future)
+// BACKGROUND SYNC (future-ready)
 self.addEventListener("sync", e => {
   if (e.tag === "roitx-sync") {
     console.log("ROITX background sync completed");
   }
 });
 
-// PUSH NOTIFICATIONS (future ready)
+// PUSH NOTIFICATIONS (future-ready)
 self.addEventListener("push", e => {
   const data = e.data?.json() || {
     title: "ROITX",
@@ -78,7 +78,7 @@ self.addEventListener("push", e => {
   );
 });
 
-// APP OPEN / CLICK
+// NOTIFICATION CLICK HANDLER
 self.addEventListener("notificationclick", e => {
   e.notification.close();
   e.waitUntil(
