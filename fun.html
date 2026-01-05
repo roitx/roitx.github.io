@@ -1,190 +1,43 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>ROITX – Game</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-
-<style>
-body{
-  margin:0;
-  background:black;
-  overflow:hidden;
-  font-family:Arial;
-  touch-action:manipulation;
-}
-canvas{
-  display:block;
-  margin:auto;
-}
-#ui{
-  position:fixed;
-  top:10px;
-  left:10px;
-  z-index:10;
-}
-button{
-  font-size:14px;
-  padding:8px 12px;
-  margin:4px;
-  background:#111;
-  color:#0ff;
-  border:1px solid #0ff;
-  border-radius:6px;
-}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Roitx Space Shooter</title>
+  <link rel="stylesheet" href="game-style.css">
 </head>
-
 <body>
+  <div id="game-container">
+    <canvas id="gameCanvas"></canvas>
 
-<div id="ui">
-<button onclick="toggleMusic()">🎵</button>
-<button onclick="pauseGame()">⏸</button>
-</div>
+    <!-- HUD -->
+    <div id="hud">
+      <div id="score">Score: 0</div>
+      <div id="lives">Lives: 3</div>
+      <div id="level">Level: 1</div>
+    </div>
 
-<canvas id="game"></canvas>
+    <!-- Start Screen -->
+    <div id="start-screen">
+      <h1>Roitx Space Shooter</h1>
+      <button id="startBtn">Start Game</button>
+    </div>
 
-<audio id="bgm" loop src="https://assets.mixkit.co/music/preview/mixkit-game-level-music-689.mp3"></audio>
-<audio id="jumpS" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
+    <!-- Game Over Screen -->
+    <div id="game-over">
+      <h1>Game Over</h1>
+      <p id="final-score">Score: 0</p>
+      <button id="restartBtn">Restart</button>
+    </div>
 
-<script>
-const c=document.getElementById("game"),x=c.getContext("2d");
-function resize(){
- c.width=window.innerWidth;
- c.height=window.innerHeight;
-}
-window.addEventListener("resize",resize);
-resize();
+    <!-- Mobile Controls -->
+    <div id="mobile-controls">
+      <button id="leftBtn">◀</button>
+      <button id="shootBtn">●</button>
+      <button id="rightBtn">▶</button>
+    </div>
+  </div>
 
-const bgm=document.getElementById("bgm");
-const jumpS=document.getElementById("jumpS");
-
-let state="play",paused=false;
-let speed=6,score=0,gravity=0.9,shake=0;
-let hi=localStorage.getItem("roitxHi")||0;
-let shield=false,slow=false;
-
-const player={x:100,y:0,w:40,h:40,dy:0,j:false};
-let enemies=[],powerups=[];
-
-function ground(){ return c.height-80; }
-
-function glow(a,b,w,h,col){
- x.shadowColor=col;x.shadowBlur=20;
- x.fillStyle=col;x.fillRect(a,b,w,h);
- x.shadowBlur=0;
-}
-
-function spawnEnemy(){
- let t=Math.random();
- let g=ground();
- if(t<0.3) enemies.push({t:"run",x:c.width,y:g,w:40,h:50});
- else if(t<0.5) enemies.push({t:"zig",x:c.width,y:g-120,w:35,h:35,d:1});
- else if(t<0.7) enemies.push({t:"fly",x:c.width,y:g-180,w:35,h:35});
- else if(t<0.9) enemies.push({t:"rush",x:c.width,y:g,w:35,h:45});
- else enemies.push({t:"boss",x:c.width,y:g-40,w:80,h:90});
- if(Math.random()<0.25)
-  powerups.push({x:c.width,y:g-60,type:Math.random()<0.5?"shield":"slow"});
-}
-
-setInterval(()=>{ if(!paused) spawnEnemy(); },1200);
-
-function collide(a,b){
- return a.x<b.x+b.w && a.x+a.w>b.x && a.y<b.y+b.h && a.y+a.h>b.y;
-}
-
-function loop(){
- if(paused){requestAnimationFrame(loop);return;}
-
- x.save();
- if(shake>0){
-  x.translate(Math.random()*shake,Math.random()*shake);
-  shake*=0.9;
- }
-
- x.clearRect(0,0,c.width,c.height);
-
- // Player
- player.dy+=gravity;
- player.y+=player.dy;
- if(player.y>=ground()){
-  player.y=ground();
-  player.j=false;
- }
- glow(player.x,player.y,player.w,player.h,"#0ff");
-
- // Enemies
- enemies.forEach((e,i)=>{
-  if(e.t==="run") e.x-=speed;
-  if(e.t==="fly") e.x-=speed+1;
-  if(e.t==="rush") e.x-=speed*1.8;
-  if(e.t==="zig"){
-   e.x-=speed;
-   e.y+=e.d*2;
-   if(e.y<ground()-200||e.y>ground()-60) e.d*=-1;
-  }
-  if(e.t==="boss") e.x-=speed*0.6;
-
-  glow(e.x,e.y,e.w,e.h,e.t==="boss"?"#f00":"#f0f");
-
-  if(collide(player,e)){
-   if(shield){shield=false;enemies.splice(i,1);shake=12;}
-   else endGame();
-  }
- });
-
- // Powerups
- powerups.forEach((p,i)=>{
-  p.x-=speed;
-  glow(p.x,p.y,22,22,p.type==="shield"?"#0f0":"#ff0");
-  if(collide(player,{x:p.x,y:p.y,w:22,h:22})){
-   if(p.type==="shield") shield=true;
-   if(p.type==="slow"){slow=true;setTimeout(()=>slow=false,3000);}
-   powerups.splice(i,1);
-  }
- });
-
- score++;
- speed+=slow?0.0002:0.0008;
-
- // HUD
- x.fillStyle="#fff";
- x.font="16px Arial";
- x.fillText("Score: "+score,20,30);
- x.fillText("High: "+hi,20,50);
- if(shield) x.fillText("Shield ON",20,70);
-
- x.restore();
- requestAnimationFrame(loop);
-}
-
-function jump(){
- if(!player.j){
-  player.dy=-18;
-  player.j=true;
-  jumpS.play();
- }
- bgm.play();
-}
-
-function endGame(){
- hi=Math.max(hi,score);
- localStorage.setItem("roitxHi",hi);
- alert("ROITX OVER\nScore: "+score);
- location.reload();
-}
-
-function toggleMusic(){ bgm.paused?bgm.play():bgm.pause(); }
-function pauseGame(){ paused=!paused; }
-
-document.addEventListener("keydown",e=>{
- if(e.code==="Space") jump();
- if(e.code==="KeyP") pauseGame();
-});
-
-document.addEventListener("touchstart",jump);
-
-loop();
-</script>
+  <script src="game-script.js" defer></script>
 </body>
 </html>
