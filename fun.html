@@ -1,43 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Roitx Space Shooter</title>
-  <link rel="stylesheet" href="game-style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Roitx Space Shooter</title>
+<link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-  <div id="game-container">
-    <canvas id="gameCanvas"></canvas>
 
-    <!-- HUD -->
-    <div id="hud">
-      <div id="score">Score: 0</div>
-      <div id="lives">Lives: 3</div>
-      <div id="level">Level: 1</div>
-    </div>
+<!-- HUD -->
+<div class="hud">
+  <span id="score">Score: 0</span>
+  <span id="lives">Lives: 3</span>
+  <span id="level">Level: 1</span>
+</div>
 
-    <!-- Start Screen -->
-    <div id="start-screen">
-      <h1>Roitx Space Shooter</h1>
-      <button id="startBtn">Start Game</button>
-    </div>
+<!-- Canvas -->
+<canvas id="gameCanvas"></canvas>
 
-    <!-- Game Over Screen -->
-    <div id="game-over">
-      <h1>Game Over</h1>
-      <p id="final-score">Score: 0</p>
-      <button id="restartBtn">Restart</button>
-    </div>
+<!-- Start Screen -->
+<div id="start-screen" class="screen show">
+  <h1>🚀 ROITX SPACE</h1>
+  <button id="startBtn">START GAME</button>
+</div>
 
-    <!-- Mobile Controls -->
-    <div id="mobile-controls">
-      <button id="leftBtn">◀</button>
-      <button id="shootBtn">●</button>
-      <button id="rightBtn">▶</button>
-    </div>
-  </div>
+<!-- Game Over -->
+<div id="game-over" class="screen">
+  <h2>GAME OVER</h2>
+  <p id="final-score"></p>
+  <button id="restartBtn">RESTART</button>
+</div>
 
-  <script src="game-script.js" defer></script>
+<!-- Mobile Controls -->
+<div class="controls">
+  <button id="leftBtn">⬅</button>
+  <button id="shootBtn">🔥</button>
+  <button id="rightBtn">➡</button>
+</div>
+
+<script src="script.js"></script>
 </body>
 </html>
