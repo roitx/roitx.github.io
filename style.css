@@ -395,3 +395,45 @@ body {
 body.app-loaded {
   opacity: 1;
   }
+//*mot box*//
+/* Glowing Popup Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: none; justify-content: center; align-items: center;
+  z-index: 2000; backdrop-filter: blur(5px);
+}
+
+.glow-modal {
+  background: #1a1a1a;
+  padding: 30px;
+  border-radius: 20px;
+  border: 2px solid #00d4ff;
+  box-shadow: 0 0 20px #00d4ff, inset 0 0 10px #00d4ff;
+  text-align: center;
+  max-width: 80%;
+  transform: scale(0.7);
+  transition: all 0.3s ease;
+}
+
+.modal-active { display: flex; }
+.modal-active .glow-modal { transform: scale(1); }
+
+.glow-modal p {
+  color: #fff;
+  font-size: 1.2rem;
+  font-style: italic;
+  margin-bottom: 20px;
+  text-shadow: 0 0 5px #fff;
+}
+
+.close-btn {
+  background: #00d4ff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 10px;
+  color: #000;
+  font-weight: bold;
+  cursor: pointer;
+}
