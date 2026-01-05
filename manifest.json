@@ -32,7 +32,7 @@
       "name": "Reference Book",
       "short_name": "Book",
       "description": "Quick access to reference books",
-      "url": "/reference-book.html",
+      "url": "/refbook.html",
       "icons": [
         { "src": "profile.jpg", "sizes": "96x96", "type": "image/jpeg" }
       ]
