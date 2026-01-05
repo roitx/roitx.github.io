@@ -1,4 +1,4 @@
-// NAVIGATION
+MOTIVATIONIVATIONNAVIGATION
 function goto(page){ window.location.href = page; }
 
 // SIDEMENU
@@ -48,6 +48,13 @@ document.addEventListener("DOMContentLoaded", () => {
 document.getElementById("year").textContent = new Date().getFullYear();
 
 // MOTIVATION
+<div id="motModal" class="modal-overlay">
+  <div class="glow-modal">
+    <p id="motText"></p>
+    <button class="close-btn" onclick="closeMot()">Close</button>
+  </div>
+</div>`;
+document.body.insertAdjacentHTML('beforeend', modalHTML);
 const quotes = [
 "Success = Consistency × Hard Work!",
 "Success = Consistency × Hard Work!",
@@ -160,9 +167,14 @@ const quotes = [
 "The best view comes after the hardest climb!",
 "Push yourself — no one else will!",
 ];
-function showMotivation(){
-  let q = quotes[Math.floor(Math.random()*quotes.length)];
-  document.getElementById("motBox").textContent = q;
+function showMotivation() {
+  const quote = quotes[Math.floor(Math.random() * quotes.length)];
+  document.getElementById('motText').innerText = quote;
+  document.getElementById('motModal').classList.add('modal-active');
+}
+
+function closeMot() {
+ document.getElementById('motModal').classList.remove('modal-active');
 }
 
 // BACKGROUND CANVAS ANIMATION
