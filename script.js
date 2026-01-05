@@ -1,4 +1,4 @@
-MOTIVATIONIVATIONNAVIGATION
+motModalIVATIONIVATIONIVATIONIVATIONNAVIGATION
 function goto(page){ window.location.href = page; }
 
 // SIDEMENU
@@ -48,6 +48,7 @@ document.addEventListener("DOMContentLoaded", () => {
 document.getElementById("year").textContent = new Date().getFullYear();
 
 // MOTIVATION
+const modalHTML = `
 <div id="motModal" class="modal-overlay">
   <div class="glow-modal">
     <p id="motText"></p>
