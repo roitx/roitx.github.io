@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Rohit ki Notes — Home</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1a1a1a">
+  <link rel="apple-touch-icon" href="profile.jpg">
+  <meta name="mobile-web-app-capable" content="yes">
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<!-- ================= TOP BAR ================= -->
+<header class="topbar">
+  <button id="menuBtn" class="menu-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
+
+  <div class="brand">
+    <img src="profile.jpg" class="logo" />
+    <div>
+      <div class="brand-name glow">ROITX</div>
+      <div class="brand-sub">Personal Study Hub</div>
+    </div>
+  </div>
+
+  <label class="switch">
+    <input type="checkbox" id="modeToggle">
+    <span class="slider">
+      <span class="icon sun">🌙</span>
+      <span class="icon moon">🔆</span>
+    </span>
+  </label>
+</header>
+
+<!-- ================= SIDE MENU ================= -->
+<aside id="sideMenu" class="side-menu">
+  <a href="login.html">🙎🏻‍♂️ Login</a>
+  <a href="classes.html">📘 Classes</a>
+  <a href="study-timer.html">⏳ Study Timer</a>
+  <a href="calendar.html">📅 Calendar</a>
+  <a href="view.html">📄 NOTES</a>
+  <a href="formulas.html">📖 Formula</a>
+  <a href="solver.html">🤷🏻‍♂️ Ask Doubt</a>
+  <a href="refbook.html">📒 Reference Book</a>
+  <a href="calculator.html">📟 Calculator</a>
+  <a href="tests.html">📝 Tests</a>
+  <a href="ask-chat.html">🤖 Ask Chat</a>
+</aside>
+
+<div id="overlay"></div>
+
+<!-- ================= MAIN ================= -->
+<main>
+
+<!-- HERO -->
+<section class="hero">
+  <h1>Power <span class="accent">∝</span> Work</h1>
+  <p>Your personal study hub with notes, tools & tests.</p>
+
+  <div class="hero-buttons">
+    <button onclick="goto('classes.html')" class="btn primary">Start Learning</button>
+    <button onclick="goto('study-timer.html')" class="btn">Study Timer</button>
+  </div>
+
+  <!-- CARDS -->
+  <div class="card-container">
+
+    <div class="card" onclick="goto('classes.html')">
+      <span class="emoji">📘</span>
+      <h3>Classes</h3>
+      <p>Notes for all subjects</p>
+    </div>
+
+    <div class="card" onclick="goto('tests.html')">
+      <span class="emoji">📝</span>
+      <h3>Tests</h3>
+      <p>MCQs & Practice</p>
+    </div>
+
+    <div class="card" onclick="goto('refbook.html')">
+      <span class="emoji">📚</span>
+      <h3>Reference Book</h3>
+      <p>Advance Books</p>
+    </div>
+
+    <div class="card" onclick="goto('ask-chat.html')">
+      <span class="emoji">🤖</span>
+      <h3>Ask Chat</h3>
+      <p>Smart Assistant</p>
+    </div>
+
+    <div class="card" onclick="goto('fun.html')">
+      <span class="emoji">🎮</span>
+      <h3>Fun</h3>
+      <p>Pass Your Time Smoothly</p>
+    </div>
+
+    <!-- ✅ EXTERNAL APP OPEN -->
+    <div class="card"
+      onclick="window.open(
+        'https://app-8miaxso1s35t.appmedo.com/login',
+        '_blank',
+        'location=yes,hideurlbar=yes'
+      )">
+      <span class="emoji">💰</span>
+      <h3>Roitx Management</h3>
+      <p>Manage your data</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ================= MOTIVATION ================= -->
+<section class="motivation">
+  <h2>Daily Motivation</h2>
+  <button class="mot-btn" onclick="showMotivation()">✨ Generate Quote</button>
+  <div id="motBox" class="mot-box"></div>
+
+  <canvas id="bgCanvas"></canvas>
+
+  <svg id="waveBottom" viewBox="0 0 1440 120" preserveAspectRatio="none">
+    <path id="waveBottomPath" d=""></path>
+  </svg>
+</section>
+
+<!-- ================= MOTIVATION POPUP ================= -->
+<div id="motivationPopup" class="popup">
+  <div class="popup-content">
+    <span class="close-btn" onclick="closeMotivation()">&times;</span>
+    <h3>✨ Daily Motivation</h3>
+    <p id="motivationText">Stay focused. Stay unstoppable.</p>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  © <span id="year"></span> Rohit ki Notes — Built with ❤️
+</footer>
+
+</main>
+
+<!-- ================= SCRIPTS ================= -->
+<script src="script.js"></script>
+
+<script>
+  // PWA Service Worker
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(() => console.log('Roitx App Ready!'))
+        .catch(err => console.error('SW failed:', err));
+    });
+  }
+
+  // Footer year
+  document.getElementById("year").textContent =
+    new Date().getFullYear();
+</script>
+
+</body>
+</html>
