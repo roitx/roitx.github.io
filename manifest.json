@@ -22,13 +22,13 @@
     {
       "src": "profile.jpg",
       "sizes": "512x512",
-      "type": "image/jpeg",
+      "type": "imagejpeg",
       "purpose": "any maskable"
     },
     {
       "src": "profile.jpg",
       "sizes": "192x192",
-      "type": "image/jpeg",
+      "type": "image/jpg",
       "purpose": "any maskable"
     }
   ],
