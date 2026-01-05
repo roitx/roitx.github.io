@@ -8,7 +8,7 @@ const STATIC_ASSETS = [
   "/style.css",
   "/script.js",
   "/manifest.json",
-  "/profile.jpg"
+  "/profile.jpg" // Pehle profile.jpg tha, ab favicon.png
 ];
 
 // INSTALL
@@ -53,14 +53,14 @@ self.addEventListener("fetch", e => {
   );
 });
 
-// BACKGROUND SYNC (future)
+// BACKGROUND SYNC
 self.addEventListener("sync", e => {
   if (e.tag === "roitx-sync") {
     console.log("ROITX background sync completed");
   }
 });
 
-// PUSH NOTIFICATIONS (future ready)
+// PUSH NOTIFICATIONS
 self.addEventListener("push", e => {
   const data = e.data?.json() || {
     title: "ROITX",
@@ -70,8 +70,8 @@ self.addEventListener("push", e => {
   e.waitUntil(
     self.registration.showNotification(data.title, {
       body: data.body,
-      icon: "/profile.jpg",
-      badge: "/profile.jpg",
+      icon: "/profile.jpg", // Updated logo
+      badge: "/profile.jpg", // Updated badge
       vibrate: [100, 50, 100],
       tag: "roitx-notify"
     })
@@ -84,7 +84,7 @@ self.addEventListener("notificationclick", e => {
   e.waitUntil(
     clients.matchAll({ type: "window" }).then(clientList => {
       for (const client of clientList) {
-        if (client.url === "/index.html" && "focus" in client) {
+        if (client.url.includes("/index.html") && "focus" in client) {
           return client.focus();
         }
       }
