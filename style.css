@@ -1,0 +1,310 @@
+/* ================= ROOT VARIABLES ================= */
+:root {
+  --bg: #070f1d;
+  --bg-soft: #0c1830;
+  --text: #e9f2ff;
+  --muted: #9fb4d6;
+  --accent: #3aa0ff;
+
+  --card: rgba(255,255,255,0.05);
+  --border: rgba(255,255,255,0.08);
+
+  --topbar-bg: rgba(12, 24, 48, 0.75);
+  --text-color: #e9f2ff;
+}
+
+/* ================= LIGHT MODE ================= */
+body.light {
+  --bg: #edf1f7;
+  --bg-soft: rgba(255,255,255,0.78);
+  --text: #0a1020;
+  --muted: #63708c;
+  --accent: #2563eb;
+
+  --card: rgba(255,255,255,0.75);
+  --border: rgba(255,255,255,0.45);
+
+  --topbar-bg: rgba(255,255,255,0.72);
+  --text-color: #0a1020;
+}
+
+/* ================= RESET ================= */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Segoe UI", system-ui, sans-serif;
+}
+
+/* ================= BODY ================= */
+body {
+  min-height: 100vh;
+  background: var(--bg);
+  background-image: radial-gradient(circle at top left, rgba(58,160,255,0.1), transparent 40%),
+                    radial-gradient(circle at bottom right, rgba(120,100,255,0.12), transparent 40%);
+  color: var(--text);
+  transition: 0.4s ease, background 0.4s ease;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Adding Stars Effect */
+body::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: url('https://www.transparenttextures.com/patterns/star-sky.png');  /* Example texture, replace with your own */
+  opacity: 0.25;  /* You can adjust this to make stars more visible or subtle */
+  pointer-events: none;
+  z-index: -2;   /* Behind other elements */
+}
+
+/* ================= WAVE ================= */
+#waveBottom {
+  position: fixed;
+  bottom: -2px;
+  left: 0;
+  width: 100vw;
+  height: 180px;
+  z-index: -1;
+  pointer-events: none;
+  animation: waveAnimation 6s ease-in-out infinite;
+}
+
+@keyframes waveAnimation {
+  0% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(-10px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+/* ================= FOOTER ================= */
+footer {
+  padding: 16px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted);
+  position: relative;
+  z-index: 1; /* Ensures footer stays on top */
+}
+
+/* ================= DARK MODE ================= */
+body {
+  background-color: var(--bg);
+  background-image: radial-gradient(circle at top left, rgba(58,160,255,0.05), transparent 35%),
+                    radial-gradient(circle at bottom right, rgba(120,100,255,0.08), transparent 35%);
+}
+
+/* ================= LIGHT MODE ================= */
+body.light {
+  background-color: var(--bg);
+  background-image: radial-gradient(circle at top left, rgba(37,99,235,0.08), transparent 35%),
+                    radial-gradient(circle at bottom right, rgba(111,123,255,0.1), transparent 35%);
+}
+
+/* ================= TOPBAR ================= */
+.topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  background: var(--topbar-bg);
+  color: var(--text-color);
+  backdrop-filter: blur(22px) saturate(160%);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 15px 40px rgba(0,0,0,0.25);
+  border-radius: 0 0 18px 18px;
+  z-index: 1000;
+}
+
+main { margin-top: 80px; }
+
+/* ================= BRAND ================= */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+}
+
+.brand-name {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.glow {
+  text-shadow:
+    0 0 10px rgba(58,160,255,0.9),
+    0 0 25px rgba(58,160,255,0.6);
+}
+
+.brand-sub {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ================= DARK / LIGHT SWITCH ================= */
+.switch {
+  position: relative;
+  width: 54px;
+  height: 28px;
+}
+
+.switch input { display: none; }
+
+.slider {
+  position: absolute;
+  inset: 0;
+  background: var(--card);
+  border-radius: 50px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.slider::before {
+  content: "";
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  left: 3px;
+  top: 2px;
+  background: var(--accent);
+  border-radius: 50%;
+  transition: 0.35s cubic-bezier(.4,0,.2,1);
+  box-shadow: 0 0 12px var(--accent);
+}
+
+.switch input:checked + .slider::before {
+  transform: translateX(26px);
+}
+
+/* ================= MENU ICON ================= */
+.menu-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 14px;
+  border: none;
+  background: linear-gradient(135deg,#6a5cff,#9b7cff);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 0 0 22px rgba(106,92,255,0.8);
+  transition: 0.2s;
+}
+
+.menu-icon:active {
+  transform: scale(0.9);
+}
+
+.menu-icon span {
+  width: 22px;
+  height: 2.5px;
+  background: #fff;
+  border-radius: 3px;
+}
+
+/* ================= SIDE MENU ================= */
+.side-menu {
+  position: fixed;
+  top: 0;
+  left: -270px;
+  width: 270px;
+  height: 100%;
+  padding: 24px;
+  background: var(--bg-soft);
+  backdrop-filter: blur(22px) saturate(160%);
+  border-right: 1px solid var(--border);
+  transition: 0.35s cubic-bezier(.4,0,.2,1);
+  z-index: 3000;
+}
+
+.side-menu.open { left: 0; }
+
+.side-menu a {
+  display: block;
+  padding: 12px;
+  margin-bottom: 6px;
+  text-decoration: none;
+  color: var(--text);
+  border-radius: 10px;
+  transition: 0.25s;
+}
+
+.side-menu a:hover {
+  background: var(--card);
+  transform: translateX(6px);
+}
+
+/* ================= OVERLAY ================= */
+#overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  backdrop-filter: blur(4px);
+  display: none;
+  z-index: 2500;
+}
+#overlay.show { display: block; }
+
+/* ================= HERO ================= */
+.hero {
+  text-align: center;
+  padding: 70px 20px;
+}
+
+.hero h1 {
+  font-size: 44px;
+}
+
+.accent { color: var(--accent); }
+
+.hero p {
+  margin-top: 12px;
+  color: var(--muted);
+}
+
+/* ================= BUTTONS ================= */
+.btn {
+  padding: 14px 22px;
+  border-radius: 16px;
+  border: none;
+  background: var(--card);
+  color: var(--text);
+  cursor: pointer;
+  margin: 10px;
+  transition: 0.25s;
+}
+
+.btn:hover {
+  transform: translateY(-3px);
+}
+
+.btn:active {
+  transform: scale(0.95);
+}
+
+.btn.primary {
+  background: linear-gradient(135deg,var(--accent),#6f7bff);
+  color: #
