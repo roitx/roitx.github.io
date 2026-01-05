@@ -1,4 +1,4 @@
-const VERSION = "roitx-ultra-v3";
+const VERSION = "roitx-ultra-v4";
 const STATIC_CACHE = `${VERSION}-static`;
 const DYNAMIC_CACHE = `${VERSION}-dynamic`;
 
@@ -8,7 +8,10 @@ const STATIC_ASSETS = [
   "/style.css",
   "/script.js",
   "/manifest.json",
-  "/profile.jpg"
+  "/profile.jpg",
+  "/study-timer.html",
+  "/view.html",
+  "/reference-book.html"
 ];
 
 // INSTALL
@@ -48,7 +51,12 @@ self.addEventListener("fetch", e => {
             return res;
           });
         })
-        .catch(() => caches.match("/index.html"));
+        .catch(() => {
+          // Fallback to index.html for SPA
+          if (e.request.headers.get("accept").includes("text/html")) {
+            return caches.match("/index.html");
+          }
+        });
     })
   );
 });
@@ -56,7 +64,8 @@ self.addEventListener("fetch", e => {
 // BACKGROUND SYNC (future-ready)
 self.addEventListener("sync", e => {
   if (e.tag === "roitx-sync") {
-    console.log("ROITX background sync completed");
+    console.log("ROITX background sync completed ✅");
+    // You can later add actual sync logic here
   }
 });
 
@@ -64,7 +73,7 @@ self.addEventListener("sync", e => {
 self.addEventListener("push", e => {
   const data = e.data?.json() || {
     title: "ROITX",
-    body: "New update available 🚀"
+    body: "New update available 🚀",
   };
 
   e.waitUntil(
@@ -73,7 +82,11 @@ self.addEventListener("push", e => {
       icon: "/profile.jpg",
       badge: "/profile.jpg",
       vibrate: [100, 50, 100],
-      tag: "roitx-notify"
+      tag: "roitx-notify",
+      actions: [
+        { action: "open_app", title: "Open App" },
+        { action: "dismiss", title: "Dismiss" }
+      ]
     })
   );
 });
@@ -81,6 +94,7 @@ self.addEventListener("push", e => {
 // NOTIFICATION CLICK HANDLER
 self.addEventListener("notificationclick", e => {
   e.notification.close();
+
   e.waitUntil(
     clients.matchAll({ type: "window" }).then(clientList => {
       for (const client of clientList) {
