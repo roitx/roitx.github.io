@@ -1,4 +1,4 @@
-roitx-ultra-v4 VERSION = "roitx-v5";
+const VERSION = "roitx-v5";
 const STATIC_CACHE = `${VERSION}-static`;
 const DYNAMIC_CACHE = `${VERSION}-dynamic`;
 
@@ -16,19 +16,27 @@ const STATIC_ASSETS = [
 
 // INSTALL
 self.addEventListener("install", e => {
+  console.log("Service Worker Installed 🛠️");
   self.skipWaiting();
   e.waitUntil(
-    caches.open(STATIC_CACHE).then(cache => cache.addAll(STATIC_ASSETS))
+    caches.open(STATIC_CACHE).then(cache => {
+      console.log("Caching static assets...");
+      return cache.addAll(STATIC_ASSETS);
+    })
   );
 });
 
 // ACTIVATE
 self.addEventListener("activate", e => {
+  console.log("Service Worker Activated 🟢");
   e.waitUntil(
     caches.keys().then(keys =>
       Promise.all(
         keys.map(k => {
-          if (!k.startsWith(VERSION)) return caches.delete(k);
+          if (!k.startsWith(VERSION)) {
+            console.log(`Deleting old cache: ${k}`);
+            return caches.delete(k);
+          }
         })
       )
     )
@@ -42,11 +50,15 @@ self.addEventListener("fetch", e => {
 
   e.respondWith(
     caches.match(e.request).then(cached => {
-      if (cached) return cached;
+      if (cached) {
+        console.log(`Serving cached: ${e.request.url}`);
+        return cached;
+      }
 
       return fetch(e.request)
         .then(res => {
           return caches.open(DYNAMIC_CACHE).then(cache => {
+            console.log(`Caching dynamic resource: ${e.request.url}`);
             cache.put(e.request, res.clone());
             return res;
           });
@@ -93,6 +105,7 @@ self.addEventListener("push", e => {
 
 // NOTIFICATION CLICK HANDLER
 self.addEventListener("notificationclick", e => {
+  console.log("Notification clicked", e.notification);
   e.notification.close();
 
   e.waitUntil(
