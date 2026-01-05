@@ -1,4 +1,4 @@
-/* ========== ROOT VARIABLES ========== */
+/* ========== ROOT VARIABLES (DARK DEFAULT) ========== */
 :root {
   --bg: #070f1d;
   --bg-soft: #0c1830;
@@ -7,17 +7,24 @@
   --accent: #3aa0ff;
   --card: rgba(255,255,255,0.04);
   --border: rgba(255,255,255,0.08);
+
+  --topbar-bg: rgba(12, 24, 48, 0.75);
+  --text-color: #e9f2ff;
 }
 
-/* 🌞 LIGHT MODE */
+/* ========== 🌞 LIGHT MODE — PREMIUM GLASS ========== */
 body.light {
-  --bg: #f4f7fb;
-  --bg-soft: #ffffff;
-  --text: #081427;
+  --bg: #eef2f7;
+  --bg-soft: rgba(255,255,255,0.55);
+  --text: #0a1020;
   --muted: #5a6b88;
   --accent: #2563eb;
-  --card: #ffffff;
+
+  --card: rgba(255,255,255,0.65);
   --border: rgba(0,0,0,0.08);
+
+  --topbar-bg: rgba(255,255,255,0.6);
+  --text-color: #081427;
 }
 
 /* ========== RESET ========== */
@@ -30,14 +37,13 @@ body.light {
 
 /* ========== BODY ========== */
 body {
+  min-height: 100vh;
   background: radial-gradient(circle at top, var(--bg-soft), var(--bg));
   color: var(--text);
-  min-height: 100vh;
-  transition: background .4s, color .4s;
+  transition: background 0.4s ease, color 0.4s ease;
 }
 
 /* ========== TOPBAR ========== */
-/* TOPBAR FIXED */
 .topbar {
   position: fixed;
   top: 0;
@@ -50,36 +56,14 @@ body {
 
   background: var(--topbar-bg);
   color: var(--text-color);
-  backdrop-filter: blur(6px);   /* glass effect */
-  box-shadow: 0 2px 10px rgba(0,0,0,0.15);
-
-  z-index: 1000; /* Wave se upar */
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 6px 25px rgba(0,0,0,0.2);
+  z-index: 1000;
 }
 
-/* Ensure content starts below topbar */
-main {
-  margin-top: 70px;  /* adjust topbar height */
-}
-:root {
-  --topbar-bg: #ffffffcc;
-  --text-color: #222;
-}
+main { margin-top: 72px; }
 
-body.dark {
-  --topbar-bg: #1a1a1acc;
-  --text-color: #fff;
-}
-.topbar {
-  border-bottom: 1px solid rgba(255,255,255,0.3);
-  box-shadow: 0 0 10px rgba(0,0,0,0.2);
-}
-
-body.dark .topbar {
-  box-shadow: 0 0 12px rgba(0, 150, 255, 0.4); /* blue glow in dark */
-}
-main {
-  margin-top: 70px;
-}
 /* ========== BRAND ========== */
 .brand {
   display: flex;
@@ -98,7 +82,6 @@ main {
   font-weight: 800;
 }
 
-/* 🔥 GLOW EFFECT */
 .glow {
   text-shadow:
     0 0 10px rgba(58,160,255,0.8),
@@ -117,17 +100,15 @@ main {
   height: 26px;
 }
 
-.switch input {
-  display: none;
-}
+.switch input { display: none; }
 
 .slider {
   position: absolute;
   inset: 0;
-  background: var(--bg-soft);
+  background: var(--card);
   border-radius: 50px;
-  cursor: pointer;
   border: 1px solid var(--border);
+  cursor: pointer;
 }
 
 .slider::before {
@@ -139,7 +120,7 @@ main {
   top: 2px;
   background: var(--accent);
   border-radius: 50%;
-  transition: .3s;
+  transition: 0.3s;
 }
 
 .switch input:checked + .slider::before {
@@ -148,120 +129,58 @@ main {
 
 .icon {
   position: absolute;
-  font-size: 12px;
-  top: 5px;
+  top: 4px;
+  font-size: 13px;
+}
+.sun { left: 6px; }
+.moon { right: 6px; }
+
+/* ========== MENU ICON ========== */
+.menu-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(135deg,#6a5cff,#9b7cff);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 0 0 18px rgba(106,92,255,0.8);
 }
 
-.sun { left: 7px; }
-.moon { right: 7px; }
-/* THEME SELECT */
-.theme-select{
-  margin-left:auto;
-  padding:6px 10px;
-  border-radius:8px;
-  border:none;
-  font-weight:600;
-  background:#00ff9c;
-  color:#003;
-  cursor:pointer;
+.menu-icon span {
+  width: 22px;
+  height: 2.5px;
+  background: #fff;
+  border-radius: 3px;
 }
-
-/* THEMES */
-body.green{
-  background:radial-gradient(circle at top,#022,#000);
-}
-body.dark{
-  background:linear-gradient(180deg,#000,#111);
-}
-body.blue{
-  background:radial-gradient(circle at top,#021b3a,#000);
-}
-
-/* Blue accent override */
-body.blue .op,
-body.blue .equal{
-  background:#3aa0ff;
-  color:#002;
-} 
 
 /* ========== SIDE MENU ========== */
-.menu-icon{
-  position:relative;     /* 🔥 fixed → relative */
-  top:0;
-  right:0;
-
-  width:36px;
-  height:36px;
-  border:none;
-  border-radius:12px;
-
-  background:linear-gradient(135deg,#6a5cff,#9b7cff);
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
-  gap:5px;
-  cursor:pointer;
-
-  box-shadow:
-    0 4px 12px rgba(0,0,0,0.35),
-    0 0 18px rgba(106,92,255,0.8);
-
-  transition:all .3s ease;
-}
-
-.menu-icon span{
-  width:22px;
-  height:2.5px;
-  background:#fff;
-  border-radius:3px;
-  transition:all .35s ease;
-}
-
-/* Hover glow */
-.menu-icon:hover{
-  transform:scale(1.08);
-  box-shadow:
-    0 0 15px rgba(138,108,255,0.6),
-    0 0 35px rgba(138,108,255,0.9);
-}
-
-/* Active press */
-.menu-icon:active{
-  transform:scale(0.95);
-}
-
-/* 🔁 Menu Open Animation */
-.menu-icon.active span:nth-child(1){
-  transform:rotate(45deg) translate(5px,5px);
-}
-.menu-icon.active span:nth-child(2){
-  opacity:0;
-}
-.menu-icon.active span:nth-child(3){
-  transform:rotate(-45deg) translate(6px,-6px);
-}
 .side-menu {
   position: fixed;
   top: 0;
-  left: -240px;
-  width: 240px;
+  left: -260px;
+  width: 260px;
   height: 100%;
-  background: var(--bg-soft);
   padding: 20px;
-  z-index: 3000;  /* topbar से ऊपर */
+  background: var(--bg-soft);
+  backdrop-filter: blur(18px);
+  border-right: 1px solid var(--border);
   transition: 0.3s ease;
+  z-index: 3000;
 }
-.side-menu.open {
-  left: 0;
-}
+
+.side-menu.open { left: 0; }
 
 .side-menu a {
   display: block;
   padding: 10px;
   margin-bottom: 6px;
-  color: var(--text);
   text-decoration: none;
+  color: var(--text);
   border-radius: 8px;
 }
 
@@ -269,22 +188,16 @@ body.blue .equal{
   background: var(--card);
 }
 
-.side-menu.show {
-  left: 0;
-}
+/* ========== OVERLAY ========== */
 #overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.4);
-  backdrop-filter: blur(2px);
-  z-index: 2500;   /* menu ke neeche, topbar se upar */
+  background: rgba(0,0,0,0.45);
+  backdrop-filter: blur(3px);
   display: none;
+  z-index: 2500;
 }
-
-#overlay.show {
-  display: block;
-}
-
+#overlay.show { display: block; }
 
 /* ========== HERO ========== */
 .hero {
@@ -292,13 +205,8 @@ body.blue .equal{
   padding: 60px 20px;
 }
 
-.hero h1 {
-  font-size: 42px;
-}
-
-.accent {
-  color: var(--accent);
-}
+.hero h1 { font-size: 42px; }
+.accent { color: var(--accent); }
 
 .hero p {
   margin-top: 10px;
@@ -308,17 +216,18 @@ body.blue .equal{
 /* ========== BUTTONS ========== */
 .btn {
   padding: 12px 20px;
-  border-radius: 12px;
+  border-radius: 14px;
   border: none;
-  cursor: pointer;
   background: var(--card);
   color: var(--text);
+  cursor: pointer;
   margin: 10px;
 }
 
 .btn.primary {
-  background: linear-gradient(135deg, var(--accent), #6f7bff);
-  box-shadow: 0 0 30px rgba(58,160,255,.6);
+  background: linear-gradient(135deg,var(--accent),#6f7bff);
+  color: #fff;
+  box-shadow: 0 0 30px rgba(58,160,255,0.6);
 }
 
 /* ========== CARDS ========== */
@@ -327,26 +236,25 @@ body.blue .equal{
   grid-template-columns: repeat(auto-fit,minmax(200px,1fr));
   gap: 20px;
   max-width: 900px;
-  margin: 40px auto 0;
+  margin: 40px auto;
 }
 
 .card {
   background: var(--card);
+  backdrop-filter: blur(16px);
   padding: 22px;
-  border-radius: 18px;
+  border-radius: 20px;
   border: 1px solid var(--border);
   cursor: pointer;
-  transition: .3s;
+  transition: 0.3s;
 }
 
 .card:hover {
   transform: translateY(-6px);
-  box-shadow: 0 0 35px rgba(58,160,255,.3);
+  box-shadow: 0 0 35px rgba(58,160,255,0.3);
 }
 
-.card .emoji {
-  font-size: 32px;
-}
+.card .emoji { font-size: 32px; }
 
 /* ========== MOTIVATION ========== */
 .motivation {
@@ -354,10 +262,7 @@ body.blue .equal{
   text-align: center;
 }
 
-.mot-box {
-  margin-top: 14px;
-  color: var(--accent);
-}
+.mot-box { color: var(--accent); margin-top: 14px; }
 
 /* ========== FOOTER ========== */
 footer {
@@ -367,64 +272,51 @@ footer {
   color: var(--muted);
 }
 
-
-/* Wave background */
-#waveBottom {
-  position: fixed;         /* background जैसा behave करेगा */
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 120px;
-  z-index: -1;             /* BACKGROUND layer */
-  display: block;
-  pointer-events: none;    /* क्लिक block ना करे */
-}#bgCanvas {
+/* ========== BACKGROUND ========== */
+#bgCanvas {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: -2;      /* wave ke neeche */
+  inset: 0;
+  z-index: -2;
   pointer-events: none;
 }
-/*app*/
-body {
-  opacity: 1;
-  }
-body.app-loaded {
-  opacity: 1;
-  }
-//*mot box*//
-/* Glowing Popup Modal Styles */
-.modal-overlay {
+
+#waveBottom {
   position: fixed;
-  top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(0, 0, 0, 0.8);
-  display: none; justify-content: center; align-items: center;
-  z-index: 2000; backdrop-filter: blur(5px);
+  bottom: 0;
+  width: 100%;
+  height: 120px;
+  z-index: -1;
+  pointer-events: none;
 }
 
+/* ========== MODAL (MOTIVATION) ========== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.8);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 4000;
+  backdrop-filter: blur(6px);
+}
+
+.modal-overlay.modal-active { display: flex; }
+
 .glow-modal {
-  background: #1a1a1a;
+  background: #111;
   padding: 30px;
   border-radius: 20px;
   border: 2px solid #00d4ff;
-  box-shadow: 0 0 20px #00d4ff, inset 0 0 10px #00d4ff;
+  box-shadow: 0 0 25px #00d4ff;
   text-align: center;
   max-width: 80%;
-  transform: scale(0.7);
-  transition: all 0.3s ease;
 }
-
-.modal-active { display: flex; }
-.modal-active .glow-modal { transform: scale(1); }
 
 .glow-modal p {
   color: #fff;
   font-size: 1.2rem;
-  font-style: italic;
   margin-bottom: 20px;
-  text-shadow: 0 0 5px #fff;
 }
 
 .close-btn {
@@ -432,7 +324,6 @@ body.app-loaded {
   border: none;
   padding: 10px 20px;
   border-radius: 10px;
-  color: #000;
   font-weight: bold;
   cursor: pointer;
 }
