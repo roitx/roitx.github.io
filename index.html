@@ -4,15 +4,17 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Rohit ki Notes — Home</title>
+  
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1a1a1a">
+  <link rel="apple-touch-icon" href="profile.jpg">
+  <meta name="mobile-web-app-capable" content="yes">
 
   <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-
-
-<!-- TOPBAR -->
 <header class="topbar">
   <button id="menuBtn" class="menu-icon">
   <span></span>
@@ -37,25 +39,23 @@
     </label>
 </header>
 
-<!-- SIDE MENU -->
 <aside id="sideMenu" class="side-menu">
-  <a href="login.html">🙎🏻‍♂️ Login</a></a>
+  <a href="login.html">🙎🏻‍♂️ Login</a>
   <a href="classes.html">📘 Classes</a>
   <a href="study-timer.html">⏳ Study Timer</a>
   <a href="calendar.html">📅 Calendar</a>
   <a href="view.html">📄 NOTES </a>
   <a href="formulas.html">📖 Formula </a>
-  <a href="solver.html">🤷🏻‍♂️ Ask Doubt</a></a>
-  <a href="refbook.html">📒 Reference Book</a></a>
+  <a href="solver.html">🤷🏻‍♂️ Ask Doubt</a>
+  <a href="refbook.html">📒 Reference Book</a>
   <a href="calculator.html">📟 Calculator</a>
-  <a href="tests.html">📝 Tests</a> </a>
+  <a href="tests.html">📝 Tests</a> 
   <a href="ask-chat.html">🤖 Ask Chat</a>
 </aside>
 
 <div id="overlay"></div>
 
 <main>
-
 <section class="hero">
   <h1>Power <span class="accent">∝</span> Work</h1>
   <p>Your personal study hub with notes, tools & tests.</p>
@@ -66,13 +66,11 @@
   </div>
 
   <div class="card-container">
-
     <div class="card" onclick="goto('classes.html')">
       <span class="emoji">📘</span>
       <h3>Classes</h3>
       <p>Notes for all subjects</p>
     </div>
-
     <div class="card" onclick="goto('tests.html')">
       <span class="emoji">📝</span>
       <h3>Tests</h3>
@@ -83,7 +81,6 @@
       <h3>Reference Book</h3>
       <p>Advance Books</p>
     </div>
-
     <div class="card" onclick="goto('ask-chat.html')">
       <span class="emoji">🤖</span>
       <h3>Ask Chat</h3>
@@ -93,35 +90,40 @@
       <span class="emoji">🎮</span>
       <h3>Fun</h3>
       <p>Pass Your Time Smoothly</p>
+    </div>
+    <div class="card" onclick="window.location.href='https://medo.dev/apps/app-8miaxso1s35t?s=s'" style="cursor:pointer;">
+      <span class="emoji">💰</span>
+      <h3>Roitx Management</h3>
+      <p>Manage your data</p>
+    </div>
   </div>
-<div class="card" onclick="window.location.href='https://medo.dev/apps/app-8miaxso1s35t?s=s'" style="cursor:pointer;">
-  <span class="emoji">💰</span>
-  <h3>Roitx Management</h3>
-  <p>Manage your data</p>
-</div>
-  </div>
-
 </section>
 
 <section class="motivation">
   <h2>Daily Motivation</h2>
   <button class="mot-btn" onclick="showMotivation()">✨ Generate Quote</button>
   <div id="motBox" class="mot-box"></div>
-  <!-- BACKGROUND CANVAS -->
-<canvas id="bgCanvas"></canvas>
-
-<!-- WAVE BOTTOM -->
-<svg id="waveBottom" viewBox="0 0 1440 120" preserveAspectRatio="none">
-  <path id="waveBottomPath" d=""></path>
-</svg>
+  <canvas id="bgCanvas"></canvas>
+  <svg id="waveBottom" viewBox="0 0 1440 120" preserveAspectRatio="none">
+    <path id="waveBottomPath" d=""></path>
+  </svg>
 </section>
 
 <footer>
   © <span id="year"></span> Rohit ki Notes — Built with ❤️
 </footer>
-
 </main>
 
 <script src="script.js"></script>
+
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(reg => console.log('Roitx App Ready!'))
+        .catch(err => console.error('Registration failed:', err));
+    });
+  }
+</script>
 </body>
 </html>
