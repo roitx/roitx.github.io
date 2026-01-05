@@ -387,3 +387,11 @@ footer {
   z-index: -2;      /* wave ke neeche */
   pointer-events: none;
 }
+/*app*/
+body {
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+body.app-loaded {
+  opacity: 1;
+  }
