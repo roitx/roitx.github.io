@@ -8,7 +8,7 @@ const STATIC_ASSETS = [
   "/style.css",
   "/script.js",
   "/manifest.json",
-  "/profile.jpg" // Keep your single profile.jpg
+  "/profile.jpg"
 ];
 
 // INSTALL
@@ -33,7 +33,7 @@ self.addEventListener("activate", e => {
   self.clients.claim();
 });
 
-// FETCH — smart strategy
+// FETCH — cache-first with dynamic fallback
 self.addEventListener("fetch", e => {
   if (e.request.method !== "GET") return;
 
@@ -53,14 +53,14 @@ self.addEventListener("fetch", e => {
   );
 });
 
-// BACKGROUND SYNC
+// BACKGROUND SYNC (future-ready)
 self.addEventListener("sync", e => {
   if (e.tag === "roitx-sync") {
     console.log("ROITX background sync completed");
   }
 });
 
-// PUSH NOTIFICATIONS
+// PUSH NOTIFICATIONS (future-ready)
 self.addEventListener("push", e => {
   const data = e.data?.json() || {
     title: "ROITX",
@@ -70,21 +70,21 @@ self.addEventListener("push", e => {
   e.waitUntil(
     self.registration.showNotification(data.title, {
       body: data.body,
-      icon: "/profile.jpg", // Use the same profile.jpg
-      badge: "/profile.jpg", // Same here
+      icon: "/profile.jpg",
+      badge: "/profile.jpg",
       vibrate: [100, 50, 100],
       tag: "roitx-notify"
     })
   );
 });
 
-// APP OPEN / CLICK
+// NOTIFICATION CLICK HANDLER
 self.addEventListener("notificationclick", e => {
   e.notification.close();
   e.waitUntil(
     clients.matchAll({ type: "window" }).then(clientList => {
       for (const client of clientList) {
-        if (client.url.includes("/index.html") && "focus" in client) {
+        if (client.url.endsWith("/index.html") && "focus" in client) {
           return client.focus();
         }
       }
