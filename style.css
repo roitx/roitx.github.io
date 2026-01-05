@@ -310,7 +310,7 @@ main { margin-top: 80px; }
   bottom: -2px;
   left: 0;
   width: 100vw;
-  height: 180px;
+  height: 180px; /* height ko JS me match karenge */
   z-index: -1;
   pointer-events: none;
 }
