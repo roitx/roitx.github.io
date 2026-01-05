@@ -8,7 +8,7 @@ const STATIC_ASSETS = [
   "/style.css",
   "/script.js",
   "/manifest.json",
-  "/profile.jpg" // Pehle profile.jpg tha, ab favicon.png
+  "/profile.jpg" // Keep your single profile.jpg
 ];
 
 // INSTALL
@@ -70,8 +70,8 @@ self.addEventListener("push", e => {
   e.waitUntil(
     self.registration.showNotification(data.title, {
       body: data.body,
-      icon: "/profile.jpg", // Updated logo
-      badge: "/profile.jpg", // Updated badge
+      icon: "/profile.jpg", // Use the same profile.jpg
+      badge: "/profile.jpg", // Same here
       vibrate: [100, 50, 100],
       tag: "roitx-notify"
     })
