@@ -1,0 +1,93 @@
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}
+
+body{
+  background:radial-gradient(circle at top,#0b1b3a,#030712);
+  overflow:hidden;
+  color:white;
+}
+
+/* HUD */
+.hud{
+  position:fixed;
+  top:12px;
+  left:50%;
+  transform:translateX(-50%);
+  display:flex;
+  gap:18px;
+  padding:10px 18px;
+  border-radius:18px;
+  background:rgba(255,255,255,0.12);
+  backdrop-filter:blur(12px);
+  box-shadow:0 0 25px rgba(0,153,255,.5);
+  z-index:10;
+}
+
+/* Canvas */
+canvas{
+  display:block;
+}
+
+/* Screens */
+.screen{
+  position:fixed;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  background:rgba(0,0,0,0.6);
+  backdrop-filter:blur(10px);
+  z-index:20;
+  display:none;
+}
+
+.screen.show{display:flex;}
+
+.screen h1,.screen h2{
+  font-size:36px;
+  text-shadow:0 0 25px cyan;
+}
+
+.screen button{
+  margin-top:20px;
+  padding:14px 28px;
+  font-size:16px;
+  border:none;
+  border-radius:14px;
+  cursor:pointer;
+  background:linear-gradient(135deg,#3aa0ff,#6f7bff);
+  box-shadow:0 0 30px rgba(58,160,255,.8);
+  color:white;
+}
+
+/* Mobile Controls */
+.controls{
+  position:fixed;
+  bottom:20px;
+  width:100%;
+  display:flex;
+  justify-content:center;
+  gap:20px;
+  z-index:15;
+}
+
+.controls button{
+  width:64px;
+  height:64px;
+  border-radius:50%;
+  font-size:24px;
+  border:none;
+  background:rgba(255,255,255,0.18);
+  backdrop-filter:blur(8px);
+  color:white;
+  box-shadow:0 0 20px rgba(58,160,255,.7);
+}
+
+.controls button:active{
+  transform:scale(.88);
+  box-shadow:0 0 35px cyan;
+}
+
+@media(min-width:900px){
+  .controls{display:none;}
+}
