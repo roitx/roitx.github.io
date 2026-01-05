@@ -233,22 +233,23 @@ let t = 0;
 
 function animateWave() {
   t += 0.03;
-  let d = "M0 60 ";
+  const waveHeight = 60;   // wave starting height
+  const amplitude = 16;    // wave height (12->16 for premium look)
+  const bottomLimit = 180; // matches CSS height
+
+  let d = `M0 ${waveHeight} `;
   for(let x = 0; x <= window.innerWidth; x += 20){
-    let y = 60 + Math.sin(x*0.01 + t)*12;
+    let y = waveHeight + Math.sin(x*0.01 + t)*amplitude;
     d += `L ${x} ${y} `;
   }
-  d += `L ${window.innerWidth} 120 L0 120 Z`;
+  d += `L ${window.innerWidth} ${bottomLimit} L0 ${bottomLimit} Z`;
   wavePathBottom.setAttribute("d", d);
 
   requestAnimationFrame(animateWave);
 }
 animateWave();
-//app load//
+
+// App load effect
 window.addEventListener("load", () => {
   document.body.classList.add("app-loaded");
 });
-
-
-
-
