@@ -224,3 +224,8 @@ function animateWave(){
   requestAnimationFrame(animateWave);
 }
 animateWave();
+
+//app load//
+window.addEventListener("load", () => {
+  document.body.classList.add("app-loaded");
+});
