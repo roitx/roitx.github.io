@@ -1,4 +1,4 @@
-motModalIVATIONIVATIONIVATIONIVATIONNAVIGATION
+// NAVIGATION 
 function goto(page){ window.location.href = page; }
 
 // SIDEMENU
@@ -9,8 +9,8 @@ const menuBtn = document.getElementById("menuBtn");
 
 /* MENU OPEN */
 menuBtn.addEventListener("click", () => {
-  sideMenu.classList.add("open");
-  overlay.classList.add("show");
+  sideMenu.classList.toggle("open");
+  overlay.classList.toggle("show");
 });
 
 /* MENU CLOSE by overlay tap */
@@ -57,7 +57,6 @@ const modalHTML = `
 </div>`;
 document.body.insertAdjacentHTML('beforeend', modalHTML);
 const quotes = [
-"Success = Consistency × Hard Work!",
 "Success = Consistency × Hard Work!",
 "Winners are not born, they are built!",
 "Focus on progress, not perfection!",
@@ -171,9 +170,11 @@ const quotes = [
 function showMotivation() {
   const quote = quotes[Math.floor(Math.random() * quotes.length)];
   document.getElementById('motText').innerText = quote;
-  document.getElementById('motModal').classList.add('modal-active');
-}
+  const modal = document.getElementById('motModal');
+  modal.classList.add('modal-active');
 
+  setTimeout(() => modal.classList.remove('modal-active'), 5000);
+}
 function closeMot() {
  document.getElementById('motModal').classList.remove('modal-active');
 }
@@ -182,29 +183,35 @@ function closeMot() {
 const c = document.getElementById("bgCanvas");
 const ctx = c.getContext("2d");
 
-function resizeCanvas(){
+let dots = [];
+const numDots = Math.floor(window.innerWidth / 30); // screen size ke hisaab se dots
+
+function createDots() {
+  dots = [];
+  for(let i = 0; i < numDots; i++){
+    dots.push({
+      x: Math.random() * c.width,
+      y: Math.random() * c.height,
+      r: 1.5 + Math.random() * 2,
+      dx: (Math.random() - 0.5) * 0.4,
+      dy: (Math.random() - 0.5) * 0.4
+    });
+  }
+}
+
+function resizeCanvas() {
   c.width = window.innerWidth;
   c.height = window.innerHeight;
+  createDots(); // resize me new positions
 }
 resizeCanvas();
 window.addEventListener("resize", resizeCanvas);
 
-let dots = [];
-for(let i = 0; i < 35; i++){
-  dots.push({
-    x: Math.random()*c.width,
-    y: Math.random()*c.height,
-    r: 1.5 + Math.random()*2,
-    dx: (Math.random()-0.5)*0.4,
-    dy: (Math.random()-0.5)*0.4
-  });
-}
-
-function animate(){
-  ctx.clearRect(0,0,c.width,c.height);
-  dots.forEach(d=>{
+function animateDots() {
+  ctx.clearRect(0, 0, c.width, c.height);
+  dots.forEach(d => {
     ctx.beginPath();
-    ctx.arc(d.x,d.y,d.r,0,Math.PI*2);
+    ctx.arc(d.x, d.y, d.r, 0, Math.PI*2);
     ctx.fillStyle = "rgba(255,255,255,0.25)";
     ctx.fill();
 
@@ -215,29 +222,28 @@ function animate(){
     if(d.y < 0 || d.y > c.height) d.dy *= -1;
   });
 
-  requestAnimationFrame(animate);
+  requestAnimationFrame(animateDots);
 }
-animate();
+animateDots();
 
 
 // WAVE BOTTOM (BACKGROUND STYLE)
 const wavePathBottom = document.getElementById("waveBottomPath");
 let t = 0;
 
-function animateWave(){
+function animateWave() {
   t += 0.03;
   let d = "M0 60 ";
-  for(let x=0; x<=1440; x+=20){
+  for(let x = 0; x <= window.innerWidth; x += 20){
     let y = 60 + Math.sin(x*0.01 + t)*12;
     d += `L ${x} ${y} `;
   }
-  d += "L1440 120 L0 120 Z";
+  d += `L ${window.innerWidth} 120 L0 120 Z`;
   wavePathBottom.setAttribute("d", d);
 
   requestAnimationFrame(animateWave);
 }
 animateWave();
-
 //app load//
 window.addEventListener("load", () => {
   document.body.classList.add("app-loaded");
