@@ -1,166 +1,108 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Neon Gravity Chaos - Ultra Max</title>
-    <style>
-        body { margin: 0; background: #050505; overflow: hidden; font-family: 'Orbitron', sans-serif; }
-        #overlay { position: absolute; top: 10px; width: 100%; text-align: center; color: #0ff; text-shadow: 0 0 10px #0ff; pointer-events: none; }
-        canvas { display: block; }
-    </style>
+<meta charset="UTF-8">
+<title>ROITX – Game</title>
+<style>
+body{margin:0;background:black;overflow:hidden;font-family:Arial}
+canvas{display:block;margin:auto}
+</style>
 </head>
 <body>
-    <div id="overlay">
-        <h1>NEON GRAVITY CHAOS</h1>
-        <p>Use Arrow Keys to Change Gravity | Click to Spawn</p>
-        <h2 id="count">Objects: 0</h2>
-    </div>
-    <canvas id="world"></canvas>
+
+<canvas id="game" width="900" height="450"></canvas>
 
 <script>
-const canvas = document.getElementById('world');
-const ctx = canvas.getContext('2d');
-const countDisp = document.getElementById('count');
+const c=document.getElementById("game"),x=c.getContext("2d");
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+let state="play",paused=false;
+let speed=6,score=0,gravity=0.7,shake=0;
 
-let shapes = [];
-let particles = [];
-let hazards = []; 
-let multipliers = [];
-let gravity = { x: 0, y: 0.3 };
+const player={x:120,y:320,w:40,h:40,dy:0,j:false};
+let enemies=[],powerups=[];
+let shield=false;
 
-// --- Objects Configuration ---
-class Hazard {
-    constructor(x, y) { this.x = x; this.y = y; this.r = 20; }
-    draw() {
-        ctx.shadowBlur = 20; ctx.shadowColor = "red";
-        ctx.fillStyle = "#ff2222";
-        ctx.beginPath();
-        for(let i=0; i<6; i++) {
-            let a = i * Math.PI / 3;
-            ctx.lineTo(this.x + Math.cos(a)*this.r, this.y + Math.sin(a)*this.r);
-        }
-        ctx.fill();
-        ctx.shadowBlur = 0;
-    }
+function glow(a,b,w,h,col){
+ x.shadowColor=col;x.shadowBlur=18;
+ x.fillStyle=col;x.fillRect(a,b,w,h);
+ x.shadowBlur=0;
 }
 
-class Portal {
-    constructor(x, y) { this.x = x; this.y = y; this.r = 30; this.hue = 120; }
-    draw() {
-        ctx.strokeStyle = `hsla(${this.hue}, 100%, 50%, 0.8)`;
-        ctx.lineWidth = 4;
-        ctx.shadowBlur = 20; ctx.shadowColor = "#0f0";
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.r, 0, Math.PI*2);
-        ctx.stroke();
-        ctx.shadowBlur = 0;
-    }
+function spawnEnemy(){
+ let type=Math.random();
+ if(type<0.3) enemies.push({t:"runner",x:c.width,y:320,w:35,h:50});
+ else if(type<0.5) enemies.push({t:"zigzag",x:c.width,y:260,w:35,h:35,dir:1});
+ else if(type<0.7) enemies.push({t:"fly",x:c.width,y:200,w:35,h:35});
+ else if(type<0.9) enemies.push({t:"rush",x:c.width,y:320,w:30,h:45});
+ else enemies.push({t:"boss",x:c.width,y:290,w:70,h:80,hp:2});
+}
+setInterval(()=>{ if(!paused) spawnEnemy(); },1300);
+
+function collide(a,b){
+ return a.x<b.x+b.w && a.x+a.w>b.x && a.y<b.y+b.h && a.y+a.h>b.y;
 }
 
-class NeonShape {
-    constructor(x, y, vx, vy) {
-        this.x = x; this.y = y;
-        this.v = { x: vx, y: vy };
-        this.r = 10;
-        this.hue = Math.random() * 360;
-        this.dead = false;
-    }
-    update() {
-        this.v.x += gravity.x;
-        this.v.y += gravity.y;
-        this.x += this.v.x;
-        this.y += this.v.y;
+function loop(){
+ if(paused){requestAnimationFrame(loop);return;}
 
-        // Bounce
-        if(this.x < 0 || this.x > canvas.width) this.v.x *= -0.7;
-        if(this.y < 0 || this.y > canvas.height) this.v.y *= -0.7;
+ x.save();
+ if(shake>0){
+  x.translate(Math.random()*shake,Math.random()*shake);
+  shake*=0.9;
+ }
 
-        // Hazard Collision
-        hazards.forEach(h => {
-            if(Math.hypot(this.x - h.x, this.y - h.y) < this.r + h.r) {
-                this.dead = true;
-                this.explode();
-            }
-        });
+ x.clearRect(0,0,c.width,c.height);
 
-        // Portal Collision
-        multipliers.forEach(p => {
-            if(Math.hypot(this.x - p.x, this.y - p.y) < this.r + p.r && shapes.length < 150) {
-                this.v.y *= -1.2;
-                spawn(this.x, this.y);
-            }
-        });
-    }
-    explode() {
-        for(let i=0; i<10; i++) {
-            particles.push({
-                x: this.x, y: this.y,
-                vx: (Math.random()-0.5)*15, vy: (Math.random()-0.5)*15,
-                life: 1.0, hue: this.hue
-            });
-        }
-    }
-    draw() {
-        ctx.fillStyle = `hsla(${this.hue}, 100%, 50%, 1)`;
-        ctx.shadowBlur = 15; ctx.shadowColor = `hsla(${this.hue}, 100%, 50%, 0.5)`;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.r, 0, Math.PI*2);
-        ctx.fill();
-        ctx.shadowBlur = 0;
-    }
+ // Player
+ player.dy+=gravity;
+ player.y+=player.dy;
+ if(player.y>=320){player.y=320;player.j=false;}
+ glow(player.x,player.y,player.w,player.h,"#0ff");
+
+ // Enemies AI
+ enemies.forEach((e,i)=>{
+  if(e.t==="runner") e.x-=speed;
+  if(e.t==="fly") e.x-=speed+1;
+  if(e.t==="rush"){e.x-=speed*1.8;}
+  if(e.t==="zigzag"){
+   e.x-=speed;
+   e.y+=e.dir*2;
+   if(e.y<200||e.y>300) e.dir*=-1;
+  }
+  if(e.t==="boss") e.x-=speed*0.6;
+
+  let col="#f0f";
+  if(e.t==="boss") col="#f00";
+  glow(e.x,e.y,e.w,e.h,col);
+
+  if(collide(player,e)){
+   if(shield){shield=false;enemies.splice(i,1);shake=10;}
+   else{
+    alert("ROITX FINAL OVER\nScore: "+score);
+    location.reload();
+   }
+  }
+ });
+
+ score++;
+ speed+=0.0009;
+
+ // HUD
+ x.fillStyle="#fff";
+ x.font="18px Arial";
+ x.fillText("Score: "+score,20,30);
+ if(shield) x.fillText("Shield ON",20,55);
+
+ x.restore();
+ requestAnimationFrame(loop);
 }
 
-// --- Setup Level ---
-function init() {
-    for(let i=0; i<12; i++) hazards.push(new Hazard(Math.random()*canvas.width, Math.random()*canvas.height));
-    for(let i=0; i<6; i++) multipliers.push(new Portal(Math.random()*canvas.width, Math.random()*canvas.height));
-}
-
-function spawn(x, y) {
-    shapes.push(new NeonShape(x, y, (Math.random()-0.5)*10, -5));
-}
-
-// --- Inputs ---
-window.addEventListener('keydown', (e) => {
-    if(e.key === "ArrowUp") gravity = { x: 0, y: -0.3 };
-    if(e.key === "ArrowDown") gravity = { x: 0, y: 0.3 };
-    if(e.key === "ArrowLeft") gravity = { x: -0.3, y: 0 };
-    if(e.key === "ArrowRight") gravity = { x: 0.3, y: 0 };
+document.addEventListener("keydown",e=>{
+ if(e.code==="Space"&&!player.j){player.dy=-13;player.j=true;}
+ if(e.code==="KeyP") paused=!paused;
 });
 
-canvas.addEventListener('mousedown', (e) => spawn(e.clientX, e.clientY));
-
-// --- Main Loop ---
-function animate() {
-    ctx.fillStyle = 'rgba(5, 5, 5, 0.2)'; // Glassy Trail
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    hazards.forEach(h => h.draw());
-    multipliers.forEach(p => p.draw());
-
-    for(let i=shapes.length-1; i>=0; i--) {
-        shapes[i].update();
-        shapes[i].draw();
-        if(shapes[i].dead) shapes.splice(i, 1);
-    }
-
-    particles.forEach((p, i) => {
-        p.x += p.vx; p.y += p.vy; p.life -= 0.02;
-        ctx.fillStyle = `hsla(${p.hue}, 100%, 50%, ${p.life})`;
-        ctx.fillRect(p.x, p.y, 2, 2);
-        if(p.life <= 0) particles.splice(i, 1);
-    });
-
-    countDisp.innerText = `Objects: ${shapes.length}`;
-    requestAnimationFrame(animate);
-}
-
-init();
-spawn(canvas.width/2, 100);
-animate();
+loop();
 </script>
 </body>
 </html>
