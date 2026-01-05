@@ -1,22 +1,21 @@
 {
   "id": "/index.html",
-  "name": "ROITX – Rohit ki Notes",
-  "short_name": "ROITX",
-  "description": "A powerful personal study hub with notes, tools, tests, smart assistant & fun.",
-  "start_url": "/index.html",
+  "name": "Roitx Study Hub",
+  "short_name": "Roitx",
+  "description": "Personal Study Hub for Notes and Tools",
+  "start_url": "./index.html",
   "scope": "/",
   "display": "standalone",
   "display_override": ["standalone"],
-  "background_color": "#0b0b0f",
-  "theme_color": "#00ffff",
+  "background_color": "#ffffff",
+  "theme_color": "#1a1a1a",
   "orientation": "portrait-primary",
   "lang": "en-IN",
   "dir": "ltr",
   "categories": ["education", "productivity", "utilities"],
   "icons": [
-    { "src": "profile.jpg", "sizes": "512x512", "type": "image/jpeg", "purpose": "maskable any" },
     { "src": "profile.jpg", "sizes": "192x192", "type": "image/jpeg", "purpose": "maskable any" },
-    { "src": "profile.jpg", "sizes": "96x96", "type": "image/jpeg", "purpose": "maskable any" }
+    { "src": "profile.jpg", "sizes": "512x512", "type": "image/jpeg", "purpose": "maskable any" }
   ],
   "shortcuts": [
     {
@@ -32,7 +31,7 @@
       "name": "Reference Book",
       "short_name": "Book",
       "description": "Quick access to reference books",
-      "url": "/refbook.html",  // Updated URL
+      "url": "/refbook.html",
       "icons": [
         { "src": "profile.jpg", "sizes": "96x96", "type": "image/jpeg" }
       ]
