@@ -248,3 +248,7 @@ animateWave();
 window.addEventListener("load", () => {
   document.body.classList.add("app-loaded");
 });
+
+
+
+
