@@ -1,0 +1,299 @@
+/* ================= ROOT VARIABLES ================= */
+:root {
+  --bg: #070f1d;
+  --bg-soft: #0c1830;
+  --text: #e9f2ff;
+  --muted: #9fb4d6;
+  --accent: #3aa0ff;
+
+  --card: rgba(255, 255, 255, 0.05);
+  --border: rgba(255, 255, 255, 0.08);
+
+  --topbar-bg: rgba(12, 24, 48, 0.75);
+  --text-color: #e9f2ff;
+}
+
+/* ================= LIGHT MODE ================= */
+body.light {
+  --bg: #edf1f7;
+  --bg-soft: rgba(255, 255, 255, 0.78);
+  --text: #0a1020;
+  --muted: #63708c;
+  --accent: #2563eb;
+
+  --card: rgba(255, 255, 255, 0.75);
+  --border: rgba(255, 255, 255, 0.45);
+
+  --topbar-bg: rgba(255, 255, 255, 0.72);
+  --text-color: #0a1020;
+}
+
+/* ================= RESET ================= */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Segoe UI", system-ui, sans-serif;
+}
+
+/* ================= BODY ================= */
+body {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  transition: 0.4s ease, background 0.4s ease;
+  overflow-x: hidden;
+  position: relative;
+  z-index: 0;
+}
+
+/* ================= BACKGROUND STARS ================= */
+body::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: url('https://www.transparenttextures.com/patterns/star-sky.png');  /* Example texture */
+  opacity: 0.25;
+  pointer-events: none;
+  z-index: -3;
+}
+
+/* ================= WAVE EFFECT ================= */
+#waveBottom {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 150px;
+  z-index: -2;
+  pointer-events: none;
+  animation: waveAnimation 6s ease-in-out infinite;
+}
+
+@keyframes waveAnimation {
+  0% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(-10px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+#waveBottom path {
+  fill: var(--bg-soft);
+}
+
+/* ================= FOOTER ================= */
+footer {
+  padding: 16px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted);
+  position: relative;
+  z-index: 1;
+}
+
+/* ================= TOPBAR ================= */
+.topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--topbar-bg);
+  color: var(--text-color);
+  backdrop-filter: blur(22px) saturate(160%);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 15px 40px rgba(0,0,0,0.25);
+  border-radius: 0 0 18px 18px;
+  z-index: 1000;
+}
+
+main { margin-top: 80px; }
+
+/* ================= BRAND ================= */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+}
+
+.brand-name {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.glow {
+  text-shadow:
+    0 0 10px rgba(58,160,255,0.9),
+    0 0 25px rgba(58,160,255,0.6);
+}
+
+.brand-sub {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ================= HERO ================= */
+.hero {
+  text-align: center;
+  padding: 70px 20px;
+  z-index: 1;
+}
+
+.hero h1 {
+  font-size: 44px;
+}
+
+.accent { color: var(--accent); }
+
+.hero p {
+  margin-top: 12px;
+  color: var(--muted);
+}
+
+/* ================= BUTTON CARDS ================= */
+.card-container {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-top: 40px;
+}
+
+.card {
+  width: 220px;
+  background: var(--card);
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  cursor: pointer;
+  transition: 0.3s ease-in-out;
+  z-index: 1;
+}
+
+.card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+}
+
+.card h3 {
+  margin-top: 12px;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.card p {
+  margin-top: 8px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.card .btn {
+  margin-top: 18px;
+  padding: 12px 20px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 16px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.card .btn:hover {
+  transform: scale(1.05);
+}
+
+/* ================= BUTTONS ================= */
+.btn {
+  padding: 14px 22px;
+  border-radius: 16px;
+  border: none;
+  background: var(--card);
+  color: var(--text);
+  cursor: pointer;
+  margin: 10px;
+  transition: 0.25s ease-in-out;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
+}
+
+.btn:active {
+  transform: scale(0.95);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+}
+
+.btn.primary {
+  background: linear-gradient(135deg, var(--accent), #6f7bff);
+  color: #fff;
+}
+
+/* ================= DARK / LIGHT SWITCH ================= */
+.switch {
+  position: relative;
+  width: 54px;
+  height: 28px;
+}
+
+.switch input { display: none; }
+
+.slider {
+  position: absolute;
+  inset: 0;
+  background: var(--card);
+  border-radius: 50px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.slider::before {
+  content: "";
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  left: 3px;
+  top: 2px;
+  background: var(--accent);
+  border-radius: 50%;
+  transition: 0.35s cubic-bezier(.4,0,.2,1);
+  box-shadow: 0 0 12px var(--accent);
+}
+
+.switch input:checked + .slider::before {
+  transform: translateX(26px);
+}
+
+/* ================= MOTIVATION POPUP ================= */
+#motivationPopup {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  padding: 30px;
+  border-radius: 10px;
+  width: 300px;
