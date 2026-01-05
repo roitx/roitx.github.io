@@ -1,79 +1,96 @@
-const CACHE_VERSION = 'v2';
-const STATIC_CACHE = `roitx-static-${CACHE_VERSION}`;
-const DYNAMIC_CACHE = `roitx-dynamic-${CACHE_VERSION}`;
+const VERSION = "roitx-ultra-v3";
+const STATIC_CACHE = `${VERSION}-static`;
+const DYNAMIC_CACHE = `${VERSION}-dynamic`;
 
 const STATIC_ASSETS = [
-  '/',
-  '/index.html',
-  '/style.css',
-  '/script.js',
-  '/classes.html',
-  '/view.html',
-  '/tests.html',
-  '/profile.jpg',
-  '/manifest.json'
+  "/",
+  "/index.html",
+  "/style.css",
+  "/script.js",
+  "/manifest.json",
+  "/profile.jpg"
 ];
 
 // INSTALL
-self.addEventListener('install', event => {
+self.addEventListener("install", e => {
   self.skipWaiting();
-  event.waitUntil(
-    caches.open(STATIC_CACHE).then(cache => {
-      return cache.addAll(STATIC_ASSETS);
-    })
+  e.waitUntil(
+    caches.open(STATIC_CACHE).then(cache => cache.addAll(STATIC_ASSETS))
   );
 });
 
-// ACTIVATE (Old cache cleanup)
-self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys().then(keys => {
-      return Promise.all(
-        keys
-          .filter(key => key !== STATIC_CACHE && key !== DYNAMIC_CACHE)
-          .map(key => caches.delete(key))
-      );
-    })
+// ACTIVATE
+self.addEventListener("activate", e => {
+  e.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(
+        keys.map(k => {
+          if (!k.startsWith(VERSION)) return caches.delete(k);
+        })
+      )
+    )
   );
   self.clients.claim();
 });
 
-// FETCH
-self.addEventListener('fetch', event => {
-  const { request } = event;
+// FETCH — smart strategy
+self.addEventListener("fetch", e => {
+  if (e.request.method !== "GET") return;
 
-  // Ignore non-GET requests
-  if (request.method !== 'GET') return;
-
-  // HTML → Network first (fresh content)
-  if (request.headers.get('accept')?.includes('text/html')) {
-    event.respondWith(
-      fetch(request)
-        .then(res => {
-          const clone = res.clone();
-          caches.open(DYNAMIC_CACHE).then(cache => cache.put(request, clone));
-          return res;
-        })
-        .catch(() => caches.match(request))
-    );
-    return;
-  }
-
-  // CSS / JS / Images → Cache first
-  event.respondWith(
-    caches.match(request).then(cached => {
+  e.respondWith(
+    caches.match(e.request).then(cached => {
       if (cached) return cached;
 
-      return fetch(request)
+      return fetch(e.request)
         .then(res => {
           return caches.open(DYNAMIC_CACHE).then(cache => {
-            cache.put(request, res.clone());
+            cache.put(e.request, res.clone());
             return res;
           });
         })
-        .catch(() => {
-          // Offline fallback (optional)
-        });
+        .catch(() => caches.match("/index.html"));
+    })
+  );
+});
+
+// BACKGROUND SYNC (future)
+self.addEventListener("sync", e => {
+  if (e.tag === "roitx-sync") {
+    console.log("ROITX background sync completed");
+  }
+});
+
+// PUSH NOTIFICATIONS (future ready)
+self.addEventListener("push", e => {
+  const data = e.data?.json() || {
+    title: "ROITX",
+    body: "New update available 🚀"
+  };
+
+  e.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: "/profile.jpg",
+      badge: "/profile.jpg",
+      vibrate: [100, 50, 100],
+      tag: "roitx-notify"
+    })
+  );
+});
+
+// APP OPEN / CLICK
+self.addEventListener("notificationclick", e => {
+  e.notification.close();
+  e.waitUntil(
+    clients.matchAll({ type: "window" }).then(clientList => {
+      for (const client of clientList) {
+        if (client.url === "/index.html" && "focus" in client) {
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow("/index.html");
+      }
     })
   );
 });
