@@ -1,18 +1,11 @@
 {
-  "id": "/index.html",
-  "name": "Roitx - Smart Study Hub",
+  "name": "Roitx Study Hub",
   "short_name": "Roitx",
   "description": "Personal Study Hub for Notes and Tools",
-  "start_url": "/index.html",
-  "scope": "/",
+  "start_url": "./index.html",
   "display": "standalone",
-  "display_override": ["standalone"],
-  "orientation": "portrait-primary",
-  "background_color": "#0a1b3d",
-  "theme_color": "#833AB4",
-  "lang": "en-IN",
-  "dir": "ltr",
-  "categories": ["education", "productivity"],
+  "background_color": "#ffffff",
+  "theme_color": "#1a1a1a",
   "icons": [
     {
       "src": "profile.jpg",
@@ -24,26 +17,5 @@
       "sizes": "512x512",
       "type": "image/jpeg"
     }
-  ],
-  "shortcuts": [
-    {
-      "name": "Study Timer",
-      "short_name": "Timer",
-      "url": "/study-timer.html",
-      "icons": [{ "src": "profile.jpg", "sizes": "96x96", "type": "image/jpeg" }]
-    },
-    {
-      "name": "Reference Book",
-      "short_name": "Books",
-      "url": "/refbook.html",
-      "icons": [{ "src": "profile.jpg", "sizes": "96x96", "type": "image/jpeg" }]
-    },
-    {
-      "name": "Notes",
-      "short_name": "Notes",
-      "url": "/view.html",
-      "icons": [{ "src": "profile.jpg", "sizes": "96x96", "type": "image/jpeg" }]
-    }
-  ],
-  "prefer_related_applications": false
+  ]
 }
