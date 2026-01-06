@@ -50,20 +50,15 @@ function toRoman(n){
   return romanMap[n] || n;
 }
 
-/* ================= LOCAL STORAGE ================= */
-function getStore(key){
-  return JSON.parse(localStorage.getItem(key) || "[]");
-}
-function setStore(key,data){
-  localStorage.setItem(key,JSON.stringify(data));
-}
-
-function addRecent(book){
-  let recent = getStore("recentFiles");
-  recent = recent.filter(r => r.url !== book.url);
-  recent.unshift(book);
-  recent = recent.slice(0,10);
-  setStore("recentFiles", recent);
+/* ================= SYSTEM FILE OPEN (PWA FIX) ================= */
+function openSystemFile(url){
+  const a = document.createElement("a");
+  a.href = url;
+  a.target = "_blank";      // required
+  a.rel = "noopener";      // safe
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 }
 
 /* ================= LOAD ================= */
@@ -95,7 +90,7 @@ async function loadRefBooks(){
 function showBooks(){
   currentLevel="book";
   selectedAuthor="";
-  backBtn.style.visibility="hidden";
+  backBtn.style.visibility="hidden"; // ❌ no back on home
   topTitle.textContent="Reference Books";
   grid.innerHTML="";
 
@@ -122,7 +117,7 @@ function showClasses(author){
 
   const classes=[...new Set(
     allBooks.filter(b=>b.author===author)
-            .map(b=>Number(b.class_no))
+      .map(b=>Number(b.class_no))
   )].sort((a,b)=>a-b);
 
   grid.innerHTML="";
@@ -143,7 +138,7 @@ function showSubjects(cls){
 
   const subjects=[...new Set(
     allBooks.filter(b=>b.author===selectedAuthor && Number(b.class_no)===cls)
-            .map(b=>b.subject)
+      .map(b=>b.subject)
   )];
 
   grid.innerHTML="";
@@ -190,17 +185,8 @@ function showChapters(subject){
     card.onclick=()=>{
       if(!ch.file_url) return;
 
-      const bookData = {
-        title: ch.chapter,
-        url: ch.file_url,
-        meta: `Class ${ch.class_no} • ${ch.subject}`
-      };
-
-      addRecent(bookData);
-
-      // ✅ PWA / App friendly
-      // System decides: open OR download
-      location.href = ch.file_url;
+      // ✅ SYSTEM PDF VIEWER
+      openSystemFile(ch.file_url);
     };
 
     grid.appendChild(card);
