@@ -1,0 +1,156 @@
+*{margin:0;padding:0;box-sizing:border-box;font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;}
+
+body {
+  background: radial-gradient(circle at center, #1a3a5f 0%, #030712 100%);
+  overflow: hidden;
+  color: white;
+  touch-action: none; /* Mobile par scroll rokne ke liye */
+}
+
+/* TOP BAR & HUD */
+.top-bar {
+  position: fixed;
+  top: 15px;
+  width: 95%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 100;
+}
+
+.hud {
+  display: flex;
+  gap: 15px;
+  padding: 8px 15px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 20px rgba(61, 90, 254, 0.4);
+  font-weight: bold;
+  font-size: 14px;
+}
+
+/* GLOW BUTTONS (General) */
+.glow-btn {
+  border: none;
+  border-radius: 12px;
+  color: white;
+  cursor: pointer;
+  background: linear-gradient(135deg, #7c4dff, #3d5afe);
+  box-shadow: 0 0 15px rgba(61, 90, 254, 0.6);
+  transition: 0.3s;
+  font-weight: bold;
+}
+
+.glow-btn.small { padding: 8px 12px; font-size: 12px; }
+.glow-btn.pause-icon { width: 40px; height: 40px; border-radius: 50%; }
+
+.glow-btn:active { transform: scale(0.9); box-shadow: 0 0 25px #3d5afe; }
+
+/* SCREENS */
+.screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 27, 61, 0.85);
+  backdrop-filter: blur(15px);
+  z-index: 200;
+  display: none;
+  text-align: center;
+}
+
+.screen.show { display: flex; }
+
+.glow-text {
+  font-size: 42px;
+  color: #fff;
+  text-shadow: 0 0 10px #3d5afe, 0 0 20px #3d5afe, 0 0 40px #7c4dff;
+  margin-bottom: 10px;
+}
+
+.glow-text.danger { text-shadow: 0 0 20px #ff1744; }
+
+.main-btn {
+  padding: 15px 40px;
+  font-size: 18px;
+  margin-top: 30px;
+  letter-spacing: 2px;
+}
+
+/* MOBILE CONTROLS (Only Left/Right) */
+.controls {
+  position: fixed;
+  bottom: 40px;
+  width: 100%;
+  display: flex;
+  justify-content: space-around;
+  padding: 0 20px;
+  z-index: 150;
+}
+
+.move-btn {
+  width: 75px;
+  height: 75px;
+  border-radius: 50%;
+  font-size: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  color: white;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+.auto-label {
+  align-self: center;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* MONSTER ALERT */
+.alert-text {
+  position: fixed;
+  top: 100px;
+  width: 100%;
+  text-align: center;
+  color: #ff1744;
+  font-weight: bold;
+  font-size: 24px;
+  text-shadow: 0 0 10px black;
+  display: none;
+  animation: blink 0.5s infinite;
+  z-index: 50;
+}
+
+@keyframes blink { 
+  0%, 100% { opacity: 1; } 
+  50% { opacity: 0; } 
+}
+
+canvas { display: block; }
+/* Pure app se text selection aur long-press blue highlight hatane ke liye */
+* {
+  -webkit-tap-highlight-color: transparent; /* Mobile tap highlight hatata hai */
+  -webkit-touch-callout: none;                /* iOS par long-press menu disable karta hai */
+  -webkit-user-select: none;                 /* Safari/Chrome select disable */
+  -khtml-user-select: none;                  /* Konqueror */
+  -moz-user-select: none;                    /* Firefox */
+  -ms-user-select: none;                     /* IE/Edge */
+  user-select: none;                         /* Standard logic */
+}
+
+/* Agar aap chahte hain ki sirf 'input' ya 'textarea' mein selection kaam kare */
+input, textarea {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+}
+

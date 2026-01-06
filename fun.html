@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Roitx Space Shooter</title>
+<link rel="stylesheet" href="stylegame.css">
+</head>
+
+<body>
+
+<div class="top-bar">
+  <button id="toggleControl" class="glow-btn small">🕹️ Mode: Buttons</button>
+  
+  <div class="hud">
+    <span id="score">Score: 0</span>
+    <span id="level">Lvl: 1</span>
+    <span id="lives">❤️ 3</span>
+  </div>
+
+  <button id="pauseBtn" class="glow-btn pause-icon">⏸️</button>
+</div>
+
+<canvas id="gameCanvas"></canvas>
+
+<div id="start-screen" class="screen show">
+  <div class="logo-container">
+    <h1 class="glow-text">🚀 ROITX SPACE</h1>
+    <p>Monster Boss appears every 1000 pts!</p>
+  </div>
+  <button id="startBtn" class="glow-btn main-btn">START MISSION</button>
+</div>
+
+<div id="game-over" class="screen">
+  <h2 class="glow-text danger">MISSION FAILED</h2>
+  <p id="final-score"></p>
+  <button id="restartBtn" class="glow-btn main-btn">RETRY</button>
+</div>
+
+<div class="controls" id="manual-controls">
+  <button id="leftBtn" class="move-btn">⬅</button>
+  <div class="auto-label">AUTO-FIRE ACTIVE</div>
+  <button id="rightBtn" class="move-btn">➡</button>
+</div>
+
+<div id="monster-alert" class="alert-text">⚠️ MONSTER APPROACHING! ⚠️</div>
+
+<script src="scriptgame.js"></script>
+</body>
+</html>
