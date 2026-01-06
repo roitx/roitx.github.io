@@ -159,25 +159,45 @@ body::after{
   transform:translateX(26px);
 }
 
-/* ================= MENU ICON ================= */
-.menu-icon{
-  width:36px;
-  height:36px;
-  border-radius:12px;
-  background:linear-gradient(135deg,#6a5cff,#9b7cff);
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
-  gap:5px;
-  box-shadow:0 8px 22px rgba(0,0,0,.45);
+/* ================= MENU ICON (GLOWING THEME) ================= */
+.menu-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px; /* Slightly sharper like the screenshot */
+  
+  /* Screenshot matching blue-purple gradient */
+  background: linear-gradient(135deg, #7c4dff, #3d5afe);
+  
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  
+  /* Glowing Effect: Neon blue shadow */
+  box-shadow: 0 0 15px rgba(61, 90, 254, 0.6), 
+              0 4px 10px rgba(0, 0, 0, 0.3);
+  
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.2); /* Subtle border for glass look */
 }
-.menu-icon span{
-  width:22px;
-  height:2.5px;
-  background:#fff;
-  border-radius:4px;
+
+.menu-icon span {
+  width: 20px;
+  height: 2.5px;
+  background: #ffffff;
+  border-radius: 4px;
+  /* Bars par bhi halka glow */
+  box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
 }
+
+/* Hover effect: Jab user touch ya click karega to glow badh jayega */
+.menu-icon:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(61, 90, 254, 0.8);
+}
+
 
 /* ================= SIDE MENU ================= */
 .side-menu{
