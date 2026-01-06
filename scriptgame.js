@@ -122,7 +122,7 @@ function update() {
                 bullets.splice(i, 1);
                 explode(b.x, b.y, "red");
                 if (monster.hp <= 0) {
-                    score += 500; monsterActive = false; monster = null;
+                    score += 100; monsterActive = false; monster = null;
                 }
             }
         });
