@@ -80,3 +80,23 @@ body{
   font-size:12px;
   color:#7c86c7;
 }
+
+/* Pure app se text selection aur long-press blue highlight hatane ke liye */
+* {
+  -webkit-tap-highlight-color: transparent; /* Mobile tap highlight hatata hai */
+  -webkit-touch-callout: none;                /* iOS par long-press menu disable karta hai */
+  -webkit-user-select: none;                 /* Safari/Chrome select disable */
+  -khtml-user-select: none;                  /* Konqueror */
+  -moz-user-select: none;                    /* Firefox */
+  -ms-user-select: none;                     /* IE/Edge */
+  user-select: none;                         /* Standard logic */
+}
+
+/* Agar aap chahte hain ki sirf 'input' ya 'textarea' mein selection kaam kare */
+input, textarea {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+}
+
