@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# Sitemap ka link Google ko dene ke liye
+Sitemap: https://roitx.github.io/sitemap.xml
