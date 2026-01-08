@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   
-  <title>Roitx — Rohit ki Notes | Personal Study Hub</title>
-  <meta name="description" content="Roitx (Rohit ki Notes) is a personal study hub providing notes, study timer, and educational tools for students.">
-  <meta name="keywords" content="Roitx, Rohit ki Notes, Study Hub, Educational Notes, Study Timer">
+  <title>Roitx — Personal Study Hub</title>
+  <meta name="description" content="Roitx is a personal study hub providing notes, study timer, and educational tools.">
+  <meta name="keywords" content="Roitx, Study Hub, Educational Notes, Study Timer, Roitx Notes">
   <meta name="google-site-verification" content="TPdziMXbg8H61q3oj7MyiCaks2OMPLYiblfLROZu2XY" />
 
   <link rel="manifest" href="manifest.json">
@@ -135,7 +135,7 @@
 </div>
 
 <footer>
-  © <span id="year"></span> Rohit ki Notes — Built with ❤️
+  © <span id="year"></span> ROITX — Built with ❤️
 </footer>
 
 </main>
@@ -145,7 +145,7 @@
   // PWA Service Worker
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.worker.register('./sw.js')
+      navigator.serviceWorker.register('./sw.js')
         .then(() => console.log('Roitx App Ready!'))
         .catch(err => console.error('SW failed:', err));
     });
