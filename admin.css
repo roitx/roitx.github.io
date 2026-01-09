@@ -248,6 +248,30 @@ label {
   box-shadow: 0 0 25px rgba(58,160,255,0.8);
 }
 
+/* FLOATING ST BUTTON */
+#stBtn {
+  position: fixed;
+  bottom: 150px; /* Doubt button ke thik upar ki exact jagah */
+  right: 22px;  /* Doubt button ke saath line mein */
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6bc6ff, #3aa0ff);
+  color: #fff;
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 9999;
+  box-shadow: 0 0 18px rgba(58,160,255,0.5);
+  transition: 0.3s ease;
+}
+
+#stBtn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 25px rgba(58,160,255,0.8);
+}
 /* FLOATING DOUBT BUTTON */
 #doubtBtn {
   position: fixed;
