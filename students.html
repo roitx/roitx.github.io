@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PM-Roit | Professional Coaching ERP</title>
+    <link rel="stylesheet" href="ststyle.css">
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+</head>
+<body oncontextmenu="return false;">
+
+    <div class="admin-container">
+        <header>
+            <h1>PM-Roit <span style="font-weight: 200;">Pro Admin</span></h1>
+            <p>Smart Coaching Management System</p>
+        </header>
+
+        <section class="card">
+            <h2>🏢 Coaching Branding & Settings</h2>
+            <div class="grid">
+                <div class="input-group"><label>Coaching Name</label><input type="text" id="cName"></div>
+                <div class="input-group"><label>Phone</label><input type="tel" id="cPhone"></div>
+                <div class="input-group"><label>Address</label><input type="text" id="cAddr"></div>
+            </div>
+            <div class="grid" style="margin-top: 15px;">
+                <div class="input-group">
+                    <label>Payment QR Code</label>
+                    <input type="file" accept="image/*" onchange="previewImg(this, 'qrPreview')">
+                    <img id="qrPreview" class="preview-box">
+                </div>
+                <div class="input-group">
+                    <label>Owner Signature (PNG)</label>
+                    <input type="file" accept="image/png" onchange="previewImg(this, 'sigPreview')">
+                    <img id="sigPreview" class="preview-box signature">
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="saveSettings()">Save Branding Settings</button>
+        </section>
+
+        <section class="card">
+            <h2>➕ Register New Student</h2>
+            <div class="grid">
+                <input type="text" id="sName" placeholder="Student Name">
+                <select id="sClass">
+                    <option value="9th">9th</option><option value="10th">10th</option>
+                    <option value="11th">11th</option><option value="12th">12th</option>
+                </select>
+                <input type="number" id="sTotal" placeholder="Total Fees (₹)">
+                <input type="file" id="sPhoto" accept="image/*" onchange="previewImg(this, 'sPreview')">
+            </div>
+            <img id="sPreview" class="std-preview-circle">
+            <button class="btn btn-primary" onclick="registerStudent()">Add Student to Database</button>
+        </section>
+
+        <div id="bulkBar" class="bulk-bar">
+            <span id="selCount">0 Selected</span>
+            <div class="bulk-actions">
+                <input type="number" id="bulkAmt" placeholder="Amt ₹">
+                <button class="btn btn-dark" onclick="bulkFeeUpdate()">Update Fees</button>
+                <button class="btn btn-danger" onclick="deleteSelected()">Delete</button>
+            </div>
+        </div>
+
+        <section class="card">
+            <div class="filter-header">
+                <h2>👥 Student Database</h2>
+                <select id="filterCls" onchange="loadStudents()">
+                    <option value="All">All Classes</option>
+                    <option value="9th">9th</option><option value="10th">10th</option>
+                    <option value="11th">11th</option><option value="12th">12th</option>
+                </select>
+            </div>
+            <div id="studentList"></div>
+        </section>
+    </div>
+
+    <div id="receiptModal">
+        <div class="receipt-paper" id="printArea">
+            <div class="receipt-header">
+                <h2 id="rCoachingName">Coaching Name</h2>
+                <p id="rCoachingAddr">Address</p>
+                <p id="rCoachingPhone">Phone</p>
+            </div>
+            <div class="receipt-body">
+                <div class="receipt-row-main">
+                    <div>
+                        <p><strong>Name:</strong> <span id="rStdName"></span></p>
+                        <p><strong>Class:</strong> <span id="rStdClass"></span></p>
+                    </div>
+                    <img id="rStdPhoto" class="receipt-std-img">
+                </div>
+                <hr>
+                <div class="fee-info">
+                    <p>Fees Paid: <strong id="rAmount"></strong></p>
+                    <p>Balance Due: <strong id="rBalance"></strong></p>
+                </div>
+            </div>
+            <div class="receipt-footer">
+                <div class="qr-sec"><img id="rQR"><span>Scan to Pay</span></div>
+                <div class="sig-sec"><img id="rSig"><span>Auth. Sign</span></div>
+            </div>
+            <div class="modal-btns">
+                <button class="btn btn-primary no-print" onclick="window.print()">Print Receipt</button>
+                <button class="btn btn-danger no-print" onclick="closeReceipt()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="stscript.js"></script>
+</body>
+</html>
