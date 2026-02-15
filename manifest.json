@@ -48,19 +48,19 @@
       "name": "Study Timer",
       "short_name": "Timer",
       "url": "/study-timer.html",
-      "icons": [{ "src": "profile.jpg", "sizes": "96x96", "type": "image/jpeg" }]
+      "icons": [{ "src": "profile.png", "sizes": "96x96", "type": "image/png" }]
     },
     {
       "name": "Reference Book",
       "short_name": "Books",
       "url": "/refbook.html",
-      "icons": [{ "src": "profile.jpg", "sizes": "96x96", "type": "image/jpeg" }]
+      "icons": [{ "src": "profile.png", "sizes": "96x96", "type": "image/png" }]
     },
     {
       "name": "Notes",
       "short_name": "Notes",
       "url": "/view.html",
-      "icons": [{ "src": "profile.jpg", "sizes": "96x96", "type": "image/jpeg" }]
+      "icons": [{ "src": "profile.png", "sizes": "96x96", "type": "image/png" }]
     }
   ],
   "prefer_related_applications": false
