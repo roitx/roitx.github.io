@@ -7,8 +7,8 @@
   "scope": "/",
   "display": "standalone",
   "display_override": ["standalone"],
-  "orientation": "any",
-  "background_color": "#ffffff",
+  "orientation": "portrait-primary",
+  "background_color": "#0a1b3d",
   "theme_color": "#833AB4",
   "lang": "en-IN",
   "dir": "ltr",
@@ -17,14 +17,12 @@
     {
       "src": "profile.jpg",
       "sizes": "192x192",
-      "type": "image/jpeg",
-      "purpose": "any"
+      "type": "image/jpeg"
     },
     {
       "src": "profile.jpg",
       "sizes": "512x512",
-      "type": "image/jpeg",
-      "purpose": "maskable"
+      "type": "image/jpeg"
     }
   ],
   "screenshots": [
@@ -64,4 +62,8 @@
     }
   ],
   "prefer_related_applications": false
-}
+} 
+
+
+
+  
