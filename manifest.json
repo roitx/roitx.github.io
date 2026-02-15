@@ -37,7 +37,7 @@
     },
     {
       "src": "dekstop.png",
-      "sizes": "1080x2400",
+      "sizes": "2400x1080",
       "type": "image/png",
       "form_factor": "wide",
       "label": "Roitx Desktop Hub"
