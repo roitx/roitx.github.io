@@ -61,7 +61,13 @@
       "short_name": "Notes",
       "url": "/view.html",
       "icons": [{ "src": "profile.jpg", "sizes": "96x96" }]
-    }
+    },
+    {
+      "name": "Reference Book",
+      "short_name": "Books",
+      "url": "/refbook.html",
+      "icons": [{ "src": "profile.jpg", "sizes": "96x96", "type": "image/jpeg" }]
+    },
   ],
   "edge_side_panel": {
     "preferred_width": 400
