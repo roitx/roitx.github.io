@@ -15,15 +15,15 @@
   "categories": ["education", "productivity"],
   "icons": [
     {
-      "src": "profile.png",
+      "src": "profile.jpg",
       "sizes": "192x192",
-      "type": "image/png",
+      "type": "image/jpeg",
       "purpose": "any maskable"
     },
     {
       "src": "profile.jpg",
       "sizes": "512x512",
-      "type": "image/png",
+      "type": "image/jpeg",
       "purpose": "any maskable"
     }
   ],
@@ -48,19 +48,19 @@
       "name": "Study Timer",
       "short_name": "Timer",
       "url": "/study-timer.html",
-      "icons": [{ "src": "profile.png", "sizes": "96x96", "type": "image/png" }]
+      "icons": [{ "src": "profile.jpg", "sizes": "96x96", "type": "image/jpeg" }]
     },
     {
       "name": "Reference Book",
       "short_name": "Books",
       "url": "/refbook.html",
-      "icons": [{ "src": "profile.png", "sizes": "96x96", "type": "image/png" }]
+      "icons": [{ "src": "profile.jpg", "sizes": "96x96", "type": "image/jpeg" }]
     },
     {
       "name": "Notes",
       "short_name": "Notes",
       "url": "/view.html",
-      "icons": [{ "src": "profile.png", "sizes": "96x96", "type": "image/png" }]
+      "icons": [{ "src": "profile.jpg", "sizes": "96x96", "type": "image/jpeg" }]
     }
   ],
   "prefer_related_applications": false
