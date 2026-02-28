@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>404 - Page Not Found | Roitx</title>
+    
+    <meta name="robots" content="noindex, follow">
+    <meta name="theme-color" content="#030B20">
+
+    <style>
+        /* CSS Variables for consistent branding */
+        :root {
+            --bg-color: #030B20;
+            --text-color: #ffffff;
+            --accent-color: #00d2ff;
+            --secondary-accent: #3a7bd5;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        /* Abstract Background Elements */
+        .bg-glow {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, var(--secondary-accent), transparent 70%);
+            filter: blur(50px);
+            opacity: 0.3;
+            z-index: -1;
+            animation: float 10s infinite alternate;
+        }
+
+        @keyframes float {
+            0% { transform: translate(-50%, -50%); }
+            100% { transform: translate(50%, 50%); }
+        }
+
+        .container {
+            max-width: 90%;
+            padding: 40px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .error-code {
+            font-size: clamp(80px, 15vw, 150px);
+            font-weight: 900;
+            background: linear-gradient(to right, var(--accent-color), var(--secondary-accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+            line-height: 1;
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+
+        p {
+            color: #a0aec0;
+            font-size: 1.1rem;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        /* Navigation Buttons */
+        .actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            text-decoration: none;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-color), var(--secondary-accent));
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(0, 210, 255, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 210, 255, 0.4);
+        }
+
+        .btn-outline {
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            color: var(--text-color);
+        }
+
+        .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: #fff;
+        }
+
+        /* Animated Illustration */
+        .icon-box {
+            margin-bottom: 20px;
+        }
+
+        .pulse {
+            animation: pulse-animation 2s infinite;
+        }
+
+        @keyframes pulse-animation {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Footer Info */
+        .footer {
+            margin-top: 40px;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        /* Small Screen Fixes */
+        @media (max-width: 480px) {
+            .container { padding: 30px 20px; }
+            h2 { font-size: 1.4rem; }
+            p { font-size: 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-glow" style="top: 20%; left: 30%;"></div>
+    <div class="bg-glow" style="bottom: 10%; right: 20%; background: radial-gradient(circle, #743ad5, transparent 70%);"></div>
+
+    <div class="container">
+        <div class="icon-box">
+            <svg class="pulse" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#00d2ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+        </div>
+
+        <div class="error-code">404</div>
+        <h2>Oops! Raasta Bhatak Gaye?</h2>
+        <p>Maaf kijiye, par jo page aap dhoond rahe hain wo hamare <b>Roitx Hub</b> mein nahi mil raha. Shayad link purani hai ya URL mein koi mistake hai.</p>
+
+        <div class="actions">
+            <a href="https://roitx.github.io/" class="btn btn-primary">Home Par Wapas Jayein</a>
+            <a href="javascript:history.back()" class="btn btn-outline">Pichle Page Par Jayein</a>
+        </div>
+
+        <div class="footer">
+            &copy; 2026 Roitx — Your Personal Study Hub
+        </div>
+    </div>
+
+    <script>
+        // Background moves slightly with mouse movement for a premium feel
+        document.addEventListener('mousemove', (e) => {
+            const glows = document.querySelectorAll('.bg-glow');
+            const x = e.clientX / window.innerWidth;
+            const y = e.clientY / window.innerHeight;
+            
+            glows.forEach((glow, index) => {
+                const speed = (index + 1) * 20;
+                glow.style.transform = `translate(${x * speed}px, ${y * speed}px)`;
+            });
+        });
+
+        // Log the 404 hit (Optional: You can use analytics here)
+        console.log("Roitx 404: User hit a non-existent page at " + window.location.href);
+    </script>
+</body>
+</html>
