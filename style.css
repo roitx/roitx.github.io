@@ -408,22 +408,26 @@ input, textarea {
   user-select: text;
 }
 
-/* ================= UPDATED INSTALL PROMPT (Pro Look) ================= */
+/* ================= UPDATED INSTALL PROMPT (Pro Look with Swipe Support) ================= */
 #installContainer {
   position: fixed;
   bottom: 25px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 10000; /* Sidebar se upar rakha hai */
+  z-index: 10000;
   width: 92%;
   max-width: 400px;
   pointer-events: auto;
+  /* Swipe transitions */
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s ease;
+  will-change: transform, opacity;
+  touch-action: pan-x; /* Sirf horizontal swipe ko allow karega */
 }
 
 #installApp {
   width: 100%;
   padding: 14px 22px;
-  background: rgba(10, 27, 61, 0.85); /* background-2 se match kiya */
+  background: rgba(10, 27, 61, 0.85); 
   backdrop-filter: blur(15px) saturate(160%);
   color: white;
   border: 1px solid rgba(58, 160, 255, 0.5);
@@ -433,13 +437,27 @@ input, textarea {
   gap: 15px;
   cursor: pointer;
   box-shadow: 0 15px 35px rgba(0,0,0,0.6);
-  animation: slideUp 0.8s cubic-bezier(0.17, 0.67, 0.83, 0.67), pulseGlow 2.5s infinite;
-  transition: transform 0.2s ease;
+  /* Initial entrance animation */
+  animation: slideUp 0.8s cubic-bezier(0.17, 0.67, 0.83, 0.67);
 }
 
 #installApp:active {
   transform: scale(0.96);
 }
+
+/* Animations */
+@keyframes slideUp {
+  from { transform: translateY(100px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Logo icon styling inside button */
+#installApp img {
+  border: 2px solid rgba(58, 160, 255, 0.3);
+  box-shadow: 0 0 10px rgba(58, 160, 255, 0.4);
+  pointer-events: none; /* Image touch events ko interfere na kare */
+}
+
 
 /* Logo icon in button */
 #installApp img {

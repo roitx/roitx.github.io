@@ -37,7 +37,7 @@
 <body>
 
 <header class="topbar">
-  <button id="menuBtn" class="menu-icon">
+  <button id="menuBtn" class="menu-icon" aria-label="Open Navigation Menu">
     <span></span>
     <span></span>
     <span></span>
@@ -155,8 +155,8 @@
   </div>
 </div>
 <div id="installContainer" style="display:none;">
-  <button id="installApp">
-    <img src="profile.png" alt="Logo" style="width: 40px; height: 40px; border-radius: 10px;">
+  <button id="installApp" aria-label="Install Roitx Hub App">
+    <img src="profile.png" alt="Roitx Hub App Logo" style="width: 40px; height: 40px; border-radius: 10px;">
     <div style="text-align: left;">
       <div style="font-weight: bold; font-size: 15px; color: #3aa0ff;">Install Roitx Hub</div>
       <div style="font-size: 12px; opacity: 0.8;">Smart Study Tools & Notes</div>
@@ -173,39 +173,86 @@
 
 <script src="script.js"></script>
 <script>
- let deferredPrompt;
+let deferredPrompt;
 const installContainer = document.getElementById('installContainer');
 const installBtn = document.getElementById('installApp');
 
-// Step 1: Catch the install prompt event
+// --- SWIPE LOGIC VARIABLES ---
+let startX = 0;
+let currentX = 0;
+let isDragging = false;
+
+// 1. Catch the install prompt event
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredPrompt = e;
-  // Show button only when app is ready to install
-  installContainer.style.display = 'block'; 
+  
+  // Agar user ne is session mein pehle hi swipe karke hata diya hai, to mat dikhao
+  if (!sessionStorage.getItem('installDismissed')) {
+    installContainer.style.display = 'block'; 
+  }
 });
 
-// Step 2: Handle the click event (Isko bahar rakhna better hai)
+// 2. Touch Events for Swipe-to-Dismiss (Notification Style)
+installContainer.addEventListener('touchstart', (e) => {
+  startX = e.touches[0].clientX;
+  isDragging = true;
+  installContainer.style.transition = 'none'; // Dragging ke waqt smooth move ke liye transition off
+}, {passive: true});
+
+installContainer.addEventListener('touchmove', (e) => {
+  if (!isDragging) return;
+  currentX = e.touches[0].clientX - startX;
+  
+  // Sirf Right side swipe allow karne ke liye
+  if (currentX > 0) {
+    // Button ko ungli ke saath move karna (calc use kiya hai kyunki CSS mein -50% pehle se hai)
+    installContainer.style.transform = `translateX(calc(-50% + ${currentX}px))`;
+    // Jitna zyada swipe, utna zyada transparent (fade effect)
+    installContainer.style.opacity = 1 - (currentX / 250); 
+  }
+}, {passive: true});
+
+installContainer.addEventListener('touchend', () => {
+  isDragging = false;
+  installContainer.style.transition = 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s ease';
+
+  if (currentX > 150) { // Agar 150px se zyada swipe kiya to dismiss kar do
+    installContainer.style.transform = 'translateX(100vw)';
+    installContainer.style.opacity = '0';
+    sessionStorage.setItem('installDismissed', 'true'); // Session save karein taaki bar-bar na aaye
+    setTimeout(() => { installContainer.style.display = 'none'; }, 300);
+  } else {
+    // Agar pura swipe nahi hua, to wapas beech mein le aao (Spring effect)
+    installContainer.style.transform = 'translateX(-50%)';
+    installContainer.style.opacity = '1';
+  }
+  currentX = 0; // Reset
+});
+
+// 3. Handle the Install Click
 installBtn.addEventListener('click', async () => {
+  // Agar user swipe kar raha hai, to click trigger na ho
+  if (Math.abs(currentX) > 10) return; 
+  
   if (!deferredPrompt) return;
   
   deferredPrompt.prompt();
   const { outcome } = await deferredPrompt.userChoice;
   console.log(`User response: ${outcome}`);
   
-  // Clear the saved prompt
   deferredPrompt = null;
   installContainer.style.display = 'none';
 });
 
-// Step 3: Success event
+// 4. Success event
 window.addEventListener('appinstalled', () => {
   installContainer.style.display = 'none';
   deferredPrompt = null;
   console.log('Roitx App installed successfully!');
 });
 
-// Step 4: Robust Service Worker registration
+// 5. Robust Service Worker registration
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js')
@@ -220,8 +267,6 @@ document.getElementById("year").textContent = new Date().getFullYear();
 function goto(url) {
   window.location.href = url;
 }
-
-
 </script>
 
 </body>
