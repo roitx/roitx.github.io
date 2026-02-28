@@ -2,44 +2,54 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>404 - Lost in Roitx Space</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>404 | Lost in the Roitx Multiverse</title>
     
     <link rel="stylesheet" href="404.css">
     
-    <meta name="robots" content="noindex, follow">
+    <meta name="robots" content="noindex, nofollow">
     <meta name="theme-color" content="#030B20">
 </head>
-<body>
+<body oncontextmenu="return false;"> <div class="space-overlay"></div>
+    <div id="starfield"></div>
+    <div class="nebula-cloud"></div>
 
-    <div class="scanner"></div>
-    <div id="stars-container"></div>
-    <div class="nebula"></div>
+    <div class="multiverse-container">
+        <div class="content-wrapper" id="scene">
+            
+            <div class="astronaut-box">
+                <div class="astronaut-shadow"></div>
+                <svg class="astronaut-svg" viewBox="0 0 512 512">
+                    <defs>
+                        <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100 text">
+                            <stop offset="0%" style="stop-color:#00d2ff;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#743ad5;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                    <path fill="url(#grad1)" d="M376,192c0-66.27-53.73-120-120-120S136,125.73,136,192s53.73,120,120,120S376,258.27,376,192z"></path>
+                    <path fill="#ffffff" d="M256,160c-17.67,0-32,14.33-32,32s14.33,32,32,32s32-14.33,32-32S273.67,160,256,160z"></path>
+                    <path fill="rgba(255,255,255,0.8)" d="M256,336c-88.37,0-160,71.63-160,160h320C416,407.63,344.37,336,256,336z"></path>
+                </svg>
+            </div>
 
-    <main class="error-card" id="card">
-        <div class="astronaut-wrapper">
-            <svg class="astronaut" viewBox="0 0 512 512">
-                <path fill="#00d2ff" d="M376,192c0-66.27-53.73-120-120-120S136,125.73,136,192s53.73,120,120,120S376,258.27,376,192z"></path>
-                <path fill="#ffffff" d="M256,160c-17.67,0-32,14.33-32,32s14.33,32,32,32s32-14.33,32-32S273.67,160,256,160z"></path>
-                <path fill="#fff" d="M256,336c-88.37,0-160,71.63-160,160h320C416,407.63,344.37,336,256,336z"></path>
-            </svg>
+            <h1 class="glitch-text" data-text="404">404</h1>
+            <h2 class="alert-title">SYSTEM ERROR: PAGE_NOT_FOUND</h2>
+            
+            <p class="mission-log">
+                [LOG]: User has drifted outside the Roitx safety perimeter. <br>
+                [STATUS]: Searching for data fragments... <span class="blink">0% FOUND</span>
+            </p>
+
+            <div class="control-panel">
+                <a href="https://roitx.github.io/" class="nav-btn primary">RE-ESTABLISH CONNECTION</a>
+                <a href="javascript:history.back()" class="nav-btn secondary">GO BACK</a>
+            </div>
+
+            <div class="data-stream">
+                <p>COORDS: <span id="x-pos">0</span>, <span id="y-pos">0</span> | V-SHIFT: <span id="v-shift">0.02ms</span></p>
+            </div>
         </div>
-
-        <h1 class="glitch" data-text="404">404</h1>
-        <h2 class="status">MISSION STATUS: LOST</h2>
-        <p class="description">
-            Aap shayad space mein kahin kho gaye hain. Jo file aap dhoond rahe hain wo hamare satellite range se bahar nikal chuki hai. 
-        </p>
-
-        <div class="nav-buttons">
-            <a href="https://roitx.github.io/" class="btn btn-home">Return to Base</a>
-            <a href="javascript:history.back()" class="btn btn-back">Abort Mission</a>
-        </div>
-
-        <div class="coordinates">
-            LAT: <span id="lat">00.00</span> | LONG: <span id="long">00.00</span>
-        </div>
-    </main>
+    </div>
 
     <script src="404.js"></script>
 </body>

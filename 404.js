@@ -1,63 +1,53 @@
-// --- Star Generation System ---
-const starsContainer = document.getElementById('stars-container');
-const starCount = 200;
+document.addEventListener('DOMContentLoaded', () => {
+    
+    // --- Starfield Generation ---
+    const starfield = document.getElementById('starfield');
+    const starCount = 180;
 
-function createStars() {
     for (let i = 0; i < starCount; i++) {
         const star = document.createElement('div');
         star.className = 'star';
         
-        // Random size and position
-        const size = Math.random() * 2.5;
-        const x = Math.random() * 100;
-        const y = Math.random() * 100;
-        
+        const size = Math.random() * 2.8;
         star.style.width = `${size}px`;
         star.style.height = `${size}px`;
-        star.style.left = `${x}%`;
-        star.style.top = `${y}%`;
+        star.style.left = `${Math.random() * 100}%`;
+        star.style.top = `${Math.random() * 100}%`;
         
-        // Random twinkle speed
-        const duration = Math.random() * 3 + 1;
-        star.style.setProperty('--duration', `${duration}s`);
+        // Random opacity for depth
+        star.style.opacity = Math.random();
         
-        starsContainer.appendChild(star);
+        // CSS Animation Duration
+        const duration = Math.random() * 5 + 2;
+        star.style.animation = `twinkle ${duration}s infinite alternate`;
+        
+        starfield.appendChild(star);
     }
-}
 
-// --- 3D Parallax Card Effect ---
-const card = document.getElementById('card');
-const body = document.querySelector('body');
+    // --- Interactive Parallax Scene ---
+    const scene = document.getElementById('scene');
+    const xLabel = document.getElementById('x-pos');
+    const yLabel = document.getElementById('y-pos');
 
-body.addEventListener('mousemove', (e) => {
-    // Mouse coordinates relative to center
-    let xAxis = (window.innerWidth / 2 - e.pageX) / 25;
-    let yAxis = (window.innerHeight / 2 - e.pageY) / 25;
-    
-    card.style.transform = `rotateY(${xAxis}deg) rotateX(${yAxis}deg)`;
+    document.addEventListener('mousemove', (e) => {
+        const x = (window.innerWidth / 2 - e.pageX) / 30;
+        const y = (window.innerHeight / 2 - e.pageY) / 30;
+
+        scene.style.transform = `rotateY(${x}deg) rotateX(${y}deg)`;
+        
+        // Updating Coordinates UI
+        xLabel.innerText = Math.round(e.pageX);
+        yLabel.innerText = Math.round(e.pageY);
+    });
+
+    // --- Security Check ---
+    window.addEventListener('keydown', (e) => {
+        // Prevent F12, Ctrl+Shift+I, Ctrl+U (Basic protection)
+        if (e.keyCode == 123 || (e.ctrlKey && e.shiftKey && e.keyCode == 73) || (e.ctrlKey && e.keyCode == 85)) {
+            console.warn("Roitx Firewall: Access Denied.");
+            e.preventDefault();
+        }
+    });
+
+    console.log("%c [SYSTEM]: Roitx 404 Multiverse Loaded.", "color: #00d2ff; font-weight: bold; font-size: 14px;");
 });
-
-// Reset on Mouse Leave
-body.addEventListener('mouseleave', () => {
-    card.style.transform = `rotateY(0deg) rotateX(0deg)`;
-});
-
-// --- Fake GPS Coordinates Logic ---
-function updateCoordinates() {
-    const lat = document.getElementById('lat');
-    const long = document.getElementById('long');
-    
-    setInterval(() => {
-        let randLat = (Math.random() * 180 - 90).toFixed(4);
-        let randLong = (Math.random() * 360 - 180).toFixed(4);
-        lat.innerText = randLat;
-        long.innerText = randLong;
-    }, 2000);
-}
-
-// Initialize Everything
-window.onload = () => {
-    createStars();
-    updateCoordinates();
-    console.log("%c Roitx Terminal: Page 404 Detected. Requesting Backup...", "color: #00d2ff; font-weight: bold;");
-};
