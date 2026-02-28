@@ -1,0 +1,168 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Poppins:wght@300;600&display=swap');
+
+:root {
+    --primary-blue: #00d2ff;
+    --deep-space: #030B20;
+    --star-white: #ffffff;
+    --accent-purple: #743ad5;
+    --error-red: #ff4b2b;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--deep-space);
+    color: white;
+    font-family: 'Poppins', sans-serif;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    perspective: 1500px;
+}
+
+/* Stars & Nebula Background */
+#stars-container {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: -2;
+}
+
+.star {
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+    animation: twinkle var(--duration) infinite;
+}
+
+.nebula {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at 50% 50%, rgba(116, 58, 213, 0.1), transparent 50%);
+    z-index: -1;
+    filter: blur(80px);
+}
+
+/* Interactive Error Card */
+.error-card {
+    text-align: center;
+    padding: 60px;
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 40px;
+    box-shadow: 0 50px 100px rgba(0,0,0,0.8);
+    max-width: 650px;
+    transform-style: preserve-3d;
+    transition: transform 0.2s cubic-bezier(0.03, 0.98, 0.52, 0.99);
+}
+
+/* Glitch Effect for 404 */
+.glitch {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 130px;
+    font-weight: 900;
+    position: relative;
+    color: var(--primary-blue);
+    text-shadow: 0.05em 0 0 rgba(255, 0, 0, 0.75),
+                 -0.025em -0.05em 0 rgba(0, 255, 0, 0.75),
+                 0.025em 0.05em 0 rgba(0, 0, 255, 0.75);
+    animation: glitch 500ms infinite;
+}
+
+@keyframes glitch {
+    0% { text-shadow: 0.05em 0 0 rgba(255,0,0,.75), -0.05em -0.025em 0 rgba(0,255,0,.75); }
+    15% { text-shadow: -0.05em -0.025em 0 rgba(255,0,0,.75), 0.025em 0.025em 0 rgba(0,255,0,.75); }
+    100% { text-shadow: -0.025em 0 0 rgba(255,0,0,.75), -0.025em -0.05em 0 rgba(0,255,0,.75); }
+}
+
+/* Astronaut Animation */
+.astronaut-wrapper {
+    width: 180px;
+    margin: 0 auto 20px;
+}
+
+.astronaut {
+    width: 100%;
+    animation: float 6s ease-in-out infinite;
+    filter: drop-shadow(0 0 10px var(--primary-blue));
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0) rotate(0); }
+    50% { transform: translateY(-30px) rotate(10deg); }
+}
+
+/* Buttons and UI */
+.status {
+    font-family: 'Orbitron', sans-serif;
+    color: var(--error-red);
+    letter-spacing: 3px;
+    margin-bottom: 20px;
+}
+
+.description {
+    color: #ccc;
+    line-height: 1.8;
+    margin-bottom: 40px;
+}
+
+.nav-buttons {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+}
+
+.btn {
+    padding: 18px 40px;
+    border-radius: 15px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 0.9rem;
+    transition: 0.4s;
+}
+
+.btn-home {
+    background: var(--primary-blue);
+    color: var(--deep-space);
+}
+
+.btn-home:hover {
+    transform: translateY(-5px) scale(1.05);
+    box-shadow: 0 10px 30px rgba(0, 210, 255, 0.4);
+}
+
+.btn-back {
+    border: 1px solid rgba(255,255,255,0.3);
+    color: white;
+}
+
+.btn-back:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+.coordinates {
+    margin-top: 40px;
+    font-family: monospace;
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.3);
+}
+
+/* Scanner Lines Overlay */
+.scanner {
+    position: absolute;
+    width: 100%; height: 100%;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+    background-size: 100% 3px, 3px 100%;
+    pointer-events: none;
+    z-index: 5;
+}
