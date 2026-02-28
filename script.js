@@ -240,3 +240,21 @@ animateWave();
 window.addEventListener("load", () => {
   document.body.classList.add("app-loaded");
 });
+
+
+// share //
+const shareData = {
+  title: 'Roitx - Personal Study Hub',
+  text: 'Check out these amazing study notes and tools!',
+  url: 'https://roitx.github.io/'
+}
+
+const btn = document.querySelector('#share-button'); // Apne share button ki ID de do
+
+btn.addEventListener('click', async () => {
+  try {
+    await navigator.share(shareData);
+  } catch (err) {
+    console.log('Error: ' + err);
+  }
+});
