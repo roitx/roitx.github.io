@@ -28,7 +28,7 @@
     }
   ],
 "screenshots": [
-    // --- Mobile Screenshots (Narrow) ---
+  
     {
       "src": "mobile-1.png",
       "sizes": "1080x2400",
@@ -51,7 +51,7 @@
       "label": "Roitx Mobile - User Profile"
     },
     
-    // --- Desktop Screenshots (Wide) ---
+   
     {
       "src": "desktop-1.png",
       "sizes": "2400x1080",
