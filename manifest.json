@@ -41,14 +41,21 @@
       "sizes": "1080x2400",
       "type": "image/png",
       "form_factor": "narrow",
-      "label": "Roitx Mobile - Analytics View"
+      "label": "Roitx Mobile - Ask Chat"
     },
     {
       "src": "mobile-3.png",
       "sizes": "1080x2400",
       "type": "image/png",
       "form_factor": "narrow",
-      "label": "Roitx Mobile - User Profile"
+      "label": "Roitx Mobile - Calendar"
+    },
+    {
+      "src": "mobile-4.png",
+      "sizes": "1080x2400",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Roitx Mobile - Study Timer"
     },
     
    
@@ -64,14 +71,14 @@
       "sizes": "2400x1080",
       "type": "image/png",
       "form_factor": "wide",
-      "label": "Roitx Desktop - Detailed Reports"
+      "label": "Roitx Desktop - Study Timer"
     },
     {
       "src": "desktop-3.png",
       "sizes": "2400x1080",
       "type": "image/png",
       "form_factor": "wide",
-      "label": "Roitx Desktop - Settings & Security"
+      "label": "Roitx Desktop - Ask chat Ai"
     }
   ],
   
