@@ -27,22 +27,54 @@
       "purpose": "maskable"
     }
   ],
-  "screenshots": [
+"screenshots": [
+    // --- Mobile Screenshots (Narrow) ---
     {
-      "src": "mobile.png",
+      "src": "mobile-1.png",
       "sizes": "1080x2400",
       "type": "image/png",
       "form_factor": "narrow",
-      "label": "Roitx Mobile Dashboard"
+      "label": "Roitx Mobile Dashboard - Home"
     },
     {
-      "src": "dekstop.png",
+      "src": "mobile-2.png",
+      "sizes": "1080x2400",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Roitx Mobile - Analytics View"
+    },
+    {
+      "src": "mobile-3.png",
+      "sizes": "1080x2400",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Roitx Mobile - User Profile"
+    },
+    
+    // --- Desktop Screenshots (Wide) ---
+    {
+      "src": "desktop-1.png",
       "sizes": "2400x1080",
       "type": "image/png",
       "form_factor": "wide",
-      "label": "Roitx Desktop Hub"
+      "label": "Roitx Desktop Hub - Main Board"
+    },
+    {
+      "src": "desktop-2.png",
+      "sizes": "2400x1080",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Roitx Desktop - Detailed Reports"
+    },
+    {
+      "src": "desktop-3.png",
+      "sizes": "2400x1080",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Roitx Desktop - Settings & Security"
     }
   ],
+  
   "shortcuts": [
     {
       "name": "Study Timer",
