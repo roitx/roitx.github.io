@@ -162,7 +162,7 @@ function showChapters(subject){
   chapters = [...uniq.values()].sort(
     (a,b)=>Number(a.chapter_no)-Number(b.chapter_no)
   );
-
+/* ================= CHAPTER (REPLACEABLE PART) ================= */
   grid.innerHTML="";
   chapters.forEach(ch=>{
     const card=document.createElement("div");
@@ -172,10 +172,15 @@ function showChapters(subject){
     `;
 
     card.onclick=()=>{
-      if(!ch.file_url) return;
-      
-      // FIX: PDF name extract karke viewer par bhej rahe hain
+      if(!ch.file_url) {
+        alert("File not available!");
+        return;
+      }
+
+      // PDF name extract kar rahe hain
       const fileName = ch.file_url.split('/').pop();
+      
+      // Smart Reader par bhej rahe hain
       window.location.href = `notes-viewer.html?file=${encodeURIComponent(fileName)}`;
     };
 
@@ -183,6 +188,7 @@ function showChapters(subject){
   });
 }
 
+  
 /* ================= BACK ================= */
 backBtn.onclick=()=>{
   if(currentLevel==="chapter") return showSubjects(selectedClass);
