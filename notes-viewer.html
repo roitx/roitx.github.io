@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-    <title>Roitx Ultra Reader</title>
+    <title>Roitx Ultra Reader v7.0</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase.js"></script>
@@ -30,6 +30,11 @@
         <div id="top-progress"></div>
     </header>
 
+    <div class="zoom-controls">
+        <button onclick="changeZoom(0.2)">+</button>
+        <button onclick="changeZoom(-0.2)">-</button>
+    </div>
+
     <main id="viewport">
         <div id="loader" class="spinner"></div>
         <div id="render-area"></div>
@@ -46,31 +51,30 @@
     <aside id="side-panel">
         <div class="panel-header">
             <h3>Study Toolbox</h3>
-            <button class="close-panel" onclick="toggleMenu(false)">×</button>
+            <button class="close-btn" onclick="toggleMenu(false)">×</button>
         </div>
         
         <div class="tool-section">
-            <h4>Appearance</h4>
+            <h4>Vision</h4>
             <div class="tool-grid">
                 <button onclick="setTheme('light')">Light</button>
                 <button onclick="setTheme('dark')">Dark</button>
                 <button onclick="setTheme('sepia')">Sepia</button>
-                <button onclick="setTheme('ocean')">Ocean</button>
             </div>
         </div>
 
         <div class="tool-section">
-            <h4>Smart Reading</h4>
+            <h4>Reading Tools</h4>
             <div class="flex-row"><span>Auto Scroll</span><input type="checkbox" id="auto-scroll-chk"></div>
             <div class="flex-row"><span>Reading Ruler</span><input type="checkbox" id="ruler-chk"></div>
             <div class="flex-row"><span>Screen Awake</span><input type="checkbox" id="awake-chk"></div>
         </div>
 
         <div class="tool-section">
-            <h4>Controls</h4>
+            <h4>Advanced</h4>
+            <button class="wide-btn" onclick="toggleFullscreen()">Toggle Fullscreen</button>
             <button class="wide-btn" onclick="rotateDoc()">Rotate 90°</button>
-            <button class="wide-btn" onclick="toggleFullscreen()">Fullscreen Mode</button>
-            <button class="wide-btn" id="dl-link">Download File</button>
+            <button class="wide-btn" id="dl-link">Download Offline</button>
         </div>
     </aside>
 
