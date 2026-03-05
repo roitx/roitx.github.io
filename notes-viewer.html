@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>Roitx Universal Reader</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #4a8bff; --bg: #0b1025; --surface: #11183a; --text: #ffffff; }
+        body.sepia { --bg: #f4ecd8; --surface: #e6dac1; --text: #5b4636; }
+        body.light { --bg: #f0f2f5; --surface: #ffffff; --text: #1a1a1a; }
+        body, html { margin: 0; padding: 0; background: var(--bg); font-family: 'Poppins', sans-serif; color: var(--text); height: 100%; transition: 0.3s; overflow: hidden; touch-action: pan-x pan-y; }
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 0 15px; background: var(--surface); height: 55px; position: relative; z-index: 1001; }
+        #main-container { width: 100%; height: calc(100vh - 55px); overflow: auto; -webkit-overflow-scrolling: touch; position: relative; }
+        #viewer-content { display: flex; flex-direction: column; align-items: center; padding: 15px; transform-origin: top center; }
+        canvas, img { max-width: 100%; height: auto !important; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); border-radius: 4px; }
+        #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1002; display: none; }
+        .side-panel { position: fixed; right: -320px; top: 0; width: 280px; height: 100%; background: var(--surface); z-index: 1003; transition: 0.3s; padding: 25px; }
+        .side-panel.active { right: 0; }
+        .feature-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .btn-tool { background: var(--primary); border: none; color: white; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 12px; }
+        #reading-ruler { position: fixed; top: 50%; left: 0; width: 100%; height: 40px; background: rgba(74, 139, 255, 0.2); border-top: 2px solid var(--primary); pointer-events: none; display: none; z-index: 999; }
+        .loader { width: 40px; height: 40px; border: 3px solid #333; border-top: 3px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; position: absolute; top: 50%; left: 50%; margin: -20px; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        #progress-bar { position: absolute; bottom: 0; left: 0; height: 3px; background: var(--primary); width: 0%; transition: 0.3s; }
+    </style>
+</head>
+<body class="dark">
+    <div id="overlay" onclick="toggleSettings(false)"></div>
+    <div id="reading-ruler"></div>
+    <div class="header">
+        <div style="display:flex; align-items:center;">
+            <span onclick="window.history.back()" style="cursor:pointer; color:var(--primary); font-size:24px; margin-right:12px;">←</span>
+            <div id="fname" style="font-size:12px; font-weight:600; max-width:150px; overflow:hidden;">Loading...</div>
+        </div>
+        <div style="display:flex; gap:15px; align-items:center;">
+            <span onclick="toggleSettings(true)" style="cursor:pointer; font-size:20px;">⚙️</span>
+        </div>
+        <div id="progress-bar"></div>
+    </div>
+
+    <div id="main-container">
+        <div id="loader" class="loader"></div>
+        <div id="viewer-content"></div>
+    </div>
+
+    <div class="side-panel" id="sidePanel">
+        <h3 style="color:var(--primary); margin-top:0;">Smart Reader</h3>
+        <div class="feature-item"><label>Auto Scroll</label><input type="checkbox" id="scrollCheck" onchange="toggleAutoScroll(this.checked)"></div>
+        <div class="feature-item"><label>Reading Ruler</label><input type="checkbox" onchange="document.getElementById('reading-ruler').style.display = this.checked ? 'block' : 'none'"></div>
+        <div class="feature-item"><label>Full Screen</label><button class="btn-tool" onclick="toggleFullscreen()">ON / OFF</button></div>
+        <div class="feature-item"><label>Themes</label>
+            <div>
+                <button class="btn-tool" onclick="setTheme('light')">☀</button>
+                <button class="btn-tool" onclick="setTheme('sepia')">📖</button>
+                <button class="btn-tool" onclick="setTheme('dark')">🌙</button>
+            </div>
+        </div>
+        <div class="feature-item"><label>Rotation</label><button class="btn-tool" onclick="rotateView()">Rotate 90°</button></div>
+        <div class="feature-item"><label>Safe Read</label><input type="checkbox" onchange="toggleWakeLock(this.checked)"></div>
+        <button class="btn-tool" style="width:100%; margin-top:20px;" onclick="toggleSettings(false)">Close Settings</button>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(location.search);
+        const fileName = params.get("file");
+        let pdfDoc = null, pageNum = 1, rotation = 0, autoScrollId = null;
+
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+        async function init() {
+            if(!fileName) return;
+            const isImage = /\.(jpg|jpeg|png|webp|gif)$/i.test(fileName);
+            const fullPath = fileName.includes('/') ? fileName : `notes/${fileName}`;
+            document.getElementById("fname").innerText = fileName.split('/').pop();
+
+            try {
+                const { data, error } = await window.supabaseClient.storage.from("admin-files").download(fullPath);
+                if (error) throw error;
+                const url = URL.createObjectURL(data);
+                
+                if (isImage) renderImage(url);
+                else renderPDF(url);
+
+                document.getElementById("loader").style.display = "none";
+            } catch (e) { console.error(e); }
+        }
+
+        function renderImage(url) {
+            const container = document.getElementById("viewer-content");
+            const img = document.createElement("img");
+            img.src = url;
+            img.style.transform = `rotate(${rotation}deg)`;
+            container.innerHTML = '';
+            container.appendChild(img);
+        }
+
+        async function renderPDF(url) {
+            pdfDoc = await pdfjsLib.getDocument(url).promise;
+            renderPage(1);
+        }
+
+        async function renderPage(num) {
+            const page = await pdfDoc.getPage(num);
+            const viewport = page.getViewport({ scale: 1.5, rotation: rotation });
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+            const container = document.getElementById("viewer-content");
+            container.innerHTML = '';
+            container.appendChild(canvas);
+            await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+            document.getElementById("progress-bar").style.width = (num/pdfDoc.numPages*100) + "%";
+        }
+
+        function toggleSettings(s) {
+            document.getElementById("sidePanel").classList.toggle("active", s);
+            document.getElementById("overlay").style.display = s ? "block" : "none";
+        }
+
+        function toggleAutoScroll(active) {
+            if(active) autoScrollId = setInterval(() => document.getElementById("main-container").scrollTop += 1, 40);
+            else clearInterval(autoScrollId);
+        }
+
+        function rotateView() {
+            rotation = (rotation + 90) % 360;
+            const isImage = /\.(jpg|jpeg|png|webp|gif)$/i.test(fileName);
+            if(isImage) {
+                const img = document.querySelector("#viewer-content img");
+                if(img) img.style.transform = `rotate(${rotation}deg)`;
+            } else if(pdfDoc) {
+                renderPage(pageNum);
+            }
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(e => console.log(e));
+            } else {
+                document.exitFullscreen();
+            }
+            toggleSettings(false);
+        }
+
+        function setTheme(t) { document.body.className = t; toggleSettings(false); }
+
+        async function toggleWakeLock(a) {
+            if (a && 'wakeLock' in navigator) await navigator.wakeLock.request('screen');
+        }
+
+        init();
+    </script>
+</body>
+</html>
