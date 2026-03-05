@@ -1,128 +1,105 @@
 const params = new URLSearchParams(location.search);
-const fileName = params.get("file");
-let pdfDoc = null, pageNum = 1, rotation = 0, scrollInterval = null;
-
-// Initialize Supabase & PDF.js
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+let fileName = params.get("file");
+let pdfDoc = null, pageNum = 1, rotation = 0, currentScale = 1.5, isScrolling = false, lastTap = 0;
 
 async function init() {
     if(!fileName) return;
     const path = fileName.includes('/') ? fileName : `notes/${fileName}`;
-    document.getElementById("doc-title").innerText = fileName.split('/').pop();
+    document.getElementById("doc-title").innerText = fileName.split('/').pop().replace(/_/g, ' ');
 
     try {
         const { data, error } = await window.supabaseClient.storage.from("admin-files").download(path);
         if (error) throw error;
+
+        // File Size Calculation
+        const sizeKB = (data.size / 1024).toFixed(1);
+        const sizeDisp = sizeKB > 1024 ? (sizeKB/1024).toFixed(2) + " MB" : sizeKB + " KB";
         
         const url = URL.createObjectURL(data);
         document.getElementById("dl-link").onclick = () => window.open(url);
 
         if (/\.(jpg|jpeg|png|webp)$/i.test(fileName)) {
             renderImage(url);
+            document.getElementById("doc-stats").innerText = `Image • ${sizeDisp}`;
             document.querySelector(".bottom-console").style.display = "none";
         } else {
             pdfDoc = await pdfjsLib.getDocument(url).promise;
             document.getElementById("total-pages").textContent = pdfDoc.numPages;
+            document.getElementById("doc-stats").innerText = `${pdfDoc.numPages} Pages • ${sizeDisp}`;
             renderPage(pageNum);
         }
         document.getElementById("loader").style.display = "none";
         startClock();
-    } catch (e) { console.error("Load failed", e); }
+    } catch (e) { console.error(e); }
 }
 
-// Rendering Logic
 async function renderPage(num) {
     const page = await pdfDoc.getPage(num);
-    const viewport = page.getViewport({ scale: 1.5, rotation: rotation });
+    const viewport = page.getViewport({ scale: currentScale, rotation: rotation });
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-    
-    // Performance: Device Pixel Ratio optimization
-    const dpr = window.devicePixelRatio || 1;
-    canvas.height = viewport.height * dpr;
-    canvas.width = viewport.width * dpr;
-    canvas.style.width = viewport.width + "px";
-    canvas.style.height = viewport.height + "px";
-    ctx.scale(dpr, dpr);
-
+    canvas.height = viewport.height;
+    canvas.width = viewport.width;
     const area = document.getElementById("render-area");
     area.innerHTML = ''; area.appendChild(canvas);
     await page.render({ canvasContext: ctx, viewport: viewport }).promise;
-    
     document.getElementById("page-input").value = num;
     document.getElementById("top-progress").style.width = (num/pdfDoc.numPages*100) + "%";
 }
 
 function renderImage(url) {
     const img = document.createElement("img");
-    img.src = url;
-    img.style.transform = `rotate(${rotation}deg)`;
+    img.src = url; img.style.transform = `rotate(${rotation}deg)`;
     const area = document.getElementById("render-area");
     area.innerHTML = ''; area.appendChild(img);
 }
 
-// 50+ Smart Features Implementation
+// Controls
 function changePage(delta) {
     if (!pdfDoc || pageNum + delta < 1 || pageNum + delta > pdfDoc.numPages) return;
     pageNum += delta; renderPage(pageNum);
     document.getElementById("viewport").scrollTop = 0;
 }
 
-function toggleMenu(show) {
-    document.getElementById("side-panel").classList.toggle("active", show);
-    document.getElementById("overlay").style.display = show ? "block" : "none";
-}
+// Double Tap to Zoom
+document.getElementById("viewport").addEventListener('click', (e) => {
+    let now = Date.now();
+    if (now - lastTap < 300) {
+        currentScale = currentScale === 1.5 ? 2.5 : 1.5;
+        if(pdfDoc) renderPage(pageNum);
+    }
+    lastTap = now;
+});
 
-function setTheme(t) {
-    document.body.className = t + "-theme";
-    toggleMenu(false);
-}
-
-// Feature: Auto Scroll
+// Auto Scroll Logic
 document.getElementById("auto-scroll-chk").onchange = (e) => {
-    if(e.target.checked) scrollInterval = setInterval(() => document.getElementById("viewport").scrollTop += 1, 40);
-    else clearInterval(scrollInterval);
+    isScrolling = e.target.checked;
+    if(isScrolling) {
+        const scroll = () => {
+            if(!isScrolling) return;
+            document.getElementById("viewport").scrollTop += 1;
+            requestAnimationFrame(scroll);
+        };
+        requestAnimationFrame(scroll);
+    }
 };
 
-// Feature: Reading Ruler
+// Ruler Logic
+document.getElementById("viewport").addEventListener('mousemove', (e) => {
+    if(document.getElementById("ruler-chk").checked)
+        document.getElementById("reading-ruler").style.top = e.clientY - 15 + "px";
+});
 document.getElementById("ruler-chk").onchange = (e) => {
     document.getElementById("reading-ruler").style.display = e.target.checked ? "block" : "none";
 };
 
-// Feature: Focus Mode
-document.getElementById("focus-chk").onchange = (e) => {
-    document.getElementById("focus-mode-overlay").style.display = e.target.checked ? "block" : "none";
-};
-
-// Feature: Wake Lock
-async function toggleWakeLock(active) {
-    if (active && 'wakeLock' in navigator) {
-        try { await navigator.wakeLock.request('screen'); } catch(e){}
-    }
+function toggleMenu(s) {
+    document.getElementById("side-panel").classList.toggle("active", s);
+    document.getElementById("overlay").style.display = s ? "block" : "none";
 }
-document.getElementById("awake-chk").onchange = (e) => toggleWakeLock(e.target.checked);
+function setTheme(t) { document.body.className = t + "-theme"; toggleMenu(false); }
+function rotateDoc() { rotation = (rotation + 90) % 360; pdfDoc ? renderPage(pageNum) : renderImage(document.querySelector("img").src); }
+function startClock() { setInterval(() => { document.getElementById("live-clock").innerText = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); }, 1000); }
+function toggleFullscreen() { if(!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen(); }
 
-function rotateDoc() {
-    rotation = (rotation + 90) % 360;
-    pdfDoc ? renderPage(pageNum) : renderImage(document.querySelector("#render-area img").src);
-}
-
-function startClock() {
-    setInterval(() => {
-        document.getElementById("live-clock").innerText = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-    }, 1000);
-}
-
-function toggleFullscreen() {
-    if (!document.fullscreenElement) document.documentElement.requestFullscreen();
-    else document.exitFullscreen();
-}
-
-function startTimer() {
-    let mins = document.getElementById("pomo-val").value;
-    alert(`Pomodoro started for ${mins} minutes. Stay focused!`);
-    setTimeout(() => alert("Time's up! Take a break."), mins * 60000);
-}
-
-// Init execution
 init();
