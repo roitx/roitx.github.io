@@ -115,16 +115,13 @@ async function loadFiles() {
   });
 }
 
-/* ---------- OPEN FILE ---------- */
+/* ---------- OPEN FILE (SMART READER LINK) ---------- */
 async function openFile(name) {
-  const { data } =
-    await window.supabaseClient.storage
-      .from("admin-files")
-      .createSignedUrl(`notes/${name}`, 60);
-
-  window.open(data.signedUrl, "_blank");
+  // Ab ye seedha hamare premium viewer par jayega
+  window.location.href = `notes-viewer.html?file=${encodeURIComponent(name)}`;
 }
 
+  
 /* ---------- DELETE FILE ---------- */
 async function deleteFile(name) {
   if (!confirm("Delete file?")) return;
