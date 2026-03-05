@@ -3,124 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Professional Viewer - Roitx</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <title>Smart Viewer - Roitx</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
         body, html { margin: 0; padding: 0; height: 100%; background: #0b1025; font-family: 'Poppins', sans-serif; color: white; overflow: hidden; }
+        
+        /* Premium Header */
         .header-bar {
             display: flex; justify-content: space-between; align-items: center;
-            padding: 10px 20px; background: #11183a; border-bottom: 1px solid #1e2652;
+            padding: 12px 20px; background: #11183a; border-bottom: 1px solid #1e2652;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 100;
         }
-        .file-info b { font-size: 14px; color: #fff; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        
-        /* Controls Toolbar */
-        .pdf-toolbar {
-            background: #1c2242; padding: 8px; display: flex; justify-content: center; 
-            gap: 15px; align-items: center; font-size: 13px; border-bottom: 1px solid #333;
-        }
-        .btn { background: #4a8bff; border: none; color: white; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
-        
-        /* PDF Canvas Area */
-        .main-viewer { width: 100%; height: calc(100vh - 110px); overflow-y: auto; display: flex; flex-direction: column; align-items: center; background: #1e1e2e; }
-        canvas { box-shadow: 0 0 15px rgba(0,0,0,0.5); margin: 20px 0; max-width: 95%; }
+        .file-info b { display: block; font-size: 14px; color: #fff; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .back-btn { cursor: pointer; color: #4a8bff; font-size: 18px; margin-right: 10px; }
 
-        #img-view { display: none; height: 100%; justify-content: center; align-items: center; }
-        #img-view img { max-width: 95%; border-radius: 5px; cursor: zoom-in; }
+        .main-viewer { width: 100%; height: calc(100vh - 65px); position: relative; background: #1e1e1e; }
+        iframe { width: 100%; height: 100%; border: none; }
 
-        .loader { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border: 4px solid #333; border-top: 4px solid #4a8bff; border-radius: 50%; width: 35px; height: 35px; animation: spin 1s linear infinite; }
+        /* Loader */
+        .loader-box { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
+        .loader { border: 4px solid #333; border-top: 4px solid #4a8bff; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 10px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
 <div class="header-bar">
-    <div class="file-info" onclick="window.history.back()" style="cursor:pointer">
-        <span style="color:#4a8bff">⬅</span>
-        <b id="file-title">Loading...</b>
+    <div style="display: flex; align-items: center;">
+        <span class="back-btn" onclick="window.history.back()">⬅</span>
+        <div class="file-info">
+            <b id="file-title">📁 Loading...</b>
+            <span id="file-type-label" style="font-size: 11px; color: #7b8bff;">Premium Reader</span>
+        </div>
     </div>
-    <button id="download-btn" class="btn" style="background: #28a745;">डाउनलोड</button>
+    <div style="font-size: 12px; font-weight: bold; color: #4a8bff;">ROITX</div>
 </div>
 
-<div class="pdf-toolbar" id="pdf-tools" style="display:none;">
-    <button class="btn" onclick="prevPage()">Prev</button>
-    <span>Page <span id="page_num">0</span> of <span id="page_count">0</span></span>
-    <button class="btn" onclick="nextPage()">Next</button>
-    <button class="btn" onclick="zoomOut()">-</button>
-    <button class="btn" onclick="zoomIn()">+</button>
-</div>
-
-<div class="main-viewer" id="container">
-    <div id="loader" class="loader"></div>
-    <div id="pdf-render-area"></div>
-    <div id="img-view"><img id="inner-img" src=""></div>
+<div class="main-viewer">
+    <div id="loader" class="loader-box">
+        <div class="loader"></div>
+        <div style="font-size: 12px; color: #aaa;">Syncing Premium View...</div>
+    </div>
+    <iframe id="pdf-frame" allowfullscreen></iframe>
 </div>
 
 <script>
     const params = new URLSearchParams(location.search);
     const fileName = params.get("file");
-    
-    let pdfDoc = null, pageNum = 1, scale = 1.2, canvasContainer = document.getElementById('pdf-render-area');
-
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
     async function init() {
-        if(!fileName) return;
+        if(!fileName) {
+            document.getElementById("file-title").innerText = "File Missing!";
+            return;
+        }
 
         const fullPath = fileName.includes('/') ? fileName : `notes/${fileName}`;
         const { data } = window.supabaseClient.storage.from("admin-files").getPublicUrl(fullPath);
         const url = data.publicUrl;
-
-        document.getElementById("file-title").innerText = fileName.split('/').pop();
-        document.getElementById("download-btn").onclick = () => window.open(url, '_blank');
-
-        const ext = fileName.split('.').pop().toLowerCase();
-        if (ext === 'pdf') {
-            document.getElementById("pdf-tools").style.display = "flex";
-            loadPDF(url);
-        } else {
-            document.getElementById("img-view").style.display = "flex";
-            document.getElementById("inner-img").src = url;
-            document.getElementById("loader").style.display = "none";
-        }
-    }
-
-    async function loadPDF(url) {
-        try {
-            // Hum proxy/cors se bachne ke liye direct fetch kar rahe hain
-            const loadingTask = pdfjsLib.getDocument(url);
-            pdfDoc = await loadingTask.promise;
-            document.getElementById("page_count").textContent = pdfDoc.numPages;
-            renderPage(pageNum);
-            document.getElementById("loader").style.display = "none";
-        } catch (e) {
-            alert("Error loading PDF: " + e.message);
-        }
-    }
-
-    async function renderPage(num) {
-        const page = await pdfDoc.getPage(num);
-        const viewport = page.getViewport({ scale });
         
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
+        document.getElementById("file-title").innerText = fileName.split('/').pop().replace(/_/g, ' ');
 
-        canvasContainer.innerHTML = '';
-        canvasContainer.appendChild(canvas);
+        // 🔥 Solution: Proxy use karke Mozilla Viewer ko "0 of 3" error se bachana
+        // Isse viewer ko lagega ki file locally load ho rahi h
+        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+        
+        // Full Mozilla Viewer with all features enabled
+        const viewerUrl = `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(proxyUrl)}`;
+        
+        const iframe = document.getElementById("pdf-frame");
+        iframe.src = viewerUrl;
 
-        await page.render({ canvasContext: ctx, viewport }).promise;
-        document.getElementById("page_num").textContent = num;
+        iframe.onload = () => {
+            document.getElementById("loader").style.display = "none";
+        };
     }
-
-    window.prevPage = () => { if(pageNum <= 1) return; pageNum--; renderPage(pageNum); }
-    window.nextPage = () => { if(pageNum >= pdfDoc.numPages) return; pageNum++; renderPage(pageNum); }
-    window.zoomIn = () => { scale += 0.2; renderPage(pageNum); }
-    window.zoomOut = () => { if(scale <= 0.8) return; scale -= 0.2; renderPage(pageNum); }
 
     init();
 </script>
