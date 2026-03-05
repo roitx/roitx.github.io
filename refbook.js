@@ -50,30 +50,6 @@ function toRoman(n){
   return romanMap[n] || n;
 }
 
-/* ================= LOCAL STORAGE (LIBRARY) ================= */
-function getStore(key){
-  return JSON.parse(localStorage.getItem(key) || "[]");
-}
-function setStore(key,data){
-  localStorage.setItem(key,JSON.stringify(data));
-}
-
-function addRecent(book){
-  let recent = getStore("recentFiles");
-  recent = recent.filter(r => r.url !== book.url);
-  recent.unshift(book);
-  recent = recent.slice(0,10);
-  setStore("recentFiles", recent);
-}
-
-function addDownload(book){
-  let down = getStore("downloadedFiles");
-  if(!down.some(d => d.url === book.url)){
-    down.unshift(book);
-    setStore("downloadedFiles", down);
-  }
-}
-
 /* ================= LOAD ================= */
 async function loadRefBooks(){
   const {data,error} = await window.supabaseClient
@@ -197,15 +173,10 @@ function showChapters(subject){
 
     card.onclick=()=>{
       if(!ch.file_url) return;
-
-      const bookData = {
-        title: ch.chapter,
-        url: ch.file_url,
-        meta: `Class ${ch.class_no} • ${ch.subject}`
-      };
-
-      addRecent(bookData);
-      window.open(ch.file_url,"_blank");
+      
+      // FIX: PDF name extract karke viewer par bhej rahe hain
+      const fileName = ch.file_url.split('/').pop();
+      window.location.href = `notes-viewer.html?file=${encodeURIComponent(fileName)}`;
     };
 
     grid.appendChild(card);
