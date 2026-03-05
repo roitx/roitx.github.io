@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>Roitx Ultra Reader v6.0</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="viewer-style.css">
+</head>
+<body class="dark-theme">
+
+    <div id="overlay" onclick="toggleMenu(false)"></div>
+    <div id="reading-ruler"></div>
+    <div id="focus-mode-overlay"></div>
+
+    <header class="glass-header">
+        <div class="header-left">
+            <button class="icon-btn" onclick="window.history.back()">←</button>
+            <div class="title-meta">
+                <span id="doc-title">Loading...</span>
+                <small id="doc-stats">0 Pages • 0 KB</small>
+            </div>
+        </div>
+        <div class="header-right">
+            <span id="live-clock">00:00</span>
+            <button class="premium-btn" onclick="toggleMenu(true)">⚙️ Tools</button>
+        </div>
+        <div id="top-progress"></div>
+    </header>
+
+    <main id="viewport">
+        <div id="loader" class="spinner"></div>
+        <div id="render-area"></div>
+    </main>
+
+    <nav class="bottom-console">
+        <div class="nav-group">
+            <button class="nav-btn" onclick="changePage(-1)">Prev</button>
+            <div class="page-indicator">
+                <input type="number" id="page-input" value="1"> / <span id="total-pages">0</span>
+            </div>
+            <button class="nav-btn" onclick="changePage(1)">Next</button>
+        </div>
+    </nav>
+
+    <aside id="side-panel">
+        <div class="panel-header">
+            <h3>Study Toolbox</h3>
+            <button onclick="toggleMenu(false)">×</button>
+        </div>
+        
+        <div class="tool-section">
+            <h4>Display & Vision</h4>
+            <div class="tool-grid">
+                <button onclick="setTheme('light')">Light</button>
+                <button onclick="setTheme('dark')">Dark</button>
+                <button onclick="setTheme('sepia')">Sepia</button>
+                <button onclick="setTheme('ocean')">Ocean</button>
+            </div>
+        </div>
+
+        <div class="tool-section">
+            <h4>Reading Aids</h4>
+            <div class="flex-row"><span>Auto Scroll</span><input type="checkbox" id="auto-scroll-chk"></div>
+            <div class="flex-row"><span>Reading Ruler</span><input type="checkbox" id="ruler-chk"></div>
+            <div class="flex-row"><span>Focus Mode</span><input type="checkbox" id="focus-chk"></div>
+            <div class="flex-row"><span>Screen Awake</span><input type="checkbox" id="awake-chk"></div>
+        </div>
+
+        <div class="tool-section">
+            <h4>Page Controls</h4>
+            <button class="wide-btn" onclick="rotateDoc()">Rotate 90°</button>
+            <button class="wide-btn" onclick="toggleFullscreen()">Fullscreen Mode</button>
+            <button class="wide-btn" onclick="window.print()">Print to PDF</button>
+        </div>
+
+        <div class="tool-section">
+            <h4>Smart Utilities</h4>
+            <div class="flex-row"><span>Timer (Min)</span><input type="number" id="pomo-val" value="25" style="width:40px"></div>
+            <button class="wide-btn" onclick="startTimer()">Start Pomodoro</button>
+            <button class="wide-btn" id="dl-link">Download File</button>
+        </div>
+    </aside>
+
+    <script src="viewer-main.js"></script>
+</body>
+</html>
