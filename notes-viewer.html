@@ -2,81 +2,75 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-    <title>Roitx Ultra Reader v7.0</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Roitx Reader Pro</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="viewer-style.css">
 </head>
 <body class="dark-theme">
 
-    <div id="overlay" onclick="toggleMenu(false)"></div>
-    <div id="reading-ruler"></div>
-
-    <header class="glass-header">
-        <div class="header-left">
-            <button class="icon-btn" onclick="window.history.back()">←</button>
-            <div class="title-meta">
-                <b id="doc-title">Loading...</b>
-                <span id="doc-stats">0 Pages • 0 KB</span>
-            </div>
+    <header class="navbar">
+        <button class="nav-icon" onclick="window.history.back()">✕</button>
+        <div class="nav-title">
+            <span id="doc-title">Loading...</span>
+            <small id="doc-stats">Initializing...</small>
         </div>
-        <div class="header-right">
-            <div id="live-clock">00:00</div>
-            <button class="premium-btn" onclick="toggleMenu(true)">⚙️ Tools</button>
-        </div>
-        <div id="top-progress"></div>
+        <button class="nav-icon menu-trigger" onclick="toggleMenu(true)">
+            <svg viewBox="0 0 24 24" width="24"><path fill="currentColor" d="M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z"/></svg>
+        </button>
     </header>
 
-    <div class="zoom-controls">
-        <button onclick="changeZoom(0.2)">+</button>
-        <button onclick="changeZoom(-0.2)">-</button>
-    </div>
-
-    <main id="viewport">
-        <div id="loader" class="spinner"></div>
-        <div id="render-area"></div>
+    <main id="main-viewport">
+        <div id="loading-screen">
+            <div class="loader-bar"></div>
+            <p>Rendering HD Pages...</p>
+        </div>
+        <div id="canvas-wrapper"></div>
     </main>
 
-    <nav class="bottom-console">
-        <button class="nav-btn" onclick="changePage(-1)">Prev</button>
-        <div class="page-count">
-            <input type="number" id="page-input" value="1"> / <span id="total-pages">0</span>
+    <div class="action-pill">
+        <div class="pill-group">
+            <button onclick="changePage(-1)">Prev</button>
+            <div class="pill-info">
+                <input type="number" id="page-num" value="1"> <span>/</span> <span id="total-pages">0</span>
+            </div>
+            <button onclick="changePage(1)">Next</button>
         </div>
-        <button class="nav-btn" onclick="changePage(1)">Next</button>
-    </nav>
+        <div class="pill-divider"></div>
+        <div class="pill-group">
+            <button class="zoom-btn" onclick="updateZoom(-0.2)">−</button>
+            <button class="zoom-btn" onclick="updateZoom(0.2)">+</button>
+        </div>
+    </div>
 
-    <aside id="side-panel">
-        <div class="panel-header">
-            <h3>Study Toolbox</h3>
-            <button class="close-btn" onclick="toggleMenu(false)">×</button>
+    <div id="side-drawer" class="drawer">
+        <div class="drawer-header">
+            <h3>Reader Settings</h3>
+            <button onclick="toggleMenu(false)">Close</button>
         </div>
-        
-        <div class="tool-section">
-            <h4>Vision</h4>
-            <div class="tool-grid">
-                <button onclick="setTheme('light')">Light</button>
-                <button onclick="setTheme('dark')">Dark</button>
-                <button onclick="setTheme('sepia')">Sepia</button>
+        <div class="drawer-body">
+            <div class="setting-item">
+                <label>Theme</label>
+                <div class="theme-switch">
+                    <button onclick="setTheme('light')">Light</button>
+                    <button onclick="setTheme('dark')">Dark</button>
+                    <button onclick="setTheme('sepia')">Sepia</button>
+                </div>
+            </div>
+            <div class="setting-item">
+                <label>Reading Aids</label>
+                <button class="toggle-btn" onclick="toggleFullscreen()">Toggle Fullscreen</button>
+                <button class="toggle-btn" onclick="rotateDoc()">Rotate Page</button>
+            </div>
+            <div class="setting-item">
+                <label>Cloud</label>
+                <button id="dl-button" class="download-btn">Save Offline</button>
             </div>
         </div>
-
-        <div class="tool-section">
-            <h4>Reading Tools</h4>
-            <div class="flex-row"><span>Auto Scroll</span><input type="checkbox" id="auto-scroll-chk"></div>
-            <div class="flex-row"><span>Reading Ruler</span><input type="checkbox" id="ruler-chk"></div>
-            <div class="flex-row"><span>Screen Awake</span><input type="checkbox" id="awake-chk"></div>
-        </div>
-
-        <div class="tool-section">
-            <h4>Advanced</h4>
-            <button class="wide-btn" onclick="toggleFullscreen()">Toggle Fullscreen</button>
-            <button class="wide-btn" onclick="rotateDoc()">Rotate 90°</button>
-            <button class="wide-btn" id="dl-link">Download Offline</button>
-        </div>
-    </aside>
+    </div>
+    <div id="drawer-overlay" onclick="toggleMenu(false)"></div>
 
     <script src="viewer-main.js"></script>
 </body>
