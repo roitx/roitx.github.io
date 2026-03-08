@@ -2,75 +2,100 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Roitx Reader Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Roitx Reader Elite</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="viewer-style.css">
 </head>
-<body class="dark-theme">
+<body class="theme-dark ui-visible">
 
-    <header class="navbar">
-        <button class="nav-icon" onclick="window.history.back()">✕</button>
-        <div class="nav-title">
-            <span id="doc-title">Loading...</span>
-            <small id="doc-stats">Initializing...</small>
-        </div>
-        <button class="nav-icon menu-trigger" onclick="toggleMenu(true)">
-            <svg viewBox="0 0 24 24" width="24"><path fill="currentColor" d="M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z"/></svg>
-        </button>
-    </header>
-
-    <main id="main-viewport">
-        <div id="loading-screen">
-            <div class="loader-bar"></div>
-            <p>Rendering HD Pages...</p>
-        </div>
-        <div id="canvas-wrapper"></div>
-    </main>
-
-    <div class="action-pill">
-        <div class="pill-group">
-            <button onclick="changePage(-1)">Prev</button>
-            <div class="pill-info">
-                <input type="number" id="page-num" value="1"> <span>/</span> <span id="total-pages">0</span>
-            </div>
-            <button onclick="changePage(1)">Next</button>
-        </div>
-        <div class="pill-divider"></div>
-        <div class="pill-group">
-            <button class="zoom-btn" onclick="updateZoom(-0.2)">−</button>
-            <button class="zoom-btn" onclick="updateZoom(0.2)">+</button>
-        </div>
-    </div>
-
-    <div id="side-drawer" class="drawer">
-        <div class="drawer-header">
-            <h3>Reader Settings</h3>
-            <button onclick="toggleMenu(false)">Close</button>
-        </div>
-        <div class="drawer-body">
-            <div class="setting-item">
-                <label>Theme</label>
-                <div class="theme-switch">
-                    <button onclick="setTheme('light')">Light</button>
-                    <button onclick="setTheme('dark')">Dark</button>
-                    <button onclick="setTheme('sepia')">Sepia</button>
+    <header class="navbar" id="navbar">
+        <div class="nav-left">
+            <button class="icon-btn action-back" onclick="window.history.back()" aria-label="Go Back">
+                <svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M20,11H7.83L13.42,5.41L12,4L4,12L12,20L13.41,18.59L7.83,13H20V11Z"/></svg>
+            </button>
+            <div class="metadata">
+                <h1 id="doc-title">Initializing...</h1>
+                <div class="sub-meta">
+                    <span id="page-indicator-top">Page 0 of 0</span>
+                    <span class="dot">•</span>
+                    <span id="file-size">0.0 MB</span>
                 </div>
             </div>
-            <div class="setting-item">
-                <label>Reading Aids</label>
-                <button class="toggle-btn" onclick="toggleFullscreen()">Toggle Fullscreen</button>
-                <button class="toggle-btn" onclick="rotateDoc()">Rotate Page</button>
+        </div>
+        <div class="nav-right">
+            <button class="icon-btn" onclick="toggleSettings()" aria-label="Settings">
+                <svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.35 19.43,11.03L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.97 19.05,5.05L16.56,6.05C16.04,5.66 15.47,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.53,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.97 4.46,5.05 4.34,5.27L2.34,8.73C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11.03C4.53,11.35 4.5,11.67 4.5,12C4.5,11.67 4.53,11.35 4.57,11.03L2.46,14.63C2.27,14.78 2.22,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.95C7.96,18.34 8.53,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.47,18.68 16.04,18.34 16.56,17.95L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"/></svg>
+            </button>
+        </div>
+    </header>
+
+    <main id="viewport" onclick="handleViewportClick(event)">
+        <div id="canvas-stage">
             </div>
-            <div class="setting-item">
-                <label>Cloud</label>
-                <button id="dl-button" class="download-btn">Save Offline</button>
+        
+        <div id="master-loader">
+            <div class="loader-ring"><div></div><div></div><div></div><div></div></div>
+            <p>Optimizing for your screen...</p>
+        </div>
+    </main>
+
+    <div class="scrub-bar" id="scrubBar">
+        <div class="scrub-container">
+            <button class="scrub-btn" onclick="navPage('prev')">
+                <svg viewBox="0 0 24 24" width="20"><path fill="currentColor" d="M15.41,16.58L10.83,12L15.41,7.41L14,6L8,12L14,18L15.41,16.58Z"/></svg>
+            </button>
+            <div class="scrub-track">
+                <input type="range" id="page-slider" min="1" max="100" value="1">
+                <div id="bubble-tip">1</div>
             </div>
+            <button class="scrub-btn" onclick="navPage('next')">
+                <svg viewBox="0 0 24 24" width="20"><path fill="currentColor" d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"/></svg>
+            </button>
         </div>
     </div>
-    <div id="drawer-overlay" onclick="toggleMenu(false)"></div>
+
+    <div id="modal-overlay" onclick="toggleSettings(false)"></div>
+    <div id="settings-panel">
+        <div class="panel-handle"></div>
+        <section class="panel-content">
+            <header>
+                <h2>Appearance</h2>
+                <button class="close-x" onclick="toggleSettings(false)">✕</button>
+            </header>
+
+            <div class="control-group">
+                <label>Theme</label>
+                <div class="theme-picker">
+                    <button onclick="setTheme('light')" class="t-opt t-light">Light</button>
+                    <button onclick="setTheme('sepia')" class="t-opt t-sepia">Sepia</button>
+                    <button onclick="setTheme('dark')" class="t-opt t-dark">Dark</button>
+                    <button onclick="setTheme('oled')" class="t-opt t-oled">OLED</button>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label>Page Zoom</label>
+                <div class="zoom-stepper">
+                    <button onclick="adjustZoom(-0.2)">A−</button>
+                    <span id="zoom-val">100%</span>
+                    <button onclick="adjustZoom(0.2)">A+</button>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label>Interaction</label>
+                <button class="full-btn" onclick="toggleFullscreen()">Toggle Fullscreen</button>
+                <button class="full-btn" onclick="rotateCanvas()">Rotate Page 90°</button>
+                <a id="download-trigger" class="full-btn primary">Download for Offline</a>
+            </div>
+        </section>
+    </div>
 
     <script src="viewer-main.js"></script>
 </body>
