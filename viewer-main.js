@@ -1,9 +1,10 @@
 /* =====================================================
-   ROITX ELITE ENGINE — ADVANCED CORE
+   ROITX ELITE ENGINE — UNIVERSAL MERGED Edition
+   Handles: Notes (notes/...) & Refbooks (refbooks/...)
    ===================================================== */
 
 const params = new URLSearchParams(location.search);
-const fullPath = params.get("path");
+const fullPath = params.get("path"); // Pure path from URL
 const docName = params.get("name");
 
 let pdfDoc = null,
@@ -13,50 +14,67 @@ let pdfDoc = null,
     isUIVisible = true,
     renderTask = null;
 
-/* ---------- INITIALIZATION ---------- */
+/* ---------- 1. INITIALIZATION & SMART FETCH ---------- */
 async function initReader() {
-    if (!fullPath) {
+    // 1. Path Validation
+    if (!fullPath || fullPath === "null" || fullPath === "undefined") {
         document.getElementById("doc-title").innerText = "No File Selected";
+        console.error("Critical: URL parameter 'path' is missing.");
         return;
     }
     
     document.getElementById("doc-title").innerText = docName || "Roitx Reader";
 
     try {
-        const { data, error } = await window.supabaseClient.storage.from("admin-files").download(fullPath);
-        if (error) throw error;
+        // 2. Supabase Connection & Download
+        // Bucket name 'admin-files' as per your provided links
+        const { data, error } = await window.supabaseClient.storage
+            .from("admin-files") 
+            .download(fullPath);
 
-        // Metadata Update
-        document.getElementById("file-size").innerText = (data.size / (1024 * 1024)).toFixed(2) + " MB";
+        if (error) {
+            console.error("Supabase Error:", error);
+            document.getElementById("doc-title").innerText = "Load Failed";
+            document.getElementById("master-loader").innerHTML = `<p style="color:#ff4444">Error: File not found in storage.</p>`;
+            return;
+        }
+
+        // 3. Metadata & Offline Download Setup
+        const fileSizeMB = (data.size / (1024 * 1024)).toFixed(2);
+        document.getElementById("file-size").innerText = `${fileSizeMB} MB`;
         
         const blobUrl = URL.createObjectURL(data);
-        document.getElementById("download-trigger").href = blobUrl;
-        document.getElementById("download-trigger").download = (docName || "document") + ".pdf";
+        const dlBtn = document.getElementById("download-trigger");
+        if(dlBtn) {
+            dlBtn.href = blobUrl;
+            dlBtn.download = (docName || "Document") + ".pdf";
+        }
 
-        // Load PDF
+        // 4. PDF.js Engine Boot
         const loadingTask = pdfjsLib.getDocument(blobUrl);
         pdfDoc = await loadingTask.promise;
         
-        // Setup Scrub Bar
+        // UI Setup
         const slider = document.getElementById("page-slider");
-        slider.max = pdfDoc.numPages;
+        if(slider) slider.max = pdfDoc.numPages;
         document.getElementById("page-indicator-top").innerText = `Page 1 of ${pdfDoc.numPages}`;
         
+        // Initial Render
         renderPage(1);
         document.getElementById("master-loader").style.display = "none";
         
     } catch (err) {
-        console.error("Reader Init Error:", err);
-        alert("Failed to load document.");
+        console.error("Global Engine Error:", err);
+        document.getElementById("doc-title").innerText = "Engine Error";
     }
 }
 
-/* ---------- HIGH-FIDELITY RENDERING ---------- */
+/* ---------- 2. HD RENDERING ENGINE (ZOOM FIX) ---------- */
 async function renderPage(num) {
     if (!pdfDoc) return;
     currentPage = num;
 
-    // Cancel previous render task if any
+    // Cancel current rendering if user is scrolling fast
     if (renderTask) renderTask.cancel();
 
     const page = await pdfDoc.getPage(num);
@@ -65,7 +83,7 @@ async function renderPage(num) {
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d', { alpha: false });
     
-    // Quality Optimization: Use device pixel ratio for super-sharp text
+    // High-DPI Sharpness (Retina Ready)
     const dpr = window.devicePixelRatio || 1;
     canvas.height = viewport.height * dpr;
     canvas.width = viewport.width * dpr;
@@ -74,34 +92,29 @@ async function renderPage(num) {
     context.scale(dpr, dpr);
 
     const stage = document.getElementById("canvas-stage");
-    stage.innerHTML = ''; // Clean old page
+    stage.innerHTML = ''; // Clear previous page
     stage.appendChild(canvas);
 
-    const renderContext = {
-        canvasContext: context,
-        viewport: viewport
-    };
-
-    renderTask = page.render(renderContext);
+    // Render Process
+    renderTask = page.render({ canvasContext: context, viewport: viewport });
     
-    // UI Updates
+    // Sync UI elements
     document.getElementById("page-indicator-top").innerText = `Page ${num} of ${pdfDoc.numPages}`;
-    document.getElementById("page-slider").value = num;
-    document.getElementById("bubble-tip").innerText = num;
+    const slider = document.getElementById("page-slider");
+    if(slider) slider.value = num;
 }
 
-/* ---------- INTERACTION LOGIC ---------- */
+/* ---------- 3. UI INTERACTION & GESTURES ---------- */
 window.handleViewportClick = (e) => {
-    // If clicking the very top or bottom, ignore (they have buttons)
+    // Top aur Bottom bars ke clicks ko ignore karein
     if (e.clientY < 80 || e.clientY > window.innerHeight - 80) return;
 
-    // Central Toggle for UI
     isUIVisible = !isUIVisible;
     document.body.classList.toggle("ui-hidden", !isUIVisible);
 };
 
 window.navPage = (dir) => {
-    let next = dir === 'next' ? currentPage + 1 : currentPage - 1;
+    let next = (dir === 'next') ? currentPage + 1 : currentPage - 1;
     if (next > 0 && next <= pdfDoc.numPages) {
         renderPage(next);
         document.getElementById("viewport").scrollTop = 0;
@@ -109,18 +122,23 @@ window.navPage = (dir) => {
 };
 
 window.adjustZoom = (delta) => {
+    // Zoom limits: 0.5x to 4.0x
     zoomScale = Math.min(Math.max(zoomScale + delta, 0.5), 4.0);
-    document.getElementById("zoom-val").innerText = Math.round(zoomScale * 100) + "%";
+    const zoomDisp = document.getElementById("zoom-val");
+    if(zoomDisp) zoomDisp.innerText = Math.round(zoomScale * 100) + "%";
     renderPage(currentPage);
 };
 
-/* ---------- SETTINGS & THEMES ---------- */
+/* ---------- 4. SETTINGS & THEMES ---------- */
 window.toggleSettings = (show = true) => {
-    document.getElementById("settings-panel").classList.toggle("open", show);
-    document.getElementById("modal-overlay").style.display = show ? "block" : "none";
+    const panel = document.getElementById("settings-panel");
+    const overlay = document.getElementById("modal-overlay");
+    if(panel) panel.classList.toggle("open", show);
+    if(overlay) overlay.style.display = show ? "block" : "none";
 };
 
 window.setTheme = (t) => {
+    // Themes: light, sepia, dark, oled
     document.body.className = `theme-${t} ui-visible`;
     toggleSettings(false);
 };
@@ -131,26 +149,23 @@ window.rotateCanvas = () => {
 };
 
 window.toggleFullscreen = () => {
-    if (!document.fullscreenElement) document.documentElement.requestFullscreen();
-    else document.exitFullscreen();
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(e => console.error(e));
+    } else {
+        document.exitFullscreen();
+    }
 };
 
-/* ---------- SCRUB BAR SLIDER ---------- */
+/* ---------- 5. SCRUB BAR SLIDER LOGIC ---------- */
 const slider = document.getElementById("page-slider");
-const bubble = document.getElementById("bubble-tip");
+if(slider) {
+    slider.oninput = function() {
+        // Scrubbing (Optional: Add bubble tooltip logic here)
+    };
+    slider.onchange = function() {
+        renderPage(parseInt(this.value));
+    };
+}
 
-slider.oninput = function() {
-    const val = parseInt(this.value);
-    bubble.innerText = val;
-    bubble.style.display = "block";
-    const percent = (val - 1) / (this.max - 1);
-    bubble.style.left = `calc(${percent * 100}% + (${8 - percent * 16}px))`;
-};
-
-slider.onchange = function() {
-    renderPage(parseInt(this.value));
-    bubble.style.display = "none";
-};
-
-/* ---------- BOOT ---------- */
+// Kickstart the engine
 document.addEventListener("DOMContentLoaded", initReader);
