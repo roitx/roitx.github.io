@@ -1,106 +1,94 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>ROITX Calculator</title>
-
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="calculator.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ROITX Scientific Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="calculator.css">
 </head>
+<body class="dark-theme">
+    <div id="overlay" class="overlay" onclick="closeSide()"></div>
+    <div id="sideMenu" class="side-menu">
+        <div class="side-header"><h3>📜 History</h3><button onclick="closeSide()">&times;</button></div>
+        <div id="historyList"></div>
+    </div>
 
-<body class="green">
+    <div class="calculator-frame">
+        <header class="calc-header">
+            <div class="menu-trigger" onclick="openSide()"><span></span><span></span><span></span></div>
+            <div class="brand-info">
+                <h1 class="site-label">ROITX SCIENTIFIC</h1>
+                <span class="model-number">fx-350MS PRO V.P.A.M.</span>
+            </div>
+            <div class="status-indicators">
+                <span id="degBtn" class="indicator active" onclick="toggleDegRad()">DEG</span>
+                <span id="shiftIndicator" class="indicator">S</span>
+                <span id="alphaIndicator" class="indicator">A</span>
+            </div>
+        </header>
 
-<!-- OVERLAY -->
-<div id="overlay" class="overlay"></div>
+        <div class="screen-container">
+            <div class="lcd-screen">
+                <div id="expression" class="exp-layer">|</div>
+                <div id="result" class="res-layer">0</div>
+            </div>
+        </div>
 
-<!-- SIDE MENU -->
-<div id="sideMenu" class="side-menu">
-  <h3>📘 History</h3>
-  <div id="historyList"></div>
+        <div class="control-row">
+            <button class="btn-ctrl shift" onclick="toggleShift()">SHIFT</button>
+            <button class="btn-ctrl alpha" onclick="toggleAlpha()">ALPHA</button>
+            <div class="replayer" id="ring">
+                <div class="replay-inner">
+                    <button class="dir-btn up" onclick="navigateHistory()">▲</button>
+                    <button class="dir-btn left" onclick="moveCursor(-1)">◀</button>
+                    <button class="dir-btn right" onclick="moveCursor(1)">▶</button>
+                    <button class="dir-btn down" onclick="navigateHistory()">▼</button>
+                </div>
+            </div>
+            <button class="btn-ctrl mode" onclick="toggleMode()">MODE</button>
+            <button class="btn-ctrl on" onclick="clearAll()">ON</button>
+        </div>
 
-  <div class="shortcuts">
-    <h4>✨ Shortcuts</h4>
-    <p>➡ Swipe Right → Open History</p>
-    <p>⬅ Swipe Left → Close History</p>
-    <p>👆 Tap Result → Copy</p>
-    <p>🔁 Double Tap → Clear</p>
-  </div>
+        <div class="button-grid scientific">
+            <div class="btn-wrapper"><span class="shift-label">d/c</span><button onclick="btnPress('FRAC')">ab/c</button></div>
+            <div class="btn-wrapper"><span class="shift-label">∛</span><button onclick="btnPress('SQRT')">√</button></div>
+            <div class="btn-wrapper"><span class="shift-label">x!</span><button onclick="btnPress('X2')">x²</button></div>
+            <div class="btn-wrapper"><span class="shift-label">x√</span><button onclick="btnPress('POW')">^</button></div>
+            <div class="btn-wrapper"><span class="shift-label">10ˣ</span><button onclick="btnPress('LOG')">log</button></div>
+            <div class="btn-wrapper"><span class="shift-label">eˣ</span><button onclick="btnPress('LN')">ln</button></div>
+        </div>
 
-  <button class="clear-btn" onclick="clearHistory()">Clear History</button>
-</div>
+        <div class="button-grid scientific">
+            <div class="btn-wrapper"><span class="shift-label">nPr</span><button onclick="btnPress('NCR')">nCr</button></div>
+            <div class="btn-wrapper"><span class="shift-label">Rec</span><button onclick="btnPress('POL')">Pol</button></div>
+            <div class="btn-wrapper"><span class="shift-label">x³</span><button onclick="btnPress('X3')">x³</button></div>
+            <div class="btn-wrapper"><span class="shift-label">hyp</span><button onclick="btnPress('ABS')">abs</button></div>
+            <div class="btn-wrapper"><span class="shift-label">sin⁻¹</span><button onclick="btnPress('SIN')">sin</button></div>
+            <div class="btn-wrapper"><span class="shift-label">cos⁻¹</span><button onclick="btnPress('COS')">cos</button></div>
+        </div>
 
-<!-- HEADER -->
-<header class="topbar">
-  <button id="menuBtn" class="menu-icon">
-    <span>➖</span>
-    <span> </span>
-    <span> </span>
-  </button>
+        <div class="button-grid scientific">
+            <div class="btn-wrapper"><span class="shift-label">tan⁻¹</span><button onclick="btnPress('TAN')">tan</button></div>
+            <div class="btn-wrapper"><span class="shift-label">e</span><button onclick="btnPress('PI')">π</button></div>
+            <div class="btn-wrapper"><span class="shift-label">%</span><button onclick="btnPress('(')">(</button></div>
+            <div class="btn-wrapper"><span class="shift-label">,</span><button onclick="btnPress(')')">)</button></div>
+            <div class="btn-wrapper"><span class="shift-label">M-</span><button onclick="btnPress('MOD')">mod</button></div>
+            <div class="btn-wrapper"><span class="shift-label">DRG</span><button onclick="btnPress('M+')">M+</button></div>
+        </div>
 
-
-  <div class="title glow">ROITX Calculator</div>
-
-  <select id="themeSelect" class="theme-select">
-    <option value="green">Green 💚</option>
-    <option value="blue">Blue 💙</option>
-    <option value="dark">Purple 💜</option>
-  </select>
-
-  <button id="degBtn" class="deg-btn" onclick="toggleDegRad()">DEG</button>
-</header>
-
-<!-- CALCULATOR -->
-<div class="calculator">
-
-  <div class="display">
-    <div id="expression" class="expression"></div>
-    <div id="result" class="result">0</div>
-  </div>
-
-  <button class="mode-btn" onclick="toggleSci()">Scientific</button>
-
-  <!-- SCIENTIFIC -->
-  <div id="sciPanel" class="sci-panel">
-    <button onclick="append('Math.sin(')">sin</button>
-    <button onclick="append('Math.cos(')">cos</button>
-    <button onclick="append('Math.tan(')">tan</button>
-    <button onclick="append('Math.sqrt(')">√</button>
-    <button onclick="append('**2')">x²</button>
-    <button onclick="append('Math.log(')">log</button>
-    <button onclick="append('Math.PI')">π</button>
-    <button onclick="append('Math.E')">e</button>
-  </div>
-
-  <!-- MAIN -->
-  <div class="buttons">
-    <button class="op" onclick="clearAll()">AC</button>
-    <button class="op" onclick="del()">⌫</button>
-    <button class="op" onclick="append('%')">%</button>
-    <button class="op" onclick="append('/')">÷</button>
-
-    <button onclick="append('7')">7</button>
-    <button onclick="append('8')">8</button>
-    <button onclick="append('9')">9</button>
-    <button class="op" onclick="append('*')">×</button>
-
-    <button onclick="append('4')">4</button>
-    <button onclick="append('5')">5</button>
-    <button onclick="append('6')">6</button>
-    <button class="op" onclick="append('-')">−</button>
-
-    <button onclick="append('1')">1</button>
-    <button onclick="append('2')">2</button>
-    <button onclick="append('3')">3</button>
-    <button class="op" onclick="append('+')">+</button>
-
-    <button onclick="append('(')">(</button>
-    <button onclick="append('0')">0</button>
-    <button onclick="append(')')">)</button>
-    <button class="equal" onclick="calculate()">=</button>
-  </div>
-</div>
-
-<script src="calculator.js"></script>
+        <div class="button-grid main-pad">
+            <button class="num" onclick="btnPress('7')">7</button><button class="num" onclick="btnPress('8')">8</button><button class="num" onclick="btnPress('9')">9</button>
+            <button class="action del" onclick="del()">DEL</button><button class="action ac" onclick="clearAll()">AC</button>
+            <button class="num" onclick="btnPress('4')">4</button><button class="num" onclick="btnPress('5')">5</button><button class="num" onclick="btnPress('6')">6</button>
+            <button class="op" onclick="btnPress('*')">×</button><button class="op" onclick="btnPress('/')">÷</button>
+            <button class="num" onclick="btnPress('1')">1</button><button class="num" onclick="btnPress('2')">2</button><button class="num" onclick="btnPress('3')">3</button>
+            <button class="op" onclick="btnPress('+')">+</button><button class="op" onclick="btnPress('-')">−</button>
+            <button class="num" onclick="btnPress('0')">0</button><button class="num" onclick="btnPress('.')">.</button>
+            <button class="op" onclick="btnPress('EXP')">EXP</button><button class="op" onclick="btnPress('ANS')">Ans</button>
+            <button class="equal" onclick="calculate()">=</button>
+        </div>
+    </div>
+    <script src="calculator.js"></script>
 </body>
 </html>

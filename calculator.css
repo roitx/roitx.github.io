@@ -1,146 +1,254 @@
-:root{
-  --accent:#4aa3ff; /* default */
-}
-*{box-sizing:border-box;font-family:Poppins}
-body{margin:0;background:#0c1226;color:#fff}
+/* --- ROITX ADVANCED SCIENTIFIC CALCULATOR CSS --- */
 
-/* THEMES */
-body.green{--accent:#00ff9c}
-body.blue{--accent:#4aa3ff}
-body.dark{--accent:#9b7cff}
-
-/* HEADER */
-.topbar{
-  height:56px;
-  display:flex;
-  align-items:center;
-  gap:10px;
-  padding:0 12px;
-  background:#111a33;
-}
-/* ===========================
-   MENU BUTTON
-=========================== */
-.menu-icon{
-  width:38px;
-  height:38px;
-  border:none;
-  border-radius:12px;
-  background:linear-gradient(135deg,var(--accent),#fff2);
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
-  gap:5px;
-  cursor:pointer;
-  box-shadow:0 0 18px var(--accent);
-}
-.menu-icon span{
-  width:22px;
-  height:2.5px;
-  background:#fff;
-  border-radius:3px;
+:root {
+    --accent: #00ff9c;       /* Neon Green like high-end calculators */
+    --shift-color: #ffb800;  /* Gold/Yellow for Shift labels */
+    --alpha-color: #ff4d4d;  /* Red for Alpha labels */
+    --bg-frame: #1a1a1a;     /* Dark plastic body */
+    --lcd-bg: #9ea98f;       /* Classic Greenish LCD color */
+    --btn-gray: #333333;     /* Standard button color */
+    --btn-black: #111111;    /* Operation button color */
 }
 
-.title{flex:1;font-weight:700}
-.glow{text-shadow:0 0 16px var(--accent)}
-
-.theme-select{
-  background:#1b254f;
-  color:#fff;
-  border:none;
-  border-radius:8px;
-  padding:6px;
-}
-
-.deg-btn{
-  background:var(--accent);
-  border:none;border-radius:8px;
-  padding:6px 10px;
-  font-weight:600;
-}
-
-/* CALCULATOR */
-.calculator{padding:14px}
-.display{
-  background:#050a1d;
-  padding:14px;
-  border-radius:12px;
-}
-.expression{color:#aaa;font-size:14px}
-.result{font-size:32px;font-weight:700}
-
-/* BUTTONS */
-.buttons{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:10px;
-  margin-top:12px;
-}
-button{
-  padding:14px;
-  font-size:18px;
-  border:none;
-  border-radius:12px;
-  background:#1b254f;
-  color:#fff;
-  transition:.2s;
-}
-button:active{transform:scale(.95)}
-button.op{background:#2a336a}
-button.equal{background:var(--accent);color:#000;font-weight:700}
-
-/* SCI */
-.mode-btn{
-  width:100%;
-  margin:10px 0;
-  background:#2a2f55;
-}
-.sci-panel{
-  display:none;
-  grid-template-columns:repeat(4,1fr);
-  gap:8px;
-}
-.sci-panel.show{display:grid}
-
-/* SIDE MENU */
-.side-menu{
-  position:fixed;top:0;left:-280px;
-  width:260px;height:100%;
-  background:#0b1230;
-  padding:14px;
-  transition:.3s;
-  z-index:10;
-}
-.side-menu.show{left:0}
-
-.shortcuts{font-size:12px;color:#aaa;margin-top:10px}
-.clear-btn{width:100%;margin-top:10px;background:#ff4a4a}
-
-/* OVERLAY */
-.overlay{
-  position:fixed;inset:0;
-  background:rgba(0,0,0,.6);
-  display:none;
-}
-.overlay.show{display:block}
-
-/* Pure app se text selection aur long-press blue highlight hatane ke liye */
 * {
-  -webkit-tap-highlight-color: transparent; /* Mobile tap highlight hatata hai */
-  -webkit-touch-callout: none;                /* iOS par long-press menu disable karta hai */
-  -webkit-user-select: none;                 /* Safari/Chrome select disable */
-  -khtml-user-select: none;                  /* Konqueror */
-  -moz-user-select: none;                    /* Firefox */
-  -ms-user-select: none;                     /* IE/Edge */
-  user-select: none;                         /* Standard logic */
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
 }
 
-/* Agar aap chahte hain ki sirf 'input' ya 'textarea' mein selection kaam kare */
-input, textarea {
-  -webkit-user-select: text;
-  -moz-user-select: text;
-  -ms-user-select: text;
-  user-select: text;
+body {
+    margin: 0;
+    background: #050505;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    color: #fff;
 }
 
+/* Calculator Outer Frame */
+.calculator-frame {
+    background: var(--bg-frame);
+    width: 100%;
+    max-width: 400px;
+    padding: 20px;
+    border-radius: 30px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.8), inset 0 2px 5px rgba(255,255,255,0.1);
+    border: 4px solid #222;
+}
+
+/* Header & Branding */
+.calc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 15px;
+}
+
+.site-label {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 16px;
+    color: #888;
+    margin: 0;
+    letter-spacing: 2px;
+}
+
+.model-number {
+    font-size: 10px;
+    color: #555;
+    display: block;
+}
+
+/* LCD Screen Effect */
+.screen-container {
+    background: #000;
+    padding: 10px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    border: 2px solid #333;
+}
+
+.lcd-screen {
+    background: var(--lcd-bg);
+    height: 100px;
+    border-radius: 4px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: inset 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.exp-layer {
+    color: #222;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 18px;
+    text-align: left;
+    height: 30px;
+    overflow-x: auto;
+}
+
+.res-layer {
+    color: #000;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 32px;
+    font-weight: 700;
+    text-align: right;
+}
+
+/* Control Row (Shift, Alpha, Replay) */
+.control-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.btn-ctrl {
+    width: 50px;
+    height: 35px;
+    border-radius: 15px;
+    border: none;
+    font-size: 9px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 3px 0 #000;
+}
+
+.shift { background: var(--shift-color); color: #000; }
+.alpha { background: var(--alpha-color); color: #fff; }
+.mode, .on { background: #444; color: #fff; }
+
+/* Replayer Fix for Smooth Transitions */
+.replayer {
+    width: 95px;
+    height: 95px;
+    background: radial-gradient(circle at top, #2a2a2a, #111);
+    border-radius: 50%;
+    position: relative;
+    border: 3px solid #000;
+    transition: all 0.2s ease; /* Ring light smooth animation */
+}
+
+.dir-btn {
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    background: #1c1c1c;
+    border-radius: 8px;
+    border: none;
+    color: #ccc;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 3px 0 #000;
+    transition: transform 0.1s, box-shadow 0.1s, background 0.2s; /* Smooth click */
+}
+
+/* Button position stabilization */
+.up { top: 4px; left: 50%; transform: translateX(-50%); }
+.down { bottom: 4px; left: 50%; transform: translateX(-50%); }
+.left { left: 4px; top: 50%; transform: translateY(-50%); }
+.right { right: 4px; top: 50%; transform: translateY(-50%); }
+
+.dir-btn:active {
+    transform: translate(calc(-50% + 0px), 2px) !important; /* Prevents jumping */
+    box-shadow: 0 1px 0 #000;
+    background: #000;
+}
+
+/* Left/Right active state specifically to handle the translate centering */
+.left:active { transform: translateY(-48%) scale(0.95) !important; }
+.right:active { transform: translateY(-48%) scale(0.95) !important; }
+.up:active { transform: translateX(-50%) translateY(2px) scale(0.95) !important; }
+.down:active { transform: translateX(-50%) translateY(-2px) scale(0.95) !important; }
+
+/* Button Grids */
+.button-grid {
+    display: grid;
+    gap: 12px;
+    margin-bottom: 15px;
+}
+
+.scientific { grid-template-columns: repeat(6, 1fr); }
+.main-pad { grid-template-columns: repeat(5, 1fr); }
+
+.btn-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.shift-label {
+    font-size: 8px;
+    color: var(--shift-color);
+    margin-bottom: 2px;
+    height: 10px;
+}
+
+/* Base Button Styles */
+button {
+    width: 100%;
+    padding: 10px 0;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.1s;
+    box-shadow: 0 4px 0 #000;
+}
+
+button:active {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 #000;
+}
+
+/* Scientific Buttons */
+.scientific button {
+    background: var(--btn-black);
+    color: #fff;
+    font-size: 11px;
+    border-radius: 6px;
+    padding: 8px 0;
+}
+
+/* Main Pad Buttons */
+.num { background: var(--btn-gray); color: #fff; font-size: 18px; }
+.op { background: var(--btn-black); color: var(--accent); font-size: 18px; }
+.action { background: #555; color: #fff; font-size: 12px; font-weight: 700; }
+.del, .ac { background: #a33; }
+.equal { background: #fff; color: #000; font-size: 20px; }
+
+/* Status Indicators */
+.status-indicators { display: flex; gap: 5px; }
+.indicator {
+    font-size: 8px;
+    color: #333;
+    background: #000;
+    padding: 2px 5px;
+    border-radius: 3px;
+}
+.indicator.active { color: #000; background: var(--accent); font-weight: 700; }
+
+/* Sidebar & History */
+.side-menu {
+    position: fixed; top: 0; left: -300px; width: 280px; height: 100%;
+    background: #111; z-index: 1000; transition: 0.4s; padding: 20px;
+}
+.side-menu.show { left: 0; }
+.overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.8);
+    display: none; z-index: 999;
+}
+.overlay.show { display: block; }
+
+.calc-footer {
+    text-align: center;
+    margin-top: 15px;
+    font-size: 9px;
+    color: #444;
+    letter-spacing: 3px;
+}
