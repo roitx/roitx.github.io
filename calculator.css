@@ -252,3 +252,72 @@ button:active {
     color: #444;
     letter-spacing: 3px;
 }
+/* --- Alpha Labels Style --- */
+.btn-wrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.alpha-label {
+    color: var(--alpha-color);
+    font-size: 9px;
+    font-weight: bold;
+    position: absolute;
+    top: -12px;
+    right: 5px;
+    opacity: 0.8;
+}
+
+/* --- Cool Lighting Effects --- */
+
+/* 1. Screen Glow: Jab calculator on ho toh halki roshni aaye */
+.lcd-screen {
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.3), 0 0 10px rgba(158, 169, 143, 0.2);
+    transition: all 0.3s ease;
+    border: 1px solid rgba(0,0,0,0.1);
+}
+
+/* 2. Button Glow: Hover karne par neon border effect */
+button:hover {
+    filter: brightness(1.2);
+    box-shadow: 0 0 8px var(--accent);
+}
+
+/* 3. Ring Light: D-Pad ke peeche halka neon effect */
+.replayer {
+    box-shadow: 0 0 15px rgba(0, 255, 156, 0.1), inset 0 0 10px #000;
+}
+
+/* 4. Active Mode Animation */
+.indicator.active {
+    text-shadow: 0 0 5px var(--accent);
+    animation: neonPulse 1.5s infinite;
+}
+
+@keyframes neonPulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.6; }
+    100% { opacity: 1; }
+}
+
+/* 5. Key Press Shadow */
+button:active {
+    transform: translateY(2px);
+    box-shadow: 0 0 15px var(--accent);
+}
+/* Blinking Cursor Styling */
+.cursor {
+    display: inline-block;
+    width: 2px;
+    height: 18px;
+    background: #000; /* LCD text color */
+    margin-left: 1px;
+    vertical-align: middle;
+    animation: blink-animation 0.8s step-end infinite;
+}
+
+@keyframes blink-animation {
+    50% { opacity: 0; }
+}
