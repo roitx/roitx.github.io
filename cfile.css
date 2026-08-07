@@ -1,40 +1,29 @@
 /* ==========================================================================
-   Roitx Studio IDE v5.5 - Premium Advanced Theme (cfile.css)
+   Roitx Studio IDE v5.6 - Pro Engine Stylesheet (cfile.css)
    ========================================================================== */
 
 :root {
-    --bg-dark-main: #0a0c10;
+    --bg-main: #0a0c10;
     --bg-panel: #12161f;
-    --bg-panel-header: #1a202c;
-    --bg-input: #080a0f;
-    --border-color: #2d3748;
-    
-    /* Text & Accents */
-    --text-primary: #ffffff;
-    --text-secondary: #a0aec0;
-    --text-muted: #52606d;
-    --accent-cyan: #00f0ff;
-    --accent-green: #00ff70;
-    --accent-red: #ff3e3e;
+    --bg-panel-header: #181d28;
+    --bg-input: #0f131a;
+    --text-main: #e2e8f0;
+    --text-muted: #64748b;
+    --accent-color: #00f0ff;
+    --accent-gradient: linear-gradient(135deg, #00f0ff, #7000ff);
+    --border-color: #1e293b;
+    --font-code: 'Courier New', Courier, monospace;
+}
 
-    /* High-Contrast Syntax Colors */
-    --syn-tag: #ff3377;
-    --syn-attr-name: #ffea00;
-    --syn-attr-val: #00f0ff;
-    --syn-keyword: #d000ff;
-    --syn-function: #00d9ff;
-    --syn-number: #ff9d00;
-    --syn-comment: #6c7a89;
-    --syn-css-prop: #00ffaa;
-    --syn-css-selector: #ff3377;
-
-    --font-ui: 'Inter', system-ui, sans-serif;
-    --font-code: 'Fira Code', Consolas, 'Courier New', monospace;
-
-    /* Advanced Animation Variables */
-    --trans-fast: 0.15s ease-in-out;
-    --trans-smooth: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --shadow-glow: 0 0 15px rgba(0, 240, 255, 0.3);
+body.light-theme {
+    --bg-main: #f1f5f9;
+    --bg-panel: #ffffff;
+    --bg-panel-header: #e2e8f0;
+    --bg-input: #f8fafc;
+    --text-main: #1e293b;
+    --text-muted: #94a3b8;
+    --accent-color: #0284c7;
+    --border-color: #cbd5e1;
 }
 
 * {
@@ -44,81 +33,17 @@
 }
 
 body {
-    background-color: var(--bg-dark-main);
-    color: var(--text-primary);
-    font-family: var(--font-ui);
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     height: 100vh;
-    width: 100vw;
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    transition: background-color var(--trans-smooth), color var(--trans-smooth);
+    transition: background 0.3s, color 0.3s;
 }
 
-/* ==========================================================================
-   1. Light Theme Variables & Overrides (With Smooth Transitions)
-   ========================================================================== */
-body.light-theme {
-    --bg-dark-main: #f0f2f5;
-    --bg-panel: #ffffff;
-    --bg-panel-header: #f8fafc;
-    --bg-input: #ffffff;
-    --border-color: #cbd5e1;
-    
-    --text-primary: #0f172a;
-    --text-secondary: #475569;
-    --text-muted: #64748b;
-    --accent-cyan: #0284c7;
-    --accent-green: #16a34a;
-    --accent-red: #dc2626;
-    --shadow-glow: 0 4px 12px rgba(0, 0, 0, 0.05);
-
-    /* Light Mode Syntax Colors */
-    --syn-tag: #d97706;
-    --syn-attr-name: #2563eb;
-    --syn-attr-val: #059669;
-    --syn-keyword: #9333ea;
-    --syn-function: #2563eb;
-    --syn-number: #d97706;
-    --syn-comment: #94a3b8;
-    --syn-css-prop: #0d9488;
-    --syn-css-selector: #d97706;
-}
-
-body.light-theme textarea { caret-color: #0284c7 !important; }
-body.light-theme .highlight-layer { color: #0f172a; }
-body.light-theme iframe { background: #ffffff; }
-
-/* ==========================================================================
-   2. Animations & Keyframes
-   ========================================================================== */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(5px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes pulseGlow {
-    0% { text-shadow: 0 0 10px rgba(0, 240, 255, 0.5); }
-    50% { text-shadow: 0 0 20px rgba(0, 240, 255, 0.8); }
-    100% { text-shadow: 0 0 10px rgba(0, 240, 255, 0.5); }
-}
-
-/* ==========================================================================
-   3. Base Layout & Transitions
-   ========================================================================== */
-.hidden { display: none !important; }
-
-/* Custom Sleek Scrollbars */
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { 
-    background: var(--border-color); 
-    border-radius: 4px; 
-    border: 2px solid var(--bg-dark-main);
-}
-::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
-
-/* Top Navbar - Glassmorphism touch */
+/* Top Navigation */
 .top-nav {
     height: 55px;
     background-color: var(--bg-panel);
@@ -126,32 +51,193 @@ body.light-theme iframe { background: #ffffff; }
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 16px;
-    z-index: 10;
+    padding: 0 20px;
     flex-shrink: 0;
-    transition: background-color var(--trans-smooth), border-color var(--trans-smooth);
 }
 
-.brand-container { display: flex; align-items: center; gap: 10px; }
+.brand-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
 
 .logo-text {
-    font-size: 20px;
     font-weight: 800;
-    color: var(--accent-cyan);
+    font-size: 16px;
     letter-spacing: 1px;
-    animation: pulseGlow 3s infinite alternate;
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
 .version-tag {
-    background: rgba(0, 255, 112, 0.1);
-    color: var(--accent-green);
-    border: 1px solid rgba(0, 255, 112, 0.3);
+    background: rgba(0, 240, 255, 0.1);
+    color: var(--accent-color);
     font-size: 10px;
-    font-weight: 700;
-    padding: 3px 8px;
-    border-radius: 12px;
-    backdrop-filter: blur(4px);
+    padding: 3px 6px;
+    border-radius: 4px;
+    font-weight: bold;
 }
+
+.header-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+/* Buttons */
+.btn {
+    background: var(--bg-panel-header);
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+    padding: 6px 14px;
+    font-size: 13px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    transition: 0.2s;
+}
+
+.btn:hover {
+    border-color: var(--accent-color);
+}
+
+.btn-primary {
+    background: var(--accent-gradient);
+    color: #fff;
+    border: none;
+}
+
+.icon-btn {
+    background: var(--bg-panel-header);
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+    width: 35px;
+    height: 35px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.2s;
+}
+
+.icon-btn:hover {
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+}
+
+/* Workspace Grid */
+.workspace-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background-color: var(--border-color);
+    overflow: hidden;
+}
+
+.editors-wrapper, .output-container {
+    background-color: var(--bg-main);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Editor Tabs Bar */
+.editor-tabs-bar {
+    display: flex;
+    background-color: var(--bg-panel);
+    border-bottom: 1px solid var(--border-color);
+    height: 40px;
+    flex-shrink: 0;
+}
+
+.tab-btn {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: 0.2s;
+}
+
+.tab-btn.active {
+    color: var(--accent-color);
+    border-bottom-color: var(--accent-color);
+    background-color: var(--bg-input);
+}
+
+.editors-container {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+}
+
+.editor-panel {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
+    flex-direction: column;
+}
+
+.editor-panel.active {
+    display: flex;
+}
+
+.panel-header {
+    height: 35px;
+    background-color: var(--bg-panel-header);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 12px;
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.panel-title {
+    font-size: 12px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.file-icon {
+    font-size: 11px;
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+.html-icon { background: rgba(255, 100, 0, 0.2); color: #ff6400; }
+.css-icon { background: rgba(0, 150, 255, 0.2); color: #0096ff; }
+.js-icon { background: rgba(255, 220, 0, 0.2); color: #ffdc00; }
+
+.mini-btn {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.mini-btn:hover {
+    color: var(--text-main);
+    border-color: var(--text-main);
+}
+
 .editor-body {
     flex: 1;
     display: flex;
@@ -175,7 +261,6 @@ body.light-theme iframe { background: #ffffff; }
     flex-shrink: 0;
 }
 
-/* Fixes Overlap Issue */
 .code-area-wrapper {
     flex: 1;
     position: relative;
@@ -201,388 +286,225 @@ textarea, .highlight-layer {
     outline: none;
 }
 
-/* Advanced Buttons with 3D Press Effects */
-.header-actions { display: flex; align-items: center; gap: 8px; }
-
-.btn {
-    padding: 8px 16px;
-    font-size: 12px;
-    font-weight: 700;
-    border-radius: 6px;
-    border: 1px solid transparent;
-    cursor: pointer;
-    transition: var(--trans-fast);
-    white-space: nowrap;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.btn:active { transform: scale(0.95); }
-
-.btn-primary {
-    background: var(--accent-green);
-    color: #000;
-    box-shadow: 0 4px 10px rgba(0, 255, 112, 0.2);
-}
-.btn-primary:hover {
-    background: #00e665;
-    box-shadow: 0 6px 15px rgba(0, 255, 112, 0.4);
-    transform: translateY(-1px);
-}
-
-.btn-secondary {
-    background: transparent;
-    color: var(--text-primary);
-    border-color: var(--border-color);
-}
-.btn-secondary:hover {
-    background: var(--bg-panel-header);
-    border-color: var(--text-muted);
-}
-
-.icon-btn {
-    background: transparent;
-    border: 1px solid var(--border-color);
-    color: var(--text-secondary);
-    padding: 8px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: var(--trans-fast);
-}
-.icon-btn:hover {
-    color: var(--accent-cyan);
-    border-color: var(--accent-cyan);
-    background: rgba(0, 240, 255, 0.05);
-}
-.icon-btn:active { transform: scale(0.92); }
-
-.mini-btn {
-    background: transparent;
-    border: none;
-    color: var(--text-muted);
-    font-size: 11px;
-    cursor: pointer;
-    padding: 4px 8px;
-    border-radius: 4px;
-    transition: var(--trans-fast);
-}
-.mini-btn:hover { 
-    color: var(--accent-red); 
-    background: rgba(255, 62, 62, 0.1);
-}
-
-/* ==========================================================================
-   4. Workspace & Panels
-   ========================================================================== */
-.workspace-grid {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    height: calc(100vh - 80px);
-    overflow: hidden;
-}
-
-.editors-wrapper {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
-
-/* Animated Tabs */
-.editor-tabs-bar, .output-header {
-    display: flex;
-    background: var(--bg-panel-header);
-    border-bottom: 1px solid var(--border-color);
-    padding: 6px 12px 0 12px;
-    gap: 6px;
-    transition: background-color var(--trans-smooth);
-}
-
-.tab-btn, .output-tab {
-    background: transparent;
-    border: 1px solid transparent;
-    border-bottom: none;
-    color: var(--text-secondary);
-    padding: 8px 18px;
-    font-size: 12px;
-    font-weight: 700;
-    border-radius: 8px 8px 0 0;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: var(--trans-fast);
-    position: relative;
-    overflow: hidden;
-}
-
-.tab-btn:hover, .output-tab:hover {
-    color: var(--text-primary);
-    background: rgba(255,255,255,0.02);
-}
-
-.tab-btn.active, .output-tab.active {
-    background: var(--bg-input);
-    color: var(--text-primary);
-    border-color: var(--border-color);
-}
-
-/* Animated Underline for Active Tabs */
-.tab-btn.active::after, .output-tab.active::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 2px;
-    background: var(--accent-cyan);
-    animation: fadeIn 0.3s ease forwards;
-}
-
-.editors-container {
-    flex: 1;
-    display: flex;
-    background: var(--bg-dark-main);
-    overflow: hidden;
-}
-
-.editor-panel {
-    display: flex;
-    flex-direction: column;
-    background: var(--bg-panel);
-    overflow: hidden;
-    flex: 1;
-    border-right: 1px solid var(--border-color);
-    animation: fadeIn var(--trans-smooth);
-}
-
-/* ==========================================================================
-   5. Editor Body & Highlighting (Smooth Caret & Selection)
-   ========================================================================== */
-.editor-body {
-    flex: 1;
-    display: flex;
-    position: relative;
-    background: var(--bg-input);
-    transition: background-color var(--trans-smooth);
-}
-
-.line-numbers {
-    width: 45px;
-    padding: 16px 0;
-    background: var(--bg-panel-header);
-    color: var(--text-muted);
-    font-family: var(--font-code);
-    font-size: 13.5px;
-    line-height: 1.6;
-    text-align: right;
-    padding-right: 12px;
-    user-select: none;
-    border-right: 1px solid var(--border-color);
-    transition: background-color var(--trans-smooth);
-}
-
-textarea, .highlight-layer {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    padding: 16px;
-    font-family: var(--font-code) !important;
-    font-size: 13.5px !important;
-    line-height: 1.6 !important;
-    letter-spacing: 0.3px !important;
-    tab-size: 4;
-    white-space: pre;
-    overflow: auto;
-    border: none;
-    outline: none;
-}
-
 textarea {
-    z-index: 2;
-    color: transparent !important;
-    background: transparent !important;
-    caret-color: var(--accent-green) !important;
+    background: transparent;
+    color: transparent;
+    caret-color: var(--text-main);
     resize: none;
+    z-index: 2;
 }
-textarea::selection { background: rgba(0, 240, 255, 0.2); }
 
 .highlight-layer {
-    z-index: 1;
+    color: var(--text-main);
     pointer-events: none;
-    color: var(--text-primary);
+    z-index: 1;
 }
 
-/* Syntax Tokens */
-.hl-tag { color: var(--syn-tag) !important; font-weight: 600; }
-.hl-attr-name { color: var(--syn-attr-name) !important; font-style: italic; }
-.hl-attr-val { color: var(--syn-attr-val) !important; }
-.hl-keyword { color: var(--syn-keyword) !important; font-weight: 600; }
-.hl-function { color: var(--syn-function) !important; }
-.hl-number { color: var(--syn-number) !important; }
-.hl-comment { color: var(--syn-comment) !important; font-style: italic; opacity: 0.8; }
-.hl-css-prop { color: var(--syn-css-prop) !important; }
-.hl-css-selector { color: var(--syn-css-selector) !important; font-weight: 600; }
-.hl-string { color: var(--syn-attr-val) !important; }
-
-/* ==========================================================================
-   6. Output, Console & Premium Device Mockup
-   ========================================================================== */
-.output-container {
-    flex: 1;
+/* Output Container */
+.output-header {
+    height: 40px;
+    background-color: var(--bg-panel);
+    border-bottom: 1px solid var(--border-color);
     display: flex;
-    flex-direction: column;
-    background: var(--bg-dark-main);
-    border-top: 2px solid var(--border-color);
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 12px;
+    flex-shrink: 0;
+}
+
+.output-tabs {
+    display: flex;
+    gap: 6px;
+}
+
+.output-tab {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.output-tab.active {
+    background: var(--bg-input);
+    color: var(--accent-color);
+}
+
+.badge {
+    background: rgba(255, 0, 85, 0.2);
+    color: #ff0055;
+    font-size: 10px;
+    padding: 1px 5px;
+    border-radius: 10px;
+}
+
+.device-selector {
+    display: flex;
+    gap: 4px;
 }
 
 .device-btn {
-    background: var(--bg-panel);
+    background: transparent;
     border: 1px solid var(--border-color);
     color: var(--text-muted);
     font-size: 11px;
-    padding: 4px 10px;
-    border-radius: 6px;
+    padding: 3px 8px;
+    border-radius: 4px;
     cursor: pointer;
-    transition: var(--trans-fast);
 }
+/* Toggle Preview Panel Styling */
+.output-container.collapsed-preview {
+    display: none !important;
+}
+/* ⌨️ Custom Keyboard Shortcut Toolbar */
+.shortcut-bar {
+    display: flex;
+    gap: 6px;
+    padding: 6px 10px;
+    background: #161b22;
+    border-top: 1px solid #30363d;
+    overflow-x: auto;
+    white-space: nowrap;
+    scrollbar-width: none; /* Hide scrollbar for clean look */
+}
+
+.shortcut-bar::-webkit-scrollbar {
+    display: none;
+}
+
+.shortcut-bar button {
+    background: #21262d;
+    color: #c9d1d9;
+    border: 1px solid #30363d;
+    padding: 5px 10px;
+    font-size: 12px;
+    font-family: monospace;
+    border-radius: 4px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.2s, color 0.2s;
+}
+
+.shortcut-bar button:active, .shortcut-bar button:hover {
+    background: #00f0ff;
+    color: #0a0c10;
+    border-color: #00f0ff;
+}
+
+
+/* Optional: Agar editors-wrapper ko full width dena ho jab preview hide ho */
+.workspace-grid:has(.output-container.collapsed-preview) {
+    grid-template-columns: 1fr !important;
+}
+
+
 .device-btn.active {
-    color: var(--text-primary);
-    background: var(--accent-cyan);
-    border-color: var(--accent-cyan);
-    box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+    background: var(--bg-input);
+    color: var(--text-main);
+    border-color: var(--text-muted);
 }
 
 .preview-wrapper {
     flex: 1;
-    width: 100%;
-    height: 100%;
+    background: #fff;
+    position: relative;
     display: flex;
     justify-content: center;
     align-items: center;
-    background: radial-gradient(circle, var(--bg-panel) 0%, var(--bg-dark-main) 100%);
     overflow: hidden;
-    transition: background var(--trans-smooth);
 }
 
-iframe {
+.preview-wrapper.mobile-mode iframe {
+    width: 375px;
+    height: 667px;
+    border: 8px solid #222;
+    border-radius: 24px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.preview-wrapper iframe {
     width: 100%;
     height: 100%;
     border: none;
-    background: #ffffff;
-    transition: var(--trans-smooth);
 }
 
-/* Premium Mobile Mockup Design */
-.preview-wrapper.mobile-mode iframe {
-    width: 375px;
-    height: 812px;
-    max-height: 95%;
-    border-radius: 36px;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-    border: 12px solid #1a1a1a;
-    outline: 2px solid var(--border-color);
-}
-
-/* Console Styling */
 .console-wrapper {
     flex: 1;
+    background: var(--bg-input);
     display: flex;
     flex-direction: column;
-    background: var(--bg-input);
-    font-family: var(--font-code);
-    animation: fadeIn var(--trans-fast);
-}
-.console-output {
-    flex: 1;
-    padding: 16px;
-    overflow-y: auto;
-    font-size: 13px;
-    line-height: 1.5;
-}
-.log-entry {
-    padding: 6px 12px;
-    border-radius: 4px;
-    margin-bottom: 4px;
-    background: rgba(255,255,255,0.02);
-    border-left: 3px solid var(--accent-green);
-    color: var(--text-secondary);
-}
-.log-entry.log-error {
-    border-left-color: var(--accent-red);
-    background: rgba(255, 62, 62, 0.05);
-    color: var(--accent-red);
+    overflow: hidden;
 }
 
-/* ==========================================================================
-   7. Footer Status Bar
-   ========================================================================== */
+.console-wrapper.hidden {
+    display: none;
+}
+
+.console-toolbar {
+    height: 30px;
+    background: var(--bg-panel-header);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 10px;
+    font-size: 11px;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.console-output {
+    flex: 1;
+    padding: 10px;
+    font-family: var(--font-code);
+    font-size: 12px;
+    overflow-y: auto;
+}
+
+.log-entry {
+    margin-bottom: 4px;
+    color: var(--text-main);
+}
+
+.log-error {
+    color: #ff3e3e;
+}
+
+/* Bottom Bar */
 .bottom-bar {
-    height: 28px;
-    background: var(--bg-panel);
+    height: 25px;
+    background-color: var(--bg-panel);
     border-top: 1px solid var(--border-color);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 16px;
+    padding: 0 15px;
     font-size: 11px;
-    font-weight: 600;
     color: var(--text-muted);
-    letter-spacing: 0.5px;
-}
-.auto-save-indicator { color: var(--accent-green); display: flex; align-items: center; gap: 4px; }
-.auto-save-indicator::before {
-    content: '';
-    display: inline-block;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--accent-green);
-    box-shadow: 0 0 5px var(--accent-green);
+    flex-shrink: 0;
 }
 
-/* ==========================================================================
-   8. Responsive Layouts
-   ========================================================================== */
-@media (min-width: 851px) {
-    .editor-tabs-bar { display: none !important; }
-    .editors-container {
-        display: grid !important;
-        grid-template-columns: repeat(3, 1fr) !important;
-    }
-    .editor-panel { display: flex !important; }
-    
-    .workspace-grid.vertical-layout { flex-direction: row !important; }
-    .workspace-grid.vertical-layout .editors-wrapper {
-        width: 50%;
-        border-right: 2px solid var(--border-color);
-    }
-    .workspace-grid.vertical-layout .editors-container {
-        grid-template-columns: 1fr !important;
-        grid-template-rows: repeat(3, 1fr) !important;
-    }
-    .workspace-grid.vertical-layout .editor-panel {
-        border-right: none;
-        border-bottom: 1px solid var(--border-color);
-    }
-    .workspace-grid.vertical-layout .output-container {
-        width: 50%;
-        border-top: none;
-    }
+.auto-save-indicator {
+    color: #00ffaa;
 }
 
-@media (max-width: 850px) {
-    .editor-tabs-bar { display: flex !important; }
-    .editors-container { display: block !important; position: relative; }
-    .editor-panel {
-        display: none !important;
-        height: 100%;
-        width: 100%;
-        border-right: none;
-    }
-    .editor-panel.active { display: flex !important; }
+/* Syntax Highlighting Colors */
+.hl-comment { color: #5c6370; font-style: italic; }
+.hl-tag { color: #e06c75; }
+.hl-attr-name { color: #d19a66; }
+.hl-attr-val { color: #98c379; }
+.hl-css-selector { color: #e06c75; }
+.hl-css-prop { color: #56b6c2; }
+.hl-keyword { color: #c678dd; }
+.hl-function { color: #61afef; }
+.hl-string { color: #98c379; }
+.hl-number { color: #d19a66; }
+
+.hidden {
+    display: none !important;
 }

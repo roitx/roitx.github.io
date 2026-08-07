@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Roitx Studio IDE v5.5</title>
+    <title>Roitx Studio IDE</title>
     <link rel="stylesheet" href="cfile.css">
-    <!-- Font Awesome Icons for Header Buttons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
@@ -13,19 +12,19 @@
     <!-- 1. Top Navigation Bar -->
     <nav class="top-nav">
         <div class="brand-container">
-            <span class="logo-text">ROITX STUDIO</span>
-            <span class="version-tag">v5.5 PRO</span>
+            <span class="logo-text">ROITX LAB</span>
         </div>
 
         <div class="header-actions">
-            <button class="btn btn-secondary" onclick="formatAllPanels()">
-                <i class="fa-solid fa-wand-magic-sparkles"></i> Format Code
+            <!-- Run aur Toggle Preview buttons -->
+            <button class="btn btn-success" onclick="runManualCode()" id="runBtn" style="background: #00ff70; color: #000; border: none; padding: 6px 14px; font-weight: bold; border-radius: 6px; cursor: pointer;">
+                <i class="fa-solid fa-play"></i> Run
+            </button>
+            <button class="icon-btn" onclick="togglePreviewPanel()" title="Toggle Preview Panel">
+                <i class="fa-solid fa-columns"></i>
             </button>
             <button class="btn btn-primary" onclick="exportFullProject()">
                 <i class="fa-solid fa-download"></i> Export
-            </button>
-            <button class="icon-btn" id="layoutToggleBtn" title="Toggle Layout (Side-by-Side / Top-Bottom)">
-                <i class="fa-solid fa-table-columns"></i>
             </button>
             <button class="icon-btn" id="themeToggleBtn" title="Toggle Light/Dark Theme">
                 <i class="fa-solid fa-circle-half-stroke"></i>
@@ -39,7 +38,6 @@
         <!-- Editors Wrapper -->
         <div class="editors-wrapper">
             
-            <!-- Mobile Switcher Tabs -->
             <div class="editor-tabs-bar">
                 <button class="tab-btn active" id="tabBtnHtml" onclick="switchEditorTab('html')">HTML</button>
                 <button class="tab-btn" id="tabBtnCss" onclick="switchEditorTab('css')">CSS</button>
@@ -63,6 +61,23 @@
                             <textarea id="htmlInput" spellcheck="false" placeholder="Write HTML here..."></textarea>
                         </div>
                     </div>
+                    <!-- ⌨️ Max HTML Shortcuts Toolbar -->
+                    <div class="shortcut-bar">
+                        <button onclick="insertAtCursor('htmlInput', '&lt;')">&lt;</button>
+                        <button onclick="insertAtCursor('htmlInput', '&gt;')">&gt;</button>
+                        <button onclick="insertAtCursor('htmlInput', '/')">/</button>
+                        <button onclick="insertAtCursor('htmlInput', '=')">=</button>
+                        <button onclick="insertAtCursor('htmlInput', '&quot;')">&quot;</button>
+                        <button onclick="insertAtCursor('htmlInput', 'class=&quot;&quot;')">class</button>
+                        <button onclick="insertAtCursor('htmlInput', 'id=&quot;&quot;')">id</button>
+                        <button onclick="insertAtCursor('htmlInput', '&lt;div&gt;&lt;/div&gt;')">div</button>
+                        <button onclick="insertAtCursor('htmlInput', '&lt;span&gt;&lt;/span&gt;')">span</button>
+                        <button onclick="insertAtCursor('htmlInput', '&lt;p&gt;&lt;/p&gt;')">p</button>
+                        <button onclick="insertAtCursor('htmlInput', '&lt;a href=&quot;&quot;&gt;&lt;/a&gt;')">a</button>
+                        <button onclick="insertAtCursor('htmlInput', '&lt;img src=&quot;&quot; alt=&quot;&quot;&gt;')">img</button>
+                        <button onclick="insertAtCursor('htmlInput', '&lt;input type=&quot;text&quot;&gt;')">input</button>
+                        <button onclick="insertAtCursor('htmlInput', '  ')">Tab</button>
+                    </div>
                 </div>
 
                 <!-- CSS Panel -->
@@ -80,6 +95,25 @@
                             <textarea id="cssInput" spellcheck="false" placeholder="Write CSS here..."></textarea>
                         </div>
                     </div>
+                    <!-- ⌨️ Max CSS Shortcuts Toolbar -->
+                    <div class="shortcut-bar">
+                        <button onclick="insertAtCursor('cssInput', '{')">{</button>
+                        <button onclick="insertAtCursor('cssInput', '}')">}</button>
+                        <button onclick="insertAtCursor('cssInput', ':')">:</button>
+                        <button onclick="insertAtCursor('cssInput', ';')">;</button>
+                        <button onclick="insertAtCursor('cssInput', '#')">#</button>
+                        <button onclick="insertAtCursor('cssInput', '.')">.</button>
+                        <button onclick="insertAtCursor('cssInput', 'px')">px</button>
+                        <button onclick="insertAtCursor('cssInput', '%')">%</button>
+                        <button onclick="insertAtCursor('cssInput', 'rem')">rem</button>
+                        <button onclick="insertAtCursor('cssInput', 'em')">em</button>
+                        <button onclick="insertAtCursor('cssInput', 'rgb()')">rgb</button>
+                        <button onclick="insertAtCursor('cssInput', 'rgba()')">rgba</button>
+                        <button onclick="insertAtCursor('cssInput', 'display: flex;')">flex</button>
+                        <button onclick="insertAtCursor('cssInput', 'margin: 0;')">m:0</button>
+                        <button onclick="insertAtCursor('cssInput', 'padding: 0;')">p:0</button>
+                        <button onclick="insertAtCursor('cssInput', '  ')">Tab</button>
+                    </div>
                 </div>
 
                 <!-- JS Panel -->
@@ -96,6 +130,26 @@
                             <div class="highlight-layer" id="jsHighlight"></div>
                             <textarea id="jsInput" spellcheck="false" placeholder="Write JS here..."></textarea>
                         </div>
+                    </div>
+                    <!-- ⌨️ Max JS Shortcuts Toolbar -->
+                    <div class="shortcut-bar">
+                        <button onclick="insertAtCursor('jsInput', '(')">(</button>
+                        <button onclick="insertAtCursor('jsInput', ')')">)</button>
+                        <button onclick="insertAtCursor('jsInput', '{')">{</button>
+                        <button onclick="insertAtCursor('jsInput', '}')">}</button>
+                        <button onclick="insertAtCursor('jsInput', '=')">=</button>
+                        <button onclick="insertAtCursor('jsInput', '() => {}')">arrow</button>
+
+                        <button onclick="insertAtCursor('jsInput', ';')">;</button>
+                        <button onclick="insertAtCursor('jsInput', '&quot;')">&quot;</button>
+                        <button onclick="insertAtCursor('jsInput', '`')">`</button>
+                        <button onclick="insertAtCursor('jsInput', 'console.log()')">log</button>
+                        <button onclick="insertAtCursor('jsInput', 'function () {}')">fn</button>
+                        <button onclick="insertAtCursor('jsInput', 'const  = ;')">const</button>
+                        <button onclick="insertAtCursor('jsInput', 'let  = ;')">let</button>
+                        <button onclick="insertAtCursor('jsInput', 'if () {}')">if</button>
+                        <button onclick="insertAtCursor('jsInput', 'document.getElementById()')">getEl</button>
+                        <button onclick="insertAtCursor('jsInput', '  ')">Tab</button>
                     </div>
                 </div>
 
@@ -121,12 +175,10 @@
                 </div>
             </div>
 
-            <!-- Preview Frame Wrapper -->
             <div class="preview-wrapper" id="previewWrapper">
                 <iframe id="liveFrame"></iframe>
             </div>
 
-            <!-- Virtual Console Wrapper -->
             <div class="console-wrapper hidden" id="consoleWrapper">
                 <div class="console-toolbar">
                     <span>Console Logs</span>

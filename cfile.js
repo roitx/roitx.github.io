@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Roitx Studio IDE v5.5 - Pro Engine (cfile.js)
+   Roitx Studio IDE - Pro Engine (Clean & Advanced with Smart Shortcuts)
    ========================================================================== */
 
 const STORAGE_KEY_HTML = "roitx_v5_html";
@@ -77,14 +77,13 @@ function updatePanel(type) {
     if (jsInput) localStorage.setItem(STORAGE_KEY_JS, jsInput.value);
 
     updateGlobalStats();
-    triggerLivePreview();
 }
 
 function updateGlobalStats() {
     if (!htmlInput || !cssInput || !jsInput) return;
     const totalLines = htmlInput.value.split('\n').length + cssInput.value.split('\n').length + jsInput.value.split('\n').length;
     const totalChars = htmlInput.value.length + cssInput.value.length + jsInput.value.length;
-    if (editorStats) editorStats.innerText = `Lines: ${totalLines} \vert{} Characters:${totalChars}`;
+    if (editorStats) editorStats.innerText = `Lines: ${totalLines} | Characters: ${totalChars}`;
     if (autoSaveStatus) autoSaveStatus.innerText = "Auto-Saved";
 }
 
@@ -98,19 +97,12 @@ function setupScrollSync(input, highlight, lineNums) {
 }
 
 /* ==========================================================================
-   3. Smart Keyboard & Auto-Close Brackets / Tags
+   3. Smart Keyboard & Auto-Close Brackets / Tags Engine
    ========================================================================== */
 function setupSmartKeyboard(input, type) {
     if (!input) return;
 
-    const pairMap = {
-        '(': ')',
-        '[': ']',
-        '{': '}',
-        '"': '"',
-        "'": "'",
-        '`': '`'
-    };
+    const pairMap = { '(': ')', '[': ']', '{': '}', '"': '"', "'": "'", '`': '`' };
 
     input.addEventListener('keydown', (e) => {
         const start = input.selectionStart;
@@ -138,26 +130,35 @@ function setupSmartKeyboard(input, type) {
             return;
         }
 
-        // Auto-Close HTML Tags
+        // SMART AUTO-CLOSE HTML TAGS (> dabate hi close tag generate ho jayega)
         if (e.key === '>' && type === 'html') {
             const textBefore = input.value.substring(0, start);
-            const tagMatch = textBefore.match(/<([a-zA-Z0-9-]+)(?:\s+[^>]*)?$/);
+            const lastOpenBracket = textBefore.lastIndexOf('<');
             
-            if (tagMatch && !textBefore.endsWith('/')) {
-                e.preventDefault();
-                const tagName = tagMatch[1];
-                const selfClosing = ['img', 'br', 'hr', 'input', 'meta', 'link'];
+            if (lastOpenBracket !== -1) {
+                const tagString = textBefore.substring(lastOpenBracket);
+                
+                if (tagString.startsWith('<') && !tagString.startsWith('</') && !tagString.endsWith('/')) {
+                    const tagMatch = tagString.match(/^<([a-zA-Z0-9-]+)/);
+                    
+                    if (tagMatch) {
+                        e.preventDefault();
+                        const tagName = tagMatch[1];
+                        const selfClosing = ['img', 'br', 'hr', 'input', 'meta', 'link'];
 
-                if (selfClosing.includes(tagName.toLowerCase())) {
-                    input.value = input.value.substring(0, start) + '>' + input.value.substring(end);
-                    input.selectionStart = input.selectionEnd = start + 1;
-                } else {
-                    const closeTag = `></${tagName}>`;
-                    input.value = input.value.substring(0, start) + closeTag + input.value.substring(end);
-                    input.selectionStart = input.selectionEnd = start + 1;
+                        if (selfClosing.includes(tagName.toLowerCase())) {
+                            input.value = input.value.substring(0, start) + '>' + input.value.substring(end);
+                            input.selectionStart = input.selectionEnd = start + 1;
+                        } else {
+                            const closeTag = `></${tagName}>`;
+                            input.value = input.value.substring(0, start) + closeTag + input.value.substring(end);
+                            // Cursor ko open aur close tag ke beech me set kar dega
+                            input.selectionStart = input.selectionEnd = start + 1;
+                        }
+                        updatePanel(type);
+                        return;
+                    }
                 }
-                updatePanel(type);
-                return;
             }
         }
     });
@@ -166,8 +167,46 @@ function setupSmartKeyboard(input, type) {
 }
 
 /* ==========================================================================
-   4. Live Preview & Virtual Console Engine
+   4. Keyboard Shortcut Toolbar Helper (Separate Symbols & Smart Insertion)
    ========================================================================== */
+window.insertAtCursor = function(textareaId, textToInsert) {
+    const textarea = document.getElementById(textareaId);
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const value = textarea.value;
+
+    textarea.value = value.substring(0, start) + textToInsert + value.substring(end);
+    
+    let newCursorPos = start + textToInsert.length;
+    // Agar bracket ya quote click kiya hai toh cursor beech me rahe
+    if (textToInsert === '()') newCursorPos = start + 1;
+    if (textToInsert === '{}') newCursorPos = start + 1;
+    if (textToInsert === '""') newCursorPos = start + 1;
+    if (textToInsert === '[]') newCursorPos = start + 1;
+
+    textarea.selectionStart = textarea.selectionEnd = newCursorPos;
+    textarea.focus();
+
+    const type = textareaId.replace('Input', '');
+    updatePanel(type);
+};
+
+/* ==========================================================================
+   5. Live Preview & Virtual Console Engine
+   ========================================================================== */
+window.runManualCode = function() {
+    triggerLivePreview();
+};
+
+window.togglePreviewPanel = function() {
+    const previewContainer = document.querySelector('.output-container');
+    if (previewContainer) {
+        previewContainer.classList.toggle('collapsed-preview');
+    }
+};
+
 function triggerLivePreview() {
     if (!liveFrame) return;
     const source = `
@@ -217,7 +256,7 @@ window.addEventListener('message', (e) => {
 });
 
 /* ==========================================================================
-   5. Global Actions & Tab Management
+   6. Global Actions & Tab Management
    ========================================================================== */
 window.switchEditorTab = function(panelType) {
     const panels = document.querySelectorAll('.editor-panel');
@@ -285,55 +324,27 @@ window.clearEditor = function(type) {
     }
 };
 
-window.formatAllPanels = function() {
-    const cleanIndent = (code) => {
-        if (!code) return '';
-        let lines = code.split('\n');
-        let indentLevel = 0;
-        
-        return lines.map(line => {
-            let trimmed = line.trim();
-            if (!trimmed) return '';
-            
-            if (trimmed.startsWith('}') || trimmed.startsWith('</') || trimmed.startsWith(']')) {
-                indentLevel = Math.max(0, indentLevel - 1);
-            }
-            
-            let formattedLine = '  '.repeat(indentLevel) + trimmed;
-            
-            if ((trimmed.endsWith('{') || trimmed.endsWith('>') || trimmed.endsWith('[')) && !trimmed.startsWith('</')) {
-                indentLevel++;
-            }
-            
-            return formattedLine;
-        }).join('\n');
-    };
-
-    if (htmlInput) htmlInput.value = cleanIndent(htmlInput.value);
-    if (cssInput) cssInput.value = cleanIndent(cssInput.value);
-    if (jsInput) jsInput.value = cleanIndent(jsInput.value);
-
-    updatePanel('html');
-    updatePanel('css');
-    updatePanel('js');
-};
-
 window.exportFullProject = function() {
     if (!htmlInput || !cssInput || !jsInput) return;
-    const fullSource = `<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n<title>Roitx Export Project</title>\n<style>\n${cssInput.value}\n</style>\n</head>\n<body>\n${htmlInput.value}\n<script>\n${jsInput.value}\n<\/script>\n</body>\n</html>`;
+    
+    let fileName = prompt("Enter file name for your project:", "roitx_project.html");
+    if (!fileName) return; 
+    if (!fileName.endsWith(".html")) fileName += ".html"; 
+    
+    const fullSource = `<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n<title>${fileName}</title>\n<style>\n${cssInput.value}\n</style>\n</head>\n<body>\n${htmlInput.value}\n<script>\n${jsInput.value}\n<\/script>\n</body>\n</html>`;
 
     const blob = new Blob([fullSource], { type: 'text/html;charset=utf-8' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.href = url;
-    link.download = "roitx_project.html";
+    link.download = fileName;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
 };
 
 /* ==========================================================================
-   6. Initialization & Event Bindings
+   7. Initialization
    ========================================================================== */
 function initApp() {
     htmlInput = document.getElementById('htmlInput');
@@ -366,16 +377,6 @@ function initApp() {
     setupSmartKeyboard(cssInput, 'css');
     setupSmartKeyboard(jsInput, 'js');
 
-    // Layout Toggle Button Listener
-    const layoutBtn = document.getElementById('layoutToggleBtn');
-    if (layoutBtn) {
-        layoutBtn.addEventListener('click', () => {
-            const grid = document.getElementById('workspaceGrid');
-            if (grid) grid.classList.toggle('vertical-layout');
-        });
-    }
-
-    // Theme Toggle Button Listener
     const themeBtn = document.getElementById('themeToggleBtn');
     if (themeBtn) {
         themeBtn.addEventListener('click', () => {
@@ -386,6 +387,8 @@ function initApp() {
     updatePanel('html');
     updatePanel('css');
     updatePanel('js');
+    
+    triggerLivePreview();
 }
 
 document.addEventListener('DOMContentLoaded', initApp);
