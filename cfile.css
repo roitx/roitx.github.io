@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Roitx Studio IDE v5.6 - Pro Engine Stylesheet (cfile.css)
+   Roitx Studio IDE v5.6 - Pro Engine Stylesheet (cfile.css) [Complete]
    ========================================================================== */
 
 :root {
@@ -43,15 +43,18 @@ body {
     transition: background 0.3s, color 0.3s;
 }
 
-/* Top Navigation */
+/* Top Navigation Bar */
 .top-nav {
-    height: 55px;
+    min-height: 55px;
+    height: auto;
     background-color: var(--bg-panel);
     border-bottom: 1px solid var(--border-color);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 20px;
+    padding: 8px 15px;
+    flex-wrap: wrap;
+    gap: 8px;
     flex-shrink: 0;
 }
 
@@ -79,10 +82,12 @@ body {
     font-weight: bold;
 }
 
+/* Header Actions Layout */
 .header-actions {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     align-items: center;
+    flex-wrap: wrap;
 }
 
 /* Buttons */
@@ -94,10 +99,12 @@ body {
     font-size: 13px;
     border-radius: 6px;
     cursor: pointer;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 6px;
     font-weight: 600;
+    flex-shrink: 0;
+    white-space: nowrap;
     transition: 0.2s;
 }
 
@@ -119,13 +126,35 @@ body {
     height: 35px;
     border-radius: 6px;
     cursor: pointer;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
     transition: 0.2s;
 }
 
 .icon-btn:hover {
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+}
+
+/* Mode Changer Button Specific Fix */
+#mode-toggle, .mode-changer-btn {
+    background: var(--bg-panel-header);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    width: 35px;
+    height: 35px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: 0.2s;
+}
+
+#mode-toggle:hover, .mode-changer-btn:hover {
     border-color: var(--accent-color);
     color: var(--accent-color);
 }
@@ -138,6 +167,10 @@ body {
     gap: 1px;
     background-color: var(--border-color);
     overflow: hidden;
+}
+
+.workspace-grid:has(.output-container.collapsed-preview) {
+    grid-template-columns: 1fr !important;
 }
 
 .editors-wrapper, .output-container {
@@ -154,6 +187,7 @@ body {
     border-bottom: 1px solid var(--border-color);
     height: 40px;
     flex-shrink: 0;
+    overflow-x: auto;
 }
 
 .tab-btn {
@@ -165,6 +199,11 @@ body {
     font-size: 13px;
     cursor: pointer;
     border-bottom: 2px solid transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    padding: 0 15px;
     transition: 0.2s;
 }
 
@@ -221,6 +260,7 @@ body {
 .html-icon { background: rgba(255, 100, 0, 0.2); color: #ff6400; }
 .css-icon { background: rgba(0, 150, 255, 0.2); color: #0096ff; }
 .js-icon { background: rgba(255, 220, 0, 0.2); color: #ffdc00; }
+.py-icon { background: rgba(53, 114, 165, 0.2); color: #3572a5; }
 
 .mini-btn {
     background: transparent;
@@ -230,6 +270,7 @@ body {
     padding: 2px 8px;
     border-radius: 4px;
     cursor: pointer;
+    flex-shrink: 0;
     transition: 0.2s;
 }
 
@@ -259,6 +300,7 @@ body {
     user-select: none;
     border-right: 1px solid var(--border-color);
     flex-shrink: 0;
+    overflow: hidden;
 }
 
 .code-area-wrapper {
@@ -310,11 +352,13 @@ textarea {
     align-items: center;
     padding: 0 12px;
     flex-shrink: 0;
+    gap: 10px;
 }
 
 .output-tabs {
     display: flex;
     gap: 6px;
+    align-items: center;
 }
 
 .output-tab {
@@ -326,9 +370,10 @@ textarea {
     padding: 6px 10px;
     border-radius: 4px;
     cursor: pointer;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 6px;
+    white-space: nowrap;
 }
 
 .output-tab.active {
@@ -347,31 +392,46 @@ textarea {
 .device-selector {
     display: flex;
     gap: 4px;
+    align-items: center;
+    background: var(--bg-input);
+    padding: 2px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
 }
 
 .device-btn {
     background: transparent;
-    border: 1px solid var(--border-color);
+    border: 1px solid transparent;
     color: var(--text-muted);
     font-size: 11px;
     padding: 3px 8px;
     border-radius: 4px;
     cursor: pointer;
+    flex-shrink: 0;
+    white-space: nowrap;
 }
-/* Toggle Preview Panel Styling */
+
+.device-btn.active {
+    background: var(--bg-panel-header);
+    color: var(--text-main);
+    border-color: var(--border-color);
+}
+
 .output-container.collapsed-preview {
     display: none !important;
 }
-/* ⌨️ Custom Keyboard Shortcut Toolbar */
+
+/* Shortcut Toolbar */
 .shortcut-bar {
     display: flex;
     gap: 6px;
     padding: 6px 10px;
-    background: #161b22;
-    border-top: 1px solid #30363d;
+    background: var(--bg-panel);
+    border-top: 1px solid var(--border-color);
     overflow-x: auto;
     white-space: nowrap;
-    scrollbar-width: none; /* Hide scrollbar for clean look */
+    scrollbar-width: none;
+    flex-shrink: 0;
 }
 
 .shortcut-bar::-webkit-scrollbar {
@@ -379,35 +439,22 @@ textarea {
 }
 
 .shortcut-bar button {
-    background: #21262d;
-    color: #c9d1d9;
-    border: 1px solid #30363d;
+    background: var(--bg-panel-header);
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
     padding: 5px 10px;
     font-size: 12px;
-    font-family: monospace;
+    font-family: var(--font-code);
     border-radius: 4px;
     cursor: pointer;
     flex-shrink: 0;
-    transition: background 0.2s, color 0.2s;
+    transition: 0.2s;
 }
 
-.shortcut-bar button:active, .shortcut-bar button:hover {
-    background: #00f0ff;
-    color: #0a0c10;
-    border-color: #00f0ff;
-}
-
-
-/* Optional: Agar editors-wrapper ko full width dena ho jab preview hide ho */
-.workspace-grid:has(.output-container.collapsed-preview) {
-    grid-template-columns: 1fr !important;
-}
-
-
-.device-btn.active {
-    background: var(--bg-input);
-    color: var(--text-main);
-    border-color: var(--text-muted);
+.shortcut-bar button:hover {
+    background: var(--accent-color);
+    color: var(--bg-main);
+    border-color: var(--accent-color);
 }
 
 .preview-wrapper {

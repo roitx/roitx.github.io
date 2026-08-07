@@ -3,199 +3,181 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Roitx Studio IDE</title>
+    <title>Roitx Studio IDE v5.6</title>
+    <!-- Stylesheet -->
     <link rel="stylesheet" href="cfile.css">
+    <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 
-    <!-- 1. Top Navigation Bar -->
-    <nav class="top-nav">
+    <!-- Top Navigation Bar -->
+    <header class="top-nav">
         <div class="brand-container">
             <span class="logo-text">ROITX LAB</span>
+            <span class="version-tag">v5.6</span>
         </div>
-
+        
         <div class="header-actions">
-            <!-- Run aur Toggle Preview buttons -->
-            <button class="btn btn-success" onclick="runManualCode()" id="runBtn" style="background: #00ff70; color: #000; border: none; padding: 6px 14px; font-weight: bold; border-radius: 6px; cursor: pointer;">
-                <i class="fa-solid fa-play"></i> Run
-            </button>
-            <button class="icon-btn" onclick="togglePreviewPanel()" title="Toggle Preview Panel">
-                <i class="fa-solid fa-columns"></i>
-            </button>
-            <button class="btn btn-primary" onclick="exportFullProject()">
-                <i class="fa-solid fa-download"></i> Export
-            </button>
-            <button class="icon-btn" id="themeToggleBtn" title="Toggle Light/Dark Theme">
-                <i class="fa-solid fa-circle-half-stroke"></i>
-            </button>
+            <button class="icon-btn" onclick="toggleFindReplaceModal()" title="Find & Replace"><i class="fas fa-search"></i></button>
+            <button class="btn btn-primary" onclick="runManualCode()"><i class="fas fa-play"></i> Run</button>
+            <button class="icon-btn" onclick="togglePreviewPanel()" title="Toggle Preview"><i class="fas fa-columns"></i></button>
+            <button class="icon-btn" onclick="openPreviewFullscreen()" title="Fullscreen Preview"><i class="fas fa-expand"></i></button>
+            <!-- Mode Changer Button Fixed -->
+            <!-- Is line ko update karein -->
+<button class="icon-btn mode-changer-btn" id="mode-toggle" onclick="toggleThemeMode()" title="Toggle Theme"><i class="fas fa-moon"></i></button>
+
         </div>
-    </nav>
+    </header>
 
-    <!-- 2. Workspace Grid -->
-    <main class="workspace-grid" id="workspaceGrid">
-
-        <!-- Editors Wrapper -->
+    <!-- Main Workspace Grid -->
+    <div class="workspace-grid">
+        <!-- Editors Container -->
         <div class="editors-wrapper">
-            
             <div class="editor-tabs-bar">
                 <button class="tab-btn active" id="tabBtnHtml" onclick="switchEditorTab('html')">HTML</button>
                 <button class="tab-btn" id="tabBtnCss" onclick="switchEditorTab('css')">CSS</button>
                 <button class="tab-btn" id="tabBtnJs" onclick="switchEditorTab('js')">JS</button>
+                <button class="tab-btn" id="tabBtnPy" onclick="switchEditorTab('py')">Python</button>
             </div>
 
             <div class="editors-container">
-                
                 <!-- HTML Panel -->
                 <div class="editor-panel active" id="htmlPanel">
                     <div class="panel-header">
-                        <div class="panel-title">
-                            <span class="file-icon html-icon">&lt;/&gt;</span> HTML
-                        </div>
+                        <span class="panel-title"><span class="file-icon html-icon">&lt;/&gt;</span> HTML</span>
                         <button class="mini-btn" onclick="clearEditor('html')">Clear</button>
                     </div>
                     <div class="editor-body">
                         <div class="line-numbers" id="htmlLineNums">1</div>
                         <div class="code-area-wrapper">
-                            <div class="highlight-layer" id="htmlHighlight"></div>
-                            <textarea id="htmlInput" spellcheck="false" placeholder="Write HTML here..."></textarea>
+                            <textarea id="htmlInput" spellcheck="false"></textarea>
+                            <pre class="highlight-layer"><code id="htmlHighlight"></code></pre>
                         </div>
-                    </div>
-                    <!-- ⌨️ Max HTML Shortcuts Toolbar -->
-                    <div class="shortcut-bar">
-                        <button onclick="insertAtCursor('htmlInput', '&lt;')">&lt;</button>
-                        <button onclick="insertAtCursor('htmlInput', '&gt;')">&gt;</button>
-                        <button onclick="insertAtCursor('htmlInput', '/')">/</button>
-                        <button onclick="insertAtCursor('htmlInput', '=')">=</button>
-                        <button onclick="insertAtCursor('htmlInput', '&quot;')">&quot;</button>
-                        <button onclick="insertAtCursor('htmlInput', 'class=&quot;&quot;')">class</button>
-                        <button onclick="insertAtCursor('htmlInput', 'id=&quot;&quot;')">id</button>
-                        <button onclick="insertAtCursor('htmlInput', '&lt;div&gt;&lt;/div&gt;')">div</button>
-                        <button onclick="insertAtCursor('htmlInput', '&lt;span&gt;&lt;/span&gt;')">span</button>
-                        <button onclick="insertAtCursor('htmlInput', '&lt;p&gt;&lt;/p&gt;')">p</button>
-                        <button onclick="insertAtCursor('htmlInput', '&lt;a href=&quot;&quot;&gt;&lt;/a&gt;')">a</button>
-                        <button onclick="insertAtCursor('htmlInput', '&lt;img src=&quot;&quot; alt=&quot;&quot;&gt;')">img</button>
-                        <button onclick="insertAtCursor('htmlInput', '&lt;input type=&quot;text&quot;&gt;')">input</button>
-                        <button onclick="insertAtCursor('htmlInput', '  ')">Tab</button>
                     </div>
                 </div>
 
                 <!-- CSS Panel -->
                 <div class="editor-panel" id="cssPanel">
                     <div class="panel-header">
-                        <div class="panel-title">
-                            <span class="file-icon css-icon">#</span> CSS
-                        </div>
+                        <span class="panel-title"><span class="file-icon css-icon">#</span> CSS</span>
                         <button class="mini-btn" onclick="clearEditor('css')">Clear</button>
                     </div>
                     <div class="editor-body">
                         <div class="line-numbers" id="cssLineNums">1</div>
                         <div class="code-area-wrapper">
-                            <div class="highlight-layer" id="cssHighlight"></div>
-                            <textarea id="cssInput" spellcheck="false" placeholder="Write CSS here..."></textarea>
+                            <textarea id="cssInput" spellcheck="false"></textarea>
+                            <pre class="highlight-layer"><code id="cssHighlight"></code></pre>
                         </div>
-                    </div>
-                    <!-- ⌨️ Max CSS Shortcuts Toolbar -->
-                    <div class="shortcut-bar">
-                        <button onclick="insertAtCursor('cssInput', '{')">{</button>
-                        <button onclick="insertAtCursor('cssInput', '}')">}</button>
-                        <button onclick="insertAtCursor('cssInput', ':')">:</button>
-                        <button onclick="insertAtCursor('cssInput', ';')">;</button>
-                        <button onclick="insertAtCursor('cssInput', '#')">#</button>
-                        <button onclick="insertAtCursor('cssInput', '.')">.</button>
-                        <button onclick="insertAtCursor('cssInput', 'px')">px</button>
-                        <button onclick="insertAtCursor('cssInput', '%')">%</button>
-                        <button onclick="insertAtCursor('cssInput', 'rem')">rem</button>
-                        <button onclick="insertAtCursor('cssInput', 'em')">em</button>
-                        <button onclick="insertAtCursor('cssInput', 'rgb()')">rgb</button>
-                        <button onclick="insertAtCursor('cssInput', 'rgba()')">rgba</button>
-                        <button onclick="insertAtCursor('cssInput', 'display: flex;')">flex</button>
-                        <button onclick="insertAtCursor('cssInput', 'margin: 0;')">m:0</button>
-                        <button onclick="insertAtCursor('cssInput', 'padding: 0;')">p:0</button>
-                        <button onclick="insertAtCursor('cssInput', '  ')">Tab</button>
                     </div>
                 </div>
 
                 <!-- JS Panel -->
                 <div class="editor-panel" id="jsPanel">
                     <div class="panel-header">
-                        <div class="panel-title">
-                            <span class="file-icon js-icon">JS</span> JavaScript
-                        </div>
+                        <span class="panel-title"><span class="file-icon js-icon">JS</span> JavaScript</span>
                         <button class="mini-btn" onclick="clearEditor('js')">Clear</button>
                     </div>
                     <div class="editor-body">
                         <div class="line-numbers" id="jsLineNums">1</div>
                         <div class="code-area-wrapper">
-                            <div class="highlight-layer" id="jsHighlight"></div>
-                            <textarea id="jsInput" spellcheck="false" placeholder="Write JS here..."></textarea>
+                            <textarea id="jsInput" spellcheck="false"></textarea>
+                            <pre class="highlight-layer"><code id="jsHighlight"></code></pre>
                         </div>
-                    </div>
-                    <!-- ⌨️ Max JS Shortcuts Toolbar -->
-                    <div class="shortcut-bar">
-                        <button onclick="insertAtCursor('jsInput', '(')">(</button>
-                        <button onclick="insertAtCursor('jsInput', ')')">)</button>
-                        <button onclick="insertAtCursor('jsInput', '{')">{</button>
-                        <button onclick="insertAtCursor('jsInput', '}')">}</button>
-                        <button onclick="insertAtCursor('jsInput', '=')">=</button>
-                        <button onclick="insertAtCursor('jsInput', '() => {}')">arrow</button>
-
-                        <button onclick="insertAtCursor('jsInput', ';')">;</button>
-                        <button onclick="insertAtCursor('jsInput', '&quot;')">&quot;</button>
-                        <button onclick="insertAtCursor('jsInput', '`')">`</button>
-                        <button onclick="insertAtCursor('jsInput', 'console.log()')">log</button>
-                        <button onclick="insertAtCursor('jsInput', 'function () {}')">fn</button>
-                        <button onclick="insertAtCursor('jsInput', 'const  = ;')">const</button>
-                        <button onclick="insertAtCursor('jsInput', 'let  = ;')">let</button>
-                        <button onclick="insertAtCursor('jsInput', 'if () {}')">if</button>
-                        <button onclick="insertAtCursor('jsInput', 'document.getElementById()')">getEl</button>
-                        <button onclick="insertAtCursor('jsInput', '  ')">Tab</button>
                     </div>
                 </div>
 
+                <!-- Python Panel -->
+                <div class="editor-panel" id="pyPanel">
+                    <div class="panel-header">
+                        <span class="panel-title"><span class="file-icon py-icon">PY</span> Python</span>
+                        <button class="mini-btn" onclick="clearEditor('py')">Clear</button>
+                    </div>
+                    <div class="editor-body">
+                        <div class="line-numbers" id="pyLineNums">1</div>
+                        <div class="code-area-wrapper">
+                            <textarea id="pyInput" spellcheck="false"></textarea>
+                            <pre class="highlight-layer"><code id="pyHighlight"></code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Custom Keyboard Shortcut Toolbar -->
+            <div class="shortcut-bar">
+                <button onclick="insertAtCursor('htmlInput', '&lt;div&gt;')">&lt;div&gt;</button>
+                <button onclick="insertAtCursor('htmlInput', '&lt;p&gt;')">&lt;p&gt;</button>
+                <button onclick="insertAtCursor('htmlInput', '&lt;h1&gt;')">&lt;h1&gt;</button>
+                <button onclick="insertAtCursor('htmlInput', '&lt;button&gt;')">&lt;btn&gt;</button>
+                <button onclick="insertAtCursor('htmlInput', '&lt;a href=&quot;&quot;&gt;')">&lt;a&gt;</button>
+                <button onclick="insertAtCursor('htmlInput', 'class=&quot;&quot;')">class</button>
+                <button onclick="insertAtCursor('htmlInput', 'id=&quot;&quot;')">id</button>
+                <button onclick="insertAtCursor('htmlInput', '()')">()</button>
+                <button onclick="insertAtCursor('htmlInput', '{}')">{}</button>
+                <button onclick="insertAtCursor('htmlInput', '\"\"')">""</button>
+                <button onclick="insertAtCursor('htmlInput', '=')">=</button>
+                <button onclick="insertAtCursor('htmlInput', '/')">/</button>
             </div>
         </div>
 
-        <!-- 3. Output & Console Container -->
+        <!-- Output / Preview Container -->
         <div class="output-container">
             <div class="output-header">
                 <div class="output-tabs">
-                    <button class="output-tab active" id="btnPreviewTab" onclick="switchOutputTab('preview')">
-                        <i class="fa-solid fa-eye"></i> Preview
-                    </button>
-                    <button class="output-tab" id="btnConsoleTab" onclick="switchOutputTab('console')">
-                        <i class="fa-solid fa-terminal"></i> Console 
-                        <span class="badge" id="consoleBadge">0</span>
-                    </button>
+                    <button class="output-tab active" id="btnPreviewTab" onclick="switchOutputTab('preview')"><i class="fas fa-eye"></i> Preview</button>
+                    <button class="output-tab" id="btnConsoleTab" onclick="switchOutputTab('console')"><i class="fas fa-terminal"></i> Console <span class="badge" id="consoleBadge">0</span></button>
                 </div>
                 
                 <div class="device-selector">
-                    <button class="device-btn active" id="btnDeviceFull" onclick="setDeviceMode('full')">Full</button>
-                    <button class="device-btn" id="btnDeviceMobile" onclick="setDeviceMode('mobile')">Mobile</button>
+                    <button class="device-btn active" id="btnDeviceFull" onclick="setDeviceMode('full')"><i class="fas fa-desktop"></i></button>
+                    <button class="device-btn" id="btnDeviceMobile" onclick="setDeviceMode('mobile')"><i class="fas fa-mobile-alt"></i></button>
                 </div>
             </div>
 
+            <!-- Live Preview Wrapper -->
             <div class="preview-wrapper" id="previewWrapper">
                 <iframe id="liveFrame"></iframe>
             </div>
 
+            <!-- Console Wrapper -->
             <div class="console-wrapper hidden" id="consoleWrapper">
                 <div class="console-toolbar">
-                    <span>Console Logs</span>
-                    <button class="mini-btn" onclick="clearConsoleLogs()">Clear Console</button>
+                    <span>Virtual Console Output</span>
+                    <button class="mini-btn" onclick="consoleOutput.innerHTML=''; logCount=0; consoleBadge.innerText='0';">Clear Console</button>
                 </div>
                 <div class="console-output" id="consoleOutput"></div>
             </div>
         </div>
+    </div>
 
-    </main>
-
-    <!-- 4. Footer Status Bar -->
+    <!-- Bottom Status Bar -->
     <footer class="bottom-bar">
         <span class="auto-save-indicator" id="autoSaveStatus">Auto-Saved</span>
         <span id="editorStats">Lines: 0 | Characters: 0</span>
     </footer>
 
+    <!-- Find & Replace Modal -->
+    <div id="findReplaceModal" class="hidden" style="position:fixed; top:70px; right:20px; background:var(--bg-panel); border:1px solid var(--border-color); padding:15px; border-radius:8px; z-index:1000; width:300px; box-shadow:0 10px 25px rgba(0,0,0,0.5);">
+        <div style="display:flex; justify-content:space-between; margin-bottom:10px; font-weight:bold; font-size:13px;">
+            <span>Find & Replace</span>
+            <button onclick="toggleFindReplaceModal()" style="background:none; border:none; color:var(--text-muted); cursor:pointer;"><i class="fas fa-times"></i></button>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+            <div style="display:flex; gap:5px;">
+                <input type="text" id="findInput" placeholder="Find..." oninput="handleSearchInput()" style="flex:1; background:var(--bg-input); border:1px solid var(--border-color); color:var(--text-main); padding:5px 8px; border-radius:4px; font-size:12px;">
+                <span id="matchCounter" style="font-size:11px; color:var(--text-muted); display:flex; align-items:center;">0/0</span>
+                <button onclick="navigateMatch(-1)" class="mini-btn"><i class="fas fa-chevron-up"></i></button>
+                <button onclick="navigateMatch(1)" class="mini-btn"><i class="fas fa-chevron-down"></i></button>
+            </div>
+            <input type="text" id="replaceInput" placeholder="Replace with..." style="background:var(--bg-input); border:1px solid var(--border-color); color:var(--text-main); padding:5px 8px; border-radius:4px; font-size:12px;">
+            <div style="display:flex; gap:5px; margin-top:5px;">
+                <button class="btn" style="flex:1; padding:4px;" onclick="executeSingleReplace()">Replace</button>
+                <button class="btn btn-primary" style="flex:1; padding:4px;" onclick="executeReplaceAll()">Replace All</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Engine -->
     <script src="cfile.js"></script>
 </body>
 </html>
