@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roitx.com - Code Writer & Saver</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { padding: 20px; background-color: #1e1e2e; color: #cdd6f4; }
+        .container { max-width: 650px; margin: auto; background: #181825; padding: 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); border: 1px solid #313244; }
+        h1 { color: #89b4fa; text-align: center; font-size: 28px; margin-bottom: 5px; }
+        p.subtitle { text-align: center; color: #a6adc8; margin-bottom: 20px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
+        label { font-weight: 600; display: block; margin-top: 12px; color: #bac2de; font-size: 14px; }
+        input[type="text"], select, textarea { width: 100%; padding: 12px; margin-top: 6px; border: 1px solid #45475a; border-radius: 6px; font-size: 15px; background-color: #1e1e2e; color: #cdd6f4; outline: none; }
+        input[type="text"]:focus, select:focus, textarea:focus { border-color: #89b4fa; }
+        textarea { height: 250px; resize: vertical; font-family: 'Courier New', Courier, monospace; line-height: 1.4; }
+        .btn-container { display: flex; gap: 10px; margin-top: 20px; }
+        button { flex: 1; padding: 12px; border: none; background: #a6e3a1; color: #11111b; font-size: 16px; font-weight: bold; border-radius: 6px; cursor: pointer; transition: 0.2s; }
+        button:hover { background: #94e2d5; }
+        .clear-btn { background: #f38ba8; color: #11111b; }
+        .clear-btn:hover { background: #eba0ac; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Roitx.com</h1>
+    <p class="subtitle">Code Writer & Saver</p>
+    
+    <label for="filename">File Name / Title:</label>
+    <input type="text" id="filename" placeholder="Jaise: calculator, index, style...">
+
+    <label for="filetype">Select Extension / File Type:</label>
+    <select id="filetype">
+        <option value=".html">HTML (.html)</option>
+        <option value=".css">CSS (.css)</option>
+        <option value=".js">JavaScript (.js)</option>
+        <option value=".txt">Text (.txt)</option>
+        <option value=".json">JSON (.json)</option>
+        <option value=".php">PHP (.php)</option>
+        <option value=".py">Python (.py)</option>
+        <option value=".cpp">C++ (.cpp)</option>
+        <option value=".c">C (.c)</option>
+        <option value=".java">Java (.java)</option>
+    </select>
+
+    <label for="content">Code / Text Area:</label>
+    <textarea id="content" placeholder="Yahan apna code ya text likhein..."></textarea>
+
+    <div class="btn-container">
+        <button onclick="downloadFile()">Save & Download</button>
+        <button class="clear-btn" onclick="clearFields()">Clear</button>
+    </div>
+</div>
+
+<script>
+    function downloadFile() {
+        const name = document.getElementById('filename').value.trim() || 'file';
+        const extension = document.getElementById('filetype').value;
+        const text = document.getElementById('content').value;
+
+        const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+        const link = document.createElement('a');
+        
+        link.href = URL.createObjectURL(blob);
+        link.download = name + extension;
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    function clearFields() {
+        if(confirm("Kya aap content clear karna chahte hain?")) {
+            document.getElementById('filename').value = '';
+            document.getElementById('content').value = '';
+        }
+    }
+</script>
+
+</body>
+  </html>
+  
