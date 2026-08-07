@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roitx Studio IDE v5.5</title>
+    <link rel="stylesheet" href="cfile.css">
+    <!-- Font Awesome Icons for Header Buttons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <!-- 1. Top Navigation Bar -->
+    <nav class="top-nav">
+        <div class="brand-container">
+            <span class="logo-text">ROITX STUDIO</span>
+            <span class="version-tag">v5.5 PRO</span>
+        </div>
+
+        <div class="header-actions">
+            <button class="btn btn-secondary" onclick="formatAllPanels()">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Format Code
+            </button>
+            <button class="btn btn-primary" onclick="exportFullProject()">
+                <i class="fa-solid fa-download"></i> Export
+            </button>
+            <button class="icon-btn" id="layoutToggleBtn" title="Toggle Layout (Side-by-Side / Top-Bottom)">
+                <i class="fa-solid fa-table-columns"></i>
+            </button>
+            <button class="icon-btn" id="themeToggleBtn" title="Toggle Light/Dark Theme">
+                <i class="fa-solid fa-circle-half-stroke"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- 2. Workspace Grid -->
+    <main class="workspace-grid" id="workspaceGrid">
+
+        <!-- Editors Wrapper -->
+        <div class="editors-wrapper">
+            
+            <!-- Mobile Switcher Tabs -->
+            <div class="editor-tabs-bar">
+                <button class="tab-btn active" id="tabBtnHtml" onclick="switchEditorTab('html')">HTML</button>
+                <button class="tab-btn" id="tabBtnCss" onclick="switchEditorTab('css')">CSS</button>
+                <button class="tab-btn" id="tabBtnJs" onclick="switchEditorTab('js')">JS</button>
+            </div>
+
+            <div class="editors-container">
+                
+                <!-- HTML Panel -->
+                <div class="editor-panel active" id="htmlPanel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <span class="file-icon html-icon">&lt;/&gt;</span> HTML
+                        </div>
+                        <button class="mini-btn" onclick="clearEditor('html')">Clear</button>
+                    </div>
+                    <div class="editor-body">
+                        <div class="line-numbers" id="htmlLineNums">1</div>
+                        <div class="code-area-wrapper">
+                            <div class="highlight-layer" id="htmlHighlight"></div>
+                            <textarea id="htmlInput" spellcheck="false" placeholder="Write HTML here..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CSS Panel -->
+                <div class="editor-panel" id="cssPanel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <span class="file-icon css-icon">#</span> CSS
+                        </div>
+                        <button class="mini-btn" onclick="clearEditor('css')">Clear</button>
+                    </div>
+                    <div class="editor-body">
+                        <div class="line-numbers" id="cssLineNums">1</div>
+                        <div class="code-area-wrapper">
+                            <div class="highlight-layer" id="cssHighlight"></div>
+                            <textarea id="cssInput" spellcheck="false" placeholder="Write CSS here..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- JS Panel -->
+                <div class="editor-panel" id="jsPanel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <span class="file-icon js-icon">JS</span> JavaScript
+                        </div>
+                        <button class="mini-btn" onclick="clearEditor('js')">Clear</button>
+                    </div>
+                    <div class="editor-body">
+                        <div class="line-numbers" id="jsLineNums">1</div>
+                        <div class="code-area-wrapper">
+                            <div class="highlight-layer" id="jsHighlight"></div>
+                            <textarea id="jsInput" spellcheck="false" placeholder="Write JS here..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- 3. Output & Console Container -->
+        <div class="output-container">
+            <div class="output-header">
+                <div class="output-tabs">
+                    <button class="output-tab active" id="btnPreviewTab" onclick="switchOutputTab('preview')">
+                        <i class="fa-solid fa-eye"></i> Preview
+                    </button>
+                    <button class="output-tab" id="btnConsoleTab" onclick="switchOutputTab('console')">
+                        <i class="fa-solid fa-terminal"></i> Console 
+                        <span class="badge" id="consoleBadge">0</span>
+                    </button>
+                </div>
+                
+                <div class="device-selector">
+                    <button class="device-btn active" id="btnDeviceFull" onclick="setDeviceMode('full')">Full</button>
+                    <button class="device-btn" id="btnDeviceMobile" onclick="setDeviceMode('mobile')">Mobile</button>
+                </div>
+            </div>
+
+            <!-- Preview Frame Wrapper -->
+            <div class="preview-wrapper" id="previewWrapper">
+                <iframe id="liveFrame"></iframe>
+            </div>
+
+            <!-- Virtual Console Wrapper -->
+            <div class="console-wrapper hidden" id="consoleWrapper">
+                <div class="console-toolbar">
+                    <span>Console Logs</span>
+                    <button class="mini-btn" onclick="clearConsoleLogs()">Clear Console</button>
+                </div>
+                <div class="console-output" id="consoleOutput"></div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- 4. Footer Status Bar -->
+    <footer class="bottom-bar">
+        <span class="auto-save-indicator" id="autoSaveStatus">Auto-Saved</span>
+        <span id="editorStats">Lines: 0 | Characters: 0</span>
+    </footer>
+
+    <script src="cfile.js"></script>
+</body>
+</html>
