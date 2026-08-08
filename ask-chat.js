@@ -2,7 +2,7 @@
 (() => {
   // ---- GEMINI API CONFIGURATION ----
   // aistudio.google.com se apni free API key yahan dalein
-  const GEMINI_API_KEY = "AQ.Ab8RN6JbEy_8x5Ha_I2HT5mBTEAyQBFeVyoXU6ST7C7qBYsCTg"; 
+  const GEMINI_API_KEY = "AQ.Ab8RN6IWEsmF7UDLnVpN8eXE4eu0MUnmET6zQul4V6HFRzWHvg"; 
 
   // ---- DOM ELEMENTS ----
   const chatWindow = document.getElementById('chatWindow');
@@ -140,7 +140,7 @@
   async function askGeminiAI(userQuery) {
     const typing = showTyping();
 
-    if (!GEMINI_API_KEY || GEMINI_API_KEY === "AQ.Ab8RN6JbEy_8x5Ha_I2HT5mBTEAyQBFeVyoXU6ST7C7qBYsCTg") {
+    if (!GEMINI_API_KEY || GEMINI_API_KEY === "AQ.Ab8RN6IWEsmF7UDLnVpN8eXE4eu0MUnmET6zQul4V6HFRzWHvg") {
       typing && typing.remove();
       addBotMsg("Please configure a valid Gemini API Key in ask-chat.js to enable AI answers.");
       return;
