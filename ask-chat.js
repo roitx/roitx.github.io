@@ -1,4 +1,4 @@
-// ask-chat.js — Smart Study Assistant with Groq AI & PDF Support
+// ask-chat.js — Smart Study Assistant with Groq AI & Website Knowledge
 (() => {
   // ---- GROQ API CONFIGURATION ----
   const GROQ_API_KEY = "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"; // Apni Groq API Key yahan dalein
@@ -17,7 +17,7 @@
 
   // ---- INITIALIZATION ----
   updateNotesCount();
-  addBotMsg("Hi Rohit 👋 — I'm your AI study assistant! Ask me any study question or use commands like 'open pdf ch1.pdf', 'calendar', 'create note: task'.");
+  addBotMsg("Hi Rohit 👋 — I'm your AI study assistant! Ask me about any class, subject, or notes, and I will give you direct links.");
 
   sendBtn && sendBtn.addEventListener('click', onSend);
   input && input.addEventListener('keydown', (e) => { if (e.key === 'Enter') onSend(); });
@@ -31,10 +31,14 @@
     chatWindow.appendChild(d); chatWindow.scrollTop = chatWindow.scrollHeight;
   }
 
-  function addBotMsg(text) {
+  // Updated to support HTML and Clickable links properly
+  function addBotMsg(htmlContent) {
     if (!chatWindow) return;
-    const d = document.createElement('div'); d.className = 'msg bot'; d.textContent = text;
-    chatWindow.appendChild(d); chatWindow.scrollTop = chatWindow.scrollHeight;
+    const d = document.createElement('div'); 
+    d.className = 'msg bot'; 
+    d.innerHTML = htmlContent; // innerHTML use kiya taki links clickable rahein
+    chatWindow.appendChild(d); 
+    chatWindow.scrollTop = chatWindow.scrollHeight;
   }
 
   function showTyping() {
@@ -80,27 +84,13 @@
       return;
     }
 
-    // 3. PAGE SHORTCUTS
-    if (cmd.startsWith('open ')) {
-      const target = raw.replace(/^open\s*/i, '').trim();
-      if (/class\s*9/.test(target)) { addBotMsg('Opening Class 9 page...'); goto('class9-subjects.html'); return; }
-      if (/class\s*11/.test(target)) { addBotMsg('Opening Class 11 page...'); goto('11-streams.html'); return; }
-      if (/class\s*12/.test(target)) { addBotMsg('Opening Class 12 page...'); goto('12-streams.html'); return; }
-    }
-
-    // 4. CALENDAR
+    // 3. CALENDAR
     if (cmd === 'calendar' || cmd.includes('calendar')) {
       showCalendarModal();
       return;
     }
 
-    // 5. TIME / DATE
-    if (['time', 'date', 'current time'].some(k => cmd === k || cmd.includes(k))) {
-      addBotMsg('Current date & time: ' + new Date().toLocaleString());
-      return;
-    }
-
-    // 6. NOTES MANAGEMENT
+    // 4. NOTES MANAGEMENT
     if (cmd === 'show notes' || cmd === 'notes' || cmd === 'view notes') { showNotesModal(); return; }
     if (cmd === 'download notes' || cmd === 'export notes') { downloadNotesFile(); return; }
 
@@ -110,86 +100,94 @@
       saveNote(note); addBotMsg('Note saved ✔'); return;
     }
 
-    if (cmd.startsWith('delete note')) {
-      const rest = raw.split(/delete note:?\s*/i)[1];
-      if (!rest) { addBotMsg('Specify note number or text to delete.'); return; }
-      deleteNote(rest); return;
-    }
-
-    // DEFAULT: AI AGENT (GROQ API)
+    // DEFAULT: GROQ AI WITH FULL WEBSITE KNOWLEDGE
     await askGroqAI(raw);
   }
 
-  // ---- OPEN PDF HANDLER ----
+  // ---- OPEN PDF HANDLER (FIXED) ----
   function doOpenPDF(arg) {
     if (!arg) { addBotMsg('Specify PDF filename, e.g., open pdf 10_physics_ch1.pdf'); return; }
     if (isValidUrl(arg)) {
-      addBotMsg('Opening PDF link...');
       window.open(arg, '_blank');
       return;
     }
-
-    addBotMsg('Opening PDF: ' + arg);
     const fullPath = arg.includes('/') ? arg : `notes/${arg}`;
     const viewer = 'notes-viewer.html?path=' + encodeURIComponent(fullPath) + '&name=' + encodeURIComponent(arg);
     window.location.href = viewer;
   }
 
-  // ---- GROQ AI INTEGRATION ----
+  // ---- GROQ AI INTEGRATION (WITH FULL WEBSITE KNOWLEDGE) ----
   async function askGroqAI(userQuery) {
     const typing = showTyping();
 
     if (!GROQ_API_KEY || GROQ_API_KEY === "gsk_your_groq_api_key_here") {
       typing && typing.remove();
-      addBotMsg("Please configure a valid Groq API Key in ask-chat.js to enable AI answers.");
+      addBotMsg("Please configure a valid Groq API Key in ask-chat.js.");
       return;
     }
+
+    const systemKnowledge = `
+    You are an AI study assistant for Rohit's educational platform. Answer user questions in simple Hindi/Hinglish.
+    When users ask for specific classes, subjects, notes, or tools, you MUST provide direct, clickable HTML links using the exact filenames from the website structure below.
+
+    --- WEBSITE PAGES & LINKS DIRECTORY ---
+    Class 9:
+    - Subjects Home: <a href="subjects-9.html">Class 9 Subjects</a>
+    - Science & SST: <a href="9-science-chapters.html">Science Chapters</a>, <a href="9-sst-chapters.html">SST Chapters</a>
+    - Subjects: <a href="9-maths-chapters.html">Maths</a>, <a href="9-physics-chapters.html">Physics</a>, <a href="9-chemistry-chapters.html">Chemistry</a>, <a href="9-biology-chapters.html">Biology</a>, <a href="9-english-chapters.html">English</a>, <a href="9-hindi-chapters.html">Hindi</a>, <a href="9-history-chapters.html">History</a>, <a href="9-geography-chapters.html">Geography</a>, <a href="9-civics-chapters.html">Civics</a>, <a href="9-economics-chapters.html">Economics</a>, <a href="9-sanskrit-chapters.html">Sanskrit</a>
+
+    Class 10:
+    - Subjects Home: <a href="subjects-10.html">Class 10 Subjects</a>
+    - Subjects: <a href="10-maths-chapters.html">Maths</a>, <a href="10-physics-chapters.html">Physics</a>, <a href="10-chemistry-chapters.html">Chemistry</a>, <a href="10-biology-chapters.html">Biology</a>, <a href="10-english-chapters.html">English</a>, <a href="10-hindi-chapters.html">Hindi</a>, <a href="10-history-chapters.html">History</a>, <a href="10-geography-chapters.html">Geography</a>, <a href="10-civics-chapters.html">Civics</a>, <a href="10-economics-chapters.html">Economics</a>, <a href="10-sanskrit-chapters.html">Sanskrit</a>
+
+    Class 11:
+    - Streams Home: <a href="subjects-11.html">Class 11 Streams</a> (<a href="11-science-subjects.html">Science</a>, <a href="11-commerce-subjects.html">Commerce</a>, <a href="11-arts-subjects.html">Arts</a>)
+    - Subjects: <a href="11-physics-chapters.html">Physics</a>, <a href="11-chemistry-chapters.html">Chemistry</a>, <a href="11-maths-chapters.html">Maths</a>, <a href="11-biology-chapters.html">Biology</a>, <a href="11-computer-chapters.html">Computer</a>, <a href="11-accountancy-chapters.html">Accountancy</a>, <a href="11-economics-chapters.html">Economics</a>, <a href="11-history-chapters.html">History</a>, <a href="11-geography-chapters.html">Geography</a>, <a href="11-civics-chapters.html">Civics</a>, <a href="11-english-chapters.html">English</a>, <a href="11-hindi-chapters.html">Hindi</a>
+
+    Class 12:
+    - Streams Home: <a href="subjects-12.html">Class 12 Streams</a> (<a href="12-science-subjects.html">Science</a>, <a href="12-commerce-subjects.html">Commerce</a>, <a href="12-arts-subjects.html">Arts</a>)
+    - Subjects: <a href="12-physics-chapters.html">Physics</a>, <a href="12-chemistry-chapters.html">Chemistry</a>, <a href="12-maths-chapters.html">Maths</a>, <a href="12-biology-chapters.html">Biology</a>, <a href="12-computer-chapters.html">Computer</a>, <a href="12-accountancy-chapters.html">Accountancy</a>, <a href="12-economics-chapters.html">Economics</a>, <a href="12-history-chapters.html">History</a>, <a href="12-geography-chapters.html">Geography</a>, <a href="12-civics-chapters.html">Civics</a>, <a href="12-english-chapters.html">English</a>, <a href="12-hindi-chapters.html">Hindi</a>
+
+    Tools & Features:
+    - Utilities: <a href="calculator.html">Calculator</a>, <a href="calendar.html">Calendar</a>, <a href="study-timer.html">Study Timer</a>, <a href="formulas.html">Formulas</a>, <a href="solver.html">Problem Solver</a>, <a href="tests.html">Tests</a>, <a href="refbook.html">Reference Books</a>
+
+    --- RULES ---
+    1. Always include working HTML anchor tags (e.g. <a href="page.html">Link Name</a>) when suggesting sections.
+    2. Keep responses friendly, helpful, and concise.
+    `;
 
     try {
       const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${GROQ_API_KEY}`
+          "Authorization": `Bearer ${GROQ_API_KEY.trim()}`
         },
         body: JSON.stringify({
           model: "llama-3.3-70b-versatile",
           messages: [
-            {
-              role: "system",
-              content: "You are a helpful and concise AI study assistant for a student platform. Answer in simple, clear Hindi/Hinglish."
-            },
-            {
-              role: "user",
-              content: userQuery
-            }
-          ]
+            { role: "system", content: systemKnowledge },
+            { role: "user", content: userQuery }
+          ],
+          temperature: 0.5
         })
       });
 
       const data = await response.json();
       typing && typing.remove();
 
-      if (data.choices && data.choices[0]?.message?.content) {
+      if (response.ok && data.choices && data.choices[0]?.message?.content) {
         addBotMsg(data.choices[0].message.content);
-      } else if (data.error) {
-        console.error("Groq API Error:", data.error);
-        addBotMsg("API Error: " + (data.error.message || "Something went wrong."));
       } else {
         addBotMsg("Kucch error aaya, kripya dobara try karein.");
       }
     } catch (err) {
       typing && typing.remove();
-      console.error("Fetch Error:", err);
-      addBotMsg("AI Server se connect nahi ho paya. Internet connection check karein.");
+      addBotMsg("Network Error: Internet connection check karein.");
     }
   }
 
   // ---- UTILITY FUNCTIONS ----
-  function goto(path) {
-    try { window.location.href = path; } catch (e) { console.warn(e); }
-  }
-
   function isValidUrl(s) {
     try { const u = new URL(s); return u.protocol === 'http:' || u.protocol === 'https:'; } catch { return false; }
   }
@@ -205,7 +203,7 @@
 
     let html = `<h2>Calendar — ${today.toLocaleString(undefined, { month: 'long' })} ${year}</h2>`;
     html += `<div>Today: ${today.toDateString()}</div>`;
-    html += `<div class="calendar-grid" style="margin-top:10px; display:grid; grid-template-columns:repeat(7,1fr); gap:5px; text-align:center;">`;
+    html += `<div style="margin-top:10px; display:grid; grid-template-columns:repeat(7,1fr); gap:5px; text-align:center;">`;
     const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     for (let d of dayNames) html += `<div style="font-weight:700">${d}</div>`;
     for (let i = 0; i < startDay; i++) html += `<div></div>`;
@@ -247,23 +245,6 @@
     }
     html += `<div style="margin-top:12px"><button onclick="closeModal();">Close</button> <button onclick="downloadNotesFile();">Download</button></div>`;
     openModal(html);
-  }
-
-  function deleteNote(spec) {
-    const notes = getNotes();
-    if (/^\d+$/.test(spec.trim())) {
-      const idx = parseInt(spec.trim(), 10) - 1;
-      if (idx < 0 || idx >= notes.length) { addBotMsg('Invalid note number'); return; }
-      notes.splice(idx, 1);
-      localStorage.setItem('rk_notes', JSON.stringify(notes));
-      updateNotesCount();
-      addBotMsg('Note deleted ✔');
-      return;
-    }
-    const newNotes = notes.filter(n => n.text.toLowerCase() !== spec.toLowerCase());
-    localStorage.setItem('rk_notes', JSON.stringify(newNotes));
-    updateNotesCount();
-    addBotMsg('Note deleted ✔');
   }
 
   function downloadNotesFile() {
