@@ -65,7 +65,20 @@
       await doOpenPDF(arg);
       return;
     }
-
+async function doOpenPDF(arg) {
+  if (!arg) { addBotMsg('Specify PDF filename or url'); return; }
+  if (isValidUrl(arg)) {
+    addBotMsg('Opening PDF link...');
+    window.open(arg, '_blank'); return;
+  }
+  const filename = arg;
+  addBotMsg('Opening PDF: ' + filename);
+  
+  // 'file=' ki jagah 'path=' kar diya gaya hai
+  const viewer = 'notes-viewer.html?path=' + encodeURIComponent(filename) + '&name=' + encodeURIComponent(filename);
+  window.open(viewer, '_blank');
+}
+    
     // explicit open link
     if (cmd.startsWith('open link') || /^open\s+https?:\/\//i.test(raw)) {
       const url = raw.replace(/^open(link)?\s*/i,'').trim();
@@ -501,7 +514,7 @@
       "Try: calculate sin(90)",
       "Try: calculate cos(60)",
       "Try: calculate 2^8",
-      "Try: open pdf 11-phy-ch1.pdf",
+      "Try: open pdf 10-physics-ch3.pdf",
       "Try: create note: revise optics"
     ];
     addBotMsg('Quick examples: ' + tips.join(' • '));
