@@ -1,8 +1,7 @@
-// ask-chat.js — Smart Study Assistant with Gemini AI & PDF Support
+// ask-chat.js — Smart Study Assistant with Groq AI & PDF Support
 (() => {
-  // ---- GEMINI API CONFIGURATION ----
-  // Nayi Auth Key (AQ...) yahan update kar di gayi hai
-  const GEMINI_API_KEY = "AQ.Ab8RN6JnexM9WyKZm3JWobcT5OK9JJwEcHWXwkA9qIusG1iZpw"; 
+  // ---- GROQ API CONFIGURATION ----
+  const GROQ_API_KEY = "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"; // Apni Groq API Key yahan dalein
 
   // ---- DOM ELEMENTS ----
   const chatWindow = document.getElementById('chatWindow');
@@ -108,7 +107,8 @@
     if (cmd.startsWith('create note:') || cmd.startsWith('create note')) {
       const note = raw.split(/create note:?\s*/i)[1] || '';
       if (!note) { addBotMsg('Example: create note: Revise Optics'); return; }
-      saveNote(note); addBotMsg('Note saved ✔'); return; }
+      saveNote(note); addBotMsg('Note saved ✔'); return;
+    }
 
     if (cmd.startsWith('delete note')) {
       const rest = raw.split(/delete note:?\s*/i)[1];
@@ -116,8 +116,8 @@
       deleteNote(rest); return;
     }
 
-    // DEFAULT: AI AGENT (GEMINI API)
-    await askGeminiAI(raw);
+    // DEFAULT: AI AGENT (GROQ API)
+    await askGroqAI(raw);
   }
 
   // ---- OPEN PDF HANDLER ----
@@ -134,43 +134,47 @@
     const viewer = 'notes-viewer.html?path=' + encodeURIComponent(fullPath) + '&name=' + encodeURIComponent(arg);
     window.location.href = viewer;
   }
-  // ---- GEMINI AI INTEGRATION (UPDATED MODEL) ----
-  async function askGeminiAI(userQuery) {
+
+  // ---- GROQ AI INTEGRATION ----
+  async function askGroqAI(userQuery) {
     const typing = showTyping();
 
-    if (!GEMINI_API_KEY) {
+    if (!GROQ_API_KEY || GROQ_API_KEY === "gsk_your_groq_api_key_here") {
       typing && typing.remove();
-      addBotMsg("Please configure a valid Gemini API Key in ask-chat.js to enable AI answers.");
+      addBotMsg("Please configure a valid Groq API Key in ask-chat.js to enable AI answers.");
       return;
     }
 
     try {
-      // Latest active Gemini Flash model endpoint
-      const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
-
-      const response = await fetch(url, {
+      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
-          "x-goog-api-key": GEMINI_API_KEY
+          "Authorization": `Bearer ${GROQ_API_KEY}`
         },
         body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: `You are a helpful and concise AI study assistant for a student platform. Answer in simple, clear Hindi/Hinglish.\n\nUser Question: ${userQuery}`
-            }]
-          }]
+          model: "llama-3.3-70b-versatile",
+          messages: [
+            {
+              role: "system",
+              content: "You are a helpful and concise AI study assistant for a student platform. Answer in simple, clear Hindi/Hinglish."
+            },
+            {
+              role: "user",
+              content: userQuery
+            }
+          ]
         })
       });
 
       const data = await response.json();
       typing && typing.remove();
 
-      if (data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
-        addBotMsg(data.candidates[0].content.parts[0].text);
+      if (data.choices && data.choices[0]?.message?.content) {
+        addBotMsg(data.choices[0].message.content);
       } else if (data.error) {
-        console.error("Gemini API Error:", data.error);
-        addBotMsg("API Error: " + (data.error.message || "Kucch दिक्कत आयी है।"));
+        console.error("Groq API Error:", data.error);
+        addBotMsg("API Error: " + (data.error.message || "Something went wrong."));
       } else {
         addBotMsg("Kucch error aaya, kripya dobara try karein.");
       }
@@ -180,7 +184,6 @@
       addBotMsg("AI Server se connect nahi ho paya. Internet connection check karein.");
     }
   }
-
 
   // ---- UTILITY FUNCTIONS ----
   function goto(path) {
