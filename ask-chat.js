@@ -1,8 +1,8 @@
 // ask-chat.js — Smart Study Assistant with Gemini AI & PDF Support
 (() => {
   // ---- GEMINI API CONFIGURATION ----
-  // aistudio.google.com se apni free API key yahan dalein
-  const GEMINI_API_KEY = "AQ.Ab8RN6IWEsmF7UDLnVpN8eXE4eu0MUnmET6zQul4V6HFRzWHvg"; 
+  // Nayi Auth Key (AQ...) yahan update kar di gayi hai
+  const GEMINI_API_KEY = "AQ.Ab8RN6JnexM9WyKZm3JWobcT5OK9JJwEcHWXwkA9qIusG1iZpw"; 
 
   // ---- DOM ELEMENTS ----
   const chatWindow = document.getElementById('chatWindow');
@@ -108,8 +108,7 @@
     if (cmd.startsWith('create note:') || cmd.startsWith('create note')) {
       const note = raw.split(/create note:?\s*/i)[1] || '';
       if (!note) { addBotMsg('Example: create note: Revise Optics'); return; }
-      saveNote(note); addBotMsg('Note saved ✔'); return;
-    }
+      saveNote(note); addBotMsg('Note saved ✔'); return; }
 
     if (cmd.startsWith('delete note')) {
       const rest = raw.split(/delete note:?\s*/i)[1];
@@ -136,20 +135,26 @@
     window.location.href = viewer;
   }
 
-  // ---- GEMINI AI INTEGRATION ----
+  // ---- GEMINI AI INTEGRATION (UPDATED FOR AUTH KEYS) ----
   async function askGeminiAI(userQuery) {
     const typing = showTyping();
 
-    if (!GEMINI_API_KEY || GEMINI_API_KEY === "AQ.Ab8RN6IWEsmF7UDLnVpN8eXE4eu0MUnmET6zQul4V6HFRzWHvg") {
+    if (!GEMINI_API_KEY) {
       typing && typing.remove();
       addBotMsg("Please configure a valid Gemini API Key in ask-chat.js to enable AI answers.");
       return;
     }
 
     try {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+      // Updated Endpoint and Headers for Auth Key compatibility
+      const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
+
+      const response = await fetch(url, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "x-goog-api-key": GEMINI_API_KEY // Nayi Auth key headers mein passing
+        },
         body: JSON.stringify({
           contents: [{
             parts: [{
@@ -164,11 +169,15 @@
 
       if (data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
         addBotMsg(data.candidates[0].content.parts[0].text);
+      } else if (data.error) {
+        console.error("Gemini API Error:", data.error);
+        addBotMsg("API Error: " + (data.error.message || "Kucch dikkat aayi hai."));
       } else {
         addBotMsg("Kucch error aaya, kripya dobara try karein.");
       }
     } catch (err) {
       typing && typing.remove();
+      console.error("Fetch Error:", err);
       addBotMsg("AI Server se connect nahi ho paya. Internet connection check karein.");
     }
   }
