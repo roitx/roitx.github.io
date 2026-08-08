@@ -1,8 +1,7 @@
 // ask-chat.js — Smart Study Assistant with Groq AI & Flexible PDF Commands
-(() => {
-  // ---- GROQ API CONFIGURATION ----
-  const GROQ_API_KEY = "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"; // Apni Groq API Key yahan dalein
 
+  // ---- GROQ API CONFIGURATION ----
+  
   // ---- DOM ELEMENTS ----
   const chatWindow = document.getElementById('chatWindow');
   const input = document.getElementById('chatInput');
@@ -138,16 +137,37 @@
     addBotMsg(`Opening PDF: <b>${finalFileName}</b>...`);
     window.location.href = viewer;
   }
-
-  // ---- GROQ AI INTEGRATION ----
+  // ---- GROQ AI INTEGRATION (SECURED VIA SUPABASE BACKEND) ----
   async function askGroqAI(userQuery) {
     const typing = showTyping();
 
-    if (!GROQ_API_KEY || GROQ_API_KEY === "gsk_your_groq_api_key_here") {
+    // Apna Supabase Edge Function ka URL yahan dalein
+    const SUPABASE_FUNCTION_URL = "https://ktastwehnnqicriknewr.supabase.co/functions/v1/smart-worker";
+
+    try {
+      const response = await fetch(SUPABASE_FUNCTION_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+          // Agar Supabase anon key ki zarurat ho to authorization header yahan de sakte hain
+        },
+        body: JSON.stringify({ userQuery })
+      });
+
+      const data = await response.json();
       typing && typing.remove();
-      addBotMsg("Please configure a valid Groq API Key in ask-chat.js.");
-      return;
+
+      if (response.ok && data.choices && data.choices[0]?.message?.content) {
+        addBotMsg(data.choices[0].message.content);
+      } else {
+        addBotMsg("Kucch error aaya, kripya dobara try karein.");
+      }
+    } catch (err) {
+      typing && typing.remove();
+      addBotMsg("Network Error: Internet connection check karein.");
     }
+  }
+  
 
     const systemKnowledge = `
     You are an AI study assistant for Rohit's learning platform. Answer in simple Hindi/Hinglish.
