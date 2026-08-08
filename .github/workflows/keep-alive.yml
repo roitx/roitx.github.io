@@ -2,13 +2,13 @@ name: Keep Supabase Alive
 
 on:
   schedule:
-    # Har 3 din mein raat 12 baje chalega
+    # Har 3 din mein raat 12 baje chalega (UTC)
     - cron: '0 0 */3 * *'
   workflow_dispatch: # Manual test run ke liye
 
 jobs:
   ping-supabase:
-    runs-runs-on: ubuntu-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Ping Website/Supabase
         run: |
