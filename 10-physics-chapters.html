@@ -50,7 +50,8 @@
 
 <script>
 function openPdf(file){
-  window.location.href = "notes-viewer.html?file=" + file;
+  // URL me 'file=' ki jagah 'path=' bhejenge taki viewer ise notes/ folder se load kar sake
+  window.location.href = "notes-viewer.html?path=" + encodeURIComponent(file) + "&name=" + encodeURIComponent(file);
 }
 </script>
 
