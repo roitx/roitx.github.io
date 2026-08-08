@@ -66,18 +66,24 @@
       return;
     }
 async function doOpenPDF(arg) {
+async function doOpenPDF(arg) {
   if (!arg) { addBotMsg('Specify PDF filename or url'); return; }
   if (isValidUrl(arg)) {
     addBotMsg('Opening PDF link...');
-    window.open(arg, '_blank'); return;
+    window.location.href = arg; // Naye tab ki jagah same page ya window.open istemal karein
+    return;
   }
+  
   const filename = arg;
   addBotMsg('Opening PDF: ' + filename);
   
-  // 'file=' ki jagah 'path=' kar diya gaya hai
-  const viewer = 'notes-viewer.html?path=' + encodeURIComponent(filename) + '&name=' + encodeURIComponent(filename);
-  window.open(viewer, '_blank');
+  // Agar path me '/' nahi hai to auto 'notes/' add karein aur same tab me kholein
+  const fullPath = filename.includes('/') ? filename : `notes/${filename}`;
+  const viewer = 'notes-viewer.html?path=' + encodeURIComponent(fullPath) + '&name=' + encodeURIComponent(filename);
+  
+  window.location.href = viewer; // Pop-up block se bachne ke liye same tab me redirect karein
 }
+
     
     // explicit open link
     if (cmd.startsWith('open link') || /^open\s+https?:\/\//i.test(raw)) {
