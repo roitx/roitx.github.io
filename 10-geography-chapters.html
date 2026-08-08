@@ -62,9 +62,10 @@
 
 <script>
 function openPdf(file){
-  window.location.href = "notes-viewer.html?file=" + file;
+  window.location.href = "notes-viewer.html?path=" + encodeURIComponent(file) + "&name=" + encodeURIComponent(file);
 }
 </script>
+
 
 </body>
 </html>
