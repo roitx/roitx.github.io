@@ -134,8 +134,7 @@
     const viewer = 'notes-viewer.html?path=' + encodeURIComponent(fullPath) + '&name=' + encodeURIComponent(arg);
     window.location.href = viewer;
   }
-
-  // ---- GEMINI AI INTEGRATION (UPDATED FOR AUTH KEYS) ----
+  // ---- GEMINI AI INTEGRATION (UPDATED MODEL) ----
   async function askGeminiAI(userQuery) {
     const typing = showTyping();
 
@@ -146,14 +145,14 @@
     }
 
     try {
-      // Updated Endpoint and Headers for Auth Key compatibility
+      // Latest active Gemini Flash model endpoint
       const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
 
       const response = await fetch(url, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
-          "x-goog-api-key": GEMINI_API_KEY // Nayi Auth key headers mein passing
+          "x-goog-api-key": GEMINI_API_KEY
         },
         body: JSON.stringify({
           contents: [{
@@ -171,7 +170,7 @@
         addBotMsg(data.candidates[0].content.parts[0].text);
       } else if (data.error) {
         console.error("Gemini API Error:", data.error);
-        addBotMsg("API Error: " + (data.error.message || "Kucch dikkat aayi hai."));
+        addBotMsg("API Error: " + (data.error.message || "Kucch दिक्कत आयी है।"));
       } else {
         addBotMsg("Kucch error aaya, kripya dobara try karein.");
       }
@@ -181,6 +180,7 @@
       addBotMsg("AI Server se connect nahi ho paya. Internet connection check karein.");
     }
   }
+
 
   // ---- UTILITY FUNCTIONS ----
   function goto(path) {
