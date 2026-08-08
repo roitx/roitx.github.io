@@ -1,4 +1,4 @@
-// ask-chat.js — Smart Study Assistant with Groq AI & Website Knowledge
+// ask-chat.js — Smart Study Assistant with Groq AI & Flexible PDF Commands
 (() => {
   // ---- GROQ API CONFIGURATION ----
   const GROQ_API_KEY = "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"; // Apni Groq API Key yahan dalein
@@ -17,7 +17,7 @@
 
   // ---- INITIALIZATION ----
   updateNotesCount();
-  addBotMsg("Hi Rohit 👋 — I'm your AI study assistant! Ask me about any class, subject, or notes, and I will give you direct links.");
+  addBotMsg("Hi Rohit 👋 — I'm your AI study assistant! Ask me any study question or use commands like 'open pdf 9 chemistry ch3', 'calendar', 'create note: task'.");
 
   sendBtn && sendBtn.addEventListener('click', onSend);
   input && input.addEventListener('keydown', (e) => { if (e.key === 'Enter') onSend(); });
@@ -31,12 +31,11 @@
     chatWindow.appendChild(d); chatWindow.scrollTop = chatWindow.scrollHeight;
   }
 
-  // Updated to support HTML and Clickable links properly
   function addBotMsg(htmlContent) {
     if (!chatWindow) return;
     const d = document.createElement('div'); 
     d.className = 'msg bot'; 
-    d.innerHTML = htmlContent; // innerHTML use kiya taki links clickable rahein
+    d.innerHTML = htmlContent;
     chatWindow.appendChild(d); 
     chatWindow.scrollTop = chatWindow.scrollHeight;
   }
@@ -61,13 +60,19 @@
 
   function normalize(s) { return String(s || '').trim().toLowerCase(); }
 
-  // ---- COMMAND DISPATCHER ----
+  // ---- SMART COMMAND DISPATCHER ----
   async function handleCommand(raw) {
     const cmd = normalize(raw);
 
-    // 1. OPEN PDF
-    if (cmd.startsWith('open pdf') || cmd.includes('open pdf ')) {
-      const arg = raw.replace(/^open\s*pdf\s*/i, '').trim();
+    // 1. FLEXIBLE OPEN PDF COMMAND MATCHING
+    if (/^open\s+pdf/i.test(raw) || /pdf$/i.test(raw) || /^pdf\s+/i.test(raw) || cmd.includes('open pdf')) {
+      let arg = raw
+        .replace(/^open\s*pdf\s*/i, '')
+        .replace(/^pdf\s*/i, '')
+        .replace(/\s*pdf$/i, '')
+        .replace(/^open\s*/i, '')
+        .trim();
+      
       doOpenPDF(arg);
       return;
     }
@@ -100,23 +105,41 @@
       saveNote(note); addBotMsg('Note saved ✔'); return;
     }
 
-    // DEFAULT: GROQ AI WITH FULL WEBSITE KNOWLEDGE
+    // DEFAULT: AI AGENT WITH WEBSITE & PDF KNOWLEDGE
     await askGroqAI(raw);
   }
 
-  // ---- OPEN PDF HANDLER (FIXED) ----
+  // ---- SMART OPEN PDF HANDLER ----
   function doOpenPDF(arg) {
-    if (!arg) { addBotMsg('Specify PDF filename, e.g., open pdf 10_physics_ch1.pdf'); return; }
+    if (!arg) { 
+      addBotMsg('Kripya PDF ka naam ya details likhein, jaise: <b>open pdf 9 chemistry ch3</b>'); 
+      return; 
+    }
+
     if (isValidUrl(arg)) {
       window.open(arg, '_blank');
       return;
     }
-    const fullPath = arg.includes('/') ? arg : `notes/${arg}`;
-    const viewer = 'notes-viewer.html?path=' + encodeURIComponent(fullPath) + '&name=' + encodeURIComponent(arg);
+
+    // Clean text & format into standard class_subject_chX pattern
+    let clean = arg.replace(/\.pdf$/i, '').trim().toLowerCase();
+
+    clean = clean
+      .replace(/class\s*/g, '')          // 'class 9' -> '9'
+      .replace(/chapter\s*/g, 'ch')       // 'chapter 3' -> 'ch3'
+      .replace(/chap\s*/g, 'ch')          // 'chap 3' -> 'ch3'
+      .replace(/[\s\-\.]+/g, '_')         // Spaces, dashes, dots -> '_'
+      .replace(/_+/g, '_');               // Multiple '_' -> single '_'
+
+    const finalFileName = `${clean}.pdf`;
+    const fullPath = `notes/${finalFileName}`;
+    const viewer = 'notes-viewer.html?path=' + encodeURIComponent(fullPath) + '&name=' + encodeURIComponent(finalFileName);
+
+    addBotMsg(`Opening PDF: <b>${finalFileName}</b>...`);
     window.location.href = viewer;
   }
 
-  // ---- GROQ AI INTEGRATION (WITH FULL WEBSITE KNOWLEDGE) ----
+  // ---- GROQ AI INTEGRATION ----
   async function askGroqAI(userQuery) {
     const typing = showTyping();
 
@@ -127,33 +150,24 @@
     }
 
     const systemKnowledge = `
-    You are an AI study assistant for Rohit's educational platform. Answer user questions in simple Hindi/Hinglish.
-    When users ask for specific classes, subjects, notes, or tools, you MUST provide direct, clickable HTML links using the exact filenames from the website structure below.
+    You are an AI study assistant for Rohit's learning platform. Answer in simple Hindi/Hinglish.
 
-    --- WEBSITE PAGES & LINKS DIRECTORY ---
-    Class 9:
-    - Subjects Home: <a href="subjects-9.html">Class 9 Subjects</a>
-    - Science & SST: <a href="9-science-chapters.html">Science Chapters</a>, <a href="9-sst-chapters.html">SST Chapters</a>
-    - Subjects: <a href="9-maths-chapters.html">Maths</a>, <a href="9-physics-chapters.html">Physics</a>, <a href="9-chemistry-chapters.html">Chemistry</a>, <a href="9-biology-chapters.html">Biology</a>, <a href="9-english-chapters.html">English</a>, <a href="9-hindi-chapters.html">Hindi</a>, <a href="9-history-chapters.html">History</a>, <a href="9-geography-chapters.html">Geography</a>, <a href="9-civics-chapters.html">Civics</a>, <a href="9-economics-chapters.html">Economics</a>, <a href="9-sanskrit-chapters.html">Sanskrit</a>
+    --- PDF NAMING CONVENTION ---
+    All PDF files follow the format: {class}_{subject}_ch{number}.pdf
+    Examples:
+    - Class 9 Chemistry Chapter 3 -> notes/9_chemistry_ch3.pdf
+    - Class 10 Physics Chapter 1 -> notes/10_physics_ch1.pdf
+    - Class 11 Biology Chapter 2 -> notes/11_biology_ch2.pdf
 
-    Class 10:
-    - Subjects Home: <a href="subjects-10.html">Class 10 Subjects</a>
-    - Subjects: <a href="10-maths-chapters.html">Maths</a>, <a href="10-physics-chapters.html">Physics</a>, <a href="10-chemistry-chapters.html">Chemistry</a>, <a href="10-biology-chapters.html">Biology</a>, <a href="10-english-chapters.html">English</a>, <a href="10-hindi-chapters.html">Hindi</a>, <a href="10-history-chapters.html">History</a>, <a href="10-geography-chapters.html">Geography</a>, <a href="10-civics-chapters.html">Civics</a>, <a href="10-economics-chapters.html">Economics</a>, <a href="10-sanskrit-chapters.html">Sanskrit</a>
+    When users ask for any chapter PDF, generate clickable HTML links using this exact viewer URL:
+    <a href="notes-viewer.html?path=notes/{class}_{subject}_ch{number}.pdf&name={class}_{subject}_ch{number}.pdf">Open PDF</a>
 
-    Class 11:
-    - Streams Home: <a href="subjects-11.html">Class 11 Streams</a> (<a href="11-science-subjects.html">Science</a>, <a href="11-commerce-subjects.html">Commerce</a>, <a href="11-arts-subjects.html">Arts</a>)
-    - Subjects: <a href="11-physics-chapters.html">Physics</a>, <a href="11-chemistry-chapters.html">Chemistry</a>, <a href="11-maths-chapters.html">Maths</a>, <a href="11-biology-chapters.html">Biology</a>, <a href="11-computer-chapters.html">Computer</a>, <a href="11-accountancy-chapters.html">Accountancy</a>, <a href="11-economics-chapters.html">Economics</a>, <a href="11-history-chapters.html">History</a>, <a href="11-geography-chapters.html">Geography</a>, <a href="11-civics-chapters.html">Civics</a>, <a href="11-english-chapters.html">English</a>, <a href="11-hindi-chapters.html">Hindi</a>
-
-    Class 12:
-    - Streams Home: <a href="subjects-12.html">Class 12 Streams</a> (<a href="12-science-subjects.html">Science</a>, <a href="12-commerce-subjects.html">Commerce</a>, <a href="12-arts-subjects.html">Arts</a>)
-    - Subjects: <a href="12-physics-chapters.html">Physics</a>, <a href="12-chemistry-chapters.html">Chemistry</a>, <a href="12-maths-chapters.html">Maths</a>, <a href="12-biology-chapters.html">Biology</a>, <a href="12-computer-chapters.html">Computer</a>, <a href="12-accountancy-chapters.html">Accountancy</a>, <a href="12-economics-chapters.html">Economics</a>, <a href="12-history-chapters.html">History</a>, <a href="12-geography-chapters.html">Geography</a>, <a href="12-civics-chapters.html">Civics</a>, <a href="12-english-chapters.html">English</a>, <a href="12-hindi-chapters.html">Hindi</a>
-
-    Tools & Features:
-    - Utilities: <a href="calculator.html">Calculator</a>, <a href="calendar.html">Calendar</a>, <a href="study-timer.html">Study Timer</a>, <a href="formulas.html">Formulas</a>, <a href="solver.html">Problem Solver</a>, <a href="tests.html">Tests</a>, <a href="refbook.html">Reference Books</a>
-
-    --- RULES ---
-    1. Always include working HTML anchor tags (e.g. <a href="page.html">Link Name</a>) when suggesting sections.
-    2. Keep responses friendly, helpful, and concise.
+    --- WEBSITE PAGES DIRECTORY ---
+    - Class 9: <a href="subjects-9.html">Class 9 Subjects</a>
+    - Class 10: <a href="subjects-10.html">Class 10 Subjects</a>
+    - Class 11: <a href="subjects-11.html">Class 11 Streams</a>
+    - Class 12: <a href="subjects-12.html">Class 12 Streams</a>
+    - Tools: <a href="calculator.html">Calculator</a>, <a href="calendar.html">Calendar</a>, <a href="study-timer.html">Study Timer</a>, <a href="formulas.html">Formulas</a>
     `;
 
     try {
