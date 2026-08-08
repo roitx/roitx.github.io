@@ -22,8 +22,11 @@
 </div>
 
 <script>
-function openPdf(f){ location.href="notes-viewer.html?file="+f; }
+function openPdf(file){
+  window.location.href = "notes-viewer.html?path=" + encodeURIComponent(file) + "&name=" + encodeURIComponent(file);
+}
 </script>
+
 
 </body>
 </html>
