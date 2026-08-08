@@ -43,10 +43,9 @@
 <div class="footer">
   © Notes by Roitx
 </div>
-
 <script>
 function openPdf(file){
-  location.href = "notes-viewer.html?file=" + file;
+  window.location.href = "notes-viewer.html?path=" + encodeURIComponent(file) + "&name=" + encodeURIComponent(file);
 }
 </script>
 
