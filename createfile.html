@@ -15,17 +15,33 @@
     <header class="top-nav">
         <div class="brand-container">
             <span class="logo-text">ROITX LAB</span>
-            <span class="version-tag">v5.6</span>
+            
         </div>
         
         <div class="header-actions">
-            <button class="icon-btn" onclick="toggleFindReplaceModal()" title="Find & Replace"><i class="fas fa-search"></i></button>
-            <button class="btn btn-primary" onclick="runManualCode()"><i class="fas fa-play"></i> Run</button>
-            <button class="icon-btn" onclick="togglePreviewPanel()" title="Toggle Preview"><i class="fas fa-columns"></i></button>
-            <button class="icon-btn" onclick="openPreviewFullscreen()" title="Fullscreen Preview"><i class="fas fa-expand"></i></button>
-            <!-- Mode Changer Button Fixed -->
-            <!-- Is line ko update karein -->
-<button class="icon-btn mode-changer-btn" id="mode-toggle" onclick="toggleThemeMode()" title="Toggle Theme"><i class="fas fa-moon"></i></button>
+ 
+<!-- Top Navigation Header के header-actions में यह बटन जोड़ें -->
+<div class="header-actions">
+    <button class="icon-btn" onclick="toggleFindReplaceModal()" title="Find & Replace"><i class="fas fa-search"></i></button>
+    <button class="btn btn-primary" onclick="runManualCode()"><i class="fas fa-play"></i> Run</button>
+
+    <!-- 🟢 Save & Export Button -->
+    <div class="export-dropdown" style="position: relative; display: inline-block;">
+        <button class="btn btn-save" onclick="toggleExportMenu()" style="background: #00f0ff; color: #0a0c10; font-weight: bold; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer;">
+            <i class="fas fa-download"></i> Export <i class="fas fa-caret-down"></i>
+        </button>
+        <div id="exportMenu" class="dropdown-menu hidden" style="position: absolute; right: 0; top: 110%; background: #12161f; border: 1px solid #00f0ff; border-radius: 8px; box-shadow: 0 8px 20px rgba(0,0,0,0.5); width: 210px; z-index: 1000; padding: 6px 0;">
+            <button onclick="saveCurrentActiveFile()" class="menu-item"><i class="fas fa-file-code"></i> Save Active File</button>
+            <button onclick="exportFullHTMLProject()" class="menu-item"><i class="fas fa-globe"></i> Export Complete Web Page (.html)</button>
+            <button onclick="exportAllSeparateFiles()" class="menu-item"><i class="fas fa-folder-open"></i> Export All Files (.html, .css, .js, .py)</button>
+        </div>
+    </div>
+
+    <button class="icon-btn" onclick="togglePreviewPanel()" title="Toggle Preview"><i class="fas fa-columns"></i></button>
+    <button class="icon-btn" onclick="openPreviewFullscreen()" title="Fullscreen Preview"><i class="fas fa-expand"></i></button>
+    <button class="icon-btn mode-changer-btn" id="mode-toggle" onclick="toggleThemeMode()" title="Toggle Theme"><i class="fas fa-moon"></i></button>
+</div>
+
 
         </div>
     </header>

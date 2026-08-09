@@ -108,6 +108,101 @@ function setupScrollSync(input, highlight, lineNums) {
         lineNums.scrollTop = input.scrollTop;
     });
 }
+/* ==========================================================================
+   9. Save & Export Engine
+   ========================================================================== */
+
+// Export Dropdown Toggle
+window.toggleExportMenu = function() {
+    const menu = document.getElementById('exportMenu');
+    if (menu) {
+        menu.classList.toggle('hidden');
+    }
+};
+
+// Click outside to close dropdown
+window.addEventListener('click', (e) => {
+    const dropdown = document.querySelector('.export-dropdown');
+    if (dropdown && !dropdown.contains(e.target)) {
+        const menu = document.getElementById('exportMenu');
+        if (menu) menu.classList.add('hidden');
+    }
+});
+
+// Generic File Downloader Utility
+function triggerDownload(filename, content, mimeType) {
+    const blob = new Blob([content], { type: mimeType });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
+}
+
+// 1. Save currently open tab file
+window.saveCurrentActiveFile = function() {
+    let activeTab = 'html';
+    if (document.getElementById('cssPanel').classList.contains('active')) activeTab = 'css';
+    if (document.getElementById('jsPanel').classList.contains('active')) activeTab = 'js';
+    if (document.getElementById('pyPanel').classList.contains('active')) activeTab = 'py';
+
+    if (activeTab === 'html') {
+        triggerDownload('index.html', htmlInput.value, 'text/html');
+    } else if (activeTab === 'css') {
+        triggerDownload('style.css', cssInput.value, 'text/css');
+    } else if (activeTab === 'js') {
+        triggerDownload('script.js', jsInput.value, 'text/javascript');
+    } else if (activeTab === 'py') {
+        triggerDownload('main.py', pyInput.value, 'text/x-python');
+    }
+    toggleExportMenu();
+};
+
+// 2. Export full runnable single HTML file (CSS + JS + Python inside)
+window.exportFullHTMLProject = function() {
+    const fullSource = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roitx Exported Project</title>
+    <style>
+${cssInput.value}
+    </style>
+    <!-- Brython Engine for Python Support -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/brython/3.11.1/brython.min.js"><\/script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/brython/3.11.1/brython_stdlib.js"><\/script>
+</head>
+<body onload="brython()">
+
+${htmlInput.value}
+
+    <script>
+${jsInput.value}
+    <\/script>
+
+    <script type="text/python">
+${pyInput.value}
+    <\/script>
+</body>
+</html>`;
+
+    triggerDownload('roitx_project.html', fullSource, 'text/html');
+    toggleExportMenu();
+};
+
+// 3. Export individual files one by one
+window.exportAllSeparateFiles = function() {
+    triggerDownload('index.html', htmlInput.value, 'text/html');
+    setTimeout(() => triggerDownload('style.css', cssInput.value, 'text/css'), 200);
+    setTimeout(() => triggerDownload('script.js', jsInput.value, 'text/javascript'), 400);
+    if (pyInput.value.trim() !== '') {
+        setTimeout(() => triggerDownload('main.py', pyInput.value, 'text/x-python'), 600);
+    }
+    toggleExportMenu();
+};
 
 /* ==========================================================================
    3. Smart Keyboard & Auto-Close Brackets / Tags Engine
@@ -530,3 +625,127 @@ window.addEventListener('DOMContentLoaded', () => {
 
     triggerLivePreview();
 });
+/* ==========================================================================
+   9. Save & Export Engine (With Custom Naming & Extension Support)
+   ========================================================================== */
+
+// Export Dropdown Toggle
+window.toggleExportMenu = function() {
+    const menu = document.getElementById('exportMenu');
+    if (menu) {
+        menu.classList.toggle('hidden');
+    }
+};
+
+// Click outside to close dropdown
+window.addEventListener('click', (e) => {
+    const dropdown = document.querySelector('.export-dropdown');
+    if (dropdown && !dropdown.contains(e.target)) {
+        const menu = document.getElementById('exportMenu');
+        if (menu) menu.classList.add('hidden');
+    }
+});
+
+// Generic File Downloader Utility
+function triggerDownload(filename, content, mimeType) {
+    const blob = new Blob([content], { type: mimeType });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
+}
+
+// 1. Save Currently Active File (Custom Name & Extension)
+window.saveCurrentActiveFile = function() {
+    let content = '';
+    let defaultName = 'roitx.txt';
+
+    if (document.getElementById('htmlPanel').classList.contains('active')) {
+        content = htmlInput ? htmlInput.value : '';
+        defaultName = 'index.html';
+    } else if (document.getElementById('cssPanel').classList.contains('active')) {
+        content = cssInput ? cssInput.value : '';
+        defaultName = 'roitx.css';
+    } else if (document.getElementById('jsPanel').classList.contains('active')) {
+        content = jsInput ? jsInput.value : '';
+        defaultName = 'roitx.js';
+    } else if (document.getElementById('pyPanel').classList.contains('active')) {
+        content = pyInput ? pyInput.value : '';
+        defaultName = 'main.py';
+    }
+
+    const userFileName = prompt("फ़ाइल का नाम और एक्सटेंशन दर्ज करें (e.g., roitx.txt, mystyle.css):", defaultName);
+
+    if (userFileName && userFileName.trim() !== "") {
+        triggerDownload(userFileName.trim(), content, 'text/plain;charset=utf-8');
+    }
+
+    toggleExportMenu();
+};
+
+// 2. Export Full Web Page File (Custom Name & Extension)
+window.exportFullHTMLProject = function() {
+    const defaultName = 'roitx_project.html';
+    const userFileName = prompt("वेबपेज फ़ाइल का नाम और एक्सटेंशन दर्ज करें (e.g., roitx.html, page.txt):", defaultName);
+
+    if (!userFileName || userFileName.trim() === "") {
+        toggleExportMenu();
+        return;
+    }
+
+    const fullSource = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roitx Exported Project</title>
+    <style>
+${cssInput ? cssInput.value : ''}
+    </style>
+    <!-- Brython Engine for Python Support -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/brython/3.11.1/brython.min.js"><\/script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/brython/3.11.1/brython_stdlib.js"><\/script>
+</head>
+<body onload="brython()">
+
+${htmlInput ? htmlInput.value : ''}
+
+    <script>
+${jsInput ? jsInput.value : ''}
+    <\/script>
+
+    <script type="text/python">
+${pyInput ? pyInput.value : ''}
+    <\/script>
+</body>
+</html>`;
+
+    triggerDownload(userFileName.trim(), fullSource, 'text/plain;charset=utf-8');
+    toggleExportMenu();
+};
+
+// 3. Export All Separate Files (Custom Base Name Prefix)
+window.exportAllSeparateFiles = function() {
+    const basePrefix = prompt("फ़ाइलों का मुख्य नाम (Prefix) दर्ज करें:", "roitx");
+
+    if (!basePrefix || basePrefix.trim() === "") {
+        toggleExportMenu();
+        return;
+    }
+
+    const prefix = basePrefix.trim();
+
+    // अब डिफॉल्ट रूप से roitx_index.html, roitx.css, roitx.js नाम से सेव होगा (अगर यूज़र ने 'roitx' रखा)
+    triggerDownload(`${prefix}_index.html`, htmlInput ? htmlInput.value : '', 'text/plain;charset=utf-8');
+    setTimeout(() => triggerDownload(`${prefix}.css`, cssInput ? cssInput.value : '', 'text/plain;charset=utf-8'), 200);
+    setTimeout(() => triggerDownload(`${prefix}.js`, jsInput ? jsInput.value : '', 'text/plain;charset=utf-8'), 400);
+    
+    if (pyInput && pyInput.value.trim() !== '') {
+        setTimeout(() => triggerDownload(`${prefix}_main.py`, pyInput.value, 'text/plain;charset=utf-8'), 600);
+    }
+
+    toggleExportMenu();
+};

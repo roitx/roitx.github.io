@@ -45,17 +45,16 @@ body {
 
 /* Top Navigation Bar */
 .top-nav {
-    min-height: 55px;
-    height: auto;
+    height: 55px;
     background-color: var(--bg-panel);
     border-bottom: 1px solid var(--border-color);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 8px 15px;
-    flex-wrap: wrap;
+    padding: 8px 12px;
     gap: 8px;
     flex-shrink: 0;
+    box-sizing: border-box;
 }
 
 .brand-container {
@@ -85,9 +84,48 @@ body {
 /* Header Actions Layout */
 .header-actions {
     display: flex;
-    gap: 8px;
+    gap: 6px;
     align-items: center;
-    flex-wrap: wrap;
+    flex-wrap: nowrap; /* किसी भी बटन को नई लाइन में टूटने से रोकेगा */
+}
+
+/* Dropdown Menu Styling */
+.dropdown-menu.hidden {
+    display: none;
+}
+
+.menu-item {
+    width: 100%;
+    padding: 8px 14px;
+    background: transparent;
+    border: none;
+    color: #fff;
+    text-align: left;
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: background 0.2s ease;
+}
+
+.menu-item:hover {
+    background: rgba(0, 240, 255, 0.15);
+    color: #00f0ff;
+}
+
+body.light-theme .dropdown-menu {
+    background: #ffffff;
+    border-color: #007acc;
+}
+
+body.light-theme .menu-item {
+    color: #333;
+}
+
+body.light-theme .menu-item:hover {
+    background: rgba(0, 122, 204, 0.1);
+    color: #007acc;
 }
 
 /* Buttons */
@@ -554,4 +592,43 @@ textarea {
 
 .hidden {
     display: none !important;
+}
+/* ==========================================================================
+   Mobile Responsive Rules (For Mobile & Small Screens)
+   ========================================================================== */
+@media (max-width: 600px) {
+    .top-nav {
+        padding: 6px 8px;
+    }
+
+    .brand-container {
+        gap: 4px;
+    }
+
+    .logo-text {
+        font-size: 13px;
+    }
+
+    .version-tag {
+        display: none; /* मोबाइल पर जगह बचाने के लिए v5.6 छिप जाएगा */
+    }
+
+    .header-actions {
+        gap: 4px;
+    }
+
+    .btn, .icon-btn, #mode-toggle, .mode-changer-btn {
+        height: 32px;
+        font-size: 11px;
+        padding: 0 8px;
+    }
+
+    .icon-btn, #mode-toggle, .mode-changer-btn {
+        width: 32px;
+    }
+
+    /* बटन के अंदर लिखे टेक्स्ट (जैसे Run, Export) को मोबाइल पर छिपाकर सिर्फ़ आइकॉन दिखाएगा */
+    .btn span {
+        display: none;
+    }
 }
