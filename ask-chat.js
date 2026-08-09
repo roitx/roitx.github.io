@@ -142,7 +142,7 @@
     const typing = showTyping();
 
     // Apna Supabase Edge Function ka URL yahan dalein
-    const SUPABASE_FUNCTION_URL = "https://ktastwehnnqicriknewr.supabase.co/functions/v1/smart-worker";
+    const SUPABASE_FUNCTION_URL = "https://ktastwehnnqicriknewr.supabase.co/functions/v1/smart-task";
 
     try {
       const response = await fetch(SUPABASE_FUNCTION_URL, {
@@ -187,7 +187,8 @@
     - Class 10: <a href="subjects-10.html">Class 10 Subjects</a>
     - Class 11: <a href="subjects-11.html">Class 11 Streams</a>
     - Class 12: <a href="subjects-12.html">Class 12 Streams</a>
-    - Tools: <a href="calculator.html">Calculator</a>, <a href="calendar.html">Calendar</a>, <a href="study-timer.html">Study Timer</a>, <a href="formulas.html">Formulas</a>
+    - Tools: <a href="calculator.html">Calculator</a>, <a href="calendar.html">Calendar</a>
+    , <a href="study-timer.html">Study Timer</a>, <a href="fun.html">Game </a>, <a href="formulas.html">Formulas</a>
     `;
 
     try {
