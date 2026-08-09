@@ -3,24 +3,31 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
+input, textarea {
+  user-select: text;
 }
 
 body {
-  background: radial-gradient(circle at top, #1a1f26, #0b0f14);
+  background: #12151b;
   color: #fff;
   min-height: 100vh;
-  line-height: 1.5;
+  line-height: 1.4;
+  overflow-x: hidden;
+  padding-bottom: 70px;
 }
 
-/* --- Topbar (Sticky & Glassy) --- */
+/* --- Topbar --- */
 .topbar {
   display: flex;
   align-items: center;
-  padding: 10px 16px;
-  background: rgba(18, 21, 27, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  padding: 12px 16px;
+  background: #181b22;
   position: sticky;
   top: 0;
   z-index: 1000;
@@ -28,158 +35,213 @@ body {
   gap: 12px;
 }
 
-/* Navigation Buttons Container */
 .nav-btns {
   display: flex;
   align-items: center;
-  min-width: 40px; /* Space reserved for icons */
+  gap: 8px;
 }
 
-/* Common style for Back and Home Nav buttons */
 .back, .home-nav {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: #fff;
-  font-size: 20px;
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
+  font-size: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s ease;
-}
-
-.back:hover, .home-nav:hover {
-  background: rgba(255, 255, 255, 0.15);
-  transform: translateY(-1px);
+  transition: all 0.2s ease;
 }
 
 .back:active, .home-nav:active {
-  transform: scale(0.9);
+  transform: scale(0.92);
 }
 
-/* Title Styling */
 .topbar h1 {
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 600;
   flex: 1;
   text-align: center;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-right: 40px; /* Offset to keep title centered relative to the back button */
+  color: #fff;
 }
 
 /* --- Grid System --- */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 16px;
-  padding: 20px 16px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 1px 0;
 }
 
-/* --- Professional Card Design --- */
+/* --- Card Container --- */
 .card {
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 20px;
-  padding: 20px 12px;
+  background: #161920;
+  padding: 18px 8px;
   text-align: center;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 110px;
-}
-
-.card:hover {
-  transform: translateY(-5px);
-  background: rgba(255, 255, 255, 0.07);
-  border-color: rgba(255, 255, 255, 0.12);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+  min-height: 135px;
+  position: relative;
+  transition: background 0.2s ease;
+  animation: fadeIn 0.3s ease forwards;
+  opacity: 0;
 }
 
 .card:active {
-  transform: scale(0.96);
+  background: #222630;
 }
 
-/* --- Elements inside Cards --- */
-
-/* Book Cover Style (for Main Authors) */
-.book {
-  width: 52px;
-  height: 70px;
-  border-radius: 4px 10px 10px 4px;
+/* --- Realistic Book Core Design --- */
+.book-icon-wrapper {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 12px;
-  box-shadow: inset -5px 0 rgba(255, 255, 255, 0.2), 5px 10px 20px rgba(0, 0, 0, 0.4);
+  gap: 4px;
+  margin-bottom: 10px;
+  height: 42px;
+  position: relative;
 }
 
-.book span {
-  font-size: 12px;
+/* Hardcover Book Element */
+.realistic-book {
+  width: 32px;
+  height: 42px;
+  border-radius: 4px 8px 8px 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 3px 4px 10px rgba(0,0,0,0.6), inset -3px 0 6px rgba(0,0,0,0.3);
+  position: relative;
+  z-index: 2;
+  transition: transform 0.3s ease;
+}
+
+/* Hardcover Spine Highlight */
+.book-spine-line {
+  position: absolute;
+  left: 4px;
+  top: 0;
+  width: 3px;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 2px 0 0 2px;
+}
+
+.realistic-book span {
+  font-size: 10px;
   font-weight: 800;
-  background: rgba(255, 255, 255, 0.2);
-  padding: 3px 6px;
-  border-radius: 4px;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+  z-index: 3;
 }
 
-/* Roman Numerals (for Classes) */
-.roman {
-  font-weight: 800;
-  color: #ffd166;
-  font-size: 22px;
-  margin-bottom: 4px;
-  text-shadow: 0 0 10px rgba(255, 209, 102, 0.3);
+/* --- Ribbon Bookmark --- */
+.realistic-ribbon {
+  position: absolute;
+  top: -8px;
+  right: 6px;
+  width: 7px;
+  height: 14px;
+  border-radius: 0 0 2px 2px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+  z-index: 4;
 }
 
-/* Card Text */
-.card p {
-  font-size: 14px;
+/* --- Realistic Page Blocks (Side Stack Effect) --- */
+.page-block {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 12px;
+}
+
+.page-block span {
+  display: block;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.35);
+  border-radius: 2px;
+}
+
+.left-pages span:nth-child(1) { width: 8px; align-self: flex-end; }
+.left-pages span:nth-child(2) { width: 12px; align-self: flex-end; }
+.left-pages span:nth-child(3) { width: 6px; align-self: flex-end; }
+
+.right-pages span:nth-child(1) { width: 8px; align-self: flex-start; }
+.right-pages span:nth-child(2) { width: 12px; align-self: flex-start; }
+.right-pages span:nth-child(3) { width: 6px; align-self: flex-start; }
+
+/* --- Open Book Look --- */
+.open-book-container {
+  gap: 2px;
+}
+
+.open-center-book {
+  transform: rotate(0deg) !important;
+  width: 26px !important;
+}
+
+.open-leaf {
+  width: 14px;
+  height: 36px;
+  background: #e2e8f0;
+  border-radius: 2px;
+  box-shadow: inset 0 0 6px rgba(0,0,0,0.25);
+}
+
+.left-leaf {
+  transform: skewY(10deg);
+}
+
+.right-leaf {
+  transform: skewY(-10deg);
+}
+
+/* --- Card Title Styling --- */
+.card-title {
+  font-size: 11.5px;
   font-weight: 500;
-  color: #dbe2f1;
-  word-wrap: break-word;
+  color: #f1f5f9;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
   width: 100%;
+  padding: 0 2px;
 }
 
-/* Subject/Chapter Specific spacing */
-.card span {
-  font-size: 13px;
-  color: rgba(219, 226, 241, 0.8);
+/* Chapter View */
+.chapter-card {
+  align-items: flex-start !important;
+  text-align: left !important;
+  padding: 14px;
 }
 
-/* --- Responsive Fix --- */
-@media (max-width: 380px) {
-  .grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
+.ch-badge {
+  font-size: 9px;
+  font-weight: 700;
+  color: #34d399;
+  margin-bottom: 4px;
+  letter-spacing: 0.5px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (max-width: 360px) {
+  .card-title {
+    font-size: 11px;
   }
-  .topbar h1 {
-    font-size: 15px;
-  }
-}
-
-/* Pure app se text selection aur long-press blue highlight hatane ke liye */
-* {
-  -webkit-tap-highlight-color: transparent; /* Mobile tap highlight hatata hai */
-  -webkit-touch-callout: none;                /* iOS par long-press menu disable karta hai */
-  -webkit-user-select: none;                 /* Safari/Chrome select disable */
-  -khtml-user-select: none;                  /* Konqueror */
-  -moz-user-select: none;                    /* Firefox */
-  -ms-user-select: none;                     /* IE/Edge */
-  user-select: none;                         /* Standard logic */
-}
-
-/* Agar aap chahte hain ki sirf 'input' ya 'textarea' mein selection kaam kare */
-input, textarea {
-  -webkit-user-select: text;
-  -moz-user-select: text;
-  -ms-user-select: text;
-  user-select: text;
 }
