@@ -10,11 +10,12 @@ async function loadFormulas() {
     .from("formulas")
     .select("*")
     .eq("publish", true)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(40); // FIXED: Removed 20-limit default, fetching up to 100 items
 
-  if (fClass.value) query = query.eq("class", fClass.value);
-  if (fSubject.value) query = query.eq("subject", fSubject.value);
-  if (fChapter.value) query = query.eq("chapter", fChapter.value);
+  if (fClass && fClass.value) query = query.eq("class", fClass.value);
+  if (fSubject && fSubject.value) query = query.eq("subject", fSubject.value);
+  if (fChapter && fChapter.value) query = query.eq("chapter", fChapter.value);
 
   const { data, error } = await query;
 
@@ -24,7 +25,7 @@ async function loadFormulas() {
     return;
   }
 
-  if (!data.length) {
+  if (!data || !data.length) {
     formulaList.innerHTML = "<em>No formulas found</em>";
     return;
   }
@@ -37,40 +38,63 @@ async function loadFormulas() {
 
     let content = "";
 
-    // TEXT
+    // 1. TEXT FORMULA
     if (f.type === "text") {
-      content = `<div class="formula-text">${f.formula_text}</div>`;
+      const cleanText = encodeURIComponent(f.formula_text);
+      content = `
+        <div class="formula-text" onclick="openTextViewer('${cleanText}')">
+          📝 ${f.formula_text}
+          <span class="click-hint">🔍 Tap to View Full</span>
+        </div>`;
     }
 
-    // IMAGE
+    // 2. IMAGE FORMULA
     if (f.type === "image") {
-      const { data: urlData } =
-        await window.supabaseClient.storage
-          .from("admin-files")
-          .createSignedUrl(f.file_path, 120);
+      const fileName = f.file_path.split("/").pop();
+      const viewerUrl = `image-viewer.html?path=${encodeURIComponent(f.file_path)}&name=${encodeURIComponent(fileName)}`;
 
-      content = `<img src="${urlData.signedUrl}" class="formula-img">`;
+      content = `
+        <div class="formula-media-box" onclick="window.location.href='${viewerUrl}'">
+          🖼️ <span>View Image Formula</span>
+        </div>`;
     }
 
-    // PDF
+    // 3. PDF FORMULA
     if (f.type === "pdf") {
-      const { data: urlData } =
-        await window.supabaseClient.storage
-          .from("admin-files")
-          .createSignedUrl(f.file_path, 120);
+      const fileName = f.file_path.split("/").pop();
+      const viewerUrl = `notes-viewer.html?path=${encodeURIComponent(f.file_path)}&name=${encodeURIComponent(fileName)}`;
 
-      content = `<a class="pdf-btn" target="_blank" href="${urlData.signedUrl}">📄 Open PDF</a>`;
+      content = `
+        <button class="pdf-btn" onclick="window.location.href='${viewerUrl}'">
+          📄 Open PDF Formula
+        </button>`;
     }
 
     card.innerHTML = `
       <div class="formula-head">
-        Class ${f.class} • ${f.subject} • ${f.chapter}
+        Class ${f.class} • ${f.subject.toUpperCase()} • ${f.chapter.toUpperCase()}
       </div>
       ${content}
     `;
 
     formulaList.appendChild(card);
   }
+}
+
+/* ---------- TEXT VIEWER POPUP FUNCTIONS ---------- */
+function openTextViewer(encodedText) {
+  const text = decodeURIComponent(encodedText);
+  const modalText = document.getElementById("modalTextContent");
+  const modal = document.getElementById("textViewerModal");
+  if (modalText && modal) {
+    modalText.innerText = text;
+    modal.style.display = "flex";
+  }
+}
+
+function closeTextViewer() {
+  const modal = document.getElementById("textViewerModal");
+  if (modal) modal.style.display = "none";
 }
 
 // AUTO LOAD

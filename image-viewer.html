@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Roitx Image Elite</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase.js"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="image-viewer.css">
+</head>
+<body class="theme-dark ui-visible">
+
+    <!-- NAVBAR HEADER -->
+    <header class="navbar" id="navbar">
+        <div class="nav-left">
+            <button class="icon-btn action-back" onclick="window.history.back()" aria-label="Go Back">
+                <svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M20,11H7.83L13.42,5.41L12,4L4,12L12,20L13.41,18.59L7.83,13H20V11Z"/></svg>
+            </button>
+            <div class="metadata">
+                <h1 id="doc-title">Initializing...</h1>
+                <div class="sub-meta">
+                    <span id="img-meta">Image View</span>
+                    <span class="dot">•</span>
+                    <span id="zoom-indicator">100%</span>
+                </div>
+            </div>
+        </div>
+        <div class="nav-right">
+            <button class="icon-btn" onclick="toggleSettings(true)" aria-label="Settings">
+                <svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.35 19.43,11.03L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.97 19.05,5.05L16.56,6.05C16.04,5.66 15.47,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.53,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.97 4.46,5.05 4.34,5.27L2.34,8.73C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11.03C4.53,11.35 4.5,11.67 4.5,12C4.5,11.67 4.53,11.35 4.57,11.03L2.46,14.63C2.27,14.78 2.22,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.95C7.96,18.34 8.53,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.47,18.68 16.04,18.34 16.56,17.95L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"/></svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN VIEWPORT -->
+    <main id="viewport" onclick="handleViewportClick(event)">
+        <div id="canvas-stage">
+            <div id="imageWrapper" class="image-wrapper">
+                <img id="mainImage" crossorigin="anonymous" alt="Viewer Content">
+                <canvas id="drawCanvas"></canvas>
+            </div>
+        </div>
+        
+        <div id="master-loader">
+            <div class="loader-ring"><div></div><div></div><div></div><div></div></div>
+            <p>Optimizing image...</p>
+        </div>
+    </main>
+
+    <!-- FLOATING QUICK TOOLBAR (BOTTOM SCRUBBAR STYLE) -->
+    <div class="scrub-bar" id="scrubBar">
+        <div class="scrub-container">
+            <button id="highlightBtn" class="pill-btn" onclick="toggleHighlightMode()">
+                🖍️ Highlight
+            </button>
+
+            <div class="color-picker-wrapper">
+                <input type="color" id="penColor" value="#ffeb3b" title="Pick Marker Color">
+            </div>
+
+            <button class="scrub-btn" onclick="undoLastStroke()" title="Undo Draw">
+                ↩️
+            </button>
+
+            <button class="scrub-btn" onclick="rotateImage()" title="Rotate 90°">
+                ⟳
+            </button>
+        </div>
+    </div>
+
+    <!-- SETTINGS / APPEARANCE PANEL -->
+    <div id="modal-overlay" onclick="toggleSettings(false)"></div>
+    <div id="settings-panel">
+        <div class="panel-handle"></div>
+        <section class="panel-content">
+            <header>
+                <h2>Appearance & Tools</h2>
+                <button class="close-x" onclick="toggleSettings(false)">✕</button>
+            </header>
+
+            <div class="control-group">
+                <label>Theme</label>
+                <div class="theme-picker">
+                    <button onclick="setTheme('light')" class="t-opt t-light">Light</button>
+                    <button onclick="setTheme('sepia')" class="t-opt t-sepia">Sepia</button>
+                    <button onclick="setTheme('dark')" class="t-opt t-dark">Dark</button>
+                    <button onclick="setTheme('oled')" class="t-opt t-oled">OLED</button>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label>Zoom Controls</label>
+                <div class="zoom-stepper">
+                    <button onclick="adjustZoom(-0.2)">A−</button>
+                    <span id="zoom-val">100%</span>
+                    <button onclick="adjustZoom(0.2)">A+</button>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label>Actions</label>
+                <button class="full-btn" onclick="resetZoom()">Reset Scale & View</button>
+                <button class="full-btn" onclick="rotateImage()">Rotate Page 90°</button>
+                <button class="full-btn primary" onclick="downloadImage()">Download Annotated Image</button>
+            </div>
+        </section>
+    </div>
+
+    <script src="image-viewer.js"></script>
+</body>
+</html>

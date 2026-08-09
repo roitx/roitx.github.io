@@ -67,43 +67,110 @@ button:hover{
   margin-bottom:8px;
 }
 
-/* TEXT FORMULA */
+/* TEXT FORMULA CARD */
 .formula-text{
   background:#1f3554;
   padding:12px;
   border-radius:10px;
   font-size:15px;
+  cursor:pointer;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
 }
 
-/* IMAGE */
-.formula-img{
-  max-width:100%;
-  border-radius:10px;
-  margin-top:8px;
+.click-hint{
+  font-size:11px;
+  color:#3aa0ff;
+}
+
+/* IMAGE & MEDIA BUTTON */
+.formula-media-box {
+  background:#1f3554;
+  padding:12px;
+  border-radius:8px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  border:1px dashed #3aa0ff;
 }
 
 /* PDF */
 .pdf-btn{
-  margin-top:10px;
+  margin-top:5px;
   display:inline-block;
   background:#ff4b4b;
-  padding:8px 14px;
+  padding:10px 16px;
   border-radius:8px;
   color:#fff;
-  text-decoration:none;
-}
-/* Pure app se text selection aur long-press blue highlight hatane ke liye */
-* {
-  -webkit-tap-highlight-color: transparent; /* Mobile tap highlight hatata hai */
-  -webkit-touch-callout: none;                /* iOS par long-press menu disable karta hai */
-  -webkit-user-select: none;                 /* Safari/Chrome select disable */
-  -khtml-user-select: none;                  /* Konqueror */
-  -moz-user-select: none;                    /* Firefox */
-  -ms-user-select: none;                     /* IE/Edge */
-  user-select: none;                         /* Standard logic */
+  border:none;
+  width:100%;
+  text-align:left;
 }
 
-/* Agar aap chahte hain ki sirf 'input' ya 'textarea' mein selection kaam kare */
+/* TEXT MODAL POPUP STYLES */
+.text-modal-overlay {
+  display:none;
+  position:fixed;
+  top:0; left:0; width:100%; height:100%;
+  background:rgba(0,0,0,0.8);
+  justify-content:center;
+  align-items:center;
+  z-index:999;
+  padding:15px;
+  box-sizing:border-box;
+}
+
+.text-modal-card {
+  background:#15263c;
+  border-radius:12px;
+  width:100%;
+  max-width:500px;
+  padding:16px;
+  box-shadow:0 0 15px rgba(0,0,0,0.8);
+}
+
+.modal-header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  font-weight:bold;
+  border-bottom:1px solid #2f4d77;
+  padding-bottom:8px;
+  margin-bottom:12px;
+}
+
+.modal-header button {
+  background:transparent;
+  border:none;
+  font-size:16px;
+  padding:4px 8px;
+}
+
+.modal-body {
+  background:#1f3554;
+  padding:15px;
+  border-radius:8px;
+  font-size:16px;
+  line-height:1.5;
+  white-space:pre-wrap;
+  word-break:break-word;
+  max-height:60vh;
+  overflow-y:auto;
+}
+
+/* Pure app se text selection disable */
+* {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
 input, textarea {
   -webkit-user-select: text;
   -moz-user-select: text;

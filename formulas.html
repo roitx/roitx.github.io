@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>📐 Formula Viewer</title>
 
 <link rel="stylesheet" href="formulas.css">
@@ -57,6 +58,17 @@
 </section>
 
 </main>
+
+<!-- LIGHTWEIGHT TEXT FORMULA VIEWER MODAL -->
+<div id="textViewerModal" class="text-modal-overlay" onclick="closeTextViewer()">
+  <div class="text-modal-card" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <span>📝 Formula View</span>
+      <button onclick="closeTextViewer()">✖</button>
+    </div>
+    <div id="modalTextContent" class="modal-body"></div>
+  </div>
+</div>
 
 </body>
 </html>
