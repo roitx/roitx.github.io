@@ -3,8 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ROITX Scientific Pro</title>
+    <title>ROITX Scientific Pro + AI Solver</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- Math.js Library CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
+    <!-- Chart.js for Graphing -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="calculator.css">
 </head>
 <body class="dark-theme">
@@ -12,6 +16,29 @@
     <div id="sideMenu" class="side-menu">
         <div class="side-header"><h3>📜 History</h3><button onclick="closeSide()">&times;</button></div>
         <div id="historyList"></div>
+    </div>
+
+    <!-- AI Solver & Graph Modal -->
+    <div id="aiModal" class="ai-modal">
+        <div class="ai-content">
+            <div class="ai-header">
+                <h3>🤖 ROITX Bilingual AI Solver</h3>
+                <button onclick="closeAISolver()">&times;</button>
+            </div>
+            <div class="ai-body">
+                <textarea id="aiPrompt" placeholder="Apna sawal yahan likhein (e.g., Solve x^2 - 5x + 6 = 0 or Draw graph of sin(x))..."></textarea>
+                <div class="ai-btns">
+                    <button onclick="askAISolver('en')">Ask in English</button>
+                    <button onclick="askAISolver('hi')">हिंदी में पूछें</button>
+                </div>
+                <div id="aiLoader" class="ai-loader" style="display:none;">Thinking / Soch rahe hain...</div>
+                <div id="aiResponse" class="ai-response-box"></div>
+                <!-- Graph Canvas -->
+                <div class="canvas-container" style="position: relative; height:200px; width:100%; margin-top:10px;">
+                    <canvas id="graphCanvas"></canvas>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="calculator-frame">
@@ -30,10 +57,9 @@
 
         <div class="screen-container">
             <div class="lcd-screen">
-    <div id="expression" class="exp-layer"></div>
-    <div id="result" class="res-layer">0</div>
-</div>
-
+                <div id="expression" class="exp-layer"></div>
+                <div id="result" class="res-layer">0</div>
+            </div>
         </div>
 
         <div class="control-row">
@@ -47,7 +73,7 @@
                     <button class="dir-btn down" onclick="navigateHistory(-1)">▼</button>
                 </div>
             </div>
-            <button class="btn-ctrl mode" onclick="isShift ? handleShiftMode() : toggleMode()">MODE</button>
+            <button class="btn-ctrl mode" onclick="openAISolver()">AI</button>
             <button class="btn-ctrl on" onclick="powerOn()">ON</button>
         </div>
 
@@ -63,14 +89,15 @@
         <div class="button-grid scientific">
             <div class="btn-wrapper"><span class="shift-label">nPr</span><button onclick="btnPress('NCR')">nCr</button></div>
             <div class="btn-wrapper"><span class="shift-label">Rec</span><button onclick="btnPress('POL')">Pol</button></div>
-            <div class="btn-wrapper"><span class="shift-label">x³</span><button onclick="btnPress('X3')">x³</button></div>
             <div class="btn-wrapper"><span class="shift-label">abs</span><button onclick="btnPress('ABS')">hyp</button></div>
             <div class="btn-wrapper"><span class="shift-label">sin⁻¹</span><button onclick="btnPress('SIN')">sin</button></div>
             <div class="btn-wrapper"><span class="shift-label">cos⁻¹</span><button onclick="btnPress('COS')">cos</button></div>
+            <div class="btn-wrapper"><span class="shift-label">tan⁻¹</span><button onclick="btnPress('TAN')">tan</button></div>
         </div>
 
         <div class="button-grid scientific">
-            <div class="btn-wrapper"><span class="shift-label">tan⁻¹</span><button onclick="btnPress('TAN')">tan</button></div>
+            <!-- Unique Base Log function added here instead of duplicate power -->
+            <div class="btn-wrapper"><span class="shift-label">base</span><button onclick="btnPress('LOGBASE')">logₐ(</button></div>
             <div class="btn-wrapper"><span class="shift-label">e</span><button onclick="btnPress('PI')">π</button></div>
             <div class="btn-wrapper"><span class="shift-label">{</span><button onclick="btnPress('(')">(</button></div>
             <div class="btn-wrapper"><span class="shift-label">}</span><button onclick="btnPress(')')">)</button></div>
@@ -78,32 +105,31 @@
             <div class="btn-wrapper"><span class="shift-label">M-</span><button onclick="btnPress('M+')">M+</button></div>
         </div>
 
-      <div class="button-grid main-pad">
-    <div class="btn-wrapper"><span class="alpha-label">A</span><button class="num" onclick="btnPress('7')">7</button></div>
-    <div class="btn-wrapper"><span class="alpha-label">B</span><button class="num" onclick="btnPress('8')">8</button></div>
-    <div class="btn-wrapper"><span class="alpha-label">C</span><button class="num" onclick="btnPress('9')">9</button></div>
-    <button class="action del" onclick="del()">DEL</button>
-    <button class="action ac" onclick="clearAll()">AC</button>
-    
-    <div class="btn-wrapper"><span class="alpha-label">D</span><button class="num" onclick="btnPress('4')">4</button></div>
-    <div class="btn-wrapper"><span class="alpha-label">E</span><button class="num" onclick="btnPress('5')">5</button></div>
-    <div class="btn-wrapper"><span class="alpha-label">F</span><button class="num" onclick="btnPress('6')">6</button></div>
-    <button class="op" onclick="btnPress('*')">×</button>
-    <button class="op" onclick="btnPress('/')">÷</button>
-    
-    <div class="btn-wrapper"><span class="alpha-label">X</span><button class="num" onclick="btnPress('1')">1</button></div>
-    <div class="btn-wrapper"><span class="alpha-label">Y</span><button class="num" onclick="btnPress('2')">2</button></div>
-    <div class="btn-wrapper"><span class="alpha-label">M</span><button class="num" onclick="btnPress('3')">3</button></div>
-    <button class="op" onclick="btnPress('+')">+</button>
-    <button class="op" onclick="btnPress('-')">−</button>
-    
-    <button class="num" onclick="btnPress('0')">0</button>
-    <button class="num" onclick="btnPress('.')">.</button>
-    <button class="op" onclick="btnPress('EXP')">EXP</button>
-    <button class="op" onclick="btnPress('ANS')">Ans</button>
-    <button class="equal" onclick="calculate()">=</button>
-</div>
-
+        <div class="button-grid main-pad">
+            <div class="btn-wrapper"><span class="alpha-label">A</span><button class="num" onclick="btnPress('7')">7</button></div>
+            <div class="btn-wrapper"><span class="alpha-label">B</span><button class="num" onclick="btnPress('8')">8</button></div>
+            <div class="btn-wrapper"><span class="alpha-label">C</span><button class="num" onclick="btnPress('9')">9</button></div>
+            <button class="action del" onclick="del()">DEL</button>
+            <button class="action ac" onclick="clearAll()">AC</button>
+            
+            <div class="btn-wrapper"><span class="alpha-label">D</span><button class="num" onclick="btnPress('4')">4</button></div>
+            <div class="btn-wrapper"><span class="alpha-label">E</span><button class="num" onclick="btnPress('5')">5</button></div>
+            <div class="btn-wrapper"><span class="alpha-label">F</span><button class="num" onclick="btnPress('6')">6</button></div>
+            <button class="op" onclick="btnPress('*')">×</button>
+            <button class="op" onclick="btnPress('/')">÷</button>
+            
+            <div class="btn-wrapper"><span class="alpha-label">X</span><button class="num" onclick="btnPress('1')">1</button></div>
+            <div class="btn-wrapper"><span class="alpha-label">Y</span><button class="num" onclick="btnPress('2')">2</button></div>
+            <div class="btn-wrapper"><span class="alpha-label">M</span><button class="num" onclick="btnPress('3')">3</button></div>
+            <button class="op" onclick="btnPress('+')">+</button>
+            <button class="op" onclick="btnPress('-')">−</button>
+            
+            <button class="num" onclick="btnPress('0')">0</button>
+            <button class="num" onclick="btnPress('.')">.</button>
+            <button class="op" onclick="btnPress('EXP')">EXP</button>
+            <button class="op" onclick="btnPress('ANS')">Ans</button>
+            <button class="equal" onclick="calculate()">=</button>
+        </div>
     </div>
     <script src="calculator.js"></script>
 </body>
