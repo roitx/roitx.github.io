@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel</title>
+
+<link rel="stylesheet" href="admin.css">
+
+<!-- Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+</head>
+
+<body>
+
+<header class="topbar">
+  <h2>⚙️ Admin Panel</h2>
+
+  <!-- DOUBT FLOATING BUTTON -->
+  <div id="doubtBtn" class="floating-btn" title="View Doubts">
+    ❓ <span id="pendingCount" class="badge">0</span>
+  </div>
+
+  <div id="bookBtn" class="floating-btn" title="Reference Books" onclick="goUpload()">📚</div>
+  <div id="stBtn" class="floating-btn" title="Student List" onclick="window.location.href='students.html'">👨🏻‍🎓</div>
+
+  <!-- DOUBT PANEL -->
+  <div id="doubtPanel">
+    <h3>🤔 Recent Doubts</h3>
+    <div id="doubtList">Loading...</div>
+    <div id="viewAllWrap">
+      <button id="viewAllDoubts" class="view-all-btn">📂 View All Doubts</button>
+    </div>
+  </div>
+
+  <button class="logout" onclick="logout()">Logout</button>
+</header>
+
+<!-- FULL SCREEN DOUBT OVERLAY -->
+<div id="doubtOverlay" class="doubt-overlay">
+  <div class="doubt-header">
+    <span>❓ All Doubts</span>
+    <button id="closeDoubt">✖</button>
+  </div>
+  <div id="doubtOverlayList" class="doubt-overlay-list">⏳ Loading doubts...</div>
+</div>
+
+<main>
+
+  <!-- ================= 📊 ADMIN STATS OVERVIEW ================= -->
+  <section class="box">
+    <h3>📊 Admin Data Overview</h3>
+    <div style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
+      <div style="background:#1e232d; padding:12px; border-radius:8px; flex:1; min-width:90px; text-align:center;">
+        <span id="totalNotesCount" style="font-size:20px; font-weight:bold; color:#38bdf8;">0</span><br>
+        <small style="color:#aaa;">Total Notes</small>
+      </div>
+      <div style="background:#1e232d; padding:12px; border-radius:8px; flex:1; min-width:90px; text-align:center;">
+        <span id="totalFormulasCount" style="font-size:20px; font-weight:bold; color:#38bdf8;">0</span><br>
+        <small style="color:#aaa;">Total Formulas</small>
+      </div>
+      <div style="background:#1e232d; padding:12px; border-radius:8px; flex:1; min-width:90px; text-align:center;">
+        <span id="totalEventsCount" style="font-size:20px; font-weight:bold; color:#38bdf8;">0</span><br>
+        <small style="color:#aaa;">Total Events</small>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 📤 UPLOAD NOTES (PDF) ================= -->
+  <section class="box">
+    <h3>📤 Upload Notes (PDF)</h3>
+
+    <select id="classSelect">
+      <option value="">Select Class</option>
+      <option value="class9">Class 9</option>
+      <option value="class10">Class 10</option>
+      <option value="class11">Class 11</option>
+      <option value="class12">Class 12</option>
+    </select><br><br>
+
+    <select id="subjectSelect">
+      <option value="">Select Subject</option>
+      <option value="physics">Physics</option>
+      <option value="chemistry">Chemistry</option>
+      <option value="maths">Maths</option>
+      <option value="biology">Biology</option>
+      <option value="history">History</option>
+      <option value="geography">Geography</option>
+      <option value="civics">Civics</option>
+      <option value="economics">Economics</option>
+      <option value="hindi">Hindi</option>
+      <option value="english">English</option>
+    </select><br><br>
+
+    <select id="chapterSelect">
+      <option value="">Select Chapter</option>
+      <option value="ch1">Chapter 1</option>
+      <option value="ch2">Chapter 2</option>
+      <option value="ch3">Chapter 3</option>
+      <option value="ch4">Chapter 4</option>
+      <option value="ch5">Chapter 5</option>
+      <option value="ch6">Chapter 6</option>
+      <option value="ch7">Chapter 7</option>
+      <option value="ch8">Chapter 8</option>
+    </select><br><br>
+
+    <input type="file" id="fileUpload" accept=".pdf"><br><br>
+    <button onclick="uploadFile()">Upload Notes</button>
+    <div id="uploadMsg"></div>
+  </section>
+
+  <!-- ================= 🗂 UPLOADED NOTES LIST ================= -->
+  <section class="box">
+    <h3>🗂 Uploaded Notes List</h3>
+
+    <div style="display:flex; gap:8px; margin-bottom:15px; flex-wrap:wrap;">
+      <input type="text" id="searchNotes" placeholder="🔍 Search Notes..." style="flex:1; min-width:120px;">
+      <select id="filterNotesClass" style="flex:1; min-width:100px;">
+        <option value="">All Classes</option>
+        <option value="9">Class 9</option>
+        <option value="10">Class 10</option>
+        <option value="11">Class 11</option>
+        <option value="12">Class 12</option>
+      </select>
+      <select id="filterNotesSubject" style="flex:1; min-width:100px;">
+        <option value="">All Subjects</option>
+        <option value="physics">Physics</option>
+        <option value="chemistry">Chemistry</option>
+        <option value="maths">Maths</option>
+        <option value="biology">Biology</option>
+        <option value="history">History</option>
+        <option value="geography">Geography</option>
+        <option value="civics">Civics</option>
+        <option value="economics">Economics</option>
+        <option value="hindi">Hindi</option>
+        <option value="english">English</option>
+      </select>
+    </div>
+
+    <div id="fileList">Loading...</div>
+  </section>
+
+  <!-- ================= 📅 CALENDAR EVENTS ================= -->
+  <section class="box">
+    <h3>📅 Add Calendar Event</h3>
+
+    <input type="date" id="eventDate"><br><br>
+    <input type="text" id="eventName" placeholder="Event Name / Details"><br><br>
+    <button onclick="addEvent()">Add Event</button>
+    <div id="eventMsg"></div>
+  </section>
+
+  <section class="box">
+    <h3>📋 All Events List</h3>
+
+    <!-- MONTH & YEAR FILTER FIXED UI -->
+    <div style="display:flex; gap:8px; margin-bottom:15px; flex-wrap:wrap;">
+      <input type="text" id="searchEvent" placeholder="🔍 Search..." style="flex:1; min-width:100px;">
+      
+      <select id="filterEventMonth" style="flex:1; min-width:100px;">
+        <option value="">All Months</option>
+        <option value="01">Jan</option>
+        <option value="02">Feb</option>
+        <option value="03">Mar</option>
+        <option value="04">Apr</option>
+        <option value="05">May</option>
+        <option value="06">Jun</option>
+        <option value="07">Jul</option>
+        <option value="08">Aug</option>
+        <option value="09">Sep</option>
+        <option value="10">Oct</option>
+        <option value="11">Nov</option>
+        <option value="12">Dec</option>
+      </select>
+
+      <select id="filterEventYear" style="flex:1; min-width:90px;">
+        <option value="">All Years</option>
+        <option value="2025">2025</option>
+        <option value="2026">2026</option>
+        <option value="2027">2027</option>
+        <option value="2028">2028</option>
+      </select>
+    </div>
+
+    <div id="eventList">Loading...</div>
+  </section>
+
+  <!-- ================= 📐 UPLOAD FORMULA ================= -->
+  <section class="box formula-box">
+    <h2>📐 Upload Formula</h2>
+
+    <select id="fClass">
+      <option value="">Select Class</option>
+      <option value="9">Class 9</option>
+      <option value="10">Class 10</option>
+      <option value="11">Class 11</option>
+      <option value="12">Class 12</option>
+    </select>
+
+    <select id="fSubject">
+      <option value="">Select Subject</option>
+      <option value="physics">Physics</option>
+      <option value="chemistry">Chemistry</option>
+      <option value="maths">Maths</option>
+      <option value="biology">Biology</option>
+    </select>
+
+    <select id="fChapter">
+      <option value="">Select Chapter</option>
+      <option value="ch1">Chapter 1</option>
+      <option value="ch2">Chapter 2</option>
+      <option value="ch3">Chapter 3</option>
+      <option value="ch4">Chapter 4</option>
+      <option value="ch5">Chapter 5</option>
+    </select>
+
+    <select id="fType">
+      <option value="">Formula Type</option>
+      <option value="text">Text Formula</option>
+      <option value="pdf">PDF</option>
+      <option value="image">Image (JPG / PNG)</option>
+    </select>
+
+    <div id="mathToolbar">
+      
+      <button type="button" data-sym="√">√</button>
+      <button type="button" data-sym="²">x²</button>
+      <button type="button" data-sym="∑">∑</button>
+      <button type="button" data-sym="∫">∫</button>
+      <button type="button" data-sym="≤">≤</button>
+      <button type="button" data-sym="≥">≥</button>
+    </div>
+
+    <textarea id="formulaText" placeholder="Type formula here..." style="display:none"></textarea>
+    <input type="file" id="formulaFile" accept=".pdf,.jpg,.png" style="display:none">
+
+    <div id="formulaPreview">
+      <em>Preview will appear here…</em>
+    </div>
+
+    <label>
+      <input type="checkbox" id="publishCheck" checked>
+      Publish Formula
+    </label>
+
+    <br><br>
+    <button onclick="uploadFormula()">Upload Formula</button>
+    <div id="uploadStatus"></div>
+  </section>
+
+  <!-- ================= 📄 FORMULA LIST ================= -->
+  <section class="box">
+    <h2>📄 Formula List</h2>
+
+    <div style="display:flex; gap:8px; margin-bottom:15px; flex-wrap:wrap;">
+      <input type="text" id="searchFormula" placeholder="🔍 Search Formula..." style="flex:1; min-width:120px;">
+      <select id="filterFClass" style="flex:1; min-width:100px;">
+        <option value="">All Classes</option>
+        <option value="9">Class 9</option>
+        <option value="10">Class 10</option>
+        <option value="11">Class 11</option>
+        <option value="12">Class 12</option>
+      </select>
+      <select id="filterFSubject" style="flex:1; min-width:100px;">
+        <option value="">All Subjects</option>
+        <option value="physics">Physics</option>
+        <option value="chemistry">Chemistry</option>
+        <option value="maths">Maths</option>
+        <option value="biology">Biology</option>
+      </select>
+    </div>
+
+    <div id="formulaList">Loading...</div>
+  </section>
+
+</main>
+
+<script src="admin.js"></script>
+</body>
+</html>
