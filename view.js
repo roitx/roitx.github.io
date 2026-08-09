@@ -1,51 +1,27 @@
-// view.js — PDF Viewer Logic aligned with ask-chat.js
+// Dropdown se direct notes-viewer.html par bhejne ke liye function
 
-(function () {
-  // ---- URL PARAMS EXTRACTOR ----
-  function getQueryParams() {
-    const params = new URLSearchParams(window.location.search);
-    return {
-      path: params.get('path'),
-      name: params.get('name') || params.get('file')
-    };
+function loadPdf() {
+  const classSelect = document.getElementById("classSelect");
+  const subjectSelect = document.getElementById("subjectSelect");
+  const chapterSelect = document.getElementById("chapterSelect");
+
+  const cls = classSelect ? classSelect.value.trim() : "";
+  const subject = subjectSelect ? subjectSelect.value.trim() : "";
+  const chapter = chapterSelect ? chapterSelect.value.trim() : "";
+
+  // Validation
+  if (!cls || !subject || !chapter) {
+    alert("❌ Kripya Class, Subject aur Chapter teeno select karein.");
+    return;
   }
 
-  // ---- DOM INITIALIZATION & PDF LOADING ----
-  document.addEventListener('DOMContentLoaded', () => {
-    const { path, name } = getQueryParams();
-    const pdfFrame = document.getElementById('pdfFrame');
-    const titleEl = document.getElementById('pdfTitle');
-    const downloadBtn = document.getElementById('downloadBtn');
+  // Exact same format as ask-chat.js
+  const finalFileName = `${cls}_${subject}_${chapter}.pdf`;
+  const fullPath = `notes/${finalFileName}`;
 
-    if (!name && !path) {
-      if (titleEl) titleEl.textContent = '❌ No PDF Specified';
-      alert('PDF file name or path missing!');
-      return;
-    }
+  // notes-viewer.html ke sath URL parameters link karein
+  const viewerUrl = 'notes-viewer.html?path=' + encodeURIComponent(fullPath) + '&name=' + encodeURIComponent(finalFileName);
 
-    // Standardize PDF Path (matching ask-chat.js structure)
-    let finalPath = path;
-    
-    if (!finalPath) {
-      // If only name/file is provided, wrap it in notes/ directory
-      const cleanName = name.startsWith('notes/') ? name : `notes/${name}`;
-      finalPath = cleanName;
-    }
-
-    // Set Document Title and UI Header
-    const displayName = name ? name.replace(/^notes\//, '') : finalPath.replace(/^notes\//, '');
-    if (titleEl) titleEl.textContent = displayName;
-    document.title = `Viewing: ${displayName}`;
-
-    // Load PDF in iframe or embed viewer
-    if (pdfFrame) {
-      pdfFrame.src = finalPath;
-    }
-
-    // Setup Download Action
-    if (downloadBtn) {
-      downloadBtn.href = finalPath;
-      downloadBtn.setAttribute('download', displayName);
-    }
-  });
-})();
+  // Redirect to notes-viewer page
+  window.location.href = viewerUrl;
+}
