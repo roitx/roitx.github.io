@@ -1,25 +1,27 @@
-// 🔹 DOM
+// 🔹 DOM Elements
 const classSelect   = document.getElementById("classSelect");
 const subjectSelect = document.getElementById("subjectSelect");
 const chapterSelect = document.getElementById("chapterSelect");
 
-function loadPdf(){
-
-  const cls     = classSelect.value;
-  const subject = subjectSelect.value;
-  const chapter = chapterSelect.value;
+function loadPdf() {
+  const cls     = classSelect ? classSelect.value : "";
+  const subject = subjectSelect ? subjectSelect.value : "";
+  const chapter = chapterSelect ? chapterSelect.value : "";
 
   // 🔴 Validation
-  if(!cls || !subject || !chapter){
-    alert("❌ Please select Class, Subject and Chapter");
+  if (!cls || !subject || !chapter) {
+    alert("❌ Please select Class, Subject, and Chapter");
     return;
   }
 
-  // 📄 Build file name
+  // 📄 Standard File & Path Format
   // Example: 10_physics_ch3.pdf
   const fileName = `${cls}_${subject}_${chapter}.pdf`;
+  const fullPath = `notes/${fileName}`;
 
-  // 👉 Redirect to notes-viewer.html with file
-  window.location.href =
-    `notes-viewer.html?file=${encodeURIComponent(fileName)}`;
+  // 👉 Build Viewer URL matching ask-chat.js convention
+  const viewerUrl = `notes-viewer.html?path=${encodeURIComponent(fullPath)}&name=${encodeURIComponent(fileName)}`;
+
+  // 🚀 Open in new tab so the main page stays open
+  window.open(viewerUrl, '_blank');
 }
