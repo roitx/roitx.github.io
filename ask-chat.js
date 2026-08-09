@@ -14,7 +14,7 @@
 
   // ---- INITIALIZATION ----
   updateNotesCount();
-  addBotMsg("Hi Rohit 👋 — I'm your AI study assistant! Ask me any study question or use commands like 'open pdf 9 chemistry ch3', 'calendar', 'create note: task'.");
+  addBotMsg("Hi  👋 — I'm your AI study assistant! Ask me any study question or use commands like 'open pdf 9 chemistry ch3', 'calendar', 'create note: task'.");
 
   sendBtn && sendBtn.addEventListener('click', onSend);
   input && input.addEventListener('keydown', (e) => { if (e.key === 'Enter') onSend(); });
