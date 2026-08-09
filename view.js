@@ -1,27 +1,51 @@
-// 🔹 DOM Elements
-const classSelect   = document.getElementById("classSelect");
-const subjectSelect = document.getElementById("subjectSelect");
-const chapterSelect = document.getElementById("chapterSelect");
+// view.js — PDF Viewer Logic aligned with ask-chat.js
 
-function loadPdf() {
-  const cls     = classSelect ? classSelect.value : "";
-  const subject = subjectSelect ? subjectSelect.value : "";
-  const chapter = chapterSelect ? chapterSelect.value : "";
-
-  // 🔴 Validation
-  if (!cls || !subject || !chapter) {
-    alert("❌ Please select Class, Subject, and Chapter");
-    return;
+(function () {
+  // ---- URL PARAMS EXTRACTOR ----
+  function getQueryParams() {
+    const params = new URLSearchParams(window.location.search);
+    return {
+      path: params.get('path'),
+      name: params.get('name') || params.get('file')
+    };
   }
 
-  // 📄 Standard File & Path Format
-  // Example: 10_physics_ch3.pdf
-  const fileName = `${cls}_${subject}_${chapter}.pdf`;
-  const fullPath = `notes/${fileName}`;
+  // ---- DOM INITIALIZATION & PDF LOADING ----
+  document.addEventListener('DOMContentLoaded', () => {
+    const { path, name } = getQueryParams();
+    const pdfFrame = document.getElementById('pdfFrame');
+    const titleEl = document.getElementById('pdfTitle');
+    const downloadBtn = document.getElementById('downloadBtn');
 
-  // 👉 Build Viewer URL matching ask-chat.js convention
-  const viewerUrl = `notes-viewer.html?path=${encodeURIComponent(fullPath)}&name=${encodeURIComponent(fileName)}`;
+    if (!name && !path) {
+      if (titleEl) titleEl.textContent = '❌ No PDF Specified';
+      alert('PDF file name or path missing!');
+      return;
+    }
 
-  // 🚀 Open in new tab so the main page stays open
-  window.open(viewerUrl, '_blank');
-}
+    // Standardize PDF Path (matching ask-chat.js structure)
+    let finalPath = path;
+    
+    if (!finalPath) {
+      // If only name/file is provided, wrap it in notes/ directory
+      const cleanName = name.startsWith('notes/') ? name : `notes/${name}`;
+      finalPath = cleanName;
+    }
+
+    // Set Document Title and UI Header
+    const displayName = name ? name.replace(/^notes\//, '') : finalPath.replace(/^notes\//, '');
+    if (titleEl) titleEl.textContent = displayName;
+    document.title = `Viewing: ${displayName}`;
+
+    // Load PDF in iframe or embed viewer
+    if (pdfFrame) {
+      pdfFrame.src = finalPath;
+    }
+
+    // Setup Download Action
+    if (downloadBtn) {
+      downloadBtn.href = finalPath;
+      downloadBtn.setAttribute('download', displayName);
+    }
+  });
+})();
