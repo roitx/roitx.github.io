@@ -1,7 +1,5 @@
 // ask-chat.js — Smart Study Assistant with Groq AI & Flexible PDF Commands
-
-  // ---- GROQ API CONFIGURATION ----
-  
+(function () {
   // ---- DOM ELEMENTS ----
   const chatWindow = document.getElementById('chatWindow');
   const input = document.getElementById('chatInput');
@@ -137,11 +135,11 @@
     addBotMsg(`Opening PDF: <b>${finalFileName}</b>...`);
     window.location.href = viewer;
   }
+
   // ---- GROQ AI INTEGRATION (SECURED VIA SUPABASE BACKEND) ----
   async function askGroqAI(userQuery) {
     const typing = showTyping();
 
-    // Apna Supabase Edge Function ka URL yahan dalein
     const SUPABASE_FUNCTION_URL = "https://ktastwehnnqicriknewr.supabase.co/functions/v1/smart-task";
 
     try {
@@ -149,9 +147,8 @@
         method: "POST",
         headers: {
           "Content-Type": "application/json"
-          // Agar Supabase anon key ki zarurat ho to authorization header yahan de sakte hain
         },
-        body: JSON.stringify({ userQuery })
+        body: JSON.stringify({ prompt: userQuery }) // Edge Function ke liye 'prompt' bheja ja raha hai
       });
 
       const data = await response.json();
@@ -160,61 +157,7 @@
       if (response.ok && data.choices && data.choices[0]?.message?.content) {
         addBotMsg(data.choices[0].message.content);
       } else {
-        addBotMsg("Kucch error aaya, kripya dobara try karein.");
-      }
-    } catch (err) {
-      typing && typing.remove();
-      addBotMsg("Network Error: Internet connection check karein.");
-    }
-  }
-  
-
-    const systemKnowledge = `
-    You are an AI study assistant for Rohit's learning platform. Answer in simple Hindi/Hinglish.
-
-    --- PDF NAMING CONVENTION ---
-    All PDF files follow the format: {class}_{subject}_ch{number}.pdf
-    Examples:
-    - Class 9 Chemistry Chapter 3 -> notes/9_chemistry_ch3.pdf
-    - Class 10 Physics Chapter 1 -> notes/10_physics_ch1.pdf
-    - Class 11 Biology Chapter 2 -> notes/11_biology_ch2.pdf
-
-    When users ask for any chapter PDF, generate clickable HTML links using this exact viewer URL:
-    <a href="notes-viewer.html?path=notes/{class}_{subject}_ch{number}.pdf&name={class}_{subject}_ch{number}.pdf">Open PDF</a>
-
-    --- WEBSITE PAGES DIRECTORY ---
-    - Class 9: <a href="subjects-9.html">Class 9 Subjects</a>
-    - Class 10: <a href="subjects-10.html">Class 10 Subjects</a>
-    - Class 11: <a href="subjects-11.html">Class 11 Streams</a>
-    - Class 12: <a href="subjects-12.html">Class 12 Streams</a>
-    - Tools: <a href="calculator.html">Calculator</a>, <a href="calendar.html">Calendar</a>
-    , <a href="study-timer.html">Study Timer</a>, <a href="fun.html">Game </a>, <a href="formulas.html">Formulas</a>
-    `;
-
-    try {
-      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${GROQ_API_KEY.trim()}`
-        },
-        body: JSON.stringify({
-          model: "llama-3.3-70b-versatile",
-          messages: [
-            { role: "system", content: systemKnowledge },
-            { role: "user", content: userQuery }
-          ],
-          temperature: 0.5
-        })
-      });
-
-      const data = await response.json();
-      typing && typing.remove();
-
-      if (response.ok && data.choices && data.choices[0]?.message?.content) {
-        addBotMsg(data.choices[0].message.content);
-      } else {
-        addBotMsg("Kucch error aaya, kripya dobara try karein.");
+        addBotMsg("Kucch error आया, kripya dobara try karein.");
       }
     } catch (err) {
       typing && typing.remove();
