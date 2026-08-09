@@ -1,43 +1,70 @@
 /* =====================================================
-   ROITX REFBOOK ENGINE — FULL DRIVE FEATURES
+   ROITX REFBOOK ENGINE — ULTRA REALISTIC BOOK EDITION
    ===================================================== */
 
 const grid = document.getElementById("refBookGrid");
 const backBtn = document.getElementById("backBtn");
+const homeBtn = document.getElementById("homeBtn");
 const topTitle = document.getElementById("topTitle");
 
 let allBooks = [], currentLevel = "author";
 let selectedAuthor = "", selectedClass = "", selectedSubject = "";
 
-// Premium Color Palettes (From your preference)
-const palettes = [
-  { bg: "#f0f9ff", txt: "#0369a1", border: "#bae6fd", badge: "#0ea5e9" },
-  { bg: "#fff7ed", txt: "#9a3412", border: "#fed7aa", badge: "#f97316" },
-  { bg: "#f0fdf4", txt: "#166534", border: "#bbf7d0", badge: "#22c55e" },
-  { bg: "#faf5ff", txt: "#6b21a8", border: "#e9d5ff", badge: "#a855f7" },
-  { bg: "#fff1f2", txt: "#9f1239", border: "#fecdd3", badge: "#f43f5e" }
-];
-
 const roman = { 1:"I", 2:"II", 3:"III", 4:"IV", 5:"V", 6:"VI", 7:"VII", 8:"VIII", 9:"IX", 10:"X", 11:"XI", 12:"XII" };
+
+// Rich color schemes mimicking physical publication houses & textbooks
+const bookPresets = [
+  { bg: "linear-gradient(135deg, #f97316, #c2410c)", text: "RD", tilt: "-6deg", type: "normal", ribbon: "#ef4444" },
+  { bg: "linear-gradient(135deg, #06b6d4, #0891b2)", text: "HC", tilt: "4deg", type: "normal", ribbon: null },
+  { bg: "linear-gradient(135deg, #3b82f6, #1d4ed8)", text: "TS", tilt: "0deg", type: "open", ribbon: "#fbbf24" },
+  { bg: "linear-gradient(135deg, #8b5cf6, #6d28d9)", text: "DK", tilt: "-8deg", type: "normal", ribbon: null },
+  { bg: "linear-gradient(135deg, #10b981, #047857)", text: "TR", tilt: "6deg", type: "open", ribbon: "#f43f5e" },
+  { bg: "linear-gradient(135deg, #ec4899, #be185d)", text: "SG", tilt: "-4deg", type: "normal", ribbon: "#38bdf8" },
+  { bg: "linear-gradient(135deg, #6366f1, #4338ca)", text: "MV", tilt: "8deg", type: "normal", ribbon: null },
+  { bg: "linear-gradient(135deg, #14b8a6, #0f766e)", text: "SS", tilt: "-2deg", type: "open", ribbon: "#eab308" },
+  { bg: "linear-gradient(135deg, #f43f5e, #9f1239)", text: "KC", tilt: "5deg", type: "normal", ribbon: null }
+];
 
 async function loadRefBooks() {
   const { data, error } = await window.supabaseClient.from("ref_books").select("*");
   if (error) return console.error("Database Error:", error);
-  allBooks = data;
+  allBooks = data || [];
   showAuthors();
 }
 
 // LEVEL 1: Authors
 function showAuthors() {
   currentLevel = "author";
-  backBtn.style.visibility = "hidden";
-  topTitle.textContent = "Reference Books";
+  selectedAuthor = "";
+  selectedClass = "";
+  selectedSubject = "";
+  
+  backBtn.style.opacity = "0.3";
+  backBtn.style.pointerEvents = "none";
+  topTitle.textContent = "Ref Book";
   grid.innerHTML = "";
   
   const authors = [...new Set(allBooks.map(b => b.author))].filter(Boolean);
+  
+  if (authors.length === 0) {
+    grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: #9a95a6; padding: 40px;">No books found.</div>`;
+    return;
+  }
+
   authors.forEach((auth, i) => {
-    const p = palettes[i % palettes.length];
-    createCard(auth, "Explore Collection", p, () => showClasses(auth));
+    const preset = bookPresets[i % bookPresets.length];
+    const initials = auth.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+    
+    createCard({
+      title: auth,
+      badgeText: initials,
+      coverBg: preset.bg,
+      tilt: preset.tilt,
+      bookType: preset.type,
+      ribbonColor: preset.ribbon,
+      index: i,
+      callback: () => showClasses(auth)
+    });
   });
 }
 
@@ -45,14 +72,26 @@ function showAuthors() {
 function showClasses(author) {
   currentLevel = "class";
   selectedAuthor = author;
-  backBtn.style.visibility = "visible";
+  
+  backBtn.style.opacity = "1";
+  backBtn.style.pointerEvents = "auto";
   topTitle.textContent = author;
   grid.innerHTML = "";
   
   const classes = [...new Set(allBooks.filter(b => b.author === author).map(b => b.class_no))].sort((a,b)=>a-b);
+  
   classes.forEach((c, i) => {
-    const p = palettes[i % palettes.length];
-    createCard(`Class ${roman[c] || c}`, "Select Class", p, () => showSubjects(c));
+    const romanClass = roman[c] || c;
+    createCard({
+      title: `Class ${romanClass}`,
+      badgeText: romanClass,
+      coverBg: "linear-gradient(135deg, #eab308, #ca8a04)",
+      tilt: i % 2 === 0 ? "-4deg" : "4deg",
+      bookType: "normal",
+      ribbonColor: "#22c55e",
+      index: i,
+      callback: () => showSubjects(c)
+    });
   });
 }
 
@@ -60,20 +99,33 @@ function showClasses(author) {
 function showSubjects(cls) {
   currentLevel = "subject";
   selectedClass = cls;
+  backBtn.style.opacity = "1";
+  backBtn.style.pointerEvents = "auto";
   topTitle.textContent = `${selectedAuthor} • Class ${cls}`;
   grid.innerHTML = "";
   
   const subjects = [...new Set(allBooks.filter(b => b.author === selectedAuthor && b.class_no == cls).map(b => b.subject))];
+  
   subjects.forEach((sub, i) => {
-    const p = palettes[i % palettes.length];
-    createCard(sub, "Select Subject", p, () => showChapters(sub));
+    createCard({
+      title: sub,
+      badgeText: sub.charAt(0).toUpperCase(),
+      coverBg: "linear-gradient(135deg, #a855f7, #7e22ce)",
+      tilt: "0deg",
+      bookType: i % 3 === 0 ? "open" : "normal",
+      ribbonColor: "#38bdf8",
+      index: i,
+      callback: () => showChapters(sub)
+    });
   });
 }
 
-// LEVEL 4: Chapters (Final Click)
+// LEVEL 4: Chapters
 function showChapters(sub) {
   currentLevel = "chapter";
   selectedSubject = sub;
+  backBtn.style.opacity = "1";
+  backBtn.style.pointerEvents = "auto";
   topTitle.textContent = sub;
   grid.innerHTML = "";
   
@@ -81,16 +133,25 @@ function showChapters(sub) {
                            .sort((a,b) => a.chapter_no - b.chapter_no);
   
   chapters.forEach((ch, i) => {
-    const p = palettes[i % palettes.length];
     const card = document.createElement("div");
     card.className = "card chapter-card";
-    card.style.cssText = `background:${p.bg}; border:1px solid ${p.border}; color:${p.txt}; padding:15px; border-radius:12px; cursor:pointer;`;
-    card.innerHTML = `<div style="background:${p.badge}; color:#fff; font-size:10px; padding:2px 6px; border-radius:4px; width:fit-content; margin-bottom:8px;">CH ${ch.chapter_no}</div>
-                      <h4 style="margin:0; font-size:14px;">${ch.chapter}</h4>`;
+    card.style.animationDelay = `${i * 0.03}s`;
+    
+    card.innerHTML = `
+      <div class="book-icon-wrapper">
+        <div class="realistic-book" style="background: linear-gradient(135deg, #34d399, #059669); transform: rotate(-3deg);">
+          <div class="book-spine-line"></div>
+          <span>CH</span>
+        </div>
+        <div class="page-block"><span></span><span></span><span></span></div>
+      </div>
+      <div class="ch-badge">CHAPTER ${ch.chapter_no}</div>
+      <p class="card-title">${ch.chapter}</p>
+    `;
     
     card.onclick = () => {
+      if (!ch.file_url) return;
       const fileName = ch.file_url.split('/').pop();
-      // Universal Path: refbooks/class_1/Physics/ch_1/file.pdf
       const fullPath = `refbooks/class_${selectedClass}/${selectedSubject}/ch_${ch.chapter_no}/${fileName}`;
       window.location.href = `notes-viewer.html?path=${encodeURIComponent(fullPath)}&name=${encodeURIComponent(ch.chapter)}`;
     };
@@ -98,11 +159,47 @@ function showChapters(sub) {
   });
 }
 
-function createCard(title, sub, p, callback) {
+// Realistic Book Builder
+function createCard({ title, badgeText, coverBg, tilt, bookType, ribbonColor, index, callback }) {
   const card = document.createElement("div");
   card.className = "card";
-  card.style.cssText = `background:${p.bg}; border:1px solid ${p.border}; color:${p.txt}; padding:20px; border-radius:15px; cursor:pointer; transition:0.2s;`;
-  card.innerHTML = `<h3 style="margin:0; font-size:16px;">${title}</h3><p style="margin:5px 0 0; font-size:11px; opacity:0.7;">${sub}</p>`;
+  card.style.animationDelay = `${index * 0.03}s`;
+
+  let bookHTML = "";
+
+  if (bookType === "open") {
+    // Open Book Rendering with realistic curvature
+    bookHTML = `
+      <div class="book-icon-wrapper open-book-container">
+        <div class="open-leaf left-leaf"></div>
+        <div class="realistic-book open-center-book" style="background: ${coverBg};">
+          <div class="book-spine-line"></div>
+          <span>${badgeText}</span>
+        </div>
+        <div class="open-leaf right-leaf"></div>
+      </div>
+    `;
+  } else {
+    // Realistic Hardcover with Spine and Ribbon Bookmark
+    let ribbonHTML = ribbonColor ? `<div class="realistic-ribbon" style="background: ${ribbonColor};"></div>` : "";
+    bookHTML = `
+      <div class="book-icon-wrapper">
+        <div class="page-block left-pages"><span></span><span></span><span></span></div>
+        <div class="realistic-book" style="background: ${coverBg}; transform: rotate(${tilt});">
+          <div class="book-spine-line"></div>
+          ${ribbonHTML}
+          <span>${badgeText}</span>
+        </div>
+        <div class="page-block right-pages"><span></span><span></span><span></span></div>
+      </div>
+    `;
+  }
+
+  card.innerHTML = `
+    ${bookHTML}
+    <p class="card-title">${title}</p>
+  `;
+
   card.onclick = callback;
   grid.appendChild(card);
 }
@@ -112,5 +209,11 @@ backBtn.onclick = () => {
   else if (currentLevel === "subject") showClasses(selectedAuthor);
   else if (currentLevel === "class") showAuthors();
 };
+
+if(homeBtn) {
+  homeBtn.onclick = () => {
+    window.location.href = "index.html";
+  };
+}
 
 document.addEventListener("DOMContentLoaded", loadRefBooks);
