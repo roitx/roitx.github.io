@@ -1,5 +1,5 @@
 /* =====================================================
-   ROITX IMAGE ELITE — ENGINE (SUPABASE + CANVAS ANNOTATOR)
+   ROITX IMAGE ELITE — ENGINE (SUPABASE + CANVAS ANNOTATOR + PINCH ZOOM)
    ===================================================== */
 
 let zoomScale = 1.0;
@@ -11,6 +11,10 @@ let canvas, ctx, img;
 let drawingHistory = [];
 let isDrawing = false;
 let currentStroke = [];
+
+// Touch / Pinch Zoom Variables
+let initialPinchDistance = 0;
+let initialScale = 1.0;
 
 async function initImageViewer() {
     canvas = document.getElementById("drawCanvas");
@@ -42,6 +46,7 @@ async function initImageViewer() {
             canvas.height = img.clientHeight;
             document.getElementById("master-loader").style.display = "none";
             setupCanvasEvents();
+            setupPinchZoomEvents(); // Pinch zoom setup added
         };
     } catch (err) {
         showError(finalPath);
@@ -92,8 +97,45 @@ window.rotateImage = () => {
     updateTransform();
 };
 
+/* PINCH TO ZOOM ENGINE (NEW ADDITION) */
+function getPinchDistance(t1, t2) {
+    const dx = t1.clientX - t2.clientX;
+    const dy = t1.clientY - t2.clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+}
+
+function setupPinchZoomEvents() {
+    const viewport = document.getElementById("viewport");
+    if (!viewport) return;
+
+    viewport.addEventListener("touchstart", (e) => {
+        // Highlight mode active nahi hone par hi pinch execute hoga
+        if (e.touches.length === 2 && !isHighlightMode) {
+            initialPinchDistance = getPinchDistance(e.touches[0], e.touches[1]);
+            initialScale = zoomScale;
+        }
+    }, { passive: true });
+
+    viewport.addEventListener("touchmove", (e) => {
+        if (e.touches.length === 2 && initialPinchDistance > 0 && !isHighlightMode) {
+            const currentDistance = getPinchDistance(e.touches[0], e.touches[1]);
+            const factor = currentDistance / initialPinchDistance;
+            
+            // Zoom bounds Limit: 0.5x to 3.5x
+            zoomScale = Math.min(Math.max(initialScale * factor, 0.5), 3.5);
+            updateTransform();
+        }
+    }, { passive: true });
+
+    viewport.addEventListener("touchend", (e) => {
+        if (e.touches.length < 2) {
+            initialPinchDistance = 0;
+        }
+    });
+}
+
 /* HIGHLIGHTING CANVAS ENGINE */
-function toggleHighlightMode() {
+window.toggleHighlightMode = () => {
     isHighlightMode = !isHighlightMode;
     const btn = document.getElementById("highlightBtn");
     
@@ -104,7 +146,7 @@ function toggleHighlightMode() {
         btn.classList.remove("active");
         canvas.classList.remove("drawing-active");
     }
-}
+};
 
 function setupCanvasEvents() {
     const getCoords = (e) => {
@@ -119,14 +161,14 @@ function setupCanvasEvents() {
     };
 
     const startDrawing = (e) => {
-        if (!isHighlightMode) return;
+        if (!isHighlightMode || (e.touches && e.touches.length > 1)) return;
         isDrawing = true;
         const { x, y } = getCoords(e);
         currentStroke = [{ x, y }];
     };
 
     const draw = (e) => {
-        if (!isDrawing || !isHighlightMode) return;
+        if (!isDrawing || !isHighlightMode || (e.touches && e.touches.length > 1)) return;
         e.preventDefault();
         const { x, y } = getCoords(e);
         currentStroke.push({ x, y });
@@ -151,8 +193,8 @@ function setupCanvasEvents() {
     canvas.addEventListener("mousemove", draw);
     canvas.addEventListener("mouseup", stopDrawing);
 
-    canvas.addEventListener("touchstart", startDrawing);
-    canvas.addEventListener("touchmove", draw);
+    canvas.addEventListener("touchstart", startDrawing, { passive: false });
+    canvas.addEventListener("touchmove", draw, { passive: false });
     canvas.addEventListener("touchend", stopDrawing);
 }
 
@@ -183,13 +225,13 @@ function redrawCanvas() {
     });
 }
 
-function undoLastStroke() {
+window.undoLastStroke = () => {
     drawingHistory.pop();
     redrawCanvas();
-}
+};
 
 /* EXPORT / DOWNLOAD */
-function downloadImage() {
+window.downloadImage = () => {
     const exportCanvas = document.createElement("canvas");
     exportCanvas.width = img.naturalWidth;
     exportCanvas.height = img.naturalHeight;
@@ -202,7 +244,7 @@ function downloadImage() {
     link.download = `roitx_${document.getElementById("doc-title").innerText || "annotated"}.png`;
     link.href = exportCanvas.toDataURL("image/png");
     link.click();
-}
+};
 
 function showError(path) {
     document.getElementById("doc-title").innerText = "Load Failed";
