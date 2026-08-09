@@ -80,7 +80,7 @@
       </div>
 
       <div class="inputBar">
-        <input id="chatInput" placeholder="Type a command or question (e.g., 'open pdf 9_chemistry_ch2.pdf', 'calendar', 'calculate 23*7', 'create note: todo')" aria-label="Chat input">
+        <input id="chatInput" placeholder="Type a command or question (e.g., 'open pdf 9_chemistry_ch2.pdf', 'formula class 10', 'calendar', 'create note: todo')" aria-label="Chat input">
         <button id="sendBtn" class="sendBtn">Send</button>
       </div>
     </div>
@@ -90,9 +90,8 @@
         <h3>Quick Commands</h3>
         <div class="tools">
           <button class="toolBtn" onclick="runCommand('open pdf 10 physics ch3')">Open PDF</button>
+          <button class="toolBtn" onclick="runCommand('formula class 10')">Formulas</button>
           <button class="toolBtn" onclick="runCommand('calendar')">Calendar</button>
-          <button class="toolBtn" onclick="runCommand('calculate 123*456')">Calculate</button>
-          <button class="toolBtn" onclick="runCommand('time')">Time/Date</button>
           <button class="toolBtn" onclick="runCommand('create note: My study plan')">Create Note</button>
           <button class="toolBtn" onclick="runCommand('show notes')">Show Notes</button>
           <button class="toolBtn" onclick="runCommand('download notes')">Download Notes</button>
@@ -104,7 +103,7 @@
         <div>Use natural language. Examples:</div>
         <ul style="margin:8px 0 0 16px;color:#bcdbe6">
           <li>open pdf 10 phy ch3.pdf</li>
-          <li>calculate 45/9 + 3</li>
+          <li>formula class 10 physics</li>
           <li>create note: revise optics</li>
           <li>open link https://example.com</li>
         </ul>
@@ -129,7 +128,20 @@
   </div>
 </div>
 
+<!-- 1. SUPABASE JS SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- 2. SUPABASE CLIENT INITIALIZATION -->
+<script>
+  const SUPABASE_URL = "https://ktastwehnnqicriknewr.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0YXN0d2Vobm5xaWNyaWtuZXdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyNTk5NTEsImV4cCI6MjA4MDgzNTk1MX0.5_UvwaG0X8k_Emj-cMC0KjEqlvU6hgAt5IsHJdgARvk";
+
+  window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+</script>
+
+<!-- 3. MAIN CHAT SCRIPT -->
 <script src="ask-chat.js"></script>
-  <div class="home-btn" onclick="location.href='index.html'">🏠</div>
+
+<div class="home-btn" onclick="location.href='index.html'">🏠</div>
 </body>
 </html>
