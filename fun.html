@@ -3,47 +3,117 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Roitx Space Shooter</title>
+<title>Cyber Elite: Overdrive Engine</title>
 <link rel="stylesheet" href="stylegame.css">
 </head>
-
 <body>
 
 <div class="top-bar">
-  <button id="toggleControl" class="glow-btn small">🕹️ Mode: Buttons</button>
+  <div class="bar-left">
+    <button id="toggleControl" class="glow-btn small">🕹️ Controls</button>
+    <button id="audioBtn" class="glow-btn small">🔊 Audio Engine</button>
+  </div>
   
   <div class="hud">
-    <span id="score">Score: 0</span>
-    <span id="level">Lvl: 1</span>
+    <span id="score">SCORE: 0</span>
+    <span id="coins">🪙 0</span>
+    <span id="combo" class="combo-glow">1x MULTI</span>
+    <span id="level">LVL: 1</span>
     <span id="lives">❤️ 10</span>
   </div>
 
-  <button id="pauseBtn" class="glow-btn pause-icon">⏸️</button>
+  <div class="bar-right">
+    <button id="shopBtn" class="glow-btn shop-icon">🛒</button>
+    <button id="pauseBtn" class="glow-btn pause-icon">⏸️</button>
+  </div>
 </div>
 
 <canvas id="gameCanvas"></canvas>
 
-<div id="start-screen" class="screen show">
-  <div class="logo-container">
-    <h1 class="glow-text">🚀 ROITX SPACE</h1>
-    <p>Monster Boss appears every 250 pts!</p>
+<!-- SHOP MODAL -->
+<div id="shop-modal" class="screen">
+  <h2 class="glow-text">🛸 TECH MATRIX SHOP</h2>
+  <p class="sub-text">Available Credits: <span id="shop-coins">0</span> 🪙</p>
+  
+  <div class="shop-items">
+    <div class="shop-item">
+      <div>
+        <h4>⚡ Overclock Lasers</h4>
+        <p>Fire Rate + Velocity Boost</p>
+      </div>
+      <button id="buyFireRate" class="glow-btn small">50 🪙</button>
+    </div>
+    <div class="shop-item">
+      <div>
+        <h4>🛡️ Kinetic Shield Matrix</h4>
+        <p>Deploy Absorptive Barrier</p>
+      </div>
+      <button id="buyShield" class="glow-btn small">80 🪙</button>
+    </div>
+    <div class="shop-item">
+      <div>
+        <h4>❤️ Nanite Hull Repair</h4>
+        <p>Instantly Restore +5 HP</p>
+      </div>
+      <button id="buyHealth" class="glow-btn small">60 🪙</button>
+    </div>
   </div>
-  <button id="startBtn" class="glow-btn main-btn">START MISSION</button>
+
+  <button id="closeShopBtn" class="glow-btn main-btn">RESUME OPERATION</button>
 </div>
 
+<!-- START SCREEN -->
+<div id="start-screen" class="screen show">
+  <h1 class="glow-text mega">🚀 CYBER OVERDRIVE PRO</h1>
+  <p class="sub-text">Deploy Fighting Class Fighter</p>
+  
+  <div class="ship-select-container">
+    <div class="ship-card active" data-ship="pulse">
+      <div class="ship-preview">⚡</div>
+      <h3>Aero-Pulse</h3>
+      <p>Hyper Beam Cannon</p>
+      <span>Speed: Extreme</span>
+    </div>
+
+    <div class="ship-card" data-ship="titan">
+      <div class="ship-preview">🛡️</div>
+      <h3>Titan Dread</h3>
+      <p>EMP Shockwave</p>
+      <span>Armor: Heavy</span>
+    </div>
+
+    <div class="ship-card" data-ship="phantom">
+      <div class="ship-preview">🌀</div>
+      <h3>Chrono Phantom</h3>
+      <p>Time Freeze Field</p>
+      <span>Array: Triple Beam</span>
+    </div>
+  </div>
+
+  <button id="startBtn" class="glow-btn main-btn pulse-btn">LAUNCH MISSION</button>
+</div>
+
+<!-- GAME OVER SCREEN -->
 <div id="game-over" class="screen">
-  <h2 class="glow-text danger">MISSION FAILED</h2>
+  <h2 class="glow-text danger">HULL DESTROYED</h2>
   <p id="final-score"></p>
-  <button id="restartBtn" class="glow-btn main-btn">RETRY</button>
+  <button id="restartBtn" class="glow-btn main-btn">REDEPLOY</button>
 </div>
 
+<!-- CONTROLS -->
 <div class="controls" id="manual-controls">
   <button id="leftBtn" class="move-btn">⬅</button>
+  <button id="dashBtn" class="move-btn dash-btn">💨 DASH</button>
+  <button id="ultimateBtn" class="move-btn ultimate-btn">⚡ ULTI</button>
   <button id="rightBtn" class="move-btn">➡</button>
 </div>
 
-<div id="monster-alert" class="alert-text">⚠️ MONSTER APPROACHING! ⚠️</div>
+<div id="monster-alert" class="alert-text">⚠️ OVERLORD MOTHERSHIP ENGAGED! ⚠️</div>
 
-<script src="scriptgame.js"></script>
+<!-- defer लगाने से फ़ाइलें हमेशा सही क्रम (Order) में ही लोड होती हैं -->
+<script src="renderers.js" defer></script>
+<script src="scriptgame.js" defer></script>
+
+
 </body>
 </html>
