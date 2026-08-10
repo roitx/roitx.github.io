@@ -12,6 +12,7 @@ let zoomScale = 1.2;
 let rotation = 0;
 let isUIVisible = true;
 let renderTask = null;
+let currentBlobUrl = null; // Download reference ke liye variable
 
 async function initReader() {
     if (!rawPath || rawPath === "null") {
@@ -40,11 +41,21 @@ async function initReader() {
 }
 
 function startEngine(blob) {
-    const url = URL.createObjectURL(blob);
-    const dl = document.getElementById("download-trigger");
-    if (dl) { dl.href = url; dl.download = (docName || "document") + ".pdf"; }
+    currentBlobUrl = URL.createObjectURL(blob);
     
-    pdfjsLib.getDocument(url).promise.then(pdf => {
+    // HTML download trigger interception
+    const dl = document.getElementById("download-trigger");
+    if (dl) { 
+        dl.removeAttribute("href"); // Direct link security hole block
+        dl.onclick = (e) => {
+            e.preventDefault();
+            const fileName = (docName || "document") + ".pdf";
+            // Check session and download via secure function
+            window.secureDownload(currentBlobUrl, fileName);
+        };
+    }
+    
+    pdfjsLib.getDocument(currentBlobUrl).promise.then(pdf => {
         pdfDoc = pdf;
         
         const slider = document.getElementById("page-slider");

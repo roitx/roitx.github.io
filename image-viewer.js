@@ -1,5 +1,5 @@
 /* =====================================================
-   ROITX IMAGE ELITE — ENGINE (SUPABASE + CANVAS ANNOTATOR + PINCH ZOOM)
+   ROITX IMAGE ELITE — ENGINE (SUPABASE + CANVAS ANNOTATOR)
    ===================================================== */
 
 let zoomScale = 1.0;
@@ -11,10 +11,6 @@ let canvas, ctx, img;
 let drawingHistory = [];
 let isDrawing = false;
 let currentStroke = [];
-
-// Touch / Pinch Zoom Variables
-let initialPinchDistance = 0;
-let initialScale = 1.0;
 
 async function initImageViewer() {
     canvas = document.getElementById("drawCanvas");
@@ -46,7 +42,6 @@ async function initImageViewer() {
             canvas.height = img.clientHeight;
             document.getElementById("master-loader").style.display = "none";
             setupCanvasEvents();
-            setupPinchZoomEvents(); // Pinch zoom setup added
         };
     } catch (err) {
         showError(finalPath);
@@ -97,45 +92,8 @@ window.rotateImage = () => {
     updateTransform();
 };
 
-/* PINCH TO ZOOM ENGINE (NEW ADDITION) */
-function getPinchDistance(t1, t2) {
-    const dx = t1.clientX - t2.clientX;
-    const dy = t1.clientY - t2.clientY;
-    return Math.sqrt(dx * dx + dy * dy);
-}
-
-function setupPinchZoomEvents() {
-    const viewport = document.getElementById("viewport");
-    if (!viewport) return;
-
-    viewport.addEventListener("touchstart", (e) => {
-        // Highlight mode active nahi hone par hi pinch execute hoga
-        if (e.touches.length === 2 && !isHighlightMode) {
-            initialPinchDistance = getPinchDistance(e.touches[0], e.touches[1]);
-            initialScale = zoomScale;
-        }
-    }, { passive: true });
-
-    viewport.addEventListener("touchmove", (e) => {
-        if (e.touches.length === 2 && initialPinchDistance > 0 && !isHighlightMode) {
-            const currentDistance = getPinchDistance(e.touches[0], e.touches[1]);
-            const factor = currentDistance / initialPinchDistance;
-            
-            // Zoom bounds Limit: 0.5x to 3.5x
-            zoomScale = Math.min(Math.max(initialScale * factor, 0.5), 3.5);
-            updateTransform();
-        }
-    }, { passive: true });
-
-    viewport.addEventListener("touchend", (e) => {
-        if (e.touches.length < 2) {
-            initialPinchDistance = 0;
-        }
-    });
-}
-
 /* HIGHLIGHTING CANVAS ENGINE */
-window.toggleHighlightMode = () => {
+function toggleHighlightMode() {
     isHighlightMode = !isHighlightMode;
     const btn = document.getElementById("highlightBtn");
     
@@ -146,7 +104,7 @@ window.toggleHighlightMode = () => {
         btn.classList.remove("active");
         canvas.classList.remove("drawing-active");
     }
-};
+}
 
 function setupCanvasEvents() {
     const getCoords = (e) => {
@@ -161,14 +119,14 @@ function setupCanvasEvents() {
     };
 
     const startDrawing = (e) => {
-        if (!isHighlightMode || (e.touches && e.touches.length > 1)) return;
+        if (!isHighlightMode) return;
         isDrawing = true;
         const { x, y } = getCoords(e);
         currentStroke = [{ x, y }];
     };
 
     const draw = (e) => {
-        if (!isDrawing || !isHighlightMode || (e.touches && e.touches.length > 1)) return;
+        if (!isDrawing || !isHighlightMode) return;
         e.preventDefault();
         const { x, y } = getCoords(e);
         currentStroke.push({ x, y });
@@ -193,8 +151,8 @@ function setupCanvasEvents() {
     canvas.addEventListener("mousemove", draw);
     canvas.addEventListener("mouseup", stopDrawing);
 
-    canvas.addEventListener("touchstart", startDrawing, { passive: false });
-    canvas.addEventListener("touchmove", draw, { passive: false });
+    canvas.addEventListener("touchstart", startDrawing);
+    canvas.addEventListener("touchmove", draw);
     canvas.addEventListener("touchend", stopDrawing);
 }
 
@@ -225,13 +183,29 @@ function redrawCanvas() {
     });
 }
 
-window.undoLastStroke = () => {
+function undoLastStroke() {
     drawingHistory.pop();
     redrawCanvas();
-};
+}
 
-/* EXPORT / DOWNLOAD */
-window.downloadImage = () => {
+/* EXPORT / DOWNLOAD WITH AUTH CONTROL */
+async function downloadImage() {
+    if (!window.supabaseClient) {
+        console.error("Supabase client initialized nahi hai.");
+        return;
+    }
+
+    // 1. Session verify karein
+    const { data: { session } } = await window.supabaseClient.auth.getSession();
+
+    if (!session) {
+        alert("Annotated Image download karne ke liye pehle Login karein.");
+        sessionStorage.setItem("redirect_after_login", window.location.href);
+        window.location.href = "login.html";
+        return;
+    }
+
+    // 2. Logged-in user ke liye canvas + image merge aur export
     const exportCanvas = document.createElement("canvas");
     exportCanvas.width = img.naturalWidth;
     exportCanvas.height = img.naturalHeight;
@@ -240,11 +214,15 @@ window.downloadImage = () => {
     exportCtx.drawImage(img, 0, 0);
     exportCtx.drawImage(canvas, 0, 0, img.naturalWidth, img.naturalHeight);
 
+    const fileName = `roitx_${document.getElementById("doc-title").innerText || "annotated"}.png`;
+    
     const link = document.createElement("a");
-    link.download = `roitx_${document.getElementById("doc-title").innerText || "annotated"}.png`;
+    link.download = fileName;
     link.href = exportCanvas.toDataURL("image/png");
+    document.body.appendChild(link);
     link.click();
-};
+    document.body.removeChild(link);
+}
 
 function showError(path) {
     document.getElementById("doc-title").innerText = "Load Failed";
