@@ -195,6 +195,11 @@ async function loadBooks(){
     const div = document.createElement("div");
     div.className = "book-item";
 
+    // Notes-viewer par redirect karne ke liye path handle karna
+    // Agar aapke paas storage_path hai toh use karenge, warna file_url
+    const targetPath = b.storage_path || `refbooks/class_${b.class_no}/${b.subject}/ch_${b.chapter_no}/${b.name}.pdf`;
+    const fileName = `${b.name}.pdf`;
+
     div.innerHTML = `
       <div class="book-info">
         <b>${b.author} • Class ${b.class_no} • ${b.subject}</b>
@@ -204,9 +209,9 @@ async function loadBooks(){
       </div>
 
       <div class="book-actions">
-        <a href="${b.file_url}" target="_blank" class="view-btn">
+        <button class="view-btn" onclick="openPdfViewer('${encodeURIComponent(targetPath)}', '${encodeURIComponent(fileName)}')">
           👀 View
-        </a>
+        </button>
         <button class="danger" onclick="deleteBook('${b.id}','${b.storage_path}')">
           🗑
         </button>
@@ -215,6 +220,14 @@ async function loadBooks(){
 
     bookList.appendChild(div);
   });
+}
+
+/* =====================================================
+   OPEN PDF VIEWER (NOTES-VIEWER.HTML)
+   ===================================================== */
+function openPdfViewer(encodedPath, encodedName) {
+  const viewerUrl = `notes-viewer.html?path=${encodedPath}&name=${encodedName}`;
+  window.location.href = viewerUrl;
 }
 
 /* =====================================================
