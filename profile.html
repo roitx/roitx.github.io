@@ -629,6 +629,8 @@ async function cropAndUpload() {
         .getPublicUrl(filePath);
 
       currentAvatarUrl = publicData.publicUrl;
+      localStorage.setItem("userPhoto", currentAvatarUrl);
+      
       renderAvatarImage(currentAvatarUrl);
 
       await window.supabaseClient
