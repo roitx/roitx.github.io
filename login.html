@@ -2,11 +2,13 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Login - Roitx</title>
+<title>Auth Hub - Roitx</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<!-- External Dependencies -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js"></script>
+<script src="auth.js"></script>
 
 <style>
 * {
@@ -104,33 +106,29 @@ body {
 .hand.left { left: -5px; transform: rotate(-25deg); }
 .hand.right { right: -5px; transform: rotate(25deg); }
 
-/* STATES */
+/* ANIMATION STATES */
 .cover .eye { opacity: 0; }
 .cover .hand { opacity: 1; }
 
-/* SAD FACE STATE */
 .wrong .mouth {
   border-bottom: none;
-  border-top: 3px solid #ff4d4d; /* Sad face in red */
+  border-top: 3px solid #ff4d4d;
   border-radius: 20px 20px 0 0;
   top: 100px;
 }
 
-/* SHAKE ANIMATION */
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
   25% { transform: translateX(-10px); }
   50% { transform: translateX(10px); }
   75% { transform: translateX(-10px); }
 }
-.shake {
-  animation: shake 0.4s ease-in-out;
-}
+.shake { animation: shake 0.4s ease-in-out; }
 
 /* CARD */
 .card {
   width: 100%; 
-  padding: 90px 25px 35px;
+  padding: 90px 25px 30px;
   border-radius: 28px;
   background: #e0e5ec;
   box-shadow: 18px 18px 30px #b8bec7, -18px -18px 30px #fff;
@@ -138,30 +136,30 @@ body {
 }
 
 h1 { font-size: 24px; color: #444; margin-bottom: 5px; }
-h2 { font-size: 14px; margin-bottom: 25px; color: #777; font-weight: 400; }
+h2 { font-size: 14px; margin-bottom: 20px; color: #777; font-weight: 400; }
 
 input {
   width: 100%;
   padding: 15px;
-  margin-bottom: 20px;
+  margin-bottom: 15px;
   border: none;
   border-radius: 12px;
   background: #e0e5ec;
   box-shadow: inset 6px 6px 12px #b8bec7, inset -6px -6px 12px #fff;
   outline: none;
-  font-size: 16px;
+  font-size: 15px;
 }
 
 .eyeBtn {
   background: none;
   border: none;
-  font-size: 20px;
+  font-size: 18px;
   cursor: pointer;
   margin-bottom: 15px;
   color: #666;
 }
 
-button.login {
+button.primary-btn {
   width: 100%;
   padding: 15px;
   border: none;
@@ -175,13 +173,38 @@ button.login {
   transition: 0.2s;
 }
 
-button.login:active {
+button.primary-btn:active {
   box-shadow: inset 4px 4px 8px #b8bec7, inset -4px -4px 8px #fff;
   transform: scale(0.98);
 }
 
+.google-btn {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.auth-links {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.auth-links a {
+  color: #5a2eff;
+  text-decoration: none;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.auth-links a:hover { text-decoration: underline; }
+
 @media (max-width: 400px) {
-  .card { padding: 80px 20px 30px; }
+  .card { padding: 80px 20px 25px; }
   .character { width: 120px; height: 120px; top: -60px; }
 }
 </style>
@@ -200,26 +223,137 @@ button.login:active {
     <div class="hand right"></div>
   </div>
 
-  <div class="card" id="loginCard">
-    <h1>Welcome Back!</h1>
-    <h2>ROITX</h2>
+  <div class="card" id="authCard">
+    <h1 id="titleText">Welcome Back!</h1>
+    <h2 id="subText">ROITX HUB</h2>
 
-    <input id="email" type="email" placeholder="Email">
+    <input id="email" type="email" placeholder="Email Address">
     <input id="password" type="password" placeholder="Password">
-
+    
     <button id="toggleSign" class="eyeBtn">👁️</button>
-    <button class="login" onclick="loginUser()">Login</button>
+    
+    <button id="mainBtn" class="primary-btn" onclick="handleAuthSubmit()">Login</button>
+
+    <!-- Google OAuth Button -->
+    <button id="googleBtn" type="button" class="primary-btn google-btn" onclick="window.signInWithGoogle()">
+      <svg width="18" height="18" viewBox="0 0 24 24">
+        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+      </svg>
+      Continue with Google
+    </button>
+
+    <div class="auth-links" id="linkBox">
+      <a onclick="switchMode('forgot')" id="forgotLink">Forgot Password?</a>
+      <span>New here? <a onclick="switchMode('signup')">Create Account</a></span>
+    </div>
   </div>
 </div>
 
 <script>
+let currentMode = "login"; 
+
 const passwordInput = document.getElementById("password");
 const emailInput = document.getElementById("email");
 const toggleBtn = document.getElementById("toggleSign");
-const char = document.getElementById("char");
-const card = document.getElementById("loginCard");
 
-// Character Face Animations
+const char = document.getElementById("char");
+const card = document.getElementById("authCard");
+const titleText = document.getElementById("titleText");
+const subText = document.getElementById("subText");
+const mainBtn = document.getElementById("mainBtn");
+const googleBtn = document.getElementById("googleBtn");
+const linkBox = document.getElementById("linkBox");
+
+// Mode Switcher UI Logic
+function switchMode(mode) {
+  currentMode = mode;
+  emailInput.value = "";
+  passwordInput.value = "";
+
+  if (mode === "login") {
+    titleText.innerText = "Welcome Back!";
+    subText.innerText = "ROITX HUB";
+    emailInput.style.display = "block";
+    passwordInput.style.display = "block";
+    passwordInput.placeholder = "Password";
+    toggleBtn.style.display = "inline-block";
+    googleBtn.style.display = "flex";
+    mainBtn.innerText = "Login";
+    linkBox.innerHTML = `
+      <a onclick="switchMode('forgot')">Forgot Password?</a>
+      <span>New here? <a onclick="switchMode('signup')">Create Account</a></span>
+    `;
+  } else if (mode === "signup") {
+    titleText.innerText = "Join Roitx";
+    subText.innerText = "CREATE ACCOUNT";
+    emailInput.style.display = "block";
+    passwordInput.style.display = "block";
+    passwordInput.placeholder = "Password";
+    toggleBtn.style.display = "inline-block";
+    googleBtn.style.display = "flex";
+    mainBtn.innerText = "Sign Up";
+    linkBox.innerHTML = `
+      <span>Already have an account? <a onclick="switchMode('login')">Login</a></span>
+    `;
+  } else if (mode === "forgot") {
+    titleText.innerText = "Reset Password";
+    subText.innerText = "ENTER YOUR EMAIL";
+    emailInput.style.display = "block";
+    passwordInput.style.display = "none";
+    toggleBtn.style.display = "none";
+    googleBtn.style.display = "none";
+    mainBtn.innerText = "Send Reset Link";
+    linkBox.innerHTML = `
+      <span>Remembered Password? <a onclick="switchMode('login')">Back to Login</a></span>
+    `;
+  }
+}
+
+// Automatically Detect Session or Reset Token on Load
+document.addEventListener("DOMContentLoaded", async () => {
+  const user = await window.getCurrentUser();
+  if (user) {
+    // 💡 LOCALSTORAGE SYNC ON AUTO-LOGIN
+    localStorage.setItem("isLoggedIn", "true");
+    localStorage.setItem("userName", user.email ? user.email.split('@')[0] : "Profile");
+    localStorage.setItem("userPhoto", "profile.jpg");
+
+    const redirectTarget = sessionStorage.getItem("redirect_after_login");
+    const isAdmin = await window.checkIsAdmin();
+
+    if (redirectTarget) {
+      sessionStorage.removeItem("redirect_after_login");
+      window.location.href = redirectTarget;
+    } else if (isAdmin) {
+      window.location.href = window.getPageUrl("admin-panel.html");
+    } else {
+      window.location.href = window.getPageUrl("profile.html");
+    }
+    return;
+  }
+
+  // Password Reset Handling
+  const urlParams = new URLSearchParams(window.location.search);
+  const isReset = urlParams.get('reset');
+
+  if (isReset) {
+    currentMode = "update_password";
+    titleText.innerText = "New Password";
+    subText.innerText = "SET YOUR NEW PASSWORD";
+    emailInput.style.display = "none";
+    passwordInput.style.display = "block";
+    passwordInput.placeholder = "Enter New Password";
+    toggleBtn.style.display = "inline-block";
+    googleBtn.style.display = "none";
+    mainBtn.innerText = "Save New Password";
+    linkBox.innerHTML = `<span><a onclick="switchMode('login')">Cancel & Login</a></span>`;
+  }
+});
+
+// Character Interactions
 toggleBtn.onclick = () => {
   if (passwordInput.type === "password") {
     passwordInput.type = "text";
@@ -233,12 +367,11 @@ toggleBtn.onclick = () => {
 };
 
 passwordInput.addEventListener("focus", () => {
-    if(passwordInput.type === "password") char.classList.add("cover");
+  if (passwordInput.type === "password") char.classList.add("cover");
 });
 passwordInput.addEventListener("blur", () => char.classList.remove("cover"));
 
-// Error Animation (Sad + Shake)
-window.loginError = () => {
+window.triggerErrorAnim = () => {
   char.classList.add("wrong");
   card.classList.add("shake");
   setTimeout(() => {
@@ -247,34 +380,31 @@ window.loginError = () => {
   }, 1500);
 };
 
-// Merged Supabase Login Logic
-async function loginUser() {
-  const email = emailInput.value;
-  const password = passwordInput.value;
-
-  if (!email || !password) {
-    loginError();
-    return;
-  }
-
-  try {
-    // Using window.supabaseClient as per your script
-    const { error } = await window.supabaseClient.auth.signInWithPassword({
-      email,
-      password
-    });
-
-    if (error) {
-      console.error(error.message);
-      loginError(); // Triggers Sad Face and Shake
-      alert(error.message);
+// Submissions Router (Modified to store LocalStorage session data)
+async function handleAuthSubmit() {
+  if (currentMode === "login" || currentMode === "signup") {
+    // Pehle existing auth function call karein
+    if (currentMode === "login") {
+      await window.loginUser();
     } else {
-      window.location.href = "admin-panel.html";
+      await window.signUpUser();
     }
-  } catch (err) {
-    loginError();
+    
+    // Login/Signup ke baad agar user mil jata hai toh localStorage update kar do
+    const user = await window.getCurrentUser();
+    if (user) {
+      localStorage.setItem("isLoggedIn", "true");
+      localStorage.setItem("userName", user.email ? user.email.split('@')[0] : "Profile");
+      localStorage.setItem("userPhoto", "profile.jpg");
+    }
+  } else if (currentMode === "forgot") {
+    window.sendResetLink();
+  } else if (currentMode === "update_password") {
+    window.updatePassword();
   }
 }
+
+window.switchMode = switchMode;
 </script>
 
 </body>

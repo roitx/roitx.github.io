@@ -474,6 +474,22 @@ input, textarea {
   transform: rotate(10deg) scale(1.1);
   box-shadow: 0 0 20px var(--accent);
 }
+/* Dynamic Profile Avatar Styling */
+.user-profile-link {
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--accent);
+  box-shadow: 0 0 10px rgba(58, 160, 255, 0.4);
+}
 
 /* ================= GLOBAL SCROLLBAR (Premium) ================= */
 ::-webkit-scrollbar {

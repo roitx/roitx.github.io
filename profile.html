@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>My Profile - Roitx Platform</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- External Dependencies -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+
+<!-- FontAwesome Icons for Pro Look -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<!-- Cropper.js for Round Image Cropping -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center; 
+  align-items: center;     
+  background: #e0e5ec;
+  padding: 30px 15px;           
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* BACKGROUND AMBIENT GLOWS */
+.bg-glow {
+  position: fixed;
+  width: 350px;
+  height: 350px;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.35;
+  z-index: 0;
+  animation: float 12s infinite alternate ease-in-out;
+}
+.bg-glow.top-left { background: #5a2eff; top: -50px; left: -50px; }
+.bg-glow.bottom-right { background: #ff7a3d; bottom: -50px; right: -50px; }
+
+@keyframes float {
+  to { transform: translateY(-30px) scale(1.05); }
+}
+
+/* PROFILE CONTAINER CARD */
+.profile-card {
+  position: relative;
+  z-index: 1;
+  width: 100%; 
+  max-width: 460px;
+  padding: 35px 25px;
+  border-radius: 32px;
+  background: #e0e5ec;
+  box-shadow: 20px 20px 40px #b8bec7, -20px -20px 40px #ffffff;
+  text-align: center;
+}
+
+/* AVATAR BADGE & PHOTO ACTIONS */
+.avatar-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.avatar-wrapper {
+  position: relative;
+  width: 105px;
+  height: 105px;
+  cursor: pointer;
+}
+
+.avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #e0e5ec;
+  box-shadow: 8px 8px 16px #b8bec7, -8px -8px 16px #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  font-weight: 700;
+  color: #5a2eff;
+  overflow: hidden;
+  text-transform: uppercase;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-edit-badge {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 32px;
+  height: 32px;
+  background: #5a2eff;
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  box-shadow: 0 4px 10px rgba(90, 46, 255, 0.4);
+  border: 2px solid #e0e5ec;
+  transition: transform 0.2s;
+}
+
+.avatar-wrapper:hover .avatar-edit-badge {
+  transform: scale(1.1);
+}
+
+.delete-photo-btn {
+  margin-top: 10px;
+  background: transparent;
+  border: none;
+  color: #e53e3e;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  opacity: 0.85;
+  transition: opacity 0.2s;
+}
+
+.delete-photo-btn:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
+
+#avatarFileInput { display: none; }
+
+h1 { font-size: 22px; color: #2d3748; margin-bottom: 6px; font-weight: 700; word-break: break-all; }
+p.role-badge { 
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 16px;
+  border-radius: 20px;
+  font-size: 12px; 
+  color: #5a2eff; 
+  background: #e0e5ec;
+  box-shadow: inset 3px 3px 6px #b8bec7, inset -3px -3px 6px #ffffff;
+  font-weight: 700; 
+  text-transform: uppercase; 
+  letter-spacing: 0.5px;
+  margin-bottom: 20px; 
+}
+
+/* FORM SECTIONS */
+.section-title {
+  text-align: left;
+  font-size: 12px;
+  font-weight: 700;
+  color: #718096;
+  text-transform: uppercase;
+  margin: 18px 0 10px;
+  letter-spacing: 0.8px;
+  border-bottom: 1px dashed #cbd5e0;
+  padding-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.form-group {
+  margin-bottom: 14px;
+  text-align: left;
+}
+
+.form-group label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #4a5568;
+  font-weight: 600;
+  margin-bottom: 6px;
+  margin-left: 4px;
+}
+
+.input-box {
+  width: 100%;
+  padding: 12px 15px;
+  border: none;
+  border-radius: 14px;
+  background: #e0e5ec;
+  box-shadow: inset 5px 5px 10px #b8bec7, inset -5px -5px 10px #ffffff;
+  outline: none;
+  font-size: 14px;
+  color: #2d3748;
+  transition: all 0.2s ease;
+}
+
+.input-box:focus {
+  box-shadow: inset 7px 7px 12px #b8bec7, inset -7px -7px 12px #ffffff;
+  color: #5a2eff;
+}
+
+select.input-box { cursor: pointer; }
+
+/* PHONE DUAL INPUT */
+.phone-wrapper { display: flex; gap: 8px; }
+.phone-wrapper select { width: 38%; }
+.phone-wrapper input { width: 62%; }
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+/* BUTTONS */
+.btn-group {
+  margin-top: 25px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+button.btn {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 14px;
+  background: #e0e5ec;
+  font-weight: 700;
+  font-size: 14px;
+  box-shadow: 6px 6px 14px #b8bec7, -6px -6px 14px #ffffff;
+  cursor: pointer;
+  transition: 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+button.btn-save { color: #20c997; }
+button.btn-admin { 
+  color: #5a2eff; 
+  background: #e0e5ec;
+  border: 1px solid rgba(90, 46, 255, 0.2);
+  box-shadow: 6px 6px 14px #b8bec7, -6px -6px 14px #ffffff, 0 0 12px rgba(90, 46, 255, 0.2);
+}
+button.btn-explore { color: #3182ce; }
+button.btn-danger { color: #e53e3e; }
+
+button.btn:active {
+  box-shadow: inset 4px 4px 8px #b8bec7, inset -4px -4px 8px #ffffff;
+  transform: scale(0.98);
+}
+
+.status-msg {
+  font-size: 13px;
+  margin-top: 10px;
+  font-weight: 600;
+  display: none;
+}
+.status-msg.success { color: #20c997; display: block; }
+.status-msg.error { color: #e53e3e; display: block; }
+
+/* CROPPER MODAL POPUP */
+.crop-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.65);
+  backdrop-filter: blur(4px);
+  z-index: 999;
+  display: none;
+  justify-content: center;
+  align-items: center;
+  padding: 15px;
+}
+
+.crop-modal-card {
+  width: 100%;
+  max-width: 400px;
+  background: #e0e5ec;
+  padding: 20px;
+  border-radius: 24px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  text-align: center;
+}
+
+.cropper-img-container {
+  width: 100%;
+  max-height: 280px;
+  margin: 15px 0;
+  overflow: hidden;
+  border-radius: 16px;
+  background: #cbd5e0;
+}
+
+.cropper-img-container img {
+  max-width: 100%;
+}
+
+/* Force Round Crop Preview in Cropper.js */
+.cropper-view-box,
+.cropper-face {
+  border-radius: 50% !important;
+}
+</style>
+</head>
+
+<body>
+
+<div class="bg-glow top-left"></div>
+<div class="bg-glow bottom-right"></div>
+
+<!-- Profile Main Card -->
+<div class="profile-card">
+  
+  <div class="avatar-section">
+    <div class="avatar-wrapper" onclick="triggerPhotoSelect()" title="Click to Change Photo">
+      <div class="avatar" id="avatarContainer">R</div>
+      <div class="avatar-edit-badge"><i class="fa-solid fa-camera"></i></div>
+    </div>
+    <button type="button" id="deletePhotoBtn" class="delete-photo-btn" style="display: none;" onclick="deleteAvatarPhoto()">
+      <i class="fa-solid fa-trash-can"></i> Delete Photo
+    </button>
+  </div>
+
+  <input type="file" id="avatarFileInput" accept="image/*" onchange="handleFileSelected(event)">
+
+  <h1 id="userDisplayName">Loading...</h1>
+  <p class="role-badge" id="userRoleBadge"><i class="fa-solid fa-spinner fa-spin"></i> Fetching Role...</p>
+
+  <!-- Section 1: Basic Account Info -->
+  <div class="section-title"><i class="fa-solid fa-user-gear"></i> Personal Account Info</div>
+
+  <div class="form-group">
+    <label><i class="fa-solid fa-signature"></i> Full Name</label>
+    <input type="text" id="fullNameInput" class="input-box" placeholder="Enter your full name" oninput="updateInitialAvatar()">
+  </div>
+
+  <div class="form-group">
+    <label><i class="fa-solid fa-envelope"></i> Email Address</label>
+    <input type="text" id="emailInput" class="input-box" readonly style="opacity: 0.7; cursor: not-allowed;">
+  </div>
+
+  <div class="form-group">
+    <label><i class="fa-solid fa-phone"></i> Phone Number</label>
+    <div class="phone-wrapper">
+      <select id="countryCodeSelect" class="input-box">
+        <option value="+91">+91 (IN)</option>
+        <option value="+1">+1 (US)</option>
+        <option value="+971">+971 (UAE)</option>
+        <option value="+977">+977 (NP)</option>
+        <option value="+880">+880 (BD)</option>
+        <option value="+92">+92 (PK)</option>
+        <option value="+44">+44 (UK)</option>
+      </select>
+      <input type="tel" id="phoneInput" class="input-box" placeholder="10-digit Mobile No">
+    </div>
+  </div>
+
+  <!-- Section 2: Academic Info -->
+  <div class="section-title"><i class="fa-solid fa-graduation-cap"></i> Academic Details</div>
+
+  <div class="form-group">
+    <label><i class="fa-solid fa-book-open"></i> Target Exam / Class</label>
+    <select id="classSelect" class="input-box">
+      <option value="">Select Class / Target Exam</option>
+      <option value="Class 9th">Class 9th</option>
+      <option value="Class 10th">Class 10th</option>
+      <option value="Class 11th">Class 11th</option>
+      <option value="Class 12th">Class 12th</option>
+      <option value="JEE Main & Advanced">JEE Main & Advanced</option>
+      <option value="NEET UG">NEET UG</option>
+      <option value="Other Competitive Exam">Other Competitive Exam</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label><i class="fa-solid fa-microscope"></i> Stream / Subject Branch</label>
+    <select id="streamSelect" class="input-box">
+      <option value="">Select Stream</option>
+      <option value="PCM (Physics, Chem, Math)">PCM (Maths)</option>
+      <option value="PCB (Physics, Chem, Bio)">PCB (Biology)</option>
+      <option value="PCMB (Maths & Bio)">PCMB (Both)</option>
+      <option value="Commerce">Commerce</option>
+      <option value="Arts / Humanities">Arts / Humanities</option>
+      <option value="General Science">General Science</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label><i class="fa-solid fa-building-columns"></i> School / Coaching Name</label>
+    <input type="text" id="institutionInput" class="input-box" placeholder="e.g. KV School / Allen / Physics Wallah">
+  </div>
+
+  <div class="grid-2">
+    <div class="form-group">
+      <label><i class="fa-solid fa-city"></i> City</label>
+      <input type="text" id="cityInput" class="input-box" placeholder="Your City">
+    </div>
+    <div class="form-group">
+      <label><i class="fa-solid fa-map-location-dot"></i> State</label>
+      <input type="text" id="stateInput" class="input-box" placeholder="Your State">
+    </div>
+  </div>
+
+  <p id="statusMsg" class="status-msg"></p>
+
+  <!-- Actions -->
+  <div class="btn-group">
+    <button class="btn btn-save" onclick="saveProfileDetails()">
+      <i class="fa-solid fa-floppy-disk"></i> Save Profile Info
+    </button>
+
+    <!-- Admin Panel Button (ONLY Shown for Admins) -->
+    <button class="btn btn-admin" id="adminBtn" style="display: none;" onclick="goToAdminPanel()">
+      <i class="fa-solid fa-shield-halved"></i> Open Admin Panel
+    </button>
+
+    <button class="btn btn-explore" onclick="goToHome()">
+      <i class="fa-solid fa-compass"></i> Explore Notes & Formulas
+    </button>
+    <button class="btn btn-danger" onclick="logoutUser()">
+      <i class="fa-solid fa-right-from-bracket"></i> Logout Account
+    </button>
+  </div>
+</div>
+
+<!-- Round Image Cropper Modal -->
+<div class="crop-modal-overlay" id="cropModal">
+  <div class="crop-modal-card">
+    <h3 style="color: #2d3748; font-size: 16px;"><i class="fa-solid fa-crop-simple"></i> Crop Your Profile Photo</h3>
+    <div class="cropper-img-container">
+      <img id="cropTargetImage" src="" alt="Crop Target">
+    </div>
+    <div style="display: flex; gap: 10px; margin-top: 15px;">
+      <button class="btn btn-danger" onclick="closeCropModal()" style="padding: 10px;">Cancel</button>
+      <button class="btn btn-save" onclick="cropAndUpload()" style="padding: 10px;">
+        <i class="fa-solid fa-check"></i> Crop & Upload
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentUser = null;
+let currentAvatarUrl = null;
+let cropper = null;
+
+async function loadUserProfile() {
+  if (!window.supabaseClient) return;
+
+  const user = await window.getCurrentUser();
+
+  if (!user) {
+    window.location.href = window.getPageUrl("login.html");
+    return;
+  }
+
+  currentUser = user;
+  document.getElementById("emailInput").value = user.email || "";
+
+  // 1. Precise Admin Authorization Check
+  const isAdmin = await window.checkIsAdmin();
+  if (isAdmin) {
+    document.getElementById("userRoleBadge").innerHTML = '<i class="fa-solid fa-crown"></i> Platform Admin';
+    document.getElementById("adminBtn").style.display = "flex";
+  } else {
+    document.getElementById("userRoleBadge").innerHTML = '<i class="fa-solid fa-graduation-cap"></i> Active Student';
+  }
+
+  // 2. Fetch Profile Data
+  try {
+    const { data } = await window.supabaseClient
+      .from('profiles')
+      .select('full_name, country_code, phone, target_class, stream, institution, city, state, avatar_url')
+      .eq('id', user.id)
+      .single();
+
+    if (data) {
+      document.getElementById("fullNameInput").value = data.full_name || "";
+      document.getElementById("countryCodeSelect").value = data.country_code || "+91";
+      document.getElementById("phoneInput").value = data.phone || "";
+      document.getElementById("classSelect").value = data.target_class || "";
+      document.getElementById("streamSelect").value = data.stream || "";
+      document.getElementById("institutionInput").value = data.institution || "";
+      document.getElementById("cityInput").value = data.city || "";
+      document.getElementById("stateInput").value = data.state || "";
+
+      document.getElementById("userDisplayName").innerText = data.full_name || user.email.split('@')[0];
+      
+      if (data.avatar_url) {
+        currentAvatarUrl = data.avatar_url;
+        renderAvatarImage(data.avatar_url);
+      } else {
+        renderInitialAvatar();
+      }
+    } else {
+      document.getElementById("userDisplayName").innerText = user.email.split('@')[0];
+      renderInitialAvatar();
+    }
+  } catch (err) {
+    console.warn("Could not fetch profile details:", err);
+    document.getElementById("userDisplayName").innerText = user.email.split('@')[0];
+    renderInitialAvatar();
+  }
+}
+
+// Render Initial Letter Avatar
+function renderInitialAvatar() {
+  currentAvatarUrl = null;
+  const name = document.getElementById("fullNameInput").value.trim();
+  const email = document.getElementById("emailInput").value.trim();
+  
+  let initial = "U";
+  if (name) {
+    initial = name.charAt(0).toUpperCase();
+  } else if (email) {
+    initial = email.charAt(0).toUpperCase();
+  }
+  
+  document.getElementById("avatarContainer").innerText = initial;
+  document.getElementById("deletePhotoBtn").style.display = "none";
+}
+
+function updateInitialAvatar() {
+  if (!currentAvatarUrl) {
+    renderInitialAvatar();
+  }
+}
+
+function renderAvatarImage(url) {
+  document.getElementById("avatarContainer").innerHTML = `<img src="${url}" alt="Profile">`;
+  document.getElementById("deletePhotoBtn").style.display = "inline-flex";
+}
+
+// PHOTO SELECTION & CROPPER MODAL
+function triggerPhotoSelect() {
+  document.getElementById("avatarFileInput").click();
+}
+
+function handleFileSelected(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const cropImg = document.getElementById("cropTargetImage");
+    cropImg.src = e.target.result;
+
+    document.getElementById("cropModal").style.display = "flex";
+
+    if (cropper) {
+      cropper.destroy();
+    }
+
+    cropper = new Cropper(cropImg, {
+      aspectRatio: 1, // Square for Circle Cropping
+      viewMode: 1,
+      autoCropArea: 0.9,
+      dragMode: 'move'
+    });
+  };
+  reader.readAsDataURL(file);
+  event.target.value = ''; // Reset input
+}
+
+function closeCropModal() {
+  document.getElementById("cropModal").style.display = "none";
+  if (cropper) cropper.destroy();
+}
+
+// CROP & UPLOAD TO SUPABASE STORAGE
+async function cropAndUpload() {
+  if (!cropper || !currentUser) return;
+
+  const canvas = cropper.getCroppedCanvas({
+    width: 300,
+    height: 300
+  });
+
+  closeCropModal();
+
+  const msgBox = document.getElementById("statusMsg");
+  msgBox.className = "status-msg";
+  msgBox.innerText = "Saving cropped photo...";
+  msgBox.style.display = "block";
+
+  canvas.toBlob(async (blob) => {
+    const filePath = `${currentUser.id}/avatar_${Date.now()}.png`;
+
+    try {
+      // Upload Blob
+      const { error: uploadErr } = await window.supabaseClient
+        .storage
+        .from('avatars')
+        .upload(filePath, blob, { contentType: 'image/png', upsert: true });
+
+      if (uploadErr) throw uploadErr;
+
+      // Get Public Link
+      const { data: publicData } = window.supabaseClient
+        .storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      currentAvatarUrl = publicData.publicUrl;
+      renderAvatarImage(currentAvatarUrl);
+
+      // Save in DB
+      await window.supabaseClient
+        .from('profiles')
+        .upsert({ id: currentUser.id, avatar_url: currentAvatarUrl, updated_at: new Date() });
+
+      msgBox.className = "status-msg success";
+      msgBox.innerText = "✅ Profile photo updated!";
+      setTimeout(() => { msgBox.style.display = "none"; }, 3000);
+
+    } catch (err) {
+      msgBox.className = "status-msg error";
+      msgBox.innerText = "❌ Upload failed: " + err.message;
+    }
+  }, 'image/png');
+}
+
+// DELETE PHOTO
+async function deleteAvatarPhoto() {
+  if (!currentUser || !currentAvatarUrl) return;
+
+  if (!confirm("Are you sure you want to delete your profile photo?")) return;
+
+  const msgBox = document.getElementById("statusMsg");
+  msgBox.className = "status-msg";
+  msgBox.innerText = "Deleting photo...";
+  msgBox.style.display = "block";
+
+  try {
+    // DB Update
+    await window.supabaseClient
+      .from('profiles')
+      .upsert({ id: currentUser.id, avatar_url: null, updated_at: new Date() });
+
+    renderInitialAvatar();
+
+    msgBox.className = "status-msg success";
+    msgBox.innerText = "✅ Photo removed successfully!";
+    setTimeout(() => { msgBox.style.display = "none"; }, 3000);
+
+  } catch (err) {
+    msgBox.className = "status-msg error";
+    msgBox.innerText = "❌ Could not delete photo.";
+  }
+}
+
+// SAVE PROFILE DETAILS
+async function saveProfileDetails() {
+  if (!currentUser) return;
+
+  const fullName = document.getElementById("fullNameInput").value.trim();
+  const countryCode = document.getElementById("countryCodeSelect").value;
+  const phone = document.getElementById("phoneInput").value.trim();
+  const targetClass = document.getElementById("classSelect").value;
+  const stream = document.getElementById("streamSelect").value;
+  const institution = document.getElementById("institutionInput").value.trim();
+  const city = document.getElementById("cityInput").value.trim();
+  const state = document.getElementById("stateInput").value.trim();
+
+  const msgBox = document.getElementById("statusMsg");
+  msgBox.className = "status-msg";
+  msgBox.innerText = "Saving details...";
+  msgBox.style.display = "block";
+
+  try {
+    const { error } = await window.supabaseClient
+      .from('profiles')
+      .upsert({
+        id: currentUser.id,
+        email: currentUser.email,
+        full_name: fullName,
+        country_code: countryCode,
+        phone: phone,
+        target_class: targetClass,
+        stream: stream,
+        institution: institution,
+        city: city,
+        state: state,
+        avatar_url: currentAvatarUrl,
+        updated_at: new Date()
+      });
+
+    if (error) {
+      msgBox.className = "status-msg error";
+      msgBox.innerText = "❌ Save failed: " + error.message;
+    } else {
+      msgBox.className = "status-msg success";
+      msgBox.innerText = "✅ Profile updated successfully!";
+      if (fullName) {
+        document.getElementById("userDisplayName").innerText = fullName;
+      }
+      setTimeout(() => { msgBox.style.display = "none"; }, 3000);
+    }
+  } catch (err) {
+    msgBox.className = "status-msg error";
+    msgBox.innerText = "❌ Unexpected error occurred.";
+  }
+}
+
+function goToAdminPanel() {
+  window.location.href = window.getPageUrl("admin-panel.html");
+}
+
+function goToHome() {
+  window.location.href = window.getPageUrl("index.html");
+}
+
+async function logoutUser() {
+  if (window.supabaseClient) {
+    await window.supabaseClient.auth.signOut();
+    window.location.href = window.getPageUrl("login.html");
+  }
+}
+
+document.addEventListener("DOMContentLoaded", loadUserProfile);
+</script>
+
+</body>
+</html>

@@ -33,6 +33,25 @@ document.addEventListener("DOMContentLoaded", () => {
       localStorage.setItem("theme", modeToggle.checked ? "light" : "dark");
     });
   }
+
+  // 👇 ================= DYNAMIC AUTH / PROFILE LOGIC ================= 👇
+  const authContainer = document.getElementById("navAuthContainer");
+
+  // LocalStorage se login details check karein
+  const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+  const userPhoto = localStorage.getItem("userPhoto") || "profile.jpg"; // Default photo
+  const userName = localStorage.getItem("userName") || "Profile";
+
+  if (isLoggedIn && authContainer) {
+    // Login link hatakar Profile link + Photo dikhayega
+    authContainer.innerHTML = `
+      <a href="profile.html" class="user-profile-link">
+        <img src="${userPhoto}" alt="Avatar" class="user-avatar">
+        <span>${userName}</span>
+      </a>
+    `;
+  }
+  // 👆 ================================================================ 👆
 });
 
 // ================= YEAR =================
