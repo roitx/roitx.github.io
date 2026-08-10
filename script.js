@@ -19,7 +19,7 @@ overlay.addEventListener("click", () => {
 });
 
 // ================= DOM LOADED =================
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   // Dark / Light Mode
   const modeToggle = document.getElementById("modeToggle");
   if (modeToggle) {
@@ -37,17 +37,45 @@ document.addEventListener("DOMContentLoaded", () => {
   // 👇 ================= DYNAMIC AUTH / PROFILE LOGIC ================= 👇
   const authContainer = document.getElementById("navAuthContainer");
 
-  // LocalStorage se login details check karein
   const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
-  const userPhoto = localStorage.getItem("userPhoto") || "profile.jpg"; // Default photo
-  const userName = localStorage.getItem("userName") || "Profile";
+  let userPhoto = localStorage.getItem("userPhoto") || "profile.jpg"; 
+  let userName = localStorage.getItem("userName") || "Profile";
+
+  // Agar user logged in hai, toh Supabase se latest profile details (Naam aur Photo) fetch karein
+  if (isLoggedIn && window.supabaseClient) {
+    try {
+      const user = await window.getCurrentUser();
+      if (user) {
+        const { data } = await window.supabaseClient
+          .from('profiles')
+          .select('full_name, avatar_url')
+          .eq('id', user.id)
+          .single();
+
+        if (data) {
+          if (data.full_name) {
+            userName = data.full_name;
+            localStorage.setItem("userName", userName);
+          } else {
+            userName = user.email ? user.email.split('@')[0] : "Profile";
+          }
+
+          if (data.avatar_url) {
+            userPhoto = data.avatar_url;
+            localStorage.setItem("userPhoto", userPhoto);
+          }
+        }
+      }
+    } catch (err) {
+      console.warn("Could not fetch profile for navbar:", err);
+    }
+  }
 
   if (isLoggedIn && authContainer) {
-    // Login link hatakar Profile link + Photo dikhayega
     authContainer.innerHTML = `
       <a href="profile.html" class="user-profile-link">
-        <img src="${userPhoto}" alt="Avatar" class="user-avatar">
-        <span>${userName}</span>
+        <img src="${userPhoto}" alt="Avatar" class="user-avatar" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">
+        <span style="font-weight: 600;">${userName}</span>
       </a>
     `;
   }
@@ -55,7 +83,10 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // ================= YEAR =================
-document.getElementById("year").textContent = new Date().getFullYear();
+const yearElement = document.getElementById("year");
+if (yearElement) {
+  yearElement.textContent = new Date().getFullYear();
+}
 
 // ================= MOTIVATION POPUP =================
 const quotes = [
@@ -163,8 +194,8 @@ const quotes = [
 
 // Create popup HTML
 const popupHTML = `
-<div class="popup" id="motivationPopup">
-  <div class="popup-content">
+<div class="popup" id="motivationPopup" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); justify-content:center; align-items:center; z-index:1000;">
+  <div class="popup-content" style="background:#e0e5ec; padding:20px; border-radius:16px; max-width:300px; text-align:center;">
     <p id="motivationText"></p>
   </div>
 </div>`;
@@ -178,102 +209,105 @@ function showMotivation() {
   setTimeout(() => popup.style.display = "none", 7000);
 }
 
-// Close popup when clicking outside content
-document.getElementById("motivationPopup").addEventListener("click", e => {
-  if(e.target.id === "motivationPopup") e.target.style.display = "none";
-});
+const motivationPopupElem = document.getElementById("motivationPopup");
+if (motivationPopupElem) {
+  motivationPopupElem.addEventListener("click", e => {
+    if(e.target.id === "motivationPopup") e.target.style.display = "none";
+  });
+}
+
 // ================= CANVAS STARS BACKGROUND =================
 const c = document.getElementById("bgCanvas");
-const ctx = c.getContext("2d");
-
-// Create dots (stars)
-let dots = [];
-function createDots() {
-  const numDots = Math.floor(window.innerWidth / 25); // adjust density
-  dots = [];
-  for (let i = 0; i < numDots; i++) {
-    dots.push({
-      x: Math.random() * c.width,
-      y: Math.random() * c.height,
-      r: 1.5 + Math.random() * 2,
-      dx: (Math.random() - 0.5) * 0.4,
-      dy: (Math.random() - 0.5) * 0.4
-    });
+if (c) {
+  const ctx = c.getContext("2d");
+  let dots = [];
+  
+  function createDots() {
+    const numDots = Math.floor(window.innerWidth / 25);
+    dots = [];
+    for (let i = 0; i < numDots; i++) {
+      dots.push({
+        x: Math.random() * c.width,
+        y: Math.random() * c.height,
+        r: 1.5 + Math.random() * 2,
+        dx: (Math.random() - 0.5) * 0.4,
+        dy: (Math.random() - 0.5) * 0.4
+      });
+    }
   }
-}
 
-// Resize canvas
-function resizeCanvas() {
-  c.width = window.innerWidth;
-  c.height = window.innerHeight;
-  createDots();
-}
-window.addEventListener("resize", resizeCanvas);
-resizeCanvas();
+  function resizeCanvas() {
+    c.width = window.innerWidth;
+    c.height = window.innerHeight;
+    createDots();
+  }
+  window.addEventListener("resize", resizeCanvas);
+  resizeCanvas();
 
-// Animate stars
-function animateDots() {
-  ctx.clearRect(0, 0, c.width, c.height);
-  dots.forEach(d => {
-    ctx.beginPath();
-    ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
-    ctx.fillStyle = "rgba(255,255,255,0.25)";
-    ctx.fill();
-    d.x += d.dx;
-    d.y += d.dy;
-    if (d.x < 0 || d.x > c.width) d.dx *= -1;
-    if (d.y < 0 || d.y > c.height) d.dy *= -1;
-  });
-  requestAnimationFrame(animateDots);
+  function animateDots() {
+    ctx.clearRect(0, 0, c.width, c.height);
+    dots.forEach(d => {
+      ctx.beginPath();
+      ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(255,255,255,0.25)";
+      ctx.fill();
+      d.x += d.dx;
+      d.y += d.dy;
+      if (d.x < 0 || d.x > c.width) d.dx *= -1;
+      if (d.y < 0 || d.y > c.height) d.dy *= -1;
+    });
+    requestAnimationFrame(animateDots);
+  }
+  animateDots();
 }
-animateDots();
 
 // ================= FULL-WIDTH CINEMATIC WAVE =================
 const wavePathBottom = document.getElementById("waveBottomPath");
-let t = 0;
+if (wavePathBottom) {
+  let t = 0;
+  function animateWave() {
+    t += 0.015;
+    const waveHeight = 120;     
+    const amplitude1 = 18;      
+    const amplitude2 = 10;      
+    const frequency1 = 0.007;   
+    const frequency2 = 0.014;
+    const bottomLimit = 220;    
 
-function animateWave() {
-  t += 0.015; // speed of wave animation
+    let d = `M0 ${waveHeight} `;
+    for (let x = 0; x <= window.innerWidth; x += 5) {
+      const y = waveHeight
+                + Math.sin(x * frequency1 + t) * amplitude1
+                + Math.sin(x * frequency2 + t * 1.3) * amplitude2;
+      d += `L ${x} ${y} `;
+    }
+    d += `L ${window.innerWidth} ${bottomLimit} L0 ${bottomLimit} Z`;
 
-  const waveHeight = 120;     // base height (higher than before)
-  const amplitude1 = 18;      // primary wave
-  const amplitude2 = 10;      // secondary wave
-  const frequency1 = 0.007;   // controls wavelength
-  const frequency2 = 0.014;
-  const bottomLimit = 220;    // bottom padding
-
-  let d = `M0 ${waveHeight} `;
-  for (let x = 0; x <= window.innerWidth; x += 5) {
-    const y = waveHeight
-              + Math.sin(x * frequency1 + t) * amplitude1
-              + Math.sin(x * frequency2 + t * 1.3) * amplitude2;
-    d += `L ${x} ${y} `;
+    wavePathBottom.setAttribute("d", d);
+    requestAnimationFrame(animateWave);
   }
-  d += `L ${window.innerWidth} ${bottomLimit} L0 ${bottomLimit} Z`;
-
-  wavePathBottom.setAttribute("d", d);
-  requestAnimationFrame(animateWave);
+  animateWave();
 }
-animateWave();
+
 // ================= APP LOAD EFFECT =================
 window.addEventListener("load", () => {
   document.body.classList.add("app-loaded");
 });
 
-
 // share //
-const shareData = {
-  title: 'Roitx - Personal Study Hub',
-  text: 'Check out these amazing study notes and tools!',
-  url: 'https://roitx.github.io/'
-}
-
-const btn = document.querySelector('#share-button'); // Apne share button ki ID de do
-
-btn.addEventListener('click', async () => {
-  try {
-    await navigator.share(shareData);
-  } catch (err) {
-    console.log('Error: ' + err);
+const shareBtn = document.querySelector('#share-button');
+if (shareBtn) {
+  const shareData = {
+    title: 'Roitx - Personal Study Hub',
+    text: 'Check out these amazing study notes and tools!',
+    url: 'https://roitx.github.io/'
   }
-});
+
+  shareBtn.addEventListener('click', async () => {
+    try {
+      await navigator.share(shareData);
+    } catch (err) {
+      console.log('Error: ' + err);
+    }
+  });
+}
