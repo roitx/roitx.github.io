@@ -552,4 +552,200 @@ function update() {
         if (target) {
             let tx = target.x + target.w/2, ty = target.y + target.h/2;
             let angle = Math.atan2(ty - m.y, tx - m.x);
-            m.vx += Math.cos(angle)
+            m.vx += Math.cos(angle) * 0.65;
+            m.vy += Math.sin(angle) * 0.65;
+        } else {
+            m.vy -= 0.3;
+        }
+        m.x += m.vx; m.y += m.vy;
+        ctx.fillStyle = "#facc15"; ctx.fillRect(m.x - 2, m.y - 2, 5, 10);
+
+        if (m.y < -20 || m.y > canvas.height || m.x < 0 || m.x > canvas.width) missiles.splice(i, 1);
+    });
+
+    // Asteroids
+    asteroids.forEach((a, i) => {
+        if (!timeFreeze) { a.y += a.speed; a.rot += a.vRot; }
+        ctx.save();
+        ctx.translate(a.x + a.w/2, a.y + a.h/2);
+        ctx.rotate(a.rot);
+        ctx.fillStyle = "#64748b"; ctx.fillRect(-a.w/2, -a.h/2, a.w, a.h);
+        ctx.restore();
+
+        if (a.y > canvas.height) asteroids.splice(i, 1);
+
+        if (a.x < player.x + player.w && a.x + a.w > player.x && a.y < player.y + player.h && a.y + a.h > player.y) {
+            asteroids.splice(i, 1); hitPlayer();
+        }
+    });
+
+    // Coins
+    coinDrops.forEach((c, i) => {
+        c.y += 2.2;
+        ctx.fillStyle = "#ffd600";
+        ctx.beginPath(); ctx.arc(c.x, c.y, c.size/2, 0, Math.PI*2); ctx.fill();
+
+        if (c.x < player.x + player.w && c.x + c.size > player.x && c.y < player.y + player.h && c.y + c.size > player.y) {
+            coins += 10;
+            addFloatingText(c.x, c.y, "+10 🪙", "#ffd600");
+            coinDrops.splice(i, 1); updateHUD();
+            saveUserData();
+        }
+    });
+
+    // Powerups
+    powerups.forEach((p, i) => {
+        p.y += 1.8;
+        ctx.fillStyle = p.type === "shield" ? "#38bdf8" : p.type === "health" ? "#22c55e" : "#a855f7";
+        ctx.fillRect(p.x, p.y, p.size, p.size);
+
+        if (p.x < player.x + player.w && p.x + p.size > player.x && p.y < player.y + player.h && p.y + p.size > player.y) {
+            if (p.type === "shield") player.shield = true;
+            if (p.type === "health") lives = Math.min(shipTypes[selectedShip].hp + 10, lives + 4);
+            if (p.type === "triple") {
+                player.triplePower = true;
+                setTimeout(() => player.triplePower = false, 7500);
+            }
+            powerups.splice(i, 1); updateHUD();
+        }
+    });
+
+    // Enemies Loop
+    if (!monsterActive && Math.random() < 0.038) spawnEnemy();
+    for (let i = enemies.length - 1; i >= 0; i--) {
+        let e = enemies[i];
+        if (!timeFreeze) {
+            e.y += e.speed;
+            e.x += Math.sin(e.y * 0.05 + e.sineOffset) * 2 + (e.flankDir * 0.4);
+        }
+        
+        if (typeof drawEnemy === "function") drawEnemy(ctx, e);
+
+        if (e.y > canvas.height) { enemies.splice(i, 1); hitPlayer(); }
+
+        for (let j = bullets.length - 1; j >= 0; j--) {
+            let b = bullets[j];
+            if (b.x < e.x + e.w && b.x + b.size > e.x && b.y < e.y + e.h && b.y + 16 > e.y) {
+                comboTimer = 130; combo = Math.min(5, combo + 1);
+                addFloatingText(e.x, e.y, "+" + (10 * combo));
+                spawnPowerup(e.x, e.y);
+                explode(e.x + e.w/2, e.y + e.h/2, "#f43f5e", 10);
+                enemies.splice(i, 1); bullets.splice(j, 1);
+                score += 10 * combo; updateHUD();
+                if (score > 0 && score % 250 === 0) spawnMonster();
+                if (score % 350 === 0) level++;
+                break;
+            }
+        }
+
+        missiles.forEach((m, mIdx) => {
+            if (m.x > e.x && m.x < e.x + e.w && m.y > e.y && m.y < e.y + e.h) {
+                explode(e.x + e.w/2, e.y + e.h/2, "#facc15", 14);
+                enemies.splice(i, 1); missiles.splice(mIdx, 1);
+                score += 15 * combo; updateHUD();
+            }
+        });
+
+        if (e.x < player.x + player.w && e.x + e.w > player.x && e.y < player.y + player.h && e.y + e.h > player.y) {
+            enemies.splice(i, 1); hitPlayer();
+        }
+    }
+
+    // Boss Monster Logic
+    if (monsterActive && monster) {
+        if (!timeFreeze) {
+            if (monster.y < 80) monster.y += 2;
+            else {
+                monster.x += monster.speed * monster.dir;
+                if (monster.x + monster.w > canvas.width || monster.x < 0) monster.dir *= -1;
+
+                monster.angle += 0.14;
+                let hpRatio = monster.hp / monster.maxHp;
+
+                if (hpRatio < 0.2) monster.phase = 3;
+                else if (hpRatio < 0.55) monster.phase = 2;
+
+                if (Math.random() < (monster.phase === 3 ? 0.22 : 0.13)) {
+                    let mCenterX = monster.x + monster.w / 2;
+                    let mCenterY = monster.y + monster.h / 2;
+
+                    if (monster.phase === 1) {
+                        enemyBullets.push({ x: mCenterX, y: mCenterY, vx: (Math.random() - 0.5) * 5, vy: 4.5 });
+                    } else if (monster.phase === 2) {
+                        let dx = (player.x + player.w/2) - mCenterX;
+                        let dy = (player.y + player.h/2) - mCenterY;
+                        let angle = Math.atan2(dy, dx);
+                        enemyBullets.push({ x: mCenterX, y: mCenterY, vx: Math.cos(angle) * 5.5, vy: Math.sin(angle) * 5.5 });
+                    } else if (monster.phase === 3) {
+                        for(let a = 0; a < Math.PI * 2; a += Math.PI / 4) {
+                            enemyBullets.push({ x: mCenterX, y: mCenterY, vx: Math.cos(a) * 4, vy: Math.sin(a) * 4 });
+                        }
+                    }
+                }
+            }
+        }
+
+        // Draw Boss
+        ctx.fillStyle = "#ef4444";
+        ctx.fillRect(monster.x, monster.y, monster.w, monster.h);
+        // Health bar
+        ctx.fillStyle = "rgba(255,255,255,0.3)";
+        ctx.fillRect(monster.x, monster.y - 12, monster.w, 6);
+        ctx.fillStyle = "#22c55e";
+        ctx.fillRect(monster.x, monster.y - 12, (monster.hp / monster.maxHp) * monster.w, 6);
+
+        // Player bullets vs Boss
+        for (let j = bullets.length - 1; j >= 0; j--) {
+            let b = bullets[j];
+            if (b.x > monster.x && b.x < monster.x + monster.w && b.y > monster.y && b.y < monster.y + monster.h) {
+                monster.hp -= 2;
+                bullets.splice(j, 1);
+                explode(b.x, b.y, "#ef4444", 4);
+                if (monster.hp <= 0) {
+                    explode(monster.x + monster.w/2, monster.y + monster.h/2, "#f43f5e", 40);
+                    score += 200;
+                    monsterActive = false;
+                    monster = null;
+                    updateHUD();
+                    break;
+                }
+            }
+        }
+    }
+
+    // Enemy Bullets Logic
+    enemyBullets.forEach((eb, i) => {
+        eb.x += eb.vx; eb.y += eb.vy;
+        ctx.fillStyle = "#f43f5e";
+        ctx.beginPath(); ctx.arc(eb.x, eb.y, 4, 0, Math.PI * 2); ctx.fill();
+
+        if (eb.x < player.x + player.w && eb.x > player.x && eb.y < player.y + player.h && eb.y > player.y) {
+            enemyBullets.splice(i, 1);
+            hitPlayer();
+        }
+        if (eb.y > canvas.height || eb.y < 0 || eb.x < 0 || eb.x > canvas.width) enemyBullets.splice(i, 1);
+    });
+
+    // Particles Render
+    particles.forEach((p, i) => {
+        p.x += p.vx; p.y += p.vy; p.l--;
+        ctx.fillStyle = p.c;
+        ctx.fillRect(p.x, p.y, p.s, p.s);
+        if (p.l <= 0) particles.splice(i, 1);
+    });
+
+    // Floating Text Render
+    floatingTexts.forEach((ft, i) => {
+        ft.y += ft.vy; ft.alpha -= 0.02;
+        ctx.fillStyle = ft.color;
+        ctx.globalAlpha = Math.max(0, ft.alpha);
+        ctx.font = "bold 13px sans-serif";
+        ctx.fillText(ft.text, ft.x, ft.y);
+        if (ft.alpha <= 0) floatingTexts.splice(i, 1);
+    });
+    ctx.globalAlpha = 1.0;
+
+    ctx.restore();
+    requestAnimationFrame(update);
+}
+
