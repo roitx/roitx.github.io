@@ -8,15 +8,17 @@ const sideMenu = document.querySelector(".side-menu");
 const overlay = document.getElementById("overlay");
 const menuBtn = document.getElementById("menuBtn");  
 
-menuBtn.addEventListener("click", () => {
-  sideMenu.classList.toggle("open");
-  overlay.classList.toggle("show");
-});
+if (menuBtn && sideMenu && overlay) {
+  menuBtn.addEventListener("click", () => {
+    sideMenu.classList.toggle("open");
+    overlay.classList.toggle("show");
+  });
 
-overlay.addEventListener("click", () => {
-  sideMenu.classList.remove("open");
-  overlay.classList.remove("show");
-});
+  overlay.addEventListener("click", () => {
+    sideMenu.classList.remove("open");
+    overlay.classList.remove("show");
+  });
+}
 
 // ================= DOM LOADED =================
 document.addEventListener("DOMContentLoaded", async () => {
@@ -34,17 +36,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  
-// ================= DYNAMIC AUTH / PROFILE LOGIC =================
-document.addEventListener("DOMContentLoaded", async () => {
+  // ================= DYNAMIC AUTH / PROFILE LOGIC =================
   const authContainer = document.getElementById("navAuthContainer");
   const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
 
-  // 1. Pehle LocalStorage se fast load kar lo taaki turant naam dikhe
+  // 1. Pehle LocalStorage se fast load karein taaki turant naam dikhe
   let userName = localStorage.getItem("userName") || "Profile";
   let userPhoto = localStorage.getItem("userPhoto") || "profile.jpg";
 
-  // Agar already naam saved hai aur default/email nahi hai, toh render kar do
   if (isLoggedIn && authContainer) {
     authContainer.innerHTML = `
       <a href="profile.html" class="user-profile-link">
@@ -67,15 +66,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         if (data && data.full_name) {
           userName = data.full_name;
-          localStorage.setItem("userName", userName); // LocalStorage ko update kiya
+          localStorage.setItem("userName", userName);
         }
 
         if (data && data.avatar_url) {
           userPhoto = data.avatar_url;
-          localStorage.setItem("userPhoto", userPhoto); // Photo update kiya
+          localStorage.setItem("userPhoto", userPhoto);
         }
 
-        // Agar DOM pehle render ho gaya tha, toh fresh data ke sath dobara update kar do
         if (authContainer) {
           authContainer.innerHTML = `
             <a href="profile.html" class="user-profile-link">
@@ -90,7 +88,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 });
-
 
 // ================= YEAR =================
 const yearElement = document.getElementById("year");
