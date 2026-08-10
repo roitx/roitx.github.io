@@ -1,5 +1,4 @@
 // Dropdown se direct notes-viewer.html par bhejne ke liye function
-
 function loadPdf() {
   const classSelect = document.getElementById("classSelect");
   const subjectSelect = document.getElementById("subjectSelect");
