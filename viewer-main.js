@@ -2,7 +2,6 @@
    ROITX ELITE VIEWER — ADVANCED FIXED & UPGRADED ENGINE
    ===================================================== */
 
-// 1. Activity Tracking Helper Function (Errors se bachne ke liye yahan define hai)
 function trackActivityLocally(fileData, isDownloaded = false) {
     try {
         let recent = JSON.parse(localStorage.getItem("recentFiles") || "[]");
@@ -19,8 +18,8 @@ function trackActivityLocally(fileData, isDownloaded = false) {
         recent = recent.filter(f => f.url !== fileData.url);
         recent.unshift({
             title: fileData.title,
-            url: fileData.url,
-            meta: fileData.meta || "Viewed",
+            url: rawPath,
+            meta: "Notes Viewer",
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             downloaded: alreadyDownloaded
         });
@@ -42,7 +41,7 @@ let zoomScale = 1.2;
 let rotation = 0;
 let isUIVisible = true;
 let renderTask = null;
-let currentBlobUrl = null; // Download reference ke liye variable
+let currentBlobUrl = null;
 
 async function initReader() {
     if (!rawPath || rawPath === "null") {
@@ -73,7 +72,6 @@ async function initReader() {
 function startEngine(blob) {
     currentBlobUrl = URL.createObjectURL(blob);
     
-    // ⚡ Track View Activity
     trackActivityLocally({
         title: docName || "PDF Document",
         url: rawPath,
@@ -86,7 +84,6 @@ function startEngine(blob) {
         dl.onclick = async (e) => {
             e.preventDefault();
             
-            // Session check add kar diya
             const { data: { session } } = await window.supabaseClient.auth.getSession();
             if (!session) {
                 alert("Notes download karne ke liye pehle Login karein.");
@@ -96,9 +93,15 @@ function startEngine(blob) {
             }
 
             const fileName = (docName || "document") + ".pdf";
-            window.secureDownload(currentBlobUrl, fileName);
+            
+            // Standard reliable download method for notes
+            const tempLink = document.createElement("a");
+            tempLink.href = currentBlobUrl;
+            tempLink.download = fileName;
+            document.body.appendChild(tempLink);
+            tempLink.click();
+            document.body.removeChild(tempLink);
 
-            // ⚡ Track Download Activity
             trackActivityLocally({
                 title: docName || "PDF Document",
                 url: rawPath,
@@ -109,13 +112,11 @@ function startEngine(blob) {
 
     pdfjsLib.getDocument(currentBlobUrl).promise.then(pdf => {
         pdfDoc = pdf;
-        
         const slider = document.getElementById("page-slider");
         if (slider) {
             slider.max = pdf.numPages;
             slider.value = 1;
         }
-        
         document.getElementById("master-loader").style.display = "none";
         renderPage(1);
     });
@@ -148,7 +149,6 @@ async function renderPage(num) {
     
     renderTask = page.render({ canvasContext: ctx, viewport: viewport });
     
-    // UI Updates
     const indicator = document.getElementById("page-indicator-top");
     if (indicator) indicator.innerText = `Page ${num} of ${pdfDoc.numPages}`;
     
@@ -159,7 +159,6 @@ async function renderPage(num) {
     if (zoomVal) zoomVal.innerText = Math.round(zoomScale * 100) + "%";
 }
 
-/* UI INTERACTIONS & NAVIGATION */
 window.handleViewportClick = (e) => {
     if (e.clientY < 80 || e.clientY > window.innerHeight - 80) return;
     isUIVisible = !isUIVisible;
@@ -175,7 +174,6 @@ window.navPage = (dir) => {
     }
 };
 
-/* FIXED & REFACTOR ZOOM CONTROLS */
 window.adjustZoom = (delta) => {
     const newZoom = parseFloat((zoomScale + delta).toFixed(2));
     if (newZoom >= 0.5 && newZoom <= 3.5) {
@@ -216,7 +214,6 @@ function showError(path) {
     </div>`;
 }
 
-// Slider logic with live bubble update
 const slider = document.getElementById("page-slider");
 if (slider) {
     const bubble = document.getElementById("bubble-tip");
