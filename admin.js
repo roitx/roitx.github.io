@@ -439,7 +439,7 @@ document.addEventListener("DOMContentLoaded", () => {
   updateStats();
 });
 
-/* ---------- PART 5: DOUBTS & OVERLAY SYSTEM ---------- */
+/* ---------- PART 5: DOUBTS & OVERLAY SYSTEM (WITH USER PHOTO, NAME & EMAIL) ---------- */
 document.addEventListener("DOMContentLoaded", () => {
   const doubtBtn   = document.getElementById("doubtBtn");
   const doubtPanel = document.getElementById("doubtPanel");
@@ -484,10 +484,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
     doubtList.innerHTML = "";
     data.slice(0, 5).forEach(d => {
+      const userPhotoHtml = d.user_photo 
+        ? `<img src="${d.user_photo}" style="width:26px; height:26px; border-radius:50%; object-fit:cover; margin-right:6px;">` 
+        : `<div style="width:26px; height:26px; border-radius:50%; background:#1f3554; display:inline-flex; align-items:center; justify-content:center; margin-right:6px; font-size:11px; font-weight:bold;">${(d.user_name || 'U').charAt(0).toUpperCase()}</div>`;
+
       doubtList.innerHTML += `
-        <div style="padding:8px; border-bottom:1px solid #2f4d77; font-size:13px;">
-          <b>❓ ${d.question}</b><br>
-          <span style="font-size:11px;">${d.status === "solved" ? "🟢 Solved" : "🟡 Pending"}</span>
+        <div style="padding:8px; border-bottom:1px solid #2f4d77; font-size:13px; display:flex; align-items:flex-start;">
+          <div>${userPhotoHtml}</div>
+          <div style="flex:1; overflow:hidden;">
+            <div style="font-weight:bold; color:#3aa0ff; font-size:12px;">${d.user_name || 'Anonymous'}</div>
+            <div style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"><b>❓ ${d.question}</b></div>
+            <span style="font-size:11px;">${d.status === "solved" ? "🟢 Solved" : "🟡 Pending"}</span>
+          </div>
         </div>
       `;
     });
@@ -523,17 +531,32 @@ document.addEventListener("DOMContentLoaded", () => {
 
     overlayList.innerHTML = "";
     data.forEach(d => {
+      const userPhotoHtml = d.user_photo 
+        ? `<img src="${d.user_photo}" style="width:38px; height:38px; border-radius:50%; object-fit:cover; margin-right:10px;">` 
+        : `<div style="width:38px; height:38px; border-radius:50%; background:#1f3554; display:flex; align-items:center; justify-content:center; margin-right:10px; font-weight:bold; font-size:16px;">${(d.user_name || 'U').charAt(0).toUpperCase()}</div>`;
+
       overlayList.innerHTML += `
-        <div class="admin-doubt-card">
-          <p><b>❓ ${d.question}</b></p>
+        <div class="admin-doubt-card" style="background:#15263c; border:1px solid #2e4a73; padding:14px; border-radius:10px; margin-bottom:12px;">
+          <div style="display:flex; align-items:center; margin-bottom:10px; border-bottom:1px solid #2e4a73; padding-bottom:8px;">
+            ${userPhotoHtml}
+            <div>
+              <div style="font-weight:bold; font-size:14px; color:#e9f2ff;">${d.user_name || 'Anonymous User'}</div>
+              <div style="font-size:12px; color:#94a3b8;">📧 ${d.user_email || 'No Email'} • 🕒 ${new Date(d.created_at).toLocaleString()}</div>
+            </div>
+          </div>
+          
+          <p style="margin:6px 0 10px 0; color:#e9f2ff; font-size:14px;"><b>❓ Question:</b> ${d.question}</p>
+          
           ${d.status === "solved" ? `
-            <div style="margin:8px 0; font-size:13px; color:#4ade80;">${d.answer.replace(/\n/g,"<br>")}</div>
+            <div style="margin:8px 0; font-size:13px; color:#4ade80; background:#0e1a2a; padding:8px; border-radius:6px;">
+              <b>Answer:</b><br>${d.answer ? d.answer.replace(/\n/g,"<br>") : ''}
+            </div>
             <div class="admin-actions">
               <button class="delete" onclick="deleteDoubt('${d.id}')">🗑 Delete</button>
             </div>
           ` : `
-            <input id="greet_${d.id}" type="text" placeholder="Greeting message (optional)...">
-            <textarea id="ans_${d.id}" placeholder="Type solution/answer here..."></textarea>
+            <input id="greet_${d.id}" type="text" placeholder="Greeting message (optional)..." style="width:100%; padding:8px; margin-bottom:6px; background:#1f3554; border:1px solid #2e4a73; color:white; border-radius:6px; box-sizing:border-box;">
+            <textarea id="ans_${d.id}" placeholder="Type solution/answer here..." style="width:100%; padding:8px; margin-bottom:6px; background:#1f3554; border:1px solid #2e4a73; color:white; border-radius:6px; resize:vertical; box-sizing:border-box; height:60px;"></textarea>
             <div class="admin-actions">
               <button class="publish" onclick="publishAnswer('${d.id}')">✅ Publish Answer</button>
               <button class="delete" onclick="deleteDoubt('${d.id}')">🗑 Delete</button>

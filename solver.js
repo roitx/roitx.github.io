@@ -43,27 +43,60 @@ function getSessionId() {
 }
 
 /* =====================================================
-   PART 3 — SEND FEEDBACK / QUESTION TO ADMIN
+   PART 3 — SEND FEEDBACK / QUESTION TO ADMIN (AUTH & USER DETAILS)
    Keep database table name 'doubts' untouched for safety!
    ===================================================== */
 
 async function sendToAdmin(customQuestion = null) {
+  // 1. Check if user is logged in
+  const user = await window.getCurrentUser();
+  if (!user) {
+    alert("🔒 Feedback bhejne ke liye login karna zaroori hai!");
+    sessionStorage.setItem("redirect_after_login", window.location.href);
+    window.location.href = window.getPageUrl ? window.getPageUrl("login.html") : "login.html";
+    return;
+  }
+
   const question = customQuestion || getQuestion();
   if (!question) {
     alert("❌ Kripya koi question ya feedback likhein.");
     return;
   }
 
+  // 2. Fetch user profile details (Name & Photo) from 'profiles' table
+  let fullName = user.email ? user.email.split('@')[0] : "User";
+  let avatarUrl = "";
+
+  try {
+    const { data: profileData } = await window.supabaseClient
+      .from('profiles')
+      .select('full_name, avatar_url')
+      .eq('id', user.id)
+      .single();
+
+    if (profileData) {
+      if (profileData.full_name) fullName = profileData.full_name;
+      if (profileData.avatar_url) avatarUrl = profileData.avatar_url;
+    }
+  } catch (err) {
+    console.warn("Could not fetch user profile details for feedback:", err);
+  }
+
+  // 3. Insert into 'doubts' table along with Name, Email & Photo
   const { error } = await window.supabaseClient
     .from("doubts") // Kept as 'doubts' to protect database!
     .insert([{
       question: question,
       status: "pending",
-      session_id: getSessionId()
+      session_id: getSessionId(),
+      user_id: user.id,
+      user_email: user.email,
+      user_name: fullName,
+      user_photo: avatarUrl
     }]);
 
   if (error) {
-    alert("❌ Error sending feedback");
+    alert("❌ Error sending feedback: " + error.message);
     console.error(error);
   } else {
     alert("✅ Feedback Admin ko bhej diya gaya hai!");
