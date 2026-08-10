@@ -2,6 +2,36 @@
    ROITX IMAGE ELITE — ENGINE (SUPABASE + CANVAS ANNOTATOR)
    ===================================================== */
 
+// 1. Activity Tracking Helper Function
+function trackActivityLocally(fileData, isDownloaded = false) {
+    try {
+        let recent = JSON.parse(localStorage.getItem("recentFiles") || "[]");
+        let downloads = JSON.parse(localStorage.getItem("downloadedFiles") || "[]");
+
+        if (isDownloaded && !downloads.some(f => f.url === fileData.url)) {
+            fileData.timeDownloaded = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            downloads.unshift(fileData);
+            localStorage.setItem("downloadedFiles", JSON.stringify(downloads));
+        }
+
+        const alreadyDownloaded = downloads.some(f => f.url === fileData.url) || isDownloaded;
+
+        recent = recent.filter(f => f.url !== fileData.url);
+        recent.unshift({
+            title: fileData.title,
+            url: fileData.url,
+            meta: fileData.meta || "Viewed",
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            downloaded: alreadyDownloaded
+        });
+
+        recent = recent.slice(0, 10);
+        localStorage.setItem("recentFiles", JSON.stringify(recent));
+    } catch (e) {
+        console.error("Tracking Error: ", e);
+    }
+}
+
 let zoomScale = 1.0;
 let rotation = 0;
 let isUIVisible = true;
@@ -42,6 +72,13 @@ async function initImageViewer() {
             canvas.height = img.clientHeight;
             document.getElementById("master-loader").style.display = "none";
             setupCanvasEvents();
+
+            // ⚡ Track View Activity (Image Opened)
+            trackActivityLocally({
+                title: docName || "Image Asset",
+                url: rawPath,
+                meta: "Image Viewer"
+            }, false);
         };
     } catch (err) {
         showError(finalPath);
@@ -222,6 +259,13 @@ async function downloadImage() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+
+    // ⚡ Track Download Activity (Marked as Downloaded)
+    trackActivityLocally({
+        title: docName || "Image Asset",
+        url: rawPath,
+        meta: "Image Viewer"
+    }, true);
 }
 
 function showError(path) {

@@ -2,6 +2,36 @@
    ROITX ELITE VIEWER — ADVANCED FIXED & UPGRADED ENGINE
    ===================================================== */
 
+// 1. Activity Tracking Helper Function (Errors se bachne ke liye yahan define hai)
+function trackActivityLocally(fileData, isDownloaded = false) {
+    try {
+        let recent = JSON.parse(localStorage.getItem("recentFiles") || "[]");
+        let downloads = JSON.parse(localStorage.getItem("downloadedFiles") || "[]");
+
+        if (isDownloaded && !downloads.some(f => f.url === fileData.url)) {
+            fileData.timeDownloaded = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            downloads.unshift(fileData);
+            localStorage.setItem("downloadedFiles", JSON.stringify(downloads));
+        }
+
+        const alreadyDownloaded = downloads.some(f => f.url === fileData.url) || isDownloaded;
+
+        recent = recent.filter(f => f.url !== fileData.url);
+        recent.unshift({
+            title: fileData.title,
+            url: fileData.url,
+            meta: fileData.meta || "Viewed",
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            downloaded: alreadyDownloaded
+        });
+
+        recent = recent.slice(0, 10);
+        localStorage.setItem("recentFiles", JSON.stringify(recent));
+    } catch (e) {
+        console.error("Tracking Error: ", e);
+    }
+}
+
 const params = new URLSearchParams(location.search);
 let rawPath = params.get("path"); 
 const docName = params.get("name");
@@ -42,6 +72,14 @@ async function initReader() {
 
 function startEngine(blob) {
     currentBlobUrl = URL.createObjectURL(blob);
+    
+    // ⚡ Track View Activity
+    trackActivityLocally({
+        title: docName || "PDF Document",
+        url: rawPath,
+        meta: "Notes Viewer"
+    }, false);
+
     const dl = document.getElementById("download-trigger");
     if (dl) { 
         dl.removeAttribute("href"); 
@@ -59,6 +97,13 @@ function startEngine(blob) {
 
             const fileName = (docName || "document") + ".pdf";
             window.secureDownload(currentBlobUrl, fileName);
+
+            // ⚡ Track Download Activity
+            trackActivityLocally({
+                title: docName || "PDF Document",
+                url: rawPath,
+                meta: "Notes Viewer"
+            }, true);
         };
     }
 
