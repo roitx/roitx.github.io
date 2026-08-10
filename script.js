@@ -34,14 +34,26 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  // 👇 ================= DYNAMIC AUTH / PROFILE LOGIC ================= 👇
+// ================= DYNAMIC AUTH / PROFILE LOGIC =================
+document.addEventListener("DOMContentLoaded", async () => {
   const authContainer = document.getElementById("navAuthContainer");
-
   const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
-  let userPhoto = localStorage.getItem("userPhoto") || "profile.jpg"; 
-  let userName = localStorage.getItem("userName") || "Profile";
 
-  // Agar user logged in hai, toh Supabase se latest profile details (Naam aur Photo) fetch karein
+  // 1. Pehle LocalStorage se fast load kar lo taaki turant naam dikhe
+  let userName = localStorage.getItem("userName") || "Profile";
+  let userPhoto = localStorage.getItem("userPhoto") || "profile.jpg";
+
+  // Agar already naam saved hai aur default/email nahi hai, toh render kar do
+  if (isLoggedIn && authContainer) {
+    authContainer.innerHTML = `
+      <a href="profile.html" class="user-profile-link">
+        <img src="${userPhoto}" alt="Avatar" class="user-avatar" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">
+        <span style="font-weight: 600;">${userName}</span>
+      </a>
+    `;
+  }
+
+  // 2. Background mein Supabase se latest fetch karke localStorage update kar do
   if (isLoggedIn && window.supabaseClient) {
     try {
       const user = await window.getCurrentUser();
@@ -52,35 +64,32 @@ document.addEventListener("DOMContentLoaded", async () => {
           .eq('id', user.id)
           .single();
 
-        if (data) {
-          if (data.full_name) {
-            userName = data.full_name;
-            localStorage.setItem("userName", userName);
-          } else {
-            userName = user.email ? user.email.split('@')[0] : "Profile";
-          }
+        if (data && data.full_name) {
+          userName = data.full_name;
+          localStorage.setItem("userName", userName); // LocalStorage ko update kiya
+        }
 
-          if (data.avatar_url) {
-            userPhoto = data.avatar_url;
-            localStorage.setItem("userPhoto", userPhoto);
-          }
+        if (data && data.avatar_url) {
+          userPhoto = data.avatar_url;
+          localStorage.setItem("userPhoto", userPhoto); // Photo update kiya
+        }
+
+        // Agar DOM pehle render ho gaya tha, toh fresh data ke sath dobara update kar do
+        if (authContainer) {
+          authContainer.innerHTML = `
+            <a href="profile.html" class="user-profile-link">
+              <img src="${userPhoto}" alt="Avatar" class="user-avatar" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">
+              <span style="font-weight: 600;">${userName}</span>
+            </a>
+          `;
         }
       }
     } catch (err) {
       console.warn("Could not fetch profile for navbar:", err);
     }
   }
-
-  if (isLoggedIn && authContainer) {
-    authContainer.innerHTML = `
-      <a href="profile.html" class="user-profile-link">
-        <img src="${userPhoto}" alt="Avatar" class="user-avatar" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">
-        <span style="font-weight: 600;">${userName}</span>
-      </a>
-    `;
-  }
-  // 👆 ================================================================ 👆
 });
+
 
 // ================= YEAR =================
 const yearElement = document.getElementById("year");
