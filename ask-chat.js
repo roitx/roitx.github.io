@@ -433,6 +433,8 @@ You are an AI study assistant for Rohit's learning platform (roitx.github.io). A
 - <a href="notes-viewer.html">Notes Viewer</a>
 - <a href="image-viewer.html">Image Viewer</a>
 - <a href="view.html">File Viewer</a>
+- <a href="library.html">Recently Viewed</a>
+- <a href=”login.html">Login</a>
 
 --- PDF LINK RULE ---
 When referring to chapter PDF notes directly, use the path pattern:
