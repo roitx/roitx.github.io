@@ -20,7 +20,7 @@ function trackActivityLocally(fileData, isDownloaded = false) {
         recent.unshift({
             title: fileData.title,
             url: fileData.url,
-            meta: fileData.meta || "Viewed",
+            meta: fileData.meta || "Image Viewer",
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             downloaded: alreadyDownloaded
         });
@@ -42,14 +42,18 @@ let drawingHistory = [];
 let isDrawing = false;
 let currentStroke = [];
 
+// Global scope variables taaki download aur view dono me track ho sake
+let rawPath = "";
+let docName = "";
+
 async function initImageViewer() {
     canvas = document.getElementById("drawCanvas");
     ctx = canvas.getContext("2d");
     img = document.getElementById("mainImage");
 
     const params = new URLSearchParams(location.search);
-    let rawPath = params.get("path");
-    const docName = params.get("name");
+    rawPath = params.get("path");
+    docName = params.get("name");
 
     if (!rawPath || rawPath === "null") {
         showError("No File Selected");
@@ -251,7 +255,7 @@ async function downloadImage() {
     exportCtx.drawImage(img, 0, 0);
     exportCtx.drawImage(canvas, 0, 0, img.naturalWidth, img.naturalHeight);
 
-    const fileName = `roitx_${document.getElementById("doc-title").innerText || "annotated"}.png`;
+    const fileName = `roitx_${docName || "annotated"}.png`;
     
     const link = document.createElement("a");
     link.download = fileName;
@@ -260,7 +264,7 @@ async function downloadImage() {
     link.click();
     document.body.removeChild(link);
 
-    // ⚡ Track Download Activity (Marked as Downloaded)
+    // ⚡ Track Download Activity (Marked as Downloaded with correct path)
     trackActivityLocally({
         title: docName || "Image Asset",
         url: rawPath,
