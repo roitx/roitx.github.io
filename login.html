@@ -309,14 +309,39 @@ function switchMode(mode) {
     linkBox.innerHTML = `
       <span>Remembered Password? <a onclick="switchMode('login')">Back to Login</a></span>
     `;
+  } else if (mode === "update_password") {
+    currentMode = "update_password";
+    titleText.innerText = "New Password";
+    subText.innerText = "SET YOUR NEW PASSWORD";
+    emailInput.style.display = "none";
+    passwordInput.style.display = "block";
+    passwordInput.placeholder = "Enter New Password";
+    toggleBtn.style.display = "inline-block";
+    googleBtn.style.display = "none";
+    mainBtn.innerText = "Save New Password";
+    linkBox.innerHTML = `<span><a onclick="switchMode('login')">Cancel & Login</a></span>`;
   }
 }
 
 // Automatically Detect Session or Reset Token on Load
 document.addEventListener("DOMContentLoaded", async () => {
+  // 1. Sabse pehle URL query ya Hash parameters check karein (Password Reset ke liye)
+  const urlParams = new URLSearchParams(window.location.search);
+  const isReset = urlParams.get('reset');
+  
+  // Supabase kabhi-kabhi recovery tokens hash (#type=recovery) mein bhejta hai
+  const hashString = window.location.hash.substring(1);
+  const hashParams = new URLSearchParams(hashString);
+  const type = hashParams.get('type');
+
+  if (isReset || type === 'recovery') {
+    switchMode("update_password");
+    return; // Yahin rok dein taaki auto-login check run na ho
+  }
+
+  // 2. Normal Auto-Login Check (Agar reset mode nahi hai)
   const user = await window.getCurrentUser();
   if (user) {
-    // 💡 LOCALSTORAGE SYNC ON AUTO-LOGIN
     localStorage.setItem("isLoggedIn", "true");
     localStorage.setItem("userName", user.email ? user.email.split('@')[0] : "Profile");
     localStorage.setItem("userPhoto", "profile.jpg");
@@ -333,23 +358,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       window.location.href = window.getPageUrl("profile.html");
     }
     return;
-  }
-
-  // Password Reset Handling
-  const urlParams = new URLSearchParams(window.location.search);
-  const isReset = urlParams.get('reset');
-
-  if (isReset) {
-    currentMode = "update_password";
-    titleText.innerText = "New Password";
-    subText.innerText = "SET YOUR NEW PASSWORD";
-    emailInput.style.display = "none";
-    passwordInput.style.display = "block";
-    passwordInput.placeholder = "Enter New Password";
-    toggleBtn.style.display = "inline-block";
-    googleBtn.style.display = "none";
-    mainBtn.innerText = "Save New Password";
-    linkBox.innerHTML = `<span><a onclick="switchMode('login')">Cancel & Login</a></span>`;
   }
 });
 
@@ -380,17 +388,15 @@ window.triggerErrorAnim = () => {
   }, 1500);
 };
 
-// Submissions Router (Modified to store LocalStorage session data)
+// Submissions Router
 async function handleAuthSubmit() {
   if (currentMode === "login" || currentMode === "signup") {
-    // Pehle existing auth function call karein
     if (currentMode === "login") {
       await window.loginUser();
     } else {
       await window.signUpUser();
     }
     
-    // Login/Signup ke baad agar user mil jata hai toh localStorage update kar do
     const user = await window.getCurrentUser();
     if (user) {
       localStorage.setItem("isLoggedIn", "true");
@@ -405,6 +411,7 @@ async function handleAuthSubmit() {
 }
 
 window.switchMode = switchMode;
+
 </script>
 
 </body>
