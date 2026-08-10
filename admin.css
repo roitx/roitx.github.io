@@ -185,25 +185,73 @@ textarea:focus {
   font-style: italic;
 }
 
-/* ================= LISTS ================= */
+/* ================= PERFECT FIT SIDE-BY-SIDE LAYOUT ================= */
 #fileList div,
 #eventList div,
 #formulaList div {
-  background: rgba(31,53,84,0.75);
-  padding: 10px 14px;
-  border-radius: 10px;
-  margin-top: 10px;
-  display: flex;
-  justify-content: space-between;
+  background: rgba(31, 53, 84, 0.75);
+  padding: 12px 14px;
+  border-radius: 12px;
+  margin-top: 12px;
+  
+  /* Grid layout taaki text aur buttons agal-bagal fit rahein */
+  display: grid;
+  grid-template-columns: 1fr auto; 
   align-items: center;
+  gap: 12px;
+  
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
   transition: 0.25s;
 }
 
 #fileList div:hover,
 #eventList div:hover,
 #formulaList div:hover {
-  background: rgba(58,160,255,0.12);
+  background: rgba(58, 160, 255, 0.12);
+  border-color: rgba(58, 160, 255, 0.3);
 }
+
+/* Text poora dikhega, wrap ho jayega aur overflow nahi hoga */
+#fileList div span, 
+#eventList div span, 
+#formulaList div span {
+  width: 100%;
+  word-break: break-word;
+  white-space: normal;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-main);
+  line-height: 1.4;
+  margin: 0;
+}
+
+/* Buttons container (Open & Delete) */
+#fileList div div,
+#eventList div div,
+#formulaList div div {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: flex-end;
+  background: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Buttons ka compact size taaki jagah na gherein */
+#fileList div button,
+#eventList div button,
+#formulaList div button {
+  margin-top: 0 !important;
+  padding: 6px 12px !important;
+  font-size: 12px !important;
+  border-radius: 8px !important;
+  white-space: nowrap;
+}
+
 
 /* ================= STATUS TEXT ================= */
 #uploadStatus,
@@ -634,4 +682,81 @@ input, textarea {
   -moz-user-select: text;
   -ms-user-select: text;
   user-select: text;
+}
+/* ================= ADVANCED STATS OVERVIEW SECTION ================= */
+.stats-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  position: relative;
+  background: linear-gradient(135deg, rgba(25, 45, 75, 0.7), rgba(11, 20, 35, 0.9));
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(58, 160, 255, 0.2);
+  border-radius: var(--radius);
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+/* Glow effect on hover */
+.stat-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--accent);
+  box-shadow: 0 15px 35px rgba(58, 160, 255, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Decorative background glowing orb */
+.stat-card::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 100px;
+  height: 100px;
+  background: var(--accent);
+  opacity: 0.1;
+  filter: blur(30px);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba(58, 160, 255, 0.12);
+  border: 1px solid rgba(58, 160, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-count {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-top: 2px;
 }

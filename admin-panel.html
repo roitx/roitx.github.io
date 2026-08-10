@@ -48,24 +48,35 @@
 
 <main>
 
-  <!-- ================= 📊 ADMIN STATS OVERVIEW ================= -->
-  <section class="box">
-    <h3>📊 Admin Data Overview</h3>
-    <div style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
-      <div style="background:#1e232d; padding:12px; border-radius:8px; flex:1; min-width:90px; text-align:center;">
-        <span id="totalNotesCount" style="font-size:20px; font-weight:bold; color:#38bdf8;">0</span><br>
-        <small style="color:#aaa;">Total Notes</small>
-      </div>
-      <div style="background:#1e232d; padding:12px; border-radius:8px; flex:1; min-width:90px; text-align:center;">
-        <span id="totalFormulasCount" style="font-size:20px; font-weight:bold; color:#38bdf8;">0</span><br>
-        <small style="color:#aaa;">Total Formulas</small>
-      </div>
-      <div style="background:#1e232d; padding:12px; border-radius:8px; flex:1; min-width:90px; text-align:center;">
-        <span id="totalEventsCount" style="font-size:20px; font-weight:bold; color:#38bdf8;">0</span><br>
-        <small style="color:#aaa;">Total Events</small>
-      </div>
+<div class="stats-container">
+  <!-- Total Notes / PDFs Card -->
+  <div class="stat-card">
+    <div class="stat-icon">📄</div>
+    <div class="stat-info">
+      <span class="stat-title">Total PDFs / Notes</span>
+      <span class="stat-count" id="totalNotesCount">0</span>
     </div>
-  </section>
+  </div>
+
+  <!-- Total Formulas Card -->
+  <div class="stat-card">
+    <div class="stat-icon">📐</div>
+    <div class="stat-info">
+      <span class="stat-title">Total Formulas</span>
+      <span class="stat-count" id="totalFormulasCount">0</span>
+    </div>
+  </div>
+
+  <!-- Total Events Card -->
+  <div class="stat-card">
+    <div class="stat-icon">📅</div>
+    <div class="stat-info">
+      <span class="stat-title">Calendar Events</span>
+      <span class="stat-count" id="totalEventsCount">0</span>
+    </div>
+  </div>
+</div>
+
 
   <!-- ================= 📤 UPLOAD NOTES (PDF) ================= -->
   <section class="box">

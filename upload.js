@@ -1,9 +1,8 @@
 /* =====================================================
    ROITX • REFERENCE BOOK UPLOAD (CHAPTER VERSION)
-   UPDATED WITH chapter_no
+   FULLY UPDATED WITH DYNAMIC AUTHOR, CLASS, SUBJECT FILTERS
    ===================================================== */
 
-/* DOM */
 const fileInput = document.getElementById("bookFile");
 const preview   = document.getElementById("previewName");
 const statusBox = document.getElementById("status");
@@ -11,8 +10,6 @@ const bookList  = document.getElementById("bookList");
 
 /* =====================================================
    AUTO NAME BUILDER
-   Format:
-   AUTHOR_Subject_ClassX_ChNo-ChName
    ===================================================== */
 function buildAutoName(){
   const author    = document.getElementById("authorInput").value.trim();
@@ -29,10 +26,13 @@ function buildAutoName(){
 /* LIVE PREVIEW */
 ["authorInput","subjectSelect","classSelect","chapter_noInput","chapterInput"]
 .forEach(id=>{
-  document.getElementById(id).addEventListener("input",()=>{
-    const name = buildAutoName();
-    preview.innerText = name ? "📘 " + name : "Select values to generate name";
-  });
+  const el = document.getElementById(id);
+  if(el){
+    el.addEventListener("input",()=>{
+      const name = buildAutoName();
+      if(preview) preview.innerText = name ? "📘 " + name : "Select values to generate name";
+    });
+  }
 });
 
 /* =====================================================
@@ -61,7 +61,7 @@ async function uploadBook(){
   const safeName = bookName.replace(/[^a-z0-9_-]/gi,"_");
   const ext      = file.name.split(".").pop();
 
-  statusBox.innerText = "⏳ Uploading book...";
+  if(statusBox) statusBox.innerText = "⏳ Uploading book...";
 
   /* STORAGE PATH */
   const storagePath =
@@ -74,7 +74,7 @@ async function uploadBook(){
       .upload(storagePath, file, { upsert:false });
 
   if(uploadError){
-    statusBox.innerText = "❌ Storage upload failed";
+    if(statusBox) statusBox.innerText = "❌ Storage upload failed";
     console.error(uploadError);
     return;
   }
@@ -94,40 +94,65 @@ async function uploadBook(){
         author: author,
         subject: subject,
         class_no: cls,
-        chapter_no: chapterNo,   // ✅ NEW
+        chapter_no: chapterNo,
         chapter: chapter,
         file_url: urlData.publicUrl,
         storage_path: storagePath
       }]);
 
   if(dbError){
-    statusBox.innerText = "❌ Database error";
+    if(statusBox) statusBox.innerText = "❌ Database error";
     console.error(dbError);
     return;
   }
 
-  statusBox.innerText = "✅ Book uploaded successfully";
-  fileInput.value="";
-  preview.innerText="Select values to generate name";
+  if(statusBox) statusBox.innerText = "✅ Book uploaded successfully";
+  fileInput.value = "";
+  if(preview) preview.innerText = "Select values to generate name";
 
-  loadBooks();
+  // Instant Refresh after upload
+  await loadBooks();
 }
 
 /* =====================================================
-   LOAD BOOK LIST (ORDER BY chapter_no)
+   POPULATE AUTHOR DROPDOWN DYNAMICALLY
+   ===================================================== */
+function updateAuthorDropdown(data) {
+  const authorSelect = document.getElementById("filterAuthor");
+  if (!authorSelect) return;
+
+  const currentSelected = authorSelect.value;
+  
+  // Unique authors extract karna
+  const authors = [...new Set(data.map(b => b.author))].sort();
+
+  authorSelect.innerHTML = '<option value="">All Authors</option>';
+  authors.forEach(author => {
+    const opt = document.createElement("option");
+    opt.value = author;
+    opt.textContent = author;
+    if (author === currentSelected) opt.selected = true;
+    authorSelect.appendChild(opt);
+  });
+}
+
+/* =====================================================
+   LOAD BOOK LIST (WITH SEARCH, DYNAMIC AUTHORS & LIMIT 20)
    ===================================================== */
 async function loadBooks(){
   if(!bookList) return;
 
   bookList.innerHTML = "⏳ Loading books...";
 
-  const { data, error } =
-    await window.supabaseClient
-      .from("ref_books")
-      .select("*")
-      .order("class_no",{ ascending:true })
-      .order("subject",{ ascending:true })
-      .order("chapter_no",{ ascending:true }); // ✅ FIXED ORDER
+  let query = window.supabaseClient
+    .from("ref_books")
+    .select("*")
+    .order("class_no",{ ascending:true })
+    .order("subject",{ ascending:true })
+    .order("chapter_no",{ ascending:true })
+    .limit(20);
+
+  const { data, error } = await query;
 
   if(error){
     bookList.innerHTML = "❌ Failed to load books";
@@ -135,14 +160,38 @@ async function loadBooks(){
     return;
   }
 
-  if(!data.length){
+  if(!data || data.length === 0){
     bookList.innerHTML = "<em>No books uploaded yet</em>";
+    return;
+  }
+
+  // Update author dropdown options based on available data
+  updateAuthorDropdown(data);
+
+  // Get values from filters
+  const searchVal  = document.getElementById("searchBook")?.value.toLowerCase().trim() || "";
+  const authorVal  = document.getElementById("filterAuthor")?.value || "";
+  const classVal   = document.getElementById("filterClass")?.value || "";
+  const subVal     = document.getElementById("filterSubject")?.value || "";
+
+  // Apply filters logic
+  const filtered = data.filter(b => {
+    const textMatch  = `${b.author} ${b.subject} ${b.chapter} Class ${b.class_no}`.toLowerCase().includes(searchVal);
+    const authorMatch= authorVal === "" || b.author === authorVal;
+    const classMatch = classVal === "" || String(b.class_no) === String(classVal);
+    const subMatch   = subVal === "" || b.subject === subVal;
+
+    return textMatch && authorMatch && classMatch && subMatch;
+  });
+
+  if(filtered.length === 0){
+    bookList.innerHTML = "<em>No matching books found</em>";
     return;
   }
 
   bookList.innerHTML = "";
 
-  data.forEach(b=>{
+  filtered.forEach(b=>{
     const div = document.createElement("div");
     div.className = "book-item";
 
@@ -155,12 +204,10 @@ async function loadBooks(){
       </div>
 
       <div class="book-actions">
-  <a href="${b.file_url}" target="_blank" class="view-btn">
-    👀 View
-  </a>
-</div>
-        <button class="danger"
-          onclick="deleteBook('${b.id}','${b.storage_path}')">
+        <a href="${b.file_url}" target="_blank" class="view-btn">
+          👀 View
+        </a>
+        <button class="danger" onclick="deleteBook('${b.id}','${b.storage_path}')">
           🗑
         </button>
       </div>
@@ -176,17 +223,33 @@ async function loadBooks(){
 async function deleteBook(id,path){
   if(!confirm("Delete this book permanently?")) return;
 
-  await window.supabaseClient.storage
+  const { error: storageError } = await window.supabaseClient.storage
     .from("admin-files")
     .remove([path]);
 
-  await window.supabaseClient
+  if(storageError) {
+    console.error(storageError);
+  }
+
+  const { error: dbError } = await window.supabaseClient
     .from("ref_books")
     .delete()
     .eq("id",id);
 
-  loadBooks();
+  if(dbError){
+    alert("❌ Delete failed");
+    return;
+  }
+
+  await loadBooks();
 }
 
-/* INIT */
-document.addEventListener("DOMContentLoaded", loadBooks);
+/* INIT & FILTER EVENT LISTENERS */
+document.addEventListener("DOMContentLoaded", () => {
+  loadBooks();
+  
+  document.getElementById("searchBook")?.addEventListener("input", loadBooks);
+  document.getElementById("filterAuthor")?.addEventListener("change", loadBooks);
+  document.getElementById("filterClass")?.addEventListener("change", loadBooks);
+  document.getElementById("filterSubject")?.addEventListener("change", loadBooks);
+});

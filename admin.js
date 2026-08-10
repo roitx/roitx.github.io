@@ -74,7 +74,10 @@ async function uploadFile() {
 
   if (msg) msg.innerText = "✅ Uploaded: " + fileName;
   if (fileInput) fileInput.value = "";
-  loadFiles();
+  
+  // Instant Refresh & Stats Update after upload
+  await loadFiles();
+  await updateStats();
 }
 
 async function loadFiles() {
@@ -107,6 +110,7 @@ async function loadFiles() {
 
   if (filtered.length === 0) {
     list.innerHTML = "<em>No matching notes found</em>";
+    updateStats();
     return;
   }
 
@@ -115,9 +119,9 @@ async function loadFiles() {
     const row = document.createElement("div");
     row.innerHTML = `
       <span>📄 <b>${file.name}</b></span>
-      <div style="display:flex; gap:6px;">
+      <div>
         <button onclick="openFile('${file.name}')">Open</button>
-        <button class="logout" style="padding:4px 10px; font-size:12px;" onclick="deleteFile('${file.name}')">🗑</button>
+        <button class="logout" style="padding:6px 12px; font-size:12px;" onclick="deleteFile('${file.name}')">🗑</button>
       </div>
     `;
     list.appendChild(row);
@@ -133,8 +137,12 @@ async function openFile(name) {
 async function deleteFile(name) {
   if (!confirm("Delete file?")) return;
   const { error } = await window.supabaseClient.storage.from("admin-files").remove([`notes/${name}`]);
-  if (error) alert("❌ Delete failed");
-  loadFiles();
+  if (error) {
+    alert("❌ Delete failed");
+    return;
+  }
+  await loadFiles();
+  await updateStats();
 }
 
 /* ---------- PART 3: CALENDAR EVENTS SYSTEM ---------- */
@@ -161,7 +169,10 @@ async function addEvent() {
 
   if (msg) msg.innerText = "✅ Event added";
   if (document.getElementById("eventName")) document.getElementById("eventName").value = "";
-  loadEvents();
+  
+  // Instant Refresh & Stats Update
+  await loadEvents();
+  await updateStats();
 }
 
 async function loadEvents() {
@@ -195,6 +206,7 @@ async function loadEvents() {
 
   if (filtered.length === 0) {
     list.innerHTML = "<em>No events found for selected filter</em>";
+    updateStats();
     return;
   }
 
@@ -203,7 +215,9 @@ async function loadEvents() {
     const row = document.createElement("div");
     row.innerHTML = `
       <span>📅 <b>${ev.event_date}</b> — ${ev.event_name}</span>
-      <button class="logout" style="padding:4px 10px; font-size:12px;" onclick="deleteEvent(${ev.id})">🗑</button>
+      <div>
+        <button class="logout" style="padding:6px 12px; font-size:12px;" onclick="deleteEvent(${ev.id})">🗑</button>
+      </div>
     `;
     list.appendChild(row);
   });
@@ -213,8 +227,13 @@ async function loadEvents() {
 
 async function deleteEvent(id) {
   if (!confirm("Delete event?")) return;
-  await window.supabaseClient.from("events").delete().eq("id", id);
-  loadEvents();
+  const { error } = await window.supabaseClient.from("events").delete().eq("id", id);
+  if (error) {
+    alert("❌ Delete failed");
+    return;
+  }
+  await loadEvents();
+  await updateStats();
 }
 
 /* ---------- PART 4: FORMULAS SYSTEM ---------- */
@@ -310,7 +329,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if (statusBox) statusBox.innerText = "✅ Formula uploaded";
     if (formulaText) formulaText.value = "";
     if (formulaFile) formulaFile.value = "";
-    loadFormulas();
+    
+    // Instant Refresh & Stats Update
+    await loadFormulas();
+    await updateStats();
   };
 
   async function loadFormulas() {
@@ -345,6 +367,12 @@ document.addEventListener("DOMContentLoaded", () => {
       return text.includes(search) || ch.includes(search);
     });
 
+    if (filtered.length === 0) {
+      list.innerHTML = "<em>No matching formulas found</em>";
+      updateStats();
+      return;
+    }
+
     list.innerHTML = "";
     filtered.forEach(f => {
       const row = document.createElement("div");
@@ -354,9 +382,9 @@ document.addEventListener("DOMContentLoaded", () => {
           ${icon} <b>Class ${f.class}</b> • ${f.subject.toUpperCase()} • ${f.chapter.toUpperCase()}
           ${f.publish ? "🟢" : "🔒"}
         </span>
-        <div style="display:flex; gap:6px;">
-          <button style="padding:4px 10px; font-size:12px;" onclick="viewFormula('${f.id}')">View</button>
-          <button style="padding:4px 10px; font-size:12px;" onclick="deleteFormula('${f.id}','${f.file_path || ""}')">🗑</button>
+        <div>
+          <button style="padding:6px 12px; font-size:12px;" onclick="viewFormula('${f.id}')">View</button>
+          <button style="padding:6px 12px; font-size:12px;" class="logout" onclick="deleteFormula('${f.id}','${f.file_path || ""}')">🗑</button>
         </div>
       `;
       list.appendChild(row);
@@ -383,8 +411,13 @@ document.addEventListener("DOMContentLoaded", () => {
   window.deleteFormula = async function (id, filePath) {
     if (!confirm("Delete formula?")) return;
     if (filePath) await window.supabaseClient.storage.from("admin-files").remove([filePath]);
-    await window.supabaseClient.from("formulas").delete().eq("id", id);
-    loadFormulas();
+    const { error } = await window.supabaseClient.from("formulas").delete().eq("id", id);
+    if (error) {
+      alert("❌ Delete failed");
+      return;
+    }
+    await loadFormulas();
+    await updateStats();
   };
 
   // Event Listeners for Filters
@@ -403,6 +436,7 @@ document.addEventListener("DOMContentLoaded", () => {
   loadFiles();
   loadEvents();
   loadFormulas();
+  updateStats();
 });
 
 /* ---------- PART 5: DOUBTS & OVERLAY SYSTEM ---------- */
@@ -551,4 +585,5 @@ document.addEventListener("DOMContentLoaded", () => {
 document.addEventListener("DOMContentLoaded", () => {
   const d = document.getElementById("eventDate");
   if (d) d.value = new Date().toISOString().split("T")[0];
+  updateStats();
 });

@@ -62,8 +62,43 @@
 
   <hr class="divider">
 
-  <h3 class="list-title">📚 Uploaded Chapters</h3>
-  <div id="bookList" class="book-list">⏳ Loading...</div>
+  
+<h3 class="list-title">📚 Uploaded Chapters</h3>
+
+<!-- ✅ SEARCH & FILTERS (Author, Class, Subject) -->
+<div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
+  <input type="text" id="searchBook" placeholder="🔍 Search chapter name..." style="margin-bottom: 0;">
+  
+  <div style="display: flex; gap: 6px;">
+    <!-- Author Filter -->
+    <select id="filterAuthor" style="flex: 1; padding: 8px; font-size: 12px;">
+      <option value="">All Authors</option>
+      <!-- JavaScript se authors automatically yahan aayenge -->
+    </select>
+
+    <!-- Class Filter -->
+    <select id="filterClass" style="width: 95px; padding: 8px; font-size: 12px;">
+      <option value="">All Classes</option>
+      <option value="1">Part I</option>
+      <option value="2">Part II</option>
+      <option value="8">Class 8</option>
+      <option value="9">Class 9</option>
+      <option value="10">Class 10</option>
+      <option value="11">Class 11</option>
+      <option value="12">Class 12</option>
+    </select>
+
+    <!-- Subject Filter -->
+    <select id="filterSubject" style="width: 95px; padding: 8px; font-size: 12px;">
+      <option value="">All Subjects</option>
+      <option value="Math">Math</option>
+      <option value="Physics">Physics</option>
+      <option value="Chemistry">Chemistry</option>
+    </select>
+  </div>
+</div>
+
+<div id="bookList" class="book-list">⏳ Loading...</div>
 
 </div>
 
