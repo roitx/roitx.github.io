@@ -34,6 +34,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
+  
 // ================= DYNAMIC AUTH / PROFILE LOGIC =================
 document.addEventListener("DOMContentLoaded", async () => {
   const authContainer = document.getElementById("navAuthContainer");
