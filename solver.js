@@ -6,17 +6,29 @@ if (!window.supabaseClient) {
   console.error("❌ Supabase not connected");
 }
 
-/* ---------- GET QUESTION ---------- */
 function getQuestion() {
   const el = document.getElementById("question");
   return el ? el.value.trim() : "";
 }
 
-/* ---------- SET ANSWER ---------- */
-function setAnswer(html) {
-  const el = document.getElementById("answer");
-  if (el) el.innerHTML = html;
+function clearQuestionInput() {
+  const el = document.getElementById("question");
+  if (el) el.value = "";
 }
+
+// Append messages continuously to chat container
+function appendChatMessage(htmlContent, type = "ai") {
+  const container = document.getElementById("answerHistory");
+  if (!container) return;
+
+  const msgDiv = document.createElement("div");
+  msgDiv.className = `chat-bubble ${type}`;
+  msgDiv.innerHTML = htmlContent;
+
+  container.appendChild(msgDiv);
+  container.scrollTop = container.scrollHeight;
+}
+
 /* =====================================================
    PART 2 — SESSION ID (NO LOGIN)
    ===================================================== */
@@ -29,19 +41,21 @@ function getSessionId() {
   }
   return sid;
 }
+
 /* =====================================================
-   PART 3 — SEND DOUBT TO ADMIN
+   PART 3 — SEND FEEDBACK / QUESTION TO ADMIN
+   Keep database table name 'doubts' untouched for safety!
    ===================================================== */
 
-async function sendToAdmin() {
-  const question = getQuestion();
+async function sendToAdmin(customQuestion = null) {
+  const question = customQuestion || getQuestion();
   if (!question) {
-    alert("❌ Question empty hai");
+    alert("❌ Kripya koi question ya feedback likhein.");
     return;
   }
 
   const { error } = await window.supabaseClient
-    .from("doubts")
+    .from("doubts") // Kept as 'doubts' to protect database!
     .insert([{
       question: question,
       status: "pending",
@@ -49,22 +63,24 @@ async function sendToAdmin() {
     }]);
 
   if (error) {
-    alert("❌ Error sending doubt");
+    alert("❌ Error sending feedback");
     console.error(error);
   } else {
-    alert("✅ Question admin ko bhej diya");
+    alert("✅ Feedback Admin ko bhej diya gaya hai!");
+    appendChatMessage(`📩 <i>Feedback Admin ko bhej diya gaya hai: "${escapeHtml(question)}"</i>`, "system-error");
+    clearQuestionInput();
   }
 }
+
 /* =====================================================
-   PART 4 — MY DOUBTS PANEL
+   PART 4 — MY FEEDBACKS PANEL (READ FROM 'doubts' TABLE)
    ===================================================== */
 
 function toggleMyDoubt() {
   const panel = document.getElementById("myDoubtPanel");
   if (!panel) return;
 
-  panel.style.display =
-    panel.style.display === "block" ? "none" : "block";
+  panel.style.display = panel.style.display === "block" ? "none" : "block";
 
   if (panel.style.display === "block") {
     loadMyDoubts();
@@ -76,22 +92,22 @@ async function loadMyDoubts() {
   const list = document.getElementById("doubtList");
   if (!list) return;
 
-  list.innerHTML = "⏳ Loading...";
+  list.innerHTML = "⏳ Loading your feedbacks...";
 
   const { data, error } = await window.supabaseClient
-    .from("doubts")
+    .from("doubts") // Supabase table preserved
     .select("*")
     .eq("session_id", getSessionId())
     .order("created_at", { ascending: false });
 
   if (error) {
-    list.innerHTML = "❌ Error loading";
+    list.innerHTML = "❌ Error loading history";
     console.error(error);
     return;
   }
 
-  if (!data.length) {
-    list.innerHTML = "<em>No doubts yet</em>";
+  if (!data || !data.length) {
+    list.innerHTML = "<em>Abhi tak koi feedback nahi hai.</em>";
     return;
   }
 
@@ -101,25 +117,26 @@ async function loadMyDoubts() {
     const s = d.status || "pending";
 
     list.innerHTML += `
-      <div class="doubt-item ${s}">
-        <div><b>Q:</b> ${d.question}</div>
-        <div><b>Status:</b> ${s.toUpperCase()}</div>
+      <div class="doubt-item">
+        <div><b>Q:</b> ${escapeHtml(d.question)}</div>
+        <div style="margin-top:4px;"><b>Status:</b> <span class="${s}">${s.toUpperCase()}</span></div>
 
         ${d.greeting ? `
-          <div class="greet-bubble">
+          <div style="margin-top:4px; color:#3aa0ff;">
             ${d.greeting.replace(/\n/g,"<br>")}
           </div>` : ""}
 
         ${d.answer ? `
-          <div class="answer-box">
+          <div style="margin-top:4px; background:#0e1a2a; padding:6px; border-radius:6px; color:#4ade80;">
             ${d.answer.replace(/\n/g,"<br>")}
           </div>` : ""}
       </div>
     `;
   });
 }
+
 /* =====================================================
-   PART 5 — SOLVED NOTIFICATION DOT
+   PART 5 — NOTIFICATION DOT
    ===================================================== */
 
 function hideNotifyDot() {
@@ -145,21 +162,21 @@ async function checkSolvedNotification() {
 document.addEventListener("DOMContentLoaded", checkSolvedNotification);
 
 /* =====================================================
-   PART 6 — STEP BY STEP SOLVER (WITH GROQ AI FALLBACK)
+   PART 6 — STEP BY STEP SOLVER WITH GROQ AI FALLBACK
    ===================================================== */
 
 async function solveWithGroq(questionText) {
-  setAnswer("⏳ AI Step-by-Step Solution तैयार कर रहा है...");
+  // Show temporary loading bubble
+  const loadingId = "loading-" + Date.now();
+  appendChatMessage(`<span id="${loadingId}">⏳ AI Solution soch raha hai...</span>`, "ai");
 
   const SUPABASE_FUNCTION_URL = "https://ktastwehnnqicriknewr.supabase.co/functions/v1/smart-task";
-  
-  // Apni Supabase Public Anon Key yahan rakhein
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0YXN0d2Vobm5xaWNyaWtuZXdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyNTk5NTEsImV4cCI6MjA4MDgzNTk1MX0.5_UvwaG0X8k_Emj-cMC0KjEqlvU6hgAt5IsHJdgARvk"; 
 
   const promptText = `
-You are an expert tutor for students. 
+You are an expert study tutor for students.
 Please solve this question step-by-step with clear explanations in simple Hindi/Hinglish.
-If it involves math or science, explain each step clearly.
+If you do NOT know the exact answer or if the input is unclear/ambiguous, state that you cannot understand it clearly.
 
 Question: ${questionText}
 `;
@@ -176,39 +193,65 @@ Question: ${questionText}
     });
 
     const data = await response.json();
+    const loadingElem = document.getElementById(loadingId);
+    
+    if (loadingElem) {
+      loadingElem.parentElement.remove(); // Remove loading bubble
+    }
 
     if (response.ok && data.choices && data.choices[0]?.message?.content) {
-      const formattedAnswer = data.choices[0].message.content.replace(/\n/g, "<br>");
-      setAnswer(`
-        <div class="ai-solution">
-          <b>🧠 AI Step-by-Step Solution:</b><br><br>
+      const aiContent = data.choices[0].message.content;
+      
+      // Check if AI expresses uncertainty
+      if (aiContent.toLowerCase().includes("nahi samajh") || aiContent.toLowerCase().includes("unclear") || aiContent.length < 15) {
+        showFallbackAdminOption(questionText);
+      } else {
+        const formattedAnswer = aiContent.replace(/\n/g, "<br>");
+        appendChatMessage(`
+          <b>🧠 AI Solution:</b><br><br>
           ${formattedAnswer}
-        </div>
-      `);
+          <br><br>
+          <div style="font-size:11px; opacity:0.8; margin-top:6px; border-top:1px solid #374151; padding-top:4px;">
+            Kya yeh solution samajh nahi aaya? 
+            <a href="#" onclick="sendToAdmin('${escapeHtml(questionText)}'); return false;" style="color:#f59e0b; text-decoration:underline;">Admin ko Feedback bhejeyin</a>
+          </div>
+        `, "ai");
+      }
     } else {
-      showFallbackAdminButton();
+      showFallbackAdminOption(questionText);
     }
   } catch (err) {
     console.error(err);
-    showFallbackAdminButton();
+    const loadingElem = document.getElementById(loadingId);
+    if (loadingElem) loadingElem.parentElement.remove();
+    showFallbackAdminOption(questionText);
   }
 }
 
-function showFallbackAdminButton() {
-  setAnswer(`
-    ❌ Auto solution available nahi hai.<br><br>
-    <button onclick="sendToAdmin()">📩 Send to Admin</button>
-  `);
+function showFallbackAdminOption(qText) {
+  const safeQ = escapeHtml(qText);
+  appendChatMessage(`
+    <b>🤔 Mujhe yeh question samajh nahi aaya.</b><br>
+    Kripya ise Feedback ke roop mein Admin ko bhejen, hum ise jald hi solve kar denge!<br><br>
+    <button class="feedback-btn" onclick="sendToAdmin('${safeQ}')">📩 Admin Ko Feedback Bhejen</button>
+  `, "system-error");
 }
+
+/* =====================================================
+   MAIN SOLVE TRIGGER (CONTINUOUS FLOW)
+   ===================================================== */
 
 function solve() {
   const qRaw = getQuestion();
-  setAnswer("");
 
   if (!qRaw) {
-    setAnswer("❌ Question likho pehle");
+    alert("❌ Kripya pehle question likhein!");
     return;
   }
+
+  // Add User Question to Chat History Stream
+  appendChatMessage(escapeHtml(qRaw), "user");
+  clearQuestionInput();
 
   let q = qRaw
     .toLowerCase()
@@ -217,15 +260,15 @@ function solve() {
     .replace(/\s+/g, " ")
     .trim();
 
-  /* ---------- SIMPLE CALCULATION ---------- */
+  /* ---------- SIMPLE MATH CALCULATION ---------- */
   if (/^[0-9+\-*/(). ]+$/.test(q)) {
     try {
       const result = eval(q);
-      setAnswer(`
-        <div class="step"><b>Step 1:</b> ${q}</div>
-        <div class="step"><b>Step 2:</b> BODMAS apply</div>
-        <div class="step final"><b>✅ Answer:</b> ${result}</div>
-      `);
+      appendChatMessage(`
+        <b>🔢 Direct Math Calculation:</b><br>
+        <b>Step 1:</b> ${q}<br>
+        <b>✅ Answer:</b> ${result}
+      `, "ai");
       return;
     } catch {}
   }
@@ -233,7 +276,7 @@ function solve() {
   /* ---------- PERCENTAGE ---------- */
   if (/^(\d+)\s*%\s*of\s*(\d+)$/.test(q)) {
     const [, p, n] = q.match(/^(\d+)\s*%\s*of\s*(\d+)$/);
-    setAnswer(`<b>Answer:</b> ${(p/100)*n}`);
+    appendChatMessage(`<b>✅ Answer:</b> ${(p/100)*n}`, "ai");
     return;
   }
 
@@ -243,10 +286,16 @@ function solve() {
     const a = a1 === "" ? 1 : Number(a1);
     const rhs = op === "+" ? c - b : Number(c) + Number(b);
 
-    setAnswer(`<b>Answer:</b> x = ${rhs / a}`);
+    appendChatMessage(`<b>✅ Answer:</b> x = ${rhs / a}`, "ai");
     return;
   }
 
-  /* ---------- GROQ AI FALLBACK ---------- */
+  /* ---------- AI FALLBACK ---------- */
   solveWithGroq(qRaw);
+}
+
+function escapeHtml(str) {
+  return String(str || '').replace(/[&<>"']/g, function(m) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+  });
 }

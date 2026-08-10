@@ -1,47 +1,144 @@
-body{
-  background:#0e1a2a;
-  font-family:Segoe UI;
-  color:#e9f2ff;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  height:100vh;
+body {
+  background: #0e1a2a;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #e9f2ff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  margin: 0;
+  padding: 10px;
+  box-sizing: border-box;
 }
 
-.box{
-  width:90%;
-  max-width:500px;
-  background:#15263c;
-  padding:20px;
-  border-radius:12px;
+.box {
+  width: 100%;
+  max-width: 520px;
+  background: #15263c;
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+  display: flex;
+  flex-direction: column;
+  max-height: 92vh;
 }
 
-textarea{
-  width:100%;
-  height:90px;
-  background:#1f3554;
-  border:none;
-  color:white;
-  padding:10px;
-  border-radius:8px;
+h2 {
+  margin-top: 0;
+  margin-bottom: 6px;
+  font-size: 20px;
+  color: #3aa0ff;
 }
 
-button{
-  margin-top:10px;
-  padding:10px;
-  width:100%;
-  background:#3aa0ff;
-  border:none;
-  color:white;
-  border-radius:8px;
+.hint {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-bottom: 12px;
+  line-height: 1.4;
 }
 
-#answer{
-  margin-top:15px;
-  background:#0e1a2a;
-  padding:10px;
-  border-radius:8px;
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
 }
+
+textarea {
+  width: 100%;
+  height: 70px;
+  background: #1f3554;
+  border: 1px solid #2e4a73;
+  color: white;
+  padding: 10px;
+  border-radius: 10px;
+  resize: none;
+  font-size: 14px;
+  box-sizing: border-box;
+  outline: none;
+}
+
+textarea:focus {
+  border-color: #3aa0ff;
+}
+
+button {
+  padding: 10px;
+  background: #3aa0ff;
+  border: none;
+  color: white;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+/* CONTINUOUS CHAT STREAM CONTAINER */
+.chat-container {
+  flex: 1;
+  overflow-y: auto;
+  background: #0e1a2a;
+  padding: 12px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 380px;
+  border: 1px solid #1f3554;
+}
+
+.chat-bubble {
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  animation: popIn 0.25s ease;
+  word-wrap: break-word;
+}
+
+.chat-bubble.user {
+  background: #1e3a8a;
+  color: #dbeafe;
+  align-self: flex-end;
+  border-bottom-right-radius: 2px;
+  max-width: 85%;
+}
+
+.chat-bubble.ai {
+  background: #1f2937;
+  color: #f3f4f6;
+  align-self: flex-start;
+  border-bottom-left-radius: 2px;
+  width: 90%;
+  border-left: 3px solid #3aa0ff;
+}
+
+.chat-bubble.system-error {
+  background: #371b1e;
+  border-left: 3px solid #f87171;
+  color: #fecaca;
+  width: 90%;
+}
+
+.feedback-btn {
+  margin-top: 8px;
+  background: #d97706;
+  color: white;
+  padding: 8px 12px;
+  font-size: 12px;
+  width: auto;
+  display: inline-block;
+}
+
+.feedback-btn:hover {
+  background: #b45309;
+}
+
+/* FLOATING MY FEEDBACKS BUTTON */
 .doubt-fab {
   position: fixed;
   bottom: 20px;
@@ -54,135 +151,85 @@ button{
   cursor: pointer;
   background: #3aa0ff;
   color: white;
-  box-shadow: 0 0 15px rgba(58,160,255,0.6);
+  box-shadow: 0 4px 15px rgba(58,160,255,0.6);
+  z-index: 99;
 }
 
+/* MY FEEDBACKS PANEL */
 .my-doubt-panel {
   position: fixed;
-  bottom: 90px;
+  bottom: 85px;
   right: 20px;
-  width: 260px;
+  width: 290px;
+  max-height: 400px;
   background: #15263c;
-  border-radius: 12px;
+  border-radius: 14px;
   padding: 14px;
   color: #e9f2ff;
-  box-shadow: 0 0 20px rgba(0,0,0,0.6);
-}
-.pending {
-  color: orange;
-  font-weight: bold;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.7);
+  border: 1px solid #2e4a73;
+  z-index: 100;
+  overflow-y: auto;
 }
 
-.solved {
-  color: #4cff7a;
-  font-weight: bold;
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #2e4a73;
+  padding-bottom: 6px;
 }
+
+.panel-header h3 {
+  margin: 0;
+  font-size: 14px;
+  color: #3aa0ff;
+}
+
+.close-btn {
+  background: transparent;
+  color: #94a3b8;
+  padding: 2px 6px;
+  font-size: 14px;
+  width: auto;
+}
+
+.pending { color: #fbbf24; font-weight: bold; }
+.solved { color: #4ade80; font-weight: bold; }
 
 .doubt-item {
   background: #1f3554;
-  padding: 8px;
+  padding: 10px;
   border-radius: 8px;
   margin-bottom: 8px;
+  font-size: 12px;
 }
+
 .notify-dot {
   position: absolute;
-  top: 6px;
-  right: 6px;
+  top: 4px;
+  right: 4px;
   width: 10px;
   height: 10px;
-  background: red;
+  background: #ef4444;
   border-radius: 50%;
-}
-/* ================================
-   GREETING + ANSWER BUBBLE (SOLVER)
-   ================================ */
-.greet-bubble{
-  background:#1f6fff;
-  color:#fff;
-  padding:6px 12px;
-  border-radius:14px;
-  display:inline-block;
-  margin-top:6px;
-  font-size:14px;
+  border: 2px solid #15263c;
 }
 
-.answer-box {
-  margin-top: 6px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #1f3cff, #3aa0ff);
-  color: #fff;
-  font-size: 14px;
-  line-height: 1.5;
-  white-space: pre-wrap;
-  box-shadow: 0 6px 16px rgba(58,160,255,0.35);
-  animation: popIn 0.25s ease;
-}
-
-/* Greeting line (first line) */
-.answer-box br:first-child {
-  margin-bottom: 6px;
-}
-
-/* Bubble animation */
 @keyframes popIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95) translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-/* Pending / Solved color hint */
-.doubt-item.solved .answer-box {
-  background: linear-gradient(135deg, #19c37d, #0ea5e9);
-}
-
-.doubt-item.pending {
-  opacity: 0.75;
-}.steps-box{
-  background:#0f1c33;
-  padding:14px;
-  border-radius:12px;
-  margin-top:12px;
-}
-.steps-box h4{
-  margin:0 0 8px;
-  color:#3aa0ff;
-}
-.steps-box ol{
-  padding-left:18px;
-}
-.steps-box li{
-  margin:6px 0;
-}
-
-.ncert-box{
-  background:#12203a;
-  margin-top:10px;
-  padding:10px;
-  border-left:4px solid #3aa0ff;
-  border-radius:6px;
-}
-
-  /* Pure app se text selection aur long-press blue highlight hatane ke liye */
 * {
-  -webkit-tap-highlight-color: transparent; /* Mobile tap highlight hatata hai */
-  -webkit-touch-callout: none;                /* iOS par long-press menu disable karta hai */
-  -webkit-user-select: none;                 /* Safari/Chrome select disable */
-  -khtml-user-select: none;                  /* Konqueror */
-  -moz-user-select: none;                    /* Firefox */
-  -ms-user-select: none;                     /* IE/Edge */
-  user-select: none;                         /* Standard logic */
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
-/* Agar aap chahte hain ki sirf 'input' ya 'textarea' mein selection kaam kare */
 input, textarea {
   -webkit-user-select: text;
-  -moz-user-select: text;
-  -ms-user-select: text;
   user-select: text;
 }

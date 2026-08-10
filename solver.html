@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Step Solver</title>
+  <title>Step Solver & Feedback</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <!-- CSS -->
@@ -17,42 +17,40 @@
 <body>
 
   <div class="box">
-    <h2>🧠 Step-by-Step Solver</h2>
+    <h2>🧠 Step-by-Step Solver & AI Assistant</h2>
 
     <p class="hint">
-      ✏️ Simple maths likho (2+3, 10/2)<br>
-      ❓ Tough doubt admin ko bhej sakte ho
+      ✏️ Apna question ya math problem yahan type karein<br>
+      💬 AI answer karega, ya aap Admin ko Feedback bhej sakte hain.
     </p>
 
     <!-- QUESTION INPUT -->
-    <textarea
-      id="question"
-      placeholder="Type your question here..."
-    ></textarea>
-
-    <!-- ACTION BUTTONS -->
-    <div class="btn-row">
-      <button id="solveBtn" onclick="solve()">🔍 Solve</button>
-
-      <!-- MY DOUBTS BUTTON -->
-      <button class="doubt-fab" onclick="toggleMyDoubt()">❓</button>
-
-<div id="myDoubtPanel" class="my-doubt-panel" style="display:none;">
-  <h3>📝 My Doubts</h3>
-  <div id="doubtList">Loading...</div>
-  <span id="notifyDot" class="notify-dot" style="display:none;"></span>
-</div>
+    <div class="input-group">
+      <textarea
+        id="question"
+        placeholder="Apna sawaal ya problem likhein..."
+      ></textarea>
+      <button id="solveBtn" onclick="solve()">🔍 Ask / Solve</button>
     </div>
 
-    <!-- ANSWER -->
-    <div id="answer"></div>
+    <!-- CHAT & ANSWER CONTAINER (CONTINUOUS MESSAGES) -->
+    <div id="answerHistory" class="chat-container">
+      <!-- Messages will appear here continuously -->
+    </div>
 
-    <!-- =========================
-         MY DOUBTS PANEL
-         ========================= -->
-    <div id="myDoubtsPanel" style="display:none;">
-      <h3>📬 My Doubts</h3>
-      <div id="myDoubtsList">Loading...</div>
+    <!-- FLOATING MY FEEDBACKS BUTTON -->
+    <button class="doubt-fab" title="My Feedbacks" onclick="toggleMyDoubt()">
+      💬
+      <span id="notifyDot" class="notify-dot" style="display:none;"></span>
+    </button>
+
+    <!-- MY FEEDBACKS PANEL -->
+    <div id="myDoubtPanel" class="my-doubt-panel" style="display:none;">
+      <div class="panel-header">
+        <h3>📝 My Feedbacks & Queries</h3>
+        <button class="close-btn" onclick="toggleMyDoubt()">✕</button>
+      </div>
+      <div id="doubtList">Loading...</div>
     </div>
 
   </div>
