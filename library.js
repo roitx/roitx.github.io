@@ -1,9 +1,55 @@
+let showOnlyDownloaded = false;
+
 document.addEventListener("DOMContentLoaded", () => {
     renderActivityFeed();
 });
 
 function getData(key){
   return JSON.parse(localStorage.getItem(key) || "[]");
+}
+
+function toggleFilter() {
+    showOnlyDownloaded = !showOnlyDownloaded;
+    const btn = document.getElementById("filterToggle");
+    if (showOnlyDownloaded) {
+        btn.classList.add("active");
+        btn.innerHTML = "✨ Showing Downloaded";
+    } else {
+        btn.classList.remove("active");
+        btn.innerHTML = "✨ Downloaded Only";
+    }
+    renderActivityFeed();
+}
+
+// Global helper to track and prevent duplicates cleanly
+function trackActivityLocally(fileData, isDownloaded = false) {
+    try {
+        let recent = getData("recentFiles");
+        let downloads = getData("downloadedFiles");
+
+        if (isDownloaded && !downloads.some(f => f.url === fileData.url)) {
+            fileData.timeDownloaded = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            downloads.unshift(fileData);
+            localStorage.setItem("downloadedFiles", JSON.stringify(downloads));
+        }
+
+        const alreadyDownloaded = downloads.some(f => f.url === fileData.url) || isDownloaded;
+
+        // Remove duplicate entry so it only appears once at the top
+        recent = recent.filter(f => f.url !== fileData.url);
+        recent.unshift({
+            title: fileData.title,
+            url: fileData.url,
+            meta: fileData.meta || "Viewer",
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            downloaded: alreadyDownloaded
+        });
+
+        recent = recent.slice(0, 10);
+        localStorage.setItem("recentFiles", JSON.stringify(recent));
+    } catch (e) {
+        console.error("Tracking Error: ", e);
+    }
 }
 
 function renderActivityFeed() {
@@ -13,8 +59,15 @@ function renderActivityFeed() {
     let recent = getData("recentFiles");
     let downloads = getData("downloadedFiles");
 
+    if (showOnlyDownloaded) {
+        recent = recent.filter(f => {
+            let isDownloaded = downloads.some(item => item.url === f.url || item.title === f.title) || f.downloaded;
+            return isDownloaded;
+        });
+    }
+
     if (!recent.length) {
-        recentList.innerHTML = `<div class="empty">No recent activity recorded yet.</div>`;
+        recentList.innerHTML = `<div class="empty">${showOnlyDownloaded ? "No downloaded files found." : "No recent activity recorded yet."}</div>`;
         return;
     }
 
@@ -23,7 +76,6 @@ function renderActivityFeed() {
     recent.forEach(f => {
         let isDownloaded = downloads.some(item => item.url === f.url || item.title === f.title) || f.downloaded;
 
-        // Automatically determine viewer link based on file type/extension
         let viewerPage = "notes-viewer.html";
         let cleanPath = f.url || "";
         
