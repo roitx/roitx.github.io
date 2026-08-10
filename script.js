@@ -8,12 +8,14 @@ const sideMenu = document.querySelector(".side-menu");
 const overlay = document.getElementById("overlay");
 const menuBtn = document.getElementById("menuBtn");  
 
-if (menuBtn && sideMenu && overlay) {
+if (menuBtn) {
   menuBtn.addEventListener("click", () => {
     sideMenu.classList.toggle("open");
     overlay.classList.toggle("show");
   });
+}
 
+if (overlay) {
   overlay.addEventListener("click", () => {
     sideMenu.classList.remove("open");
     overlay.classList.remove("show");
@@ -40,7 +42,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   const authContainer = document.getElementById("navAuthContainer");
   const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
 
-  // 1. Pehle LocalStorage se fast load karein taaki turant naam dikhe
   let userName = localStorage.getItem("userName") || "Profile";
   let userPhoto = localStorage.getItem("userPhoto") || "profile.jpg";
 
@@ -53,7 +54,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     `;
   }
 
-  // 2. Background mein Supabase se latest fetch karke localStorage update kar do
   if (isLoggedIn && window.supabaseClient) {
     try {
       const user = await window.getCurrentUser();
@@ -88,6 +88,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 });
+
 
 // ================= YEAR =================
 const yearElement = document.getElementById("year");
