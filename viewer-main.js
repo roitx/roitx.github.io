@@ -42,19 +42,26 @@ async function initReader() {
 
 function startEngine(blob) {
     currentBlobUrl = URL.createObjectURL(blob);
-    
-    // HTML download trigger interception
     const dl = document.getElementById("download-trigger");
     if (dl) { 
-        dl.removeAttribute("href"); // Direct link security hole block
-        dl.onclick = (e) => {
+        dl.removeAttribute("href"); 
+        dl.onclick = async (e) => {
             e.preventDefault();
+            
+            // Session check add kar diya
+            const { data: { session } } = await window.supabaseClient.auth.getSession();
+            if (!session) {
+                alert("Notes download karne ke liye pehle Login karein.");
+                sessionStorage.setItem("redirect_after_login", window.location.href);
+                window.location.href = "login.html";
+                return;
+            }
+
             const fileName = (docName || "document") + ".pdf";
-            // Check session and download via secure function
             window.secureDownload(currentBlobUrl, fileName);
         };
     }
-    
+
     pdfjsLib.getDocument(currentBlobUrl).promise.then(pdf => {
         pdfDoc = pdf;
         
