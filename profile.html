@@ -421,16 +421,27 @@ button.btn:active {
   <p id="statusMsg" class="status-msg"></p>
 
   <!-- Actions -->
-  <div class="btn-group">
-    <button class="btn btn-save" onclick="saveProfileDetails()">
-      <i class="fa-solid fa-floppy-disk"></i> Save Profile Info
-    </button>
+  <div id="passwordSection" style="margin: 10px 0; text-align: left; background: #e0e5ec; padding: 15px; border-radius: 14px; box-shadow: inset 4px 4px 8px #b8bec7, inset -4px -4px 8px #ffffff;">
+      <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #4a5568; font-weight: 600; margin-bottom: 6px;">
+        <i class="fa-solid fa-key"></i> Set / Change Password
+      </label>
+      <input type="password" id="newPasswordInput" class="input-box" placeholder="Enter new password (min 6 chars)" style="margin-bottom: 10px;">
+      <button class="btn" onclick="setGoogleUserPassword()" style="background: #e0e5ec; color: #5a2eff; font-size: 13px; padding: 10px;">
+        <i class="fa-solid fa-lock"></i> Save New Password
+      </button>
+    </div>
 
     <!-- Admin Panel Button (ONLY Shown for Admins) -->
     <button class="btn btn-admin" id="adminBtn" style="display: none;" onclick="goToAdminPanel()">
       <i class="fa-solid fa-shield-halved"></i> Open Admin Panel
     </button>
 
+    <!-- Password Setter Section for Google / Normal Users -->
+    
+<div class="btn-group">
+    <button class="btn btn-save" onclick="saveProfileDetails()">
+      <i class="fa-solid fa-floppy-disk"></i> Save Profile Info
+    </button>
     <button class="btn btn-explore" onclick="goToHome()">
       <i class="fa-solid fa-compass"></i> Explore Notes & Formulas
     </button>
@@ -438,6 +449,7 @@ button.btn:active {
       <i class="fa-solid fa-right-from-bracket"></i> Logout Account
     </button>
   </div>
+
 </div>
 
 <!-- Round Image Cropper Modal -->
@@ -569,14 +581,14 @@ function handleFileSelected(event) {
     }
 
     cropper = new Cropper(cropImg, {
-      aspectRatio: 1, // Square for Circle Cropping
+      aspectRatio: 1,
       viewMode: 1,
       autoCropArea: 0.9,
       dragMode: 'move'
     });
   };
   reader.readAsDataURL(file);
-  event.target.value = ''; // Reset input
+  event.target.value = '';
 }
 
 function closeCropModal() {
@@ -604,7 +616,6 @@ async function cropAndUpload() {
     const filePath = `${currentUser.id}/avatar_${Date.now()}.png`;
 
     try {
-      // Upload Blob
       const { error: uploadErr } = await window.supabaseClient
         .storage
         .from('avatars')
@@ -612,7 +623,6 @@ async function cropAndUpload() {
 
       if (uploadErr) throw uploadErr;
 
-      // Get Public Link
       const { data: publicData } = window.supabaseClient
         .storage
         .from('avatars')
@@ -621,7 +631,6 @@ async function cropAndUpload() {
       currentAvatarUrl = publicData.publicUrl;
       renderAvatarImage(currentAvatarUrl);
 
-      // Save in DB
       await window.supabaseClient
         .from('profiles')
         .upsert({ id: currentUser.id, avatar_url: currentAvatarUrl, updated_at: new Date() });
@@ -649,7 +658,6 @@ async function deleteAvatarPhoto() {
   msgBox.style.display = "block";
 
   try {
-    // DB Update
     await window.supabaseClient
       .from('profiles')
       .upsert({ id: currentUser.id, avatar_url: null, updated_at: new Date() });
@@ -698,27 +706,47 @@ async function saveProfileDetails() {
         institution: institution,
         city: city,
         state: state,
-        avatar_url: currentAvatarUrl,
         updated_at: new Date()
       });
 
-    if (error) {
-      msgBox.className = "status-msg error";
-      msgBox.innerText = "❌ Save failed: " + error.message;
-    } else {
-      msgBox.className = "status-msg success";
-      msgBox.innerText = "✅ Profile updated successfully!";
-      if (fullName) {
-        document.getElementById("userDisplayName").innerText = fullName;
-      }
-      setTimeout(() => { msgBox.style.display = "none"; }, 3000);
-    }
+    if (error) throw error;
+
+    document.getElementById("userDisplayName").innerText = fullName || currentUser.email.split('@')[0];
+
+    msgBox.className = "status-msg success";
+    msgBox.innerText = "✅ Profile details successfully save ho gayi hain!";
+    setTimeout(() => { msgBox.style.display = "none"; }, 3000);
+
   } catch (err) {
     msgBox.className = "status-msg error";
-    msgBox.innerText = "❌ Unexpected error occurred.";
+    msgBox.innerText = "❌ Save karne mein error aaya: " + err.message;
   }
 }
 
+// SET / CHANGE PASSWORD FOR GOOGLE OR NORMAL USERS
+async function setGoogleUserPassword() {
+  const newPassword = document.getElementById("newPasswordInput").value.trim();
+
+  if (!newPassword || newPassword.length < 6) {
+    alert("Password kam se kam 6 characters ka hona chahiye.");
+    return;
+  }
+
+  try {
+    const { error } = await window.supabaseClient.auth.updateUser({
+      password: newPassword
+    });
+
+    if (error) throw error;
+
+    alert("Password successfully set ho gaya hai! Ab aap Email aur Password se bhi login kar sakte hain.");
+    document.getElementById("newPasswordInput").value = "";
+  } catch (err) {
+    alert("Error: " + err.message);
+  }
+}
+
+// Navigation Helpers
 function goToAdminPanel() {
   window.location.href = window.getPageUrl("admin-panel.html");
 }
@@ -728,13 +756,25 @@ function goToHome() {
 }
 
 async function logoutUser() {
-  if (window.supabaseClient) {
-    await window.supabaseClient.auth.signOut();
-    window.location.href = window.getPageUrl("login.html");
-  }
+  await window.supabaseClient.auth.signOut();
+  localStorage.clear();
+  sessionStorage.clear();
+  window.location.href = window.getPageUrl("login.html");
 }
 
+// Event Listeners & Global Exports
 document.addEventListener("DOMContentLoaded", loadUserProfile);
+window.triggerPhotoSelect = triggerPhotoSelect;
+window.handleFileSelected = handleFileSelected;
+window.closeCropModal = closeCropModal;
+window.cropAndUpload = cropAndUpload;
+window.deleteAvatarPhoto = deleteAvatarPhoto;
+window.saveProfileDetails = saveProfileDetails;
+window.setGoogleUserPassword = setGoogleUserPassword;
+window.updateInitialAvatar = updateInitialAvatar;
+window.goToAdminPanel = goToAdminPanel;
+window.goToHome = goToHome;
+window.logoutUser = logoutUser;
 </script>
 
 </body>
