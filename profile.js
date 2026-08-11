@@ -6,7 +6,7 @@ document.addEventListener("DOMContentLoaded", () => {
   loadUserProfile();
 });
 
-// 1. Load User Profile Data from Supabase
+// Load User Profile Data from Supabase
 async function loadUserProfile() {
   if (!window.supabaseClient) return;
 
@@ -20,35 +20,31 @@ async function loadUserProfile() {
   currentUser = user;
   document.getElementById("emailInput").value = user.email || "";
 
-  // Check Admin Authorization
+  // 1. Check Admin Authorization
   const isAdmin = await window.checkIsAdmin();
   if (isAdmin) {
     document.getElementById("userRoleBadge").innerHTML = '<i class="fa-solid fa-crown"></i> Platform Admin';
-    if (document.getElementById("adminBtn")) document.getElementById("adminBtn").style.display = "flex";
-    if (document.getElementById("createFileBtn")) document.getElementById("createFileBtn").style.display = "flex";
+    document.getElementById("adminBtn").style.display = "flex";
+    document.getElementById("createFileBtn").style.display = "flex";
   } else {
     document.getElementById("userRoleBadge").innerHTML = '<i class="fa-solid fa-graduation-cap"></i> Active Student';
   }
 
-  // Fetch Profile Record (select '*' safety ke liye)
+  // 2. Fetch Profile Record
   try {
-    const { data, error } = await window.supabaseClient
+    const { data } = await window.supabaseClient
       .from('profiles')
-      .select('*')
+      .select('full_name, country_code, phone, target_class, stream, institution, city, state, avatar_url')
       .eq('id', user.id)
-      .maybeSingle();
-
-    if (error) {
-      console.error("Fetch profile error:", error);
-    }
+      .single();
 
     if (data) {
       document.getElementById("fullNameInput").value = data.full_name || "";
       document.getElementById("countryCodeSelect").value = data.country_code || "+91";
       document.getElementById("phoneInput").value = data.phone || "";
-      document.getElementById("classSelect").value = data.target_class || data.target_exam || "";
+      document.getElementById("classSelect").value = data.target_class || "";
       document.getElementById("streamSelect").value = data.stream || "";
-      document.getElementById("institutionInput").value = data.institution || data.school || "";
+      document.getElementById("institutionInput").value = data.institution || "";
       document.getElementById("cityInput").value = data.city || "";
       document.getElementById("stateInput").value = data.state || "";
 
@@ -65,13 +61,13 @@ async function loadUserProfile() {
       renderInitialAvatar();
     }
   } catch (err) {
-    console.error("Could not fetch profile details:", err);
+    console.warn("Could not fetch profile details:", err);
     document.getElementById("userDisplayName").innerText = user.email.split('@')[0];
     renderInitialAvatar();
   }
 }
 
-// 2. Render Initial Letter Avatar
+// Render Initial Letter Avatar
 function renderInitialAvatar() {
   currentAvatarUrl = null;
   const name = document.getElementById("fullNameInput").value.trim();
@@ -99,7 +95,7 @@ function renderAvatarImage(url) {
   document.getElementById("deletePhotoBtn").style.display = "inline-flex";
 }
 
-// 3. Photo Selection & Cropper Logic
+// Photo Selection & Cropper Logic
 function triggerPhotoSelect() {
   document.getElementById("avatarFileInput").click();
 }
@@ -135,7 +131,7 @@ function closeCropModal() {
   if (cropper) cropper.destroy();
 }
 
-// 4. Crop & Upload Image to Supabase Storage
+// Crop & Upload Image to Supabase Storage
 async function cropAndUpload() {
   if (!cropper || !currentUser) return;
 
@@ -168,32 +164,26 @@ async function cropAndUpload() {
         .getPublicUrl(filePath);
 
       currentAvatarUrl = publicData.publicUrl;
+      localStorage.setItem("userPhoto", currentAvatarUrl);
+
       renderAvatarImage(currentAvatarUrl);
 
-      // Save Photo URL to Profiles Table
-      const { error: dbErr } = await window.supabaseClient
+      await window.supabaseClient
         .from('profiles')
-        .upsert({ 
-          id: currentUser.id, 
-          avatar_url: currentAvatarUrl, 
-          updated_at: new Date() 
-        });
-
-      if (dbErr) throw dbErr;
+        .upsert({ id: currentUser.id, avatar_url: currentAvatarUrl, updated_at: new Date() });
 
       msgBox.className = "status-msg success";
-      msgBox.innerText = "✅ Profile photo updated & saved!";
+      msgBox.innerText = "✅ Profile photo updated!";
       setTimeout(() => { msgBox.style.display = "none"; }, 3000);
 
     } catch (err) {
-      console.error(err);
       msgBox.className = "status-msg error";
       msgBox.innerText = "❌ Upload failed: " + err.message;
     }
   }, 'image/png');
 }
 
-// 5. Delete Profile Photo
+// Delete Profile Photo
 async function deleteAvatarPhoto() {
   if (!currentUser) return;
   if (!confirm("Kya aap photo hatana chahte hain?")) return;
@@ -211,6 +201,7 @@ async function deleteAvatarPhoto() {
 
     if (error) throw error;
 
+    localStorage.removeItem("userPhoto");
     renderInitialAvatar();
 
     msgBox.className = "status-msg success";
@@ -222,7 +213,7 @@ async function deleteAvatarPhoto() {
   }
 }
 
-// 6. Save Full Profile Info
+// Save Full Profile Info
 async function saveProfileDetails() {
   if (!currentUser) return;
 
@@ -231,8 +222,6 @@ async function saveProfileDetails() {
   msgBox.innerText = "Saving profile details...";
   msgBox.style.display = "block";
 
-  const instVal = document.getElementById("institutionInput").value.trim();
-
   const profileData = {
     id: currentUser.id,
     full_name: document.getElementById("fullNameInput").value.trim(),
@@ -240,8 +229,7 @@ async function saveProfileDetails() {
     phone: document.getElementById("phoneInput").value.trim(),
     target_class: document.getElementById("classSelect").value,
     stream: document.getElementById("streamSelect").value,
-    institution: instVal,
-    school: instVal,
+    institution: document.getElementById("institutionInput").value.trim(),
     city: document.getElementById("cityInput").value.trim(),
     state: document.getElementById("stateInput").value.trim(),
     avatar_url: currentAvatarUrl,
@@ -260,13 +248,12 @@ async function saveProfileDetails() {
     msgBox.innerText = "✅ Profile info saved successfully!";
     setTimeout(() => { msgBox.style.display = "none"; }, 3000);
   } catch (err) {
-    console.error(err);
     msgBox.className = "status-msg error";
     msgBox.innerText = "❌ Save failed: " + err.message;
   }
 }
 
-// Password & Navigation Functions
+// Change Account Password
 async function setGoogleUserPassword() {
   const newPassword = document.getElementById("newPasswordInput").value;
   if (!newPassword || newPassword.length < 6) {
@@ -284,9 +271,18 @@ async function setGoogleUserPassword() {
   }
 }
 
-function goToAdminPanel() { window.location.href = "admin.html"; }
-function goToCreateFile() { window.location.href = "create-file.html"; }
-function goToHome() { window.location.href = "index.html"; }
+// Navigation Actions
+function goToAdminPanel() {
+  window.location.href = "admin.html";
+}
+
+function goToCreateFile() {
+  window.location.href = "create-file.html";
+}
+
+function goToHome() {
+  window.location.href = "index.html";
+}
 
 async function logoutUser() {
   await window.supabaseClient.auth.signOut();
