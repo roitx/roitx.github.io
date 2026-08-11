@@ -350,86 +350,90 @@
 </div>
 
 <script>
-    // Accordion FAQ Toggle Function
+        // Accordion FAQ Toggle Function
     function toggleFaq(button) {
         const item = button.parentElement;
         const isActive = item.classList.contains('active');
 
-        // Close all other open items (Google Accordion Behavior)
+        // Close all other open items
         document.querySelectorAll('.faq-item').forEach(el => el.classList.remove('active'));
 
-        // Toggle clicked item
         if (!isActive) {
             item.classList.add('active');
         }
     }
 
-    // Word Count & Validation Logic
+    // Accurate Word Counting Logic
     function countWords(str) {
-        return str.trim().split(/\s+/).filter(word => word.length > 0).length;
+        const trimmed = str.trim();
+        if (!trimmed) return 0;
+        return trimmed.split(/\s+/).length;
     }
 
+    // Live Word Count & Max Limit Enforcement
     function validateWordCount() {
-        const text = document.getElementById('description').value;
-        const words = countWords(text);
+        const textarea = document.getElementById('description');
+        let text = textarea.value;
+        let words = countWords(text);
+
+        const maxWords = 150;
+        const errorMsg = document.getElementById('errorMsg');
+
+        // Agar 150 words se zyada hone lagein, toh extra words truncate kar do
+        if (words > maxWords) {
+            const wordArray = text.trim().split(/\s+/).slice(0, maxWords);
+            textarea.value = wordArray.join(" ") + " ";
+            words = maxWords;
+        }
+
         document.getElementById('currentCount').innerText = words;
 
-        const errorMsg = document.getElementById('errorMsg');
-        if (words > 0 && (words < 30 || words > 150)) {
+        // Visual warning agar exactly 150 words ho jayein
+        if (words === maxWords) {
+            errorMsg.innerText = "Max 150 words reached!";
             errorMsg.style.display = 'block';
-            return false;
         } else {
             errorMsg.style.display = 'none';
-            return true;
         }
     }
 
-    function handleFeedback(event) {
+    // Feedback Submit Handler
+    async function handleFeedback(event) {
         event.preventDefault();
-        const text = document.getElementById('description').value;
+        const topic = document.getElementById('topic').value;
+        const text = document.getElementById('description').value.trim();
         const words = countWords(text);
 
-        if (words < 30 || words > 150) {
-            alert('Kripya word limit ka dhyan rakhein (30 - 150 words ke beech hona chahiye).');
+        if (words === 0) {
+            alert('Kripya apna feedback likhein!');
             return;
         }
 
-        alert('Aapka feedback safaltapurvak bhej diya gaya hai! Thank you.');
-        document.getElementById('feedbackForm').reset();
-        document.getElementById('currentCount').innerText = '0';
+        if (words > 150) {
+            alert('Feedback 150 words se chota hona chahiye.');
+            return;
+        }
+
+        // Dynamic Topic Names Map
+        const topicNames = {
+            ui_design: "UI / User Interface Issue",
+            content_quality: "Content & Notes Quality",
+            feature_request: "New Feature Request",
+            bug_report: "Bug / Technical Issue",
+            other: "Other"
+        };
+
+        const fullMessage = `[About Page - ${topicNames[topic] || topic}]:\n${text}`;
+
+        if (typeof sendToAdmin === "function") {
+            await sendToAdmin(fullMessage);
+            document.getElementById('feedbackForm').reset();
+            document.getElementById('currentCount').innerText = '0';
+            document.getElementById('errorMsg').style.display = 'none';
+        } else {
+            alert("❌ Error: solver.js load nahi ho paya!");
+        }
     }
-    async function handleFeedback(event) {
-    event.preventDefault();
-    const topic = document.getElementById('topic').value;
-    const text = document.getElementById('description').value;
-    const words = countWords(text);
-
-    if (words < 30 || words > 150) {
-        alert('Kripya word limit ka dhyan rakhein (30 - 150 words ke beech hona chahiye).');
-        return;
-    }
-
-    // Dynamic Topic Names Map
-    const topicNames = {
-        ui_design: "UI / User Interface Issue",
-        content_quality: "Content & Notes Quality",
-        feature_request: "New Feature Request",
-        bug_report: "Bug / Technical Issue",
-        other: "Other"
-    };
-
-    // Message ko format karke solver.js ke sendToAdmin function ko pass karein
-    const fullMessage = `[About Page - ${topicNames[topic] || topic}]:\n${text.trim()}`;
-
-    // solver.js ka function run karein
-    if (typeof sendToAdmin === "function") {
-        await sendToAdmin(fullMessage);
-        document.getElementById('feedbackForm').reset();
-        document.getElementById('currentCount').innerText = '0';
-    } else {
-        alert("❌ Error: solver.js load nahi ho paya!");
-    }
-}
 
 </script>
 
