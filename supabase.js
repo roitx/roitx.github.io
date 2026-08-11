@@ -21,11 +21,51 @@ const ADMIN_EMAILS = [
   "rohitrajgoh91@gmail.com"
 ];
 
-// Active User Fetcher
+// Active Auth User Fetcher
 async function getCurrentUser() {
   if (!window.supabaseClient) return null;
   const { data: { session } } = await window.supabaseClient.auth.getSession();
   return session ? session.user : null;
+}
+
+// Centralized Profile Data Fetcher (Name, Photo & Role)
+async function getUserProfile() {
+  const user = await getCurrentUser();
+  if (!user) return null;
+
+  // Fallback Name from Email (masumboy141)
+  let fallbackName = user.email ? user.email.split('@')[0] : "User";
+  let profileData = {
+    id: user.id,
+    email: user.email,
+    displayName: fallbackName,
+    avatarUrl: null,
+    role: 'student'
+  };
+
+  try {
+    const { data, error } = await window.supabaseClient
+      .from('profiles')
+      .select('full_name, avatar_url, role')
+      .eq('id', user.id)
+      .single();
+
+    if (data && !error) {
+      if (data.full_name && data.full_name.trim() !== "") {
+        profileData.displayName = data.full_name;
+      }
+      if (data.avatar_url) {
+        profileData.avatarUrl = data.avatar_url;
+      }
+      if (data.role) {
+        profileData.role = data.role;
+      }
+    }
+  } catch (err) {
+    console.warn("Error fetching user profile:", err);
+  }
+
+  return profileData;
 }
 
 // Precise Admin Check
@@ -33,17 +73,17 @@ async function checkIsAdmin() {
   const user = await getCurrentUser();
   if (!user) return false;
 
-  // 1. Direct App Metadata Check
+  // 1. App Metadata Check
   if (user.app_metadata?.role === "admin" || user.user_metadata?.role === "admin") {
     return true;
   }
 
-  // 2. Multi-Email Admin Check
+  // 2. Email Whitelist Check
   if (user.email && ADMIN_EMAILS.includes(user.email.toLowerCase())) {
     return true;
   }
 
-  // 3. Database Profiles Table Check
+  // 3. Database Check
   try {
     const { data } = await window.supabaseClient
       .from('profiles')
@@ -95,6 +135,7 @@ async function checkDownloadPermission(downloadCallback) {
 // Global Exports
 window.getPageUrl = getPageUrl;
 window.getCurrentUser = getCurrentUser;
+window.getUserProfile = getUserProfile;
 window.checkIsAdmin = checkIsAdmin;
 window.requireAdminAuth = requireAdminAuth;
 window.requireUserAuth = requireUserAuth;

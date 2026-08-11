@@ -30,8 +30,13 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Roitx">
 
+    <!-- External Supabase Dependencies -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+
   <link rel="stylesheet" href="style.css">
 </head>
+
 
 
 <body>
@@ -124,15 +129,6 @@
       <h3>Ask Roitx</h3>
       <p>AI Smart Assistant</p>
     </div>
-
-    <div class="card" onclick="goto('createfile.html')">
-    <span class="emoji">📁</span>
-    <h3>Create A Text File</h3>
-    <p> Create & Save </p>
-    </div>
-
-
-
     </div>
   </div>
 </section>
@@ -166,87 +162,123 @@
 </main>
 
 <script src="script.js"></script>
+
 <script>
+// =====================================================
+// 1. DYNAMIC SIDEBAR USER PROFILE LOADER
+// =====================================================
+async function renderSidebarProfile() {
+  const container = document.getElementById("navAuthContainer");
+  if (!container) return;
+
+  // Supabase Profile Engine check
+  if (typeof window.getUserProfile === "function") {
+    const profile = await window.getUserProfile();
+
+    if (profile) {
+      const firstLetter = profile.displayName.charAt(0).toUpperCase();
+
+      // User Logged In: Show Profile Photo or Initial + Dynamic Display Name
+      container.innerHTML = `
+        <a href="profile.html" style="display: flex; align-items: center; gap: 12px; padding: 10px 14px; color: #fff; text-decoration: none; background: rgba(255, 255, 255, 0.08); border-radius: 14px; margin: 10px 0; border: 1px solid rgba(255, 255, 255, 0.15); transition: all 0.2s ease;">
+          ${profile.avatarUrl 
+            ? `<img src="${profile.avatarUrl}" style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2px solid #5a2eff; flex-shrink: 0;">`
+            : `<div style="width: 38px; height: 38px; border-radius: 50%; background: #5a2eff; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; flex-shrink: 0;">${firstLetter}</div>`
+          }
+          <div style="overflow: hidden; text-align: left;">
+            <div style="font-weight: 700; font-size: 14px; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px;">
+              ${profile.displayName}
+            </div>
+            <div style="font-size: 11px; color: #3aa0ff; font-weight: 600;">My Account →</div>
+          </div>
+        </a>
+      `;
+      return;
+    }
+  }
+
+  // Not Logged In Fallback
+  container.innerHTML = `<a href="login.html" id="loginLink">🙎🏻‍♂️ Login</a>`;
+}
+
+// =====================================================
+// 2. PWA INSTALL PROMPT & SWIPE LOGIC
+// =====================================================
 let deferredPrompt;
 const installContainer = document.getElementById('installContainer');
 const installBtn = document.getElementById('installApp');
 
-// --- SWIPE LOGIC VARIABLES ---
 let startX = 0;
 let currentX = 0;
 let isDragging = false;
 
-// 1. Catch the install prompt event
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
-  
-  // Agar user ne is session mein pehle hi swipe karke hata diya hai, to mat dikhao
-  if (!sessionStorage.getItem('installDismissed')) {
-    installContainer.style.display = 'block'; 
-  }
-});
+if (installContainer && installBtn) {
+  // Catch install prompt
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    
+    if (!sessionStorage.getItem('installDismissed')) {
+      installContainer.style.display = 'block'; 
+    }
+  });
 
-// 2. Touch Events for Swipe-to-Dismiss (Notification Style)
-installContainer.addEventListener('touchstart', (e) => {
-  startX = e.touches[0].clientX;
-  isDragging = true;
-  installContainer.style.transition = 'none'; // Dragging ke waqt smooth move ke liye transition off
-}, {passive: true});
+  // Touch Events for Swipe-to-Dismiss
+  installContainer.addEventListener('touchstart', (e) => {
+    startX = e.touches[0].clientX;
+    isDragging = true;
+    installContainer.style.transition = 'none';
+  }, {passive: true});
 
-installContainer.addEventListener('touchmove', (e) => {
-  if (!isDragging) return;
-  currentX = e.touches[0].clientX - startX;
-  
-  // Sirf Right side swipe allow karne ke liye
-  if (currentX > 0) {
-    // Button ko ungli ke saath move karna (calc use kiya hai kyunki CSS mein -50% pehle se hai)
-    installContainer.style.transform = `translateX(calc(-50% + ${currentX}px))`;
-    // Jitna zyada swipe, utna zyada transparent (fade effect)
-    installContainer.style.opacity = 1 - (currentX / 250); 
-  }
-}, {passive: true});
+  installContainer.addEventListener('touchmove', (e) => {
+    if (!isDragging) return;
+    currentX = e.touches[0].clientX - startX;
+    
+    if (currentX > 0) {
+      installContainer.style.transform = `translateX(calc(-50% + ${currentX}px))`;
+      installContainer.style.opacity = 1 - (currentX / 250); 
+    }
+  }, {passive: true});
 
-installContainer.addEventListener('touchend', () => {
-  isDragging = false;
-  installContainer.style.transition = 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s ease';
+  installContainer.addEventListener('touchend', () => {
+    isDragging = false;
+    installContainer.style.transition = 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s ease';
 
-  if (currentX > 150) { // Agar 150px se zyada swipe kiya to dismiss kar do
-    installContainer.style.transform = 'translateX(100vw)';
-    installContainer.style.opacity = '0';
-    sessionStorage.setItem('installDismissed', 'true'); // Session save karein taaki bar-bar na aaye
-    setTimeout(() => { installContainer.style.display = 'none'; }, 300);
-  } else {
-    // Agar pura swipe nahi hua, to wapas beech mein le aao (Spring effect)
-    installContainer.style.transform = 'translateX(-50%)';
-    installContainer.style.opacity = '1';
-  }
-  currentX = 0; // Reset
-});
+    if (currentX > 150) { 
+      installContainer.style.transform = 'translateX(100vw)';
+      installContainer.style.opacity = '0';
+      sessionStorage.setItem('installDismissed', 'true');
+      setTimeout(() => { installContainer.style.display = 'none'; }, 300);
+    } else {
+      installContainer.style.transform = 'translateX(-50%)';
+      installContainer.style.opacity = '1';
+    }
+    currentX = 0; 
+  });
 
-// 3. Handle the Install Click
-installBtn.addEventListener('click', async () => {
-  // Agar user swipe kar raha hai, to click trigger na ho
-  if (Math.abs(currentX) > 10) return; 
-  
-  if (!deferredPrompt) return;
-  
-  deferredPrompt.prompt();
-  const { outcome } = await deferredPrompt.userChoice;
-  console.log(`User response: ${outcome}`);
-  
-  deferredPrompt = null;
-  installContainer.style.display = 'none';
-});
+  // Install Button Click
+  installBtn.addEventListener('click', async () => {
+    if (Math.abs(currentX) > 10) return; 
+    if (!deferredPrompt) return;
+    
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log(`User response: ${outcome}`);
+    
+    deferredPrompt = null;
+    installContainer.style.display = 'none';
+  });
+}
 
-// 4. Success event
 window.addEventListener('appinstalled', () => {
-  installContainer.style.display = 'none';
+  if (installContainer) installContainer.style.display = 'none';
   deferredPrompt = null;
   console.log('Roitx App installed successfully!');
 });
 
-// 5. Robust Service Worker registration
+// =====================================================
+// 3. SERVICE WORKER REGISTRATION
+// =====================================================
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js')
@@ -255,8 +287,19 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// UI Utilities
-document.getElementById("year").textContent = new Date().getFullYear();
+// =====================================================
+// 4. UI UTILITIES & DOM INITIALIZATION
+// =====================================================
+document.addEventListener("DOMContentLoaded", () => {
+  // Set Current Year
+  const yearElem = document.getElementById("year");
+  if (yearElem) {
+    yearElem.textContent = new Date().getFullYear();
+  }
+
+  // Load Sidebar Profile Details
+  renderSidebarProfile();
+});
 
 function goto(url) {
   window.location.href = url;

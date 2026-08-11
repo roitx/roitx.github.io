@@ -1,0 +1,437 @@
+<!-- about.html -->
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About & Feedback</title>
+    <!-- Google Fonts for Modern Typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        body {
+            background: #0f172a; /* Deep modern dark theme */
+            color: #f8fafc;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 30px 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 680px;
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 35px;
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        /* --- Glowing Profile Section --- */
+        .profile-card {
+            text-align: center;
+            margin-bottom: 35px;
+            position: relative;
+        }
+
+        .img-wrapper {
+            position: relative;
+            width: 140px;
+            height: 140px;
+            margin: 0 auto 20px auto;
+            border-radius: 50%;
+        }
+
+        /* Ultra Glowing Ring Animation */
+        .img-wrapper::before, .img-wrapper::after {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #3b82f6, #8b5cf6, #ec4899, #06b6d4);
+            z-index: -1;
+            animation: spinGlow 4s linear infinite;
+        }
+
+        .img-wrapper::after {
+            filter: blur(20px);
+            opacity: 0.8;
+        }
+
+        @keyframes spinGlow {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .profile-card img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid #0f172a;
+            display: block;
+        }
+
+        .profile-card h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            background: linear-gradient(to right, #60a5fa, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .profile-card p.author-msg {
+            color: #94a3b8;
+            font-size: 0.95rem;
+            max-width: 520px;
+            margin: 0 auto;
+            line-height: 1.6;
+            font-style: italic;
+        }
+
+        /* --- Section Titles --- */
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #f1f5f9;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 20px;
+            background: #3b82f6;
+            border-radius: 4px;
+        }
+
+        /* --- Accordion FAQ Section --- */
+        .faq-section {
+            margin-bottom: 35px;
+        }
+
+        .faq-item {
+            background: rgba(51, 65, 85, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            margin-bottom: 12px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .faq-item:hover {
+            border-color: rgba(96, 165, 250, 0.3);
+        }
+
+        .faq-question {
+            width: 100%;
+            padding: 16px 20px;
+            background: none;
+            border: none;
+            color: #e2e8f0;
+            font-size: 1rem;
+            font-weight: 600;
+            text-align: left;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .faq-icon {
+            font-size: 1.2rem;
+            transition: transform 0.3s ease;
+            color: #60a5fa;
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s cubic-bezier(0, 1, 0, 1);
+            background: rgba(15, 23, 42, 0.3);
+            color: #cbd5e1;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            padding: 0 20px;
+        }
+
+        .faq-item.active .faq-answer {
+            max-height: 300px;
+            padding: 16px 20px;
+            transition: max-height 0.3s cubic-bezier(1, 0, 1, 0);
+        }
+
+        .faq-item.active .faq-icon {
+            transform: rotate(180deg);
+        }
+
+        /* --- Modern Feedback Form --- */
+        .feedback-section form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #cbd5e1;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        select, textarea {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            color: #f8fafc;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        select:focus, textarea:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        select option {
+            background-color: #1e293b;
+            color: #fff;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 110px;
+        }
+
+        .form-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: -8px;
+        }
+
+        .word-count {
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+
+        .error-msg {
+            color: #f87171;
+            font-size: 0.85rem;
+            display: none;
+        }
+
+        button.submit-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.3s, transform 0.2s;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        button.submit-btn:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
+        }
+
+        button.submit-btn:active {
+            transform: translateY(0);
+        }
+    </style>
+    <!-- Supabase & Solver Dependencies -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+<script src="solver.js"></script>
+
+</head>
+<body>
+
+<div class="container">
+    <!-- Glowing Author Profile Section -->
+    <div class="profile-card">
+        <div class="img-wrapper">
+            <img src="auth.jpg" alt="Author Photo">
+        </div>
+        <h2>ROHIT BABU</h2>
+        <p class="author-msg">
+            "Is platform ko banane ka maksad sabhi students ko ek behtareen aur bina kisi rukawat ke padhai ka mahaul dena hai. Aasha hai ye aapki journey me madadgar sabit hoga!"
+        </p>
+    </div>
+
+    <!-- Accordion Google-style FAQ Section -->
+    <div class="faq-section">
+        <div class="section-title">Frequently Asked Questions</div>
+        
+        <div class="faq-item">
+            <button class="faq-question" onclick="toggleFaq(this)">
+                <span>Q: Ye platform kis baare me hai?</span>
+                <span class="faq-icon">▼</span>
+            </button>
+            <div class="faq-answer">
+                <p>A: Ye platform study materials, notes aur learning tools ko ek jagah access karne ke liye banaya gaya hai, taaki sabhi students bina kisi pareshani ke padhai kar sakein.</p>
+            </div>
+        </div>
+        
+        <div class="faq-item">
+            <button class="faq-question" onclick="toggleFaq(this)">
+                <span>Q: Mai apna feedback kaise bhej sakta hu?</span>
+                <span class="faq-icon">▼</span>
+            </button>
+            <div class="faq-answer">
+                <p>A: Aap niche diye gaye feedback form ke zariye topic select karke apna sujhav (30-150 words me) bhej sakte hain.</p>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <button class="faq-question" onclick="toggleFaq(this)">
+                <span>Q: Kya ye content bilkul free hai?</span>
+                <span class="faq-icon">▼</span>
+            </button>
+            <div class="faq-answer">
+                <p>A: Haan, yahan milne wale sabhi basic notes aur learning guides sabhi students ke liye free hain.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feedback Form Section -->
+    <div class="feedback-section">
+        <div class="section-title">Send Feedback</div>
+        <form id="feedbackForm" onsubmit="handleFeedback(event)">
+            <div>
+                <label for="topic">Topic Select Karein:</label>
+                <select id="topic" required>
+                    <option value="" disabled selected>Select a topic</option>
+                    <option value="ui_design">UI / User Interface Issue</option>
+                    <option value="content_quality">Content & Notes Quality</option>
+                    <option value="feature_request">New Feature Request</option>
+                    <option value="bug_report">Bug / Technical Issue</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="description">Apna Feedback Describe Karein (30 - 150 Words):</label>
+                <textarea id="description" placeholder="Aapka feedback hamare liye mahatvapurna hai..." oninput="validateWordCount()"></textarea>
+                <div class="form-footer">
+                    <div id="errorMsg" class="error-msg">Min 30 & Max 150 words allowed.</div>
+                    <div class="word-count"><span id="currentCount">0</span> / 150 words</div>
+                </div>
+            </div>
+
+            <button type="submit" class="submit-btn">Submit Feedback</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Accordion FAQ Toggle Function
+    function toggleFaq(button) {
+        const item = button.parentElement;
+        const isActive = item.classList.contains('active');
+
+        // Close all other open items (Google Accordion Behavior)
+        document.querySelectorAll('.faq-item').forEach(el => el.classList.remove('active'));
+
+        // Toggle clicked item
+        if (!isActive) {
+            item.classList.add('active');
+        }
+    }
+
+    // Word Count & Validation Logic
+    function countWords(str) {
+        return str.trim().split(/\s+/).filter(word => word.length > 0).length;
+    }
+
+    function validateWordCount() {
+        const text = document.getElementById('description').value;
+        const words = countWords(text);
+        document.getElementById('currentCount').innerText = words;
+
+        const errorMsg = document.getElementById('errorMsg');
+        if (words > 0 && (words < 30 || words > 150)) {
+            errorMsg.style.display = 'block';
+            return false;
+        } else {
+            errorMsg.style.display = 'none';
+            return true;
+        }
+    }
+
+    function handleFeedback(event) {
+        event.preventDefault();
+        const text = document.getElementById('description').value;
+        const words = countWords(text);
+
+        if (words < 30 || words > 150) {
+            alert('Kripya word limit ka dhyan rakhein (30 - 150 words ke beech hona chahiye).');
+            return;
+        }
+
+        alert('Aapka feedback safaltapurvak bhej diya gaya hai! Thank you.');
+        document.getElementById('feedbackForm').reset();
+        document.getElementById('currentCount').innerText = '0';
+    }
+    async function handleFeedback(event) {
+    event.preventDefault();
+    const topic = document.getElementById('topic').value;
+    const text = document.getElementById('description').value;
+    const words = countWords(text);
+
+    if (words < 30 || words > 150) {
+        alert('Kripya word limit ka dhyan rakhein (30 - 150 words ke beech hona chahiye).');
+        return;
+    }
+
+    // Dynamic Topic Names Map
+    const topicNames = {
+        ui_design: "UI / User Interface Issue",
+        content_quality: "Content & Notes Quality",
+        feature_request: "New Feature Request",
+        bug_report: "Bug / Technical Issue",
+        other: "Other"
+    };
+
+    // Message ko format karke solver.js ke sendToAdmin function ko pass karein
+    const fullMessage = `[About Page - ${topicNames[topic] || topic}]:\n${text.trim()}`;
+
+    // solver.js ka function run karein
+    if (typeof sendToAdmin === "function") {
+        await sendToAdmin(fullMessage);
+        document.getElementById('feedbackForm').reset();
+        document.getElementById('currentCount').innerText = '0';
+    } else {
+        alert("❌ Error: solver.js load nahi ho paya!");
+    }
+}
+
+</script>
+
+</body>
+</html>
