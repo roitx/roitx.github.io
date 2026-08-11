@@ -24,8 +24,8 @@ async function loadUserProfile() {
   const isAdmin = await window.checkIsAdmin();
   if (isAdmin) {
     document.getElementById("userRoleBadge").innerHTML = '<i class="fa-solid fa-crown"></i> Platform Admin';
-    document.getElementById("adminBtn").style.display = "flex";
-    document.getElementById("createFileBtn").style.display = "flex";
+    if (document.getElementById("adminBtn")) document.getElementById("adminBtn").style.display = "flex";
+    if (document.getElementById("createFileBtn")) document.getElementById("createFileBtn").style.display = "flex";
   } else {
     document.getElementById("userRoleBadge").innerHTML = '<i class="fa-solid fa-graduation-cap"></i> Active Student';
   }
@@ -34,9 +34,9 @@ async function loadUserProfile() {
   try {
     const { data } = await window.supabaseClient
       .from('profiles')
-      .select('full_name, country_code, phone, target_class, stream, institution, city, state, avatar_url')
+      .select('*')
       .eq('id', user.id)
-      .single();
+      .maybeSingle();
 
     if (data) {
       document.getElementById("fullNameInput").value = data.full_name || "";
@@ -151,6 +151,7 @@ async function cropAndUpload() {
     const filePath = `${currentUser.id}/avatar_${Date.now()}.png`;
 
     try {
+      // 1. Upload to Storage
       const { error: uploadErr } = await window.supabaseClient
         .storage
         .from('avatars')
@@ -158,6 +159,7 @@ async function cropAndUpload() {
 
       if (uploadErr) throw uploadErr;
 
+      // 2. Get Public URL
       const { data: publicData } = window.supabaseClient
         .storage
         .from('avatars')
@@ -168,9 +170,17 @@ async function cropAndUpload() {
 
       renderAvatarImage(currentAvatarUrl);
 
-      await window.supabaseClient
+      // 3. Save to Database (Email field included to prevent NOT NULL constraint error)
+      const { error: dbErr } = await window.supabaseClient
         .from('profiles')
-        .upsert({ id: currentUser.id, avatar_url: currentAvatarUrl, updated_at: new Date() });
+        .upsert({ 
+          id: currentUser.id, 
+          email: currentUser.email,
+          avatar_url: currentAvatarUrl, 
+          updated_at: new Date() 
+        });
+
+      if (dbErr) throw dbErr;
 
       msgBox.className = "status-msg success";
       msgBox.innerText = "✅ Profile photo updated!";
@@ -224,6 +234,7 @@ async function saveProfileDetails() {
 
   const profileData = {
     id: currentUser.id,
+    email: currentUser.email,
     full_name: document.getElementById("fullNameInput").value.trim(),
     country_code: document.getElementById("countryCodeSelect").value,
     phone: document.getElementById("phoneInput").value.trim(),
@@ -271,13 +282,13 @@ async function setGoogleUserPassword() {
   }
 }
 
-// Navigation Actions
+// Navigation Actions (Updated as per your exact HTML file names)
 function goToAdminPanel() {
-  window.location.href = "admin.html";
+  window.location.href = "admin-panel.html";
 }
 
 function goToCreateFile() {
-  window.location.href = "create-file.html";
+  window.location.href = "createfile.html";
 }
 
 function goToHome() {
