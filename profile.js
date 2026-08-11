@@ -6,7 +6,7 @@ document.addEventListener("DOMContentLoaded", () => {
   loadUserProfile();
 });
 
-// Load User Profile Data from Supabase
+// 1. Load User Profile Data from Supabase
 async function loadUserProfile() {
   if (!window.supabaseClient) return;
 
@@ -20,7 +20,7 @@ async function loadUserProfile() {
   currentUser = user;
   document.getElementById("emailInput").value = user.email || "";
 
-  // 1. Check Admin Authorization
+  // Check Admin Authorization
   const isAdmin = await window.checkIsAdmin();
   if (isAdmin) {
     document.getElementById("userRoleBadge").innerHTML = '<i class="fa-solid fa-crown"></i> Platform Admin';
@@ -30,7 +30,7 @@ async function loadUserProfile() {
     document.getElementById("userRoleBadge").innerHTML = '<i class="fa-solid fa-graduation-cap"></i> Active Student';
   }
 
-  // 2. Fetch Profile Record
+  // Fetch Profile Record
   try {
     const { data } = await window.supabaseClient
       .from('profiles')
@@ -67,7 +67,7 @@ async function loadUserProfile() {
   }
 }
 
-// Render Initial Letter Avatar
+// 2. Render Initial Letter Avatar
 function renderInitialAvatar() {
   currentAvatarUrl = null;
   const name = document.getElementById("fullNameInput").value.trim();
@@ -90,12 +90,15 @@ function updateInitialAvatar() {
   }
 }
 
+// Render Avatar Image with Cache Busting
 function renderAvatarImage(url) {
-  document.getElementById("avatarContainer").innerHTML = `<img src="${url}" alt="Profile">`;
+  // Browser cache bypass karne ke liye timestamp query parameter
+  const cacheBustUrl = `${url}?t=${Date.now()}`;
+  document.getElementById("avatarContainer").innerHTML = `<img src="${cacheBustUrl}" alt="Profile">`;
   document.getElementById("deletePhotoBtn").style.display = "inline-flex";
 }
 
-// Photo Selection & Cropper Logic
+// 3. Photo Selection & Cropper Logic
 function triggerPhotoSelect() {
   document.getElementById("avatarFileInput").click();
 }
@@ -131,7 +134,7 @@ function closeCropModal() {
   if (cropper) cropper.destroy();
 }
 
-// Crop & Upload Image to Supabase Storage
+// 4. Crop & Upload Image to Supabase Storage
 async function cropAndUpload() {
   if (!cropper || !currentUser) return;
 
@@ -151,7 +154,7 @@ async function cropAndUpload() {
     const filePath = `${currentUser.id}/avatar_${Date.now()}.png`;
 
     try {
-      // 1. Upload to Storage
+      // 1. Storage Upload
       const { error: uploadErr } = await window.supabaseClient
         .storage
         .from('avatars')
@@ -168,9 +171,7 @@ async function cropAndUpload() {
       currentAvatarUrl = publicData.publicUrl;
       localStorage.setItem("userPhoto", currentAvatarUrl);
 
-      renderAvatarImage(currentAvatarUrl);
-
-      // 3. Save to Database (Email field included to prevent NOT NULL constraint error)
+      // 3. Update Profile Table
       const { error: dbErr } = await window.supabaseClient
         .from('profiles')
         .upsert({ 
@@ -181,6 +182,9 @@ async function cropAndUpload() {
         });
 
       if (dbErr) throw dbErr;
+
+      // Instant UI Sync
+      await loadUserProfile();
 
       msgBox.className = "status-msg success";
       msgBox.innerText = "✅ Profile photo updated!";
@@ -193,7 +197,7 @@ async function cropAndUpload() {
   }, 'image/png');
 }
 
-// Delete Profile Photo
+// 5. Delete Profile Photo
 async function deleteAvatarPhoto() {
   if (!currentUser) return;
   if (!confirm("Kya aap photo hatana chahte hain?")) return;
@@ -212,7 +216,9 @@ async function deleteAvatarPhoto() {
     if (error) throw error;
 
     localStorage.removeItem("userPhoto");
-    renderInitialAvatar();
+    
+    // Instant UI Sync
+    await loadUserProfile();
 
     msgBox.className = "status-msg success";
     msgBox.innerText = "✅ Profile photo deleted!";
@@ -223,7 +229,7 @@ async function deleteAvatarPhoto() {
   }
 }
 
-// Save Full Profile Info
+// 6. Save Full Profile Info
 async function saveProfileDetails() {
   if (!currentUser) return;
 
@@ -254,7 +260,9 @@ async function saveProfileDetails() {
 
     if (error) throw error;
 
-    document.getElementById("userDisplayName").innerText = profileData.full_name || currentUser.email.split('@')[0];
+    // Save hote hi instant fresh data reload & DOM sync
+    await loadUserProfile();
+
     msgBox.className = "status-msg success";
     msgBox.innerText = "✅ Profile info saved successfully!";
     setTimeout(() => { msgBox.style.display = "none"; }, 3000);
@@ -264,7 +272,7 @@ async function saveProfileDetails() {
   }
 }
 
-// Change Account Password
+// Password Actions
 async function setGoogleUserPassword() {
   const newPassword = document.getElementById("newPasswordInput").value;
   if (!newPassword || newPassword.length < 6) {
@@ -282,18 +290,10 @@ async function setGoogleUserPassword() {
   }
 }
 
-// Navigation Actions (Updated as per your exact HTML file names)
-function goToAdminPanel() {
-  window.location.href = "admin-panel.html";
-}
-
-function goToCreateFile() {
-  window.location.href = "createfile.html";
-}
-
-function goToHome() {
-  window.location.href = "index.html";
-}
+// Navigation Actions
+function goToAdminPanel() { window.location.href = "admin-panel.html"; }
+function goToCreateFile() { window.location.href = "createfile.html"; }
+function goToHome() { window.location.href = "index.html"; }
 
 async function logoutUser() {
   await window.supabaseClient.auth.signOut();
