@@ -1,51 +1,37 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Class 11 Science Subjects</title>
-
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-            background: #f2f2f2;
-        }
-
-        h1 { text-align: center; margin-bottom: 25px; }
-
-        .card {
-            background: white;
-            padding: 18px;
-            margin: 12px 0;
-            border-radius: 10px;
-            font-size: 20px;
-            font-weight: 600;
-            cursor: pointer;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.15);
-            transition: 0.3s;
-        }
-        .card:hover {
-            background: #e8faff;
-            transform: translateY(-3px);
-        }
-    </style>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Class 11 Science — RK Notes</title>
+    <link rel="stylesheet" href="site.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase.js"></script>
 </head>
 <body>
+<div class="container">
+  <header class="topbar">
+    <div class="brand"><h1>Class 11 Science</h1></div>
+    <button class="btn" onclick="location.href='classes.html'">🔙 Back</button>
+  </header>
 
-<h1>Class 11 — Science Subjects</h1>
+  <h2>Select a Subject</h2>
+  <div class="grid">
+    <div class="card" onclick="openSubject('physics')"><h3>⚡ Physics</h3><p>Mechanics, Thermodynamics & Waves</p></div>
+    <div class="card" onclick="openSubject('chemistry')"><h3>🧪 Chemistry</h3><p>Structure of Atom, Bonding & Organic</p></div>
+    <div class="card" onclick="openSubject('maths')"><h3>📐 Maths</h3><p>Sets, Calculus & Probability</p></div>
+    <div class="card" onclick="openSubject('biology')"><h3>🧬 Biology</h3><p>Plant & Human Physiology</p></div>
+    <div class="card" onclick="openSubject('english')"><h3>🇬🇧 English</h3><p>Hornbill & Snapshots</p></div>
+  </div>
 
-<div class="card" onclick="goto('11-physics-chapters.html')">Physics</div>
-<div class="card" onclick="goto('11-chemistry-chapters.html')">Chemistry</div>
-<div class="card" onclick="goto('11-biology-chapters.html')">Biology</div>
-<div class="card" onclick="goto('11-maths-chapters.html')">Maths</div>
-<div class="card" onclick="goto('11-english-chapters.html')">English</div>
-<div class="card" onclick="goto('11-hindi-chapters.html')">Hindi</div>
-<div class="card" onclick="goto('11-computer-chapters.html')">Computer</div>
+  <div id="notesContainer" style="margin-top: 25px;"></div>
+</div>
+
+<div class="home-btn" onclick="location.href='index.html'">🏠</div>
 
 <script>
-function goto(page) { window.location.href = page; }
+  const CURRENT_CLASS = "11";
 </script>
-
+<script src="site.js"></script>
 </body>
 </html>

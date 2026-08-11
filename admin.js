@@ -53,27 +53,58 @@ async function uploadFile() {
 
   const cls = document.getElementById("classSelect")?.value;
   const sub = document.getElementById("subjectSelect")?.value;
-  const ch  = document.getElementById("chapterSelect")?.value;
+  const chSelect = document.getElementById("chapterSelect")?.value;
+  const chapterName = document.getElementById("chapterNameInput")?.value.trim();
   const msg = document.getElementById("uploadMsg");
 
-  if (!cls || !sub || !ch) return alert("❌ Select Class, Subject & Chapter");
+  if (!cls || !sub || !chSelect || !chapterName) {
+    return alert("❌ Please select Class, Subject, Chapter and enter Chapter Name!");
+  }
 
+  // chSelect jaise 'ch1' se number extract karna (e.g. '1')
+  const chapterNumber = parseInt(chSelect.replace("ch", "")) || 1;
   const classNum = cls.replace("class", "");
-  const fileName = `${classNum}_${sub}_${ch}.pdf`;
+  
+  // Storage file name e.g. "10_physics_1.pdf"
+  const fileName = `${classNum}_${sub}_ch${chapterNumber}.pdf`;
+  const filePath = `notes/${fileName}`;
 
-  if (msg) msg.innerText = "⏳ Uploading...";
+  if (msg) msg.innerText = "⏳ Uploading file & saving details...";
 
-  const { error } = await window.supabaseClient.storage
+  // 1. Supabase Storage me PDF upload karein
+  const { error: uploadError } = await window.supabaseClient.storage
     .from("admin-files")
-    .upload(`notes/${fileName}`, file, { upsert: true });
+    .upload(filePath, file, { upsert: true });
 
-  if (error) {
+  if (uploadError) {
+    console.error("Storage Error:", uploadError);
     if (msg) msg.innerText = "❌ Upload failed";
     return;
   }
 
-  if (msg) msg.innerText = "✅ Uploaded: " + fileName;
+  // 2. Supabase Database table 'notes' me row insert/upsert karein
+  const { error: dbError } = await window.supabaseClient
+    .from("notes")
+    .upsert([
+      {
+        class: classNum,
+        subject: sub.toLowerCase().trim(),
+        chapter_number: chapterNumber,
+        chapter_name: chapterName,
+        file_path: filePath
+      }
+    ], { onConflict: 'class,subject,chapter_number' });
+
+  if (dbError) {
+    console.error("Database Error:", dbError);
+    if (msg) msg.innerText = "⚠️ File uploaded, but database save failed!";
+    return;
+  }
+
+  if (msg) msg.innerText = "✅ Successfully Uploaded & Saved!";
   if (fileInput) fileInput.value = "";
+  const nameInput = document.getElementById("chapterNameInput");
+  if (nameInput) nameInput.value = "";
   
   // Instant Refresh & Stats Update after upload
   await loadFiles();
@@ -86,9 +117,13 @@ async function loadFiles() {
 
   list.innerHTML = "⏳ Loading notes...";
 
-  const { data, error } = await window.supabaseClient.storage
-    .from("admin-files")
-    .list("notes", { limit: 100 });
+  // Database se notes fetch karenge taki chapter name bhi dikhe
+  const { data, error } = await window.supabaseClient
+    .from("notes")
+    .select("*")
+    .order("class", { ascending: true })
+    .order("subject", { ascending: true })
+    .order("chapter_number", { ascending: true });
 
   if (error || !data || data.length === 0) {
     list.innerHTML = "<em>No files found</em>";
@@ -100,11 +135,11 @@ async function loadFiles() {
   const filterCls = document.getElementById("filterNotesClass")?.value || "";
   const filterSub = document.getElementById("filterNotesSubject")?.value.toLowerCase() || "";
 
-  const filtered = data.filter(file => {
-    const fileName = file.name.toLowerCase();
-    const matchSearch = fileName.includes(search);
-    const matchClass = filterCls ? fileName.startsWith(`${filterCls}_`) : true;
-    const matchSubject = filterSub ? fileName.includes(`_${filterSub}_`) : true;
+  const filtered = data.filter(note => {
+    const searchStr = `${note.chapter_name} ${note.subject} class ${note.class}`.toLowerCase();
+    const matchSearch = searchStr.includes(search);
+    const matchClass = filterCls ? String(note.class) === String(filterCls) : true;
+    const matchSubject = filterSub ? note.subject.toLowerCase() === filterSub.toLowerCase() : true;
     return matchSearch && matchClass && matchSubject;
   });
 
@@ -115,13 +150,14 @@ async function loadFiles() {
   }
 
   list.innerHTML = "";
-  filtered.forEach(file => {
+  filtered.forEach(note => {
     const row = document.createElement("div");
+    row.style.cssText = "padding:10px; border-bottom:1px solid #2e4a73; display:flex; justify-content:space-between; align-items:center;";
     row.innerHTML = `
-      <span>📄 <b>${file.name}</b></span>
+      <span>📄 <b>Class ${note.class}</b> • ${note.subject.toUpperCase()} • Ch ${note.chapter_number}: ${note.chapter_name}</span>
       <div>
-        <button onclick="openFile('${file.name}')">Open</button>
-        <button class="logout" style="padding:6px 12px; font-size:12px;" onclick="deleteFile('${file.name}')">🗑</button>
+        <button style="padding:6px 12px; font-size:12px;" onclick="openFile('${note.file_path}')">Open</button>
+        <button class="logout" style="padding:6px 12px; font-size:12px;" onclick="deleteNoteRecord('${note.id}', '${note.file_path}')">🗑</button>
       </div>
     `;
     list.appendChild(row);
@@ -130,17 +166,22 @@ async function loadFiles() {
   updateStats();
 }
 
-async function openFile(name) {
-  window.location.href = `notes-viewer.html?path=notes/${encodeURIComponent(name)}&name=${encodeURIComponent(name)}`;
+async function openFile(filePath) {
+  const fileName = filePath.split("/").pop();
+  window.location.href = `notes-viewer.html?path=${encodeURIComponent(filePath)}&name=${encodeURIComponent(fileName)}`;
 }
 
-async function deleteFile(name) {
-  if (!confirm("Delete file?")) return;
-  const { error } = await window.supabaseClient.storage.from("admin-files").remove([`notes/${name}`]);
-  if (error) {
-    alert("❌ Delete failed");
-    return;
+async function deleteNoteRecord(id, filePath) {
+  if (!confirm("Delete file and record?")) return;
+  
+  // Storage se file delete karein
+  await window.supabaseClient.storage.from("admin-files").remove([filePath]);
+  
+  // Database table se row delete karein (agar id available hai)
+  if (id) {
+    await window.supabaseClient.from("notes").delete().eq("id", id);
   }
+
   await loadFiles();
   await updateStats();
 }
