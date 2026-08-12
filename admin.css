@@ -100,7 +100,7 @@ button {
   box-shadow: 0 0 0 rgba(58,160,255,0);
 }
 /* ==========================================
-   💳 Payment Orders Floating Button Styling (Bigger & Bold)
+   💳 Payment Orders Floating Button Styling
    ========================================== */
 #ordersBtn {
     width: 48px;                         /* Explicit Width */
@@ -133,18 +133,24 @@ button {
     box-shadow: 0 3px 12px rgba(0, 210, 255, 0.4);
 }
 
-/* Big Glowing Green Status Dot */
+/* 🟢 Default State: Green Badge/Dot Bilkul Chhipa Rahega (Display: None) */
 #ordersBtn::after {
     content: '';
     position: absolute;
     top: -3px;
     right: -3px;
-    width: 12px;                         /* Bigger Dot */
+    width: 12px;
     height: 12px;
     background-color: #2ed573;
     border-radius: 50%;
     border: 2.5px solid #0f172a;
     box-shadow: 0 0 10px #2ed573;
+    display: none; /* Jab tak order na ho, tab tak dikega nahi */
+}
+
+/* 🟢 Active/Glow State: Jab JS class add karegi, tabhi dot dikega aur animate hoga */
+#ordersBtn.glow-effect::after {
+    display: block; /* Order aane par show hoga */
     animation: pulseDot 1.8s infinite;
 }
 

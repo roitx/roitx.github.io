@@ -38,6 +38,15 @@ async function updateStats() {
     const { data: events } = await window.supabaseClient.from("events").select("id", { count: 'exact' });
     const eventsEl = document.getElementById("totalEventsCount");
     if (eventsEl && events) eventsEl.innerText = events.length;
+
+    // 4. Check Pending Orders for Glowing Button Fix
+    const { data: orders } = await window.supabaseClient.from("orders").select("id").eq("status", "pending");
+    const orderBtn = document.getElementById("adminOrdersBtn"); // या ऑर्डर वाले बटन की आईडी
+    if (orders && orders.length > 0) {
+        if(orderBtn) orderBtn.classList.add("glow-effect");
+    } else {
+        if(orderBtn) orderBtn.classList.remove("glow-effect");
+    }
   } catch (err) {
     console.error("Stats update failed:", err);
   }
@@ -61,17 +70,14 @@ async function uploadFile() {
     return alert("❌ Please select Class, Subject, Chapter and enter Chapter Name!");
   }
 
-  // chSelect jaise 'ch1' se number extract karna (e.g. '1')
   const chapterNumber = parseInt(chSelect.replace("ch", "")) || 1;
   const classNum = cls.replace("class", "");
   
-  // Storage file name e.g. "10_physics_1.pdf"
   const fileName = `${classNum}_${sub}_ch${chapterNumber}.pdf`;
   const filePath = `notes/${fileName}`;
 
   if (msg) msg.innerText = "⏳ Uploading file & saving details...";
 
-  // 1. Supabase Storage me PDF upload karein
   const { error: uploadError } = await window.supabaseClient.storage
     .from("admin-files")
     .upload(filePath, file, { upsert: true });
@@ -82,7 +88,6 @@ async function uploadFile() {
     return;
   }
 
-  // 2. Supabase Database table 'notes' me row insert/upsert karein
   const { error: dbError } = await window.supabaseClient
     .from("notes")
     .upsert([
@@ -106,7 +111,6 @@ async function uploadFile() {
   const nameInput = document.getElementById("chapterNameInput");
   if (nameInput) nameInput.value = "";
   
-  // Instant Refresh & Stats Update after upload
   await loadFiles();
   await updateStats();
 }
@@ -117,7 +121,6 @@ async function loadFiles() {
 
   list.innerHTML = "⏳ Loading notes...";
 
-  // Database se notes fetch karenge taki chapter name bhi dikhe
   const { data, error } = await window.supabaseClient
     .from("notes")
     .select("*")
@@ -173,15 +176,10 @@ async function openFile(filePath) {
 
 async function deleteNoteRecord(id, filePath) {
   if (!confirm("Delete file and record?")) return;
-  
-  // Storage se file delete karein
   await window.supabaseClient.storage.from("admin-files").remove([filePath]);
-  
-  // Database table se row delete karein (agar id available hai)
   if (id) {
     await window.supabaseClient.from("notes").delete().eq("id", id);
   }
-
   await loadFiles();
   await updateStats();
 }
@@ -211,7 +209,6 @@ async function addEvent() {
   if (msg) msg.innerText = "✅ Event added";
   if (document.getElementById("eventName")) document.getElementById("eventName").value = "";
   
-  // Instant Refresh & Stats Update
   await loadEvents();
   await updateStats();
 }
@@ -274,7 +271,7 @@ async function deleteEvent(id) {
     return;
   }
   await loadEvents();
-  await updateStats();
+  updateStats();
 }
 
 /* ---------- PART 4: FORMULAS SYSTEM ---------- */
@@ -283,7 +280,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const fSubject  = document.getElementById("fSubject");
   const fChapter  = document.getElementById("fChapter");
   const fType     = document.getElementById("fType");
-  const fCategory = document.getElementById("fCategory"); // नया कैटेगरी एलिमेंट
+  const fCategory = document.getElementById("fCategory");
 
   const formulaText  = document.getElementById("formulaText");
   const formulaFile  = document.getElementById("formulaFile");
@@ -321,7 +318,6 @@ document.addEventListener("DOMContentLoaded", () => {
   window.uploadFormula = async function () {
     if (statusBox) statusBox.innerText = "⏳ Uploading...";
 
-    // यहाँ fCategory.value को भी अनिवार्य (required) बना दिया गया है
     if (!fClass.value || !fSubject.value || !fChapter.value || !fType.value || !fCategory.value) {
       if (statusBox) statusBox.innerText = "❌ All fields required";
       return;
@@ -359,7 +355,7 @@ document.addEventListener("DOMContentLoaded", () => {
       subject: fSubject.value,
       chapter: fChapter.value,
       type: fType.value,
-      category: fCategory.value, // डेटाबेस में कैटेगरी सेव करने के लिए
+      category: fCategory.value,
       formula_text: formulaTextData,
       file_path: filePath,
       publish: publishCheck ? publishCheck.checked : true
@@ -373,14 +369,13 @@ document.addEventListener("DOMContentLoaded", () => {
     if (statusBox) statusBox.innerText = "✅ Formula uploaded";
     if (formulaText) formulaText.value = "";
     if (formulaFile) formulaFile.value = "";
-    if (fCategory) fCategory.value = ""; // अपलोड होने के बाद कैटेगरी रीसेट हो जाएगी
+    if (fCategory) fCategory.value = "";
     
-    // Instant Refresh & Stats Update
     await loadFormulas();
     await updateStats();
   };
 
-    async function loadFormulas() {
+  async function loadFormulas() {
     const list = document.getElementById("formulaList");
     if (!list) return;
 
@@ -393,12 +388,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const fClassVal = document.getElementById("filterFClass")?.value;
     const fSubVal   = document.getElementById("filterFSubject")?.value;
-    const fCatVal   = document.getElementById("filterFCategory")?.value; // नया कैटेगरी वैल्यू
+    const fCatVal   = document.getElementById("filterFCategory")?.value;
     const search    = document.getElementById("searchFormula")?.value.toLowerCase().trim() || "";
 
     if (fClassVal) query = query.eq("class", fClassVal);
     if (fSubVal) query = query.eq("subject", fSubVal);
-    if (fCatVal) query = query.eq("category", fCatVal); // डेटाबेस क्वेरी में कैटेगरी फ़िल्टर
+    if (fCatVal) query = query.eq("category", fCatVal);
 
     const { data, error } = await query;
 
@@ -470,7 +465,6 @@ document.addEventListener("DOMContentLoaded", () => {
     await updateStats();
   };
 
-  // Event Listeners for Filters
   document.getElementById("searchNotes")?.addEventListener("input", loadFiles);
   document.getElementById("filterNotesClass")?.addEventListener("change", loadFiles);
   document.getElementById("filterNotesSubject")?.addEventListener("change", loadFiles);
@@ -479,10 +473,10 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("filterEventMonth")?.addEventListener("change", loadEvents);
   document.getElementById("filterEventYear")?.addEventListener("change", loadEvents);
 
-    document.getElementById("searchFormula")?.addEventListener("input", loadFormulas);
+  document.getElementById("searchFormula")?.addEventListener("input", loadFormulas);
   document.getElementById("filterFClass")?.addEventListener("change", loadFormulas);
   document.getElementById("filterFSubject")?.addEventListener("change", loadFormulas);
-  document.getElementById("filterFCategory")?.addEventListener("change", loadFormulas); // यह लाइन जोड़ें
+  document.getElementById("filterFCategory")?.addEventListener("change", loadFormulas);
 
   loadFiles();
   loadEvents();
@@ -490,7 +484,7 @@ document.addEventListener("DOMContentLoaded", () => {
   updateStats();
 });
 
-/* ---------- PART 5: DOUBTS & OVERLAY SYSTEM (WITH USER PHOTO, NAME & EMAIL) ---------- */
+/* ---------- PART 5: DOUBTS & OVERLAY SYSTEM (FIXED & UPGRADED) ---------- */
 document.addEventListener("DOMContentLoaded", () => {
   const doubtBtn   = document.getElementById("doubtBtn");
   const doubtPanel = document.getElementById("doubtPanel");
@@ -523,7 +517,7 @@ document.addEventListener("DOMContentLoaded", () => {
       .order("created_at", { ascending: false });
 
     if (error || !data) {
-      doubtList.innerHTML = "❌ Error loading";
+      doubtList.innerHTML = "❌ Error loading doubts";
       return;
     }
 
@@ -531,6 +525,11 @@ document.addEventListener("DOMContentLoaded", () => {
     if (badge) {
       badge.innerText = pending;
       badge.style.display = pending > 0 ? "inline-flex" : "none";
+    }
+
+    if (data.length === 0) {
+      doubtList.innerHTML = "<div style='padding:10px; text-align:center;'>No doubts found</div>";
+      return;
     }
 
     doubtList.innerHTML = "";
@@ -577,6 +576,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (error || !data) {
       overlayList.innerHTML = "❌ Failed to load";
+      return;
+    }
+
+    if (data.length === 0) {
+      overlayList.innerHTML = "<div style='text-align:center; padding:20px;'>No doubts available</div>";
       return;
     }
 
@@ -652,6 +656,7 @@ document.addEventListener("DOMContentLoaded", () => {
     loadMiniDoubts();
   };
 
+  // Page load hote hi doubts load karein taki panel khali na dikhe
   loadMiniDoubts();
 });
 

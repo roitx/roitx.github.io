@@ -35,6 +35,9 @@ function trackActivityLocally(fileData, isDownloaded = false) {
 
         const alreadyDownloaded = downloads.some(f => f.url === fileData.url) || isDownloaded;
 
+        // Check if current file is premium
+        const isCurrentPremium = fileData.isPremium || (fileData.url && (fileData.url.toLowerCase().includes("premium") || fileData.url.toLowerCase().includes("paid") || fileData.url.toLowerCase().includes("locked")));
+
         // Remove duplicate entry so it only appears once at the top
         recent = recent.filter(f => f.url !== fileData.url);
         recent.unshift({
@@ -42,7 +45,8 @@ function trackActivityLocally(fileData, isDownloaded = false) {
             url: fileData.url,
             meta: fileData.meta || "Viewer",
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            downloaded: alreadyDownloaded
+            downloaded: alreadyDownloaded,
+            isPremium: isCurrentPremium
         });
 
         recent = recent.slice(0, 10);
@@ -90,7 +94,11 @@ function renderActivityFeed() {
             }
         }
 
-        const viewTargetUrl = `${viewerPage}?path=${encodeURIComponent(cleanPath)}&name=${encodeURIComponent(f.title)}`;
+        // 🌟 SECURE LOOPHOLE FIX: Strict check for premium status from saved data or path name
+        let isFilePremium = f.isPremium || cleanPath.toLowerCase().includes("premium") || cleanPath.toLowerCase().includes("paid") || cleanPath.toLowerCase().includes("locked") || cleanPath.toLowerCase().includes("special");
+        let extraParam = isFilePremium ? "&type=premium" : "";
+
+        const viewTargetUrl = `${viewerPage}?path=${encodeURIComponent(cleanPath)}&name=${encodeURIComponent(f.title)}${extraParam}`;
 
         const div = document.createElement("div");
         div.className = "activity-item";

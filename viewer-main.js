@@ -54,14 +54,18 @@ function trackActivityLocally(fileData, isDownloaded = false) {
         }
 
         const alreadyDownloaded = downloads.some(f => f.url === fileData.url) || isDownloaded;
+        
+        // Check if current file is premium
+        const isCurrentPremium = params.get("type") === "premium" || (rawPath && (rawPath.toLowerCase().includes("premium") || rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked")));
 
-        recent = recent.filter(f => f.url !== fileData.url);
+        recent = recent.filter(f => f.url !== rawPath);
         recent.unshift({
             title: fileData.title,
             url: rawPath,
             meta: "Notes Viewer",
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            downloaded: alreadyDownloaded
+            downloaded: alreadyDownloaded,
+            isPremium: isCurrentPremium 
         });
 
         recent = recent.slice(0, 10);
@@ -114,7 +118,7 @@ async function initReader() {
 function startEngine(blob) {
     currentBlobUrl = URL.createObjectURL(blob);
     
-    // 🌟 File Size Calculation Fix
+    // File Size Calculation Fix
     try {
         const sizeInMB = (blob.size / (1024 * 1024)).toFixed(1);
         const fileSizeEl = document.getElementById("file-size");
@@ -137,7 +141,19 @@ function startEngine(blob) {
         dl.onclick = async (e) => {
             e.preventDefault();
             
-            // Login Verification Before Download
+            // 🌟 1. Strict Premium & Purchase Check
+            const isPurchased = params.get("purchased") === "true";
+            const isInPaidFolder = rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("special") || rawPath.toLowerCase().includes("premium"));
+            const isParamPremium = params.get("type") === "premium";
+            const isPremium = isParamPremium || isInPaidFolder;
+
+            // अगर यह प्रीमियम फाइल है और यूजर ने नहीं खरीदा है, तो डाउनलोड ब्लॉक कर दो!
+            if (isPremium && !isPurchased) {
+                alert("🔒 Yeh ek Premium Note hai! Bina purchase kiye aap ise download nahi kar सकते.");
+                return;
+            }
+
+            // 🌟 2. Login Verification Before Download
             const { data: { session } } = await window.supabaseClient.auth.getSession();
             if (!session) {
                 alert("Notes download karne ke liye pehle Login karein.");
@@ -148,6 +164,7 @@ function startEngine(blob) {
 
             const fileName = (docName || "document") + ".pdf";
             
+            // 🌟 3. Trigger Browser Download Safely
             const tempLink = document.createElement("a");
             tempLink.href = currentBlobUrl;
             tempLink.download = fileName;
@@ -155,11 +172,15 @@ function startEngine(blob) {
             tempLink.click();
             document.body.removeChild(tempLink);
 
+            // 🌟 4. Mark as Downloaded ONLY AFTER successful valid trigger & validation
             trackActivityLocally({
                 title: docName || "PDF Document",
                 url: rawPath,
-                meta: "Notes Viewer"
+                meta: "Notes Viewer",
+                isPremium: isPremium
             }, true);
+
+            alert("📥 Note successfully downloaded!");
         };
     }
 
@@ -167,7 +188,11 @@ function startEngine(blob) {
         pdfDoc = pdf;
 
         const isPurchased = params.get("purchased") === "true";
-        const isPremium = params.get("type") === "premium" || (rawPath && rawPath.includes("premium"));
+        const isInPaidFolder = rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("special") || rawPath.toLowerCase().includes("premium"));
+        const isParamPremium = params.get("type") === "premium";
+        
+        // Final Strict Check
+        const isPremium = isParamPremium || isInPaidFolder;
 
         let maxAllowedPages = pdf.numPages;
         if (isPremium && !isPurchased) {
@@ -188,7 +213,10 @@ async function renderPage(num) {
     if (!pdfDoc) return;
 
     const isPurchased = params.get("purchased") === "true";
-    const isPremium = params.get("type") === "premium" || (rawPath && rawPath.includes("premium"));
+    const isInPaidFolder = rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("special") || rawPath.toLowerCase().includes("premium"));
+    const isParamPremium = params.get("type") === "premium";
+    const isPremium = isParamPremium || isInPaidFolder;
+
     if (isPremium && !isPurchased && num > 1) {
         alert("🔒 Complete document dekhne ke liye is Note ko Unlock / Purchase karein!");
         return;
