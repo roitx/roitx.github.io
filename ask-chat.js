@@ -193,7 +193,12 @@
 
     const chapMatch = clean.match(/(?:chapter\s*|chap\s*|ch\s*|c\s*)(\d+)/i);
     const chNum = chapMatch ? chapMatch[1] : null;
-    const subjectPageUrl = `${cls}-${subKey}-chapters.html`;
+    
+    // Updated: Pointing to subjects-{class}.html instead of non-existent chapters page
+    const subjectPageUrl = `subjects-${cls}.html`;
+    
+    // Premium Notes Link (Aap isko apne actual premium notes page ya section se replace kar sakte hain)
+    const premiumNotesUrl = `notes-viewer.html?path=notes/premium_${cls}_${subKey}.pdf&name=Premium_${subDisplay}_Notes.pdf`;
 
     let html = `
       <div style="border: 1px solid rgba(255,255,255,0.12); padding: 8px 10px; border-radius: 8px; background: #1e293b; max-width: 100%;">
@@ -211,7 +216,11 @@
           </button>
 
           <a href="${subjectPageUrl}" style="background: #059669; color: #fff; text-decoration: none; padding: 5px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; display: inline-block;">
-            🌐 Chapters
+            🌐 Subjects
+          </a>
+
+          <a href="${premiumNotesUrl}" target="_blank" style="background: #7c3aed; color: #fff; text-decoration: none; padding: 5px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; display: inline-block;">
+            ⭐ Premium Notes
           </a>
         </div>
       </div>
@@ -378,7 +387,7 @@ You are an AI study assistant for Rohit's learning platform (roitx.github.io). A
 - <a href="image-viewer.html">Image Viewer</a>
 - <a href="view.html">File Viewer</a>
 - <a href="library.html">Recently Viewed</a>
-- <a href=”login.html">Login</a>
+- <a href="login.html">Login</a>
 
 --- PDF LINK RULE ---
 When referring to chapter PDF notes directly, use the path pattern:
