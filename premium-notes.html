@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PM-Roit | Premium Notes Hub</title>
     <link rel="stylesheet" href="premium.css">
-    <!-- Supabase SDK -->
+    <!-- Supabase SDK (Razorpay removed) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase.js"></script>
 
@@ -40,24 +40,6 @@
             font-size: 0.8rem;
             color: #8a99ad;
             margin-top: 4px;
-        }
-
-        /* 🔍 Filter Bar Styling */
-        .filter-box {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            padding: 10px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            display: none; /* By default hidden, shown via JS if notes > 20 */
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .filter-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-            gap: 8px;
         }
 
         /* 2-Column Responsive Grid */
@@ -193,6 +175,7 @@
             display: block;
         }
 
+        /* Direct UPI App Button Style */
         .btn-upi-app {
             display: block;
             background: linear-gradient(135deg, #28a745, #1e7e34);
@@ -245,31 +228,8 @@
 <body>
     <div class="notes-container">
         <div class="header-box">
-            <h1>PM-Roit <span>Premium Notes Hub</span></h1>
+            <h1>PM-Roit <span>Premium Notes</span></h1>
             <p>Select your chapter and unlock full study access</p>
-        </div>
-
-        <!-- 🔍 Filter & Search Bar -->
-        <div class="filter-box" id="filterBox">
-            <input type="text" id="filterSearch" placeholder="🔍 Search notes title..." oninput="filterNotes()" style="padding: 9px 12px; background: #090d16; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: #fff; font-size: 0.855rem; outline: none;">
-            
-            <div class="filter-grid">
-                <select id="filterClass" onchange="filterNotes()" style="padding: 8px; background: #090d16; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: #fff; font-size: 0.8rem;">
-                    <option value="ALL">All Classes</option>
-                    <option value="Class 9th">Class 9th</option>
-                    <option value="Class 10th">Class 10th</option>
-                    <option value="Class 11th">Class 11th</option>
-                    <option value="Class 12th">Class 12th</option>
-                </select>
-
-                <select id="filterSubject" onchange="filterNotes()" style="padding: 8px; background: #090d16; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: #fff; font-size: 0.8rem;">
-                    <option value="ALL">All Subjects</option>
-                    <option value="Physics">Physics</option>
-                    <option value="Chemistry">Chemistry</option>
-                    <option value="Maths">Maths</option>
-                    <option value="Biology">Biology</option>
-                </select>
-            </div>
         </div>
 
         <div class="compact-grid" id="notesGrid">
@@ -310,7 +270,6 @@
         let currentUser = null;
         let purchases = [];
         let selectedNoteForPay = null;
-        let cachedNotes = [];
         const loadedNotesMap = {};
 
         window.onload = async () => {
@@ -327,57 +286,20 @@
                 purchases = (data || []).map(p => p.note_id);
             }
 
-            await loadNotes();
+            loadNotes();
         };
 
         async function loadNotes() {
             const { data: notes, error } = await window.supabaseClient
                 .from('premium_notes')
                 .select('*')
-                .order('id', { ascending: false })
-                .limit(30);
+                .order('id', { ascending: false });
 
-            if (error) {
-                console.error("Fetch error:", error);
-                return;
-            }
-
-            cachedNotes = notes || [];
-
-            if (cachedNotes.length > 20) {
-                document.getElementById('filterBox').style.display = 'flex';
-            } else {
-                document.getElementById('filterBox').style.display = 'none';
-            }
-
-            renderNotesGrid(cachedNotes);
-        }
-
-        function filterNotes() {
-            const classFilter = document.getElementById('filterClass').value;
-            const subjectFilter = document.getElementById('filterSubject').value;
-            const searchQuery = document.getElementById('filterSearch').value.toLowerCase().trim();
-
-            const filtered = cachedNotes.filter(note => {
-                const matchClass = (classFilter === 'ALL') || (note.class_no === classFilter);
-                const matchSubject = (subjectFilter === 'ALL') || (note.subject === subjectFilter);
-                
-                const titleStr = (note.title || '').toLowerCase();
-                const chStr = (note.chapter_no || '').toLowerCase();
-                const matchSearch = !searchQuery || titleStr.includes(searchQuery) || chStr.includes(searchQuery);
-
-                return matchClass && matchSubject && matchSearch;
-            });
-
-            renderNotesGrid(filtered);
-        }
-
-        function renderNotesGrid(notes) {
             const container = document.getElementById('notesGrid');
             container.innerHTML = "";
 
             if (!notes || notes.length === 0) {
-                container.innerHTML = "<p style='color:#888; grid-column:1/-1; text-align:center;'>No notes found matching your filter.</p>";
+                container.innerHTML = "<p style='color:#888; grid-column:1/-1; text-align:center;'>No notes uploaded yet.</p>";
                 return;
             }
 
@@ -429,6 +351,7 @@
             window.location.href = url;
         }
 
+        // 💳 Payment Modal Handler with Dynamic Exact Amount & Deep Link
         async function openPaymentModal(noteId) {
             const note = loadedNotesMap[noteId];
             if (!note) return;
@@ -449,20 +372,26 @@
             document.getElementById('modalTitle').innerText = "Pay for " + note.title;
             document.getElementById('modalPrice').innerText = "₹" + note.price;
             
+            // Proper UPI Deep Link with Amount & Note Title for exact matching
             const upiUri = `upi://pay?pa=${encodeURIComponent(MY_UPI_ID)}&pn=PM-Roit&am=${note.price}&cu=INR&tn=${encodeURIComponent('Note: ' + note.title)}`;
+            
+            // Set Direct App Link for mobile devices
             document.getElementById('payDirectBtn').href = upiUri;
 
+            // Generate QR Code containing the exact Amount & UPI ID
             const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(upiUri)}`;
             document.getElementById('upiQrCode').src = qrUrl;
             
             document.getElementById('paymentModal').style.display = 'flex';
         }
 
+        // Copy UPI ID function
         function copyUpiId() {
             navigator.clipboard.writeText(MY_UPI_ID);
             alert("UPI ID Copied to Clipboard! 📋");
         }
 
+        // 📤 UTR Submission Handler
         async function submitManualPayment() {
             const utr = document.getElementById('utrInput').value.trim();
             if (utr.length < 8) {
