@@ -3,46 +3,118 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - Manage Payment Orders</title>
+    <title>Admin - Secure Payment Approvals</title>
     <link rel="stylesheet" href="premium.css">
     <!-- Supabase CDN + Central Config -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase.js"></script>
 
     <style>
-        .admin-header {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 12px;
-            padding: 12px 16px;
-            margin-bottom: 15px;
-        }
-        .admin-header h1 {
-            font-size: 1.2rem;
+        /* 🛡️ Anti-Screenshot & Security Styling */
+        body {
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+            background-color: #0b0f19;
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
+            padding: 0;
+        }
+
+        /* Security Warning Banner */
+        .security-banner {
+            background: rgba(255, 71, 87, 0.12);
+            border: 1px solid rgba(255, 71, 87, 0.3);
+            color: #ff4757;
+            font-size: 0.75rem;
+            text-align: center;
+            padding: 6px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+            border-radius: 8px;
+        }
+
+        .admin-header {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.01));
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .admin-header h1 {
+            font-size: 1.3rem;
+            margin: 0;
+            color: #fff;
             display: flex;
             align-items: center;
             gap: 8px;
         }
-        .admin-header h1 span {
-            font-size: 0.75rem;
-            background: rgba(0, 210, 255, 0.15);
-            color: #00d2ff;
-            padding: 2px 8px;
-            border-radius: 6px;
-            border: 1px solid rgba(0, 210, 255, 0.3);
+
+        .admin-header span.badge-admin {
+            font-size: 0.7rem;
+            background: linear-gradient(135deg, #00d2ff, #0072ff);
+            color: #fff;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-weight: 700;
+            text-transform: uppercase;
+            box-shadow: 0 2px 10px rgba(0, 210, 255, 0.3);
         }
+
         .admin-header p {
-            margin: 4px 0 0 0;
-            font-size: 0.75rem;
+            margin: 6px 0 0 0;
+            font-size: 0.8rem;
             color: #8a99ad;
+        }
+
+        .card {
+            background: #111622;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+            padding: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
         }
 
         .filter-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-            gap: 8px;
+            grid-template-columns: 140px 1fr;
+            gap: 10px;
             margin-bottom: 15px;
+        }
+
+        @media (max-width: 600px) {
+            .filter-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        select, input[type="text"] {
+            width: 100%;
+            background: #090d16;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #fff;
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        select:focus, input[type="text"]:focus {
+            border-color: #00d2ff;
+            box-shadow: 0 0 8px rgba(0, 210, 255, 0.2);
         }
 
         .orders-table {
@@ -50,69 +122,97 @@
             border-collapse: collapse;
             font-size: 0.8rem;
         }
+
         .orders-table th, .orders-table td {
-            padding: 10px 8px;
+            padding: 12px 10px;
             text-align: left;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
         }
+
         .orders-table th {
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.03);
             color: #00d2ff;
             font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.7rem;
+            letter-spacing: 0.5px;
         }
+
         .table-responsive {
             overflow-x: auto;
-            border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
         }
 
         .action-btns {
             display: flex;
             gap: 6px;
         }
+
         .btn-approve {
-            background: #2ed573;
-            color: #000;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 0.75rem;
-        }
-        .btn-reject {
-            background: #ff4757;
+            background: linear-gradient(135deg, #2ed573, #1e7e34);
             color: #fff;
             border: none;
-            padding: 5px 10px;
-            border-radius: 4px;
+            padding: 6px 12px;
+            border-radius: 6px;
             cursor: pointer;
-            font-size: 0.75rem;
-        }
-        .badge-status {
-            padding: 3px 6px;
-            border-radius: 4px;
-            font-size: 0.7rem;
             font-weight: bold;
-            text-transform: uppercase;
+            font-size: 0.75rem;
+            box-shadow: 0 2px 8px rgba(46, 213, 115, 0.3);
+            transition: transform 0.1s;
         }
-        .status-pending { background: rgba(255, 165, 0, 0.2); color: #ffa500; border: 1px solid rgba(255, 165, 0, 0.4); }
-        .status-approved { background: rgba(46, 213, 115, 0.2); color: #2ed573; border: 1px solid rgba(46, 213, 115, 0.4); }
-        .status-rejected { background: rgba(255, 71, 87, 0.2); color: #ff4757; border: 1px solid rgba(255, 71, 87, 0.4); }
+
+        .btn-approve:active { transform: scale(0.95); }
+
+        .btn-reject {
+            background: linear-gradient(135deg, #ff4757, #c0392b);
+            color: #fff;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.75rem;
+            box-shadow: 0 2px 8px rgba(255, 71, 87, 0.3);
+            transition: transform 0.1s;
+        }
+
+        .btn-reject:active { transform: scale(0.95); }
+
+        .badge-status {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.68rem;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+
+        .status-pending { background: rgba(255, 165, 0, 0.15); color: #ffa500; border: 1px solid rgba(255, 165, 0, 0.3); }
+        .status-approved { background: rgba(46, 213, 115, 0.15); color: #2ed573; border: 1px solid rgba(46, 213, 115, 0.3); }
+        .status-rejected { background: rgba(255, 71, 87, 0.15); color: #ff4757; border: 1px solid rgba(255, 71, 87, 0.3); }
     </style>
 </head>
-<body>
-    <div class="admin-container" style="max-width: 950px; margin: 0 auto; padding: 10px;">
+<body oncontextmenu="return false;">
+
+    <div class="admin-container" style="max-width: 950px; margin: 0 auto; padding: 12px;">
         
+        <!-- 🔒 Strict Admin Access Banner -->
+        <div class="security-banner">
+            ⚠️ RESTRICTED AREA: Authorized Admin Personnel Only. All activities are monitored.
+        </div>
+
         <header class="admin-header">
-            <h1>Admin Panel <span>Payment Approvals</span></h1>
-            <p>Verify user UTR codes and unlock notes instantly</p>
+            <div class="header-top">
+                <h1>Admin Panel</h1>
+                <span class="badge-admin">Payment Approvals</span>
+            </div>
+            <p>Verify user UTR codes securely and unlock study notes instantly.</p>
         </header>
 
         <section class="card">
             <!-- Search & Filter Controls -->
             <div class="filter-grid">
-                <div class="input-group">
+                <div>
                     <select id="statusFilter" onchange="filterOrders()">
                         <option value="pending" selected>Pending Only</option>
                         <option value="approved">Approved</option>
@@ -120,8 +220,8 @@
                         <option value="ALL">All Orders</option>
                     </select>
                 </div>
-                <div class="input-group" style="grid-column: span 2;">
-                    <input type="text" id="searchInput" placeholder="🔍 Search Email or UTR..." oninput="filterOrders()">
+                <div>
+                    <input type="text" id="searchInput" placeholder="🔍 Search by Email or UTR Code..." oninput="filterOrders()">
                 </div>
             </div>
 
@@ -135,12 +235,12 @@
                             <th>Amount</th>
                             <th>UTR Code</th>
                             <th>Status</th>
-                            <th>1-Click Action</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody id="ordersTableBody">
                         <tr>
-                            <td colspan="6" style="text-align:center; color:#888;">Loading payment orders...</td>
+                            <td colspan="6" style="text-align:center; color:#888; padding: 20px;">Loading payment orders...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -158,14 +258,23 @@
             await fetchOrders();
         };
 
+        // 🚫 Screenshot / Screen Recording Blocker Warning Layer
+        document.addEventListener("keyup", (e) => {
+            if (e.key == "PrintScreen") {
+                navigator.clipboard.writeText("");
+                alert("🔒 Screenshots & Screen Captures are disabled on this Secure Admin Panel!");
+            }
+        });
+
         async function fetchOrders() {
             const { data, error } = await window.supabaseClient
-                .from('orders')
+                .from('user_orders')
                 .select('*')
                 .order('id', { ascending: false });
 
             if (error) {
                 console.error("Orders fetch error:", error);
+                document.getElementById('ordersTableBody').innerHTML = `<tr><td colspan="6" style="text-align:center; color:#ff4757;">Error loading: ${error.message}</td></tr>`;
                 return;
             }
 
@@ -181,7 +290,7 @@
                 const matchStatus = (statusFilter === 'ALL') || (order.status === statusFilter);
                 
                 const emailStr = (order.user_email || '').toLowerCase();
-                const utrStr = (order.utr_number || '').toLowerCase();
+                const utrStr = (order.utr_code || '').toLowerCase();
                 const matchSearch = !searchQuery || emailStr.includes(searchQuery) || utrStr.includes(searchQuery);
 
                 return matchStatus && matchSearch;
@@ -195,7 +304,7 @@
             tbody.innerHTML = "";
 
             if (orders.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#888;">No orders found.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#888; padding: 20px;">No orders found.</td></tr>`;
                 return;
             }
 
@@ -206,8 +315,8 @@
                 if (order.status === 'pending') {
                     actionButtons = `
                         <div class="action-btns">
-                            <button class="btn-approve" onclick="approveOrder(${order.id}, '${order.user_email}', ${order.note_id})">Approve ✅</button>
-                            <button class="btn-reject" onclick="rejectOrder(${order.id})">Reject ❌</button>
+                            <button class="btn-approve" onclick="approveOrder(${order.id}, '${order.user_email}', ${order.note_id})">Approve</button>
+                            <button class="btn-reject" onclick="rejectOrder(${order.id})">Reject</button>
                         </div>
                     `;
                 }
@@ -217,7 +326,7 @@
                         <td><strong style="color:#fff;">${order.user_email}</strong></td>
                         <td style="color:#d1d5db;">${order.note_title}</td>
                         <td style="color:#2ed573; font-weight:bold;">₹${order.amount}</td>
-                        <td style="font-family:monospace; color:#00d2ff; font-weight:bold;">${order.utr_number}</td>
+                        <td style="font-family:monospace; color:#00d2ff; font-weight:bold;">${order.utr_code}</td>
                         <td>${statusBadge}</td>
                         <td>${actionButtons}</td>
                     </tr>
@@ -225,30 +334,26 @@
             });
         }
 
-        // 🚀 1-Click Approve Function (Updates Order + Grants Purchase Access)
         async function approveOrder(orderId, userEmail, noteId) {
             if (!confirm(`Confirm approval for ${userEmail}?`)) return;
 
             try {
-                // Step 1: User का user_id ढूंढना (Profiles/Users टेबल से)
                 const { data: userData, error: userErr } = await window.supabaseClient
-                    .from('profiles') // अगर आपकी प्रोफाइल टेबल का नाम अलग है तो अपडेट करें
+                    .from('profiles')
                     .select('id')
                     .eq('email', userEmail)
                     .single();
 
                 let userId = userData ? userData.id : null;
 
-                // Step 2: Order status को approved सेट करें
                 const { error: orderErr } = await window.supabaseClient
-                    .from('orders')
+                    .from('user_orders')
                     .update({ status: 'approved' })
                     .eq('id', orderId);
 
                 if (orderErr) throw orderErr;
 
-                // Step 3: user_purchases टेबल में एंट्री करें ताकि नोट अनलॉक हो जाए
-                if (userId) {
+                if (userId && noteId) {
                     await window.supabaseClient
                         .from('user_purchases')
                         .insert([{
@@ -259,7 +364,7 @@
                 }
 
                 alert("🎉 Order Approved & Access Granted!");
-                await fetchOrders(); // Table Refresh
+                await fetchOrders();
 
             } catch (err) {
                 alert("Approval Error: " + err.message);
@@ -271,7 +376,7 @@
 
             try {
                 const { error } = await window.supabaseClient
-                    .from('orders')
+                    .from('user_orders')
                     .update({ status: 'rejected' })
                     .eq('id', orderId);
 
