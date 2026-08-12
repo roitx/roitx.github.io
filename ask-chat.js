@@ -109,9 +109,21 @@
       return;
     }
 
-    // 4. NOTES SEARCH
-    if (cmd.includes('notes') || cmd.includes('note pdf')) {
-      await fetchAndSuggestFormulas(raw);
+    // 4. NOTES & PREMIUM NOTES SEARCH
+    if (cmd.includes('notes') || cmd.includes('note pdf') || cmd.includes('premium')) {
+      addBotMsg(`
+        <div style="border: 1px solid #00d2ff; padding: 10px; border-radius: 8px; background: rgba(0,210,255,0.05); margin-top: 5px;">
+          <div style="font-size: 13px; font-weight: bold; color: #00d2ff; margin-bottom: 4px;">
+            📚 Premium Notes Hub
+          </div>
+          <div style="font-size: 12px; color: #e0e7ff; margin-bottom: 8px;">
+            Sabhi chapters aur notes ke liye hamare Premium Notes par jayein:
+          </div>
+          <a href="premium-notes.html" style="display: inline-block; background: linear-gradient(135deg, #00d2ff, #0072ff); color: #fff; text-decoration: none; padding: 6px 12px; border-radius: 5px; font-weight: bold; font-size: 12px;">
+            🚀 Open Premium Notes
+          </a>
+        </div>
+      `);
       return;
     }
 
@@ -147,11 +159,19 @@
     // 7. CALENDAR
     if (cmd === 'calendar' || cmd.includes('calendar')) {
       showCalendarModal();
+      addBotMsg(`
+        <div style="border: 1px solid rgba(255,255,255,0.12); padding: 8px 10px; border-radius: 8px; background: #1e293b;">
+          <div style="font-size: 12px; color: #38bdf8; margin-bottom: 6px;">📅 Calendar Modal Opened Successfully!</div>
+          <a href="calendar.html" style="background: #0284c7; color: #fff; text-decoration: none; padding: 5px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; display: inline-block;">
+            🌐 Open Full Calendar Page (calendar.html)
+          </a>
+        </div>
+      `);
       return;
     }
 
     // 8. NOTES MANAGEMENT
-    if (cmd === 'show notes' || cmd === 'notes' || cmd === 'view notes') { showNotesModal(); return; }
+    if (cmd === 'show notes' || cmd === 'view notes') { showNotesModal(); return; }
     if (cmd === 'download notes' || cmd === 'export notes') { downloadNotesFile(); return; }
 
     if (cmd.startsWith('create note:') || cmd.startsWith('create note')) {
@@ -194,10 +214,7 @@
     const chapMatch = clean.match(/(?:chapter\s*|chap\s*|ch\s*|c\s*)(\d+)/i);
     const chNum = chapMatch ? chapMatch[1] : null;
     
-    // Pointing to subjects-{class}.html since individual chapter pages don't exist
     const subjectPageUrl = `subjects-${cls}.html`;
-    
-    // Direct link to premium-notes.html
     const premiumNotesUrl = `premium-notes.html`;
 
     let html = `
@@ -345,7 +362,7 @@
 // ask-chat.js — PART 3: AI INTEGRATION, UTILS & NOTES
 // ==========================================
 
-  // ---- CLEAN SYSTEM KNOWLEDGE (Only Working Pages Included) ----
+  // ---- CLEAN SYSTEM KNOWLEDGE (Dead Chapters Removed) ----
   const systemKnowledge = `
 You are an AI study assistant for Rohit's learning platform (roitx.github.io). Answer in simple Hindi/Hinglish. When asked for pages or links, generate HTML standard <a> tags using the relative paths below.
 
@@ -379,7 +396,6 @@ You are an AI study assistant for Rohit's learning platform (roitx.github.io). A
 - <a href="refbook.html">Reference Books</a>
 - <a href="solver.html">Doubt Solver</a>
 - <a href="fun.html">Fun & Games</a>
-- <a href='premium-notes.html"> Premium Notes</a>
 `;
 
   // ---- GROQ AI INTEGRATION ----
