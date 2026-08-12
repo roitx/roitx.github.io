@@ -194,11 +194,11 @@
     const chapMatch = clean.match(/(?:chapter\s*|chap\s*|ch\s*|c\s*)(\d+)/i);
     const chNum = chapMatch ? chapMatch[1] : null;
     
-    // Updated: Pointing to subjects-{class}.html instead of non-existent chapters page
+    // Pointing to subjects-{class}.html since individual chapter pages don't exist
     const subjectPageUrl = `subjects-${cls}.html`;
     
-    // Premium Notes Link (Aap isko apne actual premium notes page ya section se replace kar sakte hain)
-    const premiumNotesUrl = `notes-viewer.html?path=notes/premium_${cls}_${subKey}.pdf&name=Premium_${subDisplay}_Notes.pdf`;
+    // Direct link to premium-notes.html
+    const premiumNotesUrl = `premium-notes.html`;
 
     let html = `
       <div style="border: 1px solid rgba(255,255,255,0.12); padding: 8px 10px; border-radius: 8px; background: #1e293b; max-width: 100%;">
@@ -219,7 +219,7 @@
             🌐 Subjects
           </a>
 
-          <a href="${premiumNotesUrl}" target="_blank" style="background: #7c3aed; color: #fff; text-decoration: none; padding: 5px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; display: inline-block;">
+          <a href="${premiumNotesUrl}" style="background: #7c3aed; color: #fff; text-decoration: none; padding: 5px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; display: inline-block;">
             ⭐ Premium Notes
           </a>
         </div>
@@ -345,24 +345,20 @@
 // ask-chat.js — PART 3: AI INTEGRATION, UTILS & NOTES
 // ==========================================
 
-  // ---- COMPLETE SYSTEM KNOWLEDGE ----
+  // ---- CLEAN SYSTEM KNOWLEDGE (Only Working Pages Included) ----
   const systemKnowledge = `
 You are an AI study assistant for Rohit's learning platform (roitx.github.io). Answer in simple Hindi/Hinglish. When asked for pages or links, generate HTML standard <a> tags using the relative paths below.
 
---- FULL REPOSITORY HTML PAGES DIRECTORY ---
+--- WORKING HTML PAGES DIRECTORY ---
 
-1. Core & Home Pages:
+1. Core & Main Pages:
 - <a href="index.html">Home</a>
 - <a href="classes.html">Classes Selection</a>
-- <a href="ask-chat.html">AI Chat Assistant</a>
 - <a href="login.html">Login</a>
-- <a href="students.html">Students Directory</a>
 - <a href="admin-panel.html">Admin Panel</a>
-- <a href="createfile.html">Create File Tool</a>
-- <a href="upload.html">Upload File Tool</a>
-- <a href="working.html">Working Status</a>
+- <a href="premium-notes.html">Premium Notes</a>
 
-2. Main Class & Stream Selection Pages:
+2. Main Class & Subject/Stream Selection Pages:
 - <a href="subjects-9.html">Class 9 Subjects</a>
 - <a href="subjects-10.html">Class 10 Subjects</a>
 - <a href="subjects-11.html">Class 11 Streams</a>
@@ -374,7 +370,7 @@ You are an AI study assistant for Rohit's learning platform (roitx.github.io). A
 - <a href="12-commerce-subjects.html">12 Commerce</a>
 - <a href="12-science-subjects.html">12 Science</a>
 
-3. Study Tools, Viewers & Extras:
+3. Study Tools & Utilities:
 - <a href="formulas.html">Formulas Page</a>
 - <a href="calculator.html">Calculator</a>
 - <a href="calendar.html">Calendar</a>
@@ -383,17 +379,6 @@ You are an AI study assistant for Rohit's learning platform (roitx.github.io). A
 - <a href="refbook.html">Reference Books</a>
 - <a href="solver.html">Doubt Solver</a>
 - <a href="fun.html">Fun & Games</a>
-- <a href="notes-viewer.html">Notes Viewer</a>
-- <a href="image-viewer.html">Image Viewer</a>
-- <a href="view.html">File Viewer</a>
-- <a href="library.html">Recently Viewed</a>
-- <a href="login.html">Login</a>
-
---- PDF LINK RULE ---
-When referring to chapter PDF notes directly, use the path pattern:
-notes/{class}_{subject}_ch{number}.pdf
-Viewer URL structure:
-notes-viewer.html?path=notes/{class}_{subject}_ch{number}.pdf&name={class}_{subject}_ch{number}.pdf
 `;
 
   // ---- GROQ AI INTEGRATION ----
