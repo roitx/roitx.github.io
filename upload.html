@@ -102,6 +102,19 @@
 
 </div>
 
+<!-- Authentication & Page Initialization Script -->
+<script>
+  window.onload = async () => {
+      // Check if admin is authenticated before letting them use the page
+      if (typeof window.requireAdminAuth === "function") {
+          await window.requireAdminAuth();
+      }
+      
+      // Agar aapke upload.js ke andar initialization functions hain, 
+      // toh unhe yahan call kar sakte hain agar zaroorat ho.
+  };
+</script>
+
 <script src="upload.js"></script>
 </body>
 </html>
