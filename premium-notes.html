@@ -1,4 +1,5 @@
-<!DOCTYPE html>
+                                      Unlock 🚀
+                        <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -40,6 +41,24 @@
             font-size: 0.8rem;
             color: #8a99ad;
             margin-top: 4px;
+        }
+
+        /* 🔍 Filter Bar Styling */
+        .filter-box {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            display: none; /* By default hidden, shown via JS if notes > 20 */
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+            gap: 8px;
         }
 
         /* 2-Column Responsive Grid */
@@ -175,7 +194,6 @@
             display: block;
         }
 
-        /* Direct UPI App Button Style */
         .btn-upi-app {
             display: block;
             background: linear-gradient(135deg, #28a745, #1e7e34);
@@ -228,8 +246,31 @@
 <body>
     <div class="notes-container">
         <div class="header-box">
-            <h1>PM-Roit <span>Premium Notes</span></h1>
+            <h1>PM-Roit <span>Premium Notes Hub</span></h1>
             <p>Select your chapter and unlock full study access</p>
+        </div>
+
+        <!-- 🔍 Filter & Search Bar (Auto shows if total notes > 20) -->
+        <div class="filter-box" id="filterBox">
+            <input type="text" id="filterSearch" placeholder="🔍 Search notes title..." oninput="filterNotes()" style="padding: 9px 12px; background: #090d16; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: #fff; font-size: 0.855rem; outline: none;">
+            
+            <div class="filter-grid">
+                <select id="filterClass" onchange="filterNotes()" style="padding: 8px; background: #090d16; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: #fff; font-size: 0.8rem;">
+                    <option value="ALL">All Classes</option>
+                    <option value="Class 9th">Class 9th</option>
+                    <option value="Class 10th">Class 10th</option>
+                    <option value="Class 11th">Class 11th</option>
+                    <option value="Class 12th">Class 12th</option>
+                </select>
+
+                <select id="filterSubject" onchange="filterNotes()" style="padding: 8px; background: #090d16; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: #fff; font-size: 0.8rem;">
+                    <option value="ALL">All Subjects</option>
+                    <option value="Physics">Physics</option>
+                    <option value="Chemistry">Chemistry</option>
+                    <option value="Maths">Maths</option>
+                    <option value="Biology">Biology</option>
+                </select>
+            </div>
         </div>
 
         <div class="compact-grid" id="notesGrid">
@@ -270,6 +311,7 @@
         let currentUser = null;
         let purchases = [];
         let selectedNoteForPay = null;
+        let cachedNotes = [];
         const loadedNotesMap = {};
 
         window.onload = async () => {
@@ -286,20 +328,59 @@
                 purchases = (data || []).map(p => p.note_id);
             }
 
-            loadNotes();
+            await loadNotes();
         };
 
         async function loadNotes() {
+            // Fetch max 30 notes from database
             const { data: notes, error } = await window.supabaseClient
                 .from('premium_notes')
                 .select('*')
-                .order('id', { ascending: false });
+                .order('id', { ascending: false })
+                .limit(30);
 
+            if (error) {
+                console.error("Fetch error:", error);
+                return;
+            }
+
+            cachedNotes = notes || [];
+
+            // Show filter box only if total notes are greater than 20
+            if (cachedNotes.length > 20) {
+                document.getElementById('filterBox').style.display = 'flex';
+            } else {
+                document.getElementById('filterBox').style.display = 'none';
+            }
+
+            renderNotesGrid(cachedNotes);
+        }
+
+        function filterNotes() {
+            const classFilter = document.getElementById('filterClass').value;
+            const subjectFilter = document.getElementById('filterSubject').value;
+            const searchQuery = document.getElementById('filterSearch').value.toLowerCase().trim();
+
+            const filtered = cachedNotes.filter(note => {
+                const matchClass = (classFilter === 'ALL') || (note.class_no === classFilter);
+                const matchSubject = (subjectFilter === 'ALL') || (note.subject === subjectFilter);
+                
+                const titleStr = (note.title || '').toLowerCase();
+                const chStr = (note.chapter_no || '').toLowerCase();
+                const matchSearch = !searchQuery || titleStr.includes(searchQuery) || chStr.includes(searchQuery);
+
+                return matchClass && matchSubject && matchSearch;
+            });
+
+            renderNotesGrid(filtered);
+        }
+
+        function renderNotesGrid(notes) {
             const container = document.getElementById('notesGrid');
             container.innerHTML = "";
 
             if (!notes || notes.length === 0) {
-                container.innerHTML = "<p style='color:#888; grid-column:1/-1; text-align:center;'>No notes uploaded yet.</p>";
+                container.innerHTML = "<p style='color:#888; grid-column:1/-1; text-align:center;'>No notes found matching your filter.</p>";
                 return;
             }
 
@@ -325,6 +406,96 @@
                                     <button class="btn-mini btn-unlock" onclick="openPaymentModal(${note.id})">
                                         Unlock 🚀
                                     </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function openInViewer(noteId) {
+            const note = loadedNotesMap[noteId];
+            if (!note) return;
+
+            const isPurchased = purchases.includes(note.id);
+            let targetFilePath = note.file_path || note.full_pdf_url || '';
+
+            const cleanPath = encodeURIComponent(targetFilePath);
+            const cleanName = encodeURIComponent(note.title || 'Note');
+            
+            let url = `notes-viewer.html?path=${cleanPath}&name=${cleanName}&type=premium`;
+            if (isPurchased) {
+                url += `&purchased=true`;
+            }
+
+            window.location.href = url;
+        }
+
+        async function openPaymentModal(noteId) {
+            const note = loadedNotesMap[noteId];
+            if (!note) return;
+
+            if (typeof window.getCurrentUser === "function") {
+                currentUser = await window.getCurrentUser();
+            }
+            
+            if (!currentUser) {
+                alert("🔒 Unlock karne ke liye pehle login karein!");
+                sessionStorage.setItem("redirect_after_login", window.location.href);
+                const loginUrl = typeof window.getPageUrl === "function" ? window.getPageUrl("login.html") : "login.html";
+                window.location.href = loginUrl;
+                return;
+            }
+
+            selectedNoteForPay = note;
+            document.getElementById('modalTitle').innerText = "Pay for " + note.title;
+            document.getElementById('modalPrice').innerText = "₹" + note.price;
+            
+            const upiUri = `upi://pay?pa=${encodeURIComponent(MY_UPI_ID)}&pn=PM-Roit&am=${note.price}&cu=INR&tn=${encodeURIComponent('Note: ' + note.title)}`;
+            document.getElementById('payDirectBtn').href = upiUri;
+
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(upiUri)}`;
+            document.getElementById('upiQrCode').src = qrUrl;
+            
+            document.getElementById('paymentModal').style.display = 'flex';
+        }
+
+        function copyUpiId() {
+            navigator.clipboard.writeText(MY_UPI_ID);
+            alert("UPI ID Copied to Clipboard! 📋");
+        }
+
+        async function submitManualPayment() {
+            const utr = document.getElementById('utrInput').value.trim();
+            if (utr.length < 8) {
+                alert("Please enter a valid UTR/Transaction number!");
+                return;
+            }
+
+            const { error } = await window.supabaseClient
+                .from('user_orders')
+                .insert([{
+                    user_email: currentUser.email,
+                    note_title: selectedNoteForPay.title,
+                    note_id: selectedNoteForPay.id,
+                    amount: selectedNoteForPay.price,
+                    utr_code: utr,
+                    status: 'pending'
+                }]);
+
+            if (!error) {
+                alert("Payment details submitted successfully! Admin will verify and approve soon. 🎉");
+                document.getElementById('paymentModal').style.display = 'none';
+                document.getElementById('utrInput').value = '';
+            } else {
+                alert("Database sync failed: " + error.message);
+            }
+        }
+    </script>
+</body>
+</html>
+            </button>
                                 ` : ''}
                             </div>
                         </div>
