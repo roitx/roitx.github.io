@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PM-Roit | Premium Notes Hub</title>
+    <link rel="stylesheet" href="premium.css">
+    <!-- Supabase SDK (Razorpay removed) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase.js"></script>
+
+    <style>
+        /* Compact Grid & Card Styling */
+        .notes-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 10px;
+        }
+
+        .header-box {
+            text-align: center;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .header-box h1 {
+            font-size: 1.4rem;
+            margin: 0;
+            color: #fff;
+        }
+
+        .header-box span {
+            color: #00d2ff;
+        }
+
+        .header-box p {
+            font-size: 0.8rem;
+            color: #8a99ad;
+            margin-top: 4px;
+        }
+
+        /* 2-Column Responsive Grid */
+        .compact-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        @media (min-width: 600px) {
+            .compact-grid {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                gap: 15px;
+            }
+        }
+
+        .mini-card {
+            background: #111622;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        .badge-tag {
+            font-size: 0.65rem;
+            background: rgba(0, 210, 255, 0.1);
+            color: #00d2ff;
+            border: 1px solid rgba(0, 210, 255, 0.2);
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-bottom: 6px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .card-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin: 4px 0;
+            line-height: 1.2;
+            color: #fff;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .chapter-sub {
+            color: #7f8c9d;
+            font-size: 0.75rem;
+            margin-bottom: 6px;
+        }
+
+        .price-tag {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #00d2ff;
+            margin: 4px 0 8px 0;
+        }
+
+        .btn-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .btn-mini {
+            width: 100%;
+            padding: 8px 4px;
+            font-size: 0.8rem;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .btn-preview {
+            background: rgba(255,255,255,0.08);
+            color: #d1d5db;
+        }
+
+        .btn-unlock {
+            background: linear-gradient(135deg, #00d2ff, #0072ff);
+            color: #fff;
+        }
+
+        /* 💳 Payment Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(5px);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: #111622;
+            border: 1px solid rgba(0, 210, 255, 0.3);
+            border-radius: 16px;
+            padding: 20px;
+            width: 90%;
+            max-width: 360px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 210, 255, 0.2);
+            color: #fff;
+        }
+
+        .qr-container {
+            background: #ffffff;
+            padding: 8px;
+            border-radius: 12px;
+            display: inline-block;
+            margin: 8px 0;
+        }
+
+        .qr-img {
+            width: 160px;
+            height: 160px;
+            display: block;
+        }
+
+        /* Direct UPI App Button Style */
+        .btn-upi-app {
+            display: block;
+            background: linear-gradient(135deg, #28a745, #1e7e34);
+            color: #ffffff;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 0.8rem;
+            padding: 8px;
+            border-radius: 8px;
+            margin: 6px 0;
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+            transition: 0.2s ease;
+        }
+
+        .btn-upi-app:active {
+            transform: scale(0.97);
+        }
+
+        .input-utr {
+            width: 100%;
+            padding: 10px 12px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: #090d16;
+            color: #00d2ff;
+            font-size: 0.9rem;
+            text-align: center;
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        .input-utr::placeholder {
+            color: #5fb5ff66;
+            font-size: 0.8rem;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 5px;
+        }
+
+        .btn-cancel {
+            background: rgba(255, 255, 255, 0.1);
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+    <div class="notes-container">
+        <div class="header-box">
+            <h1>PM-Roit <span>Premium Notes</span></h1>
+            <p>Select your chapter and unlock full study access</p>
+        </div>
+
+        <div class="compact-grid" id="notesGrid">
+            <!-- Dynamic Compact Cards -->
+        </div>
+    </div>
+
+    <!-- 💳 Payment Modal with Direct Intent & QR -->
+    <div id="paymentModal" class="modal">
+        <div class="modal-content">
+            <h3 id="modalTitle" style="margin: 0 0 5px 0; font-size: 1.1rem; color: #fff;">Complete Payment</h3>
+            <p style="font-size: 0.85rem; color: #8a99ad; margin: 0;">Scan or Pay <b id="modalPrice" style="color:#00d2ff;"></b></p>
+            
+            <div class="qr-container">
+                <img id="upiQrCode" src="" alt="Payment QR Code" class="qr-img">
+            </div>
+
+            <!-- Direct App Trigger Button -->
+            <a id="payDirectBtn" href="#" class="btn-upi-app">
+                📱 Tap to Open PhonePe / GPay / Paytm
+            </a>
+
+            <p style="font-size: 0.75rem; color: #aaa; margin: 4px 0;">
+                UPI ID: <b style="color: #fff; cursor: pointer;" onclick="copyUpiId()">9199364179-3@ibl 📋</b>
+            </p>
+
+            <input type="text" id="utrInput" class="input-utr" placeholder="Enter 12-digit UTR / Trans ID" maxlength="20">
+
+            <div class="modal-actions">
+                <button class="btn-mini btn-unlock" onclick="submitManualPayment()">Confirm Payment ✅</button>
+                <button class="btn-mini btn-cancel" onclick="document.getElementById('paymentModal').style.display='none'">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const MY_UPI_ID = "9199364179-3@ibl";
+        let currentUser = null;
+        let purchases = [];
+        let selectedNoteForPay = null;
+        const loadedNotesMap = {};
+
+        window.onload = async () => {
+            if (typeof window.getCurrentUser === "function") {
+                currentUser = await window.getCurrentUser();
+            }
+
+            if (currentUser) {
+                const { data } = await window.supabaseClient
+                    .from('user_purchases')
+                    .select('note_id')
+                    .eq('user_id', currentUser.id);
+                
+                purchases = (data || []).map(p => p.note_id);
+            }
+
+            loadNotes();
+        };
+
+        async function loadNotes() {
+            const { data: notes, error } = await window.supabaseClient
+                .from('premium_notes')
+                .select('*')
+                .order('id', { ascending: false });
+
+            const container = document.getElementById('notesGrid');
+            container.innerHTML = "";
+
+            if (!notes || notes.length === 0) {
+                container.innerHTML = "<p style='color:#888; grid-column:1/-1; text-align:center;'>No notes uploaded yet.</p>";
+                return;
+            }
+
+            notes.forEach(note => {
+                loadedNotesMap[note.id] = note;
+                const isPurchased = purchases.includes(note.id);
+
+                container.innerHTML += `
+                    <div class="mini-card">
+                        <div>
+                            <span class="badge-tag">${note.class_no || ''} | ${note.subject || ''}</span>
+                            <div class="card-title">${note.title}</div>
+                            <div class="chapter-sub">${note.chapter_no || ''}</div>
+                        </div>
+                        
+                        <div>
+                            <div class="price-tag">₹${note.price}</div>
+                            <div class="btn-stack">
+                                <button class="btn-mini btn-preview" onclick="openInViewer(${note.id})">
+                                    ${isPurchased ? '📖 Read Note' : '👁️ Preview'}
+                                </button>
+                                ${!isPurchased ? `
+                                    <button class="btn-mini btn-unlock" onclick="openPaymentModal(${note.id})">
+                                        Unlock 🚀
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function openInViewer(noteId) {
+            const note = loadedNotesMap[noteId];
+            if (!note) return;
+
+            const isPurchased = purchases.includes(note.id);
+            let targetFilePath = note.file_path || note.full_pdf_url || '';
+
+            const cleanPath = encodeURIComponent(targetFilePath);
+            const cleanName = encodeURIComponent(note.title || 'Note');
+            
+            let url = `notes-viewer.html?path=${cleanPath}&name=${cleanName}&type=premium`;
+            if (isPurchased) {
+                url += `&purchased=true`;
+            }
+
+            window.location.href = url;
+        }
+
+        // 💳 Payment Modal Handler with Dynamic Exact Amount & Deep Link
+        async function openPaymentModal(noteId) {
+            const note = loadedNotesMap[noteId];
+            if (!note) return;
+
+            if (typeof window.getCurrentUser === "function") {
+                currentUser = await window.getCurrentUser();
+            }
+            
+            if (!currentUser) {
+                alert("🔒 Unlock karne ke liye pehle login karein!");
+                sessionStorage.setItem("redirect_after_login", window.location.href);
+                const loginUrl = typeof window.getPageUrl === "function" ? window.getPageUrl("login.html") : "login.html";
+                window.location.href = loginUrl;
+                return;
+            }
+
+            selectedNoteForPay = note;
+            document.getElementById('modalTitle').innerText = "Pay for " + note.title;
+            document.getElementById('modalPrice').innerText = "₹" + note.price;
+            
+            // Proper UPI Deep Link with Amount & Note Title for exact matching
+            const upiUri = `upi://pay?pa=${encodeURIComponent(MY_UPI_ID)}&pn=PM-Roit&am=${note.price}&cu=INR&tn=${encodeURIComponent('Note: ' + note.title)}`;
+            
+            // Set Direct App Link for mobile devices
+            document.getElementById('payDirectBtn').href = upiUri;
+
+            // Generate QR Code containing the exact Amount & UPI ID
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(upiUri)}`;
+            document.getElementById('upiQrCode').src = qrUrl;
+            
+            document.getElementById('paymentModal').style.display = 'flex';
+        }
+
+        // Copy UPI ID function
+        function copyUpiId() {
+            navigator.clipboard.writeText(MY_UPI_ID);
+            alert("UPI ID Copied to Clipboard! 📋");
+        }
+
+        // 📤 UTR Submission Handler
+        async function submitManualPayment() {
+            const utr = document.getElementById('utrInput').value.trim();
+            if (utr.length < 8) {
+                alert("Please enter a valid UTR/Transaction number!");
+                return;
+            }
+
+            const { error } = await window.supabaseClient
+                .from('user_orders')
+                .insert([{
+                    user_email: currentUser.email,
+                    note_title: selectedNoteForPay.title,
+                    note_id: selectedNoteForPay.id,
+                    amount: selectedNoteForPay.price,
+                    utr_code: utr,
+                    status: 'pending'
+                }]);
+
+            if (!error) {
+                alert("Payment details submitted successfully! Admin will verify and approve soon. 🎉");
+                document.getElementById('paymentModal').style.display = 'none';
+                document.getElementById('utrInput').value = '';
+            } else {
+                alert("Database sync failed: " + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -2,6 +2,46 @@
    ROITX ELITE VIEWER — ADVANCED FIXED & UPGRADED ENGINE
    ===================================================== */
 
+// --- SCREENSHOT & CONTENT PROTECTION LOGIC ---
+function enableContentProtection() {
+    // 1. Right Click Disable
+    document.addEventListener('contextmenu', e => e.preventDefault());
+
+    // 2. Disable Keyboard Shortcuts (PrintScreen, Ctrl+P, Ctrl+S, Snipping Tool)
+    document.addEventListener('keydown', e => {
+        // PrintScreen
+        if (e.key === 'PrintScreen' || e.keyCode === 44) {
+            e.preventDefault();
+            alert("⚠️ Screenshots are disabled for security reasons.");
+            return false;
+        }
+        // Ctrl+P / Cmd+P (Print)
+        if ((e.ctrlKey || e.metaKey) && (e.key === 'p' || e.key === 'P')) {
+            e.preventDefault();
+            alert("⚠️ Printing is disabled.");
+            return false;
+        }
+        // Ctrl+S / Cmd+S (Save)
+        if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+            e.preventDefault();
+            return false;
+        }
+        // Win + Shift + S (Windows Snipping Tool)
+        if (e.shiftKey && e.metaKey && (e.key === 's' || e.key === 'S')) {
+            e.preventDefault();
+            return false;
+        }
+    });
+
+    // 3. Blur / Blackout Content on Tab Switch or Screen Capture Attempt
+    window.addEventListener('blur', () => {
+        document.body.style.filter = "blur(20px)";
+    });
+    window.addEventListener('focus', () => {
+        document.body.style.filter = "none";
+    });
+}
+
 function trackActivityLocally(fileData, isDownloaded = false) {
     try {
         let recent = JSON.parse(localStorage.getItem("recentFiles") || "[]");
@@ -44,6 +84,8 @@ let renderTask = null;
 let currentBlobUrl = null;
 
 async function initReader() {
+    enableContentProtection(); // Screenshot protection activate
+
     if (!rawPath || rawPath === "null") {
         document.getElementById("doc-title").innerText = "No File Selected";
         return;
@@ -84,6 +126,7 @@ function startEngine(blob) {
         dl.onclick = async (e) => {
             e.preventDefault();
             
+            // Login Verification Before Download
             const { data: { session } } = await window.supabaseClient.auth.getSession();
             if (!session) {
                 alert("Notes download karne ke liye pehle Login karein.");
@@ -112,9 +155,19 @@ function startEngine(blob) {
 
     pdfjsLib.getDocument(currentBlobUrl).promise.then(pdf => {
         pdfDoc = pdf;
+
+        // Preview & Purchase logic
+        const isPurchased = params.get("purchased") === "true";
+        const isPremium = params.get("type") === "premium" || (rawPath && rawPath.includes("premium"));
+
+        let maxAllowedPages = pdf.numPages;
+        if (isPremium && !isPurchased) {
+            maxAllowedPages = Math.min(pdf.numPages, 1); // Show maximum 2 pages as preview
+        }
+
         const slider = document.getElementById("page-slider");
         if (slider) {
-            slider.max = pdf.numPages;
+            slider.max = maxAllowedPages;
             slider.value = 1;
         }
         document.getElementById("master-loader").style.display = "none";
@@ -124,6 +177,15 @@ function startEngine(blob) {
 
 async function renderPage(num) {
     if (!pdfDoc) return;
+
+    // Guard to prevent navigation beyond preview limit
+    const isPurchased = params.get("purchased") === "true";
+    const isPremium = params.get("type") === "premium" || (rawPath && rawPath.includes("premium"));
+    if (isPremium && !isPurchased && num > 1) {
+        alert("🔒 Complete document dekhne ke liye is Note ko Unlock / Purchase karein!");
+        return;
+    }
+
     if (renderTask) {
         try { renderTask.cancel(); } catch(e){}
     }
@@ -150,7 +212,10 @@ async function renderPage(num) {
     renderTask = page.render({ canvasContext: ctx, viewport: viewport });
     
     const indicator = document.getElementById("page-indicator-top");
-    if (indicator) indicator.innerText = `Page ${num} of ${pdfDoc.numPages}`;
+    if (indicator) {
+        const totalText = (isPremium && !isPurchased) ? "1 (Preview)" : pdfDoc.numPages;
+        indicator.innerText = `Page ${num} of ${totalText}`;
+    }
     
     const slider = document.getElementById("page-slider");
     if (slider) slider.value = num;
