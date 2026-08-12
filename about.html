@@ -307,6 +307,16 @@
                 <p>A: Aap niche diye gaye feedback form ke zariye topic select karke apna sujhav (30-150 words me) bhej sakte hain.</p>
             </div>
         </div>
+        <div class="faq-item">
+            <button class="faq-question" onclick="toggleFaq(this)">
+                <span>Q: Mai apna feedback ka jawab kaha pa sakta hu?</span>
+                <span class="faq-icon">▼</span>
+            </button>
+            <div class="faq-answer">
+                <p>A: Aap home page se menu ke through ask-doubt page par jakar waha feedback 💬 button par tap karke uska status dekh sakte hain.</p>
+            </div>
+        </div>
+        
 
         <div class="faq-item">
             <button class="faq-question" onclick="toggleFaq(this)">
@@ -339,7 +349,7 @@
                 <label for="description">Apna Feedback Describe Karein (30 - 150 Words):</label>
                 <textarea id="description" placeholder="Aapka feedback hamare liye mahatvapurna hai..." oninput="validateWordCount()"></textarea>
                 <div class="form-footer">
-                    <div id="errorMsg" class="error-msg">Min 30 & Max 150 words allowed.</div>
+                    <div id="errorMsg" class="error-msg">Max 150 words allowed.</div>
                     <div class="word-count"><span id="currentCount">0</span> / 150 words</div>
                 </div>
             </div>
