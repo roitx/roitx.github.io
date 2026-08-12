@@ -90,6 +90,7 @@ shipCards.forEach(card => {
         }
     });
 });
+
 const player = { 
     x: 0, y: 0, w: 56, h: 56, 
     speed: 8, cooldown: 0, missileCooldown: 0, shield: false, 
@@ -106,6 +107,75 @@ window.addEventListener("keydown", e => {
 window.addEventListener("keyup", e => keys[e.key] = false);
 
 // Mobile Controls (Buttons & Touch Drag)
+// Leaderboard Modal Logic
+const leaderboardScreen = document.getElementById("leaderboard-screen");
+const openLeaderboardBtn = document.getElementById("openLeaderboardBtn");
+const closeLeaderboardBtn = document.getElementById("closeLeaderboardBtn");
+const leaderboardList = document.getElementById("leaderboard-list");
+
+if (openLeaderboardBtn) {
+    openLeaderboardBtn.onclick = async () => {
+        if (startScreen) startScreen.classList.remove("show");
+        if (leaderboardScreen) leaderboardScreen.classList.add("show");
+        await fetchLeaderboard();
+    };
+}
+
+if (closeLeaderboardBtn) {
+    closeLeaderboardBtn.onclick = () => {
+        if (leaderboardScreen) leaderboardScreen.classList.remove("show");
+        if (startScreen) startScreen.classList.add("show");
+    };
+}
+
+async function fetchLeaderboard() {
+    if (!window.supabaseClient) {
+        if (leaderboardList) leaderboardList.innerHTML = "Supabase not connected.";
+        return;
+    }
+
+    try {
+        if (leaderboardList) leaderboardList.innerHTML = "Loading leaderboard...";
+        
+        const { data, error } = await window.supabaseClient
+            .from('game_profiles')
+            .select('id, score, selected_ship, name, avatar_url')
+            .order('score', { ascending: false })
+            .limit(10);
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+            let html = "<div style='display:flex; flex-direction:column; gap:8px;'>";
+            data.forEach((row, index) => {
+                let pilotName = row.name || "Unknown Pilot";
+                let pilotAvatar = row.avatar_url ? `<img src="${row.avatar_url}" style="width:30px; height:30px; border-radius:50%; object-fit:cover;">` : `<div style="width:30px; height:30px; border-radius:50%; background:#0ea5e9; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:12px;">👤</div>`;
+                
+                html += `
+                    <div style="display:flex; align-items:center; justify-content:space-between; background:rgba(255,255,255,0.05); padding:8px 12px; border-radius:6px;">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <span style="font-weight:bold; color:#38bdf8; width:20px;">#${index + 1}</span>
+                            ${pilotAvatar}
+                            <span style="font-size:14px; color:#fff; font-weight:500; max-width:110px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${pilotName}</span>
+                        </div>
+                        <div style="text-align:right;">
+                            <span style="color:#facc15; font-weight:bold; font-size:13px; display:block;">⭐ ${row.score || 0}</span>
+                            <span style="font-size:10px; color:#94a3b8;">${row.selected_ship || 'pulse'}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            html += "</div>";
+            leaderboardList.innerHTML = html;
+        } else {
+            leaderboardList.innerHTML = "No scores recorded yet!";
+        }
+    } catch (err) {
+        console.error("Error fetching leaderboard:", err);
+        if (leaderboardList) leaderboardList.innerHTML = "Failed to load leaderboard.";
+    }
+}
+
 const leftBtn = document.getElementById("leftBtn");
 const rightBtn = document.getElementById("rightBtn");
 
@@ -206,6 +276,7 @@ if (pauseBtn) {
         if (!paused) update();
     };
 }
+
 function updateHUD() {
     if (scoreEl) scoreEl.textContent = score;
     if (coinsEl) coinsEl.textContent = coins;
@@ -366,6 +437,7 @@ function gameOver() {
     game = false;
     if (finalScore) finalScore.textContent = score;
     if (gameOverScreen) gameOverScreen.classList.add("show");
+    saveUserData();
 }
 
 function startGame() {
@@ -414,11 +486,28 @@ async function loadUserData() {
             updateHUD();
             setActiveShipCard(selectedShip);
         } else {
+            let fullName = user.user_metadata?.full_name || user.user_metadata?.name || "Cyber Pilot";
+            let avatarUrl = user.user_metadata?.avatar_url || user.user_metadata?.picture || "";
+
+            // profiles टेबल से भी डिटेल्स पढ़ने की कोशिश करें
+            const { data: profileData } = await window.supabaseClient
+                .from('profiles')
+                .select('full_name, avatar_url')
+                .eq('id', user.id)
+                .maybeSingle();
+
+            if (profileData) {
+                if (profileData.full_name) fullName = profileData.full_name;
+                if (profileData.avatar_url) avatarUrl = profileData.avatar_url;
+            }
+
             await window.supabaseClient.from('game_profiles').insert([{
                 id: user.id,
                 score: 0,
                 coins: 0,
-                selected_ship: 'pulse'
+                selected_ship: 'pulse',
+                name: fullName,
+                avatar_url: avatarUrl
             }]);
         }
     } catch (err) {
@@ -428,8 +517,24 @@ async function loadUserData() {
 
 async function saveUserData() {
     try {
+        if (!window.supabaseClient) return;
         const { data: { user } } = await window.supabaseClient.auth.getUser();
         if (!user) return;
+
+        // 1. Google / Auth या profiles टेबल से यूजर का नाम और फोटो निकालना
+        let fullName = user.user_metadata?.full_name || user.user_metadata?.name || "Cyber Pilot";
+        let avatarUrl = user.user_metadata?.avatar_url || user.user_metadata?.picture || "";
+
+        const { data: profileData } = await window.supabaseClient
+            .from('profiles')
+            .select('full_name, avatar_url')
+            .eq('id', user.id)
+            .maybeSingle();
+
+        if (profileData) {
+            if (profileData.full_name) fullName = profileData.full_name;
+            if (profileData.avatar_url) avatarUrl = profileData.avatar_url;
+        }
 
         await window.supabaseClient
             .from('game_profiles')
@@ -438,6 +543,8 @@ async function saveUserData() {
                 score: score,
                 coins: coins,
                 selected_ship: selectedShip,
+                name: fullName,
+                avatar_url: avatarUrl,
                 updated_at: new Date()
             });
     } catch (err) {
@@ -531,7 +638,7 @@ function update() {
     if (ultiBtn) ultiBtn.style.opacity = player.ultiCooldown <= 0 ? "1" : "0.4";
     if (dashBtn) dashBtn.style.opacity = player.dashCooldown <= 0 ? "1" : "0.4";
 
-    // Draw Player Ship (renderers.js)
+    // Draw Player Ship
     if (typeof drawPlayerShip === "function") {
         drawPlayerShip(ctx, player, shipTypes, selectedShip, trails);
     }
@@ -688,6 +795,7 @@ function update() {
         // Draw Boss
         ctx.fillStyle = "#ef4444";
         ctx.fillRect(monster.x, monster.y, monster.w, monster.h);
+        
         // Health bar
         ctx.fillStyle = "rgba(255,255,255,0.3)";
         ctx.fillRect(monster.x, monster.y - 12, monster.w, 6);
@@ -748,4 +856,3 @@ function update() {
     ctx.restore();
     requestAnimationFrame(update);
 }
-

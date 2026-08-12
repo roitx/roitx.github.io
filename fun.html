@@ -91,6 +91,18 @@
   </div>
 
   <button id="startBtn" class="glow-btn main-btn pulse-btn">LAUNCH MISSION</button>
+  <button id="openLeaderboardBtn" class="glow-btn main-btn" style="margin-top: 10px; background: rgba(14, 165, 233, 0.2);">🏆 LEADERBOARD</button>
+</div>
+
+<!-- LEADERBOARD SCREEN -->
+<div id="leaderboard-screen" class="screen">
+  <h2 class="glow-text">🏆 TOP PILOTS LEADERBOARD</h2>
+  <div style="max-height: 220px; overflow-y: auto; margin: 15px auto; width: 85%; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 8px;">
+    <div id="leaderboard-list" style="color: #fff; text-align: left; font-size: 14px;">
+      Loading leaderboard...
+    </div>
+  </div>
+  <button id="closeLeaderboardBtn" class="glow-btn main-btn">BACK</button>
 </div>
 
 <!-- GAME OVER SCREEN -->
@@ -110,10 +122,15 @@
 
 <div id="monster-alert" class="alert-text">⚠️ OVERLORD MOTHERSHIP ENGAGED! ⚠️</div>
 
-<!-- defer लगाने से फ़ाइलें हमेशा सही क्रम (Order) में ही लोड होती हैं -->
-<script src="renderers.js" defer></script>
-<script src="scriptgame.js" defer></script>
-
+<!-- SCRIPTS LOAD ORDER: 
+     1. Supabase Official CDN Library
+     2. Supabase Configuration (supabase.js)
+     3. Game Graphics/Renderers (renderers.js)
+     4. Main Game Script (scriptgame.js) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+<script src="renderers.js"></script>
+<script src="scriptgame.js"></script>
 
 </body>
 </html>
