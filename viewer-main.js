@@ -114,6 +114,17 @@ async function initReader() {
 function startEngine(blob) {
     currentBlobUrl = URL.createObjectURL(blob);
     
+    // 🌟 File Size Calculation Fix
+    try {
+        const sizeInMB = (blob.size / (1024 * 1024)).toFixed(1);
+        const fileSizeEl = document.getElementById("file-size");
+        if (fileSizeEl) {
+            fileSizeEl.innerText = sizeInMB + " MB";
+        }
+    } catch (e) {
+        console.error("Size calculation error:", e);
+    }
+
     trackActivityLocally({
         title: docName || "PDF Document",
         url: rawPath,
@@ -137,7 +148,6 @@ function startEngine(blob) {
 
             const fileName = (docName || "document") + ".pdf";
             
-            // Standard reliable download method for notes
             const tempLink = document.createElement("a");
             tempLink.href = currentBlobUrl;
             tempLink.download = fileName;
@@ -156,13 +166,12 @@ function startEngine(blob) {
     pdfjsLib.getDocument(currentBlobUrl).promise.then(pdf => {
         pdfDoc = pdf;
 
-        // Preview & Purchase logic
         const isPurchased = params.get("purchased") === "true";
         const isPremium = params.get("type") === "premium" || (rawPath && rawPath.includes("premium"));
 
         let maxAllowedPages = pdf.numPages;
         if (isPremium && !isPurchased) {
-            maxAllowedPages = Math.min(pdf.numPages, 1); // Show maximum 2 pages as preview
+            maxAllowedPages = Math.min(pdf.numPages, 1);
         }
 
         const slider = document.getElementById("page-slider");
@@ -178,7 +187,6 @@ function startEngine(blob) {
 async function renderPage(num) {
     if (!pdfDoc) return;
 
-    // Guard to prevent navigation beyond preview limit
     const isPurchased = params.get("purchased") === "true";
     const isPremium = params.get("type") === "premium" || (rawPath && rawPath.includes("premium"));
     if (isPremium && !isPurchased && num > 1) {

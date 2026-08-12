@@ -11,6 +11,54 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js"></script>
 <script defer src="formulas.js"></script>
+
+<style>
+/* 🌟 Uniform Grid Styling for Filters and Search Button */
+.filters {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+@media (min-width: 600px) {
+    .filters {
+        grid-template-columns: repeat(5, 1fr); /* 4 Dropdowns + 1 Search Button */
+    }
+}
+
+.filters select, 
+.filters button {
+    width: 100%;
+    padding: 12px;
+    background: #111622;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #fff;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    box-sizing: border-box;
+    outline: none;
+    text-align: center;
+}
+
+.filters button {
+    background: linear-gradient(135deg, #00d2ff, #0072ff);
+    font-weight: bold;
+    cursor: pointer;
+    grid-column: span 2; /* मोबाइल स्क्रीन पर सर्च बटन पूरी चौड़ाई लेगा */
+    transition: 0.2s ease;
+}
+
+.filters button:active {
+    transform: scale(0.97);
+}
+
+@media (min-width: 600px) {
+    .filters button {
+        grid-column: span 1;
+    }
+}
+</style>
 </head>
 
 <body>
@@ -47,6 +95,14 @@
     <option value="ch3">Chapter 3</option>
     <option value="ch4">Chapter 4</option>
     <option value="ch5">Chapter 5</option>
+  </select>
+
+  <!-- 🌟 Updated Category Dropdown ID (Matching with JS: fCategory) -->
+  <select id="fCategory">
+    <option value="">Category</option>
+    <option value="mind_map">Mind Map</option>
+    <option value="short_notes">Short Notes</option>
+    <option value="other">Other</option>
   </select>
 
   <button onclick="loadFormulas()">🔍 Search</button>

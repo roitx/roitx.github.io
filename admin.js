@@ -279,10 +279,11 @@ async function deleteEvent(id) {
 
 /* ---------- PART 4: FORMULAS SYSTEM ---------- */
 document.addEventListener("DOMContentLoaded", () => {
-  const fClass   = document.getElementById("fClass");
-  const fSubject = document.getElementById("fSubject");
-  const fChapter = document.getElementById("fChapter");
-  const fType    = document.getElementById("fType");
+  const fClass    = document.getElementById("fClass");
+  const fSubject  = document.getElementById("fSubject");
+  const fChapter  = document.getElementById("fChapter");
+  const fType     = document.getElementById("fType");
+  const fCategory = document.getElementById("fCategory"); // नया कैटेगरी एलिमेंट
 
   const formulaText  = document.getElementById("formulaText");
   const formulaFile  = document.getElementById("formulaFile");
@@ -320,7 +321,8 @@ document.addEventListener("DOMContentLoaded", () => {
   window.uploadFormula = async function () {
     if (statusBox) statusBox.innerText = "⏳ Uploading...";
 
-    if (!fClass.value || !fSubject.value || !fChapter.value || !fType.value) {
+    // यहाँ fCategory.value को भी अनिवार्य (required) बना दिया गया है
+    if (!fClass.value || !fSubject.value || !fChapter.value || !fType.value || !fCategory.value) {
       if (statusBox) statusBox.innerText = "❌ All fields required";
       return;
     }
@@ -357,6 +359,7 @@ document.addEventListener("DOMContentLoaded", () => {
       subject: fSubject.value,
       chapter: fChapter.value,
       type: fType.value,
+      category: fCategory.value, // डेटाबेस में कैटेगरी सेव करने के लिए
       formula_text: formulaTextData,
       file_path: filePath,
       publish: publishCheck ? publishCheck.checked : true
@@ -370,13 +373,14 @@ document.addEventListener("DOMContentLoaded", () => {
     if (statusBox) statusBox.innerText = "✅ Formula uploaded";
     if (formulaText) formulaText.value = "";
     if (formulaFile) formulaFile.value = "";
+    if (fCategory) fCategory.value = ""; // अपलोड होने के बाद कैटेगरी रीसेट हो जाएगी
     
     // Instant Refresh & Stats Update
     await loadFormulas();
     await updateStats();
   };
 
-  async function loadFormulas() {
+    async function loadFormulas() {
     const list = document.getElementById("formulaList");
     if (!list) return;
 
@@ -389,10 +393,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const fClassVal = document.getElementById("filterFClass")?.value;
     const fSubVal   = document.getElementById("filterFSubject")?.value;
+    const fCatVal   = document.getElementById("filterFCategory")?.value; // नया कैटेगरी वैल्यू
     const search    = document.getElementById("searchFormula")?.value.toLowerCase().trim() || "";
 
     if (fClassVal) query = query.eq("class", fClassVal);
     if (fSubVal) query = query.eq("subject", fSubVal);
+    if (fCatVal) query = query.eq("category", fCatVal); // डेटाबेस क्वेरी में कैटेगरी फ़िल्टर
 
     const { data, error } = await query;
 
@@ -418,9 +424,12 @@ document.addEventListener("DOMContentLoaded", () => {
     filtered.forEach(f => {
       const row = document.createElement("div");
       const icon = f.type === "text" ? "📝" : f.type === "pdf" ? "📄" : "🖼️";
+      const categoryLabel = f.category ? f.category.replace('_', ' ').toUpperCase() : '';
+
       row.innerHTML = `
         <span>
-          ${icon} <b>Class ${f.class}</b> • ${f.subject.toUpperCase()} • ${f.chapter.toUpperCase()}
+          ${icon} <b>Class ${f.class}</b> • ${f.subject.toUpperCase()} • ${f.chapter.toUpperCase()} 
+          ${categoryLabel ? `• [${categoryLabel}]` : ''}
           ${f.publish ? "🟢" : "🔒"}
         </span>
         <div>
@@ -470,9 +479,10 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("filterEventMonth")?.addEventListener("change", loadEvents);
   document.getElementById("filterEventYear")?.addEventListener("change", loadEvents);
 
-  document.getElementById("searchFormula")?.addEventListener("input", loadFormulas);
+    document.getElementById("searchFormula")?.addEventListener("input", loadFormulas);
   document.getElementById("filterFClass")?.addEventListener("change", loadFormulas);
   document.getElementById("filterFSubject")?.addEventListener("change", loadFormulas);
+  document.getElementById("filterFCategory")?.addEventListener("change", loadFormulas); // यह लाइन जोड़ें
 
   loadFiles();
   loadEvents();
