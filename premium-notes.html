@@ -1,12 +1,11 @@
-                                      Unlock 🚀
-                        <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PM-Roit | Premium Notes Hub</title>
     <link rel="stylesheet" href="premium.css">
-    <!-- Supabase SDK (Razorpay removed) -->
+    <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase.js"></script>
 
@@ -250,7 +249,7 @@
             <p>Select your chapter and unlock full study access</p>
         </div>
 
-        <!-- 🔍 Filter & Search Bar (Auto shows if total notes > 20) -->
+        <!-- 🔍 Filter & Search Bar -->
         <div class="filter-box" id="filterBox">
             <input type="text" id="filterSearch" placeholder="🔍 Search notes title..." oninput="filterNotes()" style="padding: 9px 12px; background: #090d16; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: #fff; font-size: 0.855rem; outline: none;">
             
@@ -332,7 +331,6 @@
         };
 
         async function loadNotes() {
-            // Fetch max 30 notes from database
             const { data: notes, error } = await window.supabaseClient
                 .from('premium_notes')
                 .select('*')
@@ -346,7 +344,6 @@
 
             cachedNotes = notes || [];
 
-            // Show filter box only if total notes are greater than 20
             if (cachedNotes.length > 20) {
                 document.getElementById('filterBox').style.display = 'flex';
             } else {
@@ -466,103 +463,6 @@
             alert("UPI ID Copied to Clipboard! 📋");
         }
 
-        async function submitManualPayment() {
-            const utr = document.getElementById('utrInput').value.trim();
-            if (utr.length < 8) {
-                alert("Please enter a valid UTR/Transaction number!");
-                return;
-            }
-
-            const { error } = await window.supabaseClient
-                .from('user_orders')
-                .insert([{
-                    user_email: currentUser.email,
-                    note_title: selectedNoteForPay.title,
-                    note_id: selectedNoteForPay.id,
-                    amount: selectedNoteForPay.price,
-                    utr_code: utr,
-                    status: 'pending'
-                }]);
-
-            if (!error) {
-                alert("Payment details submitted successfully! Admin will verify and approve soon. 🎉");
-                document.getElementById('paymentModal').style.display = 'none';
-                document.getElementById('utrInput').value = '';
-            } else {
-                alert("Database sync failed: " + error.message);
-            }
-        }
-    </script>
-</body>
-</html>
-            </button>
-                                ` : ''}
-                            </div>
-                        </div>
-                    </div>
-                `;
-            });
-        }
-
-        function openInViewer(noteId) {
-            const note = loadedNotesMap[noteId];
-            if (!note) return;
-
-            const isPurchased = purchases.includes(note.id);
-            let targetFilePath = note.file_path || note.full_pdf_url || '';
-
-            const cleanPath = encodeURIComponent(targetFilePath);
-            const cleanName = encodeURIComponent(note.title || 'Note');
-            
-            let url = `notes-viewer.html?path=${cleanPath}&name=${cleanName}&type=premium`;
-            if (isPurchased) {
-                url += `&purchased=true`;
-            }
-
-            window.location.href = url;
-        }
-
-        // 💳 Payment Modal Handler with Dynamic Exact Amount & Deep Link
-        async function openPaymentModal(noteId) {
-            const note = loadedNotesMap[noteId];
-            if (!note) return;
-
-            if (typeof window.getCurrentUser === "function") {
-                currentUser = await window.getCurrentUser();
-            }
-            
-            if (!currentUser) {
-                alert("🔒 Unlock karne ke liye pehle login karein!");
-                sessionStorage.setItem("redirect_after_login", window.location.href);
-                const loginUrl = typeof window.getPageUrl === "function" ? window.getPageUrl("login.html") : "login.html";
-                window.location.href = loginUrl;
-                return;
-            }
-
-            selectedNoteForPay = note;
-            document.getElementById('modalTitle').innerText = "Pay for " + note.title;
-            document.getElementById('modalPrice').innerText = "₹" + note.price;
-            
-            // Proper UPI Deep Link with Amount & Note Title for exact matching
-            const upiUri = `upi://pay?pa=${encodeURIComponent(MY_UPI_ID)}&pn=PM-Roit&am=${note.price}&cu=INR&tn=${encodeURIComponent('Note: ' + note.title)}`;
-            
-            // Set Direct App Link for mobile devices
-            document.getElementById('payDirectBtn').href = upiUri;
-
-            // Generate QR Code containing the exact Amount & UPI ID
-            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(upiUri)}`;
-            document.getElementById('upiQrCode').src = qrUrl;
-            
-            document.getElementById('paymentModal').style.display = 'flex';
-        }
-
-        // Copy UPI ID function
-        function copyUpiId() {
-            navigator.clipboard.writeText(MY_UPI_ID);
-            alert("UPI ID Copied to Clipboard! 📋");
-        }
-
-        // 📤 UTR Submission Handler
         async function submitManualPayment() {
             const utr = document.getElementById('utrInput').value.trim();
             if (utr.length < 8) {
