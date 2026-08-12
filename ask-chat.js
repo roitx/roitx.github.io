@@ -379,6 +379,7 @@ You are an AI study assistant for Rohit's learning platform (roitx.github.io). A
 - <a href="refbook.html">Reference Books</a>
 - <a href="solver.html">Doubt Solver</a>
 - <a href="fun.html">Fun & Games</a>
+- <a href='premium-notes.html"> Premium Notes</a>
 `;
 
   // ---- GROQ AI INTEGRATION ----
