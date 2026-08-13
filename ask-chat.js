@@ -72,6 +72,23 @@
   async function handleCommand(raw) {
     const cmd = normalize(raw);
 
+    // 0. FEEDBACK QUERY HANDLER
+    if (cmd.includes('feedback') || cmd.includes('sujhav') || cmd.includes('review') || cmd.includes('kisi ko batana')) {
+      addBotMsg(`
+        <div style="border: 1px solid #06b6d4; padding: 10px; border-radius: 8px; background: rgba(6,182,212,0.05); margin-top: 5px;">
+          <div style="font-size: 13px; font-weight: bold; color: #06b6d4; margin-bottom: 4px;">
+            💬 Feedback Kaise Bhejein?
+          </div>
+          <div style="font-size: 12px; color: #e0e7ff; line-height: 1.5; margin-bottom: 8px;">
+            Aap apne feedback in tareeqon se bhej sakte hain:<br>
+            1. Login karke apne profile ke <b>i (info)</b> button dwara <a href="about.html" style="color: #38bdf8; text-decoration: underline;">about.html</a> ke through jakar waha se feedback bhej sakte hain.<br>
+            2. Ya phir <a href="ask-doubt.html" style="color: #38bdf8; text-decoration: underline;">ask-doubt.html</a> me jakar feedback dekh aur bhej dono sakte hain!
+          </div>
+        </div>
+      `);
+      return;
+    }
+
     // 1. DOUBT SOLVER REDIRECT
     if (cmd.includes('doubt') || cmd.includes('solve') || cmd.includes('samajh') || cmd.includes('question')) {
       addBotMsg(`
@@ -362,7 +379,7 @@
 // ask-chat.js — PART 3: AI INTEGRATION, UTILS & NOTES
 // ==========================================
 
-  // ---- CLEAN SYSTEM KNOWLEDGE (Dead Chapters Removed) ----
+  // ---- CLEAN SYSTEM KNOWLEDGE (Admin-Panel & Admin Pages Excluded) ----
   const systemKnowledge = `
 You are an AI study assistant for Rohit's learning platform (roitx.github.io). Answer in simple Hindi/Hinglish. When asked for pages or links, generate HTML standard <a> tags using the relative paths below.
 
@@ -372,8 +389,9 @@ You are an AI study assistant for Rohit's learning platform (roitx.github.io). A
 - <a href="index.html">Home</a>
 - <a href="classes.html">Classes Selection</a>
 - <a href="login.html">Login</a>
-- <a href="admin-panel.html">Admin Panel</a>
 - <a href="premium-notes.html">Premium Notes</a>
+- <a href="about.html">About Page</a>
+- <a href="ask-doubt.html">Ask Doubt & Feedback Page</a>
 
 2. Main Class & Subject/Stream Selection Pages:
 - <a href="subjects-9.html">Class 9 Subjects</a>
@@ -396,6 +414,9 @@ You are an AI study assistant for Rohit's learning platform (roitx.github.io). A
 - <a href="refbook.html">Reference Books</a>
 - <a href="solver.html">Doubt Solver</a>
 - <a href="fun.html">Fun & Games</a>
+
+--- FEEDBACK RULE ---
+NEVER suggest admin panels or admin-related pages. If users ask about feedback or reviews, guide them to login and use the profile 'i' (info) button to go through <a href="about.html">about.html</a>, or visit <a href="ask-doubt.html">ask-doubt.html</a> where they can both view and submit feedback.
 `;
 
   // ---- GROQ AI INTEGRATION ----
