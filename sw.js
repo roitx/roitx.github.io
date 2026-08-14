@@ -9,7 +9,6 @@ const ASSETS = [
   './view.html',
   './tests.html'
 ];
-
 // INSTALL — caching static assets
 self.addEventListener('install', e => {
   console.log('Service Worker Installed 🛠️');
