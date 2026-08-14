@@ -1,4 +1,4 @@
-const CACHE_NAME = 'roitx-study-v2'; // Version update kar diya
+const CACHE_NAME = 'roitx-study-v4'; // Har update par ye version number badal dena[span_0](start_span)[span_0](end_span)
 const ASSETS = [
   './',
   './index.html',
@@ -7,20 +7,26 @@ const ASSETS = [
   './profile.jpg',
   './classes.html',
   './view.html',
-  './tests.html'
+  './tests.html',
+  './library.html',
+  './refbook.html',
+  './refbook.css',
+  './refbook.js'
 ];
-// INSTALL — caching static assets
+
+// INSTALL — caching all critical static assets offline[span_1](start_span)[span_1](end_span)
 self.addEventListener('install', e => {
   console.log('Service Worker Installed 🛠️');
-  self.skipWaiting(); // Naye worker ko turant active karne ke liye
+  self.skipWaiting();
   e.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
+      console.log('Caching all offline assets...');
       return cache.addAll(ASSETS);
     })
   );
 });
 
-// ACTIVATE — clean up old caches instantly
+// ACTIVATE — clean up old caches instantly[span_2](start_span)[span_2](end_span)
 self.addEventListener('activate', e => {
   console.log('Service Worker Activated 🟢');
   e.waitUntil(
@@ -35,29 +41,31 @@ self.addEventListener('activate', e => {
       )
     )
   );
-  self.clients.claim(); // Turant clients ko control me le lega
+  self.clients.claim();
 });
 
-// FETCH — Stale-While-Revalidate Strategy (Best for auto-updates + offline)
+// FETCH — Serve from cache, fallback to network, or handle offline navigation[span_3](start_span)[span_3](end_span)
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
 
   e.respondWith(
     caches.match(e.request).then(cachedResponse => {
-      // Background me network se latest fetch karne ki request lagayein
-      const fetchPromise = fetch(e.request).then(networkResponse => {
-        if (networkResponse && networkResponse.status === 200) {
-          caches.open(CACHE_NAME).then(cache => {
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+      
+      return fetch(e.request)
+        .then(networkResponse => {
+          return caches.open(CACHE_NAME).then(cache => {
             cache.put(e.request, networkResponse.clone());
+            return networkResponse;
           });
-        }
-        return networkResponse;
-      }).catch(() => {
-        // Agar offline hain toh kuch nahi, cache chalne do
-      });
-
-      // Agar cache me hai toh turant wo dikhao, background me update hota rahega
-      return cachedResponse || fetchPromise;
+        })
+        .catch(() => {
+          if (e.request.headers.get('accept') && e.request.headers.get('accept').includes('text/html')) {
+            return caches.match('./index.html');
+          }
+        });
     })
   );
 });
