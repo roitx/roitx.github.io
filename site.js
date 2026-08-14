@@ -115,9 +115,12 @@ async function openSubject(subjectName) {
   }
 }
 
-// PDF Viewer Redirect Helper
+// PDF Viewer Redirect Helper (Same tab me khulne ke liye)
 function openViewer(filePath) {
   if (!filePath) return alert("❌ File path not found!");
   const fileName = filePath.split("/").pop();
-  window.open(`notes-viewer.html?path=${encodeURIComponent(filePath)}&name=${encodeURIComponent(fileName)}`, "_blank");
+  const viewerUrl = `notes-viewer.html?path=${encodeURIComponent(filePath)}&name=${encodeURIComponent(fileName)}`;
+  
+  // Same tab me redirect karne ke liye
+  window.location.href = viewerUrl;
 }

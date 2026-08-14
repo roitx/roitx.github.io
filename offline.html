@@ -5,65 +5,214 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Offline • Roitx Study Hub</title>
   <style>
+    :root {
+      --bg-color: #090d16;
+      --card-bg: rgba(18, 24, 38, 0.75);
+      --border-color: rgba(239, 68, 68, 0.25);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent-red: #ef4444;
+      --accent-blue: #3b82f6;
+    }
+
     body {
-      background: #0f172a;
-      color: #f8fafc;
-      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg-color);
+      color: var(--text-main);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100vh;
+      min-height: 100vh;
       margin: 0;
       text-align: center;
       padding: 20px;
+      overflow: hidden;
     }
+
+    /* Background ambient glowing effect */
+    body::before {
+      content: '';
+      position: absolute;
+      width: 300px;
+      height: 300px;
+      background: rgba(239, 68, 68, 0.08);
+      filter: blur(80px);
+      border-radius: 50%;
+      z-index: -1;
+    }
+
     .offline-card {
-      background: rgba(30, 41, 59, 0.7);
-      border: 1px solid rgba(239, 68, 68, 0.2);
-      padding: 30px;
-      border-radius: 20px;
-      backdrop-filter: blur(12px);
-      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
-      max-width: 320px;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      padding: 35px 25px;
+      border-radius: 24px;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(239, 68, 68, 0.1);
+      max-width: 360px;
       width: 100%;
+      transform: translateY(20px);
+      opacity: 0;
+      animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
-    .icon {
-      font-size: 40px;
-      margin-bottom: 15px;
+
+    @keyframes slideUp {
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
     }
+
+    .icon-container {
+      position: relative;
+      width: 70px;
+      height: 70px;
+      margin: 0 auto 20px;
+      background: rgba(239, 68, 68, 0.1);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    .pulse-ring {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 2px solid var(--accent-red);
+      animation: pulseAnim 2s infinite;
+      opacity: 0;
+    }
+
+    @keyframes pulseAnim {
+      0% { transform: scale(1); opacity: 0.8; }
+      100% { transform: scale(1.4); opacity: 0; }
+    }
+
     h2 {
       margin: 0 0 10px;
-      font-size: 20px;
-      color: #ef4444;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
     }
+
+    h3 {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-main);
+      margin: 0 0 12px;
+      line-height: 1.4;
+    }
+
     p {
-      font-size: 13.5px;
-      color: #94a3b8;
-      margin-bottom: 20px;
+      font-size: 12.5px;
+      color: var(--text-muted);
+      margin: 0 0 24px;
       line-height: 1.5;
     }
+
+    .btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
     .btn {
       background: linear-gradient(135deg, #3b82f6, #1d4ed8);
       color: white;
       border: none;
-      padding: 10px 20px;
-      border-radius: 30px;
+      padding: 12px 20px;
+      border-radius: 12px;
       font-size: 13.5px;
       font-weight: 600;
       cursor: pointer;
       text-decoration: none;
-      display: inline-block;
-      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.35);
+      transition: all 0.2s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: none;
+      color: var(--text-muted);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-main);
+    }
+
+    /* Live status indicator toast inside page */
+    .status-toast {
+      margin-top: 20px;
+      font-size: 12px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      background: #ef4444;
+      border-radius: 50%;
+      box-shadow: 0 0 6px #ef4444;
     }
   </style>
 </head>
 <body>
+
   <div class="offline-card">
-    <div class="icon">📡</div>
+    <div class="icon-container">
+      <div class="pulse-ring"></div>
+      📡
+    </div>
+    
     <h2>You're Offline</h2>
-    <p>Yeh page abhi offline storage me available nahi hai ya internet connection nahi hai.</p>
-    <a href="./index.html" class="btn">Go to Home</a>
+    <h3>Yeh page abhi offline storage me available nahi hai ya internet connection nahi hai.</h3>
+    <p>Agli bar se ise online khol lein taki ye page bhi automatic cache me save ho sake.</p>
+    
+    <div class="btn-group">
+      <a href="./index.html" class="btn">🏠 Go to Home</a>
+      <button class="btn btn-secondary" onclick="window.location.reload()">🔄 Try Again</button>
+    </div>
+
+    <div class="status-toast">
+      <div class="dot" id="statusDot"></div>
+      <span id="statusText">Waiting for network...</span>
+    </div>
   </div>
+
+  <script>
+    // Auto-reload jab internet wapas aa jaye
+    window.addEventListener('online', () => {
+      const dot = document.getElementById('statusDot');
+      const text = document.getElementById('statusText');
+      dot.style.background = '#10b981';
+      dot.style.boxShadow = '0 0 6px #10b981';
+      text.textContent = 'Back online! Reconnecting...';
+      
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    });
+  </script>
+
 </body>
 </html>
