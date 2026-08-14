@@ -319,7 +319,48 @@ if (shareBtn) {
     }
   });
 }
+// =====================================================
+// ADVANCED OFFLINE / ONLINE STATUS & REDIRECT
+// =====================================================
+window.addEventListener('DOMContentLoaded', () => {
+  const banner = document.getElementById('offlineBanner');
+  const bannerText = document.getElementById('bannerText');
 
+  if (!banner) return;
+
+  // Banner click par Library redirect logic
+  banner.addEventListener('click', () => {
+    // Agar offline hai tabhi library par bheje ya hamesha ke liye rakhna ho toh condition hata sakte hain
+    window.location.href = 'library.html';
+  });
+
+  function updateOnlineStatus() {
+    if (navigator.onLine) {
+      // Online Status
+      banner.classList.add('online');
+      if (bannerText) bannerText.textContent = 'Back online';
+      banner.classList.add('show');
+
+      setTimeout(() => {
+        banner.classList.remove('show');
+      }, 3500);
+    } else {
+      // Offline Status
+      banner.classList.remove('online');
+      if (bannerText) bannerText.textContent = 'Offline • Tap to view Library';
+      banner.classList.add('show');
+    }
+  }
+
+  window.addEventListener('online', updateOnlineStatus);
+  window.addEventListener('offline', updateOnlineStatus);
+
+  // Initial Check
+  if (!navigator.onLine) {
+    updateOnlineStatus();
+  }
+});
+        
 // Auto-update trigger for Service Worker
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.addEventListener('controllerchange', () => {
