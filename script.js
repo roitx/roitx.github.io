@@ -319,3 +319,12 @@ if (shareBtn) {
     }
   });
 }
+
+// Auto-update trigger for Service Worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    window.location.reload();
+  });
+}
+
+
