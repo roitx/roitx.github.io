@@ -1,3 +1,7 @@
+/* =====================================================
+   ROITX REFBOOK ENGINE — CLEAN & FINAL CSS EDITION
+   ===================================================== */
+
 /* --- Base Setup --- */
 * {
   margin: 0;
@@ -14,25 +18,31 @@ input, textarea {
 }
 
 body {
-  background: #12151b;
-  color: #fff;
+  background: #0d0f14;
+  color: #f8fafc;
   min-height: 100vh;
-  line-height: 1.4;
+  line-height: 1.45;
   overflow-x: hidden;
-  padding-bottom: 70px;
+  padding-bottom: 80px;
+  background-image: 
+    radial-gradient(circle at 10% 20%, rgba(0, 210, 255, 0.04) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(117, 121, 255, 0.04) 0%, transparent 40%);
 }
 
 /* --- Topbar --- */
 .topbar {
   display: flex;
   align-items: center;
-  padding: 12px 16px;
-  background: #181b22;
+  padding: 14px 18px;
+  background: rgba(18, 21, 28, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   position: sticky;
   top: 0;
   z-index: 1000;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  gap: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  gap: 14px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
 }
 
 .nav-btns {
@@ -42,18 +52,24 @@ body {
 }
 
 .back, .home-nav {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   color: #fff;
   font-size: 16px;
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.back:hover, .home-nav:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(0, 210, 255, 0.3);
+  color: #00d2ff;
 }
 
 .back:active, .home-nav:active {
@@ -61,66 +77,81 @@ body {
 }
 
 .topbar h1 {
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 600;
   flex: 1;
   text-align: center;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: #fff;
+  color: #f1f5f9;
+  letter-spacing: 0.3px;
 }
 
-/* --- Grid System --- */
+/* --- Optimized 3-Column Compact Grid --- */
 .grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 1px;
-  background: rgba(255, 255, 255, 0.08);
-  padding: 1px 0;
+  gap: 8px;
+  padding: 10px;
+  width: 100%;
+  box-sizing: border-box;
+  background: transparent;
 }
 
-/* --- Card Container --- */
+/* --- Compact Card (Glassmorphic) --- */
 .card {
-  background: #161920;
-  padding: 18px 8px;
+  background: rgba(22, 25, 32, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 12px 4px;
   text-align: center;
   cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 135px;
+  min-height: 130px;
+  border-radius: 12px;
   position: relative;
-  transition: background 0.2s ease;
-  animation: fadeIn 0.3s ease forwards;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: fadeIn 0.4s ease forwards;
   opacity: 0;
 }
 
-.card:active {
-  background: #222630;
+.card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(0, 210, 255, 0.25);
+  background: rgba(28, 33, 44, 0.85);
+  box-shadow: 0 10px 28px rgba(0, 210, 255, 0.1);
 }
 
-/* --- Realistic Book Core Design --- */
+.card:active {
+  transform: scale(0.96);
+}
+
+/* --- Compact Book Icon for 3 Columns --- */
 .book-icon-wrapper {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  margin-bottom: 10px;
-  height: 42px;
+  gap: 2px;
+  margin-bottom: 8px;
+  height: 40px;
   position: relative;
 }
 
 /* Hardcover Book Element */
 .realistic-book {
-  width: 32px;
-  height: 42px;
-  border-radius: 4px 8px 8px 4px;
+  width: 28px;
+  height: 38px;
+  border-radius: 3px 6px 6px 3px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 3px 4px 10px rgba(0,0,0,0.6), inset -3px 0 6px rgba(0,0,0,0.3);
+  box-shadow: 3px 5px 12px rgba(0,0,0,0.6), inset -2px 0 4px rgba(0,0,0,0.3);
   position: relative;
   z-index: 2;
   transition: transform 0.3s ease;
@@ -129,31 +160,31 @@ body {
 /* Hardcover Spine Highlight */
 .book-spine-line {
   position: absolute;
-  left: 4px;
+  left: 3px;
   top: 0;
-  width: 3px;
+  width: 2px;
   height: 100%;
   background: rgba(0, 0, 0, 0.25);
   border-radius: 2px 0 0 2px;
 }
 
 .realistic-book span {
-  font-size: 10px;
+  font-size: 9.5px;
   font-weight: 800;
   color: #fff;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.7);
   z-index: 3;
 }
 
 /* --- Ribbon Bookmark --- */
 .realistic-ribbon {
   position: absolute;
-  top: -8px;
+  top: -5px;
   right: 6px;
-  width: 7px;
-  height: 14px;
+  width: 5px;
+  height: 12px;
   border-radius: 0 0 2px 2px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.5);
   z-index: 4;
 }
 
@@ -161,57 +192,31 @@ body {
 .page-block {
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  width: 12px;
+  gap: 2px;
+  width: 8px;
 }
 
 .page-block span {
   display: block;
   height: 2px;
-  background: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.3);
   border-radius: 2px;
 }
 
-.left-pages span:nth-child(1) { width: 8px; align-self: flex-end; }
-.left-pages span:nth-child(2) { width: 12px; align-self: flex-end; }
-.left-pages span:nth-child(3) { width: 6px; align-self: flex-end; }
+.left-pages span:nth-child(1) { width: 4px; align-self: flex-end; }
+.left-pages span:nth-child(2) { width: 8px; align-self: flex-end; }
+.left-pages span:nth-child(3) { width: 3px; align-self: flex-end; }
 
-.right-pages span:nth-child(1) { width: 8px; align-self: flex-start; }
-.right-pages span:nth-child(2) { width: 12px; align-self: flex-start; }
-.right-pages span:nth-child(3) { width: 6px; align-self: flex-start; }
+.right-pages span:nth-child(1) { width: 4px; align-self: flex-start; }
+.right-pages span:nth-child(2) { width: 8px; align-self: flex-start; }
+.right-pages span:nth-child(3) { width: 3px; align-self: flex-start; }
 
-/* --- Open Book Look --- */
-.open-book-container {
-  gap: 2px;
-}
-
-.open-center-book {
-  transform: rotate(0deg) !important;
-  width: 26px !important;
-}
-
-.open-leaf {
-  width: 14px;
-  height: 36px;
-  background: #e2e8f0;
-  border-radius: 2px;
-  box-shadow: inset 0 0 6px rgba(0,0,0,0.25);
-}
-
-.left-leaf {
-  transform: skewY(10deg);
-}
-
-.right-leaf {
-  transform: skewY(-10deg);
-}
-
-/* --- Card Title Styling --- */
+/* --- Compact Card Title --- */
 .card-title {
-  font-size: 11.5px;
-  font-weight: 500;
+  font-size: 10.5px;
+  font-weight: 600;
   color: #f1f5f9;
-  line-height: 1.3;
+  line-height: 1.25;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -220,28 +225,21 @@ body {
   padding: 0 2px;
 }
 
-/* Chapter View */
-.chapter-card {
-  align-items: flex-start !important;
-  text-align: left !important;
-  padding: 14px;
-}
-
-.ch-badge {
-  font-size: 9px;
-  font-weight: 700;
-  color: #34d399;
-  margin-bottom: 4px;
-  letter-spacing: 0.5px;
-}
-
+/* Fade In Animation */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from { 
+    opacity: 0; 
+    transform: translateY(6px);
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0);
+  }
 }
 
-@media (max-width: 360px) {
-  .card-title {
-    font-size: 11px;
+/* Extra small devices fallback */
+@media (max-width: 330px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
