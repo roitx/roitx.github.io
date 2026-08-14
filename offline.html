@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Offline • Roitx Study Hub</title>
+  <style>
+    body {
+      background: #0f172a;
+      color: #f8fafc;
+      font-family: system-ui, -apple-system, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      text-align: center;
+      padding: 20px;
+    }
+    .offline-card {
+      background: rgba(30, 41, 59, 0.7);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      padding: 30px;
+      border-radius: 20px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+      max-width: 320px;
+      width: 100%;
+    }
+    .icon {
+      font-size: 40px;
+      margin-bottom: 15px;
+    }
+    h2 {
+      margin: 0 0 10px;
+      font-size: 20px;
+      color: #ef4444;
+    }
+    p {
+      font-size: 13.5px;
+      color: #94a3b8;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+    .btn {
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 30px;
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    }
+  </style>
+</head>
+<body>
+  <div class="offline-card">
+    <div class="icon">📡</div>
+    <h2>You're Offline</h2>
+    <p>Yeh page abhi offline storage me available nahi hai ya internet connection nahi hai.</p>
+    <a href="./index.html" class="btn">Go to Home</a>
+  </div>
+</body>
+</html>

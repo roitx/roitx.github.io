@@ -1,4 +1,4 @@
-const CACHE_NAME = 'roitx-study-v4'; // Har update par ye version number badal dena[span_0](start_span)[span_0](end_span)
+const CACHE_NAME = 'roitx-study-v5'; // Jab bhi GitHub par update karein, ise v6, v7 kar dein[span_0](start_span)[span_0](end_span)
 const ASSETS = [
   './',
   './index.html',
@@ -11,7 +11,8 @@ const ASSETS = [
   './library.html',
   './refbook.html',
   './refbook.css',
-  './refbook.js'
+  './refbook.js',
+  './offline.html' // Custom offline fallback page
 ];
 
 // INSTALL — caching all critical static assets offline[span_1](start_span)[span_1](end_span)
@@ -44,7 +45,7 @@ self.addEventListener('activate', e => {
   self.clients.claim();
 });
 
-// FETCH — Serve from cache, fallback to network, or handle offline navigation[span_3](start_span)[span_3](end_span)
+// FETCH — Serve from cache, fallback to network, or show offline.html[span_3](start_span)[span_3](end_span)
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
 
@@ -62,8 +63,9 @@ self.addEventListener('fetch', e => {
           });
         })
         .catch(() => {
+          // Agar page cache me nahi hai aur net bhi nahi hai, toh custom offline page dikhao[span_4](start_span)[span_4](end_span)
           if (e.request.headers.get('accept') && e.request.headers.get('accept').includes('text/html')) {
-            return caches.match('./index.html');
+            return caches.match('./offline.html');
           }
         });
     })
