@@ -17,7 +17,6 @@ function getPageUrl(pageName) {
 
 // Primary Admin Emails List
 const ADMIN_EMAILS = [
-  "masumboy141@gmail.com",
   "rohitrajgoh91@gmail.com"
 ];
 
