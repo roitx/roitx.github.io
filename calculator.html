@@ -1,136 +1,264 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ROITX Scientific Pro + AI Solver</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-    <!-- Math.js Library CDN -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
-    <!-- Chart.js for Graphing -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="calculator.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ROITX Scientific Pro + AI Solver</title>
+  
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
+  
+  <!-- MATHJAX FOR CLEAN HUMAN-LIKE FORMULAS -->
+  <script>
+  window.MathJax = {
+    tex: {
+      inlineMath: [['$', '$'], ['\\(', '\\)']],
+      displayMath: [['$$', '$$'], ['\\[', '\\]']],
+      processEscapes: true
+    },
+    options: {
+      skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    }
+  };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  
+  <link rel="stylesheet" href="style.css">
 </head>
-<body class="dark-theme">
-    <div id="overlay" class="overlay" onclick="closeSide()"></div>
-    <div id="sideMenu" class="side-menu">
-        <div class="side-header"><h3>📜 History</h3><button onclick="closeSide()">&times;</button></div>
-        <div id="historyList"></div>
+<body class="theme-dark">
+
+  <!-- CATEGORY-WISE FUNCTION GUIDE MODAL -->
+  <div id="guideModal" class="ai-modal">
+    <div class="ai-content">
+      <div class="ai-header">
+        <h3>📖 Complete Function & Keys Guide</h3>
+        <button onclick="closeGuide()">&times;</button>
+      </div>
+      <div class="ai-body">
+        <div class="ai-response-box" style="max-height: 360px;">
+          
+          <b>1. Basic Controls & Memory</b><br>
+          • <b>SHIFT:</b> Top-left yellow functions activate karta hai.<br>
+          • <b>ALPHA:</b> Variables (A-F, X, Y, M) aur RNG key ko activate karta hai.<br>
+          • <b>STO (Store):</b> Value ko variable me save karein (e.g. <code>5 STO A</code>).<br>
+          • <b>RCL (Recall):</b> Stored variable ki value screen par lane ke liye.<br>
+          • <b>M+ / M-:</b> Screen value ko Memory (M) me add ya subtract karne ke liye.<br><br>
+
+          <b>2. Trigonometry</b><br>
+          • <b>sin, cos, tan:</b> Normal angle ratios nikalne ke liye.<br>
+          • <b>DEG / RAD:</b> Top screen par click karke Degree aur Radian mode toggle karein.<br><br>
+
+          <b>3. Inverse Trigonometry</b><br>
+          • <b>sin⁻¹, cos⁻¹, tan⁻¹:</b> <code>SHIFT</code> + <code>sin/cos/tan</code> press karke angle calculate karein.<br><br>
+
+          <b>4. Hyperbolic Functions</b><br>
+          • <b>sinh, cosh, tanh:</b> Pehle <code>hyp</code> press karein, fir <code>sin/cos/tan</code> dabayein.<br><br>
+
+          <b>5. Powers, Roots & Fractions</b><br>
+          • <b>x², x³:</b> Square aur Cube values calculate karein.<br>
+          • <b>√, ∛:</b> Square root aur Cube root.<br>
+          • <b>^ (Pow), ⁿ√:</b> Kisi bhi custom power ya custom root ke liye (<code>SHIFT</code> + <code>^</code>).<br>
+          • <b>ab/c:</b> Fraction (e.g., 3/4) ya Mixed Fraction enter/convert karne ke liye.<br><br>
+
+          <b>6. Logarithm & Exponents</b><br>
+          • <b>log / 10ˣ:</b> Base-10 logarithm aur exponent power.<br>
+          • <b>ln / eˣ:</b> Natural logarithm (Base e) aur Euler's exponent power.<br><br>
+
+          <b>7. Algebra, Calculus & Special Functions</b><br>
+          • <b>x! (Factorial):</b> <code>SHIFT</code> + <code>x²</code> - Positive integers ke multiplication ke liye.<br>
+          • <b>Γ(x) (Gamma Function):</b> <code>SHIFT</code> + <code>hyp</code> - Fractional/decimal values ka factorial.<br>
+          • <b>erf (Error Function):</b> <code>SHIFT</code> + <code>abs</code> - Probability/Statistics math ke liye.<br>
+          • <b>zeta (Riemann Zeta):</b> <code>SHIFT</code> + <code>,</code> - Advanced series calculations.<br>
+          • <b>gcd / lcm:</b> Greatest Common Divisor aur Least Common Multiple values.<br><br>
+
+          <b>8. Permutation, Combination & Coordinate Conversion</b><br>
+          • <b>nCr / nPr:</b> Combinations aur Permutations (e.g., 5 nCr 2).<br>
+          • <b>Pol / Rec:</b> Polar (r, θ) to Rectangular (x, y) conversion.<br><br>
+
+          <b>9. Random Numbers & Probability</b><br>
+          • <b>Rnd / RNG:</b> <code>ALPHA</code> + <code>Rnd</code> press karke 0 se 1 ke beech random decimal generate karein.<br>
+          • <b>mod (%):</b> Remainder (Sheshphal) nikalne ke liye.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI SOLVER MODAL WITH PENCIL PAD & PHOTO SCAN -->
+  <div id="aiModal" class="ai-modal">
+    <div class="ai-content">
+      <div class="ai-header">
+        <h3>🤖 ROITX AI Math Solver</h3>
+        <button onclick="closeAISolver()">&times;</button>
+      </div>
+      <div class="ai-body">
+        <!-- MODE SWITCH TABS -->
+        <div class="ai-tab-row">
+          <button class="tab-btn active" id="tabText" onclick="switchAIMode('text')">⌨️ Text</button>
+          <button class="tab-btn" id="tabPad" onclick="switchAIMode('pad')">✏️ Draw Pad</button>
+          <button class="tab-btn" id="tabScan" onclick="switchAIMode('scan')">📷 Scan Equation</button>
+        </div>
+
+        <!-- 1. TEXT INPUT SECTION -->
+        <div id="aiTextSec" class="ai-sec">
+          <textarea id="aiPrompt" placeholder="Write your math equation (e.g. Solve x^2 - 4x + 4 = 0)..."></textarea>
+        </div>
+
+        <!-- 2. CANVAS DRAWING PAD SECTION (BADA DRAW PAD) -->
+<div id="aiPadSec" class="ai-sec" style="display:none;">
+  <small class="notice-tag">✏️ Draw your math equation on the pad below:</small>
+  <div class="canvas-wrapper" style="margin-top: 8px;">
+    <canvas id="mathCanvas" width="340" height="240" style="border: 2px dashed #00e676; border-radius: 10px; background: #111; touch-action: none; width: 100%; cursor: crosshair;"></canvas>
+    <button class="btn-clear-pad" onclick="clearCanvas()" style="margin-top: 8px; width: 100%; background: #ff5252; color: #fff; padding: 8px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">Clear Pad</button>
+  </div>
+</div>
+
+
+        <!-- 3. PHOTO SCANNER SECTION (UPDATED FOR CAMERA + FILE) -->
+<div id="aiScanSec" class="ai-sec" style="display:none;">
+  <blockquote class="scan-warning">
+    ⚠️ <b>Note:</b> Strictly scan or upload math equations/handwritten formulas only.
+  </blockquote>
+  
+  <div class="scan-input-box" style="margin-top: 8px; text-align: center;">
+    <label for="imageInput" class="custom-file-upload" style="display: block; background: #00e676; color: #000; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer;">
+      📷 Take Photo / 📁 Choose File
+    </label>
+    <!-- capture="environment" hata diya hai taaki Chrome popup mein Camera aur File dono ka option de -->
+    <input type="file" id="imageInput" accept="image/*" onchange="handleImagePreview(event)" style="display: none;">
+  </div>
+
+  <div id="imagePreviewContainer" style="display:none; margin-top:10px; text-align:center;">
+    <img id="imagePreview" src="" alt="Math Scan Preview" style="max-width: 100%; max-height: 150px; border-radius: 8px;">
+  </div>
+</div>
+
+        <!-- SUBMIT BUTTONS -->
+        <div class="ai-btns">
+          <button onclick="submitAISolver('en')">Solve in English</button>
+          <button onclick="submitAISolver('hi')">हिंदी में हल करें</button>
+        </div>
+
+        <div id="aiLoader" class="ai-loader" style="display:none;">Analyzing Equation / Process Ho Raha Hai...</div>
+        <div id="aiResponse" class="ai-response-box">Select an input mode and click solve.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="calculator-frame">
+    <!-- TOP NAVBAR ROW -->
+    <header class="calc-header">
+      <div class="brand-info">
+        <h1 class="site-label">ROITX SCIENTIFIC</h1>
+        <span class="model-number">fx-350MS PRO V.P.A.M.</span>
+      </div>
+      <div class="nav-controls">
+        <button class="btn-guide" onclick="openGuide()" title="User Guide">ℹ️ Guide</button>
+        <select class="theme-select" onchange="changeTheme(this.value)">
+          <option value="theme-dark">Dark Classic</option>
+          <option value="theme-neon">Neon Matrix</option>
+          <option value="theme-cyberpunk">Cyberpunk</option>
+          <option value="theme-retro">Retro Gray</option>
+        </select>
+      </div>
+    </header>
+
+    <!-- REALISTIC LCD SCREEN -->
+    <div class="screen-container">
+      <div class="lcd-screen">
+        <div class="status-indicators">
+          <span id="degIndicator" class="indicator deg active" onclick="toggleDegRad()">DEG</span>
+          <span id="radIndicator" class="indicator rad" onclick="toggleDegRad()">RAD</span>
+          <span id="shiftIndicator" class="indicator shift-ind">S</span>
+          <span id="alphaIndicator" class="indicator alpha-ind">A</span>
+        </div>
+        <div id="expression" class="exp-layer"></div>
+        <div id="result" class="res-layer">0</div>
+      </div>
     </div>
 
-    <!-- AI Solver & Graph Modal -->
-    <div id="aiModal" class="ai-modal">
-        <div class="ai-content">
-            <div class="ai-header">
-                <h3>🤖 ROITX Bilingual AI Solver</h3>
-                <button onclick="closeAISolver()">&times;</button>
-            </div>
-            <div class="ai-body">
-                <textarea id="aiPrompt" placeholder="Apna sawal yahan likhein (e.g., Solve x^2 - 5x + 6 = 0 or Draw graph of sin(x))..."></textarea>
-                <div class="ai-btns">
-                    <button onclick="askAISolver('en')">Ask in English</button>
-                    <button onclick="askAISolver('hi')">हिंदी में पूछें</button>
-                </div>
-                <div id="aiLoader" class="ai-loader" style="display:none;">Thinking / Soch rahe hain...</div>
-                <div id="aiResponse" class="ai-response-box"></div>
-                <!-- Graph Canvas -->
-                <div class="canvas-container" style="position: relative; height:200px; width:100%; margin-top:10px;">
-                    <canvas id="graphCanvas"></canvas>
-                </div>
-            </div>
-        </div>
+    <!-- PRIMARY CONTROL KEYS -->
+    <div class="control-row">
+      <button class="btn-ctrl shift" onclick="toggleShift()">SHIFT</button>
+      <button class="btn-ctrl alpha" onclick="toggleAlpha()">ALPHA</button>
+      <div class="replayer">
+        <button class="dir-btn up" onclick="navigateHistory(1)">▲</button>
+        <button class="dir-btn left" onclick="moveCursor(-1)">◀</button>
+        <button class="dir-btn right" onclick="moveCursor(1)">▶</button>
+        <button class="dir-btn down" onclick="navigateHistory(-1)">▼</button>
+      </div>
+      <button class="btn-ctrl mode" onclick="openAISolver()">AI</button>
+      <button class="btn-ctrl on" onclick="powerOn()">ON</button>
     </div>
 
-    <div class="calculator-frame">
-        <header class="calc-header">
-            <div class="menu-trigger" onclick="openSide()"><span></span><span></span><span></span></div>
-            <div class="brand-info">
-                <h1 class="site-label">ROITX SCIENTIFIC</h1>
-                <span class="model-number">fx-350MS PRO V.P.A.M.</span>
-            </div>
-            <div class="status-indicators">
-                <span id="degBtn" class="indicator active" onclick="toggleDegRad()">DEG</span>
-                <span id="shiftIndicator" class="indicator">S</span>
-                <span id="alphaIndicator" class="indicator">A</span>
-            </div>
-        </header>
-
-        <div class="screen-container">
-            <div class="lcd-screen">
-                <div id="expression" class="exp-layer"></div>
-                <div id="result" class="res-layer">0</div>
-            </div>
-        </div>
-
-        <div class="control-row">
-            <button class="btn-ctrl shift" onclick="toggleShift()">SHIFT</button>
-            <button class="btn-ctrl alpha" onclick="toggleAlpha()">ALPHA</button>
-            <div class="replayer" id="ring">
-                <div class="replay-inner">
-                    <button class="dir-btn up" onclick="navigateHistory(1)">▲</button>
-                    <button class="dir-btn left" onclick="moveCursor(-1)">◀</button>
-                    <button class="dir-btn right" onclick="moveCursor(1)">▶</button>
-                    <button class="dir-btn down" onclick="navigateHistory(-1)">▼</button>
-                </div>
-            </div>
-            <button class="btn-ctrl mode" onclick="openAISolver()">AI</button>
-            <button class="btn-ctrl on" onclick="powerOn()">ON</button>
-        </div>
-
-        <div class="button-grid scientific">
-            <div class="btn-wrapper"><span class="shift-label">d/c</span><button onclick="btnPress('FRAC')">ab/c</button></div>
-            <div class="btn-wrapper"><span class="shift-label">∛</span><button onclick="btnPress('SQRT')">√</button></div>
-            <div class="btn-wrapper"><span class="shift-label">x!</span><button onclick="btnPress('X2')">x²</button></div>
-            <div class="btn-wrapper"><span class="shift-label">x√</span><button onclick="btnPress('POW')">^</button></div>
-            <div class="btn-wrapper"><span class="shift-label">10ˣ</span><button onclick="btnPress('LOG')">log</button></div>
-            <div class="btn-wrapper"><span class="shift-label">eˣ</span><button onclick="btnPress('LN')">ln</button></div>
-        </div>
-
-        <div class="button-grid scientific">
-            <div class="btn-wrapper"><span class="shift-label">nPr</span><button onclick="btnPress('NCR')">nCr</button></div>
-            <div class="btn-wrapper"><span class="shift-label">Rec</span><button onclick="btnPress('POL')">Pol</button></div>
-            <div class="btn-wrapper"><span class="shift-label">abs</span><button onclick="btnPress('ABS')">hyp</button></div>
-            <div class="btn-wrapper"><span class="shift-label">sin⁻¹</span><button onclick="btnPress('SIN')">sin</button></div>
-            <div class="btn-wrapper"><span class="shift-label">cos⁻¹</span><button onclick="btnPress('COS')">cos</button></div>
-            <div class="btn-wrapper"><span class="shift-label">tan⁻¹</span><button onclick="btnPress('TAN')">tan</button></div>
-        </div>
-
-        <div class="button-grid scientific">
-            <!-- Unique Base Log function added here instead of duplicate power -->
-            <div class="btn-wrapper"><span class="shift-label">base</span><button onclick="btnPress('LOGBASE')">logₐ(</button></div>
-            <div class="btn-wrapper"><span class="shift-label">e</span><button onclick="btnPress('PI')">π</button></div>
-            <div class="btn-wrapper"><span class="shift-label">{</span><button onclick="btnPress('(')">(</button></div>
-            <div class="btn-wrapper"><span class="shift-label">}</span><button onclick="btnPress(')')">)</button></div>
-            <div class="btn-wrapper"><span class="shift-label">Mod</span><button onclick="btnPress('MOD')">%</button></div>
-            <div class="btn-wrapper"><span class="shift-label">M-</span><button onclick="btnPress('M+')">M+</button></div>
-        </div>
-
-        <div class="button-grid main-pad">
-            <div class="btn-wrapper"><span class="alpha-label">A</span><button class="num" onclick="btnPress('7')">7</button></div>
-            <div class="btn-wrapper"><span class="alpha-label">B</span><button class="num" onclick="btnPress('8')">8</button></div>
-            <div class="btn-wrapper"><span class="alpha-label">C</span><button class="num" onclick="btnPress('9')">9</button></div>
-            <button class="action del" onclick="del()">DEL</button>
-            <button class="action ac" onclick="clearAll()">AC</button>
-            
-            <div class="btn-wrapper"><span class="alpha-label">D</span><button class="num" onclick="btnPress('4')">4</button></div>
-            <div class="btn-wrapper"><span class="alpha-label">E</span><button class="num" onclick="btnPress('5')">5</button></div>
-            <div class="btn-wrapper"><span class="alpha-label">F</span><button class="num" onclick="btnPress('6')">6</button></div>
-            <button class="op" onclick="btnPress('*')">×</button>
-            <button class="op" onclick="btnPress('/')">÷</button>
-            
-            <div class="btn-wrapper"><span class="alpha-label">X</span><button class="num" onclick="btnPress('1')">1</button></div>
-            <div class="btn-wrapper"><span class="alpha-label">Y</span><button class="num" onclick="btnPress('2')">2</button></div>
-            <div class="btn-wrapper"><span class="alpha-label">M</span><button class="num" onclick="btnPress('3')">3</button></div>
-            <button class="op" onclick="btnPress('+')">+</button>
-            <button class="op" onclick="btnPress('-')">−</button>
-            
-            <button class="num" onclick="btnPress('0')">0</button>
-            <button class="num" onclick="btnPress('.')">.</button>
-            <button class="op" onclick="btnPress('EXP')">EXP</button>
-            <button class="op" onclick="btnPress('ANS')">Ans</button>
-            <button class="equal" onclick="calculate()">=</button>
-        </div>
+    <!-- SCIENTIFIC MATRIX ROW 1 -->
+    <div class="button-grid scientific">
+      <div class="btn-wrapper has-shift"><span class="shift-label">d/c</span><button onclick="btnPress('FRAC')">ab/c</button></div>
+      <div class="btn-wrapper has-shift"><span class="shift-label">∛</span><button onclick="btnPress('SQRT')">√</button></div>
+      <div class="btn-wrapper has-shift"><span class="shift-label">x!</span><button onclick="btnPress('X2')">x²</button></div>
+      <div class="btn-wrapper has-shift"><span class="shift-label">x⁻¹</span><button onclick="btnPress('X3')">x³</button></div>
+      <div class="btn-wrapper has-shift"><span class="shift-label">ⁿ√</span><button onclick="btnPress('POW')">^</button></div>
+      <div class="btn-wrapper has-shift"><span class="shift-label">10ˣ</span><button onclick="btnPress('LOG')">log</button></div>
     </div>
-    <script src="calculator.js"></script>
+
+    <!-- SCIENTIFIC MATRIX ROW 2 -->
+    <div class="button-grid scientific">
+      <div class="btn-wrapper has-shift"><span class="shift-label">eˣ</span><button onclick="btnPress('LN')">ln</button></div>
+      <div class="btn-wrapper has-shift"><span class="shift-label">nPr</span><button onclick="btnPress('NCR')">nCr</button></div>
+      <div class="btn-wrapper has-shift"><span class="shift-label">Rec</span><button onclick="btnPress('POL')">Pol</button></div>
+      <div class="btn-wrapper has-shift"><span class="shift-label">erf</span><button onclick="btnPress('ABS')">abs</button></div>
+      <div class="btn-wrapper has-shift"><span class="shift-label">Γ(x)</span><button onclick="btnPress('HYP')">hyp</button></div>
+      <div class="btn-wrapper has-shift"><span class="shift-label">zeta</span><button onclick="btnPress('COMMA')">,</button></div>
+    </div>
+
+    <!-- SCIENTIFIC MATRIX ROW 3 -->
+    <div class="button-grid scientific">
+      <div class="btn-wrapper has-shift"><span class="shift-label">sin⁻¹</span><button onclick="btnPress('SIN')">sin</button></div>
+      <div class="btn-wrapper has-shift"><span class="shift-label">cos⁻¹</span><button onclick="btnPress('COS')">cos</button></div>
+      <div class="btn-wrapper has-shift"><span class="shift-label">tan⁻¹</span><button onclick="btnPress('TAN')">tan</button></div>
+      <div class="btn-wrapper has-shift"><span class="shift-label">gcd</span><button onclick="btnPress('LCM')">lcm</button></div>
+      <div class="btn-wrapper"><span class="shift-label"></span><button onclick="btnPress('(')">(</button></div>
+      <div class="btn-wrapper"><span class="shift-label"></span><button onclick="btnPress(')')">)</button></div>
+    </div>
+
+    <!-- SCIENTIFIC MATRIX ROW 4 -->
+    <div class="button-grid scientific">
+      <div class="btn-wrapper has-shift"><span class="shift-label">e</span><button onclick="btnPress('PI')">π</button></div>
+      <div class="btn-wrapper has-shift"><span class="shift-label">mod</span><button onclick="btnPress('MOD')">%</button></div>
+      <div class="btn-wrapper has-shift"><span class="shift-label">M-</span><button onclick="btnPress('M+')">M+</button></div>
+      <div class="btn-wrapper has-alpha"><span class="shift-label"></span><span class="alpha-label">RNG</span><button onclick="btnPress('RND')">Rnd</button></div>
+      <div class="btn-wrapper"><span class="shift-label"></span><button onclick="btnPress('STO')">STO</button></div>
+      <div class="btn-wrapper"><span class="shift-label"></span><button onclick="btnPress('RCL')">RCL</button></div>
+    </div>
+
+    <!-- MAIN NUMERIC & ALPHA PAD -->
+    <div class="button-grid main-pad">
+      <div class="btn-wrapper has-alpha"><span class="alpha-label">A</span><button class="num" onclick="btnPress('7')">7</button></div>
+      <div class="btn-wrapper has-alpha"><span class="alpha-label">B</span><button class="num" onclick="btnPress('8')">8</button></div>
+      <div class="btn-wrapper has-alpha"><span class="alpha-label">C</span><button class="num" onclick="btnPress('9')">9</button></div>
+      <button class="action del" onclick="del()">DEL</button>
+      <button class="action ac" onclick="clearAll()">AC</button>
+      
+      <div class="btn-wrapper has-alpha"><span class="alpha-label">D</span><button class="num" onclick="btnPress('4')">4</button></div>
+      <div class="btn-wrapper has-alpha"><span class="alpha-label">E</span><button class="num" onclick="btnPress('5')">5</button></div>
+      <div class="btn-wrapper has-alpha"><span class="alpha-label">F</span><button class="num" onclick="btnPress('6')">6</button></div>
+      <button class="op" onclick="btnPress('*')">×</button>
+      <button class="op" onclick="btnPress('/')">÷</button>
+      
+      <div class="btn-wrapper has-alpha"><span class="alpha-label">X</span><button class="num" onclick="btnPress('1')">1</button></div>
+      <div class="btn-wrapper has-alpha"><span class="alpha-label">Y</span><button class="num" onclick="btnPress('2')">2</button></div>
+      <div class="btn-wrapper has-alpha"><span class="alpha-label">M</span><button class="num" onclick="btnPress('3')">3</button></div>
+      <button class="op" onclick="btnPress('+')">+</button>
+      <button class="op" onclick="btnPress('-')">−</button>
+      
+      <button class="num" onclick="btnPress('0')">0</button>
+      <button class="num" onclick="btnPress('.')">.</button>
+      <button class="op" onclick="btnPress('EXP')">EXP</button>
+      <button class="op" onclick="btnPress('ANS')">Ans</button>
+      <button class="equal" onclick="calculate()">=</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
 </body>
 </html>
