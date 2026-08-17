@@ -59,26 +59,87 @@ function clearCanvas() {
   if (ctx && canvas) ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
 
-// --- TOKEN REDUCTION & COMPRESSION HELPER ---
+// --- CANVAS COMPRESSION HELPER ---
 function getCompressedCanvasImage() {
   if (!canvas) return null;
-
   const tempCanvas = document.createElement('canvas');
   const tempCtx = tempCanvas.getContext('2d');
 
-  // Image size ko 400px max width par scale-down karta hai
   const maxWidth = 400;
   const scale = Math.min(1, maxWidth / canvas.width);
   tempCanvas.width = canvas.width * scale;
   tempCanvas.height = canvas.height * scale;
 
-  // Background me black fill karta hai taaki drawn equation clearly dikhe
   tempCtx.fillStyle = "#000000";
   tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
   tempCtx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
 
-  // JPEG 50% Quality Compress (3000 tokens -> 500 tokens)
   return tempCanvas.toDataURL('image/jpeg', 0.5);
+}
+
+// FULLSCREEN TOGGLE CONTROLLER
+function toggleAISolverFullscreen() {
+  const content = document.getElementById("aiContent");
+  if (content) {
+    content.classList.toggle("fullscreen");
+  }
+}
+
+// --- FAST SUBMIT AI SOLVER ---
+async function submitAISolver(lang) {
+  let loader = document.getElementById("aiLoader");
+  let resBox = document.getElementById("aiResponse");
+  
+  if (loader) loader.style.display = "block";
+  if (resBox) resBox.innerHTML = "";
+
+  const systemInstruction = `You are a pure math engine.
+Write ONLY the direct mathematical derivation and answer in ${lang === 'hi' ? 'Hindi' : 'English'}.
+RULES:
+1. Absolutely NO thinking process, rules analysis, or extra chatter.
+2. Start DIRECTLY with Step 1 or the main equation.
+3. Use MathJax/LaTeX ($...$ for inline, $$...$$ for display).`;
+
+  let userText = document.getElementById("aiPrompt")?.value.trim() || "Solve equation";
+  let base64Img = null;
+
+  if (currentAIMode !== 'text') {
+    base64Img = (currentAIMode === 'pad') ? getCompressedCanvasImage() : document.getElementById("imagePreview")?.src;
+  }
+
+  const apiUrl = "https://ktastwehnnqicriknewr.supabase.co/functions/v1/smart-task";
+  const apiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0YXN0d2Vobm5xaWNyaWtuZXdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyNTk5NTEsImV4cCI6MjA4MDgzNTk1MX0.5_UvwaG0X8k_Emj-cMC0KjEqlvU6hgAt5IsHJdgARvk";
+
+  try {
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+      body: JSON.stringify({ 
+        prompt: systemInstruction + "\n\nTask: " + userText,
+        language: lang, 
+        image: base64Img,
+        generationConfig: { max_output_tokens: 300, temperature: 0.1 }
+      })
+    });
+
+    const data = await response.json();
+    if (loader) loader.style.display = "none";
+
+    if (data.choices && data.choices[0]?.message?.content) {
+      let content = data.choices[0].message.content;
+
+      if (resBox) resBox.innerHTML = content.replace(/\n/g, "<br>");
+      
+      if (window.MathJax) {
+        MathJax.typesetPromise([resBox]);
+      }
+    } else {
+      if (resBox) resBox.innerText = "Error: Invalid AI Response.";
+    }
+  } catch (err) {
+    if (loader) loader.style.display = "none";
+    if (resBox) resBox.innerText = "Error loading response.";
+  }
 }
 
 // --- AI MODE & PHOTO PREVIEW HELPERS ---
@@ -111,72 +172,21 @@ function handleImagePreview(event) {
   }
 }
 
-// --- SUBMIT TO AI SOLVER (TUTOR MODE - CLEAN & STEPS) ---
-async function submitAISolver(lang) {
-  let loader = document.getElementById("aiLoader");
-  let resBox = document.getElementById("aiResponse");
-  
-  if (loader) loader.style.display = "block";
-  if (resBox) resBox.innerHTML = "";
-
-  // YE PROMPT AI KO BAAAT KARNE SE ROK DEGA
-  const SYSTEM_PROMPT = `
-  Analyze the math problem below.
-  CRITICAL: 
-  1. Output ONLY the step-by-step solution.
-  2. NO introductions (e.g., "Here is...", "I see...").
-  3. NO conclusions (e.g., "Thus...", "Therefore...").
-  4. Use standard MathJax LaTeX format for all math.
-  5. Format the output as a list of steps. 
-  6. If the input is just an equation, return just the steps to solve it.
-  Language: ${lang === 'hi' ? 'Hindi' : 'English'}.
-  `;
-  
-  let userContent = currentAIMode === 'text' 
-    ? document.getElementById("aiPrompt")?.value.trim() 
-    : "Solve the math equation in the image.";
-
-  let base64ImageData = null;
-  if (currentAIMode !== 'text') {
-    base64ImageData = (currentAIMode === 'pad') ? getCompressedCanvasImage() : document.getElementById("imagePreview").src;
-  }
-
-  const apiUrl = "https://ktastwehnnqicriknewr.supabase.co/functions/v1/smart-task";
-  const apiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0YXN0d2Vobm5xaWNyaWtuZXdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyNTk5NTEsImV4cCI6MjA4MDgzNTk1MX0.5_UvwaG0X8k_Emj-cMC0KjEqlvU6hgAt5IsHJdgARvk";
-
-  try {
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-      body: JSON.stringify({ 
-        prompt: SYSTEM_PROMPT + "\n\nInput: " + userContent, 
-        language: lang, 
-        image: base64ImageData 
-      })
-    });
-
-    const data = await response.json();
-    if (loader) loader.style.display = "none";
-
-    if (data.choices && data.choices[0]?.message?.content) {
-      let content = data.choices[0].message.content;
-
-      // Agar AI fir bhi "Step 1:" likhe to use Bold kar do taaki saaf dikhe
-      content = content.replace(/Step \d+:/gi, "<b>$&</b>");
-      
-      if (resBox) resBox.innerHTML = content.replace(/\n/g, "<br>");
-      
-      // Force MathJax to render the new content
-      if (window.MathJax) {
-        MathJax.typesetPromise([resBox]);
-      }
-    }
-  } catch (err) {
-    if (loader) loader.style.display = "none";
-    if (resBox) resBox.innerText = "Error";
-  }
+// --- GUIDE MODAL CONTROLLERS ---
+function openGuideModal() {
+  const m = document.getElementById("guideModal");
+  if (m) m.style.display = "flex";
 }
 
+function closeGuideModal() {
+  const m = document.getElementById("guideModal");
+  if (m) m.style.display = "none";
+}
+
+window.addEventListener("click", function(e) {
+  const m = document.getElementById("guideModal");
+  if (e.target === m) m.style.display = "none";
+});
 
 // --- MATH & CALCULATOR CORE FUNCTIONS ---
 function preprocess(raw) {
@@ -320,10 +330,16 @@ function formatFinal(num) {
   return Number.isInteger(num) ? num : parseFloat(num.toFixed(10));
 }
 
-function openGuide() { document.getElementById("guideModal")?.classList.add("show"); }
-function closeGuide() { document.getElementById("guideModal")?.classList.remove("show"); }
-function openAISolver() { document.getElementById("aiModal")?.classList.add("show"); switchAIMode('text'); }
-function closeAISolver() { document.getElementById("aiModal")?.classList.remove("show"); }
+function openAISolver() {
+  const modal = document.getElementById("aiModal");
+  if (modal) modal.style.display = "flex";
+  switchAIMode('text');
+}
+
+function closeAISolver() {
+  const modal = document.getElementById("aiModal");
+  if (modal) modal.style.display = "none";
+}
 
 function changeTheme(themeClass) { document.body.className = themeClass; updateIndicators(); }
 

@@ -3,45 +3,109 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>ROITX Scientific Pro + AI Solver</title>
+  <title>ROITX Scientific Pro </title>
   
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
   
   <!-- MATHJAX FOR CLEAN HUMAN-LIKE FORMULAS -->
   <script>
-  window.MathJax = {
-    tex: {
-      inlineMath: [['$', '$'], ['\\(', '\\)']],
-      displayMath: [['$$', '$$'], ['\\[', '\\]']],
-      processEscapes: true
-    },
-    options: {
-      skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
-    }
-  };
-</script>
-<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-
-  
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+      },
+      options: {
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
   <link rel="stylesheet" href="calculator.css">
+
+  <style>
+    .nav-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .guide-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: 'Poppins', sans-serif;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.15);
+      transition: all 0.3s ease;
+      white-space: nowrap;
+    }
+
+    .guide-btn:hover {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      border-color: #00e676;
+      color: #00e676;
+      box-shadow: 0 0 14px rgba(0, 230, 118, 0.3);
+      transform: translateY(-1px);
+    }
+
+    .guide-modal {
+      position: fixed;
+      z-index: 99999;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .guide-modal-content {
+      background: #0f172a;
+      border: 1px solid #38bdf8;
+      padding: 20px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 420px;
+      position: relative;
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.3);
+    }
+
+    .close-guide {
+      position: absolute;
+      right: 15px; top: 10px;
+      font-size: 22px;
+      color: #ef4444;
+      cursor: pointer;
+      font-weight: bold;
+    }
+  </style>
 </head>
 <body class="theme-dark">
 
-  <!-- CATEGORY-WISE FUNCTION GUIDE MODAL -->
-  <div id="guideModal" class="ai-modal">
+  <!-- 1. CATEGORY-WISE FUNCTION GUIDE MODAL -->
+  <div id="keysGuideModal" class="ai-modal" style="display:none;">
     <div class="ai-content">
       <div class="ai-header">
         <h3>📖 Complete Function & Keys Guide</h3>
-        <button onclick="closeGuide()">&times;</button>
+        <button onclick="closeKeysGuide()">&times;</button>
       </div>
       <div class="ai-body">
-        <div class="ai-response-box" style="max-height: 360px;">
-          
+        <div class="ai-response-box" style="max-height: 360px; overflow-y: auto;">
           <b>1. Basic Controls & Memory</b><br>
           • <b>SHIFT:</b> Top-left yellow functions activate karta hai.<br>
           • <b>ALPHA:</b> Variables (A-F, X, Y, M) aur RNG key ko activate karta hai.<br>
-          • <b>STO (Store):</b> Value ko variable me save karein (e.g. <code>5 STO A</code>).<br>
+          • <b>STO (Store):</b> Value ko variable me save karein.<br>
           • <b>RCL (Recall):</b> Stored variable ki value screen par lane ke liye.<br>
           • <b>M+ / M-:</b> Screen value ko Memory (M) me add ya subtract karne ke liye.<br><br>
 
@@ -50,7 +114,7 @@
           • <b>DEG / RAD:</b> Top screen par click karke Degree aur Radian mode toggle karein.<br><br>
 
           <b>3. Inverse Trigonometry</b><br>
-          • <b>sin⁻¹, cos⁻¹, tan⁻¹:</b> <code>SHIFT</code> + <code>sin/cos/tan</code> press karke angle calculate karein.<br><br>
+          • <b>sin⁻¹, cos⁻¹, tan⁻¹:</b> <code>SHIFT</code> + <code>sin/cos/tan</code> press karein.<br><br>
 
           <b>4. Hyperbolic Functions</b><br>
           • <b>sinh, cosh, tanh:</b> Pehle <code>hyp</code> press karein, fir <code>sin/cos/tan</code> dabayein.<br><br>
@@ -58,102 +122,110 @@
           <b>5. Powers, Roots & Fractions</b><br>
           • <b>x², x³:</b> Square aur Cube values calculate karein.<br>
           • <b>√, ∛:</b> Square root aur Cube root.<br>
-          • <b>^ (Pow), ⁿ√:</b> Kisi bhi custom power ya custom root ke liye (<code>SHIFT</code> + <code>^</code>).<br>
-          • <b>ab/c:</b> Fraction (e.g., 3/4) ya Mixed Fraction enter/convert karne ke liye.<br><br>
+          • <b>^ (Pow):</b> Custom power ke liye.<br><br>
 
           <b>6. Logarithm & Exponents</b><br>
-          • <b>log / 10ˣ:</b> Base-10 logarithm aur exponent power.<br>
-          • <b>ln / eˣ:</b> Natural logarithm (Base e) aur Euler's exponent power.<br><br>
+          • <b>log / ln:</b> Base-10 aur Natural logarithm.<br><br>
 
-          <b>7. Algebra, Calculus & Special Functions</b><br>
-          • <b>x! (Factorial):</b> <code>SHIFT</code> + <code>x²</code> - Positive integers ke multiplication ke liye.<br>
-          • <b>Γ(x) (Gamma Function):</b> <code>SHIFT</code> + <code>hyp</code> - Fractional/decimal values ka factorial.<br>
-          • <b>erf (Error Function):</b> <code>SHIFT</code> + <code>abs</code> - Probability/Statistics math ke liye.<br>
-          • <b>zeta (Riemann Zeta):</b> <code>SHIFT</code> + <code>,</code> - Advanced series calculations.<br>
-          • <b>gcd / lcm:</b> Greatest Common Divisor aur Least Common Multiple values.<br><br>
-
-          <b>8. Permutation, Combination & Coordinate Conversion</b><br>
-          • <b>nCr / nPr:</b> Combinations aur Permutations (e.g., 5 nCr 2).<br>
-          • <b>Pol / Rec:</b> Polar (r, θ) to Rectangular (x, y) conversion.<br><br>
-
-          <b>9. Random Numbers & Probability</b><br>
-          • <b>Rnd / RNG:</b> <code>ALPHA</code> + <code>Rnd</code> press karke 0 se 1 ke beech random decimal generate karein.<br>
-          • <b>mod (%):</b> Remainder (Sheshphal) nikalne ke liye.
+          <b>7. Algebra & Calculus</b><br>
+          • <b>x! (Factorial):</b> <code>SHIFT</code> + <code>x²</code>.<br>
+          • <b>gcd / lcm:</b> Greatest Common Divisor aur Least Common Multiple.
         </div>
       </div>
     </div>
   </div>
 
-  <!-- AI SOLVER MODAL WITH PENCIL PAD & PHOTO SCAN -->
-  <div id="aiModal" class="ai-modal">
-    <div class="ai-content">
+    <!-- 2. AI SOLVER MODAL -->
+  <div id="aiModal" class="ai-modal" style="display:none;">
+    <div class="ai-content" id="aiContent">
       <div class="ai-header">
         <h3>🤖 ROITX AI Math Solver</h3>
-        <button onclick="closeAISolver()">&times;</button>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <button class="btn-fullscreen" onclick="toggleAISolverFullscreen()" title="Toggle Fullscreen">⛶</button>
+          <button onclick="closeAISolver()">&times;</button>
+        </div>
       </div>
       <div class="ai-body">
-        <!-- MODE SWITCH TABS -->
         <div class="ai-tab-row">
           <button class="tab-btn active" id="tabText" onclick="switchAIMode('text')">⌨️ Text</button>
           <button class="tab-btn" id="tabPad" onclick="switchAIMode('pad')">✏️ Draw Pad</button>
           <button class="tab-btn" id="tabScan" onclick="switchAIMode('scan')">📷 Scan Equation</button>
         </div>
 
-        <!-- 1. TEXT INPUT SECTION -->
         <div id="aiTextSec" class="ai-sec">
           <textarea id="aiPrompt" placeholder="Write your math equation (e.g. Solve x^2 - 4x + 4 = 0)..."></textarea>
         </div>
 
-        <!-- 2. CANVAS DRAWING PAD SECTION (BADA DRAW PAD) -->
-<div id="aiPadSec" class="ai-sec" style="display:none;">
-  <small class="notice-tag">✏️ Draw your math equation on the pad below:</small>
-  <div class="canvas-wrapper" style="margin-top: 8px;">
-    <canvas id="mathCanvas" width="340" height="240" style="border: 2px dashed #00e676; border-radius: 10px; background: #111; touch-action: none; width: 100%; cursor: crosshair;"></canvas>
-    <button class="btn-clear-pad" onclick="clearCanvas()" style="margin-top: 8px; width: 100%; background: #ff5252; color: #fff; padding: 8px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">Clear Pad</button>
-  </div>
-</div>
+        <div id="aiPadSec" class="ai-sec" style="display:none;">
+          <small class="notice-tag">✏️ Draw equation below:</small>
+          <div class="canvas-wrapper">
+            <canvas id="mathCanvas" width="340" height="180" style="border: 2px dashed #00e676; border-radius: 8px; background: #111; touch-action: none; width: 100%; cursor: crosshair;"></canvas>
+            <button class="btn-clear-pad" onclick="clearCanvas()" style="margin-top: 5px; width: 100%; background: #ff5252; color: #fff; padding: 5px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 11px;">Clear Pad</button>
+          </div>
+        </div>
 
+        <div id="aiScanSec" class="ai-sec" style="display:none;">
+          <blockquote class="scan-warning">
+            ⚠️ Strictly scan math equations/formulas only.
+          </blockquote>
+          
+          <div class="scan-input-box">
+            <label for="imageInput" class="custom-file-upload">
+              📷 Take Photo / 📁 Choose File
+            </label>
+            <input type="file" id="imageInput" accept="image/*" onchange="handleImagePreview(event)" style="display: none;">
+          </div>
 
-        <!-- 3. PHOTO SCANNER SECTION (UPDATED FOR CAMERA + FILE) -->
-<div id="aiScanSec" class="ai-sec" style="display:none;">
-  <blockquote class="scan-warning">
-    ⚠️ <b>Note:</b> Strictly scan or upload math equations/handwritten formulas only.
-  </blockquote>
-  
-  <div class="scan-input-box" style="margin-top: 8px; text-align: center;">
-    <label for="imageInput" class="custom-file-upload" style="display: block; background: #00e676; color: #000; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer;">
-      📷 Take Photo / 📁 Choose File
-    </label>
-    <!-- capture="environment" hata diya hai taaki Chrome popup mein Camera aur File dono ka option de -->
-    <input type="file" id="imageInput" accept="image/*" onchange="handleImagePreview(event)" style="display: none;">
-  </div>
+          <div id="imagePreviewContainer" style="display:none; margin-top:6px; text-align:center;">
+            <img id="imagePreview" src="" alt="Math Scan Preview" style="max-width: 100%; max-height: 120px; border-radius: 6px;">
+          </div>
+        </div>
 
-  <div id="imagePreviewContainer" style="display:none; margin-top:10px; text-align:center;">
-    <img id="imagePreview" src="" alt="Math Scan Preview" style="max-width: 100%; max-height: 150px; border-radius: 8px;">
-  </div>
-</div>
-
-        <!-- SUBMIT BUTTONS -->
         <div class="ai-btns">
           <button onclick="submitAISolver('en')">Solve in English</button>
           <button onclick="submitAISolver('hi')">हिंदी में हल करें</button>
         </div>
 
-        <div id="aiLoader" class="ai-loader" style="display:none;">Analyzing Equation / Process Ho Raha Hai...</div>
-        <div id="aiResponse" class="ai-response-box">Select an input mode and click solve.</div>
+        <div id="aiLoader" class="ai-loader" style="display:none;">Analyzing Equation...</div>
+        <div id="aiResponse" class="ai-response-box">Select input mode and click solve.</div>
       </div>
     </div>
   </div>
 
+
+  <!-- 3. HOW TO USE GUIDE MODAL -->
+  <div id="guideModal" class="guide-modal" style="display:none;">
+    <div class="guide-modal-content">
+      <span class="close-guide" onclick="closeGuideModal()">&times;</span>
+      <h3 style="color:#00e676; margin-top:0;">📖 How to Use AI Solver</h3>
+      <ul style="text-align:left; font-size:13px; line-height:1.6; color:#e2e8f0; padding-left:20px;">
+        <li><b>Text Mode:</b> Directly type or paste your equation.</li>
+        <li><b>Pad Mode:</b> Draw or write equations cleanly on canvas.</li>
+        <li><b>Scan Mode:</b> Upload clear images/photos of math problems.</li>
+      </ul>
+      <button onclick="openKeysGuide()" style="width: 100%; margin-top: 10px; background: #38bdf8; color: #000; border: none; padding: 8px; border-radius: 6px; font-weight: bold; cursor: pointer;">
+        ⌨️ View Full Keys Guide
+      </button>
+    </div>
+  </div>
+
+  <!-- MAIN CALCULATOR FRAME -->
   <div class="calculator-frame">
-    <!-- TOP NAVBAR ROW -->
     <header class="calc-header">
       <div class="brand-info">
         <h1 class="site-label">ROITX SCIENTIFIC</h1>
         <span class="model-number">fx-350MS PRO V.P.A.M.</span>
       </div>
       <div class="nav-controls">
-        <button class="btn-guide" onclick="openGuide()" title="User Guide">ℹ️ Guide</button>
+        <button type="button" class="guide-btn" onclick="openGuideModal()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+          <span>Guide</span>
+        </button>
+
         <select class="theme-select" onchange="changeTheme(this.value)">
           <option value="theme-dark">Dark Classic</option>
           <option value="theme-neon">Neon Matrix</option>
@@ -258,6 +330,30 @@
       <button class="equal" onclick="calculate()">=</button>
     </div>
   </div>
+
+  <!-- MODAL HELPER SCRIPTS (Non-conflicting) -->
+  <script>
+    function openGuideModal() {
+      const el = document.getElementById("guideModal");
+      if (el) el.style.display = "flex";
+    }
+
+    function closeGuideModal() {
+      const el = document.getElementById("guideModal");
+      if (el) el.style.display = "none";
+    }
+
+    function openKeysGuide() {
+      closeGuideModal();
+      const el = document.getElementById("keysGuideModal");
+      if (el) el.style.display = "flex";
+    }
+
+    function closeKeysGuide() {
+      const el = document.getElementById("keysGuideModal");
+      if (el) el.style.display = "none";
+    }
+  </script>
 
   <script src="calculator.js"></script>
 </body>
