@@ -113,7 +113,11 @@ RULES:
   try {
     const response = await fetch(apiUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+      headers: { 
+  'Content-Type': 'application/json', 
+  'apikey': apiKey,
+  'Authorization': `Bearer ${apiKey}` 
+},
       body: JSON.stringify({ 
         prompt: systemInstruction + "\n\nTask: " + userText,
         language: lang, 

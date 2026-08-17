@@ -2,40 +2,69 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Step Solver & Feedback</title>
+  <title>Smart AI Assistant & Tutor</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <!-- CSS -->
   <link rel="stylesheet" href="solver.css">
 
-  <!-- Supabase CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- MATHJAX SAFE SETUP -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+      },
+      options: {
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      },
+      startup: {
+        pageReady: () => {
+          return MathJax.startup.defaultPageReady();
+        }
+      }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
-  <!-- Supabase Config -->
+  <!-- Supabase CDN & Config -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase.js"></script>
 </head>
 <body>
 
   <div class="box">
-    <h2>🧠 Step-by-Step Solver & AI Assistant</h2>
+       <!-- CHAT HEADER -->
+    <div class="chat-header">
+      <div class="bot-info">
+        <div class="bot-avatar">🤖</div>
+        <div>
+          <h3>ROITX AI Tutor</h3>
+          <span class="online-status">🟢 Online | Ready to Help</span>
+        </div>
+      </div>
 
-    <p class="hint">
-      ✏️ Apna question ya math problem yahan type karein<br>
-      💬 AI answer karega, ya aap Admin ko Feedback bhej sakte hain.
-    </p>
+      <!-- LANGUAGE SELECTOR -->
+      <div class="lang-selector" style="display: flex; gap: 5px;">
+        <button id="langHi" onclick="setLanguage('hi')" style="background: #0284c7; color: #fff; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: bold;">Hinglish</button>
+        <button id="langEn" onclick="setLanguage('en')" style="background: #334155; color: #cbd5e1; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">English</button>
+      </div>
+    </div>
+
+
+    <!-- CONTINUOUS CHAT STREAM CONTAINER -->
+    <div id="answerHistory" class="chat-container">
+      <!-- Welcome message and dynamic buttons render here -->
+    </div>
 
     <!-- QUESTION INPUT -->
     <div class="input-group">
       <textarea
         id="question"
-        placeholder="Apna sawaal ya problem likhein..."
+        placeholder="Apna sawaal, equation ya theory problem type karein..."
       ></textarea>
-      <button id="solveBtn" onclick="solve()">🔍 Ask / Solve</button>
-    </div>
-
-    <!-- CHAT & ANSWER CONTAINER (CONTINUOUS MESSAGES) -->
-    <div id="answerHistory" class="chat-container">
-      <!-- Messages will appear here continuously -->
+      <button id="solveBtn" onclick="solve()">Send ➔</button>
     </div>
 
     <!-- FLOATING MY FEEDBACKS BUTTON -->
