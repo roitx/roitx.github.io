@@ -16,6 +16,25 @@
   header img{ width:52px; height:52px; border-radius:50%; object-fit:cover; box-shadow:0 8px 28px rgba(58,160,255,0.06) }
   header h1{ font-size:18px; margin:0 }
 
+  /* ===== HOLIDAY WISH BANNER ===== */
+  .holiday-wish-banner {
+    display: none;
+    background: linear-gradient(135deg, #ff416c, #ff4b2b);
+    color: #ffffff;
+    padding: 14px 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    text-align: center;
+    font-weight: 800;
+    font-size: 16px;
+    box-shadow: 0 8px 25px rgba(255, 65, 108, 0.4);
+    animation: bannerPulse 2s infinite alternate;
+  }
+  @keyframes bannerPulse {
+    from { transform: scale(0.99); box-shadow: 0 4px 15px rgba(255, 65, 108, 0.4); }
+    to { transform: scale(1.01); box-shadow: 0 10px 30px rgba(255, 65, 108, 0.8); }
+  }
+
   .container{ max-width:980px; margin:0 auto; display:grid; grid-template-columns: 1fr 320px; gap:22px; align-items:start }
 
   .cal-card{ background:linear-gradient(180deg,var(--card), rgba(255,255,255,0.02)); padding:18px; border-radius:14px; border:1px solid rgba(255,255,255,0.03); box-shadow: 0 14px 40px rgba(2,6,12,0.6) }
@@ -25,7 +44,7 @@
   .cal-nav{ display:flex; gap:8px }
   .cal-btn{ padding:8px 12px; border-radius:8px; border:0; background:transparent; color:var(--muted); cursor:pointer; font-weight:700; border:1px solid rgba(255,255,255,0.02) }
   .cal-title{ font-weight:800; font-size:18px; color:#eaf6ff }
-/event box/
+
   .event-box {
     padding: 8px;
     margin: 5px 0;
@@ -56,251 +75,249 @@
     .day{ min-height:72px }
   }
   .day{
-  position: relative; 
-}
-/* ===== TODAY ===== */
-.day.today{
-  background: linear-gradient(135deg,#3aa0ff,#7b6bff);
-  box-shadow:0 0 12px rgba(58,160,255,.9),0 0 32px rgba(123,107,255,.9);
-  animation:pulse 1.6s infinite alternate;
-}
-.day.today::after{
-  content:"roitx";
-  position:absolute;
-  bottom:6px;
-  right:2px;
-  font-size:9px;
-  padding:2px 6px;
-  border-radius:6px;
-  background:rgba(0,0,0,.35);
-  color:#fff;
-}
-/* EVENT PURPLE GLOW + PULSE */
-.day.event-glow {
-  box-shadow: 0 0 16px #7b6bff, 0 0 28px #a48aff;
-  animation: pulseEvent 1.5s infinite alternate;
-}
-
-@keyframes pulseEvent {
-  from { box-shadow: 0 0 8px #7b6bff; }
-  to   { box-shadow: 0 0 24px #b79aff; }
-}
-
-.event-item.title-glow {
-  background: rgba(123,107,255,0.18);
-  border-left: 4px solid #7b6bff;
-  padding-left: 8px;
-  animation: pulseTitle 1.4s infinite alternate;
-}
-
-@keyframes pulseTitle {
-  from { background: rgba(123,107,255,0.10); }
-  to   { background: rgba(123,107,255,0.25); }
-}
-/* ===== SELECTED DATE ===== */
-.day.selected{
-  outline:2px solid #3aa0ff;
-  box-shadow:0 12px 40px rgba(58,160,255,.6);
-  transform:scale(1.04);
-}
-
-/* ===== EVENT DOT ===== */
-.day.has-event .date::after{
-  content:"event";
-  display:block;
-  width:6px;
-  height:6px;
-  margin:6px auto 0;
-  border-radius:50%;
-  background:#7b6bff;
-}
-#eventDate.filled {
-  border-color: #00ffea;
-  box-shadow: 0 0 10px #00ffe4;
-}
-/* ===== SUNDAY / HOLIDAY ===== */
-.day.holiday{
-  box-shadow: 0 0 18px rgba(255,60,60,.9);
-  border:1px solid rgba(255,60,60,.8);
-}
-
-/* ===== HOVER EXTRA ===== */
-.day:hover{
-  box-shadow:0 16px 45px rgba(0,0,0,.7);
-}
-
-/* ===== ANIMATION ===== */
-@keyframes pulse{
-  from{box-shadow:0 0 10px rgba(58,160,255,.6)}
-  to{box-shadow:0 0 32px rgba(123,107,255,1)}
-}
-.cal-nav input[type="date"]{
-  background:rgba(255,255,255,0.08);
-  color:#e9f5ff;
-  border-radius:8px;
-  border:1px solid rgba(255,255,255,0.15);
-}
-
-.cal-nav input[type="date"]::-webkit-calendar-picker-indicator{
-  filter:invert(1);
-  cursor:pointer;
-}
-/* FIX DATE INPUT LOOK */
-.cal-nav{
-  display:flex;
-  flex-wrap:wrap;
-  gap:8px;
-}
-
-#gotoDate{
-  background: rgba(255,255,255,0.04);
-  color: #e9f5ff;
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 8px;
-  font-weight: 700;
-  height: 36px;
-}
-
-/* calendar icon color (mobile + chrome) */
-#gotoDate::-webkit-calendar-picker-indicator{
-  filter: invert(1);
-  opacity: 0.8;
-  cursor: pointer;
-}
-@media(max-width:600px){
-  #gotoDate{
-    width:100%;
+    position: relative; 
   }
-}
-/* ===== FIX CALENDAR HEADER LOOK ===== */
-.cal-header{
-  background: linear-gradient(
-    180deg,
-    rgba(255,255,255,0.04),
-    rgba(255,255,255,0.02)
-  );
-  padding: 12px;
-  border-radius: 12px;
-}
+  /* ===== TODAY ===== */
+  .day.today{
+    background: linear-gradient(135deg,#3aa0ff,#7b6bff);
+    box-shadow:0 0 12px rgba(58,160,255,.9),0 0 32px rgba(123,107,255,.9);
+    animation:pulse 1.6s infinite alternate;
+  }
+  .day.today::after{
+    content:"roitx";
+    position:absolute;
+    bottom:6px;
+    right:2px;
+    font-size:9px;
+    padding:2px 6px;
+    border-radius:6px;
+    background:rgba(0,0,0,.35);
+    color:#fff;
+  }
+  /* EVENT PURPLE GLOW + PULSE */
+  .day.event-glow {
+    box-shadow: 0 0 16px #7b6bff, 0 0 28px #a48aff;
+    animation: pulseEvent 1.5s infinite alternate;
+  }
 
-/* Proper contrast for nav */
-.cal-nav{
-  display:flex;
-  align-items:center;
-  flex-wrap:wrap;
-  gap:8px;
-}
+  @keyframes pulseEvent {
+    from { box-shadow: 0 0 8px #7b6bff; }
+    to   { box-shadow: 0 0 24px #b79aff; }
+  }
 
-/* Fix ALL buttons look */
-.cal-btn{
-  background: rgba(255,255,255,0.04);
-  color: #e9f5ff;
-  border: 1px solid rgba(255,255,255,0.08);
-  backdrop-filter: blur(6px);
-}
+  .event-item.title-glow {
+    background: rgba(123,107,255,0.18);
+    border-left: 4px solid #7b6bff;
+    padding-left: 8px;
+    animation: pulseTitle 1.4s infinite alternate;
+  }
 
-/* ===== DATE PICKER FULL FIX ===== */
-#gotoDate{
-  appearance:none;
-  -webkit-appearance:none;
-  background: rgba(255,255,255,0.04);
-  color:#e9f5ff;
-  border:1px solid rgba(255,255,255,0.08);
-  border-radius:8px;
-  padding:6px 10px;
-  height:36px;
-  font-weight:700;
-}
+  @keyframes pulseTitle {
+    from { background: rgba(123,107,255,0.10); }
+    to   { background: rgba(123,107,255,0.25); }
+  }
+  /* ===== SELECTED DATE ===== */
+  .day.selected{
+    outline:2px solid #3aa0ff;
+    box-shadow:0 12px 40px rgba(58,160,255,.6);
+    transform:scale(1.04);
+  }
 
-/* calendar icon visible */
-#gotoDate::-webkit-calendar-picker-indicator{
-  filter: invert(1);
-  opacity: 0.9;
-  cursor: pointer;
-}
+  /* ===== EVENT DOT ===== */
+  .day.has-event .date::after{
+    content:"event";
+    display:block;
+    width:6px;
+    height:6px;
+    margin:6px auto 0;
+    border-radius:50%;
+    background:#7b6bff;
+  }
+  #eventDate.filled {
+    border-color: #00ffea;
+    box-shadow: 0 0 10px #00ffe4;
+  }
+  /* ===== SUNDAY / HOLIDAY ===== */
+  .day.holiday{
+    box-shadow: 0 0 18px rgba(255,60,60,.9);
+    border:1px solid rgba(255,60,60,.8);
+  }
 
+  /* ===== HOVER EXTRA ===== */
+  .day:hover{
+    box-shadow:0 16px 45px rgba(0,0,0,.7);
+  }
 
-/* HOLIDAY (RED GLOW) */
-/* ===== STEP 2 : HOLIDAY TOOLTIP ===== */
-.day.holiday{
-  position: relative;
-  box-shadow: 0 0 12px rgba(255,0,0,.6);
-}
+  /* ===== ANIMATION ===== */
+  @keyframes pulse{
+    from{box-shadow:0 0 10px rgba(58,160,255,.6)}
+    to{box-shadow:0 0 32px rgba(123,107,255,1)}
+  }
+  .cal-nav input[type="date"]{
+    background:rgba(255,255,255,0.08);
+    color:#e9f5ff;
+    border-radius:8px;
+    border:1px solid rgba(255,255,255,0.15);
+  }
 
-.day.holiday::after{
-  content: attr(data-holiday);
-  position: absolute;
-  bottom: 110%;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #111;
-  color: #fff;
-  padding: 6px 10px;
-  font-size: 12px;
-  border-radius: 6px;
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  transition: .25s;
-  z-index: 100;
-}
+  .cal-nav input[type="date"]::-webkit-calendar-picker-indicator{
+    filter:invert(1);
+    cursor:pointer;
+  }
+  /* FIX DATE INPUT LOOK */
+  .cal-nav{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+  }
 
-.day.holiday:hover::after{
-  opacity: 1;
-}
-/* GO TO DATE (ORANGE GLOW) */
-.day.goto{
-  box-shadow: 0 0 18px rgba(255,165,0,.95);
-  border:1px solid orange;
-}
-/* mobile fix */
-@media(max-width:700px){
-  .cal-header{ gap:10px }
-  #gotoDate{ width:100% }
-}
+  #gotoDate{
+    background: rgba(255,255,255,0.04);
+    color: #e9f5ff;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    font-weight: 700;
+    height: 36px;
+  }
 
-/* ✅ FULL POPUP */
-.popup-overlay{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.6);
-  display:none;
-  justify-content:center;
-  align-items:center;
-  z-index:999;
-}
+  /* calendar icon color (mobile + chrome) */
+  #gotoDate::-webkit-calendar-picker-indicator{
+    filter: invert(1);
+    opacity: 0.8;
+    cursor: pointer;
+  }
+  @media(max-width:600px){
+    #gotoDate{
+      width:100%;
+    }
+  }
+  /* ===== FIX CALENDAR HEADER LOOK ===== */
+  .cal-header{
+    background: linear-gradient(
+      180deg,
+      rgba(255,255,255,0.04),
+      rgba(255,255,255,0.02)
+    );
+    padding: 12px;
+    border-radius: 12px;
+  }
 
-.popup-box{
-  background:#0b1a2b;
-  color:#fff;
-  padding:20px;
-  border-radius:14px;
-  width:80%;
-  max-width:320px;
-  text-align:center;
-  box-shadow:0 0 30px rgba(255,60,60,.6);
-  animation:pop .3s ease;
-}
+  /* Proper contrast for nav */
+  .cal-nav{
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:8px;
+  }
 
-.popup-box h3{
-  margin:0 0 10px;
-  color:#ff6464;
-}
+  /* Fix ALL buttons look */
+  .cal-btn{
+    background: rgba(255,255,255,0.04);
+    color: #e9f5ff;
+    border: 1px solid rgba(255,255,255,0.08);
+    backdrop-filter: blur(6px);
+  }
 
-.popup-box button{
-  margin-top:12px;
-  padding:8px 16px;
-  border:0;
-  border-radius:8px;
-  background:#ff4d4d;
-  color:#fff;
-  font-weight:700;
-}
+  /* ===== DATE PICKER FULL FIX ===== */
+  #gotoDate{
+    appearance:none;
+    -webkit-appearance:none;
+    background: rgba(255,255,255,0.04);
+    color:#e9f5ff;
+    border:1px solid rgba(255,255,255,0.08);
+    border-radius:8px;
+    padding:6px 10px;
+    height:36px;
+    font-weight:700;
+  }
 
-@keyframes pop{
-  from{transform:scale(.7);opacity:0}
-  to{transform:scale(1);opacity:1}
-}
+  /* calendar icon visible */
+  #gotoDate::-webkit-calendar-picker-indicator{
+    filter: invert(1);
+    opacity: 0.9;
+    cursor: pointer;
+  }
+
+  /* HOLIDAY (RED GLOW) */
+  .day.holiday{
+    position: relative;
+    box-shadow: 0 0 12px rgba(255,0,0,.6);
+  }
+
+  .day.holiday::after{
+    content: attr(data-holiday);
+    position: absolute;
+    bottom: 110%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #111;
+    color: #fff;
+    padding: 6px 10px;
+    font-size: 12px;
+    border-radius: 6px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: .25s;
+    z-index: 100;
+  }
+
+  .day.holiday:hover::after{
+    opacity: 1;
+  }
+  /* GO TO DATE (ORANGE GLOW) */
+  .day.goto{
+    box-shadow: 0 0 18px rgba(255,165,0,.95);
+    border:1px solid orange;
+  }
+  /* mobile fix */
+  @media(max-width:700px){
+    .cal-header{ gap:10px }
+    #gotoDate{ width:100% }
+  }
+
+  /* ✅ FULL POPUP */
+  .popup-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.6);
+    display:none;
+    justify-content:center;
+    align-items:center;
+    z-index:999;
+  }
+
+  .popup-box{
+    background:#0b1a2b;
+    color:#fff;
+    padding:20px;
+    border-radius:14px;
+    width:80%;
+    max-width:320px;
+    text-align:center;
+    box-shadow:0 0 30px rgba(255,60,60,.6);
+    animation:pop .3s ease;
+  }
+
+  .popup-box h3{
+    margin:0 0 10px;
+    color:#ff6464;
+  }
+
+  .popup-box button{
+    margin-top:12px;
+    padding:8px 16px;
+    border:0;
+    border-radius:8px;
+    background:#ff4d4d;
+    color:#fff;
+    font-weight:700;
+  }
+
+  @keyframes pop{
+    from{transform:scale(.7);opacity:0}
+    to{transform:scale(1);opacity:1}
+  }
 </style>
 </head>
 <body>
@@ -310,17 +327,21 @@
   <h1>Roitx — Calendar</h1>
 </header>
 
+<div id="holidayWishBanner" class="holiday-wish-banner"></div>
+
 <div class="container">
+  <div>
+    <div class="cal-header">
+      <div class="cal-title" id="calTitle">Month Year</div>
 
-  <div class="cal-header">
-  <div class="cal-title" id="calTitle">Month Year</div>
-
-  <div class="cal-nav">
- <button class="cal-btn" id="prevBtn">◀</button><button class="cal-btn" id="todayBtn">Today</button> <button class="cal-btn" id="nextBtn">▶</button>
-Go to date
-<input type="date" id="gotoDate" class="cal-btn" title="Go to date">
-  </div>
-</div>
+      <div class="cal-nav">
+        <button class="cal-btn" id="prevBtn">◀</button>
+        <button class="cal-btn" id="todayBtn">Today</button> 
+        <button class="cal-btn" id="nextBtn">▶</button>
+        Go to date
+        <input type="date" id="gotoDate" class="cal-btn" title="Go to date">
+      </div>
+    </div>
 
     <div class="weekdays">
       <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
@@ -340,54 +361,63 @@ Go to date
       <div class="legend">
         <div style="display:flex;gap:8px;align-items:center"><span class="dot" style="background:var(--accent)"></span> Selected</div>
         <div style="display:flex;gap:8px;align-items:center"><span class="dot" style="background:#7b6bff"></span> Events (future)</div>
+        <div style="display:flex;gap:8px;align-items:center"><span class="dot" style="background:rgba(255,60,60,.9)"></span> Holidays</div>
       </div>
     </div>
+
     <div id="eventList"></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase.js"></script>
     <div class="mini">
       <a href="index.html" style="color:#9fcfff">⬅ Back to Home</a>
     </div>
   </aside>
-<!-- ✅ HOLIDAY POPUP -->
-<div id="holidayPopup" class="popup-overlay">
-  <div class="popup-box">
-    <h3 id="popupTitle">Holiday</h3>
-    <p id="popupText"></p>
-    <button onclick="closePopup()">Close</button>
+
+  <div id="holidayPopup" class="popup-overlay">
+    <div class="popup-box">
+      <h3 id="popupTitle">Holiday</h3>
+      <p id="popupText"></p>
+      <button onclick="closePopup()">Close</button>
+    </div>
   </div>
 </div>
-</div>
+
 <script>
 /* -----------------------------------------------
-   HOLIDAYS 2026
+   API FETCH & HOLIDAYS MANAGEMENT SYSTEM
 -------------------------------------------------*/
-const holidays = {
-  "2026-01-26": "Republic Day 🇮🇳",
-  "2026-08-15": "Independence Day 🇮🇳",
-  "2026-10-02": "Gandhi Jayanti 🇮🇳",
+let fetchedHolidays = {};
 
-  "2026-01-14": "Makar Sankranti",
-  "2026-01-26": "Vasant Panchami",
-  "2026-02-18": "Maha Shivratri",
-  "2026-03-04": "Holi",
-  "2026-03-25": "Good Friday",
-  "2026-04-02": "Ram Navami",
-  "2026-04-14": "Ambedkar Jayanti",
-  "2026-04-22": "Mahavir Jayanti",
-  "2026-05-01": "Labour Day",
-  "2026-05-25": "Buddha Purnima",
-  "2026-07-21": "Bakrid / Eid-ul-Adha",
-  "2026-08-28": "Janmashtami",
-  "2026-09-17": "Ganesh Chaturthi",
-  "2026-10-20": "Dussehra",
-  "2026-11-08": "Diwali 🪔",
-  "2026-11-09": "Govardhan Puja",
-  "2026-11-10": "Bhai Dooj",
-  "2026-11-27": "Guru Nanak Jayanti",
-  "2026-12-25": "Christmas 🎄"
-};
+async function fetchHolidays(year) {
+  try {
+    const response = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/IN`);
+    if (!response.ok) return;
+    const data = await response.json();
+    data.forEach(item => {
+      fetchedHolidays[item.date] = item.localName || item.name;
+    });
+  } catch (err) {
+    console.error("Error loading holidays from API:", err);
+  }
+}
 
+function checkTodayWishBanner() {
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  const todayKey = `${yyyy}-${mm}-${dd}`;
+
+  const banner = document.getElementById('holidayWishBanner');
+
+  if (fetchedHolidays[todayKey]) {
+    banner.textContent = `🎉 Happy ${fetchedHolidays[todayKey]}! Wishing you a fantastic day ahead! ✨`;
+    banner.style.display = 'block';
+  } else {
+    banner.style.display = 'none';
+  }
+}
 
 /* -----------------------------------------------
    CALENDAR RENDER SYSTEM
@@ -401,12 +431,16 @@ const holidays = {
   let cur = new Date();
   cur.setDate(1);
 
-  function render(){
-
-    daysGrid.innerHTML = '';
+  async function render(){
 
     const year = cur.getFullYear();
     const month = cur.getMonth();
+
+    // Fetch API holidays for current active year
+    await fetchHolidays(year);
+    checkTodayWishBanner();
+
+    daysGrid.innerHTML = '';
 
     /* Current Month Title */
     title.textContent = cur.toLocaleString('default',{
@@ -423,7 +457,6 @@ const holidays = {
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const prevDays = new Date(year, month, 0).getDate();
 
-
     /* Previous Month */
     for(let i = firstIndex - 1; i >= 0; i--){
       const el = document.createElement('div');
@@ -431,7 +464,6 @@ const holidays = {
       el.innerHTML = `<div class="date">${prevDays - i}</div>`;
       daysGrid.appendChild(el);
     }
-
 
     /* Current Month */
     for(let d = 1; d <= daysInMonth; d++){
@@ -446,7 +478,6 @@ const holidays = {
       const dateKey =
         `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
 
-
       /* ⭐ TODAY GLOW SYSTEM ⭐ */
       if(dateKey === todayKey){
         el.classList.add('today');
@@ -458,10 +489,10 @@ const holidays = {
         el.setAttribute('data-holiday','Sunday');
       }
 
-      /* 🎉 Named Holiday */
-      if(holidays[dateKey]){
+      /* 🎉 Named API Holiday Highlight */
+      if(fetchedHolidays[dateKey]){
         el.classList.add('holiday');
-        el.setAttribute('data-holiday', holidays[dateKey]);
+        el.setAttribute('data-holiday', fetchedHolidays[dateKey]);
       }
 
       /* POPUP on holiday tap */
@@ -525,7 +556,10 @@ function showPopup(text){
 function closePopup(){
   popup.style.display = 'none';
 }
-  /// ---------- LOAD EVENTS (FINAL COMBINED FUNCTION) ----------
+
+/* -----------------------------------------------
+   LOAD EVENTS (SUPABASE SYSTEM)
+-------------------------------------------------*/
 async function loadEvents() {
   const list = document.getElementById("eventList");
   const user = await getCurrentUser();
@@ -607,8 +641,9 @@ function glowTitlesForDate(dateKey) {
   if (items.length > 0)
     items[0].scrollIntoView({ behavior: "smooth", block: "center" });
 }
+
 /* -----------------------------------------------
-   SUPABASE EVENT SYSTEM (FIXED)
+   SUPABASE EVENT SYSTEM
 -------------------------------------------------*/
 async function getCurrentUser() {
   const { data } = await window.supabaseClient.auth.getUser();
