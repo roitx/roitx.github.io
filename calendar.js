@@ -16,7 +16,7 @@ const observanceDays = {
   "01-01": "New Year's Day"
 };
 
-// 1. Session-based User Fetch (FIXED)
+// 1. Session-based User Fetch
 async function getCurrentUser() {
   if (!window.supabaseClient) return null;
   try {
@@ -28,7 +28,7 @@ async function getCurrentUser() {
   }
 }
 
-// 2. UI Auth Checker (FIXED)
+// 2. Auth UI & Add Event Button Toggle
 async function checkAuthUI() {
   const user = await getCurrentUser();
   const formSection = document.getElementById("eventFormSection");
@@ -37,21 +37,44 @@ async function checkAuthUI() {
 
   if (!user) {
     formSection.innerHTML = `
-      <h3 style="margin:0 0 8px 0; color:#3aa0ff;">📌 Create Personal Event</h3>
-      <p style="font-size:12px; margin-bottom:10px;">Login to save your personal schedule.</p>
+      <h3 style="margin:0 0 8px 0; color:#3aa0ff;">📌 Personal Events</h3>
+      <p style="font-size:12px; margin-bottom:10px;">Login to create & save your personal schedule.</p>
       <button class="cal-btn" onclick="showLoginPopup()" style="width:100%; background:#7b6bff; color:#fff;">Login Required</button>
     `;
   } else {
+    // Hidden Form by default - Show button only
     formSection.innerHTML = `
-      <h3 style="margin:0 0 8px 0; color:#3aa0ff;">📌 Create Personal Event</h3>
-      <input type="date" id="eventDate" class="event-input">
-      <input type="text" id="eventName" class="event-input" placeholder="Event Name">
-      <button class="cal-btn" onclick="addEvent()" style="width:100%; background:var(--accent); color:#fff;">Save Event</button>
-      <div id="eventMsg" style="margin-top:6px; font-size:12px;"></div>
+      <button id="toggleFormBtn" class="cal-btn" onclick="toggleEventForm()" style="width:100%; background:var(--accent); color:#fff; font-weight:bold;">+ Add Personal Event</button>
+      
+      <div id="eventFormFields" style="display:none; margin-top:12px;">
+        <h3 style="margin:0 0 8px 0; color:#3aa0ff;">📌 Create Personal Event</h3>
+        <input type="date" id="eventDate" class="event-input" style="width:100%; margin-bottom:6px;">
+        <input type="text" id="eventName" class="event-input" placeholder="Event Name" style="width:100%; margin-bottom:6px;">
+        
+        <div style="display:flex; gap:6px;">
+          <button class="cal-btn" onclick="addEvent()" style="flex:1; background:var(--accent); color:#fff;">Save Event</button>
+          <button class="cal-btn" onclick="toggleEventForm()" style="background:#ff4d4d; color:#fff;">Cancel</button>
+        </div>
+        <div id="eventMsg" style="margin-top:6px; font-size:12px;"></div>
+      </div>
     `;
     const today = new Date().toISOString().split("T")[0];
     const dateInp = document.getElementById("eventDate");
     if (dateInp) dateInp.value = today;
+  }
+}
+
+function toggleEventForm() {
+  const fields = document.getElementById("eventFormFields");
+  const btn = document.getElementById("toggleFormBtn");
+  if (!fields || !btn) return;
+
+  if (fields.style.display === "none") {
+    fields.style.display = "block";
+    btn.style.display = "none";
+  } else {
+    fields.style.display = "none";
+    btn.style.display = "block";
   }
 }
 
@@ -150,29 +173,23 @@ async function render() {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const prevDays = new Date(year, month, 0).getDate();
 
-  // 1. Previous Month Days
   for (let i = firstIndex - 1; i >= 0; i--) {
     const d = prevDays - i;
     const prevDate = new Date(year, month - 1, d);
-    const el = createDayElement(prevDate, d, todayKey, true);
-    daysGrid.appendChild(el);
+    daysGrid.appendChild(createDayElement(prevDate, d, todayKey, true));
   }
 
-  // 2. Current Month Days
   for (let d = 1; d <= daysInMonth; d++) {
     const currDate = new Date(year, month, d);
-    const el = createDayElement(currDate, d, todayKey, false);
-    daysGrid.appendChild(el);
+    daysGrid.appendChild(createDayElement(currDate, d, todayKey, false));
   }
 
-  // 3. Next Month Days
   const totalSlots = firstIndex + daysInMonth;
   const nextMonthSlots = (totalSlots > 35) ? 42 - totalSlots : 35 - totalSlots;
 
   for (let d = 1; d <= nextMonthSlots; d++) {
     const nextDate = new Date(year, month + 1, d);
-    const el = createDayElement(nextDate, d, todayKey, true);
-    daysGrid.appendChild(el);
+    daysGrid.appendChild(createDayElement(nextDate, d, todayKey, true));
   }
 
   renderSideEventList();
@@ -203,29 +220,35 @@ function createDayElement(dateObj, displayDate, todayKey, isOtherMonth) {
     el.appendChild(badge);
   }
 
-  let popups = [];
+  let popupInfoList = [];
 
   if (dateObj.getDay() === 0) {
     el.classList.add('holiday');
     el.setAttribute('data-holiday', 'Sunday');
-    popups.push("Sunday (Weekly Off)");
+    popupInfoList.push({ type: 'holiday', text: "Sunday (Weekly Off)" });
   }
 
   if (fetchedHolidays[dateKey]) {
     el.classList.add('holiday');
     el.setAttribute('data-holiday', fetchedHolidays[dateKey]);
-    popups.push(fetchedHolidays[dateKey]);
+    popupInfoList.push({ type: 'holiday', text: fetchedHolidays[dateKey] });
   } 
   else if (observanceDays[monthDayKey]) {
     el.classList.add('observance-day');
     el.setAttribute('data-holiday', observanceDays[monthDayKey]);
-    popups.push(observanceDays[monthDayKey]);
+    popupInfoList.push({ type: 'observance', text: observanceDays[monthDayKey] });
   }
 
   if (dbEvents[dateKey]) {
     el.classList.add('event-glow');
     dbEvents[dateKey].forEach(ev => {
-      popups.push(ev.is_global ? `📢 ${ev.event_name}` : `📌 ${ev.event_name}`);
+      popupInfoList.push({ 
+        type: 'event', 
+        text: (ev.is_global ? '📢 ' : '📌 ') + ev.event_name,
+        id: ev.id,
+        is_global: ev.is_global,
+        user_id: ev.user_id
+      });
       const tag = document.createElement('span');
       tag.className = 'event-tag';
       tag.innerText = ev.event_name;
@@ -233,8 +256,8 @@ function createDayElement(dateObj, displayDate, todayKey, isOtherMonth) {
     });
   }
 
-  if (!isOtherMonth && popups.length > 0) {
-    el.onclick = () => showPopup(popups.join("\n\n"));
+  if (!isOtherMonth && popupInfoList.length > 0) {
+    el.onclick = () => showInteractivePopup(popupInfoList, dateKey);
   }
 
   return el;
@@ -242,23 +265,7 @@ function createDayElement(dateObj, displayDate, todayKey, isOtherMonth) {
 
 function renderSideEventList() {
   const list = document.getElementById("eventList");
-  if (!list) return;
-  list.innerHTML = "";
-  let count = 0;
-
-  for (const dateKey in dbEvents) {
-    dbEvents[dateKey].forEach(ev => {
-      count++;
-      const row = document.createElement("div");
-      row.className = "mini event-item";
-      row.style.marginBottom = "6px";
-      row.setAttribute("data-date", dateKey);
-      row.innerHTML = `<b>${dateKey}</b><br>${ev.is_global ? '📢' : '📌'} ${ev.event_name}`;
-      list.appendChild(row);
-    });
-  }
-
-  if (count === 0) list.innerHTML = "<div class='mini'><em>No events added yet.</em></div>";
+  if (list) list.innerHTML = "";
 }
 
 async function addEvent() {
@@ -303,8 +310,55 @@ async function addEvent() {
       msg.style.color = "#00ffe4";
     }
     nameInp.value = "";
+    toggleEventForm();
     render();
   }
+}
+
+async function deleteEvent(eventId) {
+  if (!confirm("Kya aap is personal event ko delete karna chahte hain?")) return;
+  
+  const { error } = await window.supabaseClient.from("events").delete().eq("id", eventId);
+  if (error) {
+    alert("Delete failed: " + error.message);
+  } else {
+    closePopup();
+    render();
+  }
+}
+
+async function showInteractivePopup(infoList, dateKey) {
+  const popupText = document.getElementById('popupText');
+  const popup = document.getElementById('holidayPopup');
+  const btn = document.getElementById('popupButton');
+  const user = await getCurrentUser();
+
+  if (!popupText || !popup || !btn) return;
+
+  popupText.innerHTML = `<b style="color:#3aa0ff; font-size:16px;">Date: ${dateKey}</b><br><br>`;
+
+  infoList.forEach(info => {
+    const item = document.createElement("div");
+    item.style.cssText = "margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;";
+
+    item.innerHTML = `<span style="font-size:14px;">${info.text}</span>`;
+
+    // Only allow deletion if event is PERSONAL (not global/admin) and created by logged-in user
+    if (info.type === 'event' && user && info.user_id === user.id && !info.is_global) {
+      const delBtn = document.createElement("button");
+      delBtn.innerText = "Delete";
+      delBtn.style.cssText = "background:#ff4d4d; color:#fff; border:none; padding:3px 8px; border-radius:4px; cursor:pointer; font-size:12px;";
+      delBtn.onclick = () => deleteEvent(info.id);
+      item.appendChild(delBtn);
+    }
+
+    popupText.appendChild(item);
+  });
+
+  btn.innerText = "Close";
+  btn.onclick = () => closePopup();
+
+  popup.style.display = 'flex';
 }
 
 function showPopup(text, redirectUrl = null) {
@@ -365,7 +419,7 @@ if (todayBtn) todayBtn.onclick = () => {
   render(); 
 };
 
-// Auto Auth Sync on Dynamic Session State Changes
+// Auto Auth Sync
 document.addEventListener("DOMContentLoaded", async () => {
   await checkAuthUI();
   render();
