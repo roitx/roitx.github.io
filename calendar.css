@@ -1,0 +1,386 @@
+:root {
+  --bg: #07101a;
+  --card: rgba(255, 255, 255, 0.04);
+  --accent: #3aa0ff;
+  --muted: #b9c9e0;
+}
+
+* { 
+  box-sizing: border-box; 
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, Arial, sans-serif;
+  background: linear-gradient(180deg, #04101a, #071829);
+  color: #e9f5ff;
+  padding: 24px;
+  -webkit-font-smoothing: antialiased;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+header img {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 8px 28px rgba(58, 160, 255, 0.15);
+}
+
+header h1 { 
+  font-size: 20px; 
+  margin: 0; 
+}
+
+/* ===== HOLIDAY WISH BANNER ===== */
+.holiday-wish-banner {
+  display: none;
+  background: linear-gradient(135deg, #ff416c, #ff4b2b);
+  color: #ffffff;
+  padding: 14px 20px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  text-align: center;
+  font-weight: 800;
+  font-size: 16px;
+  box-shadow: 0 8px 25px rgba(255, 65, 108, 0.4);
+  animation: bannerPulse 2s infinite alternate;
+}
+
+@keyframes bannerPulse {
+  from { transform: scale(0.99); box-shadow: 0 4px 15px rgba(255, 65, 108, 0.4); }
+  to { transform: scale(1.01); box-shadow: 0 10px 30px rgba(255, 65, 108, 0.8); }
+}
+
+.container {
+  max-width: 1020px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 22px;
+  align-items: start;
+}
+
+/* ===== CALENDAR HEADER ===== */
+.cal-header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+.cal-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.cal-title {
+  font-weight: 800;
+  font-size: 20px;
+  color: #eaf6ff;
+}
+
+.cal-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.cal-btn {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
+  color: #e9f5ff;
+  cursor: pointer;
+  font-weight: 700;
+  backdrop-filter: blur(6px);
+  transition: all 0.2s ease;
+}
+
+.cal-btn:hover {
+  background: rgba(58, 160, 255, 0.2);
+  border-color: var(--accent);
+}
+
+#gotoDate {
+  appearance: none;
+  -webkit-appearance: none;
+  background: rgba(255,255,255,0.04);
+  color: #e9f5ff;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  padding: 6px 10px;
+  height: 36px;
+  font-weight: 700;
+  flex: 1;
+  min-width: 130px;
+  color-scheme: dark;
+}
+
+#gotoDate::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.9;
+  cursor: pointer;
+}
+
+.weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  margin-top: 14px;
+  color: var(--muted);
+  font-weight: 700;
+  text-align: center;
+}
+
+.days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.day {
+  min-height: 92px;
+  border-radius: 10px;
+  padding: 8px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));
+  border: 1px solid rgba(255,255,255,0.02);
+  transition: transform .15s, box-shadow .15s;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.day:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 45px rgba(0,0,0,.7);
+}
+
+.day .date { 
+  font-weight: 800; 
+  color: var(--accent); 
+}
+
+/* ===== NON-CURRENT MONTH DATES (LOW FADE & UNCLICKABLE) ===== */
+.other-month {
+  opacity: 0.25 !important;
+  filter: grayscale(0.8) !important;
+  pointer-events: none !important;
+  cursor: default !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* ===== TODAY CELL & ROITX BADGE ===== */
+.day.today {
+  background: linear-gradient(135deg, #3aa0ff, #7b6bff);
+  box-shadow: 0 0 12px rgba(58,160,255,.9), 0 0 32px rgba(123,107,255,.9);
+  animation: pulseToday 1.6s infinite alternate;
+}
+
+@keyframes pulseToday {
+  from { box-shadow: 0 0 10px rgba(58,160,255,.6); }
+  to { box-shadow: 0 0 32px rgba(123,107,255,1); }
+}
+.roitx-center-badge {
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.45);
+  color: #ffffff;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+
+
+/* ===== OFFICIAL PUBLIC HOLIDAYS (BRIGHT RED GLOW) ===== */
+.day.holiday {
+  box-shadow: 0 0 18px rgba(255, 50, 50, 0.9) !important;
+  border: 1px solid rgba(255, 50, 50, 0.9) !important;
+}
+
+/* ===== SPECIAL OBSERVANCE DAYS (SOFT NEON BLUE GLOW) ===== */
+.day.observance-day {
+  box-shadow: 0 0 14px rgba(58, 160, 255, 0.6) !important;
+  border: 1px solid rgba(58, 160, 255, 0.7) !important;
+}
+
+.day.holiday::after, .day.observance-day::after {
+  content: attr(data-holiday);
+  position: absolute;
+  bottom: 110%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #111;
+  color: #fff;
+  padding: 6px 10px;
+  font-size: 12px;
+  border-radius: 6px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: .25s;
+  z-index: 100;
+}
+
+.day.holiday:hover::after, .day.observance-day:hover::after { 
+  opacity: 1; 
+}
+
+/* ===== DATE SELECTION / GOTO DATE (PERSISTENT YELLOW GLOW) ===== */
+.day.goto {
+  box-shadow: 0 0 20px rgba(255, 200, 0, 0.95), inset 0 0 10px rgba(255, 200, 0, 0.5) !important;
+  border: 2px solid #ffc800 !important;
+  transform: scale(1.04);
+}
+
+/* ===== EVENT PURPLE GLOW & TAGS ===== */
+.day.event-glow {
+  box-shadow: 0 0 16px #7b6bff, 0 0 28px #a48aff;
+  animation: pulseEvent 1.5s infinite alternate;
+}
+
+@keyframes pulseEvent {
+  from { box-shadow: 0 0 8px #7b6bff; }
+  to { box-shadow: 0 0 24px #b79aff; }
+}
+
+.event-tag {
+  font-size: 10px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  margin-top: 4px;
+  display: block;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  background: rgba(123, 107, 255, 0.4);
+  color: #fff;
+}
+
+.event-item.title-glow {
+  background: rgba(123,107,255,0.18);
+  border-left: 4px solid #7b6bff;
+  padding-left: 8px;
+  animation: pulseTitle 1.4s infinite alternate;
+}
+
+@keyframes pulseTitle {
+  from { background: rgba(123,107,255,0.10); }
+  to { background: rgba(123,107,255,0.25); }
+}
+
+/* SIDE PANEL */
+.side { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 12px; 
+}
+
+.mini {
+  padding: 12px;
+  border-radius: 10px;
+  background: transparent;
+  border: 1px dashed rgba(255,255,255,0.06);
+  color: var(--muted);
+}
+
+.legend { 
+  display: flex; 
+  gap: 8px; 
+  align-items: center; 
+  flex-wrap: wrap; 
+}
+
+.legend .dot { 
+  width: 10px; 
+  height: 10px; 
+  border-radius: 50%; 
+}
+
+.event-input {
+  background: rgba(255, 255, 255, 0.04);
+  color: #e9f5ff;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 8px 10px;
+  height: 38px;
+  font-weight: 600;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+/* POPUP OVERLAY */
+.popup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.7);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+  backdrop-filter: blur(4px);
+}
+
+.popup-box {
+  background: #0b1a2b;
+  color: #fff;
+  padding: 22px;
+  border-radius: 14px;
+  width: 85%;
+  max-width: 320px;
+  text-align: center;
+  box-shadow: 0 0 30px rgba(58,160,255,.4);
+  border: 1px solid rgba(255,255,255,0.1);
+  animation: pop .3s ease;
+}
+
+.popup-box h3 { 
+  margin: 0 0 10px; 
+  color: #3aa0ff; 
+}
+
+.popup-box button {
+  margin-top: 14px;
+  padding: 8px 16px;
+  border: 0;
+  border-radius: 8px;
+  background: #3aa0ff;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+@keyframes pop {
+  from { transform: scale(.7); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@media (max-width: 900px) {
+  .container { grid-template-columns: 1fr; }
+  .day { min-height: 72px; }
+  #gotoDate { width: 100%; }
+}

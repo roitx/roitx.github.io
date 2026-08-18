@@ -197,10 +197,12 @@ async function addEvent() {
   const { data: userData } = await window.supabaseClient.auth.getUser();
   if (!userData?.user) return alert("❌ Login required");
 
+  // is_global: true add kiya gaya hai
   const { error } = await window.supabaseClient.from("events").insert([{
     user_id: userData.user.id,
     event_date: date,
-    event_name: name
+    event_name: name,
+    is_global: true 
   }]);
 
   if (error) {
@@ -211,7 +213,6 @@ async function addEvent() {
   if (msg) msg.innerText = "✅ Event added";
   if (document.getElementById("eventName")) document.getElementById("eventName").value = "";
   
-  // Instant Refresh & Stats Update
   await loadEvents();
   await updateStats();
 }
