@@ -16,26 +16,47 @@ const observanceDays = {
   "01-01": "New Year's Day"
 };
 
+// 1. Session-based User Fetch (FIXED)
 async function getCurrentUser() {
   if (!window.supabaseClient) return null;
-  const { data } = await window.supabaseClient.auth.getUser();
-  return data?.user ?? null;
+  try {
+    const { data: { session } } = await window.supabaseClient.auth.getSession();
+    return session ? session.user : null;
+  } catch (e) {
+    console.error("Auth session fetch error:", e);
+    return null;
+  }
 }
 
+// 2. UI Auth Checker (FIXED)
 async function checkAuthUI() {
   const user = await getCurrentUser();
   const formSection = document.getElementById("eventFormSection");
 
-  if (!user && formSection) {
+  if (!formSection) return;
+
+  if (!user) {
     formSection.innerHTML = `
       <h3 style="margin:0 0 8px 0; color:#3aa0ff;">📌 Create Personal Event</h3>
       <p style="font-size:12px; margin-bottom:10px;">Login to save your personal schedule.</p>
       <button class="cal-btn" onclick="showLoginPopup()" style="width:100%; background:#7b6bff; color:#fff;">Login Required</button>
     `;
+  } else {
+    formSection.innerHTML = `
+      <h3 style="margin:0 0 8px 0; color:#3aa0ff;">📌 Create Personal Event</h3>
+      <input type="date" id="eventDate" class="event-input">
+      <input type="text" id="eventName" class="event-input" placeholder="Event Name">
+      <button class="cal-btn" onclick="addEvent()" style="width:100%; background:var(--accent); color:#fff;">Save Event</button>
+      <div id="eventMsg" style="margin-top:6px; font-size:12px;"></div>
+    `;
+    const today = new Date().toISOString().split("T")[0];
+    const dateInp = document.getElementById("eventDate");
+    if (dateInp) dateInp.value = today;
   }
 }
 
 function showLoginPopup() {
+  sessionStorage.setItem("redirect_after_login", window.location.href);
   showPopup("🔒 Login Required!\n\nPlease login to your account first to add personal events.", "login.html");
 }
 
@@ -102,6 +123,8 @@ async function render() {
   const daysGrid = document.getElementById('daysGrid');
   const title = document.getElementById('calTitle');
 
+  if (!daysGrid || !title) return;
+
   const year = cur.getFullYear();
   const month = cur.getMonth();
 
@@ -127,7 +150,7 @@ async function render() {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const prevDays = new Date(year, month, 0).getDate();
 
-  // 1. Previous Month Days (Low-Fade & Unclickable)
+  // 1. Previous Month Days
   for (let i = firstIndex - 1; i >= 0; i--) {
     const d = prevDays - i;
     const prevDate = new Date(year, month - 1, d);
@@ -142,7 +165,7 @@ async function render() {
     daysGrid.appendChild(el);
   }
 
-  // 3. Next Month Days (Low-Fade & Unclickable)
+  // 3. Next Month Days
   const totalSlots = firstIndex + daysInMonth;
   const nextMonthSlots = (totalSlots > 35) ? 42 - totalSlots : 35 - totalSlots;
 
@@ -168,12 +191,10 @@ function createDayElement(dateObj, displayDate, todayKey, isOtherMonth) {
   el.setAttribute("data-date-key", dateKey);
   el.innerHTML = `<div class="date">${displayDate}</div>`;
 
-  // Apply persistent yellow glow if date matches selected date
   if (selectedGotoDateKey && selectedGotoDateKey === dateKey && !isOtherMonth) {
     el.classList.add('goto');
   }
 
-  // TODAY CELL & ROITX BADGE
   if (dateKey === todayKey && !isOtherMonth) {
     el.classList.add('today');
     const badge = document.createElement('div');
@@ -184,7 +205,6 @@ function createDayElement(dateObj, displayDate, todayKey, isOtherMonth) {
 
   let popups = [];
 
-  // Official Holiday (Bright Red Glow) - includes Sundays
   if (dateObj.getDay() === 0) {
     el.classList.add('holiday');
     el.setAttribute('data-holiday', 'Sunday');
@@ -196,14 +216,12 @@ function createDayElement(dateObj, displayDate, todayKey, isOtherMonth) {
     el.setAttribute('data-holiday', fetchedHolidays[dateKey]);
     popups.push(fetchedHolidays[dateKey]);
   } 
-  // Special Observance Days (Soft Neon Blue Glow)
   else if (observanceDays[monthDayKey]) {
     el.classList.add('observance-day');
     el.setAttribute('data-holiday', observanceDays[monthDayKey]);
     popups.push(observanceDays[monthDayKey]);
   }
 
-  // Events Check (Purple Glow)
   if (dbEvents[dateKey]) {
     el.classList.add('event-glow');
     dbEvents[dateKey].forEach(ev => {
@@ -215,7 +233,6 @@ function createDayElement(dateObj, displayDate, todayKey, isOtherMonth) {
     });
   }
 
-  // Bind click listeners only to active current-month dates
   if (!isOtherMonth && popups.length > 0) {
     el.onclick = () => showPopup(popups.join("\n\n"));
   }
@@ -251,13 +268,20 @@ async function addEvent() {
     return;
   }
 
-  const date = document.getElementById("eventDate").value;
-  const name = document.getElementById("eventName").value.trim();
+  const dateInp = document.getElementById("eventDate");
+  const nameInp = document.getElementById("eventName");
   const msg = document.getElementById("eventMsg");
 
+  if (!dateInp || !nameInp) return;
+
+  const date = dateInp.value;
+  const name = nameInp.value.trim();
+
   if (!date || !name) {
-    msg.textContent = "❌ Fill date & name";
-    msg.style.color = "#ff6464";
+    if (msg) {
+      msg.textContent = "❌ Fill date & name";
+      msg.style.color = "#ff6464";
+    }
     return;
   }
 
@@ -269,20 +293,28 @@ async function addEvent() {
   }]);
 
   if (error) {
-    msg.textContent = "❌ " + error.message;
-    msg.style.color = "#ff6464";
+    if (msg) {
+      msg.textContent = "❌ " + error.message;
+      msg.style.color = "#ff6464";
+    }
   } else {
-    msg.textContent = "✅ Event added!";
-    msg.style.color = "#00ffe4";
-    document.getElementById("eventName").value = "";
+    if (msg) {
+      msg.textContent = "✅ Event added!";
+      msg.style.color = "#00ffe4";
+    }
+    nameInp.value = "";
     render();
   }
 }
 
 function showPopup(text, redirectUrl = null) {
-  document.getElementById('popupText').innerText = text;
+  const popupText = document.getElementById('popupText');
   const popup = document.getElementById('holidayPopup');
   const btn = document.getElementById('popupButton');
+
+  if (!popupText || !popup || !btn) return;
+
+  popupText.innerText = text;
 
   if (redirectUrl) {
     btn.innerText = "Login Now";
@@ -296,10 +328,10 @@ function showPopup(text, redirectUrl = null) {
 }
 
 function closePopup() {
-  document.getElementById('holidayPopup').style.display = 'none';
+  const popup = document.getElementById('holidayPopup');
+  if (popup) popup.style.display = 'none';
 }
 
-// Goto Date Event Handler
 document.getElementById('gotoDate')?.addEventListener('change', function() {
   const dateVal = this.value;
   if (!dateVal) return;
@@ -307,7 +339,6 @@ document.getElementById('gotoDate')?.addEventListener('change', function() {
   const parts = dateVal.split("-");
   const yyyy = parseInt(parts[0], 10);
   const mm = parseInt(parts[1], 10) - 1;
-  const dd = parseInt(parts[2], 10);
 
   selectedGotoDateKey = dateVal;
   cur = new Date(yyyy, mm, 1);
@@ -321,19 +352,30 @@ document.getElementById('gotoDate')?.addEventListener('change', function() {
   });
 });
 
-document.getElementById('prevBtn').onclick = () => { cur.setMonth(cur.getMonth() - 1); render(); };
-document.getElementById('nextBtn').onclick = () => { cur.setMonth(cur.getMonth() + 1); render(); };
-document.getElementById('todayBtn').onclick = () => { 
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const todayBtn = document.getElementById('todayBtn');
+
+if (prevBtn) prevBtn.onclick = () => { cur.setMonth(cur.getMonth() - 1); render(); };
+if (nextBtn) nextBtn.onclick = () => { cur.setMonth(cur.getMonth() + 1); render(); };
+if (todayBtn) todayBtn.onclick = () => { 
   selectedGotoDateKey = null;
   cur = new Date(); 
   cur.setDate(1); 
   render(); 
 };
 
-document.addEventListener("DOMContentLoaded", () => {
-  checkAuthUI();
-  const today = new Date().toISOString().split("T")[0];
-  const dateInp = document.getElementById("eventDate");
-  if (dateInp) dateInp.value = today;
+// Auto Auth Sync on Dynamic Session State Changes
+document.addEventListener("DOMContentLoaded", async () => {
+  await checkAuthUI();
   render();
+
+  if (window.supabaseClient) {
+    window.supabaseClient.auth.onAuthStateChange(async (event) => {
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+        await checkAuthUI();
+        render();
+      }
+    });
+  }
 });

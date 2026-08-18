@@ -185,7 +185,6 @@ async function deleteNoteRecord(id, filePath) {
   await loadFiles();
   await updateStats();
 }
-
 /* ---------- PART 3: CALENDAR EVENTS SYSTEM ---------- */
 async function addEvent() {
   const date = document.getElementById("eventDate")?.value;
@@ -197,7 +196,7 @@ async function addEvent() {
   const { data: userData } = await window.supabaseClient.auth.getUser();
   if (!userData?.user) return alert("❌ Login required");
 
-  // is_global: true add kiya gaya hai
+  // Admin always creates GLOBAL events
   const { error } = await window.supabaseClient.from("events").insert([{
     user_id: userData.user.id,
     event_date: date,
@@ -210,7 +209,7 @@ async function addEvent() {
     return;
   }
 
-  if (msg) msg.innerText = "✅ Event added";
+  if (msg) msg.innerText = "✅ Admin Event added";
   if (document.getElementById("eventName")) document.getElementById("eventName").value = "";
   
   await loadEvents();
@@ -237,13 +236,19 @@ async function loadEvents() {
   const search = document.getElementById("searchEvent")?.value.toLowerCase().trim() || "";
   const monthFilter = document.getElementById("filterEventMonth")?.value || "";
   const yearFilter = document.getElementById("filterEventYear")?.value || "";
+  const typeFilter = document.getElementById("filterEventType")?.value || "all";
 
   const filtered = data.filter(ev => {
     const [year, month] = ev.event_date.split("-");
     const matchSearch = ev.event_name.toLowerCase().includes(search);
     const matchMonth = monthFilter ? month === monthFilter : true;
     const matchYear  = yearFilter ? year === yearFilter : true;
-    return matchSearch && matchMonth && matchYear;
+    
+    let matchType = true;
+    if (typeFilter === "global") matchType = ev.is_global === true;
+    if (typeFilter === "user") matchType = ev.is_global !== true;
+
+    return matchSearch && matchMonth && matchYear && matchType;
   });
 
   if (filtered.length === 0) {
@@ -255,11 +260,23 @@ async function loadEvents() {
   list.innerHTML = "";
   filtered.forEach(ev => {
     const row = document.createElement("div");
+    row.style.cssText = "padding:8px; border-bottom:1px solid #2e4a73; display:flex; justify-content:space-between; align-items:center;";
+
+    const isAdminEvent = ev.is_global === true;
+    
+    // Clear Labels for Admin vs User
+    const badgeHtml = isAdminEvent 
+      ? `<span style="background:#00ffe4; color:#000; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold;">📢 ADMIN</span>`
+      : `<span style="background:#7b6bff; color:#fff; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold;">👤 USER</span>`;
+
+    // Admin can delete both (Admin & User events)
+    const actionBtnHtml = `<button class="logout" style="padding:4px 10px; font-size:12px;" onclick="deleteEvent('${ev.id}', ${isAdminEvent})">🗑 Delete</button>`;
+
     row.innerHTML = `
-      <span>📅 <b>${ev.event_date}</b> — ${ev.event_name}</span>
       <div>
-        <button class="logout" style="padding:6px 12px; font-size:12px;" onclick="deleteEvent(${ev.id})">🗑</button>
+        <b>${ev.event_date}</b> — ${ev.event_name} ${badgeHtml}
       </div>
+      <div>${actionBtnHtml}</div>
     `;
     list.appendChild(row);
   });
@@ -267,16 +284,23 @@ async function loadEvents() {
   updateStats();
 }
 
-async function deleteEvent(id) {
-  if (!confirm("Delete event?")) return;
+async function deleteEvent(id, isAdminEvent) {
+  const confirmMsg = isAdminEvent 
+    ? "Kya aap is Admin Event ko delete karna chahte hain?" 
+    : "⚠️ Warning: Yeh ek USER ka personal event hai. Kya aap ise database se delete karna chahte hain?";
+
+  if (!confirm(confirmMsg)) return;
+
   const { error } = await window.supabaseClient.from("events").delete().eq("id", id);
   if (error) {
-    alert("❌ Delete failed");
+    alert("❌ Delete failed: " + error.message);
     return;
   }
+
   await loadEvents();
   await updateStats();
 }
+
 
 /* ---------- PART 4: FORMULAS SYSTEM ---------- */
 document.addEventListener("DOMContentLoaded", () => {
