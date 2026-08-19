@@ -1,5 +1,5 @@
 /* =====================================================
-   ADMIN PANEL — COMPLETE FULLY UPDATED JS SYSTEM
+   ADMIN PANEL — COMPLETE UPDATED JS SYSTEM (NO TIMESTAMP)
    ===================================================== */
 
 /* ---------- PART 1: AUTH HELPERS & GLOBAL STATS ---------- */
@@ -24,20 +24,17 @@ function logout() {
 
 async function updateStats() {
   try {
-    // 1. Total Notes Count
-    const { data: notes } = await window.supabaseClient.storage.from("admin-files").list("notes", { limit: 1000 });
+    const { count: notesCount } = await window.supabaseClient.from("notes").select("*", { count: 'exact', head: true });
     const notesEl = document.getElementById("totalNotesCount");
-    if (notesEl && notes) notesEl.innerText = notes.length;
+    if (notesEl) notesEl.innerText = notesCount || 0;
 
-    // 2. Total Formulas Count
-    const { data: formulas } = await window.supabaseClient.from("formulas").select("id", { count: 'exact' });
+    const { count: formulasCount } = await window.supabaseClient.from("formulas").select("*", { count: 'exact', head: true });
     const formulasEl = document.getElementById("totalFormulasCount");
-    if (formulasEl && formulas) formulasEl.innerText = formulas.length;
+    if (formulasEl) formulasEl.innerText = formulasCount || 0;
 
-    // 3. Total Events Count
-    const { data: events } = await window.supabaseClient.from("events").select("id", { count: 'exact' });
+    const { count: eventsCount } = await window.supabaseClient.from("events").select("*", { count: 'exact', head: true });
     const eventsEl = document.getElementById("totalEventsCount");
-    if (eventsEl && events) eventsEl.innerText = events.length;
+    if (eventsEl) eventsEl.innerText = eventsCount || 0;
   } catch (err) {
     console.error("Stats update failed:", err);
   }
@@ -61,17 +58,16 @@ async function uploadFile() {
     return alert("❌ Please select Class, Subject, Chapter and enter Chapter Name!");
   }
 
-  // chSelect jaise 'ch1' se number extract karna (e.g. '1')
   const chapterNumber = parseInt(chSelect.replace("ch", "")) || 1;
   const classNum = cls.replace("class", "");
   
-  // Storage file name e.g. "10_physics_1.pdf"
-  const fileName = `${classNum}_${sub}_ch${chapterNumber}.pdf`;
+  // Clean file name (removes spaces) without adding timestamp
+  const cleanFileName = file.name.replace(/\s+/g, '_');
+  const fileName = `${classNum}_${sub}_ch${chapterNumber}_${cleanFileName}`;
   const filePath = `notes/${fileName}`;
 
   if (msg) msg.innerText = "⏳ Uploading file & saving details...";
 
-  // 1. Supabase Storage me PDF upload karein
   const { error: uploadError } = await window.supabaseClient.storage
     .from("admin-files")
     .upload(filePath, file, { upsert: true });
@@ -82,10 +78,9 @@ async function uploadFile() {
     return;
   }
 
-  // 2. Supabase Database table 'notes' me row insert/upsert karein
   const { error: dbError } = await window.supabaseClient
     .from("notes")
-    .upsert([
+    .insert([
       {
         class: classNum,
         subject: sub.toLowerCase().trim(),
@@ -93,7 +88,7 @@ async function uploadFile() {
         chapter_name: chapterName,
         file_path: filePath
       }
-    ], { onConflict: 'class,subject,chapter_number' });
+    ]);
 
   if (dbError) {
     console.error("Database Error:", dbError);
@@ -106,7 +101,6 @@ async function uploadFile() {
   const nameInput = document.getElementById("chapterNameInput");
   if (nameInput) nameInput.value = "";
   
-  // Instant Refresh & Stats Update after upload
   await loadFiles();
   await updateStats();
 }
@@ -117,7 +111,6 @@ async function loadFiles() {
 
   list.innerHTML = "⏳ Loading notes...";
 
-  // Database se notes fetch karenge taki chapter name bhi dikhe
   const { data, error } = await window.supabaseClient
     .from("notes")
     .select("*")
@@ -136,10 +129,10 @@ async function loadFiles() {
   const filterSub = document.getElementById("filterNotesSubject")?.value.toLowerCase() || "";
 
   const filtered = data.filter(note => {
-    const searchStr = `${note.chapter_name} ${note.subject} class ${note.class}`.toLowerCase();
+    const searchStr = `${note.chapter_name || ''} ${note.subject || ''} class ${note.class || ''}`.toLowerCase();
     const matchSearch = searchStr.includes(search);
     const matchClass = filterCls ? String(note.class) === String(filterCls) : true;
-    const matchSubject = filterSub ? note.subject.toLowerCase() === filterSub.toLowerCase() : true;
+    const matchSubject = filterSub ? (note.subject || '').toLowerCase() === filterSub.toLowerCase() : true;
     return matchSearch && matchClass && matchSubject;
   });
 
@@ -154,7 +147,7 @@ async function loadFiles() {
     const row = document.createElement("div");
     row.style.cssText = "padding:10px; border-bottom:1px solid #2e4a73; display:flex; justify-content:space-between; align-items:center;";
     row.innerHTML = `
-      <span>📄 <b>Class ${note.class}</b> • ${note.subject.toUpperCase()} • Ch ${note.chapter_number}: ${note.chapter_name}</span>
+      <span>📄 <b>Class ${note.class}</b> • ${(note.subject || '').toUpperCase()} • Ch ${note.chapter_number}: ${note.chapter_name}</span>
       <div>
         <button style="padding:6px 12px; font-size:12px;" onclick="openFile('${note.file_path}')">Open</button>
         <button class="logout" style="padding:6px 12px; font-size:12px;" onclick="deleteNoteRecord('${note.id}', '${note.file_path}')">🗑</button>
@@ -174,10 +167,10 @@ async function openFile(filePath) {
 async function deleteNoteRecord(id, filePath) {
   if (!confirm("Delete file and record?")) return;
   
-  // Storage se file delete karein
-  await window.supabaseClient.storage.from("admin-files").remove([filePath]);
+  if (filePath) {
+    await window.supabaseClient.storage.from("admin-files").remove([filePath]);
+  }
   
-  // Database table se row delete karein (agar id available hai)
   if (id) {
     await window.supabaseClient.from("notes").delete().eq("id", id);
   }
@@ -185,6 +178,7 @@ async function deleteNoteRecord(id, filePath) {
   await loadFiles();
   await updateStats();
 }
+
 /* ---------- PART 3: CALENDAR EVENTS SYSTEM ---------- */
 async function addEvent() {
   const date = document.getElementById("eventDate")?.value;
@@ -196,7 +190,6 @@ async function addEvent() {
   const { data: userData } = await window.supabaseClient.auth.getUser();
   if (!userData?.user) return alert("❌ Login required");
 
-  // Admin always creates GLOBAL events
   const { error } = await window.supabaseClient.from("events").insert([{
     user_id: userData.user.id,
     event_date: date,
@@ -239,8 +232,8 @@ async function loadEvents() {
   const typeFilter = document.getElementById("filterEventType")?.value || "all";
 
   const filtered = data.filter(ev => {
-    const [year, month] = ev.event_date.split("-");
-    const matchSearch = ev.event_name.toLowerCase().includes(search);
+    const [year, month] = (ev.event_date || "").split("-");
+    const matchSearch = (ev.event_name || "").toLowerCase().includes(search);
     const matchMonth = monthFilter ? month === monthFilter : true;
     const matchYear  = yearFilter ? year === yearFilter : true;
     
@@ -263,13 +256,10 @@ async function loadEvents() {
     row.style.cssText = "padding:8px; border-bottom:1px solid #2e4a73; display:flex; justify-content:space-between; align-items:center;";
 
     const isAdminEvent = ev.is_global === true;
-    
-    // Clear Labels for Admin vs User
     const badgeHtml = isAdminEvent 
       ? `<span style="background:#00ffe4; color:#000; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold;">📢 ADMIN</span>`
       : `<span style="background:#7b6bff; color:#fff; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold;">👤 USER</span>`;
 
-    // Admin can delete both (Admin & User events)
     const actionBtnHtml = `<button class="logout" style="padding:4px 10px; font-size:12px;" onclick="deleteEvent('${ev.id}', ${isAdminEvent})">🗑 Delete</button>`;
 
     row.innerHTML = `
@@ -285,11 +275,7 @@ async function loadEvents() {
 }
 
 async function deleteEvent(id, isAdminEvent) {
-  const confirmMsg = isAdminEvent 
-    ? "Kya aap is Admin Event ko delete karna chahte hain?" 
-    : "⚠️ Warning: Yeh ek USER ka personal event hai. Kya aap ise database se delete karna chahte hain?";
-
-  if (!confirm(confirmMsg)) return;
+  if (!confirm("Delete this event?")) return;
 
   const { error } = await window.supabaseClient.from("events").delete().eq("id", id);
   if (error) {
@@ -301,13 +287,13 @@ async function deleteEvent(id, isAdminEvent) {
   await updateStats();
 }
 
-
 /* ---------- PART 4: FORMULAS SYSTEM ---------- */
 document.addEventListener("DOMContentLoaded", () => {
   const fClass   = document.getElementById("fClass");
   const fSubject = document.getElementById("fSubject");
   const fChapter = document.getElementById("fChapter");
   const fType    = document.getElementById("fType");
+  const fCategory= document.getElementById("fCategory");
 
   const formulaText  = document.getElementById("formulaText");
   const formulaFile  = document.getElementById("formulaFile");
@@ -345,8 +331,8 @@ document.addEventListener("DOMContentLoaded", () => {
   window.uploadFormula = async function () {
     if (statusBox) statusBox.innerText = "⏳ Uploading...";
 
-    if (!fClass.value || !fSubject.value || !fChapter.value || !fType.value) {
-      if (statusBox) statusBox.innerText = "❌ All fields required";
+    if (!fClass.value || !fSubject.value || !fChapter.value || !fType.value || !fCategory.value) {
+      if (statusBox) statusBox.innerText = "❌ All fields including category are required";
       return;
     }
 
@@ -363,8 +349,9 @@ document.addEventListener("DOMContentLoaded", () => {
       const file = formulaFile.files[0];
       if (!file) return alert("❌ Select File");
 
-      const ext = file.name.split(".").pop();
-      filePath = `formulas/${Date.now()}_${fClass.value}_${fSubject.value}.${ext}`;
+      // Clean file name without timestamp
+      const cleanFileName = file.name.replace(/\s+/g, '_');
+      filePath = `formulas/${fClass.value}_${fSubject.value}_${cleanFileName}`;
 
       const { error } = await window.supabaseClient.storage
         .from("admin-files")
@@ -382,6 +369,7 @@ document.addEventListener("DOMContentLoaded", () => {
       subject: fSubject.value,
       chapter: fChapter.value,
       type: fType.value,
+      category: fCategory.value,
       formula_text: formulaTextData,
       file_path: filePath,
       publish: publishCheck ? publishCheck.checked : true
@@ -396,7 +384,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (formulaText) formulaText.value = "";
     if (formulaFile) formulaFile.value = "";
     
-    // Instant Refresh & Stats Update
     await loadFormulas();
     await updateStats();
   };
@@ -412,12 +399,14 @@ document.addEventListener("DOMContentLoaded", () => {
       .select("*")
       .order("created_at", { ascending: false });
 
-    const fClassVal = document.getElementById("filterFClass")?.value;
-    const fSubVal   = document.getElementById("filterFSubject")?.value;
-    const search    = document.getElementById("searchFormula")?.value.toLowerCase().trim() || "";
+    const fClassVal  = document.getElementById("filterFClass")?.value;
+    const fSubVal    = document.getElementById("filterFSubject")?.value;
+    const fCatVal    = document.getElementById("filterFCategory")?.value;
+    const search     = document.getElementById("searchFormula")?.value.toLowerCase().trim() || "";
 
     if (fClassVal) query = query.eq("class", fClassVal);
     if (fSubVal) query = query.eq("subject", fSubVal);
+    if (fCatVal) query = query.eq("category", fCatVal);
 
     const { data, error } = await query;
 
@@ -442,10 +431,11 @@ document.addEventListener("DOMContentLoaded", () => {
     list.innerHTML = "";
     filtered.forEach(f => {
       const row = document.createElement("div");
+      row.style.cssText = "padding:10px; border-bottom:1px solid #2e4a73; display:flex; justify-content:space-between; align-items:center;";
       const icon = f.type === "text" ? "📝" : f.type === "pdf" ? "📄" : "🖼️";
       row.innerHTML = `
         <span>
-          ${icon} <b>Class ${f.class}</b> • ${f.subject.toUpperCase()} • ${f.chapter.toUpperCase()}
+          ${icon} <b>Class ${f.class}</b> • ${(f.subject || '').toUpperCase()} • ${(f.chapter || '').toUpperCase()} [${f.category || 'other'}]
           ${f.publish ? "🟢" : "🔒"}
         </span>
         <div>
@@ -498,6 +488,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("searchFormula")?.addEventListener("input", loadFormulas);
   document.getElementById("filterFClass")?.addEventListener("change", loadFormulas);
   document.getElementById("filterFSubject")?.addEventListener("change", loadFormulas);
+  document.getElementById("filterFCategory")?.addEventListener("change", loadFormulas);
 
   loadFiles();
   loadEvents();
@@ -505,7 +496,7 @@ document.addEventListener("DOMContentLoaded", () => {
   updateStats();
 });
 
-/* ---------- PART 5: DOUBTS & OVERLAY SYSTEM (WITH USER PHOTO, NAME & EMAIL) ---------- */
+/* ---------- PART 5: DOUBTS & OVERLAY SYSTEM ---------- */
 document.addEventListener("DOMContentLoaded", () => {
   const doubtBtn   = document.getElementById("doubtBtn");
   const doubtPanel = document.getElementById("doubtPanel");
