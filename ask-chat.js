@@ -1,5 +1,5 @@
 // =========================================================
-// ask-chat.js — FULLY UPDATED WITH ALL PAGES & CLASS ROUTER
+// ask-chat.js — FULLY UPDATED & REPLACEABLE (Profile Style Name Fallback & Fixed Viewer Name)
 // =========================================================
 (function () {
   // ---- PREVENT DOUBLE INITIALIZATION ----
@@ -28,14 +28,45 @@
     console.warn('ask-chat.js: Required DOM elements missing.');
   }
 
-  // ---- INITIALIZATION ----
+  // ---- INITIALIZATION & USER GREETING ----
   updateNotesCount();
-  addBotMsg("Hi 👋 — Main aapka Study Assistant hu! Aap koi bhi study question pooch sakte hain ya commands use kar sakte hain (e.g., 'classes', 'open pdf 9 chemistry ch3', 'formula class 10', 'calendar').");
+  initUserGreeting();
 
   sendBtn && sendBtn.addEventListener('click', onSend);
   input && input.addEventListener('keydown', (e) => { if (e.key === 'Enter') onSend(); });
 
   window.runCommand = (text) => { if (!input) return; input.value = text; onSend(); };
+
+  // ---- FETCH LOGGED-IN USER & SHOW PROFILE-STYLE WELCOME BACK ----
+  async function initUserGreeting() {
+    let displayName = "Student";
+    
+    try {
+      if (window.supabaseClient) {
+        const { data: { user } } = await window.supabaseClient.auth.getUser();
+        if (user) {
+          const { data: profile } = await window.supabaseClient
+            .from('profiles')
+            .select('full_name')
+            .eq('id', user.id)
+            .maybeSingle();
+
+          // Exactly like profile.js logic: Use full_name if available, else email prefix fallback
+          if (profile && profile.full_name && profile.full_name.trim() !== "") {
+            displayName = profile.full_name.trim();
+          } else if (user.email) {
+            displayName = user.email.split('@')[0];
+          }
+        }
+      }
+    } catch (err) {
+      console.warn("Could not fetch user session for greeting:", err);
+    }
+
+    const savedName = localStorage.getItem('userName') || displayName;
+    const welcomeMsg = `Hi ${savedName} 👋 — Main aapka Study Assistant hu! Aap koi bhi study question pooch sakte hain ya commands use kar sakte hain (e.g., 'classes', 'open pdf 9 chemistry ch3', 'formula class 10', 'calendar').`;
+    addBotMsg(welcomeMsg);
+  }
 
   // ---- UI HELPERS ----
   function addUserMsg(text) {
@@ -50,26 +81,13 @@
   // ---- CLEAN EXTRA SYMBOLS ($ & LATEX SYMBOLS FIX) ----
   function cleanAndFormatText(text) {
     if (!text) return "";
-    
-    // 1. Double Dollar ($$ ... $$) -> Bold block style
     text = text.replace(/\$\$\s*([\s\S]*?)\s*\$\$/g, '<b style="color: #60a5fa; display: inline-block; margin: 4px 0;">$1</b>');
-    
-    // 2. Single Dollar ($ ... $) -> Bold inline style
     text = text.replace(/\$\s*([^$]+?)\s*\$/g, '<b style="color: #38bdf8;">$1</b>');
-    
-    // 3. Bracket Delimiters \( ... \) -> Italic/Bold
     text = text.replace(/\\\(\s*([\s\S]*?)\s*\\\)/g, '<b style="color: #38bdf8;">$1</b>');
     text = text.replace(/\\\[\s*([\s\S]*?)\s*\\\]/g, '<b style="color: #60a5fa; display: inline-block;">$1</b>');
-    
-    // 4. Markdown Bold (**text**)
     text = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
-    
-    // 5. Markdown Italic (*text*)
     text = text.replace(/\*(.*?)\*/g, '<i>$1</i>');
-
-    // 6. New lines to line breaks
     text = text.replace(/\n/g, "<br>");
-    
     return text;
   }
 
@@ -133,7 +151,7 @@
       return;
     }
 
-    // 1. DIRECT CLASSES & COURSES DISPATCHER (Fixes the issue!)
+    // 1. DIRECT CLASSES & COURSES DISPATCHER
     if (cmd === 'classes' || cmd === 'class' || cmd === 'all classes' || cmd.includes('kaun si class') || cmd.includes('select class')) {
       addBotMsg(`
         <div style="border: 1px solid #38bdf8; padding: 10px; border-radius: 8px; background: #1e293b; margin-top: 5px;">
@@ -312,7 +330,7 @@
     window.location.href = viewer;
   }
 
-  // ---- SUPABASE FORMULA FETCH ----
+  // ---- SUPABASE FORMULA FETCH WITH FIXED VIEWER NAME & DETAILED LABELS ----
   async function fetchAndSuggestFormulas(queryText) {
     if (!window.supabaseClient) {
       addBotMsg('❌ Database client missing. Kripya Supabase connection check karein.');
@@ -340,16 +358,40 @@
 
     let html = '';
     if (formulaData && formulaData.length > 0) {
-      html += `<b>📐 Direct Formulas Found (${formulaData.length}):</b><br><br>`;
+      html += `<b>📐 Formulas Found (${formulaData.length}):</b><br><br>`;
       formulaData.forEach(f => {
-        html += `<div style="border: 1px solid #374151; padding: 10px; margin-bottom: 8px; border-radius: 8px; background: #1f2937;">`;
-        html += `<div style="font-size:11px; color:#9ca3af;"><b>CLASS ${f.class} • ${f.subject || ''}</b></div>`;
-        if (f.type === 'text') html += `<div style="color: #60a5fa; font-weight: 600;">📝 ${cleanAndFormatText(f.formula_text)}</div>`;
+        const subjectName = f.subject ? f.subject.toUpperCase() : 'GENERAL';
+        const className = f.class ? `CLASS ${f.class}` : '';
+        const chapterName = f.chapter ? `• Chapter ${f.chapter}` : '';
+        const subTitle = [className, subjectName, chapterName].filter(Boolean).join(' ');
+
+        // FIXED: Passing actual descriptive name (Class + Subject + Chapter / Text snippet) to viewer instead of hardcoded 'Formula'
+        const descriptiveName = [className, subjectName, chapterName].filter(Boolean).join(' ') || 'Formula';
+        const targetViewer = f.type === 'image' ? 'image-viewer.html' : 'notes-viewer.html';
+        const viewerUrl = `${targetViewer}?path=${encodeURIComponent(f.file_path || '')}&name=${encodeURIComponent(descriptiveName)}`;
+        
+        html += `<div style="border: 1px solid #374151; padding: 10px; margin-bottom: 8px; border-radius: 8px; background: #1f2937; cursor: pointer; transition: 0.2s;" onclick="window.location.href='${viewerUrl}'">`;
+        html += `<div style="font-size:11px; color:#38bdf8; font-weight: bold; margin-bottom: 4px;">📚 ${subTitle}</div>`;
+        
+        if (f.type === 'text') {
+          html += `<div style="color: #f3f4f6; font-size: 13px;">📝 ${cleanAndFormatText(f.formula_text)}</div>`;
+        } else {
+          html += `<div style="color: #f3f4f6; font-size: 13px;">📄 View Formula Document</div>`;
+        }
         html += `</div>`;
       });
     } else {
-      html += `<div style="text-align: center;">✨ Formula Abhi Upload Nahi Hua Hai ✨</div>`;
+      html += `<div style="text-align: center;">✨ Is query ke liye koi formula nahi mila ✨</div>`;
     }
+
+    html += `
+      <div style="margin-top: 10px; text-align: center;">
+        <a href="formulas.html" style="display: inline-block; background: #d97706; color: #fff; text-decoration: none; padding: 6px 12px; border-radius: 5px; font-weight: bold; font-size: 12px;">
+          📐 Open Full Formulas Page (formulas.html)
+        </a>
+      </div>
+    `;
+
     addBotMsg(html);
   }
 
