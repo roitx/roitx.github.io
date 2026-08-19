@@ -25,16 +25,14 @@ async function loginUser() {
       return;
     }
 
-    // Dynamic Redirect Logic
+    // Dynamic Redirect Logic (Admin check hata diya gaya hai)
     const redirectTarget = sessionStorage.getItem("redirect_after_login");
-    const isAdmin = await window.checkIsAdmin();
 
     if (redirectTarget) {
       sessionStorage.removeItem("redirect_after_login");
       window.location.href = redirectTarget;
-    } else if (isAdmin) {
-      window.location.href = window.getPageUrl("admin-panel.html");
     } else {
+      // Ab sabhi users login ke baad yahin aayenge
       window.location.href = window.getPageUrl("profile.html");
     }
 
