@@ -1,5 +1,5 @@
 /* =====================================================
-   ADMIN PANEL — COMPLETE UPDATED JS SYSTEM (NO TIMESTAMP)
+   ADMIN PANEL — COMPLETE & FULLY REPLACEABLE JS SYSTEM (WITH PROPER VIEWER TITLES)
    ===================================================== */
 
 /* ---------- PART 1: AUTH HELPERS & GLOBAL STATS ---------- */
@@ -61,7 +61,6 @@ async function uploadFile() {
   const chapterNumber = parseInt(chSelect.replace("ch", "")) || 1;
   const classNum = cls.replace("class", "");
   
-  // Clean file name (removes spaces) without adding timestamp
   const cleanFileName = file.name.replace(/\s+/g, '_');
   const fileName = `${classNum}_${sub}_ch${chapterNumber}_${cleanFileName}`;
   const filePath = `notes/${fileName}`;
@@ -147,10 +146,11 @@ async function loadFiles() {
     const row = document.createElement("div");
     row.style.cssText = "padding:10px; border-bottom:1px solid #2e4a73; display:flex; justify-content:space-between; align-items:center;";
     row.innerHTML = `
-      <span>📄 <b>Class ${note.class}</b> • ${(note.subject || '').toUpperCase()} • Ch ${note.chapter_number}: ${note.chapter_name}</span>
-      <div>
-        <button style="padding:6px 12px; font-size:12px;" onclick="openFile('${note.file_path}')">Open</button>
-        <button class="logout" style="padding:6px 12px; font-size:12px;" onclick="deleteNoteRecord('${note.id}', '${note.file_path}')">🗑</button>
+      <span>📄 <b>Class ${note.class}</b> • ${(note.subject || '').toUpperCase()} • Ch ${note.chapter_number}: ${note.chapter_name || 'No Name'}</span>
+      <div style="display:flex; gap:6px;">
+        <button style="padding:6px 10px; font-size:12px;" onclick="openFile('${note.file_path}', '${note.class}', '${note.subject}', '${note.chapter_name}')">Open</button>
+        <button style="padding:6px 10px; font-size:12px; background:#d97706; color:#fff; border:none; border-radius:4px; cursor:pointer;" onclick="updateNoteChapter('${note.id}', '${note.chapter_name || ''}')">✏️ Edit</button>
+        <button class="logout" style="padding:6px 10px; font-size:12px;" onclick="deleteNoteRecord('${note.id}', '${note.file_path}')">🗑</button>
       </div>
     `;
     list.appendChild(row);
@@ -159,13 +159,35 @@ async function loadFiles() {
   updateStats();
 }
 
-async function openFile(filePath) {
-  const fileName = filePath.split("/").pop();
-  window.location.href = `notes-viewer.html?path=${encodeURIComponent(filePath)}&name=${encodeURIComponent(fileName)}`;
+async function openFile(filePath, noteClass, noteSubject, noteChapterName) {
+  const className = noteClass ? `Class ${noteClass}` : '';
+  const subjectName = noteSubject ? noteSubject.toUpperCase() : '';
+  const chapterInfo = noteChapterName ? noteChapterName : '';
+
+  const descriptiveName = [className, subjectName, chapterInfo].filter(Boolean).join(' • ') || 'Notes Document';
+  window.location.href = `notes-viewer.html?path=${encodeURIComponent(filePath)}&name=${encodeURIComponent(descriptiveName)}`;
+}
+
+async function updateNoteChapter(id, currentName) {
+  const newName = prompt("Naya Chapter Name enter karein:", currentName);
+  if (!newName || newName.trim() === "") return;
+
+  const { error } = await window.supabaseClient
+    .from("notes")
+    .update({ chapter_name: newName.trim() })
+    .eq("id", id);
+
+  if (error) {
+    alert("❌ Update failed: " + error.message);
+    return;
+  }
+
+  alert("✅ Chapter name updated successfully!");
+  await loadFiles();
 }
 
 async function deleteNoteRecord(id, filePath) {
-  if (!confirm("Delete file and record?")) return;
+  if (!confirm("Kya aap is note ko database aur storage bucket dono se delete karna chahte hain?")) return;
   
   if (filePath) {
     await window.supabaseClient.storage.from("admin-files").remove([filePath]);
@@ -260,7 +282,7 @@ async function loadEvents() {
       ? `<span style="background:#00ffe4; color:#000; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold;">📢 ADMIN</span>`
       : `<span style="background:#7b6bff; color:#fff; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold;">👤 USER</span>`;
 
-    const actionBtnHtml = `<button class="logout" style="padding:4px 10px; font-size:12px;" onclick="deleteEvent('${ev.id}', ${isAdminEvent})">🗑 Delete</button>`;
+    const actionBtnHtml = `<button class="logout" style="padding:4px 10px; font-size:12px;" onclick="deleteEvent('${ev.id}')">🗑 Delete</button>`;
 
     row.innerHTML = `
       <div>
@@ -274,7 +296,7 @@ async function loadEvents() {
   updateStats();
 }
 
-async function deleteEvent(id, isAdminEvent) {
+async function deleteEvent(id) {
   if (!confirm("Delete this event?")) return;
 
   const { error } = await window.supabaseClient.from("events").delete().eq("id", id);
@@ -289,11 +311,12 @@ async function deleteEvent(id, isAdminEvent) {
 
 /* ---------- PART 4: FORMULAS SYSTEM ---------- */
 document.addEventListener("DOMContentLoaded", () => {
-  const fClass   = document.getElementById("fClass");
-  const fSubject = document.getElementById("fSubject");
-  const fChapter = document.getElementById("fChapter");
-  const fType    = document.getElementById("fType");
-  const fCategory= document.getElementById("fCategory");
+  const fClass       = document.getElementById("fClass");
+  const fSubject     = document.getElementById("fSubject");
+  const fChapter     = document.getElementById("fChapter");
+  const fChapterName = document.getElementById("fChapterNameInput");
+  const fType        = document.getElementById("fType");
+  const fCategory    = document.getElementById("fCategory");
 
   const formulaText  = document.getElementById("formulaText");
   const formulaFile  = document.getElementById("formulaFile");
@@ -331,8 +354,8 @@ document.addEventListener("DOMContentLoaded", () => {
   window.uploadFormula = async function () {
     if (statusBox) statusBox.innerText = "⏳ Uploading...";
 
-    if (!fClass.value || !fSubject.value || !fChapter.value || !fType.value || !fCategory.value) {
-      if (statusBox) statusBox.innerText = "❌ All fields including category are required";
+    if (!fClass.value || !fSubject.value || !fChapter.value || !fChapterName?.value.trim() || !fType.value || !fCategory.value) {
+      if (statusBox) statusBox.innerText = "❌ All fields including Chapter Name & Category are required";
       return;
     }
 
@@ -342,6 +365,8 @@ document.addEventListener("DOMContentLoaded", () => {
     let formulaTextData = null;
     let filePath = null;
 
+    const chapterNum = parseInt(fChapter.value.replace("ch", "")) || 1;
+
     if (fType.value === "text") {
       if (!formulaText.value.trim()) return alert("❌ Enter Formula Text");
       formulaTextData = formulaText.value.trim();
@@ -349,9 +374,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const file = formulaFile.files[0];
       if (!file) return alert("❌ Select File");
 
-      // Clean file name without timestamp
       const cleanFileName = file.name.replace(/\s+/g, '_');
-      filePath = `formulas/${fClass.value}_${fSubject.value}_${cleanFileName}`;
+      filePath = `formulas/${fClass.value}_${fSubject.value}_ch${chapterNum}_${cleanFileName}`;
 
       const { error } = await window.supabaseClient.storage
         .from("admin-files")
@@ -368,6 +392,8 @@ document.addEventListener("DOMContentLoaded", () => {
       class: fClass.value,
       subject: fSubject.value,
       chapter: fChapter.value,
+      chapter_number: chapterNum,
+      chapter_name: fChapterName.value.trim(),
       type: fType.value,
       category: fCategory.value,
       formula_text: formulaTextData,
@@ -376,13 +402,14 @@ document.addEventListener("DOMContentLoaded", () => {
     }]);
 
     if (error) {
-      if (statusBox) statusBox.innerText = "❌ DB Error";
+      if (statusBox) statusBox.innerText = "❌ DB Error: " + error.message;
       return;
     }
 
-    if (statusBox) statusBox.innerText = "✅ Formula uploaded";
+    if (statusBox) statusBox.innerText = "✅ Formula uploaded successfully!";
     if (formulaText) formulaText.value = "";
     if (formulaFile) formulaFile.value = "";
+    if (fChapterName) fChapterName.value = "";
     
     await loadFormulas();
     await updateStats();
@@ -418,8 +445,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const filtered = data.filter(f => {
       const text = (f.formula_text || "").toLowerCase();
+      const chName = (f.chapter_name || "").toLowerCase();
       const ch   = (f.chapter || "").toLowerCase();
-      return text.includes(search) || ch.includes(search);
+      return text.includes(search) || chName.includes(search) || ch.includes(search);
     });
 
     if (filtered.length === 0) {
@@ -433,14 +461,17 @@ document.addEventListener("DOMContentLoaded", () => {
       const row = document.createElement("div");
       row.style.cssText = "padding:10px; border-bottom:1px solid #2e4a73; display:flex; justify-content:space-between; align-items:center;";
       const icon = f.type === "text" ? "📝" : f.type === "pdf" ? "📄" : "🖼️";
+      const displayCh = f.chapter_name ? `${f.chapter_name}` : (f.chapter || '');
+      
       row.innerHTML = `
         <span>
-          ${icon} <b>Class ${f.class}</b> • ${(f.subject || '').toUpperCase()} • ${(f.chapter || '').toUpperCase()} [${f.category || 'other'}]
+          ${icon} <b>Class ${f.class}</b> • ${(f.subject || '').toUpperCase()} • ${displayCh} [${f.category || 'other'}]
           ${f.publish ? "🟢" : "🔒"}
         </span>
-        <div>
-          <button style="padding:6px 12px; font-size:12px;" onclick="viewFormula('${f.id}')">View</button>
-          <button style="padding:6px 12px; font-size:12px;" class="logout" onclick="deleteFormula('${f.id}','${f.file_path || ""}')">🗑</button>
+        <div style="display:flex; gap:6px;">
+          <button style="padding:6px 10px; font-size:12px;" onclick="viewFormula('${f.id}')">View</button>
+          <button style="padding:6px 10px; font-size:12px; background:#d97706; color:#fff; border:none; border-radius:4px; cursor:pointer;" onclick="updateFormulaChapter('${f.id}', '${f.chapter_name || ''}')">✏️ Edit</button>
+          <button style="padding:6px 10px; font-size:12px;" class="logout" onclick="deleteFormula('${f.id}','${f.file_path || ""}')">🗑</button>
         </div>
       `;
       list.appendChild(row);
@@ -455,23 +486,48 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (data.type === "text") {
       alert("Formula Text:\n\n" + data.formula_text);
-    } else if (data.type === "image") {
-      const name = data.file_path.split("/").pop();
-      window.open(`image-viewer.html?path=${encodeURIComponent(data.file_path)}&name=${encodeURIComponent(name)}`, "_blank");
-    } else if (data.type === "pdf") {
-      const name = data.file_path.split("/").pop();
-      window.open(`notes-viewer.html?path=${encodeURIComponent(data.file_path)}&name=${encodeURIComponent(name)}`, "_blank");
+    } else {
+      const className = data.class ? `Class ${data.class}` : '';
+      const subjectName = data.subject ? data.subject.toUpperCase() : '';
+      const chapterInfo = data.chapter_name ? data.chapter_name : (data.chapter || '');
+      const descriptiveName = [className, subjectName, chapterInfo].filter(Boolean).join(' • ') || 'Formula Document';
+
+      const targetViewer = data.type === "image" ? "image-viewer.html" : "notes-viewer.html";
+      window.open(`${targetViewer}?path=${encodeURIComponent(data.file_path)}&name=${encodeURIComponent(descriptiveName)}`, "_blank");
     }
   };
 
-  window.deleteFormula = async function (id, filePath) {
-    if (!confirm("Delete formula?")) return;
-    if (filePath) await window.supabaseClient.storage.from("admin-files").remove([filePath]);
-    const { error } = await window.supabaseClient.from("formulas").delete().eq("id", id);
+  window.updateFormulaChapter = async function (id, currentName) {
+    const newName = prompt("Naya Chapter Name enter karein:", currentName);
+    if (!newName || newName.trim() === "") return;
+
+    const { error } = await window.supabaseClient
+      .from("formulas")
+      .update({ chapter_name: newName.trim() })
+      .eq("id", id);
+
     if (error) {
-      alert("❌ Delete failed");
+      alert("❌ Update failed: " + error.message);
       return;
     }
+
+    alert("✅ Formula chapter name updated successfully!");
+    await loadFormulas();
+  };
+
+  window.deleteFormula = async function (id, filePath) {
+    if (!confirm("Kya aap is formula ko database aur storage bucket dono se delete karna chahte hain?")) return;
+    
+    if (filePath && !filePath.startsWith("http")) {
+      await window.supabaseClient.storage.from("admin-files").remove([filePath]);
+    }
+    
+    const { error } = await window.supabaseClient.from("formulas").delete().eq("id", id);
+    if (error) {
+      alert("❌ Delete failed: " + error.message);
+      return;
+    }
+
     await loadFormulas();
     await updateStats();
   };
@@ -549,121 +605,11 @@ document.addEventListener("DOMContentLoaded", () => {
         <div style="padding:8px; border-bottom:1px solid #2f4d77; font-size:13px; display:flex; align-items:flex-start;">
           <div>${userPhotoHtml}</div>
           <div style="flex:1; overflow:hidden;">
-            <div style="font-weight:bold; color:#3aa0ff; font-size:12px;">${d.user_name || 'Anonymous'}</div>
-            <div style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"><b>❓ ${d.question}</b></div>
-            <span style="font-size:11px;">${d.status === "solved" ? "🟢 Solved" : "🟡 Pending"}</span>
+            <div style="font-weight:bold; color:#3aa0ff; font-size:12px;">${d.user_name || 'Student'}</div>
+            <div style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#cbd5e1;">${d.question_text || 'Image doubt'}</div>
           </div>
         </div>
       `;
     });
   }
-
-  const viewAllBtn  = document.getElementById("viewAllDoubts");
-  const overlay     = document.getElementById("doubtOverlay");
-  const closeBtn    = document.getElementById("closeDoubt");
-  const overlayList = document.getElementById("doubtOverlayList");
-
-  viewAllBtn?.addEventListener("click", () => {
-    if (overlay) overlay.style.display = "flex";
-    loadAllDoubts();
-  });
-
-  closeBtn?.addEventListener("click", () => {
-    if (overlay) overlay.style.display = "none";
-  });
-
-  async function loadAllDoubts() {
-    if (!overlayList) return;
-    overlayList.innerHTML = "⏳ Loading doubts...";
-
-    const { data, error } = await window.supabaseClient
-      .from("doubts")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (error || !data) {
-      overlayList.innerHTML = "❌ Failed to load";
-      return;
-    }
-
-    overlayList.innerHTML = "";
-    data.forEach(d => {
-      const userPhotoHtml = d.user_photo 
-        ? `<img src="${d.user_photo}" style="width:38px; height:38px; border-radius:50%; object-fit:cover; margin-right:10px;">` 
-        : `<div style="width:38px; height:38px; border-radius:50%; background:#1f3554; display:flex; align-items:center; justify-content:center; margin-right:10px; font-weight:bold; font-size:16px;">${(d.user_name || 'U').charAt(0).toUpperCase()}</div>`;
-
-      overlayList.innerHTML += `
-        <div class="admin-doubt-card" style="background:#15263c; border:1px solid #2e4a73; padding:14px; border-radius:10px; margin-bottom:12px;">
-          <div style="display:flex; align-items:center; margin-bottom:10px; border-bottom:1px solid #2e4a73; padding-bottom:8px;">
-            ${userPhotoHtml}
-            <div>
-              <div style="font-weight:bold; font-size:14px; color:#e9f2ff;">${d.user_name || 'Anonymous User'}</div>
-              <div style="font-size:12px; color:#94a3b8;">📧 ${d.user_email || 'No Email'} • 🕒 ${new Date(d.created_at).toLocaleString()}</div>
-            </div>
-          </div>
-          
-          <p style="margin:6px 0 10px 0; color:#e9f2ff; font-size:14px;"><b>❓ Question:</b> ${d.question}</p>
-          
-          ${d.status === "solved" ? `
-            <div style="margin:8px 0; font-size:13px; color:#4ade80; background:#0e1a2a; padding:8px; border-radius:6px;">
-              <b>Answer:</b><br>${d.answer ? d.answer.replace(/\n/g,"<br>") : ''}
-            </div>
-            <div class="admin-actions">
-              <button class="delete" onclick="deleteDoubt('${d.id}')">🗑 Delete</button>
-            </div>
-          ` : `
-            <input id="greet_${d.id}" type="text" placeholder="Greeting message (optional)..." style="width:100%; padding:8px; margin-bottom:6px; background:#1f3554; border:1px solid #2e4a73; color:white; border-radius:6px; box-sizing:border-box;">
-            <textarea id="ans_${d.id}" placeholder="Type solution/answer here..." style="width:100%; padding:8px; margin-bottom:6px; background:#1f3554; border:1px solid #2e4a73; color:white; border-radius:6px; resize:vertical; box-sizing:border-box; height:60px;"></textarea>
-            <div class="admin-actions">
-              <button class="publish" onclick="publishAnswer('${d.id}')">✅ Publish Answer</button>
-              <button class="delete" onclick="deleteDoubt('${d.id}')">🗑 Delete</button>
-            </div>
-          `}
-        </div>
-      `;
-    });
-  }
-
-  window.loadAllDoubts = loadAllDoubts;
-  window.loadMiniDoubts = loadMiniDoubts;
-
-  window.publishAnswer = async function (id) {
-    const ansEl = document.getElementById("ans_" + id);
-    const greetEl = document.getElementById("greet_" + id);
-
-    if (!ansEl || !ansEl.value.trim()) {
-      alert("Type an answer first!");
-      return;
-    }
-
-    const finalAnswer = (greetEl && greetEl.value.trim() ? greetEl.value.trim() + "\n\n" : "") + ansEl.value.trim();
-
-    const { error } = await window.supabaseClient
-      .from("doubts")
-      .update({ answer: finalAnswer, status: "solved" })
-      .eq("id", id);
-
-    if (error) return alert("❌ Publish failed");
-
-    loadAllDoubts();
-    loadMiniDoubts();
-  };
-
-  window.deleteDoubt = async function (id) {
-    if (!confirm("Delete this doubt?")) return;
-    const { error } = await window.supabaseClient.from("doubts").delete().eq("id", id);
-    if (error) return alert("❌ Delete failed");
-
-    loadAllDoubts();
-    loadMiniDoubts();
-  };
-
-  loadMiniDoubts();
-});
-
-/* ---------- INITIAL SETUP ---------- */
-document.addEventListener("DOMContentLoaded", () => {
-  const d = document.getElementById("eventDate");
-  if (d) d.value = new Date().toISOString().split("T")[0];
-  updateStats();
 });

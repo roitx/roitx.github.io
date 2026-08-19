@@ -1,4 +1,4 @@
-// site.js - shared helpers & notes loader system
+// site.js - shared helpers & notes loader system (Fully Updated with Proper Title Format)
 
 function goto(page) { 
   window.location.href = page; 
@@ -86,25 +86,30 @@ async function openSubject(subjectName) {
       return;
     }
 
-    // 4. Agar Notes mil gaye -> Container me Display Karein (Exact same format as loadPdf)
+    // 4. Agar Notes mil gaye -> Container me Display Karein
     const container = document.getElementById("notesContainer");
     if (container) {
       container.innerHTML = `<h3 style="color:#3aa0ff; margin-top:20px; margin-bottom: 15px;">📄 ${subjectName.toUpperCase()} Chapters</h3>`;
       
       notes.forEach(note => {
-        // Filename aur fullPath construct karein bilkul loadPdf ki tarah
         const finalFileName = `${note.file_name || (CURRENT_CLASS + '_' + subjectName + '_' + note.chapter_number + '.pdf')}`;
         const fullPath = note.file_path ? note.file_path : `notes/${finalFileName}`;
-        const displayName = note.chapter_name || `Chapter ${note.chapter_number}`;
+        
+        // Proper Descriptive Name banana (Class, Subject, Chapter Name)
+        const className = `Class ${CURRENT_CLASS}`;
+        const subName = subjectName.toUpperCase();
+        const chapterTitle = note.chapter_name ? `Chapter ${note.chapter_number}: ${note.chapter_name}` : `Chapter ${note.chapter_number}`;
+        
+        const descriptiveName = [className, subName, chapterTitle].filter(Boolean).join(' • ');
 
         const row = document.createElement("div");
         row.style.cssText = "margin-bottom:12px; padding:14px 18px; background:#1f3554; border-radius:10px; display:flex; justify-content:space-between; align-items:center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);";
         row.innerHTML = `
           <div>
             <span style="font-size:11px; background:#3aa0ff; color:#081226; padding:3px 8px; border-radius:4px; font-weight:bold; text-transform:uppercase;">Chapter ${note.chapter_number}</span>
-            <h4 style="margin:8px 0 0 0; color:#fff; font-size: 16px;">${displayName}</h4>
+            <h4 style="margin:8px 0 0 0; color:#fff; font-size: 16px;">${note.chapter_name || ('Chapter ' + note.chapter_number)}</h4>
           </div>
-          <button class="btn" style="padding:8px 16px; cursor:pointer;" onclick="openCustomViewer('${fullPath}', '${finalFileName}')">📖 Read</button>
+          <button class="btn" style="padding:8px 16px; cursor:pointer;" onclick="openCustomViewer('${fullPath}', '${encodeURIComponent(descriptiveName)}')">📖 Read</button>
         `;
         container.appendChild(row);
       });
@@ -120,8 +125,9 @@ async function openSubject(subjectName) {
   }
 }
 
-// Helper function to handle viewer redirection identically to loadPdf
-function openCustomViewer(fullPath, finalFileName) {
-  const viewerUrl = 'notes-viewer.html?path=' + encodeURIComponent(fullPath) + '&name=' + encodeURIComponent(finalFileName);
+// Helper function to handle viewer redirection with clean descriptive name
+function openCustomViewer(fullPath, encodedName) {
+  const decodedName = decodeURIComponent(encodedName);
+  const viewerUrl = 'notes-viewer.html?path=' + encodeURIComponent(fullPath) + '&name=' + encodeURIComponent(decodedName);
   window.location.href = viewerUrl;
 }

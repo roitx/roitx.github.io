@@ -1,7 +1,10 @@
+// =========================================================
+// formulas.js — FULLY UPDATED & CLEAN TITLE FORMATTING
+// =========================================================
 const fClass = document.getElementById("fClass");
 const fSubject = document.getElementById("fSubject");
 const fChapter = document.getElementById("fChapter");
-const fCategory = document.getElementById("fCategory"); // 🌟 नया कैटेगरी एलिमेंट
+const fCategory = document.getElementById("fCategory"); 
 const formulaList = document.getElementById("formulaList");
 
 async function loadFormulas() {
@@ -18,7 +21,7 @@ async function loadFormulas() {
   if (fClass && fClass.value) query = query.eq("class", fClass.value);
   if (fSubject && fSubject.value) query = query.eq("subject", fSubject.value);
   if (fChapter && fChapter.value) query = query.eq("chapter", fChapter.value);
-  if (fCategory && fCategory.value) query = query.eq("category", fCategory.value); // 🌟 कैटेगरी फ़िल्टर क्वेरी
+  if (fCategory && fCategory.value) query = query.eq("category", fCategory.value);
 
   const { data, error } = await query;
 
@@ -39,6 +42,19 @@ async function loadFormulas() {
     const card = document.createElement("div");
     card.className = "formula-card";
 
+    // Clean & Proper Descriptive Name for Viewer (Faltu text hata kar)
+    const className = f.class ? `Class ${f.class}` : '';
+    const subjectName = f.subject ? f.subject.toUpperCase() : '';
+    
+    let chapterInfo = '';
+    if (f.chapter_name) {
+      chapterInfo = f.chapter_name;
+    } else if (f.chapter) {
+      chapterInfo = f.chapter.replace('ch', 'Chapter ');
+    }
+
+    const descriptiveName = [className, subjectName, chapterInfo].filter(Boolean).join(' • ') || 'Formula Document';
+
     let content = "";
 
     // 1. TEXT FORMULA
@@ -53,32 +69,29 @@ async function loadFormulas() {
 
     // 2. IMAGE FORMULA
     if (f.type === "image") {
-      const fileName = f.file_path.split("/").pop();
-      const viewerUrl = `image-viewer.html?path=${encodeURIComponent(f.file_path)}&name=${encodeURIComponent(fileName)}`;
+      const viewerUrl = `image-viewer.html?path=${encodeURIComponent(f.file_path)}&name=${encodeURIComponent(descriptiveName)}`;
 
       content = `
         <div class="formula-media-box" onclick="window.location.href='${viewerUrl}'">
-          🖼️ <span>View Image Formula</span>
+          🖼️ <span>View Image Formula (${descriptiveName})</span>
         </div>`;
     }
 
     // 3. PDF FORMULA
     if (f.type === "pdf") {
-      const fileName = f.file_path.split("/").pop();
-      const viewerUrl = `notes-viewer.html?path=${encodeURIComponent(f.file_path)}&name=${encodeURIComponent(fileName)}`;
+      const viewerUrl = `notes-viewer.html?path=${encodeURIComponent(f.file_path)}&name=${encodeURIComponent(descriptiveName)}`;
 
       content = `
         <button class="pdf-btn" onclick="window.location.href='${viewerUrl}'">
-          📄 Open PDF Formula
+          📄 Open PDF Formula (${descriptiveName})
         </button>`;
     }
 
-    // कैटेगरी का लेबल सुंदर दिखने के लिए (उदा: mind_map -> MIND MAP)
     const categoryBadge = f.category ? ` • [${f.category.replace('_', ' ').toUpperCase()}]` : '';
 
     card.innerHTML = `
       <div class="formula-head">
-        Class ${f.class} • ${f.subject.toUpperCase()} • ${f.chapter.toUpperCase()}${categoryBadge}
+        ${className} • ${subjectName} • ${chapterInfo.toUpperCase()}${categoryBadge}
       </div>
       ${content}
     `;
@@ -103,7 +116,7 @@ function closeTextViewer() {
   if (modal) modal.style.display = "none";
 }
 
-// 🌟 Event Listeners ताकि ड्रॉपडाउन बदलते ही लिस्ट अपने आप फ़िल्टर हो जाए
+// Event Listeners
 if (fClass) fClass.addEventListener("change", loadFormulas);
 if (fSubject) fSubject.addEventListener("change", loadFormulas);
 if (fChapter) fChapter.addEventListener("change", loadFormulas);

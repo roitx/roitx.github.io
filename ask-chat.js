@@ -1,5 +1,5 @@
 // =========================================================
-// ask-chat.js — FULLY UPDATED & REPLACEABLE (Profile Style Name Fallback & Fixed Viewer Name)
+// ask-chat.js — FULLY UPDATED & ERROR-FREE (Supabase Dynamic Notes & Fixed Download)
 // =========================================================
 (function () {
   // ---- PREVENT DOUBLE INITIALIZATION ----
@@ -51,7 +51,6 @@
             .eq('id', user.id)
             .maybeSingle();
 
-          // Exactly like profile.js logic: Use full_name if available, else email prefix fallback
           if (profile && profile.full_name && profile.full_name.trim() !== "") {
             displayName = profile.full_name.trim();
           } else if (user.email) {
@@ -78,7 +77,6 @@
     chatWindow.scrollTop = chatWindow.scrollHeight;
   }
 
-  // ---- CLEAN EXTRA SYMBOLS ($ & LATEX SYMBOLS FIX) ----
   function cleanAndFormatText(text) {
     if (!text) return "";
     text = text.replace(/\$\$\s*([\s\S]*?)\s*\$\$/g, '<b style="color: #60a5fa; display: inline-block; margin: 4px 0;">$1</b>');
@@ -119,7 +117,6 @@
     return el;
   }
 
-  // ---- MAIN SEND HANDLER ----
   function onSend() {
     if (!input) return;
     const raw = input.value.trim();
@@ -135,7 +132,6 @@
   async function handleCommand(raw) {
     const cmd = normalize(raw);
 
-    // 0. CREATOR / DEVELOPER QUERY HANDLER
     if (cmd.includes('kiske dwara') || cmd.includes('kisne banaya') || cmd.includes('who made') || cmd.includes('who created') || cmd.includes('developer') || cmd.includes('creator') || cmd.includes('owner') || cmd === 'rohit' || cmd.includes('rohit kaun')) {
       addBotMsg(`
         <div style="border: 1px solid #38bdf8; padding: 10px; border-radius: 8px; background: rgba(56, 189, 248, 0.08); margin-top: 5px;">
@@ -151,7 +147,6 @@
       return;
     }
 
-    // 1. DIRECT CLASSES & COURSES DISPATCHER
     if (cmd === 'classes' || cmd === 'class' || cmd === 'all classes' || cmd.includes('kaun si class') || cmd.includes('select class')) {
       addBotMsg(`
         <div style="border: 1px solid #38bdf8; padding: 10px; border-radius: 8px; background: #1e293b; margin-top: 5px;">
@@ -168,7 +163,6 @@
       return;
     }
 
-    // 2. FEEDBACK QUERY HANDLER
     if (cmd.includes('feedback') || cmd.includes('sujhav') || cmd.includes('review') || cmd.includes('kisi ko batana')) {
       addBotMsg(`
         <div style="border: 1px solid #06b6d4; padding: 10px; border-radius: 8px; background: rgba(6,182,212,0.05); margin-top: 5px;">
@@ -182,7 +176,6 @@
       return;
     }
 
-    // 3. DOUBT SOLVER REDIRECT
     if (cmd.includes('doubt') || cmd.includes('solve') || cmd.includes('samajh') || cmd.includes('question')) {
       addBotMsg(`
         <div style="border: 1px solid #8b5cf6; padding: 10px; border-radius: 8px; background: #1e1b4b; margin-top: 5px;">
@@ -193,7 +186,7 @@
       return;
     }
 
-    // 4. OPEN PDF COMMAND MATCHING
+    // 4. OPEN PDF FROM SUPABASE (DYNAMIC CHAPTER & SUBJECT FETCH)
     if (/^open\s+pdf/i.test(raw) || cmd.startsWith('open pdf') || cmd.startsWith('pdf ')) {
       let arg = raw
         .replace(/^open\s*pdf\s*/i, '')
@@ -201,7 +194,7 @@
         .replace(/\s*pdf$/i, '')
         .replace(/^open\s*/i, '')
         .trim();
-      doOpenPDF(arg);
+      await doOpenPDFFromSupabase(arg);
       return;
     }
 
@@ -211,7 +204,6 @@
       return;
     }
 
-    // 6. NOTES & PREMIUM NOTES SEARCH
     if (cmd.includes('notes') || cmd.includes('note pdf') || cmd.includes('premium')) {
       addBotMsg(`
         <div style="border: 1px solid #00d2ff; padding: 10px; border-radius: 8px; background: rgba(0,210,255,0.05); margin-top: 5px;">
@@ -222,7 +214,6 @@
       return;
     }
 
-    // 7. GENERAL CLASS & SUBJECT SEARCH
     const isGeneralClassQuery = /\b(9|10|11|12)\b/.test(cmd) && 
                                 (cmd.includes('phy') || cmd.includes('physics') || 
                                  cmd.includes('math') || cmd.includes('maths') || 
@@ -239,7 +230,6 @@
       return;
     }
 
-    // 8. OPEN LINK / URL
     if (cmd.startsWith('open link') || /^open\s+https?:\/\//i.test(raw)) {
       const url = raw.replace(/^open(link)?\s*/i, '').trim();
       if (isValidUrl(url)) {
@@ -251,19 +241,6 @@
       return;
     }
 
-    // 9. CALENDAR
-    if (cmd === 'calendar' || cmd.includes('calendar')) {
-      showCalendarModal();
-      addBotMsg(`
-        <div style="border: 1px solid rgba(255,255,255,0.12); padding: 8px 10px; border-radius: 8px; background: #1e293b;">
-          <div style="font-size: 12px; color: #38bdf8; margin-bottom: 6px;">📅 Calendar Modal Opened Successfully!</div>
-          <a href="calendar.html" style="background: #0284c7; color: #fff; text-decoration: none; padding: 5px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; display: inline-block;">🌐 Open Calendar Page</a>
-        </div>
-      `);
-      return;
-    }
-
-    // 10. NOTES MANAGEMENT
     if (cmd === 'show notes' || cmd === 'view notes') { showNotesModal(); return; }
     if (cmd === 'download notes' || cmd === 'export notes') { downloadNotesFile(); return; }
 
@@ -273,11 +250,9 @@
       saveNote(note); addBotMsg('Note saved ✔'); return;
     }
 
-    // DEFAULT: GROQ AI AGENT CALL
     await askGroqAI(raw);
   }
 
-  // ---- HELPER: GENERAL SUGGESTION MENU ----
   function showGeneralSuggestionMenu(rawQuery) {
     const clean = rawQuery.toLowerCase();
     const classMatch = clean.match(/(?:class\s*|c\s*|\b)(9|10|11|12)\b/i);
@@ -311,26 +286,96 @@
     addBotMsg(html);
   }
 
-  // ---- SMART OPEN PDF HANDLER ----
-  function doOpenPDF(arg) {
+  // ---- SMART OPEN PDF HANDLER (EXACTLY LIKE FORMULAS: CLASS, SUBJECT & CHAPTER NAME) ----
+  async function doOpenPDFFromSupabase(arg) {
     if (!arg) { 
-      addBotMsg('Kripya PDF ka naam ya details likhein, jaise: <b>open pdf 9 chemistry ch3</b>'); 
+      addBotMsg('Kripya PDF ka naam ya details likhein, jaise: <b>open pdf 10 math polynomial</b>'); 
       return; 
     }
     if (isValidUrl(arg)) { window.open(arg, '_blank'); return; }
 
-    let clean = arg.replace(/\.pdf$/i, '').trim().toLowerCase()
-      .replace(/class\s*/g, '').replace(/chapter\s*/g, 'ch').replace(/chap\s*/g, 'ch').replace(/[\s\-\.]+/g, '_').replace(/_+/g, '_');
+    if (!window.supabaseClient) {
+      addBotMsg('❌ Database client missing.');
+      return;
+    }
 
-    const finalFileName = `${clean}.pdf`;
-    const fullPath = `notes/${finalFileName}`;
-    const viewer = 'notes-viewer.html?path=' + encodeURIComponent(fullPath) + '&name=' + encodeURIComponent(finalFileName);
+    const typing = showTyping();
+    const cleanQuery = arg.toLowerCase();
 
-    addBotMsg(`Opening PDF: <b>${finalFileName}</b>...`);
+    const classMatch = cleanQuery.match(/(?:class\s*|c\s*|\b)(9|10|11|12)\b/i);
+    const targetClass = classMatch ? classMatch[1] : null;
+
+    let targetSubject = null;
+    let subDisplay = '';
+    if (cleanQuery.includes('phy')) { targetSubject = 'physics'; subDisplay = 'Physics'; }
+    else if (cleanQuery.includes('chem')) { targetSubject = 'chemistry'; subDisplay = 'Chemistry'; }
+    else if (cleanQuery.includes('math')) { targetSubject = 'maths'; subDisplay = 'Maths'; }
+    else if (cleanQuery.includes('bio')) { targetSubject = 'biology'; subDisplay = 'Biology'; }
+    else if (cleanQuery.includes('hindi')) { targetSubject = 'hindi'; subDisplay = 'Hindi'; }
+    else if (cleanQuery.includes('eng')) { targetSubject = 'english'; subDisplay = 'English'; }
+
+    const chapNumMatch = cleanQuery.match(/(?:chapter\s*|chap\s*|ch\s*)(\d+)/i);
+    const targetChapNum = chapNumMatch ? parseInt(chapNumMatch[1]) : null;
+
+    let query = window.supabaseClient.from('notes').select('*');
+    if (targetClass) query = query.eq('class', targetClass);
+    if (targetSubject) query = query.ilike('subject', `%${targetSubject}%`);
+    if (targetChapNum) query = query.eq('chapter_number', targetChapNum);
+
+    const { data: notesData, error } = await query;
+    typing && typing.remove();
+
+    if (error) {
+      addBotMsg('❌ Notes fetch karne me error aaya.');
+      return;
+    }
+
+    let descriptiveName = '';
+    let filePath = '';
+
+    if (notesData && notesData.length > 0) {
+      const matchNote = notesData[0];
+      filePath = matchNote.file_path || matchNote.file_url || '';
+      
+      const className = matchNote.class ? `Class ${matchNote.class}` : '';
+      const subjectName = matchNote.subject ? matchNote.subject.toUpperCase() : '';
+      
+      let chapterInfo = '';
+      if (matchNote.chapter_name) {
+        chapterInfo = matchNote.chapter_number ? `Chapter ${matchNote.chapter_number}: ${matchNote.chapter_name}` : matchNote.chapter_name;
+      } else if (matchNote.chapter_number) {
+        chapterInfo = `Chapter ${matchNote.chapter_number}`;
+      }
+
+      descriptiveName = [className, subjectName, chapterInfo].filter(Boolean).join(' ');
+    }
+
+    if (!descriptiveName) {
+      let cFormatted = targetClass ? `Class ${targetClass}` : '';
+      let sFormatted = subDisplay;
+      let chFormatted = targetChapNum ? `Chapter ${targetChapNum}` : '';
+      
+      let rawTextName = arg.replace(/class\s*\d+/gi, '').replace(/physics|chemistry|maths|biology|hindi|english/gi, '').replace(/ch\s*\d+/gi, '').trim();
+      if (rawTextName) {
+        chFormatted = rawTextName.charAt(0).toUpperCase() + rawTextName.slice(1);
+      }
+
+      descriptiveName = [cFormatted, sFormatted, chFormatted].filter(Boolean).join(' ') || arg;
+    }
+
+    if (!filePath) {
+      let clean = arg.replace(/\.pdf$/i, '').trim().toLowerCase()
+        .replace(/class\s*/g, '').replace(/chapter\s*/g, 'ch').replace(/chap\s*/g, 'ch').replace(/[\s\-\.]+/g, '_').replace(/_+/g, '_');
+      filePath = `notes/${clean}.pdf`;
+    }
+
+    const viewer = 'notes-viewer.html?path=' + encodeURIComponent(filePath) + '&name=' + encodeURIComponent(descriptiveName);
+
+    addBotMsg(`Opening PDF: <b>${descriptiveName}</b>...`);
     window.location.href = viewer;
   }
 
-  // ---- SUPABASE FORMULA FETCH WITH FIXED VIEWER NAME & DETAILED LABELS ----
+  // ---- SUPABASE FORMULA FETCH WITH DYNAMIC CHAPTER NAME ----
   async function fetchAndSuggestFormulas(queryText) {
     if (!window.supabaseClient) {
       addBotMsg('❌ Database client missing. Kripya Supabase connection check karein.');
@@ -361,11 +406,10 @@
       html += `<b>📐 Formulas Found (${formulaData.length}):</b><br><br>`;
       formulaData.forEach(f => {
         const subjectName = f.subject ? f.subject.toUpperCase() : 'GENERAL';
-        const className = f.class ? `CLASS ${f.class}` : '';
-        const chapterName = f.chapter ? `• Chapter ${f.chapter}` : '';
+        const className = f.class ? `Class ${f.class}` : '';
+        const chapterName = f.chapter_name ? `• ${f.chapter_name}` : (f.chapter_number ? `• Chapter ${f.chapter_number}` : '');
         const subTitle = [className, subjectName, chapterName].filter(Boolean).join(' ');
 
-        // FIXED: Passing actual descriptive name (Class + Subject + Chapter / Text snippet) to viewer instead of hardcoded 'Formula'
         const descriptiveName = [className, subjectName, chapterName].filter(Boolean).join(' ') || 'Formula';
         const targetViewer = f.type === 'image' ? 'image-viewer.html' : 'notes-viewer.html';
         const viewerUrl = `${targetViewer}?path=${encodeURIComponent(f.file_path || '')}&name=${encodeURIComponent(descriptiveName)}`;
@@ -395,7 +439,6 @@
     addBotMsg(html);
   }
 
-  // ---- SYSTEM KNOWLEDGE (ALL PAGES DIRECTORY INCLUDED) ----
   const systemKnowledge = `
 You are an AI study assistant for Rohit's learning platform (roitx.github.io). Answer in simple Hindi/Hinglish.
 When asked for classes, study materials, or site pages, generate HTML standard <a> tags using the relative paths below.
@@ -427,7 +470,6 @@ CREATOR RULE:
 DO NOT introduce yourself as created by Rohit by default. ONLY if explicitly asked, state created by Rohit and link <a href="about.html">about.html</a>.
 `;
 
-  // ---- GROQ AI INTEGRATION ----
   async function askGroqAI(userQuery) {
     const typing = showTyping();
     const SUPABASE_FUNCTION_URL = "https://ktastwehnnqicriknewr.supabase.co/functions/v1/smart-task";
@@ -480,7 +522,6 @@ ${userQuery}`;
     }
   }
 
-  // ---- UTILITY FUNCTIONS ----
   function isValidUrl(s) {
     try { const u = new URL(s); return u.protocol === 'http:' || u.protocol === 'https:'; } catch { return false; }
   }
@@ -507,7 +548,7 @@ ${userQuery}`;
     openModal(html);
   }
 
-  // ---- NOTES MANAGEMENT ----
+  // ---- NOTES MANAGEMENT (WITH DELETE & FIXED DOWNLOAD) ----
   function saveNote(text) {
     const notes = getNotes();
     notes.push({ id: Date.now(), text: String(text), created: new Date().toISOString() });
@@ -524,30 +565,84 @@ ${userQuery}`;
     if (notesCount) notesCount.textContent = 'Notes: ' + n;
   }
 
+  window.deleteNote = function(id) {
+    let notes = getNotes();
+    notes = notes.filter(n => n.id !== id);
+    localStorage.setItem('rk_notes', JSON.stringify(notes));
+    updateNotesCount();
+    showNotesModal();
+  };
+
+  window.clearAllNotes = function() {
+    if (confirm("Kya aap apne saare saved notes delete karna chahte hain?")) {
+      localStorage.removeItem('rk_notes');
+      updateNotesCount();
+      showNotesModal();
+      addBotMsg("Saare notes delete kar diye gaye hain 🗑️");
+    }
+  };
+
   function showNotesModal() {
     const notes = getNotes();
-    let html = '<h2>Your Notes</h2>';
-    if (!notes.length) html += '<div>No notes saved yet.</div>';
-    else {
-      html += '<ul style="margin-top:8px">';
+    let html = '<h2 style="margin-bottom: 12px; color: #38bdf8;">Your Saved Notes</h2>';
+    
+    if (!notes.length) {
+      html += '<div style="color: #9fb7c7; padding: 10px 0;">No notes saved yet.</div>';
+    } else {
+      html += '<ul style="margin-top:8px; max-height: 250px; overflow-y: auto; padding-right: 5px; list-style: none; padding-left: 0;">';
       notes.forEach((nt, idx) => {
-        html += `<li style="margin-bottom:8px"><strong>#${idx + 1}</strong> ${escapeHtml(nt.text)}</li>`;
+        html += `
+          <li style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 8px 12px; margin-bottom: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05);">
+            <div style="word-break: break-word; flex: 1; margin-right: 10px;">
+              <strong style="color: #06b6d4;">#${idx + 1}</strong> <span style="color: #e6eef6; font-size: 14px;">${escapeHtml(nt.text)}</span>
+            </div>
+            <button onclick="deleteNote(${nt.id})" style="background: #ef4444; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 600;">Delete</button>
+          </li>`;
       });
       html += '</ul>';
     }
-    html += `<div style="margin-top:12px"><button onclick="closeModal();">Close</button> <button onclick="downloadNotesFile();">Download</button></div>`;
+
+    html += `
+      <div style="margin-top: 15px; display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap;">
+        ${notes.length ? `<button onclick="clearAllNotes()" style="background: #dc2626; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: 600;">Clear All</button>` : ''}
+        ${notes.length ? `<button onclick="downloadNotesFile()" style="background: #0284c7; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: 600;">Download</button>` : ''}
+        <button onclick="closeModal()" style="background: #334155; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: 600;">Close</button>
+      </div>`;
+    
     openModal(html);
   }
 
+  // FIXED DOWNLOAD NOTES FILE FUNCTION
   function downloadNotesFile() {
     const notes = getNotes();
-    if (!notes.length) { addBotMsg('No notes to download'); return; }
+    if (!notes.length) { 
+      addBotDownloadAlert('No notes to download'); 
+      return; 
+    }
     const txt = notes.map((n, i) => `#${i + 1} [${new Date(n.created).toLocaleString()}]\n${n.text}\n\n`).join('');
-    const blob = new Blob([txt], { type: 'text/plain' });
+    const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = 'rohit_notes.txt';
-    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
-    addBotMsg('Notes downloaded ✔');
+    const a = document.createElement('a'); 
+    a.href = url; 
+    a.download = 'rohit_notes.txt';
+    document.body.appendChild(a); 
+    a.click(); 
+    document.body.removeChild(a); 
+    URL.revokeObjectURL(url);
+    addBotMsg('Notes downloaded successfully ✔');
+    closeModal();
+  }
+
+  function addBotDownloadAlert(msg) {
+    if (modalContent) {
+      const alertBox = document.createElement('div');
+      alertBox.style.cssText = "color: #f87171; margin-top: 8px; font-size: 13px;";
+      alertBox.textContent = msg;
+      modalContent.appendChild(alertBox);
+      setTimeout(() => alertBox.remove(), 2500);
+    } else {
+      addBotMsg(msg);
+    }
   }
 
   function openModal(innerHtml) {
@@ -565,6 +660,33 @@ ${userQuery}`;
   function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]);
   }
+
+  // ---- DIRECT ACTION HELPERS FOR BUTTONS ----
+  window.showNotesModalDirect = function() {
+    showNotesModal();
+  };
+
+  window.downloadNotesFileDirect = function() {
+    downloadNotesFile();
+  };
+
+  window.showCalendarModalDirect = function() {
+    showCalendarModal();
+    addBotMsg(`
+      <div style="border: 1px solid rgba(255,255,255,0.12); padding: 8px 10px; border-radius: 8px; background: #1e293b;">
+        <div style="font-size: 12px; color: #38bdf8; margin-bottom: 6px;">📅 Calendar Modal Opened Successfully!</div>
+        <a href="calendar.html" style="background: #0284c7; color: #fff; text-decoration: none; padding: 5px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; display: inline-block;">🌐 Open Calendar Page</a>
+      </div>
+    `);
+  };
+
+  window.promptCreateNote = function() {
+    const noteText = prompt("Apna note yahan likhein:");
+    if (noteText && noteText.trim() !== "") {
+      saveNote(noteText.trim());
+      addBotMsg(`Note saved successfully: <b>${escapeHtml(noteText)}</b> ✔`);
+    }
+  };
 
   window.askChatSend = onSend;
 })();

@@ -6,7 +6,6 @@
 <title>Roitx — Smart Assistant</title>
 <link rel="stylesheet" href="ask-chat.css" />
 <style>
-  /* minimal embedded CSS so single file looks good if css missing */
   :root{
     --bg:#0f1724;--card:#0b1220;--accent:#06b6d4;--glass:rgba(255,255,255,0.04);
   }
@@ -21,38 +20,33 @@
   .inputBar input{flex:1;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:inherit;font-size:15px}
   .sendBtn{background:var(--accent);color:#021018;border:none;padding:10px 14px;border-radius:10px;font-weight:600;cursor:pointer}
   .msg.bot {
-  align-self: flex-start;
-  background: var(--glass);
-  border: 1px solid rgba(255,255,255,0.03);
-  color: inherit;
-  white-space: normal !important; /* Ye height ko lamba hone se rokega */
-   align-self:flex-start;background:var(--glass);border:1px solid rgba(255,255,255,0.03);color:inherit
-}
-
+    align-self: flex-start;
+    background: var(--glass);
+    border: 1px solid rgba(255,255,255,0.03);
+    color: inherit;
+    white-space: normal !important;
+  }
   .msg{max-width:78%;padding:10px 12px;border-radius:10px;line-height:1.4;white-space:pre-wrap;word-break:break-word}
   .msg.user{align-self:flex-end;background:linear-gradient(90deg,#0ee6c6,#06b6d4);color:#021018}
- 
   .typing{display:inline-flex;gap:6px;align-items:center}
   .typing span{width:8px;height:8px;background:#9aa7b6;border-radius:50%;animation:dot 1s infinite}
   .typing span:nth-child(2){animation-delay:.15s} .typing span:nth-child(3){animation-delay:.3s}
   @keyframes dot{0%{opacity:.25;transform:translateY(0)}50%{opacity:1;transform:translateY(-4px)}100%{opacity:.25;transform:translateY(0)}}
-  /* right panel tools/cards */
+  
   .right{width:300px;display:flex;flex-direction:column;gap:12px}
   .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.03)}
   .card h3{margin:0 0 8px 0;font-size:15px}
   .tools{display:flex;flex-wrap:wrap;gap:8px}
   .toolBtn{padding:8px 10px;border-radius:8px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.02);cursor:pointer;font-weight:600;color:#dceff6}
-  /* modal */
+  
   .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(2,6,23,0.6);z-index:50}
   .modal .panel{background:#071223;padding:18px;border-radius:12px;width:90%;max-width:720px;box-shadow:0 10px 40px rgba(2,6,23,0.6)}
   .close{float:right;background:transparent;border:0;color:#9fb7c7;font-weight:700;cursor:pointer}
-  .calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:10px}
-  .cal-day{padding:8px;border-radius:6px;text-align:center;background:rgba(255,255,255,0.02)}
+  
   footer.footer{padding:12px;text-align:center;color:#9fb7c7;font-size:13px}
-  /* small screens */
   @media (max-width:880px){.main{flex-direction:column}.right{width:100%}}
-  /* UNIVERSAL HOME BUTTON */
-.home-btn {
+  
+  .home-btn {
     position: fixed;
     bottom: 20px;
     right: 20px;
@@ -69,12 +63,8 @@
     cursor: pointer;
     z-index: 9999;
     transition: 0.2s;
-}
-
-.home-btn:active {
-    transform: scale(0.88);
-}
-
+  }
+  .home-btn:active { transform: scale(0.88); }
 </style>
 </head>
 <body>
@@ -83,27 +73,26 @@
   <header class="appbar"><h1>Roitx — Smart Assistant</h1></header>
 
   <div class="main">
+    <!-- Left Chat Box -->
     <div class="left">
-      <div id="chatWindow" class="chatWindow" aria-live="polite">
-        <!-- messages appended here -->
-      </div>
-
+      <div id="chatWindow" class="chatWindow" aria-live="polite"></div>
       <div class="inputBar">
-        <input id="chatInput" placeholder="Type a command or question (e.g., 'open pdf 9_chemistry_ch2.pdf', 'formula class 10', 'calendar', 'create note: todo')" aria-label="Chat input">
+        <input id="chatInput" placeholder="Type a command or question..." aria-label="Chat input">
         <button id="sendBtn" class="sendBtn">Send</button>
       </div>
     </div>
 
+    <!-- Right Sidebar Tools -->
     <aside class="right">
       <div class="card">
         <h3>Quick Commands</h3>
         <div class="tools">
           <button class="toolBtn" onclick="runCommand('open pdf 10 physics ch3')">Open PDF</button>
           <button class="toolBtn" onclick="runCommand('formula class 10')">Formulas</button>
-          <button class="toolBtn" onclick="runCommand('calendar')">Calendar</button>
-          <button class="toolBtn" onclick="runCommand('create note: My study plan')">Create Note</button>
-          <button class="toolBtn" onclick="runCommand('show notes')">Show Notes</button>
-          <button class="toolBtn" onclick="runCommand('download notes')">Download Notes</button>
+          <button class="toolBtn" onclick="showCalendarModalDirect()">Calendar</button>
+          <button class="toolBtn" onclick="promptCreateNote()">Create Note</button>
+          <button class="toolBtn" onclick="showNotesModalDirect()">Show Notes</button>
+          <button class="toolBtn" onclick="downloadNotesFileDirect()">Download Notes</button>
         </div>
       </div>
 
@@ -121,7 +110,7 @@
       <div class="card">
         <h3>Local Notes</h3>
         <div id="notesCount">Notes: 0</div>
-        <button class="toolBtn" onclick="runCommand('view notes')">View Notes</button>
+        <button class="toolBtn" onclick="showNotesModalDirect()">View Notes</button>
       </div>
     </aside>
   </div>
@@ -137,18 +126,15 @@
   </div>
 </div>
 
-<!-- 1. SUPABASE JS SDK -->
+<!-- SUPABASE SDK & CLIENT -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<!-- 2. SUPABASE CLIENT INITIALIZATION -->
 <script>
   const SUPABASE_URL = "https://ktastwehnnqicriknewr.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0YXN0d2Vobm5xaWNyaWtuZXdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyNTk5NTEsImV4cCI6MjA4MDgzNTk1MX0.5_UvwaG0X8k_Emj-cMC0KjEqlvU6hgAt5IsHJdgARvk";
-
   window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 </script>
 
-<!-- 3. MAIN CHAT SCRIPT -->
+<!-- MAIN CHAT SCRIPT -->
 <script src="ask-chat.js"></script>
 
 <div class="home-btn" onclick="location.href='index.html'">🏠</div>
