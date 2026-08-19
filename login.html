@@ -325,21 +325,20 @@ function switchMode(mode) {
 
 // Automatically Detect Session or Reset Token on Load
 document.addEventListener("DOMContentLoaded", async () => {
-  // 1. Sabse pehle URL query ya Hash parameters check karein (Password Reset ke liye)
+  // 1. URL query ya Hash parameters check karein (Password Reset ke liye)
   const urlParams = new URLSearchParams(window.location.search);
   const isReset = urlParams.get('reset');
   
-  // Supabase kabhi-kabhi recovery tokens hash (#type=recovery) mein bhejta hai
   const hashString = window.location.hash.substring(1);
   const hashParams = new URLSearchParams(hashString);
   const type = hashParams.get('type');
 
   if (isReset || type === 'recovery') {
     switchMode("update_password");
-    return; // Yahin rok dein taaki auto-login check run na ho
+    return; 
   }
 
-  // 2. Normal Auto-Login Check (Agar reset mode nahi hai)
+  // 2. Normal Auto-Login Check (Sabhi ko profile.html par bhejne ke liye)
   const user = await window.getCurrentUser();
   if (user) {
     localStorage.setItem("isLoggedIn", "true");
@@ -347,14 +346,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     localStorage.setItem("userPhoto", "profile.jpg");
 
     const redirectTarget = sessionStorage.getItem("redirect_after_login");
-    const isAdmin = await window.checkIsAdmin();
 
     if (redirectTarget) {
       sessionStorage.removeItem("redirect_after_login");
       window.location.href = redirectTarget;
-    } else if (isAdmin) {
-      window.location.href = window.getPageUrl("admin-panel.html");
     } else {
+      // Admin check hata diya gaya hai, ab sabhi users profile.html par jayenge
       window.location.href = window.getPageUrl("profile.html");
     }
     return;
