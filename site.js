@@ -1,4 +1,4 @@
-// site.js - shared helpers & notes loader system (Fully Updated with Proper Title Format)
+// site.js - shared helpers & notes loader system (Fully Updated with Chapter Name Display)
 
 function goto(page) { 
   window.location.href = page; 
@@ -95,10 +95,10 @@ async function openSubject(subjectName) {
         const finalFileName = `${note.file_name || (CURRENT_CLASS + '_' + subjectName + '_' + note.chapter_number + '.pdf')}`;
         const fullPath = note.file_path ? note.file_path : `notes/${finalFileName}`;
         
-        // Proper Descriptive Name banana (Class, Subject, Chapter Name)
+        // Proper Descriptive Name banana jisme chapter name priorty par ho
         const className = `Class ${CURRENT_CLASS}`;
         const subName = subjectName.toUpperCase();
-        const chapterTitle = note.chapter_name ? `Chapter ${note.chapter_number}: ${note.chapter_name}` : `Chapter ${note.chapter_number}`;
+        const chapterTitle = note.chapter_name ? note.chapter_name : `Chapter ${note.chapter_number}`;
         
         const descriptiveName = [className, subName, chapterTitle].filter(Boolean).join(' • ');
 
