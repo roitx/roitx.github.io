@@ -9,6 +9,10 @@
 </head>
 <body>
 
+  <!-- Hidden Canvas for PiP Widget Mode -->
+  <canvas id="pipCanvas" width="300" height="150" style="display:none;"></canvas>
+  <video id="pipVideo" autoplay muted playsinline style="display:none;"></video>
+
   <!-- Custom Completion Modal -->
   <div id="sessionModal" class="modal-overlay" style="display: none;">
     <div class="glass-panel modal-content">
@@ -28,13 +32,13 @@
     </div>
     
     <div class="status-bar">
-      <div class="status-badge">
+      <div class="status-badge" id="batteryBadge">
         <svg viewBox="0 0 24 24"><path d="M16 20H8V6H16M16 4H8C6.9 4 6 4.9 6 6V20C6 21.1 6.9 22 8 22H16C17.1 22 18 21.1 18 20V6C18 4.9 17.1 4 16 4M12.5 2H11.5C11.2 2 11 2.2 11 2.5V4H13V2.5C13 2.2 12.8 2 12.5 2Z"/></svg>
-        <span id="batteryLvl">--%</span>
+        <span id="batteryLvl">System Ready</span>
       </div>
       <div class="status-badge">
         <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
-        <span id="netStatus">Checking</span>
+        <span id="netStatus">Online</span>
       </div>
       <div class="status-badge" id="liveClock" style="color: var(--accent-primary);">--:--</div>
     </div>
@@ -46,7 +50,11 @@
       
       <!-- Focus Module -->
       <div class="glass-panel">
-        <h2>Focus Engine</h2>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <h2 style="margin: 0;">Focus Engine</h2>
+          <button class="btn" id="btnPipWidget" style="padding: 6px 12px; font-size: 0.8rem;">Pop-out Widget ⧉</button>
+        </div>
+        
         <div id="timerDisplay" class="time-display">40:00</div>
         
         <div class="controls mode-controls">
@@ -93,40 +101,49 @@
 
     </section>
 
-    <!-- Right Column: Context & Utilities -->
-    <aside class="right-col">
-      
-      <!-- YouTube Music Integration -->
-      <div class="glass-panel">
-        <h2>Audio Environment</h2>
-        <div class="yt-container">
-          <iframe id="ytPlayer" src="https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-        </div>
-        <div class="controls" style="margin-top: 12px;">
-          <button class="btn" id="btnMusicLofi">Lofi Focus</button>
-          <button class="btn" id="btnMusicSynth">Cyberpunk</button>
-          <button class="btn" id="btnMusicDeep">Space Ambient</button>
-        </div>
-      </div>
+    <!-- Right Column Structure Inside index.html -->
+<div class="right-col">
+  <!-- 1. Task Program (Upar shift kar diya hai) -->
+  <div class="glass-panel">
+    <h2>Study Tasks / To-Do</h2>
+    <div class="input-group">
+      <input type="text" id="taskInput" placeholder="Add a new task...">
+      <button class="btn primary" id="btnTaskAdd">Add</button>
+    </div>
+    <div class="task-list" id="taskList"></div>
+  </div>
 
-      <!-- Action Center -->
-      <div class="glass-panel">
-        <h2>System Control</h2>
-        <div style="display: flex; gap: 12px; flex-direction: column;">
-          <button class="btn" id="btnFocus" style="justify-content: center;">⛶ Enter Fullscreen Focus</button>
-          <button class="btn" id="btnAmbient" style="justify-content: center;">🔊 Toggle Deep Work White-Noise</button>
-        </div>
-      </div>
+  <!-- 2. Stopwatch Panel -->
+  <div class="glass-panel">
+    <h2>Stopwatch & Laps</h2>
+    <div class="time-display" id="stopwatchDisplay" style="font-size: 3rem;">00:00<span class="ms-display">.00</span></div>
+    <div class="controls">
+      <button class="btn primary" id="btnSwStart">Start</button>
+      <button class="btn" id="btnSwStop">Pause</button>
+      <button class="btn" id="btnSwLap">Lap</button>
+      <button class="btn danger" id="btnSwReset">Reset</button>
+    </div>
+    <div class="task-list" id="lapsList" style="margin-top: 16px; max-height: 150px;"></div>
+  </div>
 
-      <!-- Task Manager -->
-      <div class="glass-panel">
-        <h2>Session Objectives</h2>
-        <div class="input-group">
-          <input type="text" id="taskInput" placeholder="E.g., Revise Determinants, Pores of Kohn...">
-          <button class="btn primary" id="btnTaskAdd">Add</button>
-        </div>
-        <div id="taskList" class="task-list"></div>
+  <!-- 3. Custom Music Player (Sabse Niche) -->
+  <div class="glass-panel">
+    <h2>Custom Music Player</h2>
+    <div style="margin-bottom: 12px;">
+      <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 6px;">Upload Local MP3 File:</label>
+      <input type="file" id="audioFileInput" accept="audio/*">
+    </div>
+    <div style="margin-bottom: 12px;">
+      <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 6px;">Oar Direct Audio URL:</label>
+      <div class="input-group">
+        <input type="text" id="audioUrlInput" placeholder="https://example.com/song.mp3">
+        <button class="btn primary" id="btnLoadAudio">Load</button>
       </div>
+    </div>
+    <audio id="customAudio" controls style="width: 100%; margin-top: 8px; border-radius: 8px;"></audio>
+  </div>
+</div>
+
 
     </aside>
   </main>
