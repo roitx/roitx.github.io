@@ -8,7 +8,34 @@ let isHyp = false;
 let lastAnswer = "0"; 
 let memory = 0; 
 let historyIndex = -1;
-let currentAIMode = "text"; // 'text', 'pad', or 'scan'
+let currentAIMode = "text"; 
+
+// LOCAL STORAGE + SUPABASE AUTH SYNC
+let isLoggedIn = localStorage.getItem("isLoggedIn") === "true"; 
+
+// AUTOMATIC SUPABASE SYNC ON LOAD
+document.addEventListener("DOMContentLoaded", async () => {
+  if (window.supabaseClient) {
+    const { data: { session } } = await window.supabaseClient.auth.getSession();
+    if (session && session.user) {
+      isLoggedIn = true;
+      localStorage.setItem("isLoggedIn", "true");
+    } else {
+      isLoggedIn = false;
+      localStorage.removeItem("isLoggedIn");
+    }
+
+    window.supabaseClient.auth.onAuthStateChange((event, session) => {
+      if (session && session.user) {
+        isLoggedIn = true;
+        localStorage.setItem("isLoggedIn", "true");
+      } else {
+        isLoggedIn = false;
+        localStorage.removeItem("isLoggedIn");
+      }
+    });
+  }
+});
 
 const exprDiv = document.getElementById("expression");
 const resDiv = document.getElementById("result");
@@ -28,7 +55,6 @@ function initCanvas() {
   ctx.lineWidth = 3;
   ctx.lineCap = "round";
 
-  // Touch & Mouse Events
   canvas.addEventListener("mousedown", startDrawing);
   canvas.addEventListener("mousemove", draw);
   canvas.addEventListener("mouseup", stopDrawing);
@@ -59,7 +85,6 @@ function clearCanvas() {
   if (ctx && canvas) ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
 
-// --- CANVAS COMPRESSION HELPER ---
 function getCompressedCanvasImage() {
   if (!canvas) return null;
   const tempCanvas = document.createElement('canvas');
@@ -77,7 +102,6 @@ function getCompressedCanvasImage() {
   return tempCanvas.toDataURL('image/jpeg', 0.5);
 }
 
-// FULLSCREEN TOGGLE CONTROLLER
 function toggleAISolverFullscreen() {
   const content = document.getElementById("aiContent");
   if (content) {
@@ -85,7 +109,6 @@ function toggleAISolverFullscreen() {
   }
 }
 
-// --- FAST SUBMIT AI SOLVER ---
 async function submitAISolver(lang) {
   let loader = document.getElementById("aiLoader");
   let resBox = document.getElementById("aiResponse");
@@ -114,10 +137,10 @@ RULES:
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: { 
-  'Content-Type': 'application/json', 
-  'apikey': apiKey,
-  'Authorization': `Bearer ${apiKey}` 
-},
+        'Content-Type': 'application/json', 
+        'apikey': apiKey,
+        'Authorization': `Bearer ${apiKey}` 
+      },
       body: JSON.stringify({ 
         prompt: systemInstruction + "\n\nTask: " + userText,
         language: lang, 
@@ -146,8 +169,17 @@ RULES:
   }
 }
 
-// --- AI MODE & PHOTO PREVIEW HELPERS ---
+// FAST SYNCHRONOUS MODE SWITCHING WITH LIVE AUTH CHECK
 function switchAIMode(mode) {
+  // LocalStorage + Dynamic Variable Guard Check
+  const userLoggedIn = isLoggedIn || localStorage.getItem("isLoggedIn") === "true";
+
+  if ((mode === 'pad' || mode === 'scan') && !userLoggedIn) {
+    const authModal = document.getElementById("authModal");
+    if (authModal) authModal.style.display = "flex";
+    return;
+  }
+
   currentAIMode = mode;
   document.getElementById("tabText")?.classList.toggle("active", mode === 'text');
   document.getElementById("tabPad")?.classList.toggle("active", mode === 'pad');
@@ -157,8 +189,8 @@ function switchAIMode(mode) {
   if (document.getElementById("aiPadSec")) document.getElementById("aiPadSec").style.display = mode === 'pad' ? 'block' : 'none';
   if (document.getElementById("aiScanSec")) document.getElementById("aiScanSec").style.display = mode === 'scan' ? 'block' : 'none';
 
-  if (mode === 'pad' && !canvas) {
-    setTimeout(initCanvas, 100);
+  if (mode === 'pad') {
+    setTimeout(initCanvas, 50);
   }
 }
 
@@ -176,7 +208,6 @@ function handleImagePreview(event) {
   }
 }
 
-// --- GUIDE MODAL CONTROLLERS ---
 function openGuideModal() {
   const m = document.getElementById("guideModal");
   if (m) m.style.display = "flex";
@@ -192,7 +223,6 @@ window.addEventListener("click", function(e) {
   if (e.target === m) m.style.display = "none";
 });
 
-// --- MATH & CALCULATOR CORE FUNCTIONS ---
 function preprocess(raw) {
   let s = raw;
   s = s.replace(/Ans/g, `(${lastAnswer})`);

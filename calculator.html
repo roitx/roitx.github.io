@@ -3,12 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>ROITX Scientific Pro </title>
+  <title>ROITX Scientific Pro</title>
   
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
   
-  <!-- MATHJAX FOR CLEAN HUMAN-LIKE FORMULAS -->
+  <!-- Supabase & Auth Central Files -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+  <script src="auth.js"></script>
+
   <script>
     window.MathJax = {
       tex: {
@@ -58,7 +62,7 @@
       transform: translateY(-1px);
     }
 
-    .guide-modal {
+    .guide-modal, .auth-modal {
       position: fixed;
       z-index: 99999;
       left: 0; top: 0;
@@ -70,7 +74,7 @@
       justify-content: center;
     }
 
-    .guide-modal-content {
+    .guide-modal-content, .auth-modal-content {
       background: #0f172a;
       border: 1px solid #38bdf8;
       padding: 20px;
@@ -79,9 +83,10 @@
       max-width: 420px;
       position: relative;
       box-shadow: 0 0 20px rgba(56, 189, 248, 0.3);
+      text-align: center;
     }
 
-    .close-guide {
+    .close-modal {
       position: absolute;
       right: 15px; top: 10px;
       font-size: 22px;
@@ -93,7 +98,17 @@
 </head>
 <body class="theme-dark">
 
-  <!-- 1. CATEGORY-WISE FUNCTION GUIDE MODAL -->
+  <!-- AUTH POPUP MODAL -->
+  <div id="authModal" class="auth-modal">
+    <div class="auth-modal-content">
+      <span class="close-modal" onclick="closeAuthModal()">&times;</span>
+      <h3 style="color:#00e676; margin-top:0;">🔒 Access Restricted</h3>
+      <p style="color:#ccc; font-size:13px; margin: 15px 0;">Is feature ko access karne ke liye aapko pehle login karna padega.</p>
+      <button onclick="redirectToLogin()" style="background:#00e676; color:#000; border:none; padding:8px 16px; border-radius:6px; font-weight:bold; cursor:pointer;">OK, Got It</button>
+    </div>
+  </div>
+
+  <!-- CATEGORY-WISE FUNCTION GUIDE MODAL -->
   <div id="keysGuideModal" class="ai-modal" style="display:none;">
     <div class="ai-content">
       <div class="ai-header">
@@ -135,7 +150,7 @@
     </div>
   </div>
 
-    <!-- 2. AI SOLVER MODAL -->
+  <!-- AI SOLVER MODAL -->
   <div id="aiModal" class="ai-modal" style="display:none;">
     <div class="ai-content" id="aiContent">
       <div class="ai-header">
@@ -153,7 +168,7 @@
         </div>
 
         <div id="aiTextSec" class="ai-sec">
-          <textarea id="aiPrompt" placeholder="Write your math equation (e.g. Solve x^2 - 4x + 4 = 0)..."></textarea>
+          <textarea id="aiPrompt" class="custom-dark-textarea" placeholder="Write your math equation (e.g. Solve x^2 - 4x + 4 = 0)..."></textarea>
         </div>
 
         <div id="aiPadSec" class="ai-sec" style="display:none;">
@@ -192,11 +207,10 @@
     </div>
   </div>
 
-
-  <!-- 3. HOW TO USE GUIDE MODAL -->
+  <!-- HOW TO USE GUIDE MODAL -->
   <div id="guideModal" class="guide-modal" style="display:none;">
     <div class="guide-modal-content">
-      <span class="close-guide" onclick="closeGuideModal()">&times;</span>
+      <span class="close-modal" onclick="closeGuideModal()">&times;</span>
       <h3 style="color:#00e676; margin-top:0;">📖 How to Use AI Solver</h3>
       <ul style="text-align:left; font-size:13px; line-height:1.6; color:#e2e8f0; padding-left:20px;">
         <li><b>Text Mode:</b> Directly type or paste your equation.</li>
@@ -331,7 +345,6 @@
     </div>
   </div>
 
-  <!-- MODAL HELPER SCRIPTS (Non-conflicting) -->
   <script>
     function openGuideModal() {
       const el = document.getElementById("guideModal");
@@ -352,6 +365,16 @@
     function closeKeysGuide() {
       const el = document.getElementById("keysGuideModal");
       if (el) el.style.display = "none";
+    }
+
+    function closeAuthModal() {
+      const el = document.getElementById("authModal");
+      if (el) el.style.display = "none";
+    }
+
+    function redirectToLogin() {
+      sessionStorage.setItem("redirect_after_login", window.location.href);
+      window.location.href = "login.html";
     }
   </script>
 

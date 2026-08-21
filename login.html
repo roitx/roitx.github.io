@@ -325,7 +325,7 @@ function switchMode(mode) {
 
 // Automatically Detect Session or Reset Token on Load
 document.addEventListener("DOMContentLoaded", async () => {
-  // 1. URL query ya Hash parameters check karein (Password Reset ke liye)
+  // 1. Password Reset tokens check
   const urlParams = new URLSearchParams(window.location.search);
   const isReset = urlParams.get('reset');
   
@@ -335,10 +335,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (isReset || type === 'recovery') {
     switchMode("update_password");
-    return; 
+    return;
   }
 
-  // 2. Normal Auto-Login Check (Sabhi ko profile.html par bhejne ke liye)
+  // 2. Normal Auto-Login Check
   const user = await window.getCurrentUser();
   if (user) {
     localStorage.setItem("isLoggedIn", "true");
@@ -351,7 +351,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       sessionStorage.removeItem("redirect_after_login");
       window.location.href = redirectTarget;
     } else {
-      // Admin check hata diya gaya hai, ab sabhi users profile.html par jayenge
+      // Direct Profile Page Redirect (Harr user ke liye)
       window.location.href = window.getPageUrl("profile.html");
     }
     return;
@@ -408,8 +408,8 @@ async function handleAuthSubmit() {
 }
 
 window.switchMode = switchMode;
-
 </script>
+
 
 </body>
 </html>

@@ -1,8 +1,11 @@
 /* =====================================================
-   ADMIN PANEL — COMPLETE & FULLY REPLACEABLE JS SYSTEM (WITH PROPER VIEWER TITLES)
+   ADMIN PANEL — COMPACT & SHORTENED LAYOUT SYSTEM
    ===================================================== */
 
-/* ---------- PART 1: AUTH HELPERS & GLOBAL STATS ---------- */
+/* =====================================================
+   PART 1: AUTH HELPERS & GLOBAL STATS
+   ===================================================== */
+
 function goUpload() {
   window.location.href = "upload.html";
 }
@@ -24,15 +27,21 @@ function logout() {
 
 async function updateStats() {
   try {
-    const { count: notesCount } = await window.supabaseClient.from("notes").select("*", { count: 'exact', head: true });
+    const { count: notesCount } = await window.supabaseClient
+      .from("notes")
+      .select("*", { count: "exact", head: true });
     const notesEl = document.getElementById("totalNotesCount");
     if (notesEl) notesEl.innerText = notesCount || 0;
 
-    const { count: formulasCount } = await window.supabaseClient.from("formulas").select("*", { count: 'exact', head: true });
+    const { count: formulasCount } = await window.supabaseClient
+      .from("formulas")
+      .select("*", { count: "exact", head: true });
     const formulasEl = document.getElementById("totalFormulasCount");
     if (formulasEl) formulasEl.innerText = formulasCount || 0;
 
-    const { count: eventsCount } = await window.supabaseClient.from("events").select("*", { count: 'exact', head: true });
+    const { count: eventsCount } = await window.supabaseClient
+      .from("events")
+      .select("*", { count: "exact", head: true });
     const eventsEl = document.getElementById("totalEventsCount");
     if (eventsEl) eventsEl.innerText = eventsCount || 0;
   } catch (err) {
@@ -40,7 +49,11 @@ async function updateStats() {
   }
 }
 
-/* ---------- PART 2: UPLOADED NOTES SYSTEM ---------- */
+
+/* =====================================================
+   PART 2: UPLOADED NOTES SYSTEM
+   ===================================================== */
+
 async function uploadFile() {
   const fileInput = document.getElementById("fileUpload");
   const file = fileInput?.files[0];
@@ -61,7 +74,7 @@ async function uploadFile() {
   const chapterNumber = parseInt(chSelect.replace("ch", "")) || 1;
   const classNum = cls.replace("class", "");
   
-  const cleanFileName = file.name.replace(/\s+/g, '_');
+  const cleanFileName = file.name.replace(/\s+/g, "_");
   const fileName = `${classNum}_${sub}_ch${chapterNumber}_${cleanFileName}`;
   const filePath = `notes/${fileName}`;
 
@@ -128,10 +141,10 @@ async function loadFiles() {
   const filterSub = document.getElementById("filterNotesSubject")?.value.toLowerCase() || "";
 
   const filtered = data.filter(note => {
-    const searchStr = `${note.chapter_name || ''} ${note.subject || ''} class ${note.class || ''}`.toLowerCase();
+    const searchStr = `${note.chapter_name || ""} ${note.subject || ""} class ${note.class || ""}`.toLowerCase();
     const matchSearch = searchStr.includes(search);
     const matchClass = filterCls ? String(note.class) === String(filterCls) : true;
-    const matchSubject = filterSub ? (note.subject || '').toLowerCase() === filterSub.toLowerCase() : true;
+    const matchSubject = filterSub ? (note.subject || "").toLowerCase() === filterSub.toLowerCase() : true;
     return matchSearch && matchClass && matchSubject;
   });
 
@@ -144,13 +157,21 @@ async function loadFiles() {
   list.innerHTML = "";
   filtered.forEach(note => {
     const row = document.createElement("div");
-    row.style.cssText = "padding:10px; border-bottom:1px solid #2e4a73; display:flex; justify-content:space-between; align-items:center;";
+    row.style.cssText = "padding:10px; margin-bottom:10px; background:rgba(255, 255, 255, 0.04); border:1px solid #2e4a73; border-radius:10px; width:100%; box-sizing:border-box;";
+    
+    const subShort = (note.subject || "").substring(0, 3).toUpperCase();
+
     row.innerHTML = `
-      <span>📄 <b>Class ${note.class}</b> • ${(note.subject || '').toUpperCase()} • Ch ${note.chapter_number}: ${note.chapter_name || 'No Name'}</span>
-      <div style="display:flex; gap:6px;">
-        <button style="padding:6px 10px; font-size:12px;" onclick="openFile('${note.file_path}', '${note.class}', '${note.subject}', '${note.chapter_name}')">Open</button>
-        <button style="padding:6px 10px; font-size:12px; background:#d97706; color:#fff; border:none; border-radius:4px; cursor:pointer;" onclick="updateNoteChapter('${note.id}', '${note.chapter_name || ''}')">✏️ Edit</button>
-        <button class="logout" style="padding:6px 10px; font-size:12px;" onclick="deleteNoteRecord('${note.id}', '${note.file_path}')">🗑</button>
+      <!-- Line 1: Short Format (e.g. 10 • PHY • 3 • Gravitation) -->
+      <div style="font-size:13px; color:#ffffff; font-weight:600; margin-bottom:8px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%;">
+        ${note.class} • ${subShort} • ${note.chapter_number} • ${note.chapter_name || "No Name"}
+      </div>
+      
+      <!-- Line 2: 👁️, 🖋️ and 🗑️ Buttons (Compact Width) -->
+      <div style="display:flex; gap:6px; align-items:center; width:100%;">
+        <button style="flex:1; padding:4px 0; font-size:13px; border-radius:6px; border:none; background:#3b82f6; color:#ffffff; cursor:pointer;" onclick="openFile('${note.file_path}', '${note.class}', '${note.subject}', '${escapeQuotes(note.chapter_name || "")}')" title="View">👁️</button>
+        <button style="flex:1; padding:4px 0; font-size:13px; border-radius:6px; border:none; background:#f59e0b; color:#ffffff; cursor:pointer;" onclick="openNoteEditModal('${note.id}', '${note.class}', '${note.subject}', '${note.chapter_number}', '${escapeQuotes(note.chapter_name || "")}', '${note.file_path}')" title="Edit">🖋️</button>
+        <button style="flex:1; padding:4px 0; font-size:13px; border-radius:6px; border:none; background:#ef4444; color:#ffffff; cursor:pointer;" onclick="deleteNoteRecord('${note.id}', '${note.file_path}')" title="Delete">🗑️</button>
       </div>
     `;
     list.appendChild(row);
@@ -159,22 +180,59 @@ async function loadFiles() {
   updateStats();
 }
 
-async function openFile(filePath, noteClass, noteSubject, noteChapterName) {
-  const className = noteClass ? `Class ${noteClass}` : '';
-  const subjectName = noteSubject ? noteSubject.toUpperCase() : '';
-  const chapterInfo = noteChapterName ? noteChapterName : '';
+function openNoteEditModal(id, cls, sub, chNum, chName, filePath) {
+  const idEl = document.getElementById("editNoteId");
+  const clsEl = document.getElementById("editNoteClass");
+  const subEl = document.getElementById("editNoteSubject");
+  const chNumEl = document.getElementById("editNoteChNum");
+  const chNameEl = document.getElementById("editNoteChName");
 
-  const descriptiveName = [className, subjectName, chapterInfo].filter(Boolean).join(' • ') || 'Notes Document';
+  if (idEl) idEl.value = id;
+  if (clsEl) clsEl.value = cls;
+  if (subEl) subEl.value = sub;
+  if (chNumEl) chNumEl.value = chNum;
+  if (chNameEl) chNameEl.value = chName;
+  
+  const viewBtn = document.getElementById("editNoteViewBtn");
+  if (viewBtn) {
+    viewBtn.onclick = () => openFile(filePath, cls, sub, chName);
+  }
+  
+  const modal = document.getElementById("editNoteModal");
+  if (modal) modal.style.display = "flex";
+}
+
+async function openFile(filePath, noteClass, noteSubject, noteChapterName) {
+  const className = noteClass ? `Class ${noteClass}` : "";
+  const subjectName = noteSubject ? noteSubject.toUpperCase() : "";
+  const chapterInfo = noteChapterName ? noteChapterName : "";
+
+  const descriptiveName = [className, subjectName, chapterInfo].filter(Boolean).join(" • ") || "Notes Document";
   window.location.href = `notes-viewer.html?path=${encodeURIComponent(filePath)}&name=${encodeURIComponent(descriptiveName)}`;
 }
 
-async function updateNoteChapter(id, currentName) {
-  const newName = prompt("Naya Chapter Name enter karein:", currentName);
-  if (!newName || newName.trim() === "") return;
+function closeNoteEditModal() {
+  const modal = document.getElementById("editNoteModal");
+  if (modal) modal.style.display = "none";
+}
+
+async function saveNoteEdit() {
+  const id = document.getElementById("editNoteId")?.value;
+  const cls = document.getElementById("editNoteClass")?.value;
+  const sub = document.getElementById("editNoteSubject")?.value;
+  const chNum = parseInt(document.getElementById("editNoteChNum")?.value) || 1;
+  const chName = document.getElementById("editNoteChName")?.value.trim();
+
+  if (!chName) return alert("❌ Please enter a chapter name");
 
   const { error } = await window.supabaseClient
     .from("notes")
-    .update({ chapter_name: newName.trim() })
+    .update({ 
+      class: cls,
+      subject: sub,
+      chapter_number: chNum,
+      chapter_name: chName 
+    })
     .eq("id", id);
 
   if (error) {
@@ -182,12 +240,13 @@ async function updateNoteChapter(id, currentName) {
     return;
   }
 
-  alert("✅ Chapter name updated successfully!");
+  alert("✅ Note details updated successfully!");
+  closeNoteEditModal();
   await loadFiles();
 }
 
 async function deleteNoteRecord(id, filePath) {
-  if (!confirm("Kya aap is note ko database aur storage bucket dono se delete karna chahte hain?")) return;
+  if (!confirm("Delete this note?")) return;
   
   if (filePath) {
     await window.supabaseClient.storage.from("admin-files").remove([filePath]);
@@ -201,7 +260,11 @@ async function deleteNoteRecord(id, filePath) {
   await updateStats();
 }
 
-/* ---------- PART 3: CALENDAR EVENTS SYSTEM ---------- */
+
+/* =====================================================
+   PART 3: CALENDAR EVENTS SYSTEM
+   ===================================================== */
+
 async function addEvent() {
   const date = document.getElementById("eventDate")?.value;
   const name = document.getElementById("eventName")?.value.trim();
@@ -267,7 +330,7 @@ async function loadEvents() {
   });
 
   if (filtered.length === 0) {
-    list.innerHTML = "<em>No events found for selected filter</em>";
+    list.innerHTML = "<em>No events found</em>";
     updateStats();
     return;
   }
@@ -275,25 +338,67 @@ async function loadEvents() {
   list.innerHTML = "";
   filtered.forEach(ev => {
     const row = document.createElement("div");
-    row.style.cssText = "padding:8px; border-bottom:1px solid #2e4a73; display:flex; justify-content:space-between; align-items:center;";
-
-    const isAdminEvent = ev.is_global === true;
-    const badgeHtml = isAdminEvent 
-      ? `<span style="background:#00ffe4; color:#000; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold;">📢 ADMIN</span>`
-      : `<span style="background:#7b6bff; color:#fff; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold;">👤 USER</span>`;
-
-    const actionBtnHtml = `<button class="logout" style="padding:4px 10px; font-size:12px;" onclick="deleteEvent('${ev.id}')">🗑 Delete</button>`;
+    row.style.cssText = "padding:10px; margin-bottom:10px; background:rgba(255, 255, 255, 0.04); border:1px solid #2e4a73; border-radius:10px; width:100%; box-sizing:border-box;";
 
     row.innerHTML = `
-      <div>
-        <b>${ev.event_date}</b> — ${ev.event_name} ${badgeHtml}
+      <!-- Line 1: Date • Name -->
+      <div style="font-size:13px; color:#ffffff; font-weight:600; margin-bottom:8px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%;">
+        📅 ${ev.event_date} • ${ev.event_name}
       </div>
-      <div>${actionBtnHtml}</div>
+
+      <!-- Line 2: ✏️ and 🗑️ Buttons (Compact Width) -->
+      <div style="display:flex; gap:6px; align-items:center; width:100%;">
+        <button style="flex:1; padding:4px 0; font-size:13px; border-radius:6px; border:none; background:#f59e0b; color:#ffffff; cursor:pointer;" onclick="openEventEditModal('${ev.id}', '${ev.event_date}', '${escapeQuotes(ev.event_name)}')" title="Edit">✏️ Edit</button>
+        <button style="flex:1; padding:4px 0; font-size:13px; border-radius:6px; border:none; background:#ef4444; color:#ffffff; cursor:pointer;" onclick="deleteEvent('${ev.id}')" title="Delete">🗑️ Delete</button>
+      </div>
     `;
     list.appendChild(row);
   });
 
   updateStats();
+}
+
+function openEventEditModal(id, date, name) {
+  const idEl = document.getElementById("editEventId");
+  const dateEl = document.getElementById("editEventDate");
+  const nameEl = document.getElementById("editEventName");
+
+  if (idEl) idEl.value = id;
+  if (dateEl) dateEl.value = date;
+  if (nameEl) nameEl.value = name;
+
+  const modal = document.getElementById("editEventModal");
+  if (modal) modal.style.display = "flex";
+}
+
+function closeEventEditModal() {
+  const modal = document.getElementById("editEventModal");
+  if (modal) modal.style.display = "none";
+}
+
+async function saveEventEdit() {
+  const id = document.getElementById("editEventId")?.value;
+  const date = document.getElementById("editEventDate")?.value;
+  const name = document.getElementById("editEventName")?.value.trim();
+
+  if (!date || !name) return alert("❌ Please enter Date and Event Name");
+
+  const { error } = await window.supabaseClient
+    .from("events")
+    .update({ 
+      event_date: date,
+      event_name: name 
+    })
+    .eq("id", id);
+
+  if (error) {
+    alert("❌ Update failed: " + error.message);
+    return;
+  }
+
+  alert("✅ Event updated successfully!");
+  closeEventEditModal();
+  await loadEvents();
 }
 
 async function deleteEvent(id) {
@@ -309,7 +414,11 @@ async function deleteEvent(id) {
   await updateStats();
 }
 
-/* ---------- PART 4: FORMULAS SYSTEM ---------- */
+
+/* =====================================================
+   PART 4: FORMULAS SYSTEM
+   ===================================================== */
+
 document.addEventListener("DOMContentLoaded", () => {
   const fClass       = document.getElementById("fClass");
   const fSubject     = document.getElementById("fSubject");
@@ -354,8 +463,8 @@ document.addEventListener("DOMContentLoaded", () => {
   window.uploadFormula = async function () {
     if (statusBox) statusBox.innerText = "⏳ Uploading...";
 
-    if (!fClass.value || !fSubject.value || !fChapter.value || !fChapterName?.value.trim() || !fType.value || !fCategory.value) {
-      if (statusBox) statusBox.innerText = "❌ All fields including Chapter Name & Category are required";
+    if (!fClass?.value || !fSubject?.value || !fChapter?.value || !fChapterName?.value.trim() || !fType?.value || !fCategory?.value) {
+      if (statusBox) statusBox.innerText = "❌ All fields required";
       return;
     }
 
@@ -368,13 +477,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const chapterNum = parseInt(fChapter.value.replace("ch", "")) || 1;
 
     if (fType.value === "text") {
-      if (!formulaText.value.trim()) return alert("❌ Enter Formula Text");
+      if (!formulaText?.value.trim()) return alert("❌ Enter Formula Text");
       formulaTextData = formulaText.value.trim();
     } else {
-      const file = formulaFile.files[0];
+      const file = formulaFile?.files[0];
       if (!file) return alert("❌ Select File");
 
-      const cleanFileName = file.name.replace(/\s+/g, '_');
+      const cleanFileName = file.name.replace(/\s+/g, "_");
       filePath = `formulas/${fClass.value}_${fSubject.value}_ch${chapterNum}_${cleanFileName}`;
 
       const { error } = await window.supabaseClient.storage
@@ -451,7 +560,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     if (filtered.length === 0) {
-      list.innerHTML = "<em>No matching formulas found</em>";
+      list.innerHTML = "<em>No formulas found</em>";
       updateStats();
       return;
     }
@@ -459,26 +568,34 @@ document.addEventListener("DOMContentLoaded", () => {
     list.innerHTML = "";
     filtered.forEach(f => {
       const row = document.createElement("div");
-      row.style.cssText = "padding:10px; border-bottom:1px solid #2e4a73; display:flex; justify-content:space-between; align-items:center;";
-      const icon = f.type === "text" ? "📝" : f.type === "pdf" ? "📄" : "🖼️";
-      const displayCh = f.chapter_name ? `${f.chapter_name}` : (f.chapter || '');
+      row.style.cssText = "padding:10px; margin-bottom:10px; background:rgba(255, 255, 255, 0.04); border:1px solid #2e4a73; border-radius:10px; width:100%; box-sizing:border-box;";
       
+      const subShort = (f.subject || "").substring(0, 3).toUpperCase();
+      const chNum = f.chapter_number || 1;
+      const displayChName = f.chapter_name || f.chapter || "";
+      
+      let catCode = "s";
+      if (f.category === "main") catCode = "m";
+      else if (f.category === "other") catCode = "o";
+
       row.innerHTML = `
-        <span>
-          ${icon} <b>Class ${f.class}</b> • ${(f.subject || '').toUpperCase()} • ${displayCh} [${f.category || 'other'}]
-          ${f.publish ? "🟢" : "🔒"}
-        </span>
-        <div style="display:flex; gap:6px;">
-          <button style="padding:6px 10px; font-size:12px;" onclick="viewFormula('${f.id}')">View</button>
-          <button style="padding:6px 10px; font-size:12px; background:#d97706; color:#fff; border:none; border-radius:4px; cursor:pointer;" onclick="updateFormulaChapter('${f.id}', '${f.chapter_name || ''}')">✏️ Edit</button>
-          <button style="padding:6px 10px; font-size:12px;" class="logout" onclick="deleteFormula('${f.id}','${f.file_path || ""}')">🗑</button>
+        <!-- Line 1: Short Format (e.g. 10 • PHY • 3 • Gravitation (s)) -->
+        <div style="font-size:13px; color:#ffffff; font-weight:600; margin-bottom:8px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%;">
+          ${f.class} • ${subShort} • ${chNum} • ${displayChName} (${catCode})
+        </div>
+
+        <!-- Line 2: 👁️, 🖋️ and 🗑️ Buttons (Compact Width) -->
+        <div style="display:flex; gap:6px; align-items:center; width:100%;">
+          <button style="flex:1; padding:4px 0; font-size:13px; border-radius:6px; border:none; background:#3b82f6; color:#ffffff; cursor:pointer;" onclick="viewFormula('${f.id}')" title="View">👁️</button>
+          <button style="flex:1; padding:4px 0; font-size:13px; border-radius:6px; border:none; background:#f59e0b; color:#ffffff; cursor:pointer;" onclick="openFormulaEditModal('${f.id}', '${f.class}', '${f.subject}', '${f.chapter_number || 1}', '${escapeQuotes(f.chapter_name || "")}', '${f.category || "other"}')" title="Edit">🖋️</button>
+          <button style="flex:1; padding:4px 0; font-size:13px; border-radius:6px; border:none; background:#ef4444; color:#ffffff; cursor:pointer;" onclick="deleteFormula('${f.id}','${f.file_path || ""}')" title="Delete">🗑️</button>
         </div>
       `;
       list.appendChild(row);
     });
 
     updateStats();
-  }
+  };
 
   window.viewFormula = async function (id) {
     const { data } = await window.supabaseClient.from("formulas").select("*").eq("id", id).single();
@@ -487,23 +604,64 @@ document.addEventListener("DOMContentLoaded", () => {
     if (data.type === "text") {
       alert("Formula Text:\n\n" + data.formula_text);
     } else {
-      const className = data.class ? `Class ${data.class}` : '';
-      const subjectName = data.subject ? data.subject.toUpperCase() : '';
-      const chapterInfo = data.chapter_name ? data.chapter_name : (data.chapter || '');
-      const descriptiveName = [className, subjectName, chapterInfo].filter(Boolean).join(' • ') || 'Formula Document';
+      const className = data.class ? `Class ${data.class}` : "";
+      const subjectName = data.subject ? data.subject.toUpperCase() : "";
+      const chapterInfo = data.chapter_name ? data.chapter_name : (data.chapter || "");
+      const descriptiveName = [className, subjectName, chapterInfo].filter(Boolean).join(" • ") || "Formula Document";
 
       const targetViewer = data.type === "image" ? "image-viewer.html" : "notes-viewer.html";
       window.open(`${targetViewer}?path=${encodeURIComponent(data.file_path)}&name=${encodeURIComponent(descriptiveName)}`, "_blank");
     }
   };
 
-  window.updateFormulaChapter = async function (id, currentName) {
-    const newName = prompt("Naya Chapter Name enter karein:", currentName);
-    if (!newName || newName.trim() === "") return;
+  window.openFormulaEditModal = function(id, cls, sub, chNum, chName, category) {
+    const idEl = document.getElementById("editFormulaId");
+    const clsEl = document.getElementById("editFormulaClass");
+    const subEl = document.getElementById("editFormulaSubject");
+    const chNumEl = document.getElementById("editFormulaChNum");
+    const chNameEl = document.getElementById("editFormulaChName");
+    const catEl = document.getElementById("editFormulaCategory");
+
+    if (idEl) idEl.value = id;
+    if (clsEl) clsEl.value = cls;
+    if (subEl) subEl.value = sub;
+    if (chNumEl) chNumEl.value = chNum;
+    if (chNameEl) chNameEl.value = chName;
+    if (catEl) catEl.value = category;
+    
+    const viewBtn = document.getElementById("editFormulaViewBtn");
+    if (viewBtn) {
+      viewBtn.onclick = () => window.viewFormula(id);
+    }
+
+    const modal = document.getElementById("editFormulaModal");
+    if (modal) modal.style.display = "flex";
+  };
+
+  window.closeFormulaEditModal = function() {
+    const modal = document.getElementById("editFormulaModal");
+    if (modal) modal.style.display = "none";
+  };
+
+  window.saveFormulaEdit = async function() {
+    const id = document.getElementById("editFormulaId")?.value;
+    const cls = document.getElementById("editFormulaClass")?.value;
+    const sub = document.getElementById("editFormulaSubject")?.value;
+    const chNum = parseInt(document.getElementById("editFormulaChNum")?.value) || 1;
+    const chName = document.getElementById("editFormulaChName")?.value.trim();
+    const category = document.getElementById("editFormulaCategory")?.value;
+
+    if (!chName) return alert("❌ Please enter chapter name");
 
     const { error } = await window.supabaseClient
       .from("formulas")
-      .update({ chapter_name: newName.trim() })
+      .update({ 
+        class: cls,
+        subject: sub,
+        chapter_number: chNum,
+        chapter_name: chName,
+        category: category
+      })
       .eq("id", id);
 
     if (error) {
@@ -511,12 +669,13 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    alert("✅ Formula chapter name updated successfully!");
+    alert("✅ Formula details updated successfully!");
+    closeFormulaEditModal();
     await loadFormulas();
   };
 
   window.deleteFormula = async function (id, filePath) {
-    if (!confirm("Kya aap is formula ko database aur storage bucket dono se delete karna chahte hain?")) return;
+    if (!confirm("Delete this formula?")) return;
     
     if (filePath && !filePath.startsWith("http")) {
       await window.supabaseClient.storage.from("admin-files").remove([filePath]);
@@ -540,6 +699,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("searchEvent")?.addEventListener("input", loadEvents);
   document.getElementById("filterEventMonth")?.addEventListener("change", loadEvents);
   document.getElementById("filterEventYear")?.addEventListener("change", loadEvents);
+  document.getElementById("filterEventType")?.addEventListener("change", loadEvents);
 
   document.getElementById("searchFormula")?.addEventListener("input", loadFormulas);
   document.getElementById("filterFClass")?.addEventListener("change", loadFormulas);
@@ -552,8 +712,34 @@ document.addEventListener("DOMContentLoaded", () => {
   updateStats();
 });
 
-/* ---------- PART 5: DOUBTS & OVERLAY SYSTEM ---------- */
+
+/* =====================================================
+   PART 5: DOUBTS & OVERLAY SYSTEM (DIRECT USER_PHOTO FIX)
+   ===================================================== */
+
+async function updateDoubtBadge() {
+  const badge = document.getElementById("pendingCount");
+  if (!badge) return;
+
+  try {
+    const { count, error } = await window.supabaseClient
+      .from("doubts")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "pending");
+
+    if (!error && count !== null) {
+      badge.innerText = count;
+      badge.style.display = count > 0 ? "inline-block" : "none";
+    }
+  } catch (err) {
+    console.error("Error updating doubt badge:", err);
+  }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
+  updateDoubtBadge();
+  setInterval(updateDoubtBadge, 5000);
+
   const doubtBtn   = document.getElementById("doubtBtn");
   const doubtPanel = document.getElementById("doubtPanel");
   const doubtList  = document.getElementById("doubtList");
@@ -597,19 +783,160 @@ document.addEventListener("DOMContentLoaded", () => {
 
     doubtList.innerHTML = "";
     data.slice(0, 5).forEach(d => {
+      const userName = d.user_name || (d.user_email ? d.user_email.split('@')[0] : "Student");
+      const userInitial = userName.charAt(0).toUpperCase();
+
+      // Direct doubts table ka user_photo use kar rahe hain
       const userPhotoHtml = d.user_photo 
         ? `<img src="${d.user_photo}" style="width:26px; height:26px; border-radius:50%; object-fit:cover; margin-right:6px;">` 
-        : `<div style="width:26px; height:26px; border-radius:50%; background:#1f3554; display:inline-flex; align-items:center; justify-content:center; margin-right:6px; font-size:11px; font-weight:bold;">${(d.user_name || 'U').charAt(0).toUpperCase()}</div>`;
+        : `<div style="width:26px; height:26px; border-radius:50%; background:#1f3554; color:#fff; display:inline-flex; align-items:center; justify-content:center; margin-right:6px; font-size:11px; font-weight:bold;">${userInitial}</div>`;
 
       doubtList.innerHTML += `
         <div style="padding:8px; border-bottom:1px solid #2f4d77; font-size:13px; display:flex; align-items:flex-start;">
           <div>${userPhotoHtml}</div>
           <div style="flex:1; overflow:hidden;">
-            <div style="font-weight:bold; color:#3aa0ff; font-size:12px;">${d.user_name || 'Student'}</div>
-            <div style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#cbd5e1;">${d.question_text || 'Image doubt'}</div>
+            <div style="font-weight:bold; color:#3aa0ff; font-size:12px;">${userName}</div>
+            <div style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#cbd5e1;">${d.question || "Image doubt"}</div>
           </div>
         </div>
       `;
     });
   }
 });
+
+window.openDoubtOverlay = async function() {
+  const overlay = document.getElementById("doubtOverlay");
+  const overlayList = document.getElementById("doubtOverlayList");
+
+  if (!overlay || !overlayList) return;
+  overlay.style.display = "flex";
+  overlayList.innerHTML = "⏳ Loading all doubts...";
+
+  const { data, error } = await window.supabaseClient
+    .from("doubts")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error || !data || data.length === 0) {
+    overlayList.innerHTML = "<em>No doubts found</em>";
+    return;
+  }
+
+  overlayList.innerHTML = "";
+  data.forEach(d => {
+    const card = document.createElement("div");
+    card.className = "admin-doubt-card";
+    
+    const isSolved = d.status === "solved";
+
+    const userName = d.user_name || (d.user_email ? d.user_email.split('@')[0] : "Student");
+    const userEmail = d.user_email || "";
+    const userInitial = userName.charAt(0).toUpperCase();
+
+    // Direct user_photo column ka use
+    const userAvatarHtml = d.user_photo 
+      ? `<img src="${d.user_photo}" style="width:36px; height:36px; border-radius:50%; object-fit:cover;">`
+      : `<div style="width:36px; height:36px; border-radius:50%; background:#5a2eff; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:14px;">${userInitial}</div>`;
+
+    card.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          ${userAvatarHtml}
+          <div>
+            <div style="font-weight:bold; font-size:14px; color:#fff;">${userName}</div>
+            ${userEmail ? `<div style="font-size:11px; color:#94a3b8;">${userEmail}</div>` : ""}
+          </div>
+        </div>
+        <span class="status ${isSolved ? "solved" : "pending"}">${isSolved ? "✅ Solved" : "⏳ Pending"}</span>
+      </div>
+      
+      <p style="margin-top:8px;"><b>❓ Question:</b> ${d.question || "No text content"}</p>
+      ${d.image_url ? `<img src="${d.image_url}" style="max-width:100%; max-height:200px; border-radius:8px; margin-top:8px; margin-bottom:8px;">` : ""}
+
+      <input type="text" id="greet_${d.id}" placeholder="Greeting Message (e.g. Hi Rahul,)" value="${d.greeting || ""}">
+      <textarea id="ans_${d.id}" placeholder="Type solution/answer here...">${d.answer || ""}</textarea>
+
+      <div class="admin-actions">
+        <button class="publish" onclick="publishAnswer('${d.id}')">💾 Save & Resolve</button>
+        <button class="delete" onclick="deleteDoubt('${d.id}')">🗑️ Delete</button>
+      </div>
+    `;
+    overlayList.appendChild(card);
+  });
+};
+
+window.closeDoubtOverlay = function() {
+  const overlay = document.getElementById("doubtOverlay");
+  if (overlay) overlay.style.display = "none";
+};
+
+window.publishAnswer = async function(id) {
+  const greetVal = document.getElementById(`greet_${id}`)?.value.trim() || "";
+  const ansVal = document.getElementById(`ans_${id}`)?.value.trim() || "";
+
+  if (!ansVal) return alert("❌ Please enter an answer!");
+
+  const { error } = await window.supabaseClient
+    .from("doubts")
+    .update({
+      greeting: greetVal,
+      answer: ansVal,
+      status: "solved"
+    })
+    .eq("id", id);
+
+  if (error) {
+    alert("❌ Error saving answer: " + error.message);
+    return;
+  }
+
+  alert("✅ Solution published!");
+  openDoubtOverlay();
+};
+
+window.deleteDoubt = async function(id) {
+  if (!confirm("Are you sure you want to delete this doubt?")) return;
+
+  const { error } = await window.supabaseClient.from("doubts").delete().eq("id", id);
+  if (error) {
+    alert("❌ Delete failed: " + error.message);
+    return;
+  }
+
+  openDoubtOverlay();
+};
+
+/* =====================================================
+   PART 6: ORDERS SYSTEM & UTILS
+   ===================================================== */
+
+async function updateOrdersBadge() {
+  const badge = document.getElementById("pendingOrdersCount");
+  if (!badge) return;
+
+  try {
+    const { count, error } = await window.supabaseClient
+      .from("orders")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "pending");
+
+    if (!error && count !== null) {
+      badge.innerText = count;
+      badge.style.display = count > 0 ? "inline-block" : "none";
+    }
+  } catch (err) {
+    console.error("Error updating orders badge:", err);
+  }
+}
+
+setInterval(updateOrdersBadge, 5000);
+
+/* ---------- HELPER FUNCTIONS ---------- */
+
+function escapeQuotes(str) {
+  if (!str) return "";
+  return String(str)
+    .replace(/\\/g, "\\\\")
+    .replace(/'/g, "\\'")
+    .replace(/"/g, "&quot;");
+}

@@ -16,7 +16,10 @@
 
 <header class="topbar">
   <h2>⚙️ Admin Panel</h2>
-  <div id="ordersBtn" class="floating-btn" title="Payment Orders & Approvals" onclick="window.location.href='admin-orders.html'">💳</div>
+  <div id="ordersBtn" class="floating-btn" title="Payment Orders & Approvals" onclick="window.location.href='admin-orders.html'">
+  💳 <span id="pendingOrdersCount" class="badge">0</span>
+</div>
+
 
   <div id="doubtBtn" class="floating-btn" title="View Doubts">
     ❓ <span id="pendingCount" class="badge">0</span>
@@ -25,12 +28,12 @@
   <div id="bookBtn" class="floating-btn" title="Reference Books" onclick="goUpload()">📚</div>
   <div id="stBtn" class="floating-btn" title="Student List" onclick="window.location.href='upload-premium.html'">🤴🏻</div>
 
-  <!-- DOUBT PANEL -->
+  <!-- DOUBT PANEL (MINI) -->
   <div id="doubtPanel">
     <h3>🤔 Recent Doubts</h3>
     <div id="doubtList">Loading...</div>
     <div id="viewAllWrap">
-      <button id="viewAllDoubts" class="view-all-btn">📂 View All Doubts</button>
+      <button id="viewAllDoubts" class="view-all-btn" onclick="openDoubtOverlay()">📂 View All Doubts</button>
     </div>
   </div>
 
@@ -41,9 +44,126 @@
 <div id="doubtOverlay" class="doubt-overlay">
   <div class="doubt-header">
     <span>❓ All Doubts</span>
-    <button id="closeDoubt">✖</button>
+    <button id="closeDoubt" onclick="closeDoubtOverlay()">✖</button>
   </div>
   <div id="doubtOverlayList" class="doubt-overlay-list">⏳ Loading doubts...</div>
+</div>
+
+<!-- EDIT MODAL FOR NOTES -->
+<div id="editNoteModal" class="doubt-overlay" style="background: rgba(5, 11, 24, 0.95); justify-content: center; align-items: center; display: none;">
+  <div class="box" style="width: 90%; max-width: 500px;">
+    <h3>✏️ Edit Note Details</h3>
+    <input type="hidden" id="editNoteId">
+    
+    <label>Class:</label>
+    <select id="editNoteClass">
+      <option value="9">Class 9</option>
+      <option value="10">Class 10</option>
+      <option value="11">Class 11</option>
+      <option value="12">Class 12</option>
+    </select><br>
+
+    <label>Subject:</label>
+    <select id="editNoteSubject">
+      <option value="physics">Physics</option>
+      <option value="chemistry">Chemistry</option>
+      <option value="maths">Maths</option>
+      <option value="biology">Biology</option>
+      <option value="history">History</option>
+      <option value="geography">Geography</option>
+      <option value="civics">Civics</option>
+      <option value="economics">Economics</option>
+      <option value="hindi">Hindi</option>
+      <option value="english">English</option>
+    </select><br>
+
+    <label>Chapter Number:</label>
+    <select id="editNoteChNum">
+      <option value="1">Chapter 1</option>
+      <option value="2">Chapter 2</option>
+      <option value="3">Chapter 3</option>
+      <option value="4">Chapter 4</option>
+      <option value="5">Chapter 5</option>
+      <option value="6">Chapter 6</option>
+      <option value="7">Chapter 7</option>
+      <option value="8">Chapter 8</option>
+    </select><br>
+
+    <label>Chapter Name:</label>
+    <input type="text" id="editNoteChName" placeholder="Enter Chapter Name"><br><br>
+
+    <div style="display:flex; gap:10px;">
+      <button onclick="saveNoteEdit()" style="flex:1;">💾 Save Changes</button>
+      <button onclick="closeNoteEditModal()" style="flex:1; background:#ff4b4b;">✖ Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT MODAL FOR FORMULA -->
+<div id="editFormulaModal" class="doubt-overlay" style="background: rgba(5, 11, 24, 0.95); justify-content: center; align-items: center; display: none;">
+  <div class="box" style="width: 90%; max-width: 500px;">
+    <h3>✏️ Edit Formula Details</h3>
+    <input type="hidden" id="editFormulaId">
+    
+    <label>Class:</label>
+    <select id="editFormulaClass">
+      <option value="9">Class 9</option>
+      <option value="10">Class 10</option>
+      <option value="11">Class 11</option>
+      <option value="12">Class 12</option>
+    </select><br>
+
+    <label>Subject:</label>
+    <select id="editFormulaSubject">
+      <option value="physics">Physics</option>
+      <option value="chemistry">Chemistry</option>
+      <option value="maths">Maths</option>
+      <option value="biology">Biology</option>
+    </select><br>
+
+    <label>Chapter Number:</label>
+    <select id="editFormulaChNum">
+      <option value="1">Chapter 1</option>
+      <option value="2">Chapter 2</option>
+      <option value="3">Chapter 3</option>
+      <option value="4">Chapter 4</option>
+      <option value="5">Chapter 5</option>
+    </select><br>
+
+    <label>Chapter Name:</label>
+    <input type="text" id="editFormulaChName" placeholder="Enter Chapter Name"><br>
+
+    <label>Category:</label>
+    <select id="editFormulaCategory">
+      <option value="mind_map">Mind Map</option>
+      <option value="short_notes">Short Notes</option>
+      <option value="other">Other</option>
+    </select><br><br>
+
+    <div style="display:flex; gap:10px;">
+      <button onclick="saveFormulaEdit()" style="flex:1;">💾 Save Changes</button>
+      <button onclick="closeFormulaEditModal()" style="flex:1; background:#ff4b4b;">✖ Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT MODAL FOR CALENDAR EVENTS -->
+<div id="editEventModal" class="doubt-overlay" style="background: rgba(5, 11, 24, 0.95); justify-content: center; align-items: center; display: none;">
+  <div class="box" style="width: 90%; max-width: 500px;">
+    <h3>✏️ Edit Event Details</h3>
+    <input type="hidden" id="editEventId">
+    
+    <label>Event Date:</label>
+    <input type="date" id="editEventDate"><br><br>
+
+    <label>Event Name / Details:</label>
+    <input type="text" id="editEventName" placeholder="Enter Event Name"><br><br>
+
+    <div style="display:flex; gap:10px;">
+      <button onclick="saveEventEdit()" style="flex:1;">💾 Save Changes</button>
+      <button onclick="closeEventEditModal()" style="flex:1; background:#ff4b4b;">✖ Cancel</button>
+    </div>
+  </div>
 </div>
 
 <main>
@@ -228,7 +348,6 @@
       <option value="ch5">Chapter 5</option>
     </select><br><br>
 
-    <!-- 🌟 Naya Chapter Name Input Box Formulas ke liye -->
     <input type="text" id="fChapterNameInput" placeholder="Enter Chapter Name (e.g. Matrix)" required /><br><br>
 
     <select id="fType">

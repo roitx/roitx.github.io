@@ -354,36 +354,31 @@ button:active {
 .del, .ac { background: #a33; }
 .equal { background: #fff; color: #000; font-size: 18px; }
 
-/* STRICT LOCKING ENGINE */
-body.shift-mode-active .shift-label {
-  text-shadow: 0 0 10px var(--shift-color);
-  font-size: 10px;
-  transform: scale(1.15);
+/* SHIFT & ALPHA GLOW EFFECTS */
+body.shift-mode-active .has-shift button {
+  box-shadow: 0 0 10px var(--shift-color) !important;
+  border: 1px solid var(--shift-color);
 }
 
-body.shift-mode-active .btn-wrapper:not(.has-shift) button,
-body.shift-mode-active .main-pad button:not(.btn-ctrl):not(.del):not(.ac) {
-  opacity: 0.2;
-  pointer-events: none;
-  filter: grayscale(1);
+body.shift-mode-active .shift-label {
+  text-shadow: 0 0 8px var(--shift-color);
+  font-size: 9px;
+  transform: scale(1.1);
+}
+
+body.alpha-mode-active .has-alpha button {
+  box-shadow: 0 0 10px var(--alpha-color) !important;
+  border: 1px solid var(--alpha-color);
 }
 
 body.alpha-mode-active .alpha-label {
-  text-shadow: 0 0 10px var(--alpha-color);
-  font-size: 10px;
-  transform: scale(1.15);
+  text-shadow: 0 0 8px var(--alpha-color);
+  font-size: 9px;
+  transform: scale(1.1);
   opacity: 1;
 }
 
-body.alpha-mode-active .btn-wrapper:not(.has-alpha) button,
-body.alpha-mode-active .scientific button:not(.btn-wrapper.has-alpha *):not(.btn-ctrl):not(.del):not(.ac),
-body.alpha-mode-active .main-pad button:not(.btn-wrapper.has-alpha *):not(.btn-ctrl):not(.del):not(.ac) {
-  opacity: 0.2;
-  pointer-events: none;
-  filter: grayscale(1);
-}
-
-/* COMPACT MODAL & FULLSCREEN STYLES */
+/* COMPACT MODAL & FULLSCREEN STYLES (FIXED SCROLLING & OVERFLOW) */
 .ai-modal {
   position: fixed; inset: 0; background: rgba(0,0,0,0.85);
   display: none; justify-content: center; align-items: center; z-index: 2000; padding: 10px;
@@ -393,9 +388,9 @@ body.alpha-mode-active .main-pad button:not(.btn-wrapper.has-alpha *):not(.btn-c
   background: #181818; width: 100%; max-width: 420px; border-radius: 12px; padding: 12px;
   border: 1px solid var(--accent); box-shadow: 0 0 15px rgba(0,255,156,0.2);
   display: flex; flex-direction: column; max-height: 90vh; transition: all 0.2s ease;
+  overflow: hidden;
 }
 
-/* Fullscreen Mode */
 .ai-content.fullscreen {
   max-width: 100vw !important;
   height: 100vh !important;
@@ -404,12 +399,18 @@ body.alpha-mode-active .main-pad button:not(.btn-wrapper.has-alpha *):not(.btn-c
   margin: 0 !important;
 }
 
+.ai-body {
+  overflow-y: auto;
+  flex: 1;
+  padding-right: 2px;
+}
+
 .btn-fullscreen {
   background: #333 !important; color: #fff !important; font-size: 13px !important;
   border: 1px solid #555 !important; padding: 2px 6px !important; border-radius: 4px !important; cursor: pointer;
 }
 
-.ai-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.ai-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-shrink: 0; }
 .ai-header h3 { margin: 0; color: var(--accent); font-size: 14px; }
 .ai-header button { background: none; color: #fff; font-size: 18px; width: auto; box-shadow: none; padding: 0; border: none; cursor: pointer; }
 
@@ -418,21 +419,41 @@ body.alpha-mode-active .main-pad button:not(.btn-wrapper.has-alpha *):not(.btn-c
 .tab-btn.active { background: var(--accent); color: #000; font-weight: bold; border-color: var(--accent); }
 
 .ai-sec { margin-bottom: 6px; }
-.ai-body textarea { width: 100%; height: 60px; background: #111; color: #fff; border: 1px solid #444; border-radius: 6px; padding: 6px; resize: none; font-size: 12px; }
 
-/* SCROLLABLE & RESIZABLE RESPONSE BOX */
+/* MODERN TEXTAREA THEME */
+.custom-dark-textarea {
+  width: 100%;
+  height: 70px;
+  background: #0d1117;
+  color: #00ff9c;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 8px;
+  resize: none;
+  font-size: 13px;
+  font-family: 'Poppins', sans-serif;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.custom-dark-textarea:focus {
+  border-color: #00ff9c;
+  box-shadow: 0 0 8px rgba(0, 255, 156, 0.3);
+}
+
 .ai-response-box { 
   background: #0d0d0d; 
-  padding: 8px 10px; 
+  padding: 10px; 
   border-radius: 6px; 
-  min-height: 90px; 
-  max-height: 380px; 
-  overflow-y: auto; 
-  resize: vertical; 
+  max-height: 200px; 
+  overflow-y: auto !important; 
   font-size: 12px; 
   color: #ddd; 
   border: 1px solid #333; 
-  line-height: 1.35; 
+  line-height: 1.4;
+  margin-top: 8px;
+  word-break: break-word;
 }
 
 .ai-content.fullscreen .ai-response-box {
@@ -440,17 +461,30 @@ body.alpha-mode-active .main-pad button:not(.btn-wrapper.has-alpha *):not(.btn-c
   flex: 1;
 }
 
-.ai-btns { display: flex; gap: 6px; margin-bottom: 6px; }
+.ai-btns { display: flex; gap: 6px; margin: 8px 0; flex-shrink: 0; }
 .ai-btns button { background: var(--accent); color: #000; font-weight: bold; font-size: 11px; padding: 7px 0; }
 .ai-loader { text-align: center; color: var(--accent); font-size: 11px; margin: 4px 0; }
 
-/* CANVAS DRAWING STYLES */
 .notice-tag { font-size: 10px; color: #aaa; display: block; margin-bottom: 4px; }
+
+/* DRAW PAD HEIGHT UPDATED */
 .canvas-wrapper { position: relative; width: 100%; }
-#mathCanvas { background: #0a0a0a; border: 1px solid var(--accent); border-radius: 6px; touch-action: none; cursor: crosshair; display: block; width: 100%; }
+#mathCanvas { 
+  background: #0a0a0a; 
+  border: 1px solid var(--accent); 
+  border-radius: 6px; 
+  touch-action: none; 
+  cursor: crosshair; 
+  display: block; 
+  width: 100%; 
+  height: 195px; /* Small mode me canvas ki height ~25% badha di gayi hai */
+}
+.ai-content.fullscreen #mathCanvas {
+  height: 40vh !important; /* Fullscreen mode me yeh screen ka exactly 40% height lega */
+}
+
 .btn-clear-pad { position: absolute; right: 5px; bottom: 5px; width: auto; font-size: 9px; padding: 2px 8px; background: #a33; color: #fff; box-shadow: none; border-radius: 4px; }
 
-/* PHOTO SCANNER STYLES */
 .scan-warning { margin: 0 0 8px 0; padding: 6px 10px; background: rgba(255,184,0,0.1); border-left: 3px solid var(--shift-color); font-size: 10px; color: #ffb800; border-radius: 4px; }
 #imagePreview { max-width: 100%; max-height: 100px; border-radius: 6px; border: 1px solid #444; }
 
@@ -464,7 +498,6 @@ body.alpha-mode-active .main-pad button:not(.btn-wrapper.has-alpha *):not(.btn-c
   animation: blink-animation 0.8s step-end infinite;
 }
 
-/* SCAN BUTTON STYLES */
 .scan-input-box {
   margin-top: 8px;
   text-align: center;

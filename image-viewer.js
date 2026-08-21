@@ -272,11 +272,56 @@ async function downloadImage() {
     }, true);
 }
 
+/* UPDATED ERROR HANDLING & WORKING.HTML REDIRECT SYSTEM */
 function showError(path) {
-    document.getElementById("doc-title").innerText = "Load Failed";
-    document.getElementById("master-loader").innerHTML = `<div style="color:#ff4444; text-align:center; padding:20px;">
-        <h3>Image Not Found</h3><p style="font-size:12px; opacity:0.6;">Path: ${path}</p>
-    </div>`;
+    const fileName = docName || (path ? path.split('/').pop() : "Image Document");
+    
+    // Create modern notification banner
+    const popup = document.createElement('div');
+    popup.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="background: rgba(255, 71, 87, 0.15); color: #ff4757; width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; border: 1px solid rgba(255, 71, 87, 0.3);">⚠️</div>
+            <div>
+                <div style="font-weight: 600; color: #fff; font-size: 13px;">File Not Found</div>
+                <div style="font-size: 11px; color: #8a99ad; max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${fileName}</div>
+            </div>
+        </div>
+    `;
+    
+    popup.style.cssText = `
+        position: fixed;
+        top: 25px;
+        left: 50%;
+        transform: translateX(-50%) translateY(-20px);
+        background: rgba(18, 22, 31, 0.85);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 12px 18px;
+        border-radius: 14px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+        font-family: 'Inter', sans-serif;
+        z-index: 99999;
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        opacity: 0;
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    `;
+    
+    document.body.appendChild(popup);
+
+    // Smooth entry animation
+    requestAnimationFrame(() => {
+        popup.style.opacity = '1';
+        popup.style.transform = 'translateX(-50%) translateY(0)';
+    });
+
+    // Automatically redirect after 2 seconds with a smooth fade-out
+    setTimeout(() => {
+        popup.style.opacity = '0';
+        popup.style.transform = 'translateX(-50%) translateY(-20px)';
+        setTimeout(() => {
+            window.location.href = "working.html";
+        }, 300); // Wait for fade-out transition to complete
+    }, 2000);
 }
 
 document.addEventListener("DOMContentLoaded", initImageViewer);

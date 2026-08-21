@@ -32,7 +32,7 @@ async function loadUserProfile() {
 
   // Fetch Profile Record
   try {
-    const { data } = await window.supabaseClient
+    const { data, error } = await window.supabaseClient
       .from('profiles')
       .select('*')
       .eq('id', user.id)
@@ -92,9 +92,8 @@ function updateInitialAvatar() {
 
 // Render Avatar Image with Cache Busting
 function renderAvatarImage(url) {
-  // Browser cache bypass karne ke liye timestamp query parameter
   const cacheBustUrl = `${url}?t=${Date.now()}`;
-  document.getElementById("avatarContainer").innerHTML = `<img src="${cacheBustUrl}" alt="Profile">`;
+  document.getElementById("avatarContainer").innerHTML = `<img src="${cacheBustUrl}" alt="Profile" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
   document.getElementById("deletePhotoBtn").style.display = "inline-flex";
 }
 
@@ -134,7 +133,7 @@ function closeCropModal() {
   if (cropper) cropper.destroy();
 }
 
-// 4. Crop & Upload Image to Supabase Storage
+// 4. Crop & Upload Image to Supabase Storage (FIXED)
 async function cropAndUpload() {
   if (!cropper || !currentUser) return;
 
@@ -151,10 +150,12 @@ async function cropAndUpload() {
   msgBox.style.display = "block";
 
   canvas.toBlob(async (blob) => {
-    const filePath = `${currentUser.id}/avatar_${Date.now()}.png`;
+    // Unique file path per upload
+    const fileExt = "png";
+    const filePath = `${currentUser.id}/avatar_${Date.now()}.${fileExt}`;
 
     try {
-      // 1. Storage Upload
+      // 1. Upload to Supabase Storage
       const { error: uploadErr } = await window.supabaseClient
         .storage
         .from('avatars')
@@ -162,35 +163,40 @@ async function cropAndUpload() {
 
       if (uploadErr) throw uploadErr;
 
-      // 2. Get Public URL
+      // 2. Fetch Public URL correctly
       const { data: publicData } = window.supabaseClient
         .storage
         .from('avatars')
         .getPublicUrl(filePath);
 
+      if (!publicData || !publicData.publicUrl) {
+        throw new Error("Failed to generate Public URL for Avatar.");
+      }
+
       currentAvatarUrl = publicData.publicUrl;
       localStorage.setItem("userPhoto", currentAvatarUrl);
 
-      // 3. Update Profile Table
+      // Instant UI Preview before database update completes
+      renderAvatarImage(currentAvatarUrl);
+
+      // 3. Upsert to Profiles table with guaranteed Public URL
       const { error: dbErr } = await window.supabaseClient
         .from('profiles')
         .upsert({ 
           id: currentUser.id, 
           email: currentUser.email,
           avatar_url: currentAvatarUrl, 
-          updated_at: new Date() 
+          updated_at: new Date().toISOString()
         });
 
       if (dbErr) throw dbErr;
-
-      // Instant UI Sync
-      await loadUserProfile();
 
       msgBox.className = "status-msg success";
       msgBox.innerText = "✅ Profile photo updated!";
       setTimeout(() => { msgBox.style.display = "none"; }, 3000);
 
     } catch (err) {
+      console.error("Avatar Error:", err);
       msgBox.className = "status-msg error";
       msgBox.innerText = "❌ Upload failed: " + err.message;
     }
@@ -210,15 +216,13 @@ async function deleteAvatarPhoto() {
   try {
     const { error } = await window.supabaseClient
       .from('profiles')
-      .update({ avatar_url: null, updated_at: new Date() })
+      .update({ avatar_url: null, updated_at: new Date().toISOString() })
       .eq('id', currentUser.id);
 
     if (error) throw error;
 
     localStorage.removeItem("userPhoto");
-    
-    // Instant UI Sync
-    await loadUserProfile();
+    renderInitialAvatar();
 
     msgBox.className = "status-msg success";
     msgBox.innerText = "✅ Profile photo deleted!";
@@ -238,10 +242,12 @@ async function saveProfileDetails() {
   msgBox.innerText = "Saving profile details...";
   msgBox.style.display = "block";
 
+  const fullName = document.getElementById("fullNameInput").value.trim();
+
   const profileData = {
     id: currentUser.id,
     email: currentUser.email,
-    full_name: document.getElementById("fullNameInput").value.trim(),
+    full_name: fullName,
     country_code: document.getElementById("countryCodeSelect").value,
     phone: document.getElementById("phoneInput").value.trim(),
     target_class: document.getElementById("classSelect").value,
@@ -250,7 +256,7 @@ async function saveProfileDetails() {
     city: document.getElementById("cityInput").value.trim(),
     state: document.getElementById("stateInput").value.trim(),
     avatar_url: currentAvatarUrl,
-    updated_at: new Date()
+    updated_at: new Date().toISOString()
   };
 
   try {
@@ -260,8 +266,10 @@ async function saveProfileDetails() {
 
     if (error) throw error;
 
-    // Save hote hi instant fresh data reload & DOM sync
-    await loadUserProfile();
+    // Direct UI Sync
+    if (fullName) {
+      document.getElementById("userDisplayName").innerText = fullName;
+    }
 
     msgBox.className = "status-msg success";
     msgBox.innerText = "✅ Profile info saved successfully!";

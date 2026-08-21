@@ -25,14 +25,13 @@ async function loginUser() {
       return;
     }
 
-    // Dynamic Redirect Logic (Admin check hata diya gaya hai)
+    // Direct Redirect to profile.html for ALL users (User & Admin both)
     const redirectTarget = sessionStorage.getItem("redirect_after_login");
 
     if (redirectTarget) {
       sessionStorage.removeItem("redirect_after_login");
       window.location.href = redirectTarget;
     } else {
-      // Ab sabhi users login ke baad yahin aayenge
       window.location.href = window.getPageUrl("profile.html");
     }
 
