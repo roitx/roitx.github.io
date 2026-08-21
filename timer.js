@@ -11,6 +11,15 @@ class ProductivityEngine {
     this.brainwaveCtx = null;
     this.waveOscLeft = null;
     this.waveOscRight = null;
+
+    // Visualizer Contexts
+    this.vizAudioCtx = null;
+    this.vizAnalyser = null;
+    this.vizSource = null;
+
+    // Active Widget Tracking
+    this.activeWidgetType = null;
+    this.widgetClockInterval = null;
     
     this.init();
   }
@@ -23,13 +32,19 @@ class ProductivityEngine {
     this.initHardwareAPIs();
     this.requestNotificationPerm();
     this.loadTasks();
-    this.els.timerDisplay.textContent = this.formatTime(this.timerState.remaining);
+    if (this.els.timerDisplay) {
+      this.els.timerDisplay.textContent = this.formatTime(this.timerState.remaining);
+    }
+    
+    // Create UI Components for Widget & Launcher
     this.createFloatingWidgetDOM();
+    this.initVisualizer();
   }
 
   bindElements() {
     this.els = {
       timerDisplay: document.getElementById('timerDisplay'),
+      customMinInput: document.getElementById('customMinInput'),
       swDisplay: document.getElementById('stopwatchDisplay'),
       lapsContainer: document.getElementById('lapsList'),
       dailyStats: document.getElementById('dailyStats'),
@@ -39,50 +54,92 @@ class ProductivityEngine {
       waveDesc: document.getElementById('waveDesc'),
       customAudio: document.getElementById('customAudio'),
       audioUrlInput: document.getElementById('audioUrlInput'),
-      audioFileInput: document.getElementById('audioFileInput')
+      audioFileInput: document.getElementById('audioFileInput'),
+      batteryLvl: document.getElementById('batteryLvl'),
+      netStatus: document.getElementById('netStatus'),
+      visualizerCanvas: document.getElementById('visualizer')
     };
   }
 
   attachEventListeners() {
-    document.getElementById('btnPomodoro').addEventListener('click', () => this.setTimer(40));
-    document.getElementById('btnShortBreak').addEventListener('click', () => this.setTimer(5));
-    document.getElementById('btnCubeBreak').addEventListener('click', () => this.setTimer(3));
+    // Preset Timer Buttons
+    document.getElementById('btnPomodoro')?.addEventListener('click', () => this.setTimer(40));
+    document.getElementById('btnShortBreak')?.addEventListener('click', () => this.setTimer(5));
+    document.getElementById('btnCubeBreak')?.addEventListener('click', () => this.setTimer(3));
 
-    document.getElementById('btnStartTimer').addEventListener('click', () => this.startTimer());
-    document.getElementById('btnPauseTimer').addEventListener('click', () => this.pauseTimer());
-    document.getElementById('btnResetTimer').addEventListener('click', () => this.resetTimer());
-    document.getElementById('btnPipWidget').addEventListener('click', () => this.toggleFloatingWidget());
-
-    document.getElementById('btnSwStart').addEventListener('click', () => this.startStopwatch());
-    document.getElementById('btnSwStop').addEventListener('click', () => this.stopStopwatch());
-    document.getElementById('btnSwLap').addEventListener('click', () => this.lapStopwatch());
-    document.getElementById('btnSwReset').addEventListener('click', () => this.resetStopwatch());
-
-    // 1. Local Device File Upload Handler
-    this.els.audioFileInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const fileURL = URL.createObjectURL(file);
-      this.els.customAudio.src = fileURL;
-      this.els.customAudio.load();
-      this.els.customAudio.play().catch(err => {
-        console.error("Local audio error:", err);
-        alert("Local file play nahi ho saki!");
-      });
+    // Custom Minutes Input Button
+    document.getElementById('btnSetCustomMin')?.addEventListener('click', () => {
+      if (this.els.customMinInput) {
+        const val = parseInt(this.els.customMinInput.value.trim());
+        if (val && val > 0 && val <= 180) {
+          this.setTimer(val);
+        } else {
+          alert("Kripya 1 se 180 minutes ke beech enter karein.");
+        }
+      }
     });
 
-    // 2. Direct URL Load Handler
-    document.getElementById('btnLoadAudio').addEventListener('click', () => {
-      const url = this.els.audioUrlInput.value.trim();
-      if(!url) return;
-      this.els.customAudio.src = url;
-      this.els.customAudio.load();
-      this.els.customAudio.play().catch(error => {
-        console.error("URL audio error:", error);
-        alert("Audio stream load nahi ho saka! Valid direct MP3 link dein.");
+    // Main Timer Controls
+    document.getElementById('btnStartTimer')?.addEventListener('click', () => this.startTimer());
+    document.getElementById('btnPauseTimer')?.addEventListener('click', () => this.pauseTimer());
+    document.getElementById('btnResetTimer')?.addEventListener('click', () => this.resetTimer());
+
+    // Stopwatch Controls
+    document.getElementById('btnSwStart')?.addEventListener('click', () => this.startStopwatch());
+    document.getElementById('btnSwStop')?.addEventListener('click', () => this.stopStopwatch());
+    document.getElementById('btnSwLap')?.addEventListener('click', () => this.lapStopwatch());
+    document.getElementById('btnSwReset')?.addEventListener('click', () => this.resetStopwatch());
+
+    // Local Device File Upload
+    if (this.els.audioFileInput) {
+      this.els.audioFileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const ytContainer = document.getElementById('ytPlayerContainer');
+        if (ytContainer) ytContainer.innerHTML = '';
+        
+        const fileURL = URL.createObjectURL(file);
+        this.els.customAudio.style.display = 'block';
+        this.els.customAudio.src = fileURL;
+        this.els.customAudio.load();
+        this.els.customAudio.play().catch(err => {
+          console.error("Local audio error:", err);
+          alert("Local file play nahi ho saki!");
+        });
       });
+    }
+
+    // Smart URL / YouTube Handler
+    document.getElementById('btnLoadAudio')?.addEventListener('click', () => {
+      const inputVal = this.els.audioUrlInput.value.trim();
+      if(!inputVal) return;
+
+      const ytMatch = inputVal.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+      
+      let container = document.getElementById('ytPlayerContainer');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'ytPlayerContainer';
+        this.els.customAudio.parentNode.insertBefore(container, this.els.customAudio);
+      }
+
+      if (ytMatch && ytMatch[1]) {
+        const videoId = ytMatch[1];
+        this.els.customAudio.style.display = 'none';
+        container.innerHTML = `<iframe width="100%" height="80" src="https://www.youtube.com/embed/${videoId}?autoplay=1" frameborder="0" allow="autoplay"></iframe>`;
+      } else {
+        container.innerHTML = '';
+        this.els.customAudio.style.display = 'block';
+        this.els.customAudio.src = inputVal;
+        this.els.customAudio.load();
+        this.els.customAudio.play().catch(error => {
+          console.error("URL audio error:", error);
+          alert("Audio stream load nahi ho saka! Valid direct MP3 link ya YouTube link dein.");
+        });
+      }
     });
 
+    // Brainwaves
     document.querySelectorAll('.wave-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         document.querySelectorAll('.wave-btn').forEach(b => b.classList.remove('active-toggle'));
@@ -91,41 +148,241 @@ class ProductivityEngine {
       });
     });
     
-    document.getElementById('btnStopWave').addEventListener('click', () => {
+    document.getElementById('btnStopWave')?.addEventListener('click', () => {
       document.querySelectorAll('.wave-btn').forEach(b => b.classList.remove('active-toggle'));
       this.stopBrainwave();
     });
 
-    document.getElementById('btnTaskAdd').addEventListener('click', () => this.addTask());
-    document.getElementById('btnFocus').addEventListener('click', (e) => this.toggleFocus(e));
-    document.getElementById('btnAmbient').addEventListener('click', (e) => this.toggleAmbient(e));
-    document.getElementById('btnModalClose').addEventListener('click', () => this.closeModal());
+    // Utility buttons
+    document.getElementById('btnTaskAdd')?.addEventListener('click', () => this.addTask());
+    document.getElementById('btnFocus')?.addEventListener('click', (e) => this.toggleFocus(e));
+    document.getElementById('btnAmbient')?.addEventListener('click', (e) => this.toggleAmbient(e));
+    
+    const modalClose = document.getElementById('btnCloseModal') || document.getElementById('btnModalClose');
+    if(modalClose) modalClose.addEventListener('click', () => this.closeModal());
   }
 
+  // ==========================================
+  // FLOATING WIDGET & LAUNCHER SYSTEM
+  // ==========================================
+  
   createFloatingWidgetDOM() {
-    if (document.getElementById('floatingWidget')) return;
-    const widget = document.createElement('div');
-    widget.id = 'floatingWidget';
-    widget.innerHTML = `
-      <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Roitx Mini Widget</div>
-      <div class="widget-time" id="widgetTimeDisp">40:00</div>
-      <button class="btn primary" id="btnWidgetClose" style="padding: 6px; font-size: 0.75rem; width: 100%;">Close Widget</button>
+    // 1. Create Launcher Trigger Button
+    if (!document.getElementById('roitxLauncher')) {
+      const launcher = document.createElement('div');
+      launcher.id = 'roitxLauncher';
+      launcher.title = 'Add Productivity Widget';
+      launcher.innerHTML = '⚡';
+      launcher.style.cssText = `
+        position: fixed; bottom: 25px; right: 25px; z-index: 999999;
+        width: 52px; height: 52px; background: #3b82f6; color: #ffffff;
+        border-radius: 50%; display: flex; align-items: center; justify-content: center;
+        cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3); font-size: 22px;
+        transition: transform 0.2s, background 0.2s; user-select: none;
+      `;
+      launcher.onmouseover = () => launcher.style.transform = 'scale(1.1)';
+      launcher.onmouseout = () => launcher.style.transform = 'scale(1.0)';
+      
+      launcher.addEventListener('click', () => this.toggleSelectionMenu());
+      document.body.appendChild(launcher);
+    }
+
+    // 2. Create Floating Widget Container
+    if (!document.getElementById('floatingWidget')) {
+      const widget = document.createElement('div');
+      widget.id = 'floatingWidget';
+      widget.style.cssText = `
+        position: fixed; bottom: 25px; right: 25px; z-index: 999999;
+        width: 260px; background: #1e293b; color: #f8fafc; border-radius: 12px;
+        display: none; box-shadow: 0 10px 25px rgba(0,0,0,0.5); padding: 14px;
+        border: 1px solid #334155; font-family: system-ui, -apple-system, sans-serif;
+      `;
+      document.body.appendChild(widget);
+      this.makeWidgetDraggable(widget);
+    }
+  }
+
+  toggleSelectionMenu() {
+    let menu = document.getElementById('roitxMenu');
+    if (menu) {
+      menu.remove();
+      return;
+    }
+
+    menu = document.createElement('div');
+    menu.id = 'roitxMenu';
+    menu.style.cssText = `
+      position: fixed; bottom: 85px; right: 25px; z-index: 1000000;
+      background: #0f172a; color: #ffffff; padding: 10px; border-radius: 10px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.4); border: 1px solid #334155;
+      display: flex; flex-direction: column; gap: 8px; width: 180px;
+      font-family: system-ui, -apple-system, sans-serif; font-size: 14px;
     `;
-    document.body.appendChild(widget);
+
+    menu.innerHTML = `
+      <div style="font-weight: bold; padding: 4px; color: #94a3b8; font-size: 11px; text-transform: uppercase;">Select Widget</div>
+      <button id="optTimer" style="background:#1e293b; color:#fff; border:1px solid #334155; padding:8px; border-radius:6px; cursor:pointer; text-align:left;">⏱️ Timer</button>
+      <button id="optSw" style="background:#1e293b; color:#fff; border:1px solid #334155; padding:8px; border-radius:6px; cursor:pointer; text-align:left;">⏱️ Stopwatch</button>
+      <button id="optClock" style="background:#1e293b; color:#fff; border:1px solid #334155; padding:8px; border-radius:6px; cursor:pointer; text-align:left;">⏰ Real-Time Clock</button>
+    `;
+
+    document.body.appendChild(menu);
+
+    document.getElementById('optTimer').onclick = () => { this.launchWidget('timer'); menu.remove(); };
+    document.getElementById('optSw').onclick = () => { this.launchWidget('stopwatch'); menu.remove(); };
+    document.getElementById('optClock').onclick = () => { this.launchWidget('clock'); menu.remove(); };
+  }
+
+  launchWidget(type) {
+    const widget = document.getElementById('floatingWidget');
+    const launcher = document.getElementById('roitxLauncher');
+    if (!widget || !launcher) return;
+
+    this.activeWidgetType = type;
+
+    // Hide Launcher, Show Widget Window
+    launcher.style.display = 'none';
+    widget.style.display = 'block';
+
+    // Clear previous clock interval if any
+    if (this.widgetClockInterval) clearInterval(this.widgetClockInterval);
+
+    // Build Header
+    let titleText = 'Timer';
+    if (type === 'stopwatch') titleText = 'Stopwatch';
+    if (type === 'clock') titleText = 'Real-Time Clock';
+
+    widget.innerHTML = `
+      <div id="widgetDragHandle" style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:8px; margin-bottom:10px; cursor:move;">
+        <span style="font-weight:bold; font-size: 0.9rem; color:#38bdf8;">🚀 Roitx ${titleText}</span>
+        <button id="btnWidgetClose" style="background:transparent; border:none; color:#94a3b8; font-size:16px; cursor:pointer; padding:0 4px;">✕</button>
+      </div>
+      <div id="widgetBody" style="text-align:center;"></div>
+    `;
+
+    const body = widget.querySelector('#widgetBody');
+
+    // Attach Working Close Event
     document.getElementById('btnWidgetClose').addEventListener('click', () => {
       widget.style.display = 'none';
+      launcher.style.display = 'flex'; // Bring Launcher back
+      if (this.widgetClockInterval) clearInterval(this.widgetClockInterval);
+      this.activeWidgetType = null;
     });
-  }
 
-  toggleFloatingWidget() {
-    const widget = document.getElementById('floatingWidget');
-    if (!widget) return;
-    widget.style.display = (widget.style.display === 'block') ? 'none' : 'block';
+    // Populate Widget Body Content
+    if (type === 'timer') {
+      body.innerHTML = `
+        <div id="widgetTimeDisp" style="font-size:2rem; font-weight:bold; margin-bottom:10px; font-family:monospace;">${this.formatTime(this.timerState.remaining)}</div>
+        <div style="display:flex; gap:6px;">
+          <button id="btnWStart" style="flex:1; background:#3b82f6; color:#fff; border:none; padding:6px; border-radius:4px; cursor:pointer;">Start/Pause</button>
+          <button id="btnWReset" style="background:#475569; color:#fff; border:none; padding:6px; border-radius:4px; cursor:pointer;">Reset</button>
+        </div>
+      `;
+      document.getElementById('btnWStart').onclick = () => {
+        if (this.timerState.intervalId) this.pauseTimer();
+        else this.startTimer();
+      };
+      document.getElementById('btnWReset').onclick = () => this.resetTimer();
+    } 
+    else if (type === 'stopwatch') {
+      body.innerHTML = `
+        <div id="widgetSwDisp" style="font-size:1.8rem; font-weight:bold; margin-bottom:10px; font-family:monospace;">${this.formatStopwatch(this.stopwatchState.elapsed)}</div>
+        <div style="display:flex; gap:6px;">
+          <button id="btnWSwStart" style="flex:1; background:#10b981; color:#fff; border:none; padding:6px; border-radius:4px; cursor:pointer;">Start</button>
+          <button id="btnWSwStop" style="flex:1; background:#ef4444; color:#fff; border:none; padding:6px; border-radius:4px; cursor:pointer;">Stop</button>
+          <button id="btnWSwReset" style="background:#475569; color:#fff; border:none; padding:6px; border-radius:4px; cursor:pointer;">Reset</button>
+        </div>
+      `;
+      document.getElementById('btnWSwStart').onclick = () => this.startStopwatch();
+      document.getElementById('btnWSwStop').onclick = () => this.stopStopwatch();
+      document.getElementById('btnWSwReset').onclick = () => this.resetStopwatch();
+    } 
+    else if (type === 'clock') {
+      body.innerHTML = `
+        <div id="widgetClockDisp" style="font-size:1.8rem; font-weight:bold; color:#f59e0b; font-family:monospace; margin:10px 0;">00:00:00</div>
+      `;
+      const updateClock = () => {
+        const cEl = document.getElementById('widgetClockDisp');
+        if (cEl) cEl.textContent = new Date().toLocaleTimeString();
+      };
+      updateClock();
+      this.widgetClockInterval = setInterval(updateClock, 1000);
+    }
   }
 
   updateWidgetTime() {
-    const wTime = document.getElementById('widgetTimeDisp');
-    if (wTime) wTime.textContent = this.formatTime(this.timerState.remaining);
+    if (this.activeWidgetType === 'timer') {
+      const wTime = document.getElementById('widgetTimeDisp');
+      if (wTime) wTime.textContent = this.formatTime(this.timerState.remaining);
+    }
+  }
+
+  makeWidgetDraggable(widget) {
+    let isDragging = false, offsetRight = 0, offsetBottom = 0;
+
+    widget.addEventListener('mousedown', (e) => {
+      if (e.target.closest('#widgetDragHandle')) {
+        isDragging = true;
+        offsetRight = window.innerWidth - e.clientX - widget.offsetWidth;
+        offsetBottom = window.innerHeight - e.clientY - widget.offsetHeight;
+      }
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      let newRight = window.innerWidth - e.clientX - offsetRight;
+      let newBottom = window.innerHeight - e.clientY - offsetBottom;
+      widget.style.right = `${Math.max(10, newRight)}px`;
+      widget.style.bottom = `${Math.max(10, newBottom)}px`;
+    });
+
+    document.addEventListener('mouseup', () => isDragging = false);
+  }
+
+  // ==========================================
+  // AUDIO VISUALIZER & BRAINWAVE ENGINE
+  // ==========================================
+
+  initVisualizer() {
+    if (!this.els.customAudio || !this.els.visualizerCanvas) return;
+    const canvas = this.els.visualizerCanvas;
+    const ctx = canvas.getContext('2d');
+
+    this.els.customAudio.addEventListener('play', () => {
+      if (!this.vizAudioCtx) {
+        this.vizAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        this.vizAnalyser = this.vizAudioCtx.createAnalyser();
+        this.vizSource = this.vizAudioCtx.createMediaElementSource(this.els.customAudio);
+        this.vizSource.connect(this.vizAnalyser);
+        this.vizAnalyser.connect(this.vizAudioCtx.destination);
+        this.vizAnalyser.fftSize = 128;
+      }
+      if (this.vizAudioCtx.state === 'suspended') {
+        this.vizAudioCtx.resume();
+      }
+      this.drawVisualizer(canvas, ctx);
+    });
+  }
+
+  drawVisualizer(canvas, ctx) {
+    if (!this.vizAnalyser) return;
+    requestAnimationFrame(() => this.drawVisualizer(canvas, ctx));
+
+    const bufferLength = this.vizAnalyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+    this.vizAnalyser.getByteFrequencyData(dataArray);
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const barWidth = (canvas.width / bufferLength) * 2;
+    let x = 0;
+
+    for (let i = 0; i < bufferLength; i++) {
+      const barHeight = (dataArray[i] / 255) * canvas.height;
+      ctx.fillStyle = '#3b82f6';
+      ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+      x += barWidth + 2;
+    }
   }
 
   playBrainwave(type, freqOffset) {
@@ -137,7 +394,9 @@ class ProductivityEngine {
       'gamma': 'Gamma Waves (30-100Hz): Peak focus.',
       'delta': 'Delta Waves (0.5-3Hz): Deep recovery.'
     };
-    this.els.waveDesc.innerHTML = `<strong>Active:</strong> ${descriptions[type]} <br><span style="color:var(--accent-primary)">Playing at ${freqOffset}Hz difference. (Requires Headphones)</span>`;
+    if(this.els.waveDesc) {
+      this.els.waveDesc.innerHTML = `<strong>Active:</strong> ${descriptions[type] || 'Binaural Beat'} <br><span style="color:var(--accent-primary)">Playing at ${freqOffset}Hz difference. (Requires Headphones)</span>`;
+    }
 
     try {
       this.brainwaveCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -161,7 +420,7 @@ class ProductivityEngine {
       this.waveOscLeft.start();
       this.waveOscRight.start();
     } catch(err) {
-      this.els.waveDesc.textContent = "Audio blocked by browser. Click anywhere on page first.";
+      if(this.els.waveDesc) this.els.waveDesc.textContent = "Audio blocked by browser. Click anywhere on page first.";
     }
   }
 
@@ -170,8 +429,14 @@ class ProductivityEngine {
       this.brainwaveCtx.close();
       this.brainwaveCtx = null;
     }
-    this.els.waveDesc.innerHTML = "Select a frequency to generate Binaural Beats. (Requires Headphones)";
+    if(this.els.waveDesc) {
+      this.els.waveDesc.innerHTML = "Select a frequency to generate Binaural Beats. (Requires Headphones)";
+    }
   }
+
+  // ==========================================
+  // CORE TIMER & STOPWATCH LOGIC
+  // ==========================================
 
   formatTime(sec) {
     const m = String(Math.floor(sec / 60)).padStart(2, '0');
@@ -183,7 +448,7 @@ class ProductivityEngine {
     this.pauseTimer();
     this.timerState.initial = minutes * 60;
     this.timerState.remaining = this.timerState.initial;
-    this.els.timerDisplay.textContent = this.formatTime(this.timerState.remaining);
+    if(this.els.timerDisplay) this.els.timerDisplay.textContent = this.formatTime(this.timerState.remaining);
     this.updateWidgetTime();
   }
 
@@ -192,7 +457,7 @@ class ProductivityEngine {
     this.timerState.intervalId = setInterval(() => {
       if (this.timerState.remaining > 0) {
         this.timerState.remaining--;
-        this.els.timerDisplay.textContent = this.formatTime(this.timerState.remaining);
+        if(this.els.timerDisplay) this.els.timerDisplay.textContent = this.formatTime(this.timerState.remaining);
         this.updateWidgetTime();
         document.title = `${this.formatTime(this.timerState.remaining)} - Study Session`;
       }
@@ -210,14 +475,14 @@ class ProductivityEngine {
   resetTimer() {
     this.pauseTimer();
     this.timerState.remaining = this.timerState.initial;
-    this.els.timerDisplay.textContent = this.formatTime(this.timerState.remaining);
+    if(this.els.timerDisplay) this.els.timerDisplay.textContent = this.formatTime(this.timerState.remaining);
     this.updateWidgetTime();
     document.title = "Study Timer - Roitx Pro";
   }
 
   completeSession() {
     this.pauseTimer();
-    this.els.timerDisplay.textContent = "00:00";
+    if(this.els.timerDisplay) this.els.timerDisplay.textContent = "00:00";
     this.updateWidgetTime();
     this.playChime();
     this.sendNotification("Session Complete!", "Great job! Time to track your focus minutes.");
@@ -229,8 +494,8 @@ class ProductivityEngine {
     this.showModal();
   }
 
-  showModal() { this.els.modal.style.display = 'flex'; }
-  closeModal() { this.els.modal.style.display = 'none'; }
+  showModal() { if(this.els.modal) this.els.modal.style.display = 'flex'; }
+  closeModal() { if(this.els.modal) this.els.modal.style.display = 'none'; }
 
   formatStopwatch(ms) {
     const total = Math.max(0, ms);
@@ -243,7 +508,13 @@ class ProductivityEngine {
   updateStopwatch = () => {
     if(!this.stopwatchState.running) return;
     this.stopwatchState.elapsed = performance.now() - this.stopwatchState.start;
-    this.els.swDisplay.innerHTML = this.formatStopwatch(this.stopwatchState.elapsed);
+    if(this.els.swDisplay) this.els.swDisplay.innerHTML = this.formatStopwatch(this.stopwatchState.elapsed);
+    
+    if (this.activeWidgetType === 'stopwatch') {
+      const wSw = document.getElementById('widgetSwDisp');
+      if (wSw) wSw.innerHTML = this.formatStopwatch(this.stopwatchState.elapsed);
+    }
+    
     this.stopwatchState.rafId = requestAnimationFrame(this.updateStopwatch);
   }
 
@@ -260,7 +531,7 @@ class ProductivityEngine {
   }
 
   lapStopwatch() {
-    if (!this.stopwatchState.running) return;
+    if (!this.stopwatchState.running || !this.els.lapsContainer) return;
     const lapTime = this.formatStopwatch(this.stopwatchState.elapsed);
     const div = document.createElement('div');
     div.className = 'task-item';
@@ -271,11 +542,21 @@ class ProductivityEngine {
   resetStopwatch() {
     this.stopStopwatch();
     this.stopwatchState.elapsed = 0;
-    this.els.swDisplay.innerHTML = `00:00<span class="ms-display">.00</span>`;
-    this.els.lapsContainer.innerHTML = '';
+    if(this.els.swDisplay) this.els.swDisplay.innerHTML = `00:00<span class="ms-display">.00</span>`;
+    if(this.els.lapsContainer) this.els.lapsContainer.innerHTML = '';
+    
+    if (this.activeWidgetType === 'stopwatch') {
+      const wSw = document.getElementById('widgetSwDisp');
+      if (wSw) wSw.innerHTML = `00:00<span class="ms-display">.00</span>`;
+    }
   }
 
+  // ==========================================
+  // TASK MANAGEMENT & UTILITIES
+  // ==========================================
+
   addTask() {
+    if(!this.els.taskInput) return;
     const text = this.els.taskInput.value.trim();
     if(!text) return;
     const task = { id: Date.now(), text, done: false };
@@ -289,6 +570,7 @@ class ProductivityEngine {
   loadTasks() { this.renderTasks(); }
 
   renderTasks() {
+    if(!this.els.taskList) return;
     const tasks = JSON.parse(localStorage.getItem('roitx_tasks') || '[]');
     this.els.taskList.innerHTML = '';
     tasks.forEach(t => {
@@ -334,18 +616,21 @@ class ProductivityEngine {
     if ('getBattery' in navigator) {
       try {
         const b = await navigator.getBattery();
-        const updateB = () => { document.getElementById('batteryLvl').textContent = `${Math.round(b.level*100)}%`; };
+        const updateB = () => { 
+          if(this.els.batteryLvl) this.els.batteryLvl.textContent = `${Math.round(b.level*100)}%`; 
+        };
         updateB(); b.addEventListener('levelchange', updateB);
       } catch(e) {
-        document.getElementById('batteryLvl').textContent = "Desktop Mode";
+        if(this.els.batteryLvl) this.els.batteryLvl.textContent = "Desktop Mode";
       }
     } else {
-      document.getElementById('batteryLvl').textContent = "System Ready";
+      if(this.els.batteryLvl) this.els.batteryLvl.textContent = "System Ready";
     }
 
     const updateN = () => { 
-      const netEl = document.getElementById('netStatus');
-      if(netEl) netEl.textContent = navigator.onLine ? "Online" : "Offline"; 
+      if(this.els.netStatus) {
+        this.els.netStatus.textContent = navigator.onLine ? "Online" : "Offline"; 
+      }
     };
     window.addEventListener('online', updateN); 
     window.addEventListener('offline', updateN); 
@@ -418,4 +703,5 @@ class ProductivityEngine {
   }
 }
 
+// Global App Initialization
 const app = new ProductivityEngine();

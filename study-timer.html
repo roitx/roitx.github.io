@@ -5,148 +5,149 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Study Timer - Roitx Pro</title>
   <link rel="stylesheet" href="timer.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
 
-  <!-- Hidden Canvas for PiP Widget Mode -->
-  <canvas id="pipCanvas" width="300" height="150" style="display:none;"></canvas>
-  <video id="pipVideo" autoplay muted playsinline style="display:none;"></video>
-
-  <!-- Custom Completion Modal -->
-  <div id="sessionModal" class="modal-overlay" style="display: none;">
-    <div class="glass-panel modal-content">
-      <h2>Session Complete!</h2>
-      <p>Target achieved. Take a quick break, hydrate, or do a CFOP solve to reset your mind!</p>
-      <button class="btn primary" id="btnModalClose">Got it</button>
+  <!-- Floating Movable Widget Button & Popup -->
+  <div id="floatingWidget" class="floating-widget">
+    <div class="widget-header" id="widgetDragHandle">
+      <span>🚀 Roitx Widget</span>
+      <button id="closeWidgetBtn" class="close-btn">&times;</button>
+    </div>
+    <div class="widget-time" id="widgetTimeDisplay">40:00</div>
+    <div class="controls">
+      <button class="btn primary" id="btnWidgetToggle">Start</button>
     </div>
   </div>
 
+  <!-- Header Section -->
   <header class="glass-panel">
     <div class="brand">
-      <img src="study.png" class="logo-img" alt="Roitx Logo">
+      <img src="study.png" alt="Logo" class="logo-img" onerror="this.src='https://via.placeholder.com/50'">
       <div>
-        <h1>Roitx Suite <span style="color:var(--accent-primary)">PRO</span></h1>
-        <span id="dailyStats">0 mins focused today</span>
+        <h1>Roitx Suite <span>PRO</span></h1>
+        <span id="dailyStats" style="color: var(--text-muted); text-transform: none;">0 mins focused today</span>
       </div>
     </div>
-    
     <div class="status-bar">
-      <div class="status-badge" id="batteryBadge">
-        <svg viewBox="0 0 24 24"><path d="M16 20H8V6H16M16 4H8C6.9 4 6 4.9 6 6V20C6 21.1 6.9 22 8 22H16C17.1 22 18 21.1 18 20V6C18 4.9 17.1 4 16 4M12.5 2H11.5C11.2 2 11 2.2 11 2.5V4H13V2.5C13 2.2 12.8 2 12.5 2Z"/></svg>
-        <span id="batteryLvl">System Ready</span>
+      <div class="status-badge">
+        <svg viewBox="0 0 24 24"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.73 0 1.33-.6 1.33-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+        <span id="batteryLvl">Checking...</span>
       </div>
       <div class="status-badge">
         <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
         <span id="netStatus">Online</span>
       </div>
-      <div class="status-badge" id="liveClock" style="color: var(--accent-primary);">--:--</div>
+      <div class="status-badge" id="liveClock">--:--</div>
     </div>
   </header>
 
+  <!-- Main Content Layout -->
   <main>
-    <!-- Left Column: Core Timers -->
-    <section class="left-col">
-      
-      <!-- Focus Module -->
+    <div class="left-col">
       <div class="glass-panel">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-          <h2 style="margin: 0;">Focus Engine</h2>
-          <button class="btn" id="btnPipWidget" style="padding: 6px 12px; font-size: 0.8rem;">Pop-out Widget ⧉</button>
+
+        
+        <!-- Custom Minutes Input Row -->
+        <div class="input-group" style="margin-bottom: 15px;">
+          <input type="number" id="customMinInput" placeholder="Enter custom minutes (e.g. 25)" min="1" max="180">
+          <button class="btn primary" id="btnSetCustomMin" style="flex: 0 0 120px;">Set Time</button>
         </div>
-        
-        <div id="timerDisplay" class="time-display">40:00</div>
-        
-        <div class="controls mode-controls">
+
+        <div class="controls" style="margin-bottom: 20px;">
           <button class="btn" id="btnPomodoro">80-20 Strike (40m)</button>
           <button class="btn" id="btnShortBreak">Short Rest (5m)</button>
           <button class="btn" id="btnCubeBreak">CFOP Break (3m)</button>
         </div>
+
         <hr class="divider">
-        <div class="controls action-controls">
+
+        <div class="controls">
           <button class="btn primary" id="btnStartTimer">Start Session</button>
           <button class="btn" id="btnPauseTimer">Pause</button>
           <button class="btn danger" id="btnResetTimer">Reset</button>
         </div>
       </div>
 
-      <!-- High-Precision Stopwatch -->
+      <!-- Brainwave & Ambient Panel -->
       <div class="glass-panel">
-        <h2>Session Stopwatch</h2>
-        <div id="stopwatchDisplay" class="time-display" style="font-size: clamp(2.5rem, 4vw, 3.5rem);">00:00<span class="ms-display">.00</span></div>
-        <div class="controls action-controls">
+        <h2>Neural Focus & Ambient</h2>
+        <div class="controls" style="margin-bottom: 16px;">
+          <button class="btn wave-btn" data-wave="alpha" data-freq="10">Alpha (10Hz)</button>
+          <button class="btn wave-btn" data-wave="theta" data-freq="6">Theta (6Hz)</button>
+          <button class="btn wave-btn" data-wave="beta" data-freq="20">Beta (20Hz)</button>
+          <button class="btn danger" id="btnStopWave">Stop Beats</button>
+        </div>
+        <div class="controls">
+          <button class="btn" id="btnAmbient">White Noise (Rain/Static)</button>
+          <button class="btn" id="btnFocus">Fullscreen Mode</button>
+        </div>
+        <div class="wave-info" id="waveDesc">Select a frequency to generate Binaural Beats. (Requires Headphones)</div>
+      </div>
+    </div>
+
+    <!-- Right Column: Tasks, Stopwatch, Music Player -->
+    <div class="right-col">
+      <div class="glass-panel">
+        <h2>Study Tasks / To-Do</h2>
+        <div class="input-group">
+          <input type="text" id="taskInput" placeholder="Add a new task...">
+          <button class="btn primary" id="btnTaskAdd">Add</button>
+        </div>
+        <div class="task-list" id="taskList"></div>
+      </div>
+
+      <div class="glass-panel">
+        <h2>Stopwatch & Laps</h2>
+        <div class="time-display" id="stopwatchDisplay" style="font-size: 3rem;">00:00<span class="ms-display">.00</span></div>
+        <div class="controls">
           <button class="btn primary" id="btnSwStart">Start</button>
+          <button class="btn" id="btnSwStop">Pause</button>
           <button class="btn" id="btnSwLap">Lap</button>
-          <button class="btn" id="btnSwStop">Stop</button>
           <button class="btn danger" id="btnSwReset">Reset</button>
         </div>
-        <div id="lapsList" class="task-list"></div>
+        <div class="task-list" id="lapsList" style="margin-top: 16px; max-height: 150px;"></div>
       </div>
 
-      <!-- Neural Brainwave Entrainment -->
       <div class="glass-panel">
-        <h2>Brainwave Entrainment (Use Headphones)</h2>
-        <div class="controls mode-controls" style="margin-bottom: 12px;">
-          <button class="btn wave-btn" data-wave="beta" data-freq="20">Beta</button>
-          <button class="btn wave-btn" data-wave="alpha" data-freq="10">Alpha</button>
-          <button class="btn wave-btn" data-wave="theta" data-freq="6">Theta</button>
-          <button class="btn wave-btn" data-wave="gamma" data-freq="40">Gamma</button>
-          <button class="btn wave-btn" data-wave="delta" data-freq="2">Delta</button>
-          <button class="btn danger" id="btnStopWave">Stop Waves</button>
+        <h2>Custom Music Player</h2>
+        
+        <!-- Live Wave Visualizer Canvas -->
+        <canvas id="visualizer" class="visualizer-canvas"></canvas>
+
+        <div style="margin-bottom: 12px;">
+          <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 6px;">Upload Local MP3 File:</label>
+          <input type="file" id="audioFileInput" accept="audio/*">
         </div>
-        <div class="wave-info" id="waveDesc">
-          Select a frequency to generate Binaural Beats. It plays different tones in each ear to sync your brainwaves. (Requires Headphones)
+        <div style="margin-bottom: 12px;">
+          <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 6px;">Or Audio URL (.mp3):</label>
+          <div class="input-group">
+            <input type="text" id="audioUrlInput" placeholder="Paste Direct MP3 URL here">
+            <button class="btn primary" id="btnLoadAudio">Load</button>
+          </div>
+        </div>
+        <audio id="customAudio" controls style="width: 100%; margin-top: 8px; border-radius: 8px;"></audio>
+
+        <!-- MP3 / URL Help Guide Box -->
+        <div class="audio-guide-box">
+          <h4>💡 URL Guide: MP3 ya audio link kaha se laye?</h4>
+          <ul>
+            <li><strong>Direct MP3 Link:</strong> Internet par free web audio links (jaise Archive.org ya free sound hosting sites) se direct link copy kar sakte ho jiske end mein <code>.mp3</code> ho.</li>
+            <li><strong>Best Option:</strong> Apne phone/laptop se direct audio file select karne ke liye upar <em>'Upload Local MP3 File'</em> ka use karo!</li>
+          </ul>
         </div>
       </div>
-
-    </section>
-
-    <!-- Right Column Structure Inside index.html -->
-<div class="right-col">
-  <!-- 1. Task Program (Upar shift kar diya hai) -->
-  <div class="glass-panel">
-    <h2>Study Tasks / To-Do</h2>
-    <div class="input-group">
-      <input type="text" id="taskInput" placeholder="Add a new task...">
-      <button class="btn primary" id="btnTaskAdd">Add</button>
     </div>
-    <div class="task-list" id="taskList"></div>
-  </div>
-
-  <!-- 2. Stopwatch Panel -->
-  <div class="glass-panel">
-    <h2>Stopwatch & Laps</h2>
-    <div class="time-display" id="stopwatchDisplay" style="font-size: 3rem;">00:00<span class="ms-display">.00</span></div>
-    <div class="controls">
-      <button class="btn primary" id="btnSwStart">Start</button>
-      <button class="btn" id="btnSwStop">Pause</button>
-      <button class="btn" id="btnSwLap">Lap</button>
-      <button class="btn danger" id="btnSwReset">Reset</button>
-    </div>
-    <div class="task-list" id="lapsList" style="margin-top: 16px; max-height: 150px;"></div>
-  </div>
-
-  <!-- 3. Custom Music Player (Sabse Niche) -->
-  <div class="glass-panel">
-    <h2>Custom Music Player</h2>
-    <div style="margin-bottom: 12px;">
-      <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 6px;">Upload Local MP3 File:</label>
-      <input type="file" id="audioFileInput" accept="audio/*">
-    </div>
-    <div style="margin-bottom: 12px;">
-      <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 6px;">Oar Direct Audio URL:</label>
-      <div class="input-group">
-        <input type="text" id="audioUrlInput" placeholder="https://example.com/song.mp3">
-        <button class="btn primary" id="btnLoadAudio">Load</button>
-      </div>
-    </div>
-    <audio id="customAudio" controls style="width: 100%; margin-top: 8px; border-radius: 8px;"></audio>
-  </div>
-</div>
-
-
-    </aside>
   </main>
+
+  <!-- Session Complete Modal -->
+  <div class="modal-overlay" id="sessionModal" style="display: none;">
+    <div class="glass-panel modal-content">
+      <h2 id="modalTitle">Session Complete! 🎉</h2>
+      <p id="modalDesc">Bohot badiya! Tumne apna focus session poora kar liya hai.</p>
+      <button class="btn primary" id="btnCloseModal">Awesome!</button>
+    </div>
+  </div>
 
   <script src="timer.js"></script>
 </body>
