@@ -12,10 +12,12 @@ class ProductivityEngine {
     this.waveOscLeft = null;
     this.waveOscRight = null;
 
-    // Visualizer Contexts
+    // Visualizer & Track State
     this.vizAudioCtx = null;
     this.vizAnalyser = null;
     this.vizSource = null;
+    this.currentTrackName = "No Track Playing";
+    this.isPlayingMusic = false;
 
     // Active Widget Tracking
     this.activeWidgetType = null;
@@ -36,7 +38,6 @@ class ProductivityEngine {
       this.els.timerDisplay.textContent = this.formatTime(this.timerState.remaining);
     }
     
-    // Create UI Components for Widget & Launcher
     this.createFloatingWidgetDOM();
     this.initVisualizer();
   }
@@ -90,7 +91,7 @@ class ProductivityEngine {
     document.getElementById('btnSwLap')?.addEventListener('click', () => this.lapStopwatch());
     document.getElementById('btnSwReset')?.addEventListener('click', () => this.resetStopwatch());
 
-    // Local Device File Upload
+    // Local Audio Upload
     if (this.els.audioFileInput) {
       this.els.audioFileInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
@@ -102,14 +103,16 @@ class ProductivityEngine {
         this.els.customAudio.style.display = 'block';
         this.els.customAudio.src = fileURL;
         this.els.customAudio.load();
-        this.els.customAudio.play().catch(err => {
-          console.error("Local audio error:", err);
-          alert("Local file play nahi ho saki!");
-        });
+        
+        this.currentTrackName = file.name.replace(/\.[^/.]+$/, "");
+        this.isPlayingMusic = true;
+        this.updateWidgetMusicUI();
+
+        this.els.customAudio.play().catch(() => alert("Local file play nahi ho saki!"));
       });
     }
 
-    // Smart URL / YouTube Handler
+    // SMART MUSIC LINK HANDLER (MP3 + YouTube Auto Detect)
     document.getElementById('btnLoadAudio')?.addEventListener('click', () => {
       const inputVal = this.els.audioUrlInput.value.trim();
       if(!inputVal) return;
@@ -125,19 +128,44 @@ class ProductivityEngine {
 
       if (ytMatch && ytMatch[1]) {
         const videoId = ytMatch[1];
-        this.els.customAudio.style.display = 'none';
-        container.innerHTML = `<iframe width="100%" height="80" src="https://www.youtube.com/embed/${videoId}?autoplay=1" frameborder="0" allow="autoplay"></iframe>`;
+        if (this.els.customAudio) {
+          this.els.customAudio.pause();
+          this.els.customAudio.style.display = 'none';
+        }
+        container.innerHTML = `<iframe width="100%" height="160" src="https://www.youtube.com/embed/${videoId}?autoplay=1&enablejsapi=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen style="border-radius:8px; margin-top:10px;"></iframe>`;
+        
+        this.currentTrackName = "YouTube Track (" + videoId + ")";
+        this.isPlayingMusic = true;
+        this.updateWidgetMusicUI();
       } else {
         container.innerHTML = '';
-        this.els.customAudio.style.display = 'block';
-        this.els.customAudio.src = inputVal;
-        this.els.customAudio.load();
-        this.els.customAudio.play().catch(error => {
-          console.error("URL audio error:", error);
-          alert("Audio stream load nahi ho saka! Valid direct MP3 link ya YouTube link dein.");
-        });
+        if (this.els.customAudio) {
+          this.els.customAudio.style.display = 'block';
+          this.els.customAudio.src = inputVal;
+          this.els.customAudio.load();
+          
+          this.currentTrackName = inputVal.split('/').pop().split('?')[0] || "MP3 Track";
+          this.isPlayingMusic = true;
+          this.updateWidgetMusicUI();
+
+          this.els.customAudio.play().catch(() => {
+            alert("Direct MP3 link play nahi ho saka! Check karein ki link sahi hai.");
+          });
+        }
       }
     });
+
+    // Audio Pause Events
+    if (this.els.customAudio) {
+      this.els.customAudio.addEventListener('pause', () => {
+        this.isPlayingMusic = false;
+        this.updateWidgetMusicUI();
+      });
+      this.els.customAudio.addEventListener('play', () => {
+        this.isPlayingMusic = true;
+        this.updateWidgetMusicUI();
+      });
+    }
 
     // Brainwaves
     document.querySelectorAll('.wave-btn').forEach(btn => {
@@ -153,7 +181,7 @@ class ProductivityEngine {
       this.stopBrainwave();
     });
 
-    // Utility buttons
+    // Task Manager
     document.getElementById('btnTaskAdd')?.addEventListener('click', () => this.addTask());
     document.getElementById('btnFocus')?.addEventListener('click', (e) => this.toggleFocus(e));
     document.getElementById('btnAmbient')?.addEventListener('click', (e) => this.toggleAmbient(e));
@@ -163,22 +191,21 @@ class ProductivityEngine {
   }
 
   // ==========================================
-  // FLOATING WIDGET & LAUNCHER SYSTEM
+  // FLOATING WIDGET (POSITIONED BOTTOM-RIGHT)
   // ==========================================
   
   createFloatingWidgetDOM() {
-    // 1. Create Launcher Trigger Button
     if (!document.getElementById('roitxLauncher')) {
       const launcher = document.createElement('div');
       launcher.id = 'roitxLauncher';
-      launcher.title = 'Add Productivity Widget';
+      launcher.title = 'Add Widget';
       launcher.innerHTML = '⚡';
       launcher.style.cssText = `
         position: fixed; bottom: 25px; right: 25px; z-index: 999999;
-        width: 52px; height: 52px; background: #3b82f6; color: #ffffff;
+        width: 55px; height: 55px; background: #3b82f6; color: #ffffff;
         border-radius: 50%; display: flex; align-items: center; justify-content: center;
-        cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3); font-size: 22px;
-        transition: transform 0.2s, background 0.2s; user-select: none;
+        cursor: pointer; box-shadow: 0 4px 18px rgba(0,0,0,0.4); font-size: 24px;
+        transition: transform 0.2s; user-select: none;
       `;
       launcher.onmouseover = () => launcher.style.transform = 'scale(1.1)';
       launcher.onmouseout = () => launcher.style.transform = 'scale(1.0)';
@@ -187,18 +214,37 @@ class ProductivityEngine {
       document.body.appendChild(launcher);
     }
 
-    // 2. Create Floating Widget Container
     if (!document.getElementById('floatingWidget')) {
       const widget = document.createElement('div');
       widget.id = 'floatingWidget';
       widget.style.cssText = `
-        position: fixed; bottom: 25px; right: 25px; z-index: 999999;
-        width: 260px; background: #1e293b; color: #f8fafc; border-radius: 12px;
+        position: fixed; bottom: 90px; right: 25px; z-index: 999999;
+        width: 270px; background: #1e293b; color: #f8fafc; border-radius: 12px;
         display: none; box-shadow: 0 10px 25px rgba(0,0,0,0.5); padding: 14px;
         border: 1px solid #334155; font-family: system-ui, -apple-system, sans-serif;
       `;
       document.body.appendChild(widget);
       this.makeWidgetDraggable(widget);
+    }
+
+    // Dynamic Wave Styles
+    if (!document.getElementById('widgetWaveStyle')) {
+      const style = document.createElement('style');
+      style.id = 'widgetWaveStyle';
+      style.innerHTML = `
+        @keyframes soundWaveBar {
+          0%, 100% { height: 4px; }
+          50% { height: 16px; }
+        }
+        .wave-bar {
+          width: 3px; background: #38bdf8; border-radius: 2px; height: 4px;
+        }
+        .wave-active .wave-bar:nth-child(1) { animation: soundWaveBar 0.6s infinite ease-in-out; }
+        .wave-active .wave-bar:nth-child(2) { animation: soundWaveBar 0.8s infinite ease-in-out 0.2s; }
+        .wave-active .wave-bar:nth-child(3) { animation: soundWaveBar 0.5s infinite ease-in-out 0.1s; }
+        .wave-active .wave-bar:nth-child(4) { animation: soundWaveBar 0.7s infinite ease-in-out 0.3s; }
+      `;
+      document.head.appendChild(style);
     }
   }
 
@@ -212,7 +258,7 @@ class ProductivityEngine {
     menu = document.createElement('div');
     menu.id = 'roitxMenu';
     menu.style.cssText = `
-      position: fixed; bottom: 85px; right: 25px; z-index: 1000000;
+      position: fixed; bottom: 90px; right: 25px; z-index: 1000000;
       background: #0f172a; color: #ffffff; padding: 10px; border-radius: 10px;
       box-shadow: 0 10px 20px rgba(0,0,0,0.4); border: 1px solid #334155;
       display: flex; flex-direction: column; gap: 8px; width: 180px;
@@ -220,7 +266,7 @@ class ProductivityEngine {
     `;
 
     menu.innerHTML = `
-      <div style="font-weight: bold; padding: 4px; color: #94a3b8; font-size: 11px; text-transform: uppercase;">Select Widget</div>
+      <div style="font-weight: bold; padding: 2px; color: #94a3b8; font-size: 11px; text-transform: uppercase;">Select Widget</div>
       <button id="optTimer" style="background:#1e293b; color:#fff; border:1px solid #334155; padding:8px; border-radius:6px; cursor:pointer; text-align:left;">⏱️ Timer</button>
       <button id="optSw" style="background:#1e293b; color:#fff; border:1px solid #334155; padding:8px; border-radius:6px; cursor:pointer; text-align:left;">⏱️ Stopwatch</button>
       <button id="optClock" style="background:#1e293b; color:#fff; border:1px solid #334155; padding:8px; border-radius:6px; cursor:pointer; text-align:left;">⏰ Real-Time Clock</button>
@@ -240,37 +286,38 @@ class ProductivityEngine {
 
     this.activeWidgetType = type;
 
-    // Hide Launcher, Show Widget Window
     launcher.style.display = 'none';
     widget.style.display = 'block';
 
-    // Clear previous clock interval if any
     if (this.widgetClockInterval) clearInterval(this.widgetClockInterval);
 
-    // Build Header
-    let titleText = 'Timer';
-    if (type === 'stopwatch') titleText = 'Stopwatch';
-    if (type === 'clock') titleText = 'Real-Time Clock';
+    let titleText = type === 'stopwatch' ? 'Stopwatch' : (type === 'clock' ? 'Real-Time Clock' : 'Timer');
 
     widget.innerHTML = `
       <div id="widgetDragHandle" style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:8px; margin-bottom:10px; cursor:move;">
-        <span style="font-weight:bold; font-size: 0.9rem; color:#38bdf8;">🚀 Roitx ${titleText}</span>
+        <span style="font-weight:bold; font-size: 0.85rem; color:#38bdf8; user-select:none;">🚀 Roitx ${titleText}</span>
         <button id="btnWidgetClose" style="background:transparent; border:none; color:#94a3b8; font-size:16px; cursor:pointer; padding:0 4px;">✕</button>
       </div>
       <div id="widgetBody" style="text-align:center;"></div>
+      
+      <!-- Music Info Bar + Animated Sound Wave -->
+      <div style="margin-top:12px; padding-top:8px; border-top:1px solid #334155; display:flex; align-items:center; justify-content:space-between; font-size:0.75rem; color:#94a3b8;">
+        <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:180px;" id="wTrackName">🎵 ${this.currentTrackName}</div>
+        <div id="wWaveBox" class="${this.isPlayingMusic ? 'wave-active' : ''}" style="display:flex; gap:2px; align-items:flex-end; height:16px;">
+          <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+        </div>
+      </div>
     `;
 
     const body = widget.querySelector('#widgetBody');
 
-    // Attach Working Close Event
     document.getElementById('btnWidgetClose').addEventListener('click', () => {
       widget.style.display = 'none';
-      launcher.style.display = 'flex'; // Bring Launcher back
+      launcher.style.display = 'flex';
       if (this.widgetClockInterval) clearInterval(this.widgetClockInterval);
       this.activeWidgetType = null;
     });
 
-    // Populate Widget Body Content
     if (type === 'timer') {
       body.innerHTML = `
         <div id="widgetTimeDisp" style="font-size:2rem; font-weight:bold; margin-bottom:10px; font-family:monospace;">${this.formatTime(this.timerState.remaining)}</div>
@@ -311,6 +358,55 @@ class ProductivityEngine {
     }
   }
 
+  // SMOOTH 2D DRAGGING LOGIC
+  makeWidgetDraggable(widget) {
+    let isDragging = false;
+    let startX, startY, initialLeft, initialTop;
+
+    widget.addEventListener('mousedown', (e) => {
+      if (e.target.closest('#widgetDragHandle')) {
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        initialLeft = widget.offsetLeft;
+        initialTop = widget.offsetTop;
+      }
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+
+      let newLeft = initialLeft + dx;
+      let newTop = initialTop + dy;
+
+      const maxLeft = window.innerWidth - widget.offsetWidth - 10;
+      const maxTop = window.innerHeight - widget.offsetHeight - 10;
+
+      widget.style.left = `${Math.max(10, Math.min(newLeft, maxLeft))}px`;
+      widget.style.top = `${Math.max(10, Math.min(newTop, maxTop))}px`;
+      widget.style.right = 'auto';
+      widget.style.bottom = 'auto';
+    });
+
+    document.addEventListener('mouseup', () => isDragging = false);
+  }
+
+  updateWidgetMusicUI() {
+    const tName = document.getElementById('wTrackName');
+    const wWaveBox = document.getElementById('wWaveBox');
+
+    if (tName) tName.textContent = `🎵 ${this.currentTrackName}`;
+    if (wWaveBox) {
+      if (this.isPlayingMusic) {
+        wWaveBox.classList.add('wave-active');
+      } else {
+        wWaveBox.classList.remove('wave-active');
+      }
+    }
+  }
+
   updateWidgetTime() {
     if (this.activeWidgetType === 'timer') {
       const wTime = document.getElementById('widgetTimeDisp');
@@ -318,26 +414,118 @@ class ProductivityEngine {
     }
   }
 
-  makeWidgetDraggable(widget) {
-    let isDragging = false, offsetRight = 0, offsetBottom = 0;
+  // ==========================================
+  // TIMER CORE LOGIC
+  // ==========================================
 
-    widget.addEventListener('mousedown', (e) => {
-      if (e.target.closest('#widgetDragHandle')) {
-        isDragging = true;
-        offsetRight = window.innerWidth - e.clientX - widget.offsetWidth;
-        offsetBottom = window.innerHeight - e.clientY - widget.offsetHeight;
+  setTimer(mins) {
+    this.pauseTimer();
+    this.timerState.initial = mins * 60;
+    this.timerState.remaining = mins * 60;
+    if (this.els.timerDisplay) this.els.timerDisplay.textContent = this.formatTime(this.timerState.remaining);
+    this.updateWidgetTime();
+  }
+
+  startTimer() {
+    if (this.timerState.intervalId) return;
+    this.timerState.intervalId = setInterval(() => {
+      if (this.timerState.remaining > 0) {
+        this.timerState.remaining--;
+        if (this.els.timerDisplay) this.els.timerDisplay.textContent = this.formatTime(this.timerState.remaining);
+        this.updateWidgetTime();
+      } else {
+        this.pauseTimer();
+        this.onTimerComplete();
       }
-    });
+    }, 1000);
+  }
 
-    document.addEventListener('mousemove', (e) => {
-      if (!isDragging) return;
-      let newRight = window.innerWidth - e.clientX - offsetRight;
-      let newBottom = window.innerHeight - e.clientY - offsetBottom;
-      widget.style.right = `${Math.max(10, newRight)}px`;
-      widget.style.bottom = `${Math.max(10, newBottom)}px`;
-    });
+  pauseTimer() {
+    if (this.timerState.intervalId) {
+      clearInterval(this.timerState.intervalId);
+      this.timerState.intervalId = null;
+    }
+  }
 
-    document.addEventListener('mouseup', () => isDragging = false);
+  resetTimer() {
+    this.pauseTimer();
+    this.timerState.remaining = this.timerState.initial;
+    if (this.els.timerDisplay) this.els.timerDisplay.textContent = this.formatTime(this.timerState.remaining);
+    this.updateWidgetTime();
+  }
+
+  onTimerComplete() {
+    const elapsedMins = Math.round(this.timerState.initial / 60);
+    this.dailyMinutes += elapsedMins;
+    localStorage.setItem('roitx_study_mins', this.dailyMinutes);
+    this.updateStatsUI();
+
+    if (Notification.permission === 'granted') {
+      new Notification("Roitx Engine", { body: "Time's up! Great study session." });
+    }
+    this.showModal(`Session Ended! You logged ${elapsedMins} minutes of productivity.`);
+  }
+
+  formatTime(secs) {
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  }
+
+  // ==========================================
+  // STOPWATCH LOGIC
+  // ==========================================
+
+  startStopwatch() {
+    if (this.stopwatchState.running) return;
+    this.stopwatchState.running = true;
+    this.stopwatchState.start = performance.now() - this.stopwatchState.elapsed;
+    
+    const update = () => {
+      if (!this.stopwatchState.running) return;
+      this.stopwatchState.elapsed = performance.now() - this.stopwatchState.start;
+      const formatted = this.formatStopwatch(this.stopwatchState.elapsed);
+      
+      if (this.els.swDisplay) this.els.swDisplay.textContent = formatted;
+      const wSw = document.getElementById('widgetSwDisp');
+      if (wSw) wSw.textContent = formatted;
+
+      this.stopwatchState.rafId = requestAnimationFrame(update);
+    };
+    update();
+  }
+
+  stopStopwatch() {
+    this.stopwatchState.running = false;
+    if (this.stopwatchState.rafId) cancelAnimationFrame(this.stopwatchState.rafId);
+  }
+
+  lapStopwatch() {
+    if (!this.stopwatchState.elapsed || !this.els.lapsContainer) return;
+    const li = document.createElement('li');
+    li.style.cssText = "padding: 4px 0; border-bottom: 1px dashed #334155; font-family: monospace;";
+    li.textContent = `Lap ${this.els.lapsContainer.children.length + 1}: ${this.formatStopwatch(this.stopwatchState.elapsed)}`;
+    this.els.lapsContainer.prepend(li);
+  }
+
+  resetStopwatch() {
+    this.stopStopwatch();
+    this.stopwatchState.elapsed = 0;
+    const formatted = "00:00:00.00";
+    if (this.els.swDisplay) this.els.swDisplay.textContent = formatted;
+    if (this.els.lapsContainer) this.els.lapsContainer.innerHTML = '';
+    const wSw = document.getElementById('widgetSwDisp');
+    if (wSw) wSw.textContent = formatted;
+  }
+
+  formatStopwatch(ms) {
+    const totalSecs = Math.floor(ms / 1000);
+    const hrs = Math.floor(totalSecs / 3600);
+    const mins = Math.floor((totalSecs % 3600) / 60);
+    const secs = totalSecs % 60;
+    const millis = Math.floor((ms % 1000) / 10);
+
+    return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${millis.toString().padStart(2, '0')}`;
   }
 
   // ==========================================
@@ -388,318 +576,186 @@ class ProductivityEngine {
   playBrainwave(type, freqOffset) {
     this.stopBrainwave();
     const descriptions = {
-      'beta': 'Beta Waves (13-30Hz): Enhances active concentration.',
-      'alpha': 'Alpha Waves (8-12Hz): Promotes relaxation and learning.',
-      'theta': 'Theta Waves (4-7Hz): Deep memory retrieval.',
-      'gamma': 'Gamma Waves (30-100Hz): Peak focus.',
-      'delta': 'Delta Waves (0.5-3Hz): Deep recovery.'
+      'beta': 'Beta Waves (13-30Hz): Enhances active concentration and logical processing.',
+      'alpha': 'Alpha Waves (8-12Hz): Promotes relaxed focus and deep learning state.',
+      'theta': 'Theta Waves (4-7Hz): Deep meditation, intuition, and memory recall.',
+      'gamma': 'Gamma Waves (30-100Hz): High-level cognitive processing and problem-solving.'
     };
-    if(this.els.waveDesc) {
-      this.els.waveDesc.innerHTML = `<strong>Active:</strong> ${descriptions[type] || 'Binaural Beat'} <br><span style="color:var(--accent-primary)">Playing at ${freqOffset}Hz difference. (Requires Headphones)</span>`;
+
+    if (this.els.waveDesc) {
+      this.els.waveDesc.textContent = descriptions[type] || 'Binaural beats active.';
     }
 
-    try {
-      this.brainwaveCtx = new (window.AudioContext || window.webkitAudioContext)();
-      const carrierFreq = 200;
-      this.waveOscLeft = this.brainwaveCtx.createOscillator();
-      this.waveOscRight = this.brainwaveCtx.createOscillator();
-      const merger = this.brainwaveCtx.createChannelMerger(2);
-      const gain = this.brainwaveCtx.createGain();
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    this.brainwaveCtx = new AudioContext();
 
-      this.waveOscLeft.type = 'sine';
-      this.waveOscRight.type = 'sine';
-      this.waveOscLeft.frequency.value = carrierFreq;
-      this.waveOscRight.frequency.value = carrierFreq + freqOffset;
+    const baseFreq = 200;
+    const merger = this.brainwaveCtx.createChannelMerger(2);
 
-      this.waveOscLeft.connect(merger, 0, 0);
-      this.waveOscRight.connect(merger, 0, 1);
-      merger.connect(gain);
-      gain.connect(this.brainwaveCtx.destination);
-      gain.gain.value = 0.15;
+    this.waveOscLeft = this.brainwaveCtx.createOscillator();
+    this.waveOscRight = this.brainwaveCtx.createOscillator();
 
-      this.waveOscLeft.start();
-      this.waveOscRight.start();
-    } catch(err) {
-      if(this.els.waveDesc) this.els.waveDesc.textContent = "Audio blocked by browser. Click anywhere on page first.";
-    }
+    this.waveOscLeft.frequency.value = baseFreq;
+    this.waveOscRight.frequency.value = baseFreq + freqOffset;
+
+    this.waveOscLeft.connect(merger, 0, 0);
+    this.waveOscRight.connect(merger, 0, 1);
+
+    merger.connect(this.brainwaveCtx.destination);
+
+    this.waveOscLeft.start();
+    this.waveOscRight.start();
   }
 
   stopBrainwave() {
-    if (this.brainwaveCtx) {
-      this.brainwaveCtx.close();
-      this.brainwaveCtx = null;
-    }
-    if(this.els.waveDesc) {
-      this.els.waveDesc.innerHTML = "Select a frequency to generate Binaural Beats. (Requires Headphones)";
-    }
-  }
-
-  // ==========================================
-  // CORE TIMER & STOPWATCH LOGIC
-  // ==========================================
-
-  formatTime(sec) {
-    const m = String(Math.floor(sec / 60)).padStart(2, '0');
-    const s = String(sec % 60).padStart(2, '0');
-    return `${m}:${s}`;
-  }
-
-  setTimer(minutes) {
-    this.pauseTimer();
-    this.timerState.initial = minutes * 60;
-    this.timerState.remaining = this.timerState.initial;
-    if(this.els.timerDisplay) this.els.timerDisplay.textContent = this.formatTime(this.timerState.remaining);
-    this.updateWidgetTime();
-  }
-
-  startTimer() {
-    if (this.timerState.intervalId) return;
-    this.timerState.intervalId = setInterval(() => {
-      if (this.timerState.remaining > 0) {
-        this.timerState.remaining--;
-        if(this.els.timerDisplay) this.els.timerDisplay.textContent = this.formatTime(this.timerState.remaining);
-        this.updateWidgetTime();
-        document.title = `${this.formatTime(this.timerState.remaining)} - Study Session`;
-      }
-      if (this.timerState.remaining <= 0) {
-        this.completeSession();
-      }
-    }, 1000);
-  }
-
-  pauseTimer() {
-    clearInterval(this.timerState.intervalId);
-    this.timerState.intervalId = null;
-  }
-
-  resetTimer() {
-    this.pauseTimer();
-    this.timerState.remaining = this.timerState.initial;
-    if(this.els.timerDisplay) this.els.timerDisplay.textContent = this.formatTime(this.timerState.remaining);
-    this.updateWidgetTime();
-    document.title = "Study Timer - Roitx Pro";
-  }
-
-  completeSession() {
-    this.pauseTimer();
-    if(this.els.timerDisplay) this.els.timerDisplay.textContent = "00:00";
-    this.updateWidgetTime();
-    this.playChime();
-    this.sendNotification("Session Complete!", "Great job! Time to track your focus minutes.");
-    
-    const sessionMins = Math.round(this.timerState.initial / 60);
-    this.dailyMinutes += sessionMins;
-    localStorage.setItem('roitx_study_mins', this.dailyMinutes);
-    this.updateStatsUI();
-    this.showModal();
-  }
-
-  showModal() { if(this.els.modal) this.els.modal.style.display = 'flex'; }
-  closeModal() { if(this.els.modal) this.els.modal.style.display = 'none'; }
-
-  formatStopwatch(ms) {
-    const total = Math.max(0, ms);
-    const m = String(Math.floor(total / 60000)).padStart(2, '0');
-    const s = String(Math.floor((total % 60000) / 1000)).padStart(2, '0');
-    const msr = String(Math.floor((total % 1000) / 10)).padStart(2, '0');
-    return `${m}:${s}<span class="ms-display">.${msr}</span>`;
-  }
-
-  updateStopwatch = () => {
-    if(!this.stopwatchState.running) return;
-    this.stopwatchState.elapsed = performance.now() - this.stopwatchState.start;
-    if(this.els.swDisplay) this.els.swDisplay.innerHTML = this.formatStopwatch(this.stopwatchState.elapsed);
-    
-    if (this.activeWidgetType === 'stopwatch') {
-      const wSw = document.getElementById('widgetSwDisp');
-      if (wSw) wSw.innerHTML = this.formatStopwatch(this.stopwatchState.elapsed);
-    }
-    
-    this.stopwatchState.rafId = requestAnimationFrame(this.updateStopwatch);
-  }
-
-  startStopwatch() {
-    if (this.stopwatchState.running) return;
-    this.stopwatchState.running = true;
-    this.stopwatchState.start = performance.now() - this.stopwatchState.elapsed;
-    this.stopwatchState.rafId = requestAnimationFrame(this.updateStopwatch);
-  }
-
-  stopStopwatch() {
-    this.stopwatchState.running = false;
-    cancelAnimationFrame(this.stopwatchState.rafId);
-  }
-
-  lapStopwatch() {
-    if (!this.stopwatchState.running || !this.els.lapsContainer) return;
-    const lapTime = this.formatStopwatch(this.stopwatchState.elapsed);
-    const div = document.createElement('div');
-    div.className = 'task-item';
-    div.innerHTML = `<span>Lap ${this.els.lapsContainer.children.length + 1}</span> <span>${lapTime}</span>`;
-    this.els.lapsContainer.prepend(div);
-  }
-
-  resetStopwatch() {
-    this.stopStopwatch();
-    this.stopwatchState.elapsed = 0;
-    if(this.els.swDisplay) this.els.swDisplay.innerHTML = `00:00<span class="ms-display">.00</span>`;
-    if(this.els.lapsContainer) this.els.lapsContainer.innerHTML = '';
-    
-    if (this.activeWidgetType === 'stopwatch') {
-      const wSw = document.getElementById('widgetSwDisp');
-      if (wSw) wSw.innerHTML = `00:00<span class="ms-display">.00</span>`;
-    }
-  }
-
-  // ==========================================
-  // TASK MANAGEMENT & UTILITIES
-  // ==========================================
-
-  addTask() {
-    if(!this.els.taskInput) return;
-    const text = this.els.taskInput.value.trim();
-    if(!text) return;
-    const task = { id: Date.now(), text, done: false };
-    const tasks = JSON.parse(localStorage.getItem('roitx_tasks') || '[]');
-    tasks.push(task);
-    localStorage.setItem('roitx_tasks', JSON.stringify(tasks));
-    this.els.taskInput.value = '';
-    this.renderTasks();
-  }
-
-  loadTasks() { this.renderTasks(); }
-
-  renderTasks() {
-    if(!this.els.taskList) return;
-    const tasks = JSON.parse(localStorage.getItem('roitx_tasks') || '[]');
-    this.els.taskList.innerHTML = '';
-    tasks.forEach(t => {
-      const div = document.createElement('div');
-      div.className = `task-item ${t.done ? 'done' : ''}`;
-      div.innerHTML = `
-        <input type="checkbox" class="task-checkbox" ${t.done ? 'checked' : ''} onchange="app.toggleTask(${t.id})">
-        <span>${t.text}</span>
-        <button class="delete-btn" onclick="app.deleteTask(${t.id})">✕</button>
-      `;
-      this.els.taskList.appendChild(div);
-    });
-  }
-
-  toggleTask(id) {
-    let tasks = JSON.parse(localStorage.getItem('roitx_tasks') || '[]');
-    tasks = tasks.map(t => t.id === id ? { ...t, done: !t.done } : t);
-    localStorage.setItem('roitx_tasks', JSON.stringify(tasks));
-    this.renderTasks();
-  }
-
-  deleteTask(id) {
-    let tasks = JSON.parse(localStorage.getItem('roitx_tasks') || '[]');
-    tasks = tasks.filter(t => t.id !== id);
-    localStorage.setItem('roitx_tasks', JSON.stringify(tasks));
-    this.renderTasks();
-  }
-
-  startLiveClock() {
-    setInterval(() => {
-      const clockEl = document.getElementById('liveClock');
-      if(clockEl) clockEl.textContent = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-    }, 1000);
-  }
-
-  updateStatsUI() { 
-    if(this.els.dailyStats) {
-      this.els.dailyStats.textContent = `${this.dailyMinutes} mins focused today`; 
-    }
-  }
-
-  async initHardwareAPIs() {
-    if ('getBattery' in navigator) {
-      try {
-        const b = await navigator.getBattery();
-        const updateB = () => { 
-          if(this.els.batteryLvl) this.els.batteryLvl.textContent = `${Math.round(b.level*100)}%`; 
-        };
-        updateB(); b.addEventListener('levelchange', updateB);
-      } catch(e) {
-        if(this.els.batteryLvl) this.els.batteryLvl.textContent = "Desktop Mode";
-      }
-    } else {
-      if(this.els.batteryLvl) this.els.batteryLvl.textContent = "System Ready";
-    }
-
-    const updateN = () => { 
-      if(this.els.netStatus) {
-        this.els.netStatus.textContent = navigator.onLine ? "Online" : "Offline"; 
-      }
-    };
-    window.addEventListener('online', updateN); 
-    window.addEventListener('offline', updateN); 
-    updateN();
-  }
-
-  toggleFocus(e) {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(()=>{});
-      e.target.classList.add('active-toggle');
-    } else {
-      document.exitFullscreen();
-      e.target.classList.remove('active-toggle');
-    }
+    if (this.waveOscLeft) { this.waveOscLeft.stop(); this.waveOscLeft.disconnect(); }
+    if (this.waveOscRight) { this.waveOscRight.stop(); this.waveOscRight.disconnect(); }
+    if (this.brainwaveCtx) { this.brainwaveCtx.close(); }
+    this.brainwaveCtx = null;
+    if (this.els.waveDesc) this.els.waveDesc.textContent = 'Select a wave frequency to generate binaural tones.';
   }
 
   toggleAmbient(e) {
     if (!this.audioCtx) {
-      try {
-        this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const bufferSize = this.audioCtx.sampleRate * 2;
-        const buffer = this.audioCtx.createBuffer(1, bufferSize, this.audioCtx.sampleRate);
-        const data = buffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
-        
-        this.noiseNode = this.audioCtx.createBufferSource();
-        this.noiseNode.buffer = buffer;
-        this.noiseNode.loop = true;
-        const gain = this.audioCtx.createGain();
-        gain.gain.value = 0.02;
-        this.noiseNode.connect(gain); 
-        gain.connect(this.audioCtx.destination);
-        this.noiseNode.start();
-        e.target.classList.add('active-toggle');
-      } catch(err) {}
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      this.audioCtx = new AudioContext();
+      
+      const bufferSize = this.audioCtx.sampleRate * 2;
+      const noiseBuffer = this.audioCtx.createBuffer(1, bufferSize, this.audioCtx.sampleRate);
+      const output = noiseBuffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        output[i] = Math.random() * 2 - 1;
+      }
+
+      this.noiseNode = this.audioCtx.createBufferSource();
+      this.noiseNode.buffer = noiseBuffer;
+      this.noiseNode.loop = true;
+      this.noiseNode.connect(this.audioCtx.destination);
+      this.noiseNode.start();
+      e.target.classList.add('active-toggle');
+      e.target.textContent = '🔊 Ambient Noise: ON';
     } else {
-      this.audioCtx.close(); 
+      this.noiseNode.stop();
+      this.audioCtx.close();
       this.audioCtx = null;
       e.target.classList.remove('active-toggle');
+      e.target.textContent = '🌧️ Pink Noise';
     }
   }
 
-  playChime() {
-    try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'triangle'; 
-      osc.frequency.setValueAtTime(600, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(300, ctx.currentTime + 1);
-      gain.gain.setValueAtTime(0.5, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 1);
-      osc.connect(gain); 
-      gain.connect(ctx.destination);
-      osc.start(); 
-      osc.stop(ctx.currentTime + 1);
-    } catch(e) {}
+  // ==========================================
+  // TASKS, STATS, HARDWARE & UTILS
+  // ==========================================
+
+  addTask() {
+    if (!this.els.taskInput) return;
+    const val = this.els.taskInput.value.trim();
+    if (!val) return;
+
+    const tasks = JSON.parse(localStorage.getItem('roitx_tasks')) || [];
+    tasks.push({ id: Date.now(), text: val, completed: false });
+    localStorage.setItem('roitx_tasks', JSON.stringify(tasks));
+
+    this.els.taskInput.value = '';
+    this.loadTasks();
+  }
+
+  loadTasks() {
+    if (!this.els.taskList) return;
+    const tasks = JSON.parse(localStorage.getItem('roitx_tasks')) || [];
+    this.els.taskList.innerHTML = '';
+
+    tasks.forEach(t => {
+      const li = document.createElement('li');
+      li.style.cssText = "display:flex; justify-content:space-between; align-items:center; padding: 6px; border-bottom: 1px solid #334155;";
+      li.innerHTML = `
+        <span style="text-decoration: ${t.completed ? 'line-through' : 'none'}; color: ${t.completed ? '#64748b' : '#f8fafc'};">${t.text}</span>
+        <div>
+          <button style="background:none; border:none; cursor:pointer;" onclick="app.toggleTask(${t.id})">✔️</button>
+          <button style="background:none; border:none; cursor:pointer;" onclick="app.deleteTask(${t.id})">🗑️</button>
+        </div>
+      `;
+      this.els.taskList.appendChild(li);
+    });
+  }
+
+  toggleTask(id) {
+    let tasks = JSON.parse(localStorage.getItem('roitx_tasks')) || [];
+    tasks = tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t);
+    localStorage.setItem('roitx_tasks', JSON.stringify(tasks));
+    this.loadTasks();
+  }
+
+  deleteTask(id) {
+    let tasks = JSON.parse(localStorage.getItem('roitx_tasks')) || [];
+    tasks = tasks.filter(t => t.id !== id);
+    localStorage.setItem('roitx_tasks', JSON.stringify(tasks));
+    this.loadTasks();
+  }
+
+  toggleFocus(e) {
+    document.body.classList.toggle('focus-mode');
+    if (document.body.classList.contains('focus-mode')) {
+      e.target.textContent = '☀️ Exit Focus Mode';
+    } else {
+      e.target.textContent = '🌙 Deep Focus Mode';
+    }
+  }
+
+  updateStatsUI() {
+    if (this.els.dailyStats) {
+      this.els.dailyStats.textContent = `${this.dailyMinutes} mins logged today`;
+    }
+  }
+
+  startLiveClock() {
+    const clockEl = document.getElementById('liveClock');
+    if (clockEl) {
+      setInterval(() => {
+        clockEl.textContent = new Date().toLocaleTimeString();
+      }, 1000);
+    }
+  }
+
+  initHardwareAPIs() {
+    if ('getBattery' in navigator) {
+      navigator.getBattery().then(b => {
+        const updateB = () => {
+          if (this.els.batteryLvl) this.els.batteryLvl.textContent = `${Math.round(b.level * 100)}%`;
+        };
+        updateB();
+        b.addEventListener('levelchange', updateB);
+      });
+    }
+    window.addEventListener('online', () => this.updateNetStatus());
+    window.addEventListener('offline', () => this.updateNetStatus());
+    this.updateNetStatus();
+  }
+
+  updateNetStatus() {
+    if (this.els.netStatus) {
+      this.els.netStatus.textContent = navigator.onLine ? 'Online 🟢' : 'Offline 🔴';
+    }
   }
 
   requestNotificationPerm() {
-    if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
+    if ('Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission();
     }
   }
 
-  sendNotification(title, body) {
-    if ("Notification" in window && Notification.permission === "granted") {
-      new Notification(title, { body });
+  showModal(msg) {
+    if (this.els.modal) {
+      const msgEl = this.els.modal.querySelector('p') || this.els.modal;
+      msgEl.textContent = msg;
+      this.els.modal.style.display = 'flex';
+    } else {
+      alert(msg);
     }
+  }
+
+  closeModal() {
+    if (this.els.modal) this.els.modal.style.display = 'none';
   }
 }
 

@@ -47,7 +47,6 @@
     <div class="left-col">
       <div class="glass-panel">
 
-        
         <!-- Custom Minutes Input Row -->
         <div class="input-group" style="margin-bottom: 15px;">
           <input type="number" id="customMinInput" placeholder="Enter custom minutes (e.g. 25)" min="1" max="180">
@@ -86,7 +85,7 @@
       </div>
     </div>
 
-    <!-- Right Column: Tasks, Stopwatch, Music Player -->
+    <!-- Right Column: Tasks, Stopwatch, Smart Music Player -->
     <div class="right-col">
       <div class="glass-panel">
         <h2>Study Tasks / To-Do</h2>
@@ -109,8 +108,9 @@
         <div class="task-list" id="lapsList" style="margin-top: 16px; max-height: 150px;"></div>
       </div>
 
+      <!-- SMART MUSIC PLAYER PANEL (MP3 + YOUTUBE SUPPORT) -->
       <div class="glass-panel">
-        <h2>Custom Music Player</h2>
+        <h2>Custom Smart Music Player</h2>
         
         <!-- Live Wave Visualizer Canvas -->
         <canvas id="visualizer" class="visualizer-canvas"></canvas>
@@ -119,21 +119,28 @@
           <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 6px;">Upload Local MP3 File:</label>
           <input type="file" id="audioFileInput" accept="audio/*">
         </div>
+
         <div style="margin-bottom: 12px;">
-          <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 6px;">Or Audio URL (.mp3):</label>
+          <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 6px;">Paste MP3 or YouTube Link:</label>
           <div class="input-group">
-            <input type="text" id="audioUrlInput" placeholder="Paste Direct MP3 URL here">
+            <input type="text" id="audioUrlInput" placeholder="Paste Direct MP3 or YouTube Video Link">
             <button class="btn primary" id="btnLoadAudio">Load</button>
           </div>
         </div>
-        <audio id="customAudio" controls style="width: 100%; margin-top: 8px; border-radius: 8px;"></audio>
 
-        <!-- MP3 / URL Help Guide Box -->
-        <div class="audio-guide-box">
-          <h4>💡 URL Guide: MP3 ya audio link kaha se laye?</h4>
-          <ul>
-            <li><strong>Direct MP3 Link:</strong> Internet par free web audio links (jaise Archive.org ya free sound hosting sites) se direct link copy kar sakte ho jiske end mein <code>.mp3</code> ho.</li>
-            <li><strong>Best Option:</strong> Apne phone/laptop se direct audio file select karne ke liye upar <em>'Upload Local MP3 File'</em> ka use karo!</li>
+        <!-- Dynamic Container for YouTube Player Embed -->
+        <div id="ytPlayerContainer"></div>
+
+        <!-- HTML5 Audio Element for Direct MP3 Links -->
+        <audio id="customAudio" controls style="width: 100%; margin-top: 8px; border-radius: 8px; display: none;"></audio>
+
+        <!-- Dynamic URL Guide Box -->
+        <div class="audio-guide-box" style="margin-top: 15px; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
+          <h4 style="margin-top: 0;">💡 Smart Link Detection Guide</h4>
+          <ul style="font-size: 0.85rem; padding-left: 20px; color: var(--text-muted); margin-bottom: 0;">
+            <li><strong>YouTube Link:</strong> Koi bhi standard YouTube URL paste karein (e.g., <code>youtube.com/watch?v=...</code> ya <code>youtu.be/...</code>). System automatically use YouTube Iframe player mein convert kar dega.</li>
+            <li><strong>Direct MP3 Link:</strong> Koi direct audio file URL paste karein jisme <code>.mp3</code>, <code>.wav</code> ending ho. Ye standard HTML5 audio player aur Live Visualizer ke saath play hoga.</li>
+            <li><strong>Local Audio:</strong> Apne device se direct offline music play karne ke liye top file picker ka use karein.</li>
           </ul>
         </div>
       </div>
