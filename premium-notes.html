@@ -264,8 +264,7 @@
             </div>
         </div>
     </div>
-
-    <script>
+<script>
         const MY_UPI_ID = "9199364179-3@ibl";
         let currentUser = null;
         let purchases = [];
@@ -334,22 +333,38 @@
         }
 
         function openInViewer(noteId) {
-            const note = loadedNotesMap[noteId];
-            if (!note) return;
+    const note = loadedNotesMap[noteId];
+    if (!note) return;
 
-            const isPurchased = purchases.includes(note.id);
-            let targetFilePath = note.file_path || note.full_pdf_url || '';
+    const isPurchased = purchases.includes(note.id);
+    let targetFilePath = note.file_path || note.full_pdf_url || '';
 
-            const cleanPath = encodeURIComponent(targetFilePath);
-            const cleanName = encodeURIComponent(note.title || 'Note');
-            
-            let url = `notes-viewer.html?path=${cleanPath}&name=${cleanName}&type=premium`;
-            if (isPurchased) {
-                url += `&purchased=true`;
-            }
+    // 1. Extract ONLY numbers from class_no (e.g. "11th" becomes "11")
+    let rawClass = note.class_no ? String(note.class_no) : '';
+    let classDigits = rawClass.replace(/\D/g, ''); 
+    const classPart = classDigits ? classDigits : rawClass;
 
-            window.location.href = url;
-        }
+    // 2. Format subject and title
+    const subjectPart = note.subject ? note.subject.toUpperCase() : '';
+    const titlePart = note.title || 'Note';
+    
+    // 3. Put the luxury diamond/gold symbol right at the BEGINNING so it's always visible
+    const prefixSymbol = "💎";
+    
+    // Combine cleanly: "💎 • 11 • CHEMISTRY • Chapter Name"
+    const descriptiveName = [prefixSymbol, classPart, subjectPart, titlePart].filter(Boolean).join(' • ');
+
+    const cleanPath = encodeURIComponent(targetFilePath);
+    const cleanName = encodeURIComponent(descriptiveName);
+    
+    let url = `notes-viewer.html?path=${cleanPath}&name=${cleanName}&type=premium&status=premium`;
+    if (isPurchased) {
+        url += `&purchased=true`;
+    }
+
+    window.location.href = url;
+}
+
 
         // 💳 Payment Modal Handler with Dynamic Exact Amount & Deep Link
         async function openPaymentModal(noteId) {
@@ -376,7 +391,7 @@
             const upiUri = `upi://pay?pa=${encodeURIComponent(MY_UPI_ID)}&pn=PM-Roit&am=${note.price}&cu=INR&tn=${encodeURIComponent('Note: ' + note.title)}`;
             
             // Set Direct App Link for mobile devices
-            document.getElementById('payDirectBtn').href = upiUri;
+            document.getElementById('payDirectBtn').href = url = upiUri;
 
             // Generate QR Code containing the exact Amount & UPI ID
             const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(upiUri)}`;
@@ -419,5 +434,8 @@
             }
         }
     </script>
+    
+    
+    
 </body>
 </html>
