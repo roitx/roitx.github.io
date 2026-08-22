@@ -1,5 +1,9 @@
 "use strict";
 
+/**
+ * ROITX SUITE PRO - MASTER PRODUCTIVITY & WIDGET ENGINE
+ * Complete Replaceable Script File
+ */
 class ProductivityEngine {
   constructor() {
     this.timerState = { remaining: 40 * 60, intervalId: null, initial: 40 * 60 };
@@ -34,6 +38,8 @@ class ProductivityEngine {
     this.initHardwareAPIs();
     this.requestNotificationPerm();
     this.loadTasks();
+    this.applyTheme(localStorage.getItem('roitx_theme') || 'dark');
+    
     if (this.els.timerDisplay) {
       this.els.timerDisplay.textContent = this.formatTime(this.timerState.remaining);
     }
@@ -68,7 +74,7 @@ class ProductivityEngine {
     document.getElementById('btnShortBreak')?.addEventListener('click', () => this.setTimer(5));
     document.getElementById('btnCubeBreak')?.addEventListener('click', () => this.setTimer(3));
 
-    // Custom Minutes Input Button
+    // Custom Minutes
     document.getElementById('btnSetCustomMin')?.addEventListener('click', () => {
       if (this.els.customMinInput) {
         const val = parseInt(this.els.customMinInput.value.trim());
@@ -100,27 +106,29 @@ class ProductivityEngine {
         if (ytContainer) ytContainer.innerHTML = '';
         
         const fileURL = URL.createObjectURL(file);
-        this.els.customAudio.style.display = 'block';
-        this.els.customAudio.src = fileURL;
-        this.els.customAudio.load();
+        if (this.els.customAudio) {
+          this.els.customAudio.style.display = 'block';
+          this.els.customAudio.src = fileURL;
+          this.els.customAudio.load();
+        }
         
         this.currentTrackName = file.name.replace(/\.[^/.]+$/, "");
         this.isPlayingMusic = true;
         this.updateWidgetMusicUI();
 
-        this.els.customAudio.play().catch(() => alert("Local file play nahi ho saki!"));
+        this.els.customAudio?.play().catch(() => alert("Local file play nahi ho saki!"));
       });
     }
 
-    // SMART MUSIC LINK HANDLER (MP3 + YouTube Auto Detect)
+    // SMART MUSIC LINK HANDLER (YouTube + MP3 Support)
     document.getElementById('btnLoadAudio')?.addEventListener('click', () => {
-      const inputVal = this.els.audioUrlInput.value.trim();
-      if(!inputVal) return;
+      const inputVal = this.els.audioUrlInput?.value.trim();
+      if (!inputVal) return;
 
       const ytMatch = inputVal.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
       
       let container = document.getElementById('ytPlayerContainer');
-      if (!container) {
+      if (!container && this.els.customAudio) {
         container = document.createElement('div');
         container.id = 'ytPlayerContainer';
         this.els.customAudio.parentNode.insertBefore(container, this.els.customAudio);
@@ -132,13 +140,15 @@ class ProductivityEngine {
           this.els.customAudio.pause();
           this.els.customAudio.style.display = 'none';
         }
-        container.innerHTML = `<iframe width="100%" height="160" src="https://www.youtube.com/embed/${videoId}?autoplay=1&enablejsapi=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen style="border-radius:8px; margin-top:10px;"></iframe>`;
+        if (container) {
+          container.innerHTML = `<iframe width="100%" height="160" src="https://www.youtube.com/embed/${videoId}?autoplay=1&enablejsapi=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen style="border-radius:8px; margin-top:10px;"></iframe>`;
+        }
         
-        this.currentTrackName = "YouTube Track (" + videoId + ")";
+        this.currentTrackName = "YouTube Stream (" + videoId + ")";
         this.isPlayingMusic = true;
         this.updateWidgetMusicUI();
       } else {
-        container.innerHTML = '';
+        if (container) container.innerHTML = '';
         if (this.els.customAudio) {
           this.els.customAudio.style.display = 'block';
           this.els.customAudio.src = inputVal;
@@ -149,13 +159,13 @@ class ProductivityEngine {
           this.updateWidgetMusicUI();
 
           this.els.customAudio.play().catch(() => {
-            alert("Direct MP3 link play nahi ho saka! Check karein ki link sahi hai.");
+            alert("Direct MP3 link play nahi ho saka!");
           });
         }
       }
     });
 
-    // Audio Pause Events
+    // Audio Pause/Play Events
     if (this.els.customAudio) {
       this.els.customAudio.addEventListener('pause', () => {
         this.isPlayingMusic = false;
@@ -187,47 +197,46 @@ class ProductivityEngine {
     document.getElementById('btnAmbient')?.addEventListener('click', (e) => this.toggleAmbient(e));
     
     const modalClose = document.getElementById('btnCloseModal') || document.getElementById('btnModalClose');
-    if(modalClose) modalClose.addEventListener('click', () => this.closeModal());
+    if (modalClose) modalClose.addEventListener('click', () => this.closeModal());
   }
 
   // ==========================================
-  // FLOATING WIDGET (POSITIONED BOTTOM-RIGHT)
+  // FLOATING DRAGGABLE WIDGET ENGINE & THEMES
   // ==========================================
   
   createFloatingWidgetDOM() {
-    if (!document.getElementById('roitxLauncher')) {
-      const launcher = document.createElement('div');
+    let launcher = document.getElementById('roitxLauncher');
+    if (!launcher) {
+      launcher = document.createElement('div');
       launcher.id = 'roitxLauncher';
-      launcher.title = 'Add Widget';
+      launcher.title = 'Widget Options (Drag Me Anywhere)';
       launcher.innerHTML = '⚡';
       launcher.style.cssText = `
-        position: fixed; bottom: 25px; right: 25px; z-index: 999999;
-        width: 55px; height: 55px; background: #3b82f6; color: #ffffff;
-        border-radius: 50%; display: flex; align-items: center; justify-content: center;
-        cursor: pointer; box-shadow: 0 4px 18px rgba(0,0,0,0.4); font-size: 24px;
-        transition: transform 0.2s; user-select: none;
+        position: fixed; bottom: 30px; right: 30px; z-index: 999999;
+        width: 58px; height: 58px; background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        color: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+        cursor: move; box-shadow: 0 8px 25px rgba(59, 130, 246, 0.5); font-size: 26px;
+        user-select: none; touch-action: none; border: 2px solid rgba(255, 255, 255, 0.3);
       `;
-      launcher.onmouseover = () => launcher.style.transform = 'scale(1.1)';
-      launcher.onmouseout = () => launcher.style.transform = 'scale(1.0)';
-      
-      launcher.addEventListener('click', () => this.toggleSelectionMenu());
       document.body.appendChild(launcher);
     }
+
+    // Bind dragging & clicking safely
+    this.makeElementDraggable(launcher, null, () => this.toggleSelectionMenu());
 
     if (!document.getElementById('floatingWidget')) {
       const widget = document.createElement('div');
       widget.id = 'floatingWidget';
       widget.style.cssText = `
-        position: fixed; bottom: 90px; right: 25px; z-index: 999999;
-        width: 270px; background: #1e293b; color: #f8fafc; border-radius: 12px;
-        display: none; box-shadow: 0 10px 25px rgba(0,0,0,0.5); padding: 14px;
-        border: 1px solid #334155; font-family: system-ui, -apple-system, sans-serif;
+        position: fixed; bottom: 95px; right: 30px; z-index: 999998;
+        width: 270px; background: rgba(10, 17, 40, 0.95); color: #f8fafc; border-radius: 16px;
+        display: none; box-shadow: 0 10px 30px rgba(0,0,0,0.6); padding: 16px;
+        border: 1px solid #3b82f6; font-family: system-ui, -apple-system, sans-serif;
+        touch-action: none; backdrop-filter: blur(16px);
       `;
       document.body.appendChild(widget);
-      this.makeWidgetDraggable(widget);
     }
 
-    // Dynamic Wave Styles
     if (!document.getElementById('widgetWaveStyle')) {
       const style = document.createElement('style');
       style.id = 'widgetWaveStyle';
@@ -236,9 +245,7 @@ class ProductivityEngine {
           0%, 100% { height: 4px; }
           50% { height: 16px; }
         }
-        .wave-bar {
-          width: 3px; background: #38bdf8; border-radius: 2px; height: 4px;
-        }
+        .wave-bar { width: 3px; background: #38bdf8; border-radius: 2px; height: 4px; }
         .wave-active .wave-bar:nth-child(1) { animation: soundWaveBar 0.6s infinite ease-in-out; }
         .wave-active .wave-bar:nth-child(2) { animation: soundWaveBar 0.8s infinite ease-in-out 0.2s; }
         .wave-active .wave-bar:nth-child(3) { animation: soundWaveBar 0.5s infinite ease-in-out 0.1s; }
@@ -258,18 +265,26 @@ class ProductivityEngine {
     menu = document.createElement('div');
     menu.id = 'roitxMenu';
     menu.style.cssText = `
-      position: fixed; bottom: 90px; right: 25px; z-index: 1000000;
-      background: #0f172a; color: #ffffff; padding: 10px; border-radius: 10px;
-      box-shadow: 0 10px 20px rgba(0,0,0,0.4); border: 1px solid #334155;
-      display: flex; flex-direction: column; gap: 8px; width: 180px;
+      position: fixed; bottom: 95px; right: 30px; z-index: 1000000;
+      background: #0f172a; color: #ffffff; padding: 12px; border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6); border: 1px solid #334155;
+      display: flex; flex-direction: column; gap: 8px; width: 210px;
       font-family: system-ui, -apple-system, sans-serif; font-size: 14px;
     `;
 
     menu.innerHTML = `
-      <div style="font-weight: bold; padding: 2px; color: #94a3b8; font-size: 11px; text-transform: uppercase;">Select Widget</div>
-      <button id="optTimer" style="background:#1e293b; color:#fff; border:1px solid #334155; padding:8px; border-radius:6px; cursor:pointer; text-align:left;">⏱️ Timer</button>
-      <button id="optSw" style="background:#1e293b; color:#fff; border:1px solid #334155; padding:8px; border-radius:6px; cursor:pointer; text-align:left;">⏱️ Stopwatch</button>
-      <button id="optClock" style="background:#1e293b; color:#fff; border:1px solid #334155; padding:8px; border-radius:6px; cursor:pointer; text-align:left;">⏰ Real-Time Clock</button>
+      <div style="font-weight: bold; color: #94a3b8; font-size: 11px; text-transform: uppercase;">Widgets</div>
+      <button id="optTimer" style="background:#1e293b; color:#fff; border:1px solid #334155; padding:8px; border-radius:6px; cursor:pointer; text-align:left;">⏱️ Timer Widget</button>
+      <button id="optSw" style="background:#1e293b; color:#fff; border:1px solid #334155; padding:8px; border-radius:6px; cursor:pointer; text-align:left;">⏱️ Stopwatch Widget</button>
+      <button id="optClock" style="background:#1e293b; color:#fff; border:1px solid #334155; padding:8px; border-radius:6px; cursor:pointer; text-align:left;">⏰ Live Clock</button>
+      
+      <div style="font-weight: bold; color: #94a3b8; font-size: 11px; text-transform: uppercase; margin-top:6px;">Themes</div>
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+        <button class="btnTheme" data-theme="dark" style="background:#0f172a; color:#fff; border:1px solid #334155; border-radius:6px; padding:6px; font-size:11px; cursor:pointer;">Dark</button>
+        <button class="btnTheme" data-theme="cyberpunk" style="background:#150050; color:#00f6ff; border:1px solid #ff007f; border-radius:6px; padding:6px; font-size:11px; cursor:pointer;">Neon</button>
+        <button class="btnTheme" data-theme="emerald" style="background:#022c22; color:#a7f3d0; border:1px solid #059669; border-radius:6px; padding:6px; font-size:11px; cursor:pointer;">Emerald</button>
+        <button class="btnTheme" data-theme="amber" style="background:#291002; color:#fef3c7; border:1px solid #d97706; border-radius:6px; padding:6px; font-size:11px; cursor:pointer;">Amber</button>
+      </div>
     `;
 
     document.body.appendChild(menu);
@@ -277,6 +292,19 @@ class ProductivityEngine {
     document.getElementById('optTimer').onclick = () => { this.launchWidget('timer'); menu.remove(); };
     document.getElementById('optSw').onclick = () => { this.launchWidget('stopwatch'); menu.remove(); };
     document.getElementById('optClock').onclick = () => { this.launchWidget('clock'); menu.remove(); };
+
+    menu.querySelectorAll('.btnTheme').forEach(b => {
+      b.onclick = (e) => {
+        this.applyTheme(e.target.dataset.theme);
+        menu.remove();
+      };
+    });
+  }
+
+  applyTheme(theme) {
+    document.body.classList.remove('theme-cyberpunk', 'theme-emerald', 'theme-amber');
+    if (theme !== 'dark') document.body.classList.add(`theme-${theme}`);
+    localStorage.setItem('roitx_theme', theme);
   }
 
   launchWidget(type) {
@@ -285,13 +313,12 @@ class ProductivityEngine {
     if (!widget || !launcher) return;
 
     this.activeWidgetType = type;
-
     launcher.style.display = 'none';
     widget.style.display = 'block';
 
     if (this.widgetClockInterval) clearInterval(this.widgetClockInterval);
 
-    let titleText = type === 'stopwatch' ? 'Stopwatch' : (type === 'clock' ? 'Real-Time Clock' : 'Timer');
+    let titleText = type === 'stopwatch' ? 'Stopwatch' : (type === 'clock' ? 'Clock' : 'Timer');
 
     widget.innerHTML = `
       <div id="widgetDragHandle" style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:8px; margin-bottom:10px; cursor:move;">
@@ -300,7 +327,6 @@ class ProductivityEngine {
       </div>
       <div id="widgetBody" style="text-align:center;"></div>
       
-      <!-- Music Info Bar + Animated Sound Wave -->
       <div style="margin-top:12px; padding-top:8px; border-top:1px solid #334155; display:flex; align-items:center; justify-content:space-between; font-size:0.75rem; color:#94a3b8;">
         <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:180px;" id="wTrackName">🎵 ${this.currentTrackName}</div>
         <div id="wWaveBox" class="${this.isPlayingMusic ? 'wave-active' : ''}" style="display:flex; gap:2px; align-items:flex-end; height:16px;">
@@ -308,6 +334,8 @@ class ProductivityEngine {
         </div>
       </div>
     `;
+
+    this.makeElementDraggable(widget, widget.querySelector('#widgetDragHandle'));
 
     const body = widget.querySelector('#widgetBody');
 
@@ -322,8 +350,8 @@ class ProductivityEngine {
       body.innerHTML = `
         <div id="widgetTimeDisp" style="font-size:2rem; font-weight:bold; margin-bottom:10px; font-family:monospace;">${this.formatTime(this.timerState.remaining)}</div>
         <div style="display:flex; gap:6px;">
-          <button id="btnWStart" style="flex:1; background:#3b82f6; color:#fff; border:none; padding:6px; border-radius:4px; cursor:pointer;">Start/Pause</button>
-          <button id="btnWReset" style="background:#475569; color:#fff; border:none; padding:6px; border-radius:4px; cursor:pointer;">Reset</button>
+          <button id="btnWStart" style="flex:1; background:#3b82f6; color:#fff; border:none; padding:6px; border-radius:6px; cursor:pointer;">Start/Pause</button>
+          <button id="btnWReset" style="background:#475569; color:#fff; border:none; padding:6px; border-radius:6px; cursor:pointer;">Reset</button>
         </div>
       `;
       document.getElementById('btnWStart').onclick = () => {
@@ -336,9 +364,9 @@ class ProductivityEngine {
       body.innerHTML = `
         <div id="widgetSwDisp" style="font-size:1.8rem; font-weight:bold; margin-bottom:10px; font-family:monospace;">${this.formatStopwatch(this.stopwatchState.elapsed)}</div>
         <div style="display:flex; gap:6px;">
-          <button id="btnWSwStart" style="flex:1; background:#10b981; color:#fff; border:none; padding:6px; border-radius:4px; cursor:pointer;">Start</button>
-          <button id="btnWSwStop" style="flex:1; background:#ef4444; color:#fff; border:none; padding:6px; border-radius:4px; cursor:pointer;">Stop</button>
-          <button id="btnWSwReset" style="background:#475569; color:#fff; border:none; padding:6px; border-radius:4px; cursor:pointer;">Reset</button>
+          <button id="btnWSwStart" style="flex:1; background:#10b981; color:#fff; border:none; padding:6px; border-radius:6px; cursor:pointer;">Start</button>
+          <button id="btnWSwStop" style="flex:1; background:#ef4444; color:#fff; border:none; padding:6px; border-radius:6px; cursor:pointer;">Stop</button>
+          <button id="btnWSwReset" style="background:#475569; color:#fff; border:none; padding:6px; border-radius:6px; cursor:pointer;">Reset</button>
         </div>
       `;
       document.getElementById('btnWSwStart').onclick = () => this.startStopwatch();
@@ -358,84 +386,108 @@ class ProductivityEngine {
     }
   }
 
-  // SMOOTH 2D DRAGGING LOGIC
-  makeWidgetDraggable(widget) {
+  // UNIVERSAL MOUSE & TOUCH DRAGGING ENGINE WITH CLICK DISTINCTION
+  makeElementDraggable(element, handleTarget = null, onClickCallback = null) {
     let isDragging = false;
-    let startX, startY, initialLeft, initialTop;
+    let startX = 0, startY = 0, initialLeft = 0, initialTop = 0;
+    let movedDistance = 0;
+    const handle = handleTarget || element;
 
-    widget.addEventListener('mousedown', (e) => {
-      if (e.target.closest('#widgetDragHandle')) {
-        isDragging = true;
-        startX = e.clientX;
-        startY = e.clientY;
-        initialLeft = widget.offsetLeft;
-        initialTop = widget.offsetTop;
-      }
-    });
+    const onStart = (clientX, clientY) => {
+      isDragging = true;
+      movedDistance = 0;
+      startX = clientX;
+      startY = clientY;
+      const rect = element.getBoundingClientRect();
+      initialLeft = rect.left;
+      initialTop = rect.top;
+    };
 
-    document.addEventListener('mousemove', (e) => {
+    const onMove = (clientX, clientY) => {
       if (!isDragging) return;
-      const dx = e.clientX - startX;
-      const dy = e.clientY - startY;
+      const dx = clientX - startX;
+      const dy = clientY - startY;
+      movedDistance = Math.hypot(dx, dy);
 
       let newLeft = initialLeft + dx;
       let newTop = initialTop + dy;
 
-      const maxLeft = window.innerWidth - widget.offsetWidth - 10;
-      const maxTop = window.innerHeight - widget.offsetHeight - 10;
+      const maxLeft = window.innerWidth - element.offsetWidth - 10;
+      const maxTop = window.innerHeight - element.offsetHeight - 10;
 
-      widget.style.left = `${Math.max(10, Math.min(newLeft, maxLeft))}px`;
-      widget.style.top = `${Math.max(10, Math.min(newTop, maxTop))}px`;
-      widget.style.right = 'auto';
-      widget.style.bottom = 'auto';
+      element.style.left = `${Math.max(10, Math.min(newLeft, maxLeft))}px`;
+      element.style.top = `${Math.max(10, Math.min(newTop, maxTop))}px`;
+      element.style.right = 'auto';
+      element.style.bottom = 'auto';
+    };
+
+    const onEnd = () => {
+      if (isDragging && movedDistance < 5 && typeof onClickCallback === 'function') {
+        onClickCallback();
+      }
+      isDragging = false;
+    };
+
+    // Mouse Events
+    handle.addEventListener('mousedown', (e) => {
+      onStart(e.clientX, e.clientY);
+      const onMouseMove = (ev) => onMove(ev.clientX, ev.clientY);
+      const onMouseUp = () => {
+        onEnd();
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+      };
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
     });
 
-    document.addEventListener('mouseup', () => isDragging = false);
+    // Touch Events
+    handle.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 1) {
+        onStart(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    }, { passive: true });
+
+    handle.addEventListener('touchmove', (e) => {
+      if (e.touches.length === 1) {
+        onMove(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    }, { passive: true });
+
+    handle.addEventListener('touchend', () => onEnd());
   }
 
   updateWidgetMusicUI() {
-    const tName = document.getElementById('wTrackName');
-    const wWaveBox = document.getElementById('wWaveBox');
+    const wTrack = document.getElementById('wTrackName');
+    const wBox = document.getElementById('wWaveBox');
 
-    if (tName) tName.textContent = `🎵 ${this.currentTrackName}`;
-    if (wWaveBox) {
-      if (this.isPlayingMusic) {
-        wWaveBox.classList.add('wave-active');
-      } else {
-        wWaveBox.classList.remove('wave-active');
-      }
-    }
-  }
-
-  updateWidgetTime() {
-    if (this.activeWidgetType === 'timer') {
-      const wTime = document.getElementById('widgetTimeDisp');
-      if (wTime) wTime.textContent = this.formatTime(this.timerState.remaining);
+    if (wTrack) wTrack.textContent = `🎵 ${this.currentTrackName}`;
+    if (wBox) {
+      if (this.isPlayingMusic) wBox.classList.add('wave-active');
+      else wBox.classList.remove('wave-active');
     }
   }
 
   // ==========================================
   // TIMER CORE LOGIC
   // ==========================================
-
+  
   setTimer(mins) {
     this.pauseTimer();
     this.timerState.initial = mins * 60;
     this.timerState.remaining = mins * 60;
-    if (this.els.timerDisplay) this.els.timerDisplay.textContent = this.formatTime(this.timerState.remaining);
-    this.updateWidgetTime();
+    this.updateTimerDisplay();
   }
 
   startTimer() {
     if (this.timerState.intervalId) return;
+
     this.timerState.intervalId = setInterval(() => {
       if (this.timerState.remaining > 0) {
         this.timerState.remaining--;
-        if (this.els.timerDisplay) this.els.timerDisplay.textContent = this.formatTime(this.timerState.remaining);
-        this.updateWidgetTime();
+        this.updateTimerDisplay();
       } else {
-        this.pauseTimer();
-        this.onTimerComplete();
+        this.timerComplete();
       }
     }, 1000);
   }
@@ -450,32 +502,42 @@ class ProductivityEngine {
   resetTimer() {
     this.pauseTimer();
     this.timerState.remaining = this.timerState.initial;
-    if (this.els.timerDisplay) this.els.timerDisplay.textContent = this.formatTime(this.timerState.remaining);
-    this.updateWidgetTime();
+    this.updateTimerDisplay();
   }
 
-  onTimerComplete() {
-    const elapsedMins = Math.round(this.timerState.initial / 60);
-    this.dailyMinutes += elapsedMins;
+  updateTimerDisplay() {
+    const formatted = this.formatTime(this.timerState.remaining);
+    if (this.els.timerDisplay) this.els.timerDisplay.textContent = formatted;
+    
+    const widgetDisp = document.getElementById('widgetTimeDisp');
+    if (widgetDisp) widgetDisp.textContent = formatted;
+
+    document.title = `${formatted} - Study Focus`;
+  }
+
+  timerComplete() {
+    this.pauseTimer();
+    this.playNotificationSound();
+    
+    const addedMins = Math.round(this.timerState.initial / 60);
+    this.dailyMinutes += addedMins;
     localStorage.setItem('roitx_study_mins', this.dailyMinutes);
     this.updateStatsUI();
 
-    if (Notification.permission === 'granted') {
-      new Notification("Roitx Engine", { body: "Time's up! Great study session." });
-    }
-    this.showModal(`Session Ended! You logged ${elapsedMins} minutes of productivity.`);
-  }
+    if (this.els.modal) this.els.modal.style.display = 'flex';
 
-  formatTime(secs) {
-    const m = Math.floor(secs / 60);
-    const s = secs % 60;
-    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    if (Notification.permission === 'granted') {
+      new Notification('Session Complete! 🎉', {
+        body: `Aapne ${addedMins} minutes ka focus session successfully poora kar liya hai.`,
+        icon: 'study.png'
+      });
+    }
   }
 
   // ==========================================
   // STOPWATCH LOGIC
   // ==========================================
-
+  
   startStopwatch() {
     if (this.stopwatchState.running) return;
     this.stopwatchState.running = true;
@@ -484,15 +546,10 @@ class ProductivityEngine {
     const update = () => {
       if (!this.stopwatchState.running) return;
       this.stopwatchState.elapsed = performance.now() - this.stopwatchState.start;
-      const formatted = this.formatStopwatch(this.stopwatchState.elapsed);
-      
-      if (this.els.swDisplay) this.els.swDisplay.textContent = formatted;
-      const wSw = document.getElementById('widgetSwDisp');
-      if (wSw) wSw.textContent = formatted;
-
+      this.updateStopwatchDisplay();
       this.stopwatchState.rafId = requestAnimationFrame(update);
     };
-    update();
+    this.stopwatchState.rafId = requestAnimationFrame(update);
   }
 
   stopStopwatch() {
@@ -500,242 +557,301 @@ class ProductivityEngine {
     if (this.stopwatchState.rafId) cancelAnimationFrame(this.stopwatchState.rafId);
   }
 
+  resetStopwatch() {
+    this.stopStopwatch();
+    this.stopwatchState.elapsed = 0;
+    this.updateStopwatchDisplay();
+    if (this.els.lapsContainer) this.els.lapsContainer.innerHTML = '';
+  }
+
   lapStopwatch() {
-    if (!this.stopwatchState.elapsed || !this.els.lapsContainer) return;
+    if (!this.stopwatchState.running || !this.els.lapsContainer) return;
     const li = document.createElement('li');
-    li.style.cssText = "padding: 4px 0; border-bottom: 1px dashed #334155; font-family: monospace;";
+    li.style.cssText = "padding:6px 12px; border-bottom:1px solid #334155; font-family:monospace; font-size:0.9rem;";
     li.textContent = `Lap ${this.els.lapsContainer.children.length + 1}: ${this.formatStopwatch(this.stopwatchState.elapsed)}`;
     this.els.lapsContainer.prepend(li);
   }
 
-  resetStopwatch() {
-    this.stopStopwatch();
-    this.stopwatchState.elapsed = 0;
-    const formatted = "00:00:00.00";
-    if (this.els.swDisplay) this.els.swDisplay.textContent = formatted;
-    if (this.els.lapsContainer) this.els.lapsContainer.innerHTML = '';
-    const wSw = document.getElementById('widgetSwDisp');
-    if (wSw) wSw.textContent = formatted;
+  updateStopwatchDisplay() {
+    const formatted = this.formatStopwatch(this.stopwatchState.elapsed);
+    if (this.els.swDisplay) this.els.swDisplay.innerHTML = formatted;
+
+    const widgetSwDisp = document.getElementById('widgetSwDisp');
+    if (widgetSwDisp) widgetSwDisp.textContent = this.formatTime(Math.floor(this.stopwatchState.elapsed / 1000));
   }
 
   formatStopwatch(ms) {
-    const totalSecs = Math.floor(ms / 1000);
-    const hrs = Math.floor(totalSecs / 3600);
-    const mins = Math.floor((totalSecs % 3600) / 60);
-    const secs = totalSecs % 60;
-    const millis = Math.floor((ms % 1000) / 10);
-
-    return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${millis.toString().padStart(2, '0')}`;
+    const minutes = Math.floor(ms / 60000);
+    const seconds = Math.floor((ms % 60000) / 1000);
+    const milliseconds = Math.floor((ms % 1000) / 10);
+    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}<span class="ms-display">.${String(milliseconds).padStart(2, '0')}</span>`;
   }
 
   // ==========================================
-  // AUDIO VISUALIZER & BRAINWAVE ENGINE
+  // AUDIO VISUALIZER ENGINE
   // ==========================================
-
+  
   initVisualizer() {
-    if (!this.els.customAudio || !this.els.visualizerCanvas) return;
+    if (!this.els.visualizerCanvas || !this.els.customAudio) return;
+    
     const canvas = this.els.visualizerCanvas;
     const ctx = canvas.getContext('2d');
 
-    this.els.customAudio.addEventListener('play', () => {
-      if (!this.vizAudioCtx) {
-        this.vizAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const setupContext = () => {
+      if (this.vizAudioCtx) return;
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        this.vizAudioCtx = new AudioCtx();
         this.vizAnalyser = this.vizAudioCtx.createAnalyser();
         this.vizSource = this.vizAudioCtx.createMediaElementSource(this.els.customAudio);
+
         this.vizSource.connect(this.vizAnalyser);
         this.vizAnalyser.connect(this.vizAudioCtx.destination);
-        this.vizAnalyser.fftSize = 128;
+
+        this.vizAnalyser.fftSize = 64;
+      } catch (e) {
+        console.warn("Visualizer audio context binding error:", e);
       }
-      if (this.vizAudioCtx.state === 'suspended') {
-        this.vizAudioCtx.resume();
-      }
-      this.drawVisualizer(canvas, ctx);
-    });
-  }
-
-  drawVisualizer(canvas, ctx) {
-    if (!this.vizAnalyser) return;
-    requestAnimationFrame(() => this.drawVisualizer(canvas, ctx));
-
-    const bufferLength = this.vizAnalyser.frequencyBinCount;
-    const dataArray = new Uint8Array(bufferLength);
-    this.vizAnalyser.getByteFrequencyData(dataArray);
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    const barWidth = (canvas.width / bufferLength) * 2;
-    let x = 0;
-
-    for (let i = 0; i < bufferLength; i++) {
-      const barHeight = (dataArray[i] / 255) * canvas.height;
-      ctx.fillStyle = '#3b82f6';
-      ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
-      x += barWidth + 2;
-    }
-  }
-
-  playBrainwave(type, freqOffset) {
-    this.stopBrainwave();
-    const descriptions = {
-      'beta': 'Beta Waves (13-30Hz): Enhances active concentration and logical processing.',
-      'alpha': 'Alpha Waves (8-12Hz): Promotes relaxed focus and deep learning state.',
-      'theta': 'Theta Waves (4-7Hz): Deep meditation, intuition, and memory recall.',
-      'gamma': 'Gamma Waves (30-100Hz): High-level cognitive processing and problem-solving.'
     };
 
-    if (this.els.waveDesc) {
-      this.els.waveDesc.textContent = descriptions[type] || 'Binaural beats active.';
+    this.els.customAudio.addEventListener('play', () => {
+      setupContext();
+      if (this.vizAudioCtx && this.vizAudioCtx.state === 'suspended') {
+        this.vizAudioCtx.resume();
+      }
+      renderFrame();
+    });
+
+    const renderFrame = () => {
+      if (!this.vizAnalyser) return;
+      const bufferLength = this.vizAnalyser.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
+      
+      this.vizAnalyser.getByteFrequencyData(dataArray);
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const barWidth = (canvas.width / bufferLength) * 2.5;
+      let x = 0;
+
+      for (let i = 0; i < bufferLength; i++) {
+        const barHeight = (dataArray[i] / 255) * canvas.height;
+        ctx.fillStyle = `rgb(56, 189, 248)`;
+        ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+        x += barWidth + 2;
+      }
+
+      if (this.isPlayingMusic) {
+        requestAnimationFrame(renderFrame);
+      }
+    };
+  }
+
+  // ==========================================
+  // BINAURAL BEATS & WHITE NOISE SOUNDS
+  // ==========================================
+  
+  playBrainwave(type, targetFreq) {
+    this.stopBrainwave();
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      this.brainwaveCtx = new AudioCtx();
+
+      const baseFreq = 200;
+      const merger = this.brainwaveCtx.createChannelMerger(2);
+
+      this.waveOscLeft = this.brainwaveCtx.createOscillator();
+      this.waveOscRight = this.brainwaveCtx.createOscillator();
+
+      this.waveOscLeft.frequency.value = baseFreq;
+      this.waveOscRight.frequency.value = baseFreq + targetFreq;
+
+      this.waveOscLeft.connect(merger, 0, 0);
+      this.waveOscRight.connect(merger, 0, 1);
+
+      merger.connect(this.brainwaveCtx.destination);
+
+      this.waveOscLeft.start();
+      this.waveOscRight.start();
+
+      if (this.els.waveDesc) {
+        this.els.waveDesc.textContent = `Playing ${type.toUpperCase()} Waves (${targetFreq}Hz). Headphone zaroori hain!`;
+      }
+    } catch (e) {
+      alert("Audio Synth initialization failed.");
     }
-
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    this.brainwaveCtx = new AudioContext();
-
-    const baseFreq = 200;
-    const merger = this.brainwaveCtx.createChannelMerger(2);
-
-    this.waveOscLeft = this.brainwaveCtx.createOscillator();
-    this.waveOscRight = this.brainwaveCtx.createOscillator();
-
-    this.waveOscLeft.frequency.value = baseFreq;
-    this.waveOscRight.frequency.value = baseFreq + freqOffset;
-
-    this.waveOscLeft.connect(merger, 0, 0);
-    this.waveOscRight.connect(merger, 0, 1);
-
-    merger.connect(this.brainwaveCtx.destination);
-
-    this.waveOscLeft.start();
-    this.waveOscRight.start();
   }
 
   stopBrainwave() {
     if (this.waveOscLeft) { this.waveOscLeft.stop(); this.waveOscLeft.disconnect(); }
     if (this.waveOscRight) { this.waveOscRight.stop(); this.waveOscRight.disconnect(); }
-    if (this.brainwaveCtx) { this.brainwaveCtx.close(); }
-    this.brainwaveCtx = null;
-    if (this.els.waveDesc) this.els.waveDesc.textContent = 'Select a wave frequency to generate binaural tones.';
+    if (this.brainwaveCtx) { this.brainwaveCtx.close(); this.brainwaveCtx = null; }
+    if (this.els.waveDesc) {
+      this.els.waveDesc.textContent = "Select a frequency to generate Binaural Beats. (Requires Headphones)";
+    }
   }
 
   toggleAmbient(e) {
-    if (!this.audioCtx) {
-      const AudioContext = window.AudioContext || window.webkitAudioContext;
-      this.audioCtx = new AudioContext();
-      
-      const bufferSize = this.audioCtx.sampleRate * 2;
-      const noiseBuffer = this.audioCtx.createBuffer(1, bufferSize, this.audioCtx.sampleRate);
-      const output = noiseBuffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) {
-        output[i] = Math.random() * 2 - 1;
-      }
-
-      this.noiseNode = this.audioCtx.createBufferSource();
-      this.noiseNode.buffer = noiseBuffer;
-      this.noiseNode.loop = true;
-      this.noiseNode.connect(this.audioCtx.destination);
-      this.noiseNode.start();
-      e.target.classList.add('active-toggle');
-      e.target.textContent = '🔊 Ambient Noise: ON';
-    } else {
+    const btn = e.target;
+    if (this.noiseNode) {
       this.noiseNode.stop();
-      this.audioCtx.close();
-      this.audioCtx = null;
-      e.target.classList.remove('active-toggle');
-      e.target.textContent = '🌧️ Pink Noise';
+      this.noiseNode.disconnect();
+      this.noiseNode = null;
+      btn.classList.remove('active-toggle');
+    } else {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        this.audioCtx = this.audioCtx || new AudioCtx();
+
+        const bufferSize = this.audioCtx.sampleRate * 2;
+        const noiseBuffer = this.audioCtx.createBuffer(1, bufferSize, this.audioCtx.sampleRate);
+        const output = noiseBuffer.getChannelData(0);
+
+        for (let i = 0; i < bufferSize; i++) {
+          output[i] = Math.random() * 2 - 1;
+        }
+
+        this.noiseNode = this.audioCtx.createBufferSource();
+        this.noiseNode.buffer = noiseBuffer;
+        this.noiseNode.loop = true;
+
+        const gainNode = this.audioCtx.createGain();
+        gainNode.gain.value = 0.05; // Gentle White Noise
+
+        this.noiseNode.connect(gainNode);
+        gainNode.connect(this.audioCtx.destination);
+
+        this.noiseNode.start();
+        btn.classList.add('active-toggle');
+      } catch (err) {
+        alert("Audio Noise generator fail ho gaya.");
+      }
     }
   }
 
   // ==========================================
-  // TASKS, STATS, HARDWARE & UTILS
+  // TASK MANAGER & HELPERS
   // ==========================================
-
+  
   addTask() {
     if (!this.els.taskInput) return;
-    const val = this.els.taskInput.value.trim();
-    if (!val) return;
+    const text = this.els.taskInput.value.trim();
+    if (!text) return;
 
-    const tasks = JSON.parse(localStorage.getItem('roitx_tasks')) || [];
-    tasks.push({ id: Date.now(), text: val, completed: false });
+    const tasks = JSON.parse(localStorage.getItem('roitx_tasks') || '[]');
+    tasks.push({ id: Date.now(), text, done: false });
     localStorage.setItem('roitx_tasks', JSON.stringify(tasks));
 
     this.els.taskInput.value = '';
-    this.loadTasks();
+    this.renderTasks(tasks);
   }
 
   loadTasks() {
+    const tasks = JSON.parse(localStorage.getItem('roitx_tasks') || '[]');
+    this.renderTasks(tasks);
+  }
+
+  renderTasks(tasks) {
     if (!this.els.taskList) return;
-    const tasks = JSON.parse(localStorage.getItem('roitx_tasks')) || [];
     this.els.taskList.innerHTML = '';
 
     tasks.forEach(t => {
       const li = document.createElement('li');
-      li.style.cssText = "display:flex; justify-content:space-between; align-items:center; padding: 6px; border-bottom: 1px solid #334155;";
+      li.className = `task-item ${t.done ? 'done' : ''}`;
       li.innerHTML = `
-        <span style="text-decoration: ${t.completed ? 'line-through' : 'none'}; color: ${t.completed ? '#64748b' : '#f8fafc'};">${t.text}</span>
-        <div>
-          <button style="background:none; border:none; cursor:pointer;" onclick="app.toggleTask(${t.id})">✔️</button>
-          <button style="background:none; border:none; cursor:pointer;" onclick="app.deleteTask(${t.id})">🗑️</button>
-        </div>
+        <input type="checkbox" class="task-checkbox" ${t.done ? 'checked' : ''}>
+        <span>${this.escapeHTML(t.text)}</span>
+        <button class="delete-btn">&times;</button>
       `;
+
+      li.querySelector('.task-checkbox').addEventListener('change', (e) => {
+        t.done = e.target.checked;
+        localStorage.setItem('roitx_tasks', JSON.stringify(tasks));
+        li.classList.toggle('done', t.done);
+      });
+
+      li.querySelector('.delete-btn').addEventListener('click', () => {
+        const updated = tasks.filter(item => item.id !== t.id);
+        localStorage.setItem('roitx_tasks', JSON.stringify(updated));
+        this.renderTasks(updated);
+      });
+
       this.els.taskList.appendChild(li);
     });
   }
 
-  toggleTask(id) {
-    let tasks = JSON.parse(localStorage.getItem('roitx_tasks')) || [];
-    tasks = tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t);
-    localStorage.setItem('roitx_tasks', JSON.stringify(tasks));
-    this.loadTasks();
-  }
-
-  deleteTask(id) {
-    let tasks = JSON.parse(localStorage.getItem('roitx_tasks')) || [];
-    tasks = tasks.filter(t => t.id !== id);
-    localStorage.setItem('roitx_tasks', JSON.stringify(tasks));
-    this.loadTasks();
-  }
-
   toggleFocus(e) {
-    document.body.classList.toggle('focus-mode');
-    if (document.body.classList.contains('focus-mode')) {
-      e.target.textContent = '☀️ Exit Focus Mode';
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+      e.target.classList.add('active-toggle');
     } else {
-      e.target.textContent = '🌙 Deep Focus Mode';
+      if (document.exitFullscreen) document.exitFullscreen();
+      e.target.classList.remove('active-toggle');
     }
+  }
+
+  playNotificationSound() {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+      osc.frequency.setValueAtTime(880, ctx.currentTime + 0.2); // A5
+
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start();
+      osc.stop(ctx.currentTime + 0.8);
+    } catch (e) {}
+  }
+
+  startLiveClock() {
+    const update = () => {
+      const clockEl = document.getElementById('liveClock');
+      if (clockEl) {
+        const now = new Date();
+        clockEl.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      }
+    };
+    update();
+    setInterval(update, 1000);
   }
 
   updateStatsUI() {
     if (this.els.dailyStats) {
-      this.els.dailyStats.textContent = `${this.dailyMinutes} mins logged today`;
-    }
-  }
-
-  startLiveClock() {
-    const clockEl = document.getElementById('liveClock');
-    if (clockEl) {
-      setInterval(() => {
-        clockEl.textContent = new Date().toLocaleTimeString();
-      }, 1000);
+      this.els.dailyStats.textContent = `${this.dailyMinutes} mins focused today`;
     }
   }
 
   initHardwareAPIs() {
     if ('getBattery' in navigator) {
-      navigator.getBattery().then(b => {
-        const updateB = () => {
-          if (this.els.batteryLvl) this.els.batteryLvl.textContent = `${Math.round(b.level * 100)}%`;
+      navigator.getBattery().then(battery => {
+        const updateBat = () => {
+          if (this.els.batteryLvl) {
+            this.els.batteryLvl.textContent = `${Math.round(battery.level * 100)}%`;
+          }
         };
-        updateB();
-        b.addEventListener('levelchange', updateB);
+        updateBat();
+        battery.addEventListener('levelchange', updateBat);
+      }).catch(() => {
+        if (this.els.batteryLvl) this.els.batteryLvl.textContent = "N/A";
       });
     }
-    window.addEventListener('online', () => this.updateNetStatus());
-    window.addEventListener('offline', () => this.updateNetStatus());
-    this.updateNetStatus();
-  }
 
-  updateNetStatus() {
-    if (this.els.netStatus) {
-      this.els.netStatus.textContent = navigator.onLine ? 'Online 🟢' : 'Offline 🔴';
-    }
+    const updateNet = () => {
+      if (this.els.netStatus) {
+        this.els.netStatus.textContent = navigator.onLine ? "Online" : "Offline";
+      }
+    };
+    window.addEventListener('online', updateNet);
+    window.addEventListener('offline', updateNet);
+    updateNet();
   }
 
   requestNotificationPerm() {
@@ -744,20 +860,24 @@ class ProductivityEngine {
     }
   }
 
-  showModal(msg) {
-    if (this.els.modal) {
-      const msgEl = this.els.modal.querySelector('p') || this.els.modal;
-      msgEl.textContent = msg;
-      this.els.modal.style.display = 'flex';
-    } else {
-      alert(msg);
-    }
-  }
-
   closeModal() {
     if (this.els.modal) this.els.modal.style.display = 'none';
   }
+
+  formatTime(seconds) {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  }
+
+  escapeHTML(str) {
+    return str.replace(/[&<>'"]/g, 
+      tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+    );
+  }
 }
 
-// Global App Initialization
-const app = new ProductivityEngine();
+// Instantiate Engine on DOM Load
+document.addEventListener('DOMContentLoaded', () => {
+  window.roitxEngine = new ProductivityEngine();
+});

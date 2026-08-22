@@ -8,15 +8,19 @@
 </head>
 <body>
 
-  <!-- Floating Movable Widget Button & Popup -->
-  <div id="floatingWidget" class="floating-widget">
+  <!-- Floating Movable Widget Button & Popup (Controlled by timer.js) -->
+  <div id="roitxLauncher" title="Widget Options (Drag Me Anywhere)">⚡</div>
+  
+  <div id="floatingWidget" class="floating-widget" style="display: none;">
     <div class="widget-header" id="widgetDragHandle">
       <span>🚀 Roitx Widget</span>
-      <button id="closeWidgetBtn" class="close-btn">&times;</button>
+      <button id="btnWidgetClose" class="close-btn">&times;</button>
     </div>
-    <div class="widget-time" id="widgetTimeDisplay">40:00</div>
-    <div class="controls">
-      <button class="btn primary" id="btnWidgetToggle">Start</button>
+    <div id="widgetBody">
+      <div class="widget-time" id="widgetTimeDisplay">40:00</div>
+      <div class="controls">
+        <button class="btn primary" id="btnWidgetToggle">Start</button>
+      </div>
     </div>
   </div>
 
@@ -45,7 +49,10 @@
   <!-- Main Content Layout -->
   <main>
     <div class="left-col">
-      <div class="glass-panel">
+      <div class="glass-panel" style="text-align: center;">
+
+        <!-- Main Timer Screen Display (Fixed: Added Missing Timer Display Container) -->
+        <div class="time-display" id="timerDisplay" style="font-size: 4rem; font-weight: bold; margin-bottom: 15px; font-family: monospace;">40:00</div>
 
         <!-- Custom Minutes Input Row -->
         <div class="input-group" style="margin-bottom: 15px;">
@@ -81,7 +88,7 @@
           <button class="btn" id="btnAmbient">White Noise (Rain/Static)</button>
           <button class="btn" id="btnFocus">Fullscreen Mode</button>
         </div>
-        <div class="wave-info" id="waveDesc">Select a frequency to generate Binaural Beats. (Requires Headphones)</div>
+        <div class="wave-info" id="waveDesc" style="margin-top: 10px;">Select a frequency to generate Binaural Beats. (Requires Headphones)</div>
       </div>
     </div>
 
@@ -93,19 +100,19 @@
           <input type="text" id="taskInput" placeholder="Add a new task...">
           <button class="btn primary" id="btnTaskAdd">Add</button>
         </div>
-        <div class="task-list" id="taskList"></div>
+        <ul class="task-list" id="taskList" style="list-style: none; padding: 0; margin-top: 12px;"></ul>
       </div>
 
       <div class="glass-panel">
         <h2>Stopwatch & Laps</h2>
-        <div class="time-display" id="stopwatchDisplay" style="font-size: 3rem;">00:00<span class="ms-display">.00</span></div>
-        <div class="controls">
+        <div class="time-display" id="stopwatchDisplay" style="font-size: 3rem; font-family: monospace;">00:00:00.00</div>
+        <div class="controls" style="margin-top: 10px;">
           <button class="btn primary" id="btnSwStart">Start</button>
           <button class="btn" id="btnSwStop">Pause</button>
           <button class="btn" id="btnSwLap">Lap</button>
           <button class="btn danger" id="btnSwReset">Reset</button>
         </div>
-        <div class="task-list" id="lapsList" style="margin-top: 16px; max-height: 150px;"></div>
+        <ul class="task-list" id="lapsList" style="margin-top: 16px; max-height: 150px; overflow-y: auto; list-style: none; padding: 0;"></ul>
       </div>
 
       <!-- SMART MUSIC PLAYER PANEL (MP3 + YOUTUBE SUPPORT) -->
@@ -113,7 +120,7 @@
         <h2>Custom Smart Music Player</h2>
         
         <!-- Live Wave Visualizer Canvas -->
-        <canvas id="visualizer" class="visualizer-canvas"></canvas>
+        <canvas id="visualizer" class="visualizer-canvas" width="300" height="60" style="width:100%; height:60px; background:rgba(0,0,0,0.2); border-radius:8px; margin-bottom:12px;"></canvas>
 
         <div style="margin-bottom: 12px;">
           <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 6px;">Upload Local MP3 File:</label>
@@ -131,16 +138,16 @@
         <!-- Dynamic Container for YouTube Player Embed -->
         <div id="ytPlayerContainer"></div>
 
-        <!-- HTML5 Audio Element for Direct MP3 Links -->
-        <audio id="customAudio" controls style="width: 100%; margin-top: 8px; border-radius: 8px; display: none;"></audio>
+        <!-- HTML5 Audio Element for Direct MP3 / Local Links -->
+        <audio id="customAudio" controls style="width: 100%; margin-top: 8px; border-radius: 8px; display: none;" crossorigin="anonymous"></audio>
 
         <!-- Dynamic URL Guide Box -->
         <div class="audio-guide-box" style="margin-top: 15px; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
           <h4 style="margin-top: 0;">💡 Smart Link Detection Guide</h4>
           <ul style="font-size: 0.85rem; padding-left: 20px; color: var(--text-muted); margin-bottom: 0;">
-            <li><strong>YouTube Link:</strong> Koi bhi standard YouTube URL paste karein (e.g., <code>youtube.com/watch?v=...</code> ya <code>youtu.be/...</code>). System automatically use YouTube Iframe player mein convert kar dega.</li>
-            <li><strong>Direct MP3 Link:</strong> Koi direct audio file URL paste karein jisme <code>.mp3</code>, <code>.wav</code> ending ho. Ye standard HTML5 audio player aur Live Visualizer ke saath play hoga.</li>
-            <li><strong>Local Audio:</strong> Apne device se direct offline music play karne ke liye top file picker ka use karein.</li>
+            <li><strong>YouTube Link:</strong> Koi bhi standard YouTube URL paste karein (e.g., <code>youtube.com/watch?v=...</code> ya <code>youtu.be/...</code>). System automatically player embed bana dega.</li>
+            <li><strong>Direct MP3 Link:</strong> Direct audio file URL paste karein jisme <code>.mp3</code>, <code>.wav</code> ending ho. Ye standard HTML5 audio player aur Live Visualizer ke saath sync rahega.</li>
+            <li><strong>Local Audio:</strong> Offline music ke liye local file upload karein, jisse visualizer instantly start ho jayega.</li>
           </ul>
         </div>
       </div>
@@ -148,11 +155,11 @@
   </main>
 
   <!-- Session Complete Modal -->
-  <div class="modal-overlay" id="sessionModal" style="display: none;">
-    <div class="glass-panel modal-content">
-      <h2 id="modalTitle">Session Complete! 🎉</h2>
+  <div class="modal-overlay" id="sessionModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 1000000;">
+    <div class="glass-panel modal-content" style="background: #1e293b; padding: 24px; border-radius: 12px; text-align: center; max-width: 400px; border: 1px solid #334155;">
+      <h2 id="modalTitle" style="margin-top: 0;">Session Complete! 🎉</h2>
       <p id="modalDesc">Bohot badiya! Tumne apna focus session poora kar liya hai.</p>
-      <button class="btn primary" id="btnCloseModal">Awesome!</button>
+      <button class="btn primary" id="btnCloseModal" style="margin-top: 15px;">Awesome!</button>
     </div>
   </div>
 
