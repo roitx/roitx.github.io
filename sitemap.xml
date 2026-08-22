@@ -109,11 +109,11 @@
     <priority>0.7</priority>
   </url>
 
-  <!-- Information & Extra Pages (Priority 0.5 - 0.6) -->
+  <!-- Information & Legal Policies (Updated Page) -->
   <url>
-    <loc>https://roitx.qd.je/about.html</loc>
+    <loc>https://roitx.qd.je/aboutus.html</loc>
     <lastmod>2026-08-22</lastmod>
-    <priority>0.6</priority>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://roitx.qd.je/fun.html</loc>
