@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>About Us, Legal Infrastructure & Policies — PM Roitx Study Hub</title>
+  <link rel="icon" href="favicon.png" type="image/png">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    :root {
+      --bg-dark: #030b20;
+      --card-bg: rgba(10, 27, 61, 0.85);
+      --border-color: rgba(58, 160, 255, 0.25);
+      --accent-blue: #3aa0ff;
+      --accent-purple: #6f7bff;
+      --text-main: #e0e6ed;
+      --text-muted: #a0aec0;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      line-height: 1.7;
+    }
+
+    .legal-wrapper {
+      max-width: 1100px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--accent-blue);
+      text-decoration: none;
+      font-weight: 600;
+      margin-bottom: 24px;
+      transition: transform 0.2s ease;
+    }
+    .back-btn:hover {
+      transform: translateX(-4px);
+    }
+
+    .hero-header {
+      text-align: center;
+      padding: 40px 20px;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      backdrop-filter: blur(16px);
+      margin-bottom: 30px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
+
+    .hero-header h1 {
+      font-size: 36px;
+      color: var(--accent-blue);
+      margin: 0 0 10px 0;
+      letter-spacing: 1px;
+    }
+
+    .hero-header p {
+      color: var(--text-muted);
+      margin: 0;
+      font-size: 16px;
+    }
+
+    /* TAB NAVIGATION */
+    .nav-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 30px;
+      justify-content: center;
+    }
+
+    .tab-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 12px 24px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      transition: all 0.3s ease;
+    }
+
+    .tab-btn.active, .tab-btn:hover {
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      color: #fff;
+      border-color: transparent;
+      box-shadow: 0 4px 15px rgba(58, 160, 255, 0.3);
+    }
+
+    .content-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 36px;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      margin-bottom: 40px;
+    }
+
+    h2 {
+      color: var(--accent-blue);
+      border-bottom: 2px solid var(--border-color);
+      padding-bottom: 10px;
+      margin-top: 36px;
+      font-size: 24px;
+    }
+
+    h3 {
+      color: var(--accent-purple);
+      margin-top: 24px;
+      font-size: 18px;
+    }
+
+    ul, ol {
+      padding-left: 20px;
+    }
+
+    li {
+      margin-bottom: 8px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 14px;
+    }
+
+    th {
+      background: rgba(58, 160, 255, 0.15);
+      color: var(--accent-blue);
+    }
+
+    .highlight-box {
+      background: rgba(58, 160, 255, 0.08);
+      border-left: 4px solid var(--accent-blue);
+      padding: 16px 20px;
+      border-radius: 0 12px 12px 0;
+      margin: 20px 0;
+    }
+
+    footer {
+      text-align: center;
+      padding: 30px 0;
+      color: var(--text-muted);
+      font-size: 14px;
+      border-top: 1px solid var(--border-color);
+    }
+  </style>
+</head>
+<body>
+
+<div class="legal-wrapper">
+  <a href="index.html" class="back-btn">← Return to PM Roitx Home</a>
+
+  <header class="hero-header">
+    <h1>PM ROITX STUDY HUB</h1>
+    <p>Official Architecture, Legal Policies, Data Governance & Terms of Service</p>
+  </header>
+
+  <!-- NAVIGATION TABS -->
+  <div class="nav-tabs">
+    <button class="tab-btn active" onclick="scrollToSec('about')">About Platform</button>
+    <button class="tab-btn" onclick="scrollToSec('privacy')">Privacy Policy</button>
+    <button class="tab-btn" onclick="scrollToSec('terms')">Terms of Service</button>
+    <button class="tab-btn" onclick="scrollToSec('dmca')">DMCA & Copyright</button>
+    <button class="tab-btn" onclick="scrollToSec('architecture')">Technical Architecture</button>
+  </div>
+
+  <main class="content-card">
+
+    <!-- 1. ABOUT PLATFORM -->
+    <section id="about" class="legal-section">
+      <h2>1. About PM Roitx Study Hub</h2>
+      <p><strong>PM Roitx Study Hub</strong> is a state-of-the-art, high-performance educational technology ecosystem engineered specifically to optimize learning workflows for Class 12 Science students (specializing in Mathematics, Physics, Chemistry, and Biology under BSEB and CBSE frameworks) as well as self-directed learners.</p>
+      
+      <div class="highlight-box">
+        <strong>Core Mission:</strong> To bridge the gap between complex academic curriculums and high-yield student retention using structured notes, interactive practice tools, automated study timers, and AI-driven resolution systems.
+      </div>
+
+      <h3>1.1 Platform Features & Ecosystem Overview</h3>
+      <ul>
+        <li><strong>Interactive Learning Notes:</strong> Digitized, highly curated notes designed for deep concept clarity and high-score exam strategies.</li>
+        <li><strong>Automated Assessment Engine:</strong> Custom test series and objective MCQs tailored to evaluate candidate readiness.</li>
+        <li><strong>Real-time AI Solver & Assistant:</strong> Integrated AI tools designed to provide instant step-by-step solutions to mathematical and scientific queries.</li>
+        <li><strong>Study Timer & Productivity Tools:</strong> Focus management systems engineered to prevent study fatigue and optimize retention rates.</li>
+      </ul>
+    </section>
+
+    <!-- 2. PRIVACY POLICY -->
+    <section id="privacy" class="legal-section">
+      <h2>2. Comprehensive Global Privacy Policy</h2>
+      <p><em>Effective Date: August 2026 | Last Revised: August 2026</em></p>
+      <p>This Privacy Policy governs the manner in which PM Roitx collects, uses, maintains, and discloses information collected from users (each, a "User") of the website (https://roitx.qd.je/). This privacy policy applies to the Site and all products and services offered by PM Roitx.</p>
+
+      <h3>2.1 Personal Identification Information</h3>
+      <p>We may collect personal identification information from Users in a variety of ways, including, but not limited to, when Users visit our site, register on the site, place an order, subscribe to the newsletter, and in connection with other activities, services, features or resources we make available on our Site. Users may be asked for, as appropriate, name, email address, profile picture.</p>
+
+      <h3>2.2 Non-personal Identification Information</h3>
+      <p>We may collect non-personal identification information about Users whenever they interact with our Site. Non-personal identification information may include the browser name, the type of computer, screen resolution, operating system, network service provider, and other technical metadata.</p>
+
+      <h3>2.3 Web Browser Cookies & Storage Technologies</h3>
+      <p>Our Site utilizes "cookies" and local storage mechanisms (LocalStorage / SessionStorage) to enhance User experience. User's web browser places cookies on their hard drive for record-keeping purposes and sometimes to track information about them. Users may choose to set their web browser to refuse cookies, or to alert you when cookies are being sent.</p>
+
+      <h3>2.4 Sub-processors & Third-Party Service Providers</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Provider</th>
+            <th>Purpose</th>
+            <th>Data Processed</th>
+            <th>Location</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Supabase Inc.</td>
+            <td>Database & Authentication Engine</td>
+            <td>Encrypted Auth Data, Profile Info</td>
+            <td>Global / Cloud</td>
+          </tr>
+          <tr>
+            <td>Google Cloud / Search Console</td>
+            <td>Analytics & Site Indexing</td>
+            <td>Anonymized Technical Metrics</td>
+            <td>Global</td>
+          </tr>
+          <tr>
+            <td>CDN Provider</td>
+            <td>Content Delivery & DDoS Protection</td>
+            <td>IP Address, Edge Network Logs</td>
+            <td>Edge Servers</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>2.5 GDPR & CCPA Compliance Rights</h3>
+      <p>Under international privacy frameworks (including GDPR and CCPA), users retain the following statutory rights:</p>
+      <ul>
+        <li><strong>Right to Access:</strong> The right to request copies of your personal data held by PM Roitx.</li>
+        <li><strong>Right to Rectification:</strong> The right to request correction of inaccurate or incomplete data.</li>
+        <li><strong>Right to Erasure (Right to be Forgotten):</strong> The right to request the deletion of account data stored within our active databases.</li>
+        <li><strong>Right to Data Portability:</strong> The right to request transfer of user-generated data to another organization.</li>
+      </ul>
+    </section>
+
+    <!-- 3. TERMS OF SERVICE -->
+    <section id="terms" class="legal-section">
+      <h2>3. Terms and Conditions of Service</h2>
+      
+      <h3>3.1 Acceptance of Terms</h3>
+      <p>By accessing and utilizing PM Roitx Study Hub, you signify your irrevocable acceptance of these Terms of Service. If you do not agree to these terms, please refrain from accessing or utilizing our resources.</p>
+
+      <h3>3.2 Intellectual Property & Copyright Limits</h3>
+      <p>All content included on this Site, such as text, graphics, logos, button icons, images, digital downloads, data compilations, and software, is the property of PM Roitx or its content suppliers and protected by international copyright laws.</p>
+      
+      <div class="highlight-box">
+        <strong>Restricted Use Notice:</strong> Users are granted a limited, non-exclusive, non-transferable license to access study materials strictly for personal, non-commercial educational purposes. Redistribution, scraping, or commercial resale of PM Roitx study materials is strictly forbidden.
+      </div>
+
+      <h3>3.3 User Conduct & Prohibited Activities</h3>
+      <p>Users agree NOT to engage in any of the following activities on the platform:</p>
+      <ol>
+        <li>Attempting to bypass security headers, authentication layers, or database security protocols.</li>
+        <li>Automated scraping of notes, question banks, or proprietary code using bots or scripts.</li>
+        <li>Posting harmful, offensive, or illegal material within public community or doubt-solving interfaces.</li>
+        <li>Reverse-engineering client-side application bundles or API endpoints.</li>
+      </ol>
+
+      <h3>3.4 Limitation of Liability</h3>
+      <p>In no event shall PM Roitx, nor its developers or affiliates, be liable for any indirect, consequential, or incidental damages arising out of the use or inability to use the materials on PM Roitx Study Hub, even if notified orally or in writing of the possibility of such damage.</p>
+    </section>
+
+    <!-- 4. DMCA & COPYRIGHT -->
+    <section id="dmca" class="legal-section">
+      <h2>4. DMCA & Content Takedown Policy</h2>
+      <p>PM Roitx respects the intellectual property rights of creators and educational publishers. If you believe that any material residing on or accessible through our website infringes a copyright you own or control, you may submit a formal DMCA Takedown Notice.</p>
+      
+      <h3>4.1 Submitting a Copyright Notice</h3>
+      <p>To be effective, your notice must include:</p>
+      <ul>
+        <li>A physical or electronic signature of a person authorized to act on behalf of the copyright owner.</li>
+        <li>Identification of the copyrighted work claimed to have been infringed.</li>
+        <li>Exact URL link(s) or description of where the material is located on our platform.</li>
+        <li>Your full legal name, email address, and mailing address.</li>
+      </ul>
+      <p>Send formal copyright inquiries to: <code>legal@roitx.qd.je</code></p>
+    </section>
+
+    <!-- 5. TECHNICAL ARCHITECTURE -->
+    <section id="architecture" class="legal-section">
+      <h2>5. Enterprise Technical Architecture & Security Specifications</h2>
+      <p>PM Roitx is built utilizing modern client-first Web Architecture designed for maximum security, offline availability, and ultra-low latency rendering.</p>
+
+      <h3>5.1 Core Technology Stack Specifications</h3>
+      <ul>
+        <li><strong>Frontend Framework:</strong> Modern Native HTML5, CSS3 Custom Properties, Dynamic ES6+ JavaScript.</li>
+        <li><strong>Backend & Authentication Engine:</strong> Supabase BaaS (PostgreSQL Engine with Row Level Security Policies).</li>
+        <li><strong>PWA Runtime:</strong> Custom Service Worker Cache Strategy (offline-first architecture for study continuity).</li>
+        <li><strong>Structured Data:</strong> Schema.org JSON-LD WebSite and SiteNavigationElement semantic metadata.</li>
+      </ul>
+
+      <h3>5.2 Data Security & Storage Protocols</h3>
+      <p>User sessions are encrypted in transit using TLS 1.3 encryption protocols. Local authentication state persistence is handled through client-side secure tokens managed via Supabase SDK handlers.</p>
+    </section>
+
+  </main>
+
+  <footer>
+    <p>© 2026 PM ROITX — All Rights Reserved. Engineered for Excellence.</p>
+  </footer>
+</div>
+
+<script>
+  function scrollToSec(id) {
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+      
+      // Update Tab Styles
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+    }
+  }
+</script>
+
+</body>
+</html>
