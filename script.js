@@ -369,3 +369,27 @@ if ('serviceWorker' in navigator) {
 }
 
 
+// ================= COOKIE CONSENT LOGIC =================
+document.addEventListener("DOMContentLoaded", () => {
+  const cookieBanner = document.getElementById("cookieBanner");
+  const acceptBtn = document.getElementById("acceptCookies");
+  const declineBtn = document.getElementById("declineCookies");
+
+  if (cookieBanner && !localStorage.getItem("cookieConsent")) {
+    cookieBanner.style.display = "block";
+  }
+
+  if (acceptBtn) {
+    acceptBtn.addEventListener("click", () => {
+      localStorage.setItem("cookieConsent", "accepted");
+      cookieBanner.style.display = "none";
+    });
+  }
+
+  if (declineBtn) {
+    declineBtn.addEventListener("click", () => {
+      localStorage.setItem("cookieConsent", "declined");
+      cookieBanner.style.display = "none";
+    });
+  }
+});

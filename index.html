@@ -4,19 +4,20 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   
-  <title>Roitx — Personal Study Hub | Roitx Notes & Study Tools</title>
+  <!-- Title to reflect 'PM Roitx' -->
+  <title>PM Roitx — Personal Study Hub | PM Roitx Notes & Study Tools</title>
 
   <link rel="icon" href="favicon.png" type="image/png">
   <link rel="apple-touch-icon" href="profile.jpg">
 
-  <meta name="description" content="Roitx is a premium personal study hub for students. Access Roitx notes, study timers, and educational tools.">
-  <meta name="keywords" content="roitx, Roitx notes, Roitx study, Study hub, Roitx app">
-  <meta name="author" content="Roitx">
+  <meta name="description" content="PM Roitx is a premium personal study hub for students. Access PM Roitx notes, study timers, and educational tools.">
+  <meta name="keywords" content="PM Roitx, roitx, PM Roitx notes, PM Roitx study, Study hub, Roitx app">
+  <meta name="author" content="PM Roitx">
   
   <meta name="google-site-verification" content="TPdziMXbg8H61q3oj7MyiCaks2OMPLYiblfLROZu2XY" />
 
-  <meta property="og:title" content="Roitx — Personal Study Hub">
-  <meta property="og:description" content="Get high-quality Roitx notes and study tools. Boost your learning with Roitx Study Hub.">
+  <meta property="og:title" content="PM Roitx — Personal Study Hub">
+  <meta property="og:description" content="Get high-quality PM Roitx notes and study tools. Boost your learning with PM Roitx Study Hub.">
   <meta property="og:image" content="https://roitx.qd.je/profile.jpg">
   <meta property="og:url" content="https://roitx.qd.je/">
   <meta property="og:type" content="website">
@@ -28,9 +29,66 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Roitx">
+  <meta name="apple-mobile-web-app-title" content="PM Roitx">
 
-    <!-- External Supabase Dependencies -->
+  <!-- 1. GOOGLE SITE NAME SCHEMA (Isse domain ki jagah 'PM Roitx' dikhega) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "PM Roitx",
+    "alternateName": ["PM Roitx Study Hub", "Roitx Study Hub", "Roitx"],
+    "url": "https://roitx.qd.je/"
+  }
+  </script>
+
+  <!-- 2. SITELINKS NAVIGATION SCHEMA (Isse Google search ke niche links dikhayega) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "itemListElement": [
+      {
+        "@type": "SiteNavigationElement",
+        "position": 1,
+        "name": "Classes & Notes",
+        "url": "https://roitx.qd.je/classes.html"
+      },
+      {
+        "@type": "SiteNavigationElement",
+        "position": 2,
+        "name": "Premium Notes",
+        "url": "https://roitx.qd.je/premium-notes.html"
+      },
+      {
+        "@type": "SiteNavigationElement",
+        "position": 3,
+        "name": "Ai Calculator",
+        "url": "https://roitx.qd.je/calculator.html"
+      },
+      {
+        "@type": "SiteNavigationElement",
+        "position": 4,
+        "name": "Study Timer",
+        "url": "https://roitx.qd.je/study-timer.html"
+      },
+      {
+        "@type": "SiteNavigationElement",
+        "position": 5,
+        "name": "Ask Doubt",
+        "url": "https://roitx.qd.je/solver.html"
+      },
+      {
+        "@type": "SiteNavigationElement",
+        "position": 6,
+        "name": "Ask Chat AI",
+        "url": "https://roitx.qd.je/ask-chat.html"
+      }
+    ]
+  }
+  </script>
+
+  <!-- External Supabase Dependencies -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase.js"></script>
 
@@ -156,9 +214,21 @@
   </button>
 </div>
 
+<!-- COOKIE CONSENT BANNER -->
+<div id="cookieBanner" class="cookie-banner" style="display: none;">
+  <div class="cookie-content">
+    <p>🍪 Hum aapke study session ko behtar banane ke liye cookies ka istemal karte hain.</p>
+    <div class="cookie-buttons">
+      <button id="acceptCookies" class="cookie-btn accept">Accept All</button>
+      <button id="declineCookies" class="cookie-btn decline">Decline</button>
+    </div>
+  </div>
+</div>
+
 <footer>
-  © <span id="year"></span> ROITX — Your Personal Study Hub
+  © <span id="year"></span> PM ROITX — Your Personal Study Hub
 </footer>
+
 <div id="offlineBanner">
   <div class="status-dot"></div>
   <span id="bannerText">No internet connection • Offline mode</span>

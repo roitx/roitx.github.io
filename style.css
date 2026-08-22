@@ -560,6 +560,59 @@ input, textarea {
   background: #10b981;
   box-shadow: 0 0 8px #10b981;
 }
+/* ================= COOKIE CONSENT BANNER ================= */
+.cookie-banner {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 480px;
+  background: rgba(10, 27, 61, 0.92);
+  backdrop-filter: blur(18px) saturate(180%);
+  border: 1px solid rgba(58, 160, 255, 0.4);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  border-radius: 18px;
+  padding: 16px 20px;
+  z-index: 99999;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.cookie-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cookie-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.cookie-btn {
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 12px;
+  transition: all 0.2s ease;
+}
+
+.cookie-btn.accept {
+  background: linear-gradient(135deg, var(--accent), #6f7bff);
+  color: #fff;
+  box-shadow: 0 0 15px rgba(58, 160, 255, 0.4);
+}
+
+.cookie-btn.decline {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--muted);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
 
 @keyframes pulseDot {
   0% { transform: scale(0.95); opacity: 0.8; }
