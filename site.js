@@ -1,11 +1,14 @@
-// site.js - shared helpers & notes loader system (Fully Updated with Chapter Name Display)
+// site.js - shared helpers & notes loader system (Fully Updated with Professional Mail Support & Chapter Name Display)
 
 function goto(page) { 
   window.location.href = page; 
 }
 
-function mailSupport() { 
-  window.location.href = 'mailto:masumboy141@gmail.com?subject=Support'; 
+// UPDATE: Professional Legal & Support Email Handler
+function mailSupport(subject = "Support Query - Roitx Pro", body = "Hello Roitx Team,\n\nI need help regarding:") { 
+  const targetEmail = "legal@roitx.qd.je";
+  const mailtoUrl = `mailto:${targetEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  window.location.href = mailtoUrl; 
 }
 
 // theme persist simple
@@ -95,7 +98,7 @@ async function openSubject(subjectName) {
         const finalFileName = `${note.file_name || (CURRENT_CLASS + '_' + subjectName + '_' + note.chapter_number + '.pdf')}`;
         const fullPath = note.file_path ? note.file_path : `notes/${finalFileName}`;
         
-        // Proper Descriptive Name banana jisme chapter name priorty par ho
+        // Proper Descriptive Name banana jisme chapter name priority par ho
         const className = `Class ${CURRENT_CLASS}`;
         const subName = subjectName.toUpperCase();
         const chapterTitle = note.chapter_name ? note.chapter_name : `Chapter ${note.chapter_number}`;
