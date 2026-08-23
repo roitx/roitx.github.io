@@ -2,9 +2,52 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Roitx — Smart Assistant</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<!-- PRIMARY SEO META TAGS -->
+<title>Roitx Smart AI Assistant — Study Chat & Quick Tools</title>
+<meta name="title" content="Roitx Smart AI Assistant — Study Chat & Quick Tools">
+<meta name="description" content="Interactive AI Study Assistant by Roitx. Solve math, generate formulas, manage study calendar, take quick notes, and access educational PDFs.">
+<meta name="keywords" content="Roitx Smart Assistant, Roitx AI Chat, Class 12 Math Solver, Bihar Board Study Bot, Study Notes Manager, Formula Generator">
+<meta name="robots" content="index, follow">
+<meta name="author" content="PM Roitx">
+<link rel="canonical" href="https://roitx.qd.je/ask-chat.html">
+
+<!-- OPEN GRAPH / FACEBOOK SOCIAL META -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://roitx.qd.je/ask-chat.html">
+<meta property="og:title" content="Roitx Smart AI Assistant — Instant Study & Math Solver">
+<meta property="og:description" content="Ask questions, manage local notes, view formula sheets, and use smart study commands with Roitx AI Assistant.">
+<meta property="og:image" content="https://roitx.qd.je/study.png">
+
+<!-- TWITTER CARDS -->
+<meta property="twitter:card" content="summary_large_image">
+<meta property="twitter:title" content="Roitx Smart AI Assistant">
+<meta property="twitter:description" content="Your personal AI study companion for notes, formulas, and instant doubt resolution.">
+<meta property="twitter:image" content="https://roitx.qd.je/study.png">
+
+<!-- GOOGLE SCHEMA MARKUP (JSON-LD FOR CRAWLERS) -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Roitx Smart Assistant",
+  "url": "https://roitx.qd.je/ask-chat.html",
+  "description": "An AI-powered educational chatbot and study assistant providing instant answers, note-taking, formula lookup, and study planning.",
+  "applicationCategory": "EducationalApplication",
+  "operatingSystem": "All",
+  "browserRequirements": "Requires JavaScript and Web Browser",
+  "publisher": {
+    "@type": "Organization",
+    "name": "PM Roitx Study Hub",
+    "logo": "https://roitx.qd.je/study.png"
+  }
+}
+</script>
+
+<link rel="icon" href="study.png" type="image/png">
 <link rel="stylesheet" href="ask-chat.css" />
+
 <style>
   :root{
     --bg:#0f1724;--card:#0b1220;--accent:#06b6d4;--glass:rgba(255,255,255,0.04);
@@ -35,7 +78,7 @@
   
   .right{width:300px;display:flex;flex-direction:column;gap:12px}
   .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.03)}
-  .card h3{margin:0 0 8px 0;font-size:15px}
+  .card h2{margin:0 0 8px 0;font-size:15px;color:#e6eef6;}
   .tools{display:flex;flex-wrap:wrap;gap:8px}
   .toolBtn{padding:8px 10px;border-radius:8px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.02);cursor:pointer;font-weight:600;color:#dceff6}
   
@@ -46,6 +89,7 @@
   footer.footer{padding:12px;text-align:center;color:#9fb7c7;font-size:13px}
   @media (max-width:880px){.main{flex-direction:column}.right{width:100%}}
   
+  /* DRAGGABLE HOME BUTTON STYLES */
   .home-btn {
     position: fixed;
     bottom: 20px;
@@ -59,45 +103,53 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.25);
-    cursor: pointer;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.35);
+    cursor: grab;
     z-index: 9999;
-    transition: 0.2s;
+    user-select: none;
+    touch-action: none;
+    transition: transform 0.1s ease, box-shadow 0.2s ease;
   }
-  .home-btn:active { transform: scale(0.88); }
+  .home-btn:active {
+    cursor: grabbing;
+    transform: scale(0.92);
+    box-shadow: 0 8px 25px rgba(0,123,255,0.5);
+  }
 </style>
 </head>
 <body>
 
-<div class="wrap" role="application" aria-label="Ask Chat">
-  <header class="appbar"><h1>Roitx — Smart Assistant</h1></header>
+<main class="wrap" role="application" aria-label="Ask Chat Application">
+  <header class="appbar">
+    <h1>Roitx — Smart Assistant</h1>
+  </header>
 
   <div class="main">
     <!-- Left Chat Box -->
-    <div class="left">
-      <div id="chatWindow" class="chatWindow" aria-live="polite"></div>
+    <section class="left" aria-label="Chat Interface">
+      <div id="chatWindow" class="chatWindow" aria-live="polite" aria-label="Message log"></div>
       <div class="inputBar">
-        <input id="chatInput" placeholder="Type a command or question..." aria-label="Chat input">
-        <button id="sendBtn" class="sendBtn">Send</button>
+        <input id="chatInput" placeholder="Type a command or question..." aria-label="Chat input field">
+        <button id="sendBtn" class="sendBtn" aria-label="Send message">Send</button>
       </div>
-    </div>
+    </section>
 
     <!-- Right Sidebar Tools -->
-    <aside class="right">
+    <aside class="right" aria-label="Assistant Tools Sidebar">
       <div class="card">
-        <h3>Quick Commands</h3>
+        <h2>Quick Commands</h2>
         <div class="tools">
-          <button class="toolBtn" onclick="runCommand('open pdf 10 physics ch3')">Open PDF</button>
-          <button class="toolBtn" onclick="runCommand('formula class 10')">Formulas</button>
-          <button class="toolBtn" onclick="showCalendarModalDirect()">Calendar</button>
-          <button class="toolBtn" onclick="promptCreateNote()">Create Note</button>
-          <button class="toolBtn" onclick="showNotesModalDirect()">Show Notes</button>
-          <button class="toolBtn" onclick="downloadNotesFileDirect()">Download Notes</button>
+          <button type="button" class="toolBtn" onclick="runCommand('open pdf 10 physics ch3')">Open PDF</button>
+          <button type="button" class="toolBtn" onclick="runCommand('formula class 10')">Formulas</button>
+          <button type="button" class="toolBtn" onclick="showCalendarModalDirect()">Calendar</button>
+          <button type="button" class="toolBtn" onclick="promptCreateNote()">Create Note</button>
+          <button type="button" class="toolBtn" onclick="showNotesModalDirect()">Show Notes</button>
+          <button type="button" class="toolBtn" onclick="downloadNotesFileDirect()">Download Notes</button>
         </div>
       </div>
 
       <div class="card">
-        <h3>Tips</h3>
+        <h2>Study Tips</h2>
         <div>Use natural language. Examples:</div>
         <ul style="margin:8px 0 0 16px;color:#bcdbe6">
           <li>open pdf 10 phy ch3.pdf</li>
@@ -108,20 +160,20 @@
       </div>
 
       <div class="card">
-        <h3>Local Notes</h3>
+        <h2>Local Notes</h2>
         <div id="notesCount">Notes: 0</div>
-        <button class="toolBtn" onclick="showNotesModalDirect()">View Notes</button>
+        <button type="button" class="toolBtn" onclick="showNotesModalDirect()">View Notes</button>
       </div>
     </aside>
   </div>
 
   <footer class="footer">Roit ki Notes — Smart Chat • Local tools enabled</footer>
-</div>
+</main>
 
 <!-- Modals -->
-<div id="modal" class="modal" role="dialog" aria-hidden="true">
+<div id="modal" class="modal" role="dialog" aria-hidden="true" aria-modal="true">
   <div class="panel">
-    <button class="close" onclick="closeModal()">✕</button>
+    <button class="close" onclick="closeModal()" aria-label="Close Modal">✕</button>
     <div id="modalContent"></div>
   </div>
 </div>
@@ -137,6 +189,86 @@
 <!-- MAIN CHAT SCRIPT -->
 <script src="ask-chat.js"></script>
 
-<div class="home-btn" onclick="location.href='index.html'">🏠</div>
+<!-- Floating Draggable Home Button -->
+<div id="dragHomeBtn" class="home-btn" aria-label="Go to Homepage">🏠</div>
+
+<script>
+  // FULLY DRAGGABLE HOME BUTTON LOGIC (Mouse & Touch)
+  const homeBtn = document.getElementById("dragHomeBtn");
+  let isDragging = false;
+  let hasDragged = false;
+  let startX, startY, initialLeft, initialTop;
+
+  function onDragStart(e) {
+    isDragging = true;
+    hasDragged = false;
+    
+    // Position captured
+    const clientX = e.type === "touchstart" ? e.touches[0].clientX : e.clientX;
+    const clientY = e.type === "touchstart" ? e.touches[0].clientY : e.clientY;
+    
+    startX = clientX;
+    startY = clientY;
+    
+    const rect = homeBtn.getBoundingClientRect();
+    initialLeft = rect.left;
+    initialTop = rect.top;
+
+    homeBtn.style.bottom = "auto";
+    homeBtn.style.right = "auto";
+    homeBtn.style.left = `${initialLeft}px`;
+    homeBtn.style.top = `${initialTop}px`;
+  }
+
+  function onDragMove(e) {
+    if (!isDragging) return;
+
+    const clientX = e.type === "touchmove" ? e.touches[0].clientX : e.clientX;
+    const clientY = e.type === "touchmove" ? e.touches[0].clientY : e.clientY;
+
+    const deltaX = clientX - startX;
+    const deltaY = clientY - startY;
+
+    if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
+      hasDragged = true;
+    }
+
+    let newLeft = initialLeft + deltaX;
+    let newTop = initialTop + deltaY;
+
+    // Boundaries protection
+    const maxLeft = window.innerWidth - homeBtn.offsetWidth;
+    const maxTop = window.innerHeight - homeBtn.offsetHeight;
+
+    newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+    newTop = Math.max(0, Math.min(newTop, maxTop));
+
+    homeBtn.style.left = `${newLeft}px`;
+    homeBtn.style.top = `${newTop}px`;
+  }
+
+  function onDragEnd() {
+    isDragging = false;
+  }
+
+  // Mouse Events
+  homeBtn.addEventListener("mousedown", onDragStart);
+  window.addEventListener("mousemove", onDragMove);
+  window.addEventListener("mouseup", onDragEnd);
+
+  // Touch Events (Mobile/Tablet)
+  homeBtn.addEventListener("touchstart", onDragStart, { passive: true });
+  window.addEventListener("touchmove", onDragMove, { passive: true });
+  window.addEventListener("touchend", onDragEnd);
+
+  // Click Action (Only trigger if not dragged)
+  homeBtn.addEventListener("click", () => {
+    if (!hasDragged) {
+      window.location.href = "index.html";
+    }
+  });
+</script>
+
 </body>
-</html>
+  </html>
+  
