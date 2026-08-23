@@ -1,4 +1,4 @@
-const CACHE_NAME = 'roitx-study-v11'; // Jab bhi GitHub par update karein, ise v6, v7 kar dein[span_0](start_span)[span_0](end_span)
+const CACHE_NAME = 'roitx-study-v12'; // Jab bhi GitHub par update karein, ise v6, v7 kar dein[span_0](start_span)[span_0](end_span)
 const ASSETS = [
   './',
   './index.html',
