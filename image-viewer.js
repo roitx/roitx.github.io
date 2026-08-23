@@ -2,7 +2,6 @@
    ROITX IMAGE ELITE — ENGINE (SUPABASE + CANVAS ANNOTATOR)
    ===================================================== */
 
-// 1. Activity Tracking Helper Function
 function trackActivityLocally(fileData, isDownloaded = false) {
     try {
         let recent = JSON.parse(localStorage.getItem("recentFiles") || "[]");
@@ -34,6 +33,7 @@ function trackActivityLocally(fileData, isDownloaded = false) {
 
 let zoomScale = 1.0;
 let rotation = 0;
+let panX = 0, panY = 0;
 let isUIVisible = true;
 let isHighlightMode = false;
 
@@ -42,7 +42,6 @@ let drawingHistory = [];
 let isDrawing = false;
 let currentStroke = [];
 
-// Global scope variables taaki download aur view dono me track ho sake
 let rawPath = "";
 let docName = "";
 
@@ -75,9 +74,10 @@ async function initImageViewer() {
             canvas.width = img.clientWidth;
             canvas.height = img.clientHeight;
             document.getElementById("master-loader").style.display = "none";
+            
             setupCanvasEvents();
+            setupPinchAndPanEngine();
 
-            // ⚡ Track View Activity (Image Opened)
             trackActivityLocally({
                 title: docName || "Image Asset",
                 url: rawPath,
@@ -89,7 +89,6 @@ async function initImageViewer() {
     }
 }
 
-/* UI INTERACTIONS & SETTINGS */
 window.handleViewportClick = (e) => {
     if (e.clientY < 80 || e.clientY > window.innerHeight - 80) return;
     isUIVisible = !isUIVisible;
@@ -108,10 +107,10 @@ window.toggleSettings = (show = true) => {
     if (overlay) overlay.style.display = show ? "block" : "none";
 };
 
-/* TRANSFORM ENGINE */
+/* TRANSFORM ENGINE WITH PINCH & PAN SUPPORT */
 function updateTransform() {
     const wrapper = document.getElementById("imageWrapper");
-    wrapper.style.transform = `scale(${zoomScale}) rotate(${rotation}deg)`;
+    wrapper.style.transform = `translate(${panX}px, ${panY}px) scale(${zoomScale}) rotate(${rotation}deg)`;
     
     document.getElementById("zoom-val").innerText = Math.round(zoomScale * 100) + "%";
     document.getElementById("zoom-indicator").innerText = Math.round(zoomScale * 100) + "%";
@@ -125,6 +124,8 @@ window.adjustZoom = (delta) => {
 window.resetZoom = () => {
     zoomScale = 1.0;
     rotation = 0;
+    panX = 0;
+    panY = 0;
     updateTransform();
 };
 
@@ -132,6 +133,52 @@ window.rotateImage = () => {
     rotation = (rotation + 90) % 360;
     updateTransform();
 };
+
+/* PINCH ZOOM & PAN ENGINE FOR IMAGE */
+function setupPinchAndPanEngine() {
+    const viewport = document.getElementById("viewport");
+    let initialDist = 0;
+    let isDragging = false;
+    let dragStart = { x: 0, y: 0 };
+
+    viewport.addEventListener('touchstart', (e) => {
+        if (isHighlightMode) return;
+        
+        if (e.touches.length === 2) {
+            initialDist = Math.hypot(
+                e.touches[0].clientX - e.touches[1].clientX,
+                e.touches[0].clientY - e.touches[1].clientY
+            );
+        } else if (e.touches.length === 1 && zoomScale > 1) {
+            isDragging = true;
+            dragStart = { x: e.touches[0].clientX - panX, y: e.touches[0].clientY - panY };
+        }
+    }, { passive: true });
+
+    viewport.addEventListener('touchmove', (e) => {
+        if (isHighlightMode) return;
+
+        if (e.touches.length === 2 && initialDist > 0) {
+            const currentDist = Math.hypot(
+                e.touches[0].clientX - e.touches[1].clientX,
+                e.touches[0].clientY - e.touches[1].clientY
+            );
+            const delta = currentDist / initialDist;
+            zoomScale = Math.min(Math.max(zoomScale * delta, 0.5), 4.0);
+            updateTransform();
+            initialDist = currentDist;
+        } else if (e.touches.length === 1 && isDragging) {
+            panX = e.touches[0].clientX - dragStart.x;
+            panY = e.touches[0].clientY - dragStart.y;
+            updateTransform();
+        }
+    }, { passive: true });
+
+    viewport.addEventListener('touchend', () => {
+        initialDist = 0;
+        isDragging = false;
+    });
+}
 
 /* HIGHLIGHTING CANVAS ENGINE */
 function toggleHighlightMode() {
@@ -229,14 +276,12 @@ function undoLastStroke() {
     redrawCanvas();
 }
 
-/* EXPORT / DOWNLOAD WITH AUTH CONTROL */
 async function downloadImage() {
     if (!window.supabaseClient) {
         console.error("Supabase client initialized nahi hai.");
         return;
     }
 
-    // 1. Session verify karein
     const { data: { session } } = await window.supabaseClient.auth.getSession();
 
     if (!session) {
@@ -246,7 +291,6 @@ async function downloadImage() {
         return;
     }
 
-    // 2. Logged-in user ke liye canvas + image merge aur export
     const exportCanvas = document.createElement("canvas");
     exportCanvas.width = img.naturalWidth;
     exportCanvas.height = img.naturalHeight;
@@ -264,7 +308,6 @@ async function downloadImage() {
     link.click();
     document.body.removeChild(link);
 
-    // ⚡ Track Download Activity (Marked as Downloaded with correct path)
     trackActivityLocally({
         title: docName || "Image Asset",
         url: rawPath,
@@ -272,11 +315,9 @@ async function downloadImage() {
     }, true);
 }
 
-/* UPDATED ERROR HANDLING & WORKING.HTML REDIRECT SYSTEM */
 function showError(path) {
     const fileName = docName || (path ? path.split('/').pop() : "Image Document");
     
-    // Create modern notification banner
     const popup = document.createElement('div');
     popup.innerHTML = `
         <div style="display: flex; align-items: center; gap: 12px;">
@@ -289,38 +330,26 @@ function showError(path) {
     `;
     
     popup.style.cssText = `
-        position: fixed;
-        top: 25px;
-        left: 50%;
-        transform: translateX(-50%) translateY(-20px);
-        background: rgba(18, 22, 31, 0.85);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        padding: 12px 18px;
-        border-radius: 14px;
-        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
-        font-family: 'Inter', sans-serif;
-        z-index: 99999;
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        opacity: 0;
-        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        position: fixed; top: 25px; left: 50%; transform: translateX(-50%) translateY(-20px);
+        background: rgba(18, 22, 31, 0.85); border: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 12px 18px; border-radius: 14px; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+        font-family: 'Inter', sans-serif; z-index: 99999; backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px); opacity: 0; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     `;
     
     document.body.appendChild(popup);
 
-    // Smooth entry animation
     requestAnimationFrame(() => {
         popup.style.opacity = '1';
         popup.style.transform = 'translateX(-50%) translateY(0)';
     });
 
-    // Automatically redirect after 2 seconds with a smooth fade-out
     setTimeout(() => {
         popup.style.opacity = '0';
         popup.style.transform = 'translateX(-50%) translateY(-20px)';
         setTimeout(() => {
             window.location.href = "working.html";
-        }, 300); // Wait for fade-out transition to complete
+        }, 300);
     }, 2000);
 }
 

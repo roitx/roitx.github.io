@@ -1,5 +1,5 @@
 // =========================================================
-// formulas.js — FULLY UPDATED & CLEAN TITLE FORMATTING
+// formulas.js — CLEAN & MODERN UI FORMATTING
 // =========================================================
 const fClass = document.getElementById("fClass");
 const fSubject = document.getElementById("fSubject");
@@ -42,7 +42,7 @@ async function loadFormulas() {
     const card = document.createElement("div");
     card.className = "formula-card";
 
-    // Clean & Proper Descriptive Name for Viewer (Faltu text hata kar)
+    // Clean & Proper Descriptive Name formatting
     const className = f.class ? `Class ${f.class}` : '';
     const subjectName = f.subject ? f.subject.toUpperCase() : '';
     
@@ -73,7 +73,7 @@ async function loadFormulas() {
 
       content = `
         <div class="formula-media-box" onclick="window.location.href='${viewerUrl}'">
-          🖼️ <span>View Image Formula (${descriptiveName})</span>
+          🖼️ <span>${descriptiveName}</span>
         </div>`;
     }
 
@@ -83,15 +83,17 @@ async function loadFormulas() {
 
       content = `
         <button class="pdf-btn" onclick="window.location.href='${viewerUrl}'">
-          📄 Open PDF Formula (${descriptiveName})
+          📄 ${descriptiveName}
         </button>`;
     }
 
-    const categoryBadge = f.category ? ` • [${f.category.replace('_', ' ').toUpperCase()}]` : '';
+    // Clean Category Badge Without Brackets
+    const categoryBadge = f.category ? `<span class="cat-tag">${f.category.replace('_', ' ').toUpperCase()}</span>` : '';
 
     card.innerHTML = `
       <div class="formula-head">
-        ${className} • ${subjectName} • ${chapterInfo.toUpperCase()}${categoryBadge}
+        <span>${className} • ${subjectName} • ${chapterInfo.toUpperCase()}</span>
+        ${categoryBadge}
       </div>
       ${content}
     `;
