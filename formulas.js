@@ -1,5 +1,5 @@
 // =========================================================
-// formulas.js — CLEAN & MODERN UI FORMATTING
+// formulas.js — CLEAN ALIGNED VIEW (ONLY NUMBERS & ARROW)
 // =========================================================
 const fClass = document.getElementById("fClass");
 const fSubject = document.getElementById("fSubject");
@@ -9,7 +9,7 @@ const formulaList = document.getElementById("formulaList");
 
 async function loadFormulas() {
   if (!formulaList) return;
-  formulaList.innerHTML = "⏳ Loading formulas...";
+  formulaList.innerHTML = "<div style='text-align:center; padding:25px; color:#94a3b8;'>⏳ Loading formulas...</div>";
 
   let query = window.supabaseClient
     .from("formulas")
@@ -26,13 +26,13 @@ async function loadFormulas() {
   const { data, error } = await query;
 
   if (error) {
-    formulaList.innerHTML = "❌ Error loading formulas";
+    formulaList.innerHTML = "<div style='text-align:center; padding:25px; color:#ff4b5c;'>❌ Error loading formulas</div>";
     console.error(error);
     return;
   }
 
   if (!data || !data.length) {
-    formulaList.innerHTML = "<em>No formulas found</em>";
+    formulaList.innerHTML = "<div style='text-align:center; padding:25px; color:#94a3b8;'><em>No formulas found</em></div>";
     return;
   }
 
@@ -42,18 +42,18 @@ async function loadFormulas() {
     const card = document.createElement("div");
     card.className = "formula-card";
 
-    // Clean & Proper Descriptive Name formatting
-    const className = f.class ? `Class ${f.class}` : '';
+    // Class word hatakar kewal Class Number use kiya h
+    const classNum = f.class ? `${f.class}` : '';
     const subjectName = f.subject ? f.subject.toUpperCase() : '';
     
     let chapterInfo = '';
     if (f.chapter_name) {
       chapterInfo = f.chapter_name;
     } else if (f.chapter) {
-      chapterInfo = f.chapter.replace('ch', 'Chapter ');
+      chapterInfo = f.chapter.replace('ch', 'CH ');
     }
 
-    const descriptiveName = [className, subjectName, chapterInfo].filter(Boolean).join(' • ') || 'Formula Document';
+    const descriptiveName = [classNum, subjectName, chapterInfo].filter(Boolean).join(' • ') || 'Formula Document';
 
     let content = "";
 
@@ -62,8 +62,8 @@ async function loadFormulas() {
       const cleanText = encodeURIComponent(f.formula_text);
       content = `
         <div class="formula-text" onclick="openTextViewer('${cleanText}')">
-          📝 ${f.formula_text}
-          <span class="click-hint">🔍 Tap to View Full</span>
+          <span class="box-title">📝 ${f.formula_text}</span>
+          <span class="click-hint">➔</span>
         </div>`;
     }
 
@@ -73,7 +73,8 @@ async function loadFormulas() {
 
       content = `
         <div class="formula-media-box" onclick="window.location.href='${viewerUrl}'">
-          🖼️ <span>${descriptiveName}</span>
+          <span class="box-title">🖼️ ${descriptiveName}</span>
+          <span class="btn-action">➔</span>
         </div>`;
     }
 
@@ -83,18 +84,16 @@ async function loadFormulas() {
 
       content = `
         <button class="pdf-btn" onclick="window.location.href='${viewerUrl}'">
-          📄 ${descriptiveName}
+          <span class="box-title">📄 ${descriptiveName}</span>
+          <span class="btn-action">➔</span>
         </button>`;
     }
 
-    // Clean Category Badge Without Brackets
+    // Category Badge
     const categoryBadge = f.category ? `<span class="cat-tag">${f.category.replace('_', ' ').toUpperCase()}</span>` : '';
 
     card.innerHTML = `
-      <div class="formula-head">
-        <span>${className} • ${subjectName} • ${chapterInfo.toUpperCase()}</span>
-        ${categoryBadge}
-      </div>
+      ${categoryBadge ? `<div class="card-top-bar">${categoryBadge}</div>` : ''}
       ${content}
     `;
 

@@ -1,23 +1,28 @@
-/* ---------- MODERN PREMIUM THEME FOR FORMULA VIEWER ---------- */
+/* ---------- MODERN ULTRA-PREMIUM ADVANCED THEME ---------- */
 
 :root {
-  --bg-main: #070d18;
-  --bg-card: #0f1c2e;
-  --bg-element: #16263f;
+  --bg-main: #060b13;
+  --bg-card: rgba(15, 25, 42, 0.75);
+  --bg-element: rgba(22, 38, 63, 0.6);
   --border-color: rgba(255, 255, 255, 0.08);
-  --accent-blue: #3aa0ff;
+  --border-glow: rgba(0, 210, 255, 0.3);
+  --accent-blue: #00d2ff;
   --accent-gradient: linear-gradient(135deg, #00d2ff, #0072ff);
+  --pdf-gradient: linear-gradient(135deg, rgba(255, 65, 108, 0.15), rgba(255, 75, 43, 0.15));
   --text-main: #f1f5f9;
-  --text-muted: #8a99ad;
+  --text-muted: #94a3b8;
 }
 
 body {
   margin: 0;
   background: var(--bg-main);
+  background-image: 
+    radial-gradient(circle at 15% 15%, rgba(0, 210, 255, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 85% 85%, rgba(0, 114, 255, 0.08) 0%, transparent 40%);
+  background-attachment: fixed;
   color: var(--text-main);
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   -webkit-tap-highlight-color: transparent;
-  -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
 }
@@ -29,10 +34,10 @@ input, textarea {
 
 /* ---------- TOPBAR ---------- */
 .topbar {
-  background: rgba(15, 28, 46, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  padding: 16px 20px;
+  background: rgba(10, 18, 30, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding: 14px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -43,22 +48,24 @@ input, textarea {
 }
 
 .topbar h2 {
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   margin: 0;
   font-weight: 700;
-  letter-spacing: 0.5px;
+  background: linear-gradient(135deg, #fff, #94a3b8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .back {
   color: #fff;
   text-decoration: none;
   background: var(--accent-gradient);
-  padding: 8px 14px;
-  border-radius: 8px;
+  padding: 8px 16px;
+  border-radius: 10px;
   font-size: 0.85rem;
   font-weight: 600;
-  box-shadow: 0 4px 12px rgba(0, 210, 255, 0.25);
-  transition: transform 0.2s ease;
+  box-shadow: 0 4px 15px rgba(0, 210, 255, 0.3);
+  transition: all 0.2s ease;
 }
 
 .back:active {
@@ -67,32 +74,31 @@ input, textarea {
 
 main {
   padding: 16px;
-  max-width: 700px;
+  max-width: 650px;
   margin: 0 auto;
 }
 
-/* ---------- FILTERS (Uniform Grid Layout) ---------- */
+/* ---------- FILTERS ---------- */
 .filters {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 10px;
-  margin-bottom: 20px;
+  margin-bottom: 22px;
 }
 
 @media (min-width: 600px) {
-  .filters {
-    grid-template-columns: repeat(5, 1fr);
-  }
+  .filters { grid-template-columns: repeat(5, 1fr); }
 }
 
 select, .filters button {
   width: 100%;
-  padding: 12px;
-  border-radius: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
   border: 1px solid var(--border-color);
-  background: var(--bg-card);
+  background: rgba(15, 25, 42, 0.8);
+  backdrop-filter: blur(8px);
   color: var(--text-main);
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   outline: none;
   box-sizing: border-box;
   text-align: center;
@@ -101,7 +107,7 @@ select, .filters button {
 
 select:focus, select:hover {
   border-color: var(--accent-blue);
-  background: var(--bg-element);
+  box-shadow: 0 0 12px rgba(0, 210, 255, 0.2);
 }
 
 .filters button {
@@ -109,17 +115,17 @@ select:focus, select:hover {
   background: var(--accent-gradient);
   font-weight: 700;
   grid-column: span 2;
-  box-shadow: 0 4px 15px rgba(0, 114, 255, 0.3);
+  border: none;
+  box-shadow: 0 4px 20px rgba(0, 114, 255, 0.35);
+  color: #fff;
 }
 
 @media (min-width: 600px) {
-  .filters button {
-    grid-column: span 1;
-  }
+  .filters button { grid-column: span 1; }
 }
 
 .filters button:active {
-  transform: scale(0.97);
+  transform: scale(0.96);
 }
 
 /* ---------- FORMULA LIST & CARDS ---------- */
@@ -131,95 +137,131 @@ select:focus, select:hover {
 
 .formula-card {
   background: var(--bg-card);
-  padding: 14px 16px;
-  border-radius: 14px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 14px;
+  border-radius: 16px;
   border: 1px solid var(--border-color);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-  transition: transform 0.2s ease, border-color 0.2s ease;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  transition: all 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .formula-card:hover {
-  border-color: rgba(0, 210, 255, 0.3);
+  border-color: var(--border-glow);
 }
 
-.formula-head {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  margin-bottom: 10px;
-  font-weight: 600;
+/* Category Top-Right Align */
+.card-top-bar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 2px;
+}
+
+.cat-tag {
+  background: rgba(0, 210, 255, 0.12);
+  color: var(--accent-blue);
+  font-size: 9px;
+  padding: 3px 9px;
+  border-radius: 20px;
+  border: 1px solid rgba(0, 210, 255, 0.25);
+  font-weight: 700;
   letter-spacing: 0.5px;
   text-transform: uppercase;
 }
 
-/* ---------- TEXT FORMULA CARD ---------- */
+/* ---------- ACTION BOX & ARROW BUTTON STYLES ---------- */
+
+.box-title {
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 82%;
+  display: inline-block;
+}
+
+/* Arrow Button Alignment */
+.btn-action, .click-hint {
+  font-size: 0.9rem;
+  font-weight: 700;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: transform 0.2s ease;
+}
+
+.formula-card:active .btn-action,
+.formula-card:active .click-hint {
+  transform: translateX(3px);
+}
+
+/* 1. PDF Box Style */
+.pdf-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--pdf-gradient);
+  border: 1px solid rgba(255, 65, 108, 0.35);
+  padding: 10px 14px;
+  border-radius: 12px;
+  color: #ff6b81;
+  width: 100%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.pdf-btn .btn-action {
+  background: rgba(255, 65, 108, 0.25);
+  color: #fff;
+}
+
+/* 2. Image Media Box Style */
+.formula-media-box {
+  background: rgba(0, 210, 255, 0.08);
+  padding: 10px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid rgba(0, 210, 255, 0.25);
+  color: #00d2ff;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+.formula-media-box .btn-action {
+  background: rgba(0, 210, 255, 0.18);
+  color: #00d2ff;
+}
+
+/* 3. Text Formula Box Style */
 .formula-text {
   background: var(--bg-element);
-  padding: 12px 14px;
-  border-radius: 10px;
-  font-size: 0.95rem;
+  padding: 10px 14px;
+  border-radius: 12px;
   cursor: pointer;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border: 1px solid transparent;
-  transition: 0.2s ease;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-main);
+  transition: all 0.2s ease;
 }
 
-.formula-text:hover {
-  border-color: rgba(58, 160, 255, 0.4);
-  background: #1a2d4a;
-}
-
-.click-hint {
-  font-size: 0.75rem;
-  color: var(--accent-blue);
-  font-weight: 600;
-  background: rgba(58, 160, 255, 0.1);
-  padding: 4px 8px;
-  border-radius: 6px;
-  white-space: nowrap;
-}
-
-/* ---------- IMAGE & MEDIA BUTTON ---------- */
-.formula-media-box {
-  background: var(--bg-element);
-  padding: 14px;
-  border-radius: 10px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  border: 1px dashed rgba(58, 160, 255, 0.4);
-  font-weight: 600;
-  font-size: 0.9rem;
-  transition: 0.2s ease;
-}
-
-.formula-media-box:hover {
-  background: #1a2d4a;
-  border-color: var(--accent-blue);
-}
-
-/* ---------- PDF BUTTON ---------- */
-.pdf-btn {
-  margin-top: 4px;
-  display: block;
-  background: linear-gradient(135deg, #ff5e62, #ff9966);
-  padding: 12px 16px;
-  border-radius: 10px;
-  color: #fff;
-  border: none;
-  width: 100%;
-  text-align: left;
-  font-weight: 700;
-  font-size: 0.9rem;
-  cursor: pointer;
-  box-shadow: 0 4px 15px rgba(255, 94, 98, 0.3);
-  transition: transform 0.2s ease;
-}
-
-.pdf-btn:active {
-  transform: scale(0.98);
+.formula-text .click-hint {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-main);
 }
 
 /* ---------- TEXT MODAL POPUP STYLES ---------- */
@@ -228,8 +270,8 @@ select:focus, select:hover {
   position: fixed;
   top: 0; left: 0; width: 100%; height: 100%;
   background: rgba(5, 10, 18, 0.85);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   justify-content: center;
   align-items: center;
   z-index: 999;
@@ -238,18 +280,18 @@ select:focus, select:hover {
 }
 
 .text-modal-card {
-  background: var(--bg-card);
-  border-radius: 16px;
+  background: #0f1c2e;
+  border-radius: 20px;
   width: 100%;
   max-width: 500px;
   padding: 20px;
-  border: 1px solid var(--border-color);
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
-  animation: modalScale 0.25s ease;
+  border: 1px solid var(--border-glow);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7);
+  animation: modalScale 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes modalScale {
-  from { transform: scale(0.9); opacity: 0; }
+  from { transform: scale(0.92); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
 }
 
@@ -265,25 +307,25 @@ select:focus, select:hover {
 }
 
 .modal-header button {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.08);
   border: none;
   color: var(--text-muted);
   font-size: 14px;
-  padding: 6px 10px;
+  padding: 6px 12px;
   border-radius: 8px;
   cursor: pointer;
   transition: 0.2s;
 }
 
 .modal-header button:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.15);
   color: #fff;
 }
 
 .modal-body {
-  background: var(--bg-element);
+  background: rgba(22, 38, 63, 0.6);
   padding: 16px;
-  border-radius: 10px;
+  border-radius: 12px;
   font-size: 1rem;
   line-height: 1.6;
   white-space: pre-wrap;
