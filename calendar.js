@@ -42,7 +42,6 @@ async function checkAuthUI() {
       <button class="cal-btn" onclick="showLoginPopup()" style="width:100%; background:#7b6bff; color:#fff;">Login Required</button>
     `;
   } else {
-    // Hidden Form by default - Show button only
     formSection.innerHTML = `
       <button id="toggleFormBtn" class="cal-btn" onclick="toggleEventForm()" style="width:100%; background:var(--accent); color:#fff; font-weight:bold;">+ Add Personal Event</button>
       
@@ -83,16 +82,35 @@ function showLoginPopup() {
   showPopup("🔒 Login Required!\n\nPlease login to your account first to add personal events.", "login.html");
 }
 
+// Google Calendar API Integration
+const GOOGLE_API_KEY = "AIzaSyC7sf9ZgjLqIos3BEx0uR2_7ytoS-oDgwo";
+const INDIAN_HOLIDAY_CALENDAR_ID = "en.indian#holiday@group.v.calendar.google.com";
+
 async function fetchHolidays(year) {
+  const timeMin = new Date(`${year}-01-01T00:00:00Z`).toISOString();
+  const timeMax = new Date(`${year}-12-31T23:59:59Z`).toISOString();
+
+  const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(INDIAN_HOLIDAY_CALENDAR_ID)}/events?key=${GOOGLE_API_KEY}&timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&maxResults=2500`;
+
   try {
-    const response = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/IN`);
-    if (!response.ok) return;
+    const response = await fetch(url);
     const data = await response.json();
-    data.forEach(item => {
-      fetchedHolidays[item.date] = item.localName || item.name;
-    });
+
+    if (!response.ok) {
+      console.error("Google API Error Code:", data.error?.code, "| Message:", data.error?.message);
+      return;
+    }
+
+    if (data.items) {
+      data.items.forEach(item => {
+        const holidayDate = item.start.date || (item.start.dateTime ? item.start.dateTime.split("T")[0] : null);
+        if (holidayDate) {
+          fetchedHolidays[holidayDate] = item.summary;
+        }
+      });
+    }
   } catch (err) {
-    console.error("Holiday API Error:", err);
+    console.error("Fetch Network Error:", err);
   }
 }
 
@@ -343,7 +361,6 @@ async function showInteractivePopup(infoList, dateKey) {
 
     item.innerHTML = `<span style="font-size:14px;">${info.text}</span>`;
 
-    // Only allow deletion if event is PERSONAL (not global/admin) and created by logged-in user
     if (info.type === 'event' && user && info.user_id === user.id && !info.is_global) {
       const delBtn = document.createElement("button");
       delBtn.innerText = "Delete";
