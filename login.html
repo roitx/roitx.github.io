@@ -2,8 +2,47 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Auth Hub - Roitx</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- PRIMARY SEO META TAGS -->
+<title>Account Authentication Hub — Roitx Pro</title>
+<meta name="title" content="Account Authentication Hub — Roitx Pro">
+<meta name="description" content="Securely login or create an account on Roitx Pro to access personalized study tools, AI math solvers, and custom productivity timers.">
+<meta name="keywords" content="Roitx Pro Login, Roitx Auth Hub, Create Roitx Account, Roitx Study Suite Sign In, Roitx Pro Signup">
+<meta name="robots" content="index, follow">
+<meta name="author" content="PM Roitx">
+<link rel="canonical" href="https://roitx.qd.je/login.html">
+
+<!-- OPEN GRAPH / FACEBOOK SOCIAL META -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://roitx.qd.je/login.html">
+<meta property="og:title" content="Account Authentication Hub — Roitx Pro">
+<meta property="og:description" content="Access your Roitx Pro profile and unlocked features via Google OAuth or secure email authentication.">
+<meta property="og:image" content="https://roitx.qd.je/study.png">
+
+<!-- TWITTER CARDS -->
+<meta property="twitter:card" content="summary_large_image">
+<meta property="twitter:title" content="Account Authentication Hub — Roitx Pro">
+<meta property="twitter:description" content="Login to Roitx Pro to track study timers and access AI-driven math problem solving tools.">
+<meta property="twitter:image" content="https://roitx.qd.je/study.png">
+
+<!-- GOOGLE SCHEMA MARKUP (JSON-LD FOR CRAWLERS) -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "Roitx Pro Authentication Hub",
+  "url": "https://roitx.qd.je/login.html",
+  "description": "Secure sign-in and user authentication portal for Roitx Pro productivity services.",
+  "publisher": {
+    "@type": "Organization",
+    "name": "PM Roitx Study Hub",
+    "logo": "https://roitx.qd.je/study.png"
+  }
+}
+</script>
+
+<link rel="icon" href="study.png" type="image/png">
 
 <!-- External Dependencies -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -214,7 +253,7 @@ button.primary-btn:active {
 
 <div class="bg"><span></span><span></span></div>
 
-<div class="wrapper">
+<main class="wrapper">
   <div class="character" id="char">
     <div class="eye left"></div>
     <div class="eye right"></div>
@@ -223,14 +262,14 @@ button.primary-btn:active {
     <div class="hand right"></div>
   </div>
 
-  <div class="card" id="authCard">
+  <section class="card" id="authCard">
     <h1 id="titleText">Welcome Back!</h1>
     <h2 id="subText">ROITX HUB</h2>
 
-    <input id="email" type="email" placeholder="Email Address">
-    <input id="password" type="password" placeholder="Password">
+    <input id="email" type="email" placeholder="Email Address" autocomplete="email">
+    <input id="password" type="password" placeholder="Password" autocomplete="current-password">
     
-    <button id="toggleSign" class="eyeBtn">👁️</button>
+    <button id="toggleSign" class="eyeBtn" type="button" aria-label="Toggle Password Visibility">👁️</button>
     
     <button id="mainBtn" class="primary-btn" onclick="handleAuthSubmit()">Login</button>
 
@@ -249,8 +288,8 @@ button.primary-btn:active {
       <a onclick="switchMode('forgot')" id="forgotLink">Forgot Password?</a>
       <span>New here? <a onclick="switchMode('signup')">Create Account</a></span>
     </div>
-  </div>
-</div>
+  </section>
+</main>
 
 <script>
 let currentMode = "login"; 
@@ -351,7 +390,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       sessionStorage.removeItem("redirect_after_login");
       window.location.href = redirectTarget;
     } else {
-      // Direct Profile Page Redirect (Harr user ke liye)
+      // Direct Profile Page Redirect
       window.location.href = window.getPageUrl("profile.html");
     }
     return;
@@ -409,7 +448,6 @@ async function handleAuthSubmit() {
 
 window.switchMode = switchMode;
 </script>
-
 
 </body>
 </html>
