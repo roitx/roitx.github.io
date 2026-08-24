@@ -24,7 +24,7 @@
   <meta property="twitter:card" content="summary_large_image">
   <meta property="twitter:title" content="ROITX Scientific Calculator Pro">
   <meta property="twitter:description" content="Powerful online scientific calculator featuring AI equation scanning and instant step-by-step solutions.">
-  <meta property="twitter:image" content="https://roitx.qd.je/profile.png">
+  <meta property="twitter:image" content="https://roitx.qd.je/study.png">
 
   <!-- GOOGLE SCHEMA MARKUP (JSON-LD FOR CRAWLERS) -->
   <script type="application/ld+json">
@@ -129,11 +129,59 @@
 
     .close-modal {
       position: absolute;
-      right: 15px; top: 10px;
-      font-size: 22px;
+      right: 15px; top: 12px;
+      background: transparent;
+      border: none;
       color: #ef4444;
       cursor: pointer;
-      font-weight: bold;
+      padding: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .close-modal svg {
+      width: 20px;
+      height: 20px;
+      stroke: currentColor;
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .ai-header button.close-icon-btn {
+      background: transparent;
+      border: none;
+      color: #ef4444;
+      cursor: pointer;
+      padding: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .ai-header button.close-icon-btn svg {
+      width: 20px;
+      height: 20px;
+      stroke: currentColor;
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .tab-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .tab-btn svg {
+      width: 15px;
+      height: 15px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
     }
   </style>
 </head>
@@ -142,7 +190,9 @@
   <!-- AUTH POPUP MODAL -->
   <div id="authModal" class="auth-modal">
     <div class="auth-modal-content">
-      <span class="close-modal" onclick="closeAuthModal()">&times;</span>
+      <button class="close-modal" onclick="closeAuthModal()" aria-label="Close">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
       <h3 style="color:#00e676; margin-top:0;">🔒 Access Restricted</h3>
       <p style="color:#ccc; font-size:13px; margin: 15px 0;">Is feature ko access karne ke liye aapko pehle login karna padega.</p>
       <button onclick="redirectToLogin()" style="background:#00e676; color:#000; border:none; padding:8px 16px; border-radius:6px; font-weight:bold; cursor:pointer;">OK, Got It</button>
@@ -154,7 +204,9 @@
     <div class="ai-content">
       <div class="ai-header">
         <h3>📖 Complete Function & Keys Guide</h3>
-        <button onclick="closeKeysGuide()">&times;</button>
+        <button class="close-icon-btn" onclick="closeKeysGuide()" aria-label="Close">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
       </div>
       <div class="ai-body">
         <div class="ai-response-box" style="max-height: 360px; overflow-y: auto;">
@@ -191,21 +243,29 @@
     </div>
   </div>
 
-  <!-- AI SOLVER MODAL -->
+  <!-- AI SOLVER MODAL (Synchronized IDs: aiContent, aiTextSec, aiPadSec, aiScanSec) -->
   <div id="aiModal" class="ai-modal" style="display:none;">
     <div class="ai-content" id="aiContent">
       <div class="ai-header">
         <h3>🤖 ROITX AI Math Solver</h3>
         <div style="display: flex; gap: 8px; align-items: center;">
-          <button class="btn-fullscreen" onclick="toggleAISolverFullscreen()" title="Toggle Fullscreen">⛶</button>
-          <button onclick="closeAISolver()">&times;</button>
+          <button class="btn-fullscreen" onclick="toggleAISolverFullscreen()" title="Toggle Fullscreen" style="background:transparent; border:none; color:#38bdf8; cursor:pointer; font-size:16px;">⛶</button>
+          <button class="close-icon-btn" onclick="closeAISolver()" aria-label="Close">
+            <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
         </div>
       </div>
       <div class="ai-body">
         <div class="ai-tab-row">
-          <button class="tab-btn active" id="tabText" onclick="switchAIMode('text')">⌨️ Text</button>
-          <button class="tab-btn" id="tabPad" onclick="switchAIMode('pad')">✏️ Draw Pad</button>
-          <button class="tab-btn" id="tabScan" onclick="switchAIMode('scan')">📷 Scan Equation</button>
+          <button class="tab-btn active" id="tabText" onclick="switchAIMode('text')">
+            <svg viewBox="0 0 24 24"><polyline points="4 7 4 4 20 4 20 7"></polyline><line x1="9" y1="20" x2="15" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line></svg> Text
+          </button>
+          <button class="tab-btn" id="tabPad" onclick="switchAIMode('pad')">
+            <svg viewBox="0 0 24 24"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path><path d="M2 2l7.586 7.586"></path><circle cx="11" cy="11" r="2"></circle></svg> Draw Pad
+          </button>
+          <button class="tab-btn" id="tabScan" onclick="switchAIMode('scan')">
+            <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg> Scan Equation
+          </button>
         </div>
 
         <div id="aiTextSec" class="ai-sec">
@@ -213,7 +273,9 @@
         </div>
 
         <div id="aiPadSec" class="ai-sec" style="display:none;">
-          <small class="notice-tag">✏️ Draw equation below:</small>
+          <small class="notice-tag" style="display:inline-flex; align-items:center; gap:5px;">
+            <svg viewBox="0 0 24 24" style="width:14px; height:14px; fill:none; stroke:currentColor; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round;"><path d="M12 19l7-7 3 3-7 7-3-3z"></path></svg> Draw equation below:
+          </small>
           <div class="canvas-wrapper">
             <canvas id="mathCanvas" width="340" height="180" style="border: 2px dashed #00e676; border-radius: 8px; background: #111; touch-action: none; width: 100%; cursor: crosshair;"></canvas>
             <button class="btn-clear-pad" onclick="clearCanvas()" style="margin-top: 5px; width: 100%; background: #ff5252; color: #fff; padding: 5px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 11px;">Clear Pad</button>
@@ -226,8 +288,8 @@
           </blockquote>
           
           <div class="scan-input-box">
-            <label for="imageInput" class="custom-file-upload">
-              📷 Take Photo / 📁 Choose File
+            <label for="imageInput" class="custom-file-upload" style="display:inline-flex; align-items:center; gap:6px; cursor:pointer;">
+              <svg viewBox="0 0 24 24" style="width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg> Take Photo / Choose File
             </label>
             <input type="file" id="imageInput" accept="image/*" onchange="handleImagePreview(event)" style="display: none;">
           </div>
@@ -251,15 +313,17 @@
   <!-- HOW TO USE GUIDE MODAL -->
   <div id="guideModal" class="guide-modal" style="display:none;">
     <div class="guide-modal-content">
-      <span class="close-modal" onclick="closeGuideModal()">&times;</span>
+      <button class="close-modal" onclick="closeGuideModal()" aria-label="Close">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
       <h3 style="color:#00e676; margin-top:0;">📖 How to Use AI Solver</h3>
       <ul style="text-align:left; font-size:13px; line-height:1.6; color:#e2e8f0; padding-left:20px;">
         <li><b>Text Mode:</b> Directly type or paste your equation.</li>
         <li><b>Pad Mode:</b> Draw or write equations cleanly on canvas.</li>
         <li><b>Scan Mode:</b> Upload clear images/photos of math problems.</li>
       </ul>
-      <button onclick="openKeysGuide()" style="width: 100%; margin-top: 10px; background: #38bdf8; color: #000; border: none; padding: 8px; border-radius: 6px; font-weight: bold; cursor: pointer;">
-        ⌨️ View Full Keys Guide
+      <button onclick="openKeysGuide()" style="width: 100%; margin-top: 10px; background: #38bdf8; color: #000; border: none; padding: 8px; border-radius: 6px; font-weight: bold; cursor: pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px;">
+        <svg viewBox="0 0 24 24" style="width:15px; height:15px; fill:none; stroke:currentColor; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round;"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg> View Full Keys Guide
       </button>
     </div>
   </div>
@@ -290,7 +354,7 @@
       </div>
     </header>
 
-    <!-- REALISTIC LCD SCREEN -->
+    <!-- REALISTIC LCD SCREEN (Synchronized Indicator IDs) -->
     <div class="screen-container">
       <div class="lcd-screen">
         <div class="status-indicators">
@@ -386,39 +450,441 @@
     </div>
   </main>
 
+  <!-- JAVASCRIPT ENGINE FULLY SYNCHRONIZED -->
   <script>
-    function openGuideModal() {
-      const el = document.getElementById("guideModal");
-      if (el) el.style.display = "flex";
+    // --- GLOBAL CALCULATOR ENGINE ---
+    let exp = ""; 
+    let cursorPos = 0; 
+    let isDeg = true;
+    let isShift = false;
+    let isAlpha = false;
+    let isHyp = false; 
+    let lastAnswer = "0"; 
+    let memory = 0; 
+    let historyIndex = -1;
+    let currentAIMode = "text"; 
+
+    // LOCAL STORAGE + SUPABASE AUTH SYNC
+    let isLoggedIn = localStorage.getItem("isLoggedIn") === "true"; 
+
+    // AUTOMATIC SUPABASE SYNC ON LOAD
+    document.addEventListener("DOMContentLoaded", async () => {
+      if (window.supabaseClient) {
+        const { data: { session } } = await window.supabaseClient.auth.getSession();
+        if (session && session.user) {
+          isLoggedIn = true;
+          localStorage.setItem("isLoggedIn", "true");
+        } else {
+          isLoggedIn = false;
+          localStorage.removeItem("isLoggedIn");
+        }
+
+        window.supabaseClient.auth.onAuthStateChange((event, session) => {
+          if (session && session.user) {
+            isLoggedIn = true;
+            localStorage.setItem("isLoggedIn", "true");
+          } else {
+            isLoggedIn = false;
+            localStorage.removeItem("isLoggedIn");
+          }
+        });
+      }
+    });
+
+    const exprDiv = document.getElementById("expression");
+    const resDiv = document.getElementById("result");
+    const shiftInd = document.getElementById("shiftIndicator");
+    const alphaInd = document.getElementById("alphaIndicator");
+    const degInd = document.getElementById("degIndicator");
+    const radInd = document.getElementById("radIndicator");
+
+    // --- CANVAS DRAWING ENGINE ---
+    let canvas, ctx, isDrawing = false;
+
+    function initCanvas() {
+      canvas = document.getElementById("mathCanvas");
+      if (!canvas) return;
+      ctx = canvas.getContext("2d");
+      ctx.strokeStyle = "#00ff9c";
+      ctx.lineWidth = 3;
+      ctx.lineCap = "round";
+
+      canvas.addEventListener("mousedown", startDrawing);
+      canvas.addEventListener("mousemove", draw);
+      canvas.addEventListener("mouseup", stopDrawing);
+      canvas.addEventListener("mouseleave", stopDrawing);
+
+      canvas.addEventListener("touchstart", (e) => { e.preventDefault(); startDrawing(e.touches[0]); });
+      canvas.addEventListener("touchmove", (e) => { e.preventDefault(); draw(e.touches[0]); });
+      canvas.addEventListener("touchend", stopDrawing);
     }
 
-    function closeGuideModal() {
-      const el = document.getElementById("guideModal");
-      if (el) el.style.display = "none";
+    function startDrawing(e) {
+      isDrawing = true;
+      const rect = canvas.getBoundingClientRect();
+      ctx.beginPath();
+      ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+    }
+
+    function draw(e) {
+      if (!isDrawing) return;
+      const rect = canvas.getBoundingClientRect();
+      ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+      ctx.stroke();
+    }
+
+    function stopDrawing() { isDrawing = false; }
+
+    function clearCanvas() {
+      if (ctx && canvas) ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function getCompressedCanvasImage() {
+      if (!canvas) return null;
+      const tempCanvas = document.createElement('canvas');
+      const tempCtx = tempCanvas.getContext('2d');
+
+      const maxWidth = 400;
+      const scale = Math.min(1, maxWidth / canvas.width);
+      tempCanvas.width = canvas.width * scale;
+      tempCanvas.height = canvas.height * scale;
+
+      tempCtx.fillStyle = "#000000";
+      tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+      tempCtx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+
+      return tempCanvas.toDataURL('image/jpeg', 0.5);
+    }
+
+    function toggleAISolverFullscreen() {
+      const content = document.getElementById("aiContent");
+      if (content) {
+        content.classList.toggle("fullscreen");
+      }
+    }
+
+    async function submitAISolver(lang) {
+      let loader = document.getElementById("aiLoader");
+      let resBox = document.getElementById("aiResponse");
+      
+      if (loader) loader.style.display = "block";
+      if (resBox) resBox.innerHTML = "";
+
+      const systemInstruction = `You are a pure math engine.
+Write ONLY the direct mathematical derivation and answer in ${lang === 'hi' ? 'Hindi' : 'English'}.
+RULES:
+1. Absolutely NO thinking process, rules analysis, or extra chatter.
+2. Start DIRECTLY with Step 1 or the main equation.
+3. Use MathJax/LaTeX ($...$ for inline, $$...$$ for display).`;
+
+      let userText = document.getElementById("aiPrompt")?.value.trim() || "Solve equation";
+      let base64Img = null;
+
+      if (currentAIMode !== 'text') {
+        base64Img = (currentAIMode === 'pad') ? getCompressedCanvasImage() : document.getElementById("imagePreview")?.src;
+      }
+
+      const apiUrl = "https://ktastwehnnqicriknewr.supabase.co/functions/v1/smart-task";
+      const apiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0YXN0d2Vobm5xaWNyaWtuZXdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyNTk5NTEsImV4cCI6MjA4MDgzNTk1MX0.5_UvwaG0X8k_Emj-cMC0KjEqlvU6hgAt5IsHJdgARvk";
+
+      try {
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json', 
+            'apikey': apiKey,
+            'Authorization': `Bearer ${apiKey}` 
+          },
+          body: JSON.stringify({ 
+            prompt: systemInstruction + "\n\nTask: " + userText,
+            language: lang, 
+            image: base64Img,
+            generationConfig: { max_output_tokens: 300, temperature: 0.1 }
+          })
+        });
+
+        const data = await response.json();
+        if (loader) loader.style.display = "none";
+
+        if (data.choices && data.choices[0]?.message?.content) {
+          let content = data.choices[0].message.content;
+
+          if (resBox) resBox.innerHTML = content.replace(/\n/g, "<br>");
+          
+          if (window.MathJax) {
+            MathJax.typesetPromise([resBox]);
+          }
+        } else {
+          if (resBox) resBox.innerText = "Error: Invalid AI Response.";
+        }
+      } catch (err) {
+        if (loader) loader.style.display = "none";
+        if (resBox) resBox.innerText = "Error loading response.";
+      }
+    }
+
+    // FAST SYNCHRONOUS MODE SWITCHING WITH LIVE AUTH CHECK
+    function switchAIMode(mode) {
+      const userLoggedIn = isLoggedIn || localStorage.getItem("isLoggedIn") === "true";
+
+      if ((mode === 'pad' || mode === 'scan') && !userLoggedIn) {
+        const authModal = document.getElementById("authModal");
+        if (authModal) authModal.style.display = "flex";
+        return;
+      }
+
+      currentAIMode = mode;
+      document.getElementById("tabText")?.classList.toggle("active", mode === 'text');
+      document.getElementById("tabPad")?.classList.toggle("active", mode === 'pad');
+      document.getElementById("tabScan")?.classList.toggle("active", mode === 'scan');
+
+      if (document.getElementById("aiTextSec")) document.getElementById("aiTextSec").style.display = mode === 'text' ? 'block' : 'none';
+      if (document.getElementById("aiPadSec")) document.getElementById("aiPadSec").style.display = mode === 'pad' ? 'block' : 'none';
+      if (document.getElementById("aiScanSec")) document.getElementById("aiScanSec").style.display = mode === 'scan' ? 'block' : 'none';
+
+      if (mode === 'pad') {
+        setTimeout(initCanvas, 50);
+      }
+    }
+
+    function handleImagePreview(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const previewImg = document.getElementById("imagePreview");
+          const previewContainer = document.getElementById("imagePreviewContainer");
+          if (previewImg) previewImg.src = e.target.result;
+          if (previewContainer) previewContainer.style.display = "block";
+        };
+        reader.readAsDataURL(file);
+      }
     }
 
     function openKeysGuide() {
-      closeGuideModal();
-      const el = document.getElementById("keysGuideModal");
-      if (el) el.style.display = "flex";
+      const kg = document.getElementById("keysGuideModal");
+      if (kg) kg.style.display = "flex";
     }
 
     function closeKeysGuide() {
-      const el = document.getElementById("keysGuideModal");
-      if (el) el.style.display = "none";
+      const kg = document.getElementById("keysGuideModal");
+      if (kg) kg.style.display = "none";
     }
 
-    function closeAuthModal() {
-      const el = document.getElementById("authModal");
-      if (el) el.style.display = "none";
+    function closeGuideModal() {
+      const m = document.getElementById("guideModal");
+      if (m) m.style.display = "none";
     }
 
-    function redirectToLogin() {
-      sessionStorage.setItem("redirect_after_login", window.location.href);
-      window.location.href = "login.html";
+    function preprocess(raw) {
+      let s = raw;
+      s = s.replace(/Ans/g, `(${lastAnswer})`);
+      s = s.replace(/π/g, "pi").replace(/e/g, "e");
+
+      s = s.replace(/sin⁻¹\(/g, "asin(").replace(/cos⁻¹\(/g, "acos(").replace(/tan⁻¹\(/g, "atan(");
+      s = s.replace(/sinh\(/g, "sinh(").replace(/cosh\(/g, "cosh(").replace(/tanh\(/g, "tanh(");
+      s = s.replace(/erf\(/g, "erf(").replace(/gamma\(/g, "gamma(").replace(/zeta\(/g, "zeta(");
+      s = s.replace(/lcm\(/g, "lcm(").replace(/gcd\(/g, "gcd(");
+      
+      s = s.replace(/(\d+)C(\d+)/g, "(factorial($1)/(factorial($2)*factorial($1-$2)))");
+      s = s.replace(/(\d+)P(\d+)/g, "(factorial($1)/factorial($1-$2))");
+
+      s = s.replace(/×/g, "*").replace(/÷/g, "/").replace(/√\(/g, "sqrt(").replace(/∛\(/g, "cbrt(");
+      s = s.replace(/(\d+)²/g, "$1^2").replace(/(\d+)³/g, "$1^3");
+
+      if (isDeg) {
+        s = s.replace(/\b(sin|cos|tan|asin|acos|atan)\(([^)]+)\)/g, (match, fn, angle) => {
+          if (fn.startsWith('a')) return `(${fn}(${angle}) * 180 / pi)`;
+          return `${fn}((${angle}) * pi / 180)`;
+        });
+      }
+      return s;
     }
+
+    function btnPress(key) {
+      if (isShift) { handleShift(key); return; }
+      if (isAlpha) { handleAlpha(key); return; }
+
+      const map = {
+        'SIN': isHyp ? 'sinh(' : 'sin(',
+        'COS': isHyp ? 'cosh(' : 'cos(',
+        'TAN': isHyp ? 'tanh(' : 'tan(',
+        'LOG': 'log10(', 'LN': 'log(', 'SQRT': '√(', 
+        'X2': '²', 'X3': '³', 'POW': '^', 'PI': 'π', 
+        'NCR': 'C', 'ANS': 'Ans', 'MOD': '%', 'EXP': 'e',
+        'ABS': 'abs(', 'HYP': 'hyp', 'COMMA': ',',
+        'LCM': 'lcm(', 'RND': 'random()'
+      };
+
+      if (key === 'HYP') { isHyp = true; return; }
+      if (key === 'M+') { handleMemory(1); return; }
+
+      let val = map[key] || key;
+      insertAtCursor(val);
+      if (val.endsWith('(')) { insertAtCursor(")"); cursorPos++; }
+      isHyp = false; 
+      updateDisplay();
+    }
+
+    function handleShift(key) {
+      const sMap = {
+        'SIN': 'sin⁻¹(', 'COS': 'cos⁻¹(', 'TAN': 'tan⁻¹(',
+        'SQRT': '∛(', 'LOG': '10^(', 'LN': 'e^(', 
+        'X2': '!', 'X3': '^-1', 'POW': '^(1/', 'NCR': 'P', 
+        'POL': 'Rec(', 'PI': 'e', 'M+': 'M-', 'ABS': 'erf(',
+        'HYP': 'gamma(', 'COMMA': 'zeta(', 'LCM': 'gcd(', 'MOD': 'mod('
+      };
+      
+      if (key === 'M+') { handleMemory(-1); } 
+      else if (sMap[key]) {
+        let val = sMap[key];
+        insertAtCursor(val);
+        if (val.endsWith('(')) { insertAtCursor(")"); cursorPos++; }
+      }
+      toggleShift(); 
+      updateDisplay();
+    }
+
+    function handleAlpha(key) {
+      const aMap = {
+        '7': 'A', '8': 'B', '9': 'C',
+        '4': 'D', '5': 'E', '6': 'F',
+        '1': 'X', '2': 'Y', '3': 'M',
+        'RND': 'rand()'
+      };
+      if (aMap[key]) insertAtCursor(aMap[key]);
+      toggleAlpha(); 
+      updateDisplay();
+    }
+
+    function toggleShift() { isShift = !isShift; if (isShift) isAlpha = false; updateIndicators(); }
+    function toggleAlpha() { isAlpha = !isAlpha; if (isAlpha) isShift = false; updateIndicators(); }
+
+    function updateIndicators() { 
+      if (shiftInd) shiftInd.classList.toggle("active", isShift); 
+      if (alphaInd) alphaInd.classList.toggle("active", isAlpha); 
+      document.body.classList.toggle("shift-mode-active", isShift);
+      document.body.classList.toggle("alpha-mode-active", isAlpha);
+    }
+
+    function toggleDegRad() { 
+      isDeg = !isDeg; 
+      if (degInd) degInd.classList.toggle("active", isDeg);
+      if (radInd) radInd.classList.toggle("active", !isDeg);
+    }
+
+    function updateDisplay() {
+      if (!exprDiv) return;
+      exprDiv.innerHTML = ""; 
+      let pos = exp.length - cursorPos;
+      let textBefore = document.createTextNode(exp.slice(0, pos));
+      let textAfter = document.createTextNode(exp.slice(pos));
+      let cursorSpan = document.createElement("span");
+      cursorSpan.className = "cursor";
+
+      exprDiv.appendChild(textBefore);
+      exprDiv.appendChild(cursorSpan);
+      exprDiv.appendChild(textAfter);
+    }
+
+    function insertAtCursor(v) {
+      let pos = exp.length - cursorPos;
+      exp = exp.slice(0, pos) + v + exp.slice(pos);
+      updateDisplay();
+    }
+
+    function calculate() {
+      if (exp === "") return;
+      try {
+        let cleanExp = preprocess(exp);
+        let raw = math.evaluate(cleanExp);
+        if (typeof raw === 'object' && raw.entries) raw = raw.entries[0];
+        if (!isFinite(raw)) throw new Error("Math ERROR");
+        
+        let result = formatFinal(raw);
+        if (resDiv) resDiv.innerText = result;
+        lastAnswer = result.toString();
+        saveHistory(exp + "=" + result);
+        
+        exp = ""; cursorPos = 0; updateDisplay();
+      } catch (e) {
+        if (resDiv) resDiv.innerText = "Math ERROR";
+      }
+    }
+
+    function formatFinal(num) {
+      if (Math.abs(num) > 1e12 || (Math.abs(num) < 1e-7 && num !== 0)) return num.toExponential(5);
+      return Number.isInteger(num) ? num : parseFloat(num.toFixed(10));
+    }
+
+    function openAISolver() {
+      const modal = document.getElementById("aiModal");
+      if (modal) modal.style.display = "flex";
+      switchAIMode('text');
+    }
+
+    function closeAISolver() {
+      const modal = document.getElementById("aiModal");
+      if (modal) modal.style.display = "none";
+    }
+
+    function changeTheme(themeClass) { document.body.className = themeClass; updateIndicators(); }
+
+    function handleMemory(dir) {
+      try {
+        memory += (math.evaluate(preprocess(exp || (resDiv ? resDiv.innerText : "0"))) * dir);
+        if (resDiv) resDiv.innerText = "M=" + formatFinal(memory);
+        exp = ""; updateDisplay();
+      } catch(e) { if (resDiv) resDiv.innerText = "Error"; }
+    }
+
+    function navigateHistory(dir) {
+      let hist = JSON.parse(localStorage.getItem("calcHistory")) || [];
+      if (hist.length === 0) return;
+      historyIndex = Math.min(Math.max(-1, historyIndex + dir), hist.length - 1);
+      if (historyIndex === -1) { clearAll(); return; }
+      exp = hist[hist.length - 1 - historyIndex].split('=')[0];
+      cursorPos = 0;
+      if (resDiv) resDiv.innerText = "HIST " + (historyIndex + 1);
+      updateDisplay();
+    }
+
+    function moveCursor(dir) {
+      if (dir === -1 && (exp.length - cursorPos) > 0) cursorPos++;
+      else if (dir === 1 && cursorPos > 0) cursorPos--;
+      updateDisplay();
+    }
+
+    function del() { 
+      let idx = exp.length - cursorPos;
+      if(idx > 0) exp = exp.slice(0, idx - 1) + exp.slice(idx);
+      updateDisplay(); 
+    }
+
+    function clearAll() { exp = ""; cursorPos = 0; if (resDiv) resDiv.innerText = "0"; updateDisplay(); }
+
+    function saveHistory(t) {
+      let h = JSON.parse(localStorage.getItem("calcHistory")) || [];
+      h.push(t); if(h.length > 20) h.shift();
+      localStorage.setItem("calcHistory", JSON.stringify(h));
+    }
+
+    function powerOn() {
+      if (exprDiv) exprDiv.innerHTML = "";
+      if (resDiv) resDiv.innerText = "ROITX SCIENTIFIC";
+      isShift = false; isAlpha = false;
+      updateIndicators();
+      setTimeout(() => {
+        if (resDiv) resDiv.innerText = "fx-350MS PRO";
+        setTimeout(() => {
+          exp = ""; cursorPos = 0;
+          if (resDiv) resDiv.innerText = "0";
+          updateDisplay();
+        }, 500);
+      }, 500);
+    }
+
+    powerOn();
   </script>
-
-  <script src="calculator.js"></script>
 </body>
 </html>
