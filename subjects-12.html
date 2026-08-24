@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Class 12 — Streams</title>
 
@@ -49,11 +49,17 @@
             stroke-linejoin: round;
         }
 
-        /* Movable Floating Home Button Styling */
-        .home-btn {
+        /* Movable Floating Action Container */
+        .floating-container {
             position: fixed;
             bottom: 25px;
             right: 25px;
+            z-index: 9999;
+            touch-action: none;
+        }
+
+        /* Main Floating Toggle Button */
+        .home-btn {
             width: 52px;
             height: 52px;
             border-radius: 50%;
@@ -64,8 +70,6 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            z-index: 9999;
-            touch-action: none; /* Smooth dragging on touch screens */
             transition: transform 0.15s ease, box-shadow 0.2s ease;
         }
 
@@ -78,10 +82,68 @@
             height: 26px;
             fill: none;
             stroke: #ffffff;
-            stroke-width: 2.2;
+            stroke-width: 2;
             stroke-linecap: round;
             stroke-linejoin: round;
             filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.6));
+            transition: transform 0.3s ease;
+        }
+
+        /* Expanded Options Menu */
+        .floating-menu {
+            position: absolute;
+            bottom: 65px;
+            right: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(10px) scale(0.9);
+            transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .floating-container.active .floating-menu {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0) scale(1);
+        }
+
+        .floating-container.active .home-btn svg {
+            transform: rotate(90deg);
+        }
+
+        /* Sub Action Buttons (Home & Back) */
+        .menu-item {
+            background: #1e1e2f;
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            white-space: nowrap;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+
+        .menu-item:hover {
+            background: #2d2d44;
+        }
+
+        .menu-item svg {
+            width: 16px;
+            height: 16px;
+            stroke: #3aa0ff;
+            stroke-width: 2.2;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
         }
     </style>
 </head>
@@ -127,92 +189,86 @@
 </script>
 <script src="site.js"></script>
 
-<!-- Draggable SVG Floating Home Button -->
-<div id="movableHomeBtn" class="home-btn">
-  <svg viewBox="0 0 24 24">
-    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-    <polyline points="9 22 9 12 15 12 15 22"></polyline>
-  </svg>
+<!-- Draggable Floating Container with Options Menu -->
+<div id="floatingContainer" class="floating-container">
+  <div class="floating-menu">
+    <a href="index.html" class="menu-item">
+      <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+      Home
+    </a>
+    <a href="classes.html" class="menu-item">
+      <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+      Back
+    </a>
+  </div>
+  <div id="movableHomeBtn" class="home-btn">
+    <!-- Modern Compass / Navigation Icon -->
+    <svg viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10"></circle>
+      <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+    </svg>
+  </div>
 </div>
 
 <script>
-  // Draggable & Clickable Logic for Home Button
+  // Draggable & Toggle Menu Logic
+  const container = document.getElementById('floatingContainer');
   const homeBtn = document.getElementById('movableHomeBtn');
+  
   let isDragging = false;
   let hasDragged = false;
   let startX, startY, initialLeft, initialTop;
 
-  // Touch Events (Mobile)
-  homeBtn.addEventListener('touchstart', (e) => {
+  function dragStart(clientX, clientY) {
     isDragging = true;
     hasDragged = false;
-    const touch = e.touches[0];
-    startX = touch.clientX;
-    startY = touch.clientY;
+    startX = clientX;
+    startY = clientY;
     
-    const rect = homeBtn.getBoundingClientRect();
+    const rect = container.getBoundingClientRect();
     initialLeft = rect.left;
     initialTop = rect.top;
-  }, { passive: true });
+    
+    container.style.bottom = 'auto';
+    container.style.right = 'auto';
+    container.style.left = `${initialLeft}px`;
+    container.style.top = `${initialTop}px`;
+  }
 
-  document.addEventListener('touchmove', (e) => {
+  function dragMove(clientX, clientY) {
     if (!isDragging) return;
-    const touch = e.touches[0];
-    const deltaX = touch.clientX - startX;
-    const deltaY = touch.clientY - startY;
+    const deltaX = clientX - startX;
+    const deltaY = clientY - startY;
 
     if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
       hasDragged = true;
+      container.classList.remove('active');
     }
 
-    homeBtn.style.left = `${initialLeft + deltaX}px`;
-    homeBtn.style.top = `${initialTop + deltaY}px`;
-    homeBtn.style.bottom = 'auto';
-    homeBtn.style.right = 'auto';
-  }, { passive: true });
+    container.style.left = `${initialLeft + deltaX}px`;
+    container.style.top = `${initialTop + deltaY}px`;
+  }
 
-  document.addEventListener('touchend', () => {
-    isDragging = false;
-  });
+  // Events setup
+  homeBtn.addEventListener('touchstart', (e) => dragStart(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
+  document.addEventListener('touchmove', (e) => { if(isDragging) dragMove(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
+  document.addEventListener('touchend', () => { isDragging = false; });
 
-  // Mouse Events (Desktop)
-  homeBtn.addEventListener('mousedown', (e) => {
-    isDragging = true;
-    hasDragged = false;
-    startX = e.clientX;
-    startY = e.clientY;
-    
-    const rect = homeBtn.getBoundingClientRect();
-    initialLeft = rect.left;
-    initialTop = rect.top;
-  });
+  homeBtn.addEventListener('mousedown', (e) => dragStart(e.clientX, e.clientY));
+  document.addEventListener('mousemove', (e) => { if(isDragging) dragMove(e.clientX, e.clientY); });
+  document.addEventListener('mouseup', () => { isDragging = false; });
 
-  document.addEventListener('mousemove', (e) => {
-    if (!isDragging) return;
-    const deltaX = e.clientX - startX;
-    const deltaY = e.clientY - startY;
-
-    if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
-      hasDragged = true;
-    }
-
-    homeBtn.style.left = `${initialLeft + deltaX}px`;
-    homeBtn.style.top = `${initialTop + deltaY}px`;
-    homeBtn.style.bottom = 'auto';
-    homeBtn.style.right = 'auto';
-  });
-
-  document.addEventListener('mouseup', () => {
-    isDragging = false;
-  });
-
-  // Handle Click / Navigation
+  // Toggle Menu on Click
   homeBtn.addEventListener('click', (e) => {
-    if (hasDragged) {
-      e.preventDefault();
-      return;
+    if (hasDragged) return;
+    container.classList.toggle('active');
+  });
+
+  // Close menu when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!container.contains(e.target)) {
+      container.classList.remove('active');
     }
-    window.location.href = 'index.html';
   });
 </script>
 </body>
