@@ -23,7 +23,8 @@
   <meta name="author" content="PM Roitx">
   <meta name="google-site-verification" content="TPdziMXbg8H61q3oj7MyiCaks2OMPLYiblfLROZu2XY" />
 
-  <!-- OPEN GRAPH TAGS -->
+  <!-- OPEN GRAPH TAGS (UPDATED SITE_NAME) -->
+  <meta property="og:site_name" content="PM Roitx">
   <meta property="og:title" content="PM Roitx — Personal Study Hub">
   <meta property="og:description" content="Get high-quality PM Roitx notes and study tools. Boost your learning with PM Roitx Study Hub.">
   <meta property="og:url" content="https://roitx.qd.je/">
@@ -117,9 +118,9 @@
   </button>
 
   <div class="brand">
-    <img src="profile.jpg" class="logo" alt="Roitx Study Hub Logo" />
+    <img src="profile.jpg" class="logo" alt="PM Roitx Study Hub Logo" />
     <div>
-      <div class="brand-name glow">ROITX</div>
+      <div class="brand-name glow">PM ROITX</div>
       <div class="brand-sub">Personal Study Hub</div>
     </div>
   </div>
@@ -199,8 +200,9 @@
 <main>
 
 <section class="hero">
-  <h1>Power <span class="accent">∝</span> Work</h1>
-  <p>Welcome to <strong>Roitx Study Hub</strong>. Find the best <strong>Roitx notes</strong> and tools here.</p>
+  <!-- ADDED PM ROITX TO MAIN HEADING FOR DOMAIN VERIFICATION -->
+  <h1>PM Roitx — <span class="accent">Power ∝ Work</span></h1>
+  <p>Welcome to <strong>PM Roitx Study Hub</strong>. Find the best <strong>PM Roitx notes</strong> and tools here.</p>
 
   <div class="hero-buttons">
     <button onclick="goto('classes.html')" class="btn primary">Start Learning</button>
@@ -216,7 +218,7 @@
           <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
         </svg>
       </div>
-      <h3>Roitx Notes</h3>
+      <h3>PM Roitx Notes</h3>
       <p>Classes & Subject notes</p>
     </div>
   
@@ -262,7 +264,6 @@
 <!-- BOTTOM WRAPPER: DAILY MOTIVATION & FOOTER AT WAVE AREA -->
 <div class="bottom-wave-section">
   <section class="motivation">
-    
     <button class="mot-btn" onclick="showMotivation()">✨ Generate Quote</button>
   </section>
 
@@ -285,9 +286,9 @@
 
 <div id="installContainer" style="display:none;">
   <button id="installApp" aria-label="Install Roitx Hub App">
-    <img src="profile.png" alt="Roitx Hub App Logo" style="width: 40px; height: 40px; border-radius: 10px;">
+    <img src="profile.png" alt="PM Roitx Hub App Logo" style="width: 40px; height: 40px; border-radius: 10px;">
     <div style="text-align: left;">
-      <div style="font-weight: bold; font-size: 15px; color: #3aa0ff;">Install Roitx Hub</div>
+      <div style="font-weight: bold; font-size: 15px; color: #3aa0ff;">Install PM Roitx Hub</div>
       <div style="font-size: 12px; opacity: 0.8;">Smart Study Tools & Notes</div>
     </div>
     <span style="margin-left: auto; font-size: 20px;">⬇️</span>
@@ -327,14 +328,12 @@ async function renderSidebarProfile() {
   const container = document.getElementById("navAuthContainer");
   if (!container) return;
 
-  // Supabase Profile Engine check
   if (typeof window.getUserProfile === "function") {
     const profile = await window.getUserProfile();
 
     if (profile) {
       const firstLetter = profile.displayName.charAt(0).toUpperCase();
 
-      // User Logged In: Show Profile Photo or Initial + Dynamic Display Name
       container.innerHTML = `
         <a href="profile.html" style="display: flex; align-items: center; gap: 12px; padding: 10px 14px; color: #fff; text-decoration: none; background: rgba(255, 255, 255, 0.08); border-radius: 14px; margin: 10px 0; border: 1px solid rgba(255, 255, 255, 0.15); transition: all 0.2s ease;">
           ${profile.avatarUrl 
@@ -353,7 +352,6 @@ async function renderSidebarProfile() {
     }
   }
 
-  // Not Logged In Fallback
   container.innerHTML = `<a href="login.html" id="loginLink"><svg class="menu-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> Login</a>`;
 }
 
@@ -369,7 +367,6 @@ let currentX = 0;
 let isDragging = false;
 
 if (installContainer && installBtn) {
-  // Catch install prompt
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
@@ -379,7 +376,6 @@ if (installContainer && installBtn) {
     }
   });
 
-  // Touch Events for Swipe-to-Dismiss
   installContainer.addEventListener('touchstart', (e) => {
     startX = e.touches[0].clientX;
     isDragging = true;
@@ -412,7 +408,6 @@ if (installContainer && installBtn) {
     currentX = 0; 
   });
 
-  // Install Button Click
   installBtn.addEventListener('click', async () => {
     if (Math.abs(currentX) > 10) return; 
     if (!deferredPrompt) return;
@@ -429,7 +424,7 @@ if (installContainer && installBtn) {
 window.addEventListener('appinstalled', () => {
   if (installContainer) installContainer.style.display = 'none';
   deferredPrompt = null;
-  console.log('Roitx App installed successfully!');
+  console.log('PM Roitx App installed successfully!');
 });
 
 // =====================================================
@@ -447,13 +442,11 @@ if ('serviceWorker' in navigator) {
 // 4. UI UTILITIES & DOM INITIALIZATION
 // =====================================================
 document.addEventListener("DOMContentLoaded", () => {
-  // Set Current Year
   const yearElem = document.getElementById("year");
   if (yearElem) {
     yearElem.textContent = new Date().getFullYear();
   }
 
-  // Load Sidebar Profile Details
   renderSidebarProfile();
 });
 
