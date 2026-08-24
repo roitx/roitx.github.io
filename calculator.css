@@ -103,7 +103,11 @@ body {
   gap: 8px;
 }
 
-.btn-guide {
+.guide-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
   background: #222;
   border: 1px solid #444;
   border-radius: 6px;
@@ -113,6 +117,16 @@ body {
   font-size: 11px;
   font-weight: 600;
   box-shadow: 0 2px 0 #000;
+}
+
+.guide-btn svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .theme-select {
@@ -331,7 +345,7 @@ button {
   border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
-  transition: 0.1s;
+  transition: all 0.2s ease;
   box-shadow: 0 4px 0 #000;
 }
 
@@ -354,41 +368,60 @@ button:active {
 .del, .ac { background: #a33; }
 .equal { background: #fff; color: #000; font-size: 18px; }
 
-/* SHIFT & ALPHA GLOW EFFECTS */
-body.shift-mode-active .has-shift button {
-  box-shadow: 0 0 10px var(--shift-color) !important;
-  border: 1px solid var(--shift-color);
+/* SHIFT MODE: ONLY SHIFT LABELS GLOW & NON-SHIFT BUTTONS DIMMED */
+body.shift-mode-active .btn-wrapper.has-shift .shift-label {
+  text-shadow: 0 0 10px var(--shift-color), 0 0 15px var(--shift-color);
+  font-size: 9.5px;
+  transform: scale(1.15);
+  color: #fff;
 }
 
-body.shift-mode-active .shift-label {
-  text-shadow: 0 0 8px var(--shift-color);
-  font-size: 9px;
-  transform: scale(1.1);
+body.shift-mode-active .btn-wrapper:not(.has-shift) button {
+  opacity: 0.35;
+  filter: grayscale(80%);
+  pointer-events: none;
 }
 
-body.alpha-mode-active .has-alpha button {
-  box-shadow: 0 0 10px var(--alpha-color) !important;
-  border: 1px solid var(--alpha-color);
-}
-
-body.alpha-mode-active .alpha-label {
-  text-shadow: 0 0 8px var(--alpha-color);
-  font-size: 9px;
-  transform: scale(1.1);
+/* ALPHA MODE: ONLY ALPHA LABELS GLOW & NON-ALPHA BUTTONS DIMMED */
+body.alpha-mode-active .btn-wrapper.has-alpha .alpha-label {
+  text-shadow: 0 0 10px var(--alpha-color), 0 0 15px var(--alpha-color);
+  font-size: 9.5px;
+  transform: scale(1.15);
   opacity: 1;
+  color: #fff;
 }
 
-/* COMPACT MODAL & FULLSCREEN STYLES (FIXED SCROLLING & OVERFLOW) */
-.ai-modal {
+body.alpha-mode-active .btn-wrapper:not(.has-alpha) button {
+  opacity: 0.35;
+  filter: grayscale(80%);
+  pointer-events: none;
+}
+
+/* MODALS BASE STYLES */
+.ai-modal, .guide-modal {
   position: fixed; inset: 0; background: rgba(0,0,0,0.85);
-  display: none; justify-content: center; align-items: center; z-index: 2000; padding: 10px;
+  display: none; justify-content: center; align-items: center; z-index: 999; padding: 10px;
 }
 
-.ai-content {
+.auth-modal {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+  display: none; justify-content: center; align-items: center; 
+  z-index: 100000 !important; 
+  padding: 10px;
+  backdrop-filter: blur(4px);
+}
+
+.ai-content, .guide-modal-content, .auth-modal-content {
   background: #181818; width: 100%; max-width: 420px; border-radius: 12px; padding: 12px;
   border: 1px solid var(--accent); box-shadow: 0 0 15px rgba(0,255,156,0.2);
   display: flex; flex-direction: column; max-height: 90vh; transition: all 0.2s ease;
-  overflow: hidden;
+  overflow: hidden; position: relative;
+}
+
+.auth-modal-content {
+  border-color: #00e676;
+  box-shadow: 0 0 20px rgba(0, 230, 118, 0.3);
+  text-align: center;
 }
 
 .ai-content.fullscreen {
@@ -406,16 +439,34 @@ body.alpha-mode-active .alpha-label {
 }
 
 .btn-fullscreen {
-  background: #333 !important; color: #fff !important; font-size: 13px !important;
-  border: 1px solid #555 !important; padding: 2px 6px !important; border-radius: 4px !important; cursor: pointer;
+  background: transparent !important; color: #38bdf8 !important; font-size: 16px !important;
+  border: none !important; padding: 2px 6px !important; cursor: pointer; box-shadow: none !important;
+  display: inline-flex; align-items: center; justify-content: center;
 }
 
 .ai-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-shrink: 0; }
-.ai-header h3 { margin: 0; color: var(--accent); font-size: 14px; }
-.ai-header button { background: none; color: #fff; font-size: 18px; width: auto; box-shadow: none; padding: 0; border: none; cursor: pointer; }
+.ai-header h3 { margin: 0; color: var(--accent); font-size: 14px; display: flex; align-items: center; gap: 6px; }
+.close-icon-btn, .close-modal { background: none; color: #ef4444; font-size: 18px; width: auto; box-shadow: none; padding: 2px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+
+/* SVG ICON STANDARD ALIGNMENTS */
+svg {
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.close-icon-btn svg, .close-modal svg { 
+  width: 18px; 
+  height: 18px; 
+  stroke: currentColor; 
+  stroke-width: 2.5; 
+  stroke-linecap: round; 
+  stroke-linejoin: round; 
+  fill: none;
+}
 
 .ai-tab-row { display: flex; gap: 5px; margin-bottom: 8px; }
-.tab-btn { background: #111; color: #888; border: 1px solid #333; font-size: 11px; padding: 5px 0; border-radius: 6px; box-shadow: none; flex: 1; }
+.tab-btn { background: #111; color: #888; border: 1px solid #333; font-size: 11px; padding: 6px 0; border-radius: 6px; box-shadow: none; flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
+.tab-btn svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 .tab-btn.active { background: var(--accent); color: #000; font-weight: bold; border-color: var(--accent); }
 
 .ai-sec { margin-bottom: 6px; }
@@ -465,9 +516,16 @@ body.alpha-mode-active .alpha-label {
 .ai-btns button { background: var(--accent); color: #000; font-weight: bold; font-size: 11px; padding: 7px 0; }
 .ai-loader { text-align: center; color: var(--accent); font-size: 11px; margin: 4px 0; }
 
-.notice-tag { font-size: 10px; color: #aaa; display: block; margin-bottom: 4px; }
+.notice-tag { 
+  font-size: 10px; 
+  color: #aaa; 
+  display: inline-flex; 
+  align-items: center; 
+  gap: 4px; 
+  margin-bottom: 4px; 
+}
+.notice-tag svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 
-/* DRAW PAD HEIGHT UPDATED */
 .canvas-wrapper { position: relative; width: 100%; }
 #mathCanvas { 
   background: #0a0a0a; 
@@ -477,10 +535,10 @@ body.alpha-mode-active .alpha-label {
   cursor: crosshair; 
   display: block; 
   width: 100%; 
-  height: 195px; /* Small mode me canvas ki height ~25% badha di gayi hai */
+  height: 195px;
 }
 .ai-content.fullscreen #mathCanvas {
-  height: 40vh !important; /* Fullscreen mode me yeh screen ka exactly 40% height lega */
+  height: 40vh !important;
 }
 
 .btn-clear-pad { position: absolute; right: 5px; bottom: 5px; width: auto; font-size: 9px; padding: 2px 8px; background: #a33; color: #fff; box-shadow: none; border-radius: 4px; }
@@ -504,7 +562,10 @@ body.alpha-mode-active .alpha-label {
 }
 
 .custom-file-upload {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   background: var(--btn-black);
   color: var(--accent);
   border: 1px solid var(--accent);
@@ -516,6 +577,16 @@ body.alpha-mode-active .alpha-label {
   transition: all 0.2s ease;
   width: 100%;
   box-sizing: border-box;
+}
+
+.custom-file-upload svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .custom-file-upload:active {

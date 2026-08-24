@@ -171,7 +171,6 @@ RULES:
 
 // FAST SYNCHRONOUS MODE SWITCHING WITH LIVE AUTH CHECK
 function switchAIMode(mode) {
-  // LocalStorage + Dynamic Variable Guard Check
   const userLoggedIn = isLoggedIn || localStorage.getItem("isLoggedIn") === "true";
 
   if ((mode === 'pad' || mode === 'scan') && !userLoggedIn) {
@@ -183,7 +182,6 @@ function switchAIMode(mode) {
   currentAIMode = mode;
   document.getElementById("tabText")?.classList.toggle("active", mode === 'text');
   
-  // Tab buttons with SVG Icons injected dynamically
   const tabPad = document.getElementById("tabPad");
   if (tabPad) {
     tabPad.classList.toggle("active", mode === 'pad');
@@ -229,9 +227,34 @@ function closeGuideModal() {
   if (m) m.style.display = "none";
 }
 
+function openKeysGuide() {
+  closeGuideModal();
+  const keysModal = document.getElementById("keysGuideModal");
+  if (keysModal) keysModal.style.display = "flex";
+}
+
+function closeKeysGuide() {
+  const keysModal = document.getElementById("keysGuideModal");
+  if (keysModal) keysModal.style.display = "none";
+}
+
+function closeAuthModal() {
+  const modal = document.getElementById("authModal");
+  if (modal) modal.style.display = "none";
+}
+
+function redirectToLogin() {
+  window.location.href = "login.html";
+}
+
 window.addEventListener("click", function(e) {
-  const m = document.getElementById("guideModal");
-  if (e.target === m) m.style.display = "none";
+  const gModal = document.getElementById("guideModal");
+  const kModal = document.getElementById("keysGuideModal");
+  const aModal = document.getElementById("authModal");
+  
+  if (e.target === gModal) gModal.style.display = "none";
+  if (e.target === kModal) kModal.style.display = "none";
+  if (e.target === aModal) aModal.style.display = "none";
 });
 
 function preprocess(raw) {
@@ -379,13 +402,11 @@ function openAISolver() {
   const modal = document.getElementById("aiModal");
   if (modal) modal.style.display = "flex";
   
-  // Ensure default text tab has its text/icon nicely updated or preserved
   const tabText = document.getElementById("tabText");
   if (tabText) {
     tabText.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><polyline points="4 7 4 4 20 4 20 7"></polyline><line x1="9" y1="20" x2="15" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line></svg>Text`;
   }
   
-  // Initialize icons for Pad and Scan tabs dynamically when modal opens
   const tabPad = document.getElementById("tabPad");
   if (tabPad) {
     tabPad.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path><path d="M2 2l7.586 7.586"></path><circle cx="11" cy="11" r="2"></circle></svg>Draw Pad`;
@@ -396,13 +417,11 @@ function openAISolver() {
     tabScan.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>Scan Equation`;
   }
 
-  // Update file upload label icon inside scan section as well
   const fileUploadLabel = document.querySelector(".custom-file-upload");
   if (fileUploadLabel) {
     fileUploadLabel.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 6px;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>Take Photo / Choose File`;
   }
 
-  // Update notice tag in pad section
   const noticeTag = document.querySelector(".notice-tag");
   if (noticeTag) {
     noticeTag.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path></svg>Draw equation below:`;
