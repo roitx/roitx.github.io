@@ -8,7 +8,7 @@
   <link rel="canonical" href="https://roitx.qd.je/" />
   <meta property="og:image" content="https://roitx.qd.je/banner.png" />
 
-  <!-- Title to reflect 'PM Roitx' -->
+  <!-- PAGE TITLE -->
   <title>PM Roitx — Personal Study Hub | PM Roitx Notes & Study Tools</title>
 
   <link rel="icon" href="favicon.png" type="image/png">
@@ -23,7 +23,7 @@
   <meta name="author" content="PM Roitx">
   <meta name="google-site-verification" content="TPdziMXbg8H61q3oj7MyiCaks2OMPLYiblfLROZu2XY" />
 
-  <!-- OPEN GRAPH TAGS (UPDATED SITE_NAME) -->
+  <!-- OPEN GRAPH META TAGS (BRAND MATCHED) -->
   <meta property="og:site_name" content="PM Roitx">
   <meta property="og:title" content="PM Roitx — Personal Study Hub">
   <meta property="og:description" content="Get high-quality PM Roitx notes and study tools. Boost your learning with PM Roitx Study Hub.">
@@ -45,10 +45,11 @@
     "@context": "https://schema.org",
     "@type": "WebSite",
     "name": "PM Roitx",
-    "alternateName": ["PM Roitx Study Hub", "Roitx Study Hub", "Roitx"],
+    "alternateName": ["PM Roitx Study Hub", "Roitx Study Hub", "PM Roitx Notes"],
     "url": "https://roitx.qd.je/"
   }
   </script>
+
   <!-- 2. SITELINKS NAVIGATION SCHEMA -->
   <script type="application/ld+json">
   {
@@ -58,7 +59,7 @@
       {
         "@type": "SiteNavigationElement",
         "position": 1,
-        "name": "login",
+        "name": "Login",
         "url": "https://roitx.qd.je/login.html"
       },
       {
@@ -76,7 +77,7 @@
       {
         "@type": "SiteNavigationElement",
         "position": 4,
-        "name": "Ai Calculator",
+        "name": "AI Calculator",
         "url": "https://roitx.qd.je/calculator.html"
       },
       {
@@ -200,7 +201,7 @@
 <main>
 
 <section class="hero">
-  <!-- ADDED PM ROITX TO MAIN HEADING FOR DOMAIN VERIFICATION -->
+  <!-- PRIMARY H1 BRANDING SIGNAL FOR GOOGLE BOT -->
   <h1>PM Roitx — <span class="accent">Power ∝ Work</span></h1>
   <p>Welcome to <strong>PM Roitx Study Hub</strong>. Find the best <strong>PM Roitx notes</strong> and tools here.</p>
 
@@ -285,7 +286,7 @@
 </div>
 
 <div id="installContainer" style="display:none;">
-  <button id="installApp" aria-label="Install Roitx Hub App">
+  <button id="installApp" aria-label="Install PM Roitx Hub App">
     <img src="profile.png" alt="PM Roitx Hub App Logo" style="width: 40px; height: 40px; border-radius: 10px;">
     <div style="text-align: left;">
       <div style="font-weight: bold; font-size: 15px; color: #3aa0ff;">Install PM Roitx Hub</div>
@@ -356,7 +357,32 @@ async function renderSidebarProfile() {
 }
 
 // =====================================================
-// 2. PWA INSTALL PROMPT & SWIPE LOGIC
+// 2. DAILY MOTIVATION POPUP UTILITY
+// =====================================================
+const quotes = [
+  "Stay focused. Stay unstoppable.",
+  "Small steps every day lead to big results.",
+  "Work hard in silence, let your success be your noise.",
+  "Push yourself, because no one else is going to do it for you.",
+  "Success isn’t always about greatness. It’s about consistency."
+];
+
+function showMotivation() {
+  const popup = document.getElementById("motivationPopup");
+  const textElem = document.getElementById("motivationText");
+  if (!popup || !textElem) return;
+
+  const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+  textElem.textContent = randomQuote;
+  popup.classList.add("active");
+
+  setTimeout(() => {
+    popup.classList.remove("active");
+  }, 3500);
+}
+
+// =====================================================
+// 3. PWA INSTALL PROMPT & SWIPE LOGIC
 // =====================================================
 let deferredPrompt;
 const installContainer = document.getElementById('installContainer');
@@ -428,7 +454,7 @@ window.addEventListener('appinstalled', () => {
 });
 
 // =====================================================
-// 3. SERVICE WORKER REGISTRATION
+// 4. SERVICE WORKER REGISTRATION
 // =====================================================
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
@@ -439,7 +465,7 @@ if ('serviceWorker' in navigator) {
 }
 
 // =====================================================
-// 4. UI UTILITIES & DOM INITIALIZATION
+// 5. UI UTILITIES & DOM INITIALIZATION
 // =====================================================
 document.addEventListener("DOMContentLoaded", () => {
   const yearElem = document.getElementById("year");
