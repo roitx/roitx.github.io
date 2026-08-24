@@ -112,7 +112,13 @@ async function openSubject(subjectName) {
             <span style="font-size:11px; background:#3aa0ff; color:#081226; padding:3px 8px; border-radius:4px; font-weight:bold; text-transform:uppercase;">Chapter ${note.chapter_number}</span>
             <h4 style="margin:8px 0 0 0; color:#fff; font-size: 16px;">${note.chapter_name || ('Chapter ' + note.chapter_number)}</h4>
           </div>
-          <button class="btn" style="padding:8px 16px; cursor:pointer;" onclick="openCustomViewer('${fullPath}', '${encodeURIComponent(descriptiveName)}')">📖 Read</button>
+          <button class="btn" style="padding:8px 16px; cursor:pointer; display:inline-flex; align-items:center; gap:6px;" onclick="openCustomViewer('${fullPath}', '${encodeURIComponent(descriptiveName)}')">
+            <svg style="width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;" viewBox="0 0 24 24">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+            </svg>
+            Read
+          </button>
         `;
         container.appendChild(row);
       });
