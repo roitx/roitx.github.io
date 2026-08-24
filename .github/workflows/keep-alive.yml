@@ -2,7 +2,7 @@ name: Keep Supabase Alive
 
 on:
   schedule:
-    # Har 3 din mein raat 12 baje chalega (UTC)
+    # Har 3 din me raat 12 baje chalega (UTC)
     - cron: '0 0 */3 * *'
   workflow_dispatch: # Manual test run ke liye
 
@@ -10,7 +10,9 @@ jobs:
   ping-supabase:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping Website/Supabase
+      - name: Ping Website & Supabase
         run: |
-          curl -s "https://roitx.github.io" > /dev/null
-          echo "Supabase keep-alive ping sent successfully!"
+          curl -s "https://roitx.qd.je" > /dev/null
+          curl -s "https://ktastwehnnqicriknewr.supabase.co/rest/v1/" > /dev/null
+          echo "Supabase and Website keep-alive ping sent successfully!"
+          
