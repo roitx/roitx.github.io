@@ -24,7 +24,10 @@
             border-radius: 10px;
             font-size: 22px;
             font-weight: bold;
-            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
             cursor: pointer;
             box-shadow: 0 3px 6px rgba(0,0,0,0.15);
             transition: 0.3s;
@@ -34,45 +37,181 @@
             background: #eaffea;
             transform: translateY(-3px);
         }
-        /* UNIVERSAL HOME BUTTON */
-.home-btn {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    width: 55px;
-    height: 55px;
-    background: #007bff;
-    border-radius: 50%;
-    color: #fff;
-    font-size: 26px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.25);
-    cursor: pointer;
-    z-index: 9999;
-    transition: 0.2s;
-}
 
-.home-btn:active {
-    transform: scale(0.88);
-}
+        .stream-svg-icon {
+            width: 28px;
+            height: 28px;
+            fill: none;
+            stroke: #333;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
 
+        /* Movable Floating Home Button Styling */
+        .home-btn {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #7c4dff, #3d5afe);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 0 18px rgba(61, 90, 254, 0.6), 0 6px 15px rgba(0, 0, 0, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 9999;
+            touch-action: none; /* Smooth dragging on touch screens */
+            transition: transform 0.15s ease, box-shadow 0.2s ease;
+        }
+
+        .home-btn:active {
+            transform: scale(0.92);
+        }
+
+        .home-btn svg {
+            width: 26px;
+            height: 26px;
+            fill: none;
+            stroke: #ffffff;
+            stroke-width: 2.2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.6));
+        }
     </style>
 </head>
 <body>
 
 <h1>Class 11 — Select Your Stream</h1>
 
-<div class="stream-btn" onclick="goto('11-science-subjects.html')">🔬 Science</div>
-<div class="stream-btn" onclick="goto('11-arts-subjects.html')">🎭 Arts</div>
-<div class="stream-btn" onclick="goto('11-commerce-subjects.html')">💼 Commerce</div>
+<div class="stream-btn" onclick="goto('11-science-subjects.html')">
+    <!-- Science SVG (Flask) -->
+    <svg class="stream-svg-icon" viewBox="0 0 24 24">
+        <path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55A2 2 0 0 0 6.508 23h10.984a2 2 0 0 0 1.788-2.45l-5.069-10.127A2 2 0 0 1 14 9.527V2"></path>
+        <line x1="8.5" y1="2" x2="15.5" y2="2"></line>
+        <line x1="7" y1="16" x2="17" y2="16"></line>
+    </svg>
+    <span>Science</span>
+</div>
+
+<div class="stream-btn" onclick="goto('11-arts-subjects.html')">
+    <!-- Arts SVG (Palette) -->
+    <svg class="stream-svg-icon" viewBox="0 0 24 24">
+        <path d="M12 2a10 10 0 1 0 10 10c0-2.5-2.5-3-2.5-3s-1.5 1-2.5 1-1.5-1-1.5-2 2-2 1-3.5S14.5 2 12 2z"></path>
+        <circle cx="7.5" cy="11.5" r="1.5"></circle>
+        <circle cx="9" cy="7.5" r="1.5"></circle>
+        <circle cx="13.5" cy="6.5" r="1.5"></circle>
+        <circle cx="16.5" cy="9.5" r="1.5"></circle>
+    </svg>
+    <span>Arts</span>
+</div>
+
+<div class="stream-btn" onclick="goto('11-commerce-subjects.html')">
+    <!-- Commerce SVG (Briefcase) -->
+    <svg class="stream-svg-icon" viewBox="0 0 24 24">
+        <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+    </svg>
+    <span>Commerce</span>
+</div>
 
 <script>
 function goto(page) {
     window.location.href = page;
 }
 </script>
-<div class="home-btn" onclick="location.href='index.html'">🏠</div>
+
+<!-- Draggable SVG Floating Home Button -->
+<div id="movableHomeBtn" class="home-btn">
+  <svg viewBox="0 0 24 24">
+    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+  </svg>
+</div>
+
+<script>
+  // Draggable & Clickable Logic for Home Button
+  const homeBtn = document.getElementById('movableHomeBtn');
+  let isDragging = false;
+  let hasDragged = false;
+  let startX, startY, initialLeft, initialTop;
+
+  // Touch Events (Mobile)
+  homeBtn.addEventListener('touchstart', (e) => {
+    isDragging = true;
+    hasDragged = false;
+    const touch = e.touches[0];
+    startX = touch.clientX;
+    startY = touch.clientY;
+    
+    const rect = homeBtn.getBoundingClientRect();
+    initialLeft = rect.left;
+    initialTop = rect.top;
+  }, { passive: true });
+
+  document.addEventListener('touchmove', (e) => {
+    if (!isDragging) return;
+    const touch = e.touches[0];
+    const deltaX = touch.clientX - startX;
+    const deltaY = touch.clientY - startY;
+
+    if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
+      hasDragged = true;
+    }
+
+    homeBtn.style.left = `${initialLeft + deltaX}px`;
+    homeBtn.style.top = `${initialTop + deltaY}px`;
+    homeBtn.style.bottom = 'auto';
+    homeBtn.style.right = 'auto';
+  }, { passive: true });
+
+  document.addEventListener('touchend', () => {
+    isDragging = false;
+  });
+
+  // Mouse Events (Desktop)
+  homeBtn.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    hasDragged = false;
+    startX = e.clientX;
+    startY = e.clientY;
+    
+    const rect = homeBtn.getBoundingClientRect();
+    initialLeft = rect.left;
+    initialTop = rect.top;
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    const deltaX = e.clientX - startX;
+    const deltaY = e.clientY - startY;
+
+    if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
+      hasDragged = true;
+    }
+
+    homeBtn.style.left = `${initialLeft + deltaX}px`;
+    homeBtn.style.top = `${initialTop + deltaY}px`;
+    homeBtn.style.bottom = 'auto';
+    homeBtn.style.right = 'auto';
+  });
+
+  document.addEventListener('mouseup', () => {
+    isDragging = false;
+  });
+
+  // Handle Click / Navigation
+  homeBtn.addEventListener('click', (e) => {
+    if (hasDragged) {
+      e.preventDefault();
+      return;
+    }
+    window.location.href = 'index.html';
+  });
+</script>
 </body>
 </html>

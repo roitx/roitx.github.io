@@ -8,6 +8,74 @@
   <!-- CSS -->
   <link rel="stylesheet" href="solver.css">
 
+  <style>
+    /* Movable Floating Home Button Styling */
+    .home-btn {
+      position: fixed;
+      bottom: 25px;
+      right: 25px;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #7c4dff, #3d5afe);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 0 18px rgba(61, 90, 254, 0.6), 0 6px 15px rgba(0, 0, 0, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 9999;
+      touch-action: none; /* Smooth dragging on touch screens */
+      transition: transform 0.15s ease, box-shadow 0.2s ease;
+    }
+
+    .home-btn:active {
+      transform: scale(0.92);
+    }
+
+    .home-btn svg {
+      width: 26px;
+      height: 26px;
+      fill: none;
+      stroke: #ffffff;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.6));
+    }
+
+    /* SVG Icon Helpers */
+    .chat-header .bot-avatar svg {
+      width: 28px;
+      height: 28px;
+      fill: none;
+      stroke: #3aa0ff;
+      stroke-width: 2;
+    }
+
+    .send-btn-svg {
+      width: 16px;
+      height: 16px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      margin-left: 4px;
+      vertical-align: middle;
+    }
+
+    .fab-svg {
+      width: 24px;
+      height: 24px;
+      fill: none;
+      stroke: #ffffff;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+  </style>
+
   <!-- MATHJAX SAFE SETUP -->
   <script>
     window.MathJax = {
@@ -35,10 +103,20 @@
 <body>
 
   <div class="box">
-       <!-- CHAT HEADER -->
+    <!-- CHAT HEADER -->
     <div class="chat-header">
       <div class="bot-info">
-        <div class="bot-avatar">🤖</div>
+        <div class="bot-avatar">
+          <!-- Robot SVG Icon -->
+          <svg viewBox="0 0 24 24">
+            <rect x="3" y="11" width="18" height="10" rx="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="8.5" cy="16" r="1.5" fill="#3aa0ff"/>
+            <circle cx="15.5" cy="16" r="1.5" fill="#3aa0ff"/>
+            <path d="M12 2v5" stroke-linecap="round"/>
+            <circle cx="12" cy="2" r="1" fill="#3aa0ff"/>
+            <path d="M8 7h8a2 2 0 0 1 2 2v2H6V9a2 2 0 0 1 2-2z"/>
+          </svg>
+        </div>
         <div>
           <h3>ROITX AI Tutor</h3>
           <span class="online-status">🟢 Online | Ready to Help</span>
@@ -52,7 +130,6 @@
       </div>
     </div>
 
-
     <!-- CONTINUOUS CHAT STREAM CONTAINER -->
     <div id="answerHistory" class="chat-container">
       <!-- Welcome message and dynamic buttons render here -->
@@ -64,12 +141,20 @@
         id="question"
         placeholder="Apna sawaal, equation ya theory problem type karein..."
       ></textarea>
-      <button id="solveBtn" onclick="solve()">Send ➔</button>
+      <button id="solveBtn" onclick="solve()" style="display: flex; align-items: center; justify-content: center; gap: 4px;">
+        Send 
+        <svg class="send-btn-svg" viewBox="0 0 24 24">
+          <line x1="22" y1="2" x2="11" y2="13"></line>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+        </svg>
+      </button>
     </div>
 
     <!-- FLOATING MY FEEDBACKS BUTTON -->
     <button class="doubt-fab" title="My Feedbacks" onclick="toggleMyDoubt()">
-      💬
+      <svg class="fab-svg" viewBox="0 0 24 24">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+      </svg>
       <span id="notifyDot" class="notify-dot" style="display:none;"></span>
     </button>
 
@@ -84,8 +169,91 @@
 
   </div>
 
+ 
+
   <!-- Solver Logic -->
   <script src="solver.js"></script>
+
+  <script>
+    // Draggable & Clickable Logic for Home Button
+    const homeBtn = document.getElementById('movableHomeBtn');
+    let isDragging = false;
+    let hasDragged = false;
+    let startX, startY, initialLeft, initialTop;
+
+    // Touch Events (Mobile)
+    homeBtn.addEventListener('touchstart', (e) => {
+      isDragging = true;
+      hasDragged = false;
+      const touch = e.touches[0];
+      startX = touch.clientX;
+      startY = touch.clientY;
+      
+      const rect = homeBtn.getBoundingClientRect();
+      initialLeft = rect.left;
+      initialTop = rect.top;
+    }, { passive: true });
+
+    document.addEventListener('touchmove', (e) => {
+      if (!isDragging) return;
+      const touch = e.touches[0];
+      const deltaX = touch.clientX - startX;
+      const deltaY = touch.clientY - startY;
+
+      if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
+        hasDragged = true;
+      }
+
+      homeBtn.style.left = `${initialLeft + deltaX}px`;
+      homeBtn.style.top = `${initialTop + deltaY}px`;
+      homeBtn.style.bottom = 'auto';
+      homeBtn.style.right = 'auto';
+    }, { passive: true });
+
+    document.addEventListener('touchend', () => {
+      isDragging = false;
+    });
+
+    // Mouse Events (Desktop)
+    homeBtn.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      hasDragged = false;
+      startX = e.clientX;
+      startY = e.clientY;
+      
+      const rect = homeBtn.getBoundingClientRect();
+      initialLeft = rect.left;
+      initialTop = rect.top;
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      const deltaX = e.clientX - startX;
+      const deltaY = e.clientY - startY;
+
+      if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
+        hasDragged = true;
+      }
+
+      homeBtn.style.left = `${initialLeft + deltaX}px`;
+      homeBtn.style.top = `${initialTop + deltaY}px`;
+      homeBtn.style.bottom = 'auto';
+      homeBtn.style.right = 'auto';
+    });
+
+    document.addEventListener('mouseup', () => {
+      isDragging = false;
+    });
+
+    // Handle Click / Navigation
+    homeBtn.addEventListener('click', (e) => {
+      if (hasDragged) {
+        e.preventDefault();
+        return;
+      }
+      window.location.href = 'index.html';
+    });
+  </script>
 
 </body>
 </html>

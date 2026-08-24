@@ -2,9 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   
-  <!-- PRIMARY SEO META TAGS -->
   <title>Study Timer & Neural Focus Suite — Roitx Pro</title>
   <meta name="title" content="Study Timer & Neural Focus Suite — Roitx Pro">
   <meta name="description" content="Advanced Study Timer, Binaural Beats Generator, Stopwatch, Task Manager, and Smart Music Player for ultimate study focus and productivity on Roitx Pro.">
@@ -13,20 +12,12 @@
   <meta name="author" content="PM Roitx">
   <link rel="canonical" href="https://roitx.qd.je/timer.html">
 
-  <!-- OPEN GRAPH / FACEBOOK SOCIAL META -->
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://roitx.qd.je/timer.html">
   <meta property="og:title" content="Study Timer & Focus Suite — Roitx Pro">
   <meta property="og:description" content="Boost study productivity with Binaural Beats, Custom Timers, and Smart Music Player.">
   <meta property="og:image" content="https://roitx.qd.je/study.png">
 
-  <!-- TWITTER CARDS -->
-  <meta property="twitter:card" content="summary_large_image">
-  <meta property="twitter:title" content="Study Timer & Focus Suite — Roitx Pro">
-  <meta property="twitter:description" content="Ultimate productivity tool for students with Neural Focus Beats and Smart Music Player.">
-  <meta property="twitter:image" content="https://roitx.qd.je/profile.png">
-
-  <!-- GOOGLE SCHEMA MARKUP (JSON-LD FOR CRAWLERS) -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -48,9 +39,9 @@
   <link rel="icon" href="study.png" type="image/png">
   <link rel="stylesheet" href="timer.css">
 </head>
-<body>
+<body oncontextmenu="return false;">
 
-  <!-- Floating Movable Widget Button & Popup (Controlled by timer.js) -->
+  <!-- Floating Movable Widget Button & Popup -->
   <div id="roitxLauncher" title="Widget Options (Drag Me Anywhere)">⚡</div>
   
   <div id="floatingWidget" class="floating-widget" style="display: none;">
@@ -130,7 +121,7 @@
           <button class="btn" id="btnAmbient">White Noise (Rain/Static)</button>
           <button class="btn" id="btnFocus">Fullscreen Mode</button>
         </div>
-        <div class="wave-info" id="waveDesc" style="margin-top: 10px;">Select a frequency to generate Binaural Beats. (Requires Headphones)</div>
+        <div class="wave-info" id="waveDesc" style="margin-top: 10px;">Select a frequency to generate Binaural Beats. (Works alongside YouTube & Local Player)</div>
       </section>
     </div>
 
@@ -154,42 +145,44 @@
           <button class="btn" id="btnSwLap">Lap</button>
           <button class="btn danger" id="btnSwReset">Reset</button>
         </div>
-        <ul class="task-list" id="lapsList" style="margin-top: 16px; max-height: 150px; overflow-y: auto; list-style: none; padding: 0;"></ul>
+        
+        <!-- Structured Lap Card Container -->
+        <div id="lapsList" class="laps-card-container"></div>
       </section>
 
-      <!-- SMART MUSIC PLAYER PANEL (MP3 + YOUTUBE SUPPORT) -->
+      <!-- ADVANCED YT & MUSIC PLAYER PANEL -->
       <section class="glass-panel">
-        <h2>Custom Smart Music Player</h2>
+        <h2>Advanced Music & YouTube Player</h2>
         
         <!-- Live Wave Visualizer Canvas -->
         <canvas id="visualizer" class="visualizer-canvas" width="300" height="60" style="width:100%; height:60px; background:rgba(0,0,0,0.2); border-radius:8px; margin-bottom:12px;"></canvas>
 
         <div style="margin-bottom: 12px;">
-          <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 6px;">Upload Local MP3 File:</label>
+          <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 6px;">Upload Local Audio File:</label>
           <input type="file" id="audioFileInput" accept="audio/*">
         </div>
 
         <div style="margin-bottom: 12px;">
-          <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 6px;">Paste MP3 or YouTube Link:</label>
+          <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 6px;">Paste Audio / YouTube Link:</label>
           <div class="input-group">
-            <input type="text" id="audioUrlInput" placeholder="Paste Direct MP3 or YouTube Video Link">
+            <input type="text" id="audioUrlInput" placeholder="Paste YouTube Video / Audio Stream Link">
             <button class="btn primary" id="btnLoadAudio">Load</button>
           </div>
         </div>
 
-        <!-- Dynamic Container for YouTube Player Embed -->
-        <div id="ytPlayerContainer"></div>
+        <!-- Dynamic Responsive Container for YouTube Player Embed -->
+        <div id="ytPlayerContainer" class="yt-embed-wrapper"></div>
 
-        <!-- HTML5 Audio Element for Direct MP3 / Local Links -->
+        <!-- HTML5 Audio Element -->
         <audio id="customAudio" controls style="width: 100%; margin-top: 8px; border-radius: 8px; display: none;" crossorigin="anonymous"></audio>
 
         <!-- Dynamic URL Guide Box -->
         <div class="audio-guide-box" style="margin-top: 15px; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
-          <h4 style="margin-top: 0;">💡 Smart Link Detection Guide</h4>
+          <h4 style="margin-top: 0;">💡 Smart Focus Music Mode</h4>
           <ul style="font-size: 0.85rem; padding-left: 20px; color: var(--text-muted); margin-bottom: 0;">
-            <li><strong>YouTube Link:</strong> Koi bhi standard YouTube URL paste karein (e.g., <code>youtube.com/watch?v=...</code> ya <code>youtu.be/...</code>). System automatically player embed bana dega.</li>
-            <li><strong>Direct MP3 Link:</strong> Direct audio file URL paste karein jisme <code>.mp3</code>, <code>.wav</code> ending ho. Ye standard HTML5 audio player aur Live Visualizer ke saath sync rahega.</li>
-            <li><strong>Local Audio:</strong> Offline music ke liye local file upload karein, jisse visualizer instantly start ho jayega.</li>
+            <li><strong>YouTube Link:</strong> Koi bhi standard ya Shorts URL paste karein. Automatic optimized player load ho jayega.</li>
+            <li><strong>Audio Link / Files:</strong> Local files ya direct Web Stream links load karein.</li>
+            <li><strong>Binaural Sync:</strong> Audio/YouTube ke saath-saath background binaural neural beats bhi parallel run kar sakte hain.</li>
           </ul>
         </div>
       </section>
@@ -197,8 +190,8 @@
   </main>
 
   <!-- Session Complete Modal -->
-  <div class="modal-overlay" id="sessionModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 1000000;">
-    <div class="glass-panel modal-content" style="background: #1e293b; padding: 24px; border-radius: 12px; text-align: center; max-width: 400px; border: 1px solid #334155;">
+  <div class="modal-overlay" id="sessionModal" style="display: none;">
+    <div class="glass-panel modal-content">
       <h2 id="modalTitle" style="margin-top: 0;">Session Complete! 🎉</h2>
       <p id="modalDesc">Bohot badiya! Tumne apna focus session poora kar liya hai.</p>
       <button class="btn primary" id="btnCloseModal" style="margin-top: 15px;">Awesome!</button>

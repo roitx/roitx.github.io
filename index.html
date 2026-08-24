@@ -29,7 +29,6 @@
   <meta property="og:url" content="https://roitx.qd.je/">
   <meta property="og:type" content="website">
 
-
   <link rel="manifest" href="manifest.json">
   
   <meta name="theme-color" content="#030B20">
@@ -39,7 +38,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="PM Roitx">
 
-  <!-- 1. GOOGLE SITE NAME SCHEMA (Isse domain ki jagah 'PM Roitx' dikhega) -->
+  <!-- 1. GOOGLE SITE NAME SCHEMA -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -49,13 +48,13 @@
     "url": "https://roitx.qd.je/"
   }
   </script>
-<!-- 2. SITELINKS NAVIGATION SCHEMA (Isse Google search ke niche links dikhayega) -->
+  <!-- 2. SITELINKS NAVIGATION SCHEMA -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "ItemList",
     "itemListElement": [
-    {
+      {
         "@type": "SiteNavigationElement",
         "position": 1,
         "name": "login",
@@ -101,16 +100,12 @@
   }
   </script>
   
-
-
   <!-- External Supabase Dependencies -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase.js"></script>
 
   <link rel="stylesheet" href="style.css">
 </head>
-
-
 
 <body>
 
@@ -141,22 +136,56 @@
 <aside id="sideMenu" class="side-menu">
   <!-- Dynamic Auth Item -->
   <div id="navAuthContainer">
-    <a href="login.html" id="loginLink">🙎🏻‍♂️ Login</a>
+    <a href="login.html" id="loginLink">
+      <svg class="menu-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> Login
+    </a>
   </div>
 
-  <a href="classes.html">📘 Classes</a>
-  <a href="study-timer.html">⏳ Study Timer</a>
-  <a href="calendar.html">📅 Calendar</a>
-  <a href="view.html">📄 NOTES</a>
-  <a href="premium-notes.html">👑 Premium-Files</a>
-  <a href="formulas.html">📖 Formula</a>
-  <a href="solver.html">🤷🏻‍♂️ Ask Doubt</a>
-  <a href="refbook.html">📒 Reference Book</a>
-  <a href="calculator.html">📟 Calculator</a>
-  <a href="tests.html">📝 Tests</a>
-  <a href="ask-chat.html">🤖 Ask Chat</a>
-  <a href="fun.html">🎮 Game </a>
-  <a href="library.html"> 📶recently viewed </a>
+  <a href="classes.html">
+    <svg class="menu-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg> Classes
+  </a>
+  <a href="study-timer.html">
+    <svg class="menu-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> Study Timer
+  </a>
+  <a href="calendar.html">
+    <svg class="menu-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> Calendar
+  </a>
+  <a href="view.html">
+    <svg class="menu-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg> NOTES
+  </a>
+  <a href="premium-notes.html">
+    <svg class="menu-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"></path></svg> Premium-Files
+  </a>
+  <a href="formulas.html">
+    <svg class="menu-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg> Formula
+  </a>
+  <a href="solver.html">
+    <svg class="menu-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg> Ask Doubt
+  </a>
+  <a href="refbook.html">
+    <svg class="menu-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg> Reference Book
+  </a>
+  <a href="calculator.html">
+    <svg class="menu-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"></rect><line x1="8" y1="6" x2="16" y2="6"></line><line x1="16" y1="14" x2="16" y2="18"></line><path d="M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M8 18h.01M12 18h.01"></path></svg> Calculator
+  </a>
+  <a href="tests.html">
+    <svg class="menu-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg> Tests
+  </a>
+
+  <!-- UPGRADED AI SPARKLE ICON FOR ASK CHAT -->
+  <a href="ask-chat.html" class="ai-side-link">
+    <svg class="menu-svg-icon ai-sparkle-icon" viewBox="0 0 24 24" fill="none" stroke="#00ffd4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="m12 3 1.912 5.813a2 2 0 0 0 1.275 1.275L21 12l-5.813 1.912a2 2 0 0 0-1.275 1.275L12 21l-1.912-5.813a2 2 0 0 0-1.275-1.275L3 12l5.813-1.912a2 2 0 0 0 1.275-1.275L12 3z"/>
+      <path d="M5 3v4M3 5h4M19 17v4M17 19h4"/>
+    </svg> Ask Chat AI
+  </a>
+
+  <a href="fun.html">
+    <svg class="menu-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="6" y1="12" x2="10" y2="12"></line><line x1="8" y1="10" x2="8" y2="14"></line><circle cx="15" cy="13" r="1"></circle><circle cx="18" cy="11" r="1"></circle><rect x="2" y="6" width="20" height="12" rx="6"></rect></svg> Game
+  </a>
+  <a href="library.html">
+    <svg class="menu-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 15 15"></polyline></svg> recently viewed
+  </a>
 </aside>
 
 <div id="overlay"></div>
@@ -178,39 +207,74 @@
     <button onclick="goto('study-timer.html')" class="btn">Study Timer</button>
   </div>
 
+  <!-- HOME SCREEN CARDS WITH MATCHING SVG ICONS -->
   <div class="card-container">
     <div class="card" onclick="goto('classes.html')">
-      <span class="emoji">📘</span>
+      <div class="refbook-icon-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+        </svg>
+      </div>
       <h3>Roitx Notes</h3>
       <p>Classes & Subject notes</p>
     </div>
   
-  
     <div class="card" onclick="goto('tests.html')">
-      <span class="emoji">📝</span>
+      <div class="refbook-icon-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>
+      </div>
       <h3>Practice Tests</h3>
       <p>MCQs & Practice</p>
     </div>
 
     <div class="card" onclick="goto('refbook.html')">
-      <span class="emoji">📚</span>
+      <div class="refbook-icon-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+        </svg>
+      </div>
       <h3>Study Books</h3>
       <p>Advanced Reference Books</p>
     </div>
 
-    <div class="card" onclick="goto('ask-chat.html')">
-      <span class="emoji">🤖</span>
+    <!-- ASK ROITX (ASK-CHAT.HTML) CARD WITH NEW AI SPARKLE ICON -->
+    <div class="card ai-card" onclick="goto('ask-chat.html')">
+      <div class="refbook-icon-badge ai-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#00ffd4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m12 3 1.912 5.813a2 2 0 0 0 1.275 1.275L21 12l-5.813 1.912a2 2 0 0 0-1.275 1.275L12 21l-1.912-5.813a2 2 0 0 0-1.275-1.275L3 12l5.813-1.912a2 2 0 0 0 1.275-1.275L12 3z"/>
+          <path d="M5 3v4M3 5h4M19 17v4M17 19h4"/>
+        </svg>
+      </div>
       <h3>Ask Roitx</h3>
       <p>AI Smart Assistant</p>
-    </div>
     </div>
   </div>
 </section>
 
-<section class="motivation">
-  <h2>Daily Motivation</h2>
-  <button class="mot-btn" onclick="showMotivation()">✨ Generate Quote</button>
-</section>
+<!-- BOTTOM WRAPPER: DAILY MOTIVATION & FOOTER AT WAVE AREA -->
+<div class="bottom-wave-section">
+  <section class="motivation">
+    <h2>Daily Motivation</h2>
+    <button class="mot-btn" onclick="showMotivation()">✨ Generate Quote</button>
+  </section>
+
+  <footer>
+    <div>© <span id="year"></span> PM ROITX — Your Personal Study Hub</div>
+    <div style="margin-top: 8px; font-size: 12px; opacity: 0.8;">
+      <a href="aboutus.html" style="color: #3aa0ff; text-decoration: none; margin: 0 8px;">About Us</a> • 
+      <a href="aboutus.html#privacy" style="color: #3aa0ff; text-decoration: none; margin: 0 8px;">Privacy Policy</a> • 
+      <a href="aboutus.html#terms" style="color: #3aa0ff; text-decoration: none; margin: 0 8px;">Terms</a>
+    </div>
+  </footer>
+</div>
 
 <div id="motivationPopup" class="popup">
   <div class="popup-content">
@@ -218,6 +282,7 @@
     <p id="motivationText">Stay focused. Stay unstoppable.</p>
   </div>
 </div>
+
 <div id="installContainer" style="display:none;">
   <button id="installApp" aria-label="Install Roitx Hub App">
     <img src="profile.png" alt="Roitx Hub App Logo" style="width: 40px; height: 40px; border-radius: 10px;">
@@ -229,26 +294,21 @@
   </button>
 </div>
 
-<!-- COOKIE CONSENT BANNER -->
+<!-- COOKIE CONSENT BANNER WITH SVG COOKIE ICON -->
 <div id="cookieBanner" class="cookie-banner" style="display: none;">
   <div class="cookie-content">
-    <p>🍪 Hum aapke study session ko behtar banane ke liye cookies ka istemal karte hain.</p>
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3aa0ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5zm-2 7a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm5 5a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm-8 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+      </svg>
+      <p style="margin: 0;">Hum aapke study session ko behtar banane ke liye cookies ka istemal karte hain.</p>
+    </div>
     <div class="cookie-buttons">
       <button id="acceptCookies" class="cookie-btn accept">Accept All</button>
       <button id="declineCookies" class="cookie-btn decline">Decline</button>
     </div>
   </div>
 </div>
-
-<footer>
-  <div>© <span id="year"></span> PM ROITX — Your Personal Study Hub</div>
-  <div style="margin-top: 8px; font-size: 12px; opacity: 0.8;">
-    <a href="aboutus.html" style="color: #3aa0ff; text-decoration: none; margin: 0 8px;">About Us</a> • 
-    <a href="aboutus.html#privacy" style="color: #3aa0ff; text-decoration: none; margin: 0 8px;">Privacy Policy</a> • 
-    <a href="aboutus.html#terms" style="color: #3aa0ff; text-decoration: none; margin: 0 8px;">Terms</a>
-  </div>
-</footer>
-
 
 <div id="offlineBanner">
   <div class="status-dot"></div>
@@ -294,7 +354,7 @@ async function renderSidebarProfile() {
   }
 
   // Not Logged In Fallback
-  container.innerHTML = `<a href="login.html" id="loginLink">🙎🏻‍♂️ Login</a>`;
+  container.innerHTML = `<a href="login.html" id="loginLink"><svg class="menu-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> Login</a>`;
 }
 
 // =====================================================

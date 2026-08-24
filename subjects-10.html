@@ -5,6 +5,75 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Class 10 Subjects — RK Notes</title>
     <link rel="stylesheet" href="site.css">
+    
+    <style>
+      /* Movable Floating Home Button Styling */
+      .home-btn {
+        position: fixed;
+        bottom: 25px;
+        right: 25px;
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #7c4dff, #3d5afe);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 0 18px rgba(61, 90, 254, 0.6), 0 6px 15px rgba(0, 0, 0, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        z-index: 9999;
+        touch-action: none; /* Smooth dragging on touch screens */
+        transition: transform 0.15s ease, box-shadow 0.2s ease;
+      }
+
+      .home-btn:active {
+        transform: scale(0.92);
+      }
+
+      .home-btn svg {
+        width: 26px;
+        height: 26px;
+        fill: none;
+        stroke: #ffffff;
+        stroke-width: 2.2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.6));
+      }
+
+      /* Card SVG Badge Styling */
+      .card-header-flex {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 6px;
+      }
+
+      .card-svg-icon {
+        width: 24px;
+        height: 24px;
+        fill: none;
+        stroke: var(--accent, #3aa0ff);
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        flex-shrink: 0;
+      }
+
+      .btn-svg-icon {
+        width: 16px;
+        height: 16px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2.2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        vertical-align: middle;
+        margin-right: 4px;
+      }
+    </style>
+
     <!-- Supabase CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase.js"></script>
@@ -15,7 +84,12 @@
     <div class="brand">
         <h1> Class 10 Subjects</h1>
     </div>
-    <button class="btn" onclick="location.href='classes.html'">🔙 Back</button>
+    <button class="btn" onclick="location.href='classes.html'">
+      <svg class="btn-svg-icon" viewBox="0 0 24 24">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg> Back
+    </button>
   </header>
 
   <h2>Select a Subject</h2>
@@ -23,52 +97,126 @@
   <!-- SUBJECT CARDS GRID -->
   <div class="grid">
     <div class="card" onclick="openSubject('physics')">
-      <h3>⚡ Physics</h3>
+      <div class="card-header-flex">
+        <!-- Physics SVG -->
+        <svg class="card-svg-icon" viewBox="0 0 24 24">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+        </svg>
+        <h3>Physics</h3>
+      </div>
       <p>Motion, Force, Light & Electricity</p>
     </div>
 
     <div class="card" onclick="openSubject('chemistry')">
-      <h3>🧪 Chemistry</h3>
+      <div class="card-header-flex">
+        <!-- Chemistry SVG -->
+        <svg class="card-svg-icon" viewBox="0 0 24 24">
+          <path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55A2 2 0 0 0 6.508 23h10.984a2 2 0 0 0 1.788-2.45l-5.069-10.127A2 2 0 0 1 14 9.527V2"></path>
+          <line x1="8.5" y1="2" x2="15.5" y2="2"></line>
+          <line x1="7" y1="16" x2="17" y2="16"></line>
+        </svg>
+        <h3>Chemistry</h3>
+      </div>
       <p>Reactions, Acids, Metals & Carbon</p>
     </div>
 
     <div class="card" onclick="openSubject('maths')">
-      <h3>📊 Maths</h3>
+      <div class="card-header-flex">
+        <!-- Maths SVG -->
+        <svg class="card-svg-icon" viewBox="0 0 24 24">
+          <path d="M4 19L19 4"></path>
+          <circle cx="7" cy="7" r="2"></circle>
+          <circle cx="17" cy="17" r="2"></circle>
+        </svg>
+        <h3>Maths</h3>
+      </div>
       <p>Algebra, Geometry & Trigonometry</p>
     </div>
 
     <div class="card" onclick="openSubject('biology')">
-      <h3>🧬 Biology</h3>
+      <div class="card-header-flex">
+        <!-- Biology SVG -->
+        <svg class="card-svg-icon" viewBox="0 0 24 24">
+          <path d="M2 15c6.667-6 13.333 0 20-6"></path>
+          <path d="M2 9c6.667 6 13.333 0 20 6"></path>
+        </svg>
+        <h3>Biology</h3>
+      </div>
       <p>Life Processes, Control & Heredity</p>
     </div>
 
     <div class="card" onclick="openSubject('history')">
-      <h3>📜 History</h3>
+      <div class="card-header-flex">
+        <!-- History SVG -->
+        <svg class="card-svg-icon" viewBox="0 0 24 24">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+          <line x1="8" y1="7" x2="16" y2="7"></line>
+          <line x1="8" y1="11" x2="13" y2="11"></line>
+        </svg>
+        <h3>History</h3>
+      </div>
       <p>Nationalism, Revolutions & World</p>
     </div>
 
     <div class="card" onclick="openSubject('geography')">
-      <h3>🌍 Geography</h3>
+      <div class="card-header-flex">
+        <!-- Geography SVG -->
+        <svg class="card-svg-icon" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="2" y1="12" x2="22" y2="12"></line>
+          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+        </svg>
+        <h3>Geography</h3>
+      </div>
       <p>Resources, Agriculture & Industries</p>
     </div>
 
     <div class="card" onclick="openSubject('civics')">
-      <h3>⚖️ Civics</h3>
+      <div class="card-header-flex">
+        <!-- Civics SVG -->
+        <svg class="card-svg-icon" viewBox="0 0 24 24">
+          <path d="M12 3v18"></path>
+          <path d="M5 8l14-3v7L5 12z"></path>
+        </svg>
+        <h3>Civics</h3>
+      </div>
       <p>Power Sharing, Federalism & Democracy</p>
     </div>
 
     <div class="card" onclick="openSubject('economics')">
-      <h3>📈 Economics</h3>
+      <div class="card-header-flex">
+        <!-- Economics SVG -->
+        <svg class="card-svg-icon" viewBox="0 0 24 24">
+          <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+          <polyline points="17 6 23 6 23 12"></polyline>
+        </svg>
+        <h3>Economics</h3>
+      </div>
       <p>Development, Sectors & Globalization</p>
     </div>
 
     <div class="card" onclick="openSubject('hindi')">
-      <h3>📖 Hindi</h3>
+      <div class="card-header-flex">
+        <!-- Hindi SVG -->
+        <svg class="card-svg-icon" viewBox="0 0 24 24">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+        </svg>
+        <h3>Hindi</h3>
+      </div>
       <p>Kshitij, Kritika & Vyakaran</p>
     </div>
 
     <div class="card" onclick="openSubject('english')">
-      <h3>🇬🇧 English</h3>
+      <div class="card-header-flex">
+        <!-- English SVG -->
+        <svg class="card-svg-icon" viewBox="0 0 24 24">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+        </svg>
+        <h3>English</h3>
+      </div>
       <p>First Flight, Footprints & Grammar</p>
     </div>
   </div>
@@ -77,11 +225,98 @@
   <div id="notesContainer" style="margin-top: 25px;"></div>
 </div>
 
-<div class="home-btn" onclick="location.href='index.html'">🏠</div>
+<!-- Draggable SVG Floating Home Button -->
+<div id="movableHomeBtn" class="home-btn">
+  <svg viewBox="0 0 24 24">
+    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+  </svg>
+</div>
 
 <script>
   const CURRENT_CLASS = "10";
 </script>
 <script src="site.js"></script>
+
+<script>
+  // Draggable & Clickable Logic for Home Button
+  const homeBtn = document.getElementById('movableHomeBtn');
+  let isDragging = false;
+  let hasDragged = false;
+  let startX, startY, initialLeft, initialTop;
+
+  // Touch Events (Mobile)
+  homeBtn.addEventListener('touchstart', (e) => {
+    isDragging = true;
+    hasDragged = false;
+    const touch = e.touches[0];
+    startX = touch.clientX;
+    startY = touch.clientY;
+    
+    const rect = homeBtn.getBoundingClientRect();
+    initialLeft = rect.left;
+    initialTop = rect.top;
+  }, { passive: true });
+
+  document.addEventListener('touchmove', (e) => {
+    if (!isDragging) return;
+    const touch = e.touches[0];
+    const deltaX = touch.clientX - startX;
+    const deltaY = touch.clientY - startY;
+
+    if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
+      hasDragged = true;
+    }
+
+    homeBtn.style.left = `${initialLeft + deltaX}px`;
+    homeBtn.style.top = `${initialTop + deltaY}px`;
+    homeBtn.style.bottom = 'auto';
+    homeBtn.style.right = 'auto';
+  }, { passive: true });
+
+  document.addEventListener('touchend', () => {
+    isDragging = false;
+  });
+
+  // Mouse Events (Desktop)
+  homeBtn.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    hasDragged = false;
+    startX = e.clientX;
+    startY = e.clientY;
+    
+    const rect = homeBtn.getBoundingClientRect();
+    initialLeft = rect.left;
+    initialTop = rect.top;
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    const deltaX = e.clientX - startX;
+    const deltaY = e.clientY - startY;
+
+    if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
+      hasDragged = true;
+    }
+
+    homeBtn.style.left = `${initialLeft + deltaX}px`;
+    homeBtn.style.top = `${initialTop + deltaY}px`;
+    homeBtn.style.bottom = 'auto';
+    homeBtn.style.right = 'auto';
+  });
+
+  document.addEventListener('mouseup', () => {
+    isDragging = false;
+  });
+
+  // Handle Click / Navigation
+  homeBtn.addEventListener('click', (e) => {
+    if (hasDragged) {
+      e.preventDefault();
+      return;
+    }
+    window.location.href = 'index.html';
+  });
+</script>
 </body>
 </html>
