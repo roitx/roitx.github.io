@@ -393,3 +393,27 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
+// =====================================================
+// FUTURISTIC SPOTLIGHT & CURSOR EFFECT
+// =====================================================
+const spotlight = document.createElement("div");
+spotlight.id = "cursorSpotlight";
+document.body.appendChild(spotlight);
+
+document.addEventListener("mousemove", (e) => {
+  spotlight.style.left = `${e.clientX}px`;
+  spotlight.style.top = `${e.clientY}px`;
+});
+// Dynamic 3D Card Tilt
+document.querySelectorAll('.card').forEach(card => {
+  card.addEventListener('mousemove', (e) => {
+    const rect = card.getBoundingClientRect();
+    const x = e.clientX - rect.left - rect.width / 2;
+    const y = e.clientY - rect.top - rect.height / 2;
+    card.style.transform = `perspective(1000px) rotateX(${-y / 12}deg) rotateY(${x / 12}deg) translateY(-6px)`;
+  });
+
+  card.addEventListener('mouseleave', () => {
+    card.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px)`;
+  });
+});
