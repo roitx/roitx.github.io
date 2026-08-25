@@ -692,7 +692,74 @@ footer {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--gold-glow);
 }
+/* ================= COOKIE BANNER IMPROVED STYLING ================= */
+.cookie-banner {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 460px;
+  background: rgba(10, 27, 61, 0.85);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), 0 0 20px rgba(58, 160, 255, 0.2);
+  border-radius: 20px;
+  padding: 16px 20px;
+  z-index: 99999;
+  color: var(--text);
+  font-size: 13.5px;
+}
 
+.cookie-content {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.cookie-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.cookie-btn {
+  padding: 8px 18px;
+  border-radius: 12px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.25s ease;
+}
+
+.cookie-btn.accept {
+  background: linear-gradient(135deg, var(--accent), #6f7bff);
+  color: #ffffff;
+  border: none;
+  box-shadow: 0 0 15px rgba(58, 160, 255, 0.4);
+}
+
+.cookie-btn.accept:hover {
+  background: var(--gold-linear);
+  color: #050b18;
+  box-shadow: 0 0 20px var(--gold-glow);
+  transform: translateY(-2px);
+}
+
+.cookie-btn.decline {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--muted);
+  border: 1px solid var(--glass-border);
+}
+
+.cookie-btn.decline:hover {
+  background: rgba(255, 255, 255, 0.18);
+  color: var(--text);
+   }
+   
 @media(max-width: 480px) {
   .brand-name { font-size: 16px; }
   .logo { width: 38px; height: 38px; }
