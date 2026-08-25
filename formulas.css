@@ -153,11 +153,22 @@ select:focus, select:hover {
   border-color: var(--border-glow);
 }
 
-/* Category Top-Right Align */
+/* Card Top Bar Layout */
 .card-top-bar {
   display: flex;
-  justify-content: flex-end;
-  margin-bottom: 2px;
+  justify-content: space-between; /* Left me Class info, Right me Mind Map badge */
+  align-items: center;
+  margin-bottom: 4px;
+  padding: 0 4px;
+}
+
+/* Left side Class • Sub • Ch styling */
+.card-info-left {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #00d2ff;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
 }
 
 .cat-tag {
@@ -171,6 +182,7 @@ select:focus, select:hover {
   letter-spacing: 0.5px;
   text-transform: uppercase;
 }
+
 
 /* ---------- ACTION BOX & ARROW BUTTON STYLES ---------- */
 

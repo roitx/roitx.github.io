@@ -1,6 +1,7 @@
 // =========================================================
-// formulas.js — CLEAN ALIGNED VIEW (ONLY NUMBERS & ARROW)
+// formulas.js — CLEAN ALIGNED VIEW (HEADER + CATEGORY BADGE)
 // =========================================================
+
 const fClass = document.getElementById("fClass");
 const fSubject = document.getElementById("fSubject");
 const fChapter = document.getElementById("fChapter");
@@ -42,22 +43,22 @@ async function loadFormulas() {
     const card = document.createElement("div");
     card.className = "formula-card";
 
-    // Class word hatakar kewal Class Number use kiya h
+    // 1. Top Left Info Format: 10 • CHEM • CH1
     const classNum = f.class ? `${f.class}` : '';
     const subjectName = f.subject ? f.subject.toUpperCase() : '';
+    const chNum = f.chapter ? f.chapter.replace('ch', 'CH ') : '';
     
-    let chapterInfo = '';
-    if (f.chapter_name) {
-      chapterInfo = f.chapter_name;
-    } else if (f.chapter) {
-      chapterInfo = f.chapter.replace('ch', 'CH ');
-    }
+    const leftHeaderText = [classNum, subjectName, chNum].filter(Boolean).join(' • ');
 
-    const descriptiveName = [classNum, subjectName, chapterInfo].filter(Boolean).join(' • ') || 'Formula Document';
+    // 2. Main Title inside box (Chapter Name or Fallback)
+    const mainTitle = f.chapter_name || leftHeaderText || 'Formula Document';
+
+    // 3. Full Name for Viewers
+    const fullViewerName = [leftHeaderText, f.chapter_name].filter(Boolean).join(' - ');
 
     let content = "";
 
-    // 1. TEXT FORMULA
+    // TYPE 1: TEXT FORMULA
     if (f.type === "text") {
       const cleanText = encodeURIComponent(f.formula_text);
       content = `
@@ -67,33 +68,35 @@ async function loadFormulas() {
         </div>`;
     }
 
-    // 2. IMAGE FORMULA
+    // TYPE 2: IMAGE FORMULA
     if (f.type === "image") {
-      const viewerUrl = `image-viewer.html?path=${encodeURIComponent(f.file_path)}&name=${encodeURIComponent(descriptiveName)}`;
-
+      const viewerUrl = `image-viewer.html?path=${encodeURIComponent(f.file_path)}&name=${encodeURIComponent(fullViewerName)}`;
       content = `
         <div class="formula-media-box" onclick="window.location.href='${viewerUrl}'">
-          <span class="box-title">🖼️ ${descriptiveName}</span>
+          <span class="box-title">🖼️ ${mainTitle}</span>
           <span class="btn-action">➔</span>
         </div>`;
     }
 
-    // 3. PDF FORMULA
+    // TYPE 3: PDF FORMULA
     if (f.type === "pdf") {
-      const viewerUrl = `notes-viewer.html?path=${encodeURIComponent(f.file_path)}&name=${encodeURIComponent(descriptiveName)}`;
-
+      const viewerUrl = `notes-viewer.html?path=${encodeURIComponent(f.file_path)}&name=${encodeURIComponent(fullViewerName)}`;
       content = `
         <button class="pdf-btn" onclick="window.location.href='${viewerUrl}'">
-          <span class="box-title">📄 ${descriptiveName}</span>
+          <span class="box-title">📄 ${mainTitle}</span>
           <span class="btn-action">➔</span>
         </button>`;
     }
 
-    // Category Badge
+    // Category Badge (Top Right)
     const categoryBadge = f.category ? `<span class="cat-tag">${f.category.replace('_', ' ').toUpperCase()}</span>` : '';
 
+    // Final Card Structure
     card.innerHTML = `
-      ${categoryBadge ? `<div class="card-top-bar">${categoryBadge}</div>` : ''}
+      <div class="card-top-bar">
+        <span class="card-info-left">${leftHeaderText}</span>
+        ${categoryBadge}
+      </div>
       ${content}
     `;
 
@@ -117,11 +120,11 @@ function closeTextViewer() {
   if (modal) modal.style.display = "none";
 }
 
-// Event Listeners
+// ---------- EVENT LISTENERS ----------
 if (fClass) fClass.addEventListener("change", loadFormulas);
 if (fSubject) fSubject.addEventListener("change", loadFormulas);
 if (fChapter) fChapter.addEventListener("change", loadFormulas);
 if (fCategory) fCategory.addEventListener("change", loadFormulas);
 
-// AUTO LOAD
+// Initial Auto Load
 loadFormulas();
