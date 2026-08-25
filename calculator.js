@@ -109,12 +109,36 @@ function toggleAISolverFullscreen() {
   }
 }
 
+// HELPER FUNCTION TO SHOW AUTH POPUP WITH CUSTOM MESSAGE
+function showAuthModal(customMessage) {
+  const authModal = document.getElementById("authModal");
+  if (authModal) {
+    const modalDesc = authModal.querySelector("p") || authModal.querySelector(".modal-body");
+    if (modalDesc && customMessage) {
+      modalDesc.innerText = customMessage;
+    }
+    authModal.style.display = "flex";
+  }
+}
+
+// FAST AI SOLVER WITH GUEST 1-FREE LIMIT & ERROR HANDLING
 async function submitAISolver(lang) {
+  const userLoggedIn = isLoggedIn || localStorage.getItem("isLoggedIn") === "true";
+  
+  // GUEST USER 1-FREE LIMIT CHECK FOR TEXT MODE
+  if (!userLoggedIn) {
+    let usageCount = parseInt(localStorage.getItem("guestTextUsage") || "0", 10);
+    if (usageCount >= 1) {
+      showAuthModal("Unlimited messages aur full access ke liye login karein!");
+      return;
+    }
+  }
+
   let loader = document.getElementById("aiLoader");
   let resBox = document.getElementById("aiResponse");
   
   if (loader) loader.style.display = "block";
-  if (resBox) resBox.innerHTML = "";
+  if (resBox) resBox.innerHTML = "Thinking...";
 
   const systemInstruction = `You are a pure math engine.
 Write ONLY the direct mathematical derivation and answer in ${lang === 'hi' ? 'Hindi' : 'English'}.
@@ -145,27 +169,34 @@ RULES:
         prompt: systemInstruction + "\n\nTask: " + userText,
         language: lang, 
         image: base64Img,
-        generationConfig: { max_output_tokens: 300, temperature: 0.1 }
+        generationConfig: { max_output_tokens: 500, temperature: 0.1 }
       })
     });
 
     const data = await response.json();
     if (loader) loader.style.display = "none";
 
-    if (data.choices && data.choices[0]?.message?.content) {
-      let content = data.choices[0].message.content;
+    let rawContent = data.choices?.[0]?.message?.content || data.result || data.response || data.output || data.message;
 
-      if (resBox) resBox.innerHTML = content.replace(/\n/g, "<br>");
+    if (rawContent) {
+      if (typeof rawContent === 'object') rawContent = JSON.stringify(rawContent);
+      if (resBox) resBox.innerHTML = rawContent.replace(/\n/g, "<br>");
       
       if (window.MathJax) {
         MathJax.typesetPromise([resBox]);
       }
+
+      // Increment Guest Usage
+      if (!userLoggedIn && currentAIMode === 'text') {
+        let currentCount = parseInt(localStorage.getItem("guestTextUsage") || "0", 10);
+        localStorage.setItem("guestTextUsage", (currentCount + 1).toString());
+      }
     } else {
-      if (resBox) resBox.innerText = "Error: Invalid AI Response.";
+      if (resBox) resBox.innerText = "Error: Couldn't fetch response. Please try again.";
     }
   } catch (err) {
     if (loader) loader.style.display = "none";
-    if (resBox) resBox.innerText = "Error loading response.";
+    if (resBox) resBox.innerText = "Network Error. Please check connection.";
   }
 }
 
@@ -174,8 +205,7 @@ function switchAIMode(mode) {
   const userLoggedIn = isLoggedIn || localStorage.getItem("isLoggedIn") === "true";
 
   if ((mode === 'pad' || mode === 'scan') && !userLoggedIn) {
-    const authModal = document.getElementById("authModal");
-    if (authModal) authModal.style.display = "flex";
+    showAuthModal("Draw Pad aur Scan Mode use karne ke liye login karein!");
     return;
   }
 
@@ -402,6 +432,11 @@ function openAISolver() {
   const modal = document.getElementById("aiModal");
   if (modal) modal.style.display = "flex";
   
+  const aiHeaderTitle = document.querySelector("#aiModal .ai-header h3");
+  if (aiHeaderTitle) {
+    aiHeaderTitle.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00e676" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 6px;"><rect x="3" y="11" width="18" height="10" rx="2"></rect><circle cx="12" cy="5" r="2"></circle><path d="M12 7v4"></path><line x1="8" y1="16" x2="8" y2="16"></line><line x1="16" y1="16" x2="16" y2="16"></line></svg> ROITX AI Math Solver`;
+  }
+
   const tabText = document.getElementById("tabText");
   if (tabText) {
     tabText.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><polyline points="4 7 4 4 20 4 20 7"></polyline><line x1="9" y1="20" x2="15" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line></svg>Text`;
