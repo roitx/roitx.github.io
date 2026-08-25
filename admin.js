@@ -126,6 +126,7 @@ async function loadFiles() {
   const { data, error } = await window.supabaseClient
     .from("notes")
     .select("*")
+    .order("created_at", { ascending: false })
     .order("class", { ascending: true })
     .order("subject", { ascending: true })
     .order("chapter_number", { ascending: true });
@@ -162,12 +163,10 @@ async function loadFiles() {
     const subShort = (note.subject || "").substring(0, 3).toUpperCase();
 
     row.innerHTML = `
-      <!-- Line 1: Short Format (e.g. 10 • PHY • 3 • Gravitation) -->
       <div style="font-size:13px; color:#ffffff; font-weight:600; margin-bottom:8px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%;">
         ${note.class} • ${subShort} • ${note.chapter_number} • ${note.chapter_name || "No Name"}
       </div>
       
-      <!-- Line 2: 👁️, 🖋️ and 🗑️ Buttons (Compact Width) -->
       <div style="display:flex; gap:6px; align-items:center; width:100%;">
         <button style="flex:1; padding:4px 0; font-size:13px; border-radius:6px; border:none; background:#3b82f6; color:#ffffff; cursor:pointer;" onclick="openFile('${note.file_path}', '${note.class}', '${note.subject}', '${escapeQuotes(note.chapter_name || "")}')" title="View">👁️</button>
         <button style="flex:1; padding:4px 0; font-size:13px; border-radius:6px; border:none; background:#f59e0b; color:#ffffff; cursor:pointer;" onclick="openNoteEditModal('${note.id}', '${note.class}', '${note.subject}', '${note.chapter_number}', '${escapeQuotes(note.chapter_name || "")}', '${note.file_path}')" title="Edit">🖋️</button>
@@ -233,16 +232,18 @@ async function saveNoteEdit() {
       chapter_number: chNum,
       chapter_name: chName 
     })
-    .eq("id", id);
+    .eq("id", id)
+    .select();
 
   if (error) {
     alert("❌ Update failed: " + error.message);
     return;
   }
 
-  alert("✅ Note details updated successfully!");
+  // Pehle modal band aur instant UI reload execute karo
   closeNoteEditModal();
   await loadFiles();
+  await updateStats();
 }
 
 async function deleteNoteRecord(id, filePath) {
@@ -300,12 +301,20 @@ async function loadEvents() {
 
   list.innerHTML = "⏳ Loading events...";
 
+  // Sort directly by event_date
   const { data, error } = await window.supabaseClient
     .from("events")
     .select("*")
     .order("event_date", { ascending: true });
 
-  if (error || !data || !data.length) {
+  if (error) {
+    console.error("Events Load Error:", error);
+    list.innerHTML = "<em>Error loading events</em>";
+    updateStats();
+    return;
+  }
+
+  if (!data || data.length === 0) {
     list.innerHTML = "<em>No events found</em>";
     updateStats();
     return;
@@ -330,7 +339,7 @@ async function loadEvents() {
   });
 
   if (filtered.length === 0) {
-    list.innerHTML = "<em>No events found</em>";
+    list.innerHTML = "<em>No matching events found</em>";
     updateStats();
     return;
   }
@@ -341,12 +350,10 @@ async function loadEvents() {
     row.style.cssText = "padding:10px; margin-bottom:10px; background:rgba(255, 255, 255, 0.04); border:1px solid #2e4a73; border-radius:10px; width:100%; box-sizing:border-box;";
 
     row.innerHTML = `
-      <!-- Line 1: Date • Name -->
       <div style="font-size:13px; color:#ffffff; font-weight:600; margin-bottom:8px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%;">
         📅 ${ev.event_date} • ${ev.event_name}
       </div>
 
-      <!-- Line 2: ✏️ and 🗑️ Buttons (Compact Width) -->
       <div style="display:flex; gap:6px; align-items:center; width:100%;">
         <button style="flex:1; padding:4px 0; font-size:13px; border-radius:6px; border:none; background:#f59e0b; color:#ffffff; cursor:pointer;" onclick="openEventEditModal('${ev.id}', '${ev.event_date}', '${escapeQuotes(ev.event_name)}')" title="Edit">✏️ Edit</button>
         <button style="flex:1; padding:4px 0; font-size:13px; border-radius:6px; border:none; background:#ef4444; color:#ffffff; cursor:pointer;" onclick="deleteEvent('${ev.id}')" title="Delete">🗑️ Delete</button>
@@ -357,6 +364,7 @@ async function loadEvents() {
 
   updateStats();
 }
+
 
 function openEventEditModal(id, date, name) {
   const idEl = document.getElementById("editEventId");
@@ -379,7 +387,7 @@ function closeEventEditModal() {
 async function saveEventEdit() {
   const id = document.getElementById("editEventId")?.value;
   const date = document.getElementById("editEventDate")?.value;
-  const name = document.getElementById("editEventName")?.value.trim();
+  const name = document.getElementById("editEventName")?.value.trim() || document.getElementById("eventName")?.value;
 
   if (!date || !name) return alert("❌ Please enter Date and Event Name");
 
@@ -389,32 +397,27 @@ async function saveEventEdit() {
       event_date: date,
       event_name: name 
     })
-    .eq("id", id);
+    .eq("id", id)
+    .select();
 
   if (error) {
     alert("❌ Update failed: " + error.message);
     return;
   }
 
-  alert("✅ Event updated successfully!");
+  // Instant UI Reloading (Modal closure pehle)
   closeEventEditModal();
-  await loadEvents();
-}
-
-async function deleteEvent(id) {
-  if (!confirm("Delete this event?")) return;
-
-  const { error } = await window.supabaseClient.from("events").delete().eq("id", id);
-  if (error) {
-    alert("❌ Delete failed: " + error.message);
-    return;
-  }
-
   await loadEvents();
   await updateStats();
 }
 
-
+async function deleteEvent(id) {
+  if (!confirm("Delete this event?")) return;
+  const { error } = await window.supabaseClient.from("events").delete().eq("id", id);
+  if (error) return alert("❌ Delete failed: " + error.message);
+  await loadEvents();
+  await updateStats();
+}
 /* =====================================================
    PART 4: FORMULAS SYSTEM
    ===================================================== */
@@ -496,7 +499,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-        const { error } = await window.supabaseClient.from("formulas").insert([{
+    const { error } = await window.supabaseClient.from("formulas").insert([{
       user_id: userData.user.id,
       class: fClass.value,
       subject: fSubject.value,
@@ -563,30 +566,31 @@ document.addEventListener("DOMContentLoaded", () => {
       updateStats();
       return;
     }
-
     list.innerHTML = "";
     filtered.forEach(f => {
       const row = document.createElement("div");
       row.style.cssText = "padding:10px; margin-bottom:10px; background:rgba(255, 255, 255, 0.04); border:1px solid #2e4a73; border-radius:10px; width:100%; box-sizing:border-box;";
       
       const subShort = (f.subject || "").substring(0, 3).toUpperCase();
-      const chNum = f.chapter_number || 1;
+      const chNum = f.chapter ? f.chapter.replace("ch", "") : "1";
       const displayChName = f.chapter_name || f.chapter || "";
       
       let catCode = "s";
-      if (f.category === "main") catCode = "m";
+      if (f.category === "mind_map") catCode = "m";
       else if (f.category === "other") catCode = "o";
 
+      let typeIcon = "📄";
+      if (f.type === "image") typeIcon = "🖼️";
+      if (f.type === "text") typeIcon = "📝";
+
       row.innerHTML = `
-        <!-- Line 1: Short Format (e.g. 10 • PHY • 3 • Gravitation (s)) -->
         <div style="font-size:13px; color:#ffffff; font-weight:600; margin-bottom:8px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%;">
-          ${f.class} • ${subShort} • ${chNum} • ${displayChName} (${catCode})
+          ${typeIcon} ${f.class} • ${subShort} • ${chNum} • ${displayChName} (${catCode})
         </div>
 
-        <!-- Line 2: 👁️, 🖋️ and 🗑️ Buttons (Compact Width) -->
         <div style="display:flex; gap:6px; align-items:center; width:100%;">
           <button style="flex:1; padding:4px 0; font-size:13px; border-radius:6px; border:none; background:#3b82f6; color:#ffffff; cursor:pointer;" onclick="viewFormula('${f.id}')" title="View">👁️</button>
-          <button style="flex:1; padding:4px 0; font-size:13px; border-radius:6px; border:none; background:#f59e0b; color:#ffffff; cursor:pointer;" onclick="openFormulaEditModal('${f.id}', '${f.class}', '${f.subject}', '${f.chapter_number || 1}', '${escapeQuotes(f.chapter_name || "")}', '${f.category || "other"}')" title="Edit">🖋️</button>
+          <button style="flex:1; padding:4px 0; font-size:13px; border-radius:6px; border:none; background:#f59e0b; color:#ffffff; cursor:pointer;" onclick="openFormulaEditModal('${f.id}', '${f.class}', '${f.subject}', '${chNum}', '${escapeQuotes(f.chapter_name || "")}', '${f.category || "other"}')" title="Edit">🖋️</button>
           <button style="flex:1; padding:4px 0; font-size:13px; border-radius:6px; border:none; background:#ef4444; color:#ffffff; cursor:pointer;" onclick="deleteFormula('${f.id}','${f.file_path || ""}')" title="Delete">🗑️</button>
         </div>
       `;
@@ -609,7 +613,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const descriptiveName = [className, subjectName, chapterInfo].filter(Boolean).join(" • ") || "Formula Document";
 
       const targetViewer = data.type === "image" ? "image-viewer.html" : "notes-viewer.html";
-      window.open(`${targetViewer}?path=${encodeURIComponent(data.file_path)}&name=${encodeURIComponent(descriptiveName)}`, "_blank");
+      
+      window.location.href = `${targetViewer}?path=${encodeURIComponent(data.file_path)}&name=${encodeURIComponent(descriptiveName)}`;
     }
   };
 
@@ -652,7 +657,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (!chName) return alert("❌ Please enter chapter name");
 
-        const { error } = await window.supabaseClient
+    const { error } = await window.supabaseClient
       .from("formulas")
       .update({ 
         class: cls,
@@ -661,17 +666,18 @@ document.addEventListener("DOMContentLoaded", () => {
         chapter_name: chName,
         category: category
       })
-      .eq("id", id);
-
+      .eq("id", id)
+      .select();
 
     if (error) {
       alert("❌ Update failed: " + error.message);
       return;
     }
 
-    alert("✅ Formula details updated successfully!");
+    // Modal pehle band hoga fir non-blocking UI loading chalegi
     closeFormulaEditModal();
     await loadFormulas();
+    await updateStats();
   };
 
   window.deleteFormula = async function (id, filePath) {
@@ -786,7 +792,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const userName = d.user_name || (d.user_email ? d.user_email.split('@')[0] : "Student");
       const userInitial = userName.charAt(0).toUpperCase();
 
-      // Direct doubts table ka user_photo use kar rahe hain
       const userPhotoHtml = d.user_photo 
         ? `<img src="${d.user_photo}" style="width:26px; height:26px; border-radius:50%; object-fit:cover; margin-right:6px;">` 
         : `<div style="width:26px; height:26px; border-radius:50%; background:#1f3554; color:#fff; display:inline-flex; align-items:center; justify-content:center; margin-right:6px; font-size:11px; font-weight:bold;">${userInitial}</div>`;
@@ -833,7 +838,6 @@ window.openDoubtOverlay = async function() {
     const userEmail = d.user_email || "";
     const userInitial = userName.charAt(0).toUpperCase();
 
-    // Direct user_photo column ka use
     const userAvatarHtml = d.user_photo 
       ? `<img src="${d.user_photo}" style="width:36px; height:36px; border-radius:50%; object-fit:cover;">`
       : `<div style="width:36px; height:36px; border-radius:50%; background:#5a2eff; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:14px;">${userInitial}</div>`;
@@ -890,7 +894,6 @@ window.publishAnswer = async function(id) {
     return;
   }
 
-  alert("✅ Solution published!");
   openDoubtOverlay();
 };
 
