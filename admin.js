@@ -496,12 +496,11 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    const { error } = await window.supabaseClient.from("formulas").insert([{
+        const { error } = await window.supabaseClient.from("formulas").insert([{
       user_id: userData.user.id,
       class: fClass.value,
       subject: fSubject.value,
       chapter: fChapter.value,
-      chapter_number: chapterNum,
       chapter_name: fChapterName.value.trim(),
       type: fType.value,
       category: fCategory.value,
@@ -653,16 +652,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (!chName) return alert("❌ Please enter chapter name");
 
-    const { error } = await window.supabaseClient
+        const { error } = await window.supabaseClient
       .from("formulas")
       .update({ 
         class: cls,
         subject: sub,
-        chapter_number: chNum,
+        chapter: `ch${chNum}`,
         chapter_name: chName,
         category: category
       })
       .eq("id", id);
+
 
     if (error) {
       alert("❌ Update failed: " + error.message);
