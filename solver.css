@@ -84,6 +84,7 @@ body {
 .chat-container {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden; /* Screen se bahar overflow hone se roke */
   -webkit-overflow-scrolling: touch;
   background: #080f19;
   padding: 12px;
@@ -112,6 +113,9 @@ body {
   line-height: 1.5;
   animation: popIn 0.2s ease;
   word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%; /* Overflow Fix */
+  overflow-x: auto;  /* Bade formula horizontal scroll ho jaayenge par bubble bahar nahi niklegi */
 }
 
 .chat-bubble.user {
@@ -128,7 +132,7 @@ body {
   color: #f3f4f6;
   align-self: flex-start;
   border-bottom-left-radius: 2px;
-  max-width: 88%;
+  max-width: 95%; /* Clean responsive layout */
   border-left: 3px solid #3aa0ff;
   border-top: 1px solid #1f3554;
   border-right: 1px solid #1f3554;
@@ -139,7 +143,22 @@ body {
   background: #2a1215;
   border-left: 3px solid #f87171;
   color: #fecaca;
-  max-width: 88%;
+  max-width: 95%;
+}
+
+/* MATHJAX / FORMULA OVERFLOW FIX */
+mjx-container {
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  display: inline-block !important;
+  vertical-align: middle;
+  padding: 2px 0;
+}
+
+mjx-container[jax="CHTML"][display="true"] {
+  display: block !important;
+  margin: 0.5em 0 !important;
 }
 
 /* WHATSAPP INTERACTIVE ACTION CARDS & BUTTONS */
