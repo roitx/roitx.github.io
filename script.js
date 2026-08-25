@@ -1,30 +1,118 @@
-// ================= NAVIGATION =================
-function goto(page){ 
-  window.location.href = page; 
+/* =========================================================
+   PM ROITX - MAIN CONTROLLER SCRIPT
+   ========================================================= */
+
+// ================= 1. GLOBAL NAVIGATION & HELPERS =================
+function goto(page) {
+  window.location.href = page;
 }
 
-// ================= SIDEMENU =================
-const sideMenu = document.querySelector(".side-menu");
-const overlay = document.getElementById("overlay");
-const menuBtn = document.getElementById("menuBtn");  
+// ================= 2. DYNAMIC WATERMARK & QUOTES SYSTEM =================
+function setupDynamicWatermark() {
+  const fallbackQuotes = [
+    "Work Hard in Silence Let Success Make Noise",
+    "Believe You Can And You Are Halfway There",
+    "Push Yourself Because No One Else Is Going To Do It For You",
+    "Power ∝ Work • PM Roitx Study Hub",
+    "Your Only Limit Is You • Stay Focused"
+  ];
 
-if (menuBtn) {
-  menuBtn.addEventListener("click", () => {
-    sideMenu.classList.toggle("open");
-    overlay.classList.toggle("show");
+  let activeQuotes = fallbackQuotes;
+
+  try {
+    const storedQuotes = JSON.parse(localStorage.getItem('quotes'));
+    if (Array.isArray(storedQuotes) && storedQuotes.length > 0) {
+      activeQuotes = storedQuotes;
+    } else if (window.quotes && Array.isArray(window.quotes)) {
+      activeQuotes = window.quotes;
+    }
+  } catch (e) {
+    console.warn("Using fallback watermark quotes", e);
+  }
+
+  const watermarkText = activeQuotes.join(" ✦ ") + " ✦ ";
+  document.body.setAttribute('data-watermark', watermarkText);
+}
+
+// ================= 3. DISABLE ZOOM, TOUCH & SELECTION =================
+document.addEventListener('contextmenu', (e) => e.preventDefault(), false);
+
+let lastTouchEnd = 0;
+document.addEventListener('touchend', (e) => {
+  const now = new Date().getTime();
+  if (now - lastTouchEnd <= 300) {
+    e.preventDefault();
+  }
+  lastTouchEnd = now;
+}, false);
+
+// ================= 4. CURSOR SPOTLIGHT & CARD 3D TILT =================
+const spotlight = document.createElement("div");
+spotlight.id = "cursorSpotlight";
+document.body.appendChild(spotlight);
+
+function updateCursorPos(x, y) {
+  spotlight.style.left = `${x}px`;
+  spotlight.style.top = `${y}px`;
+  document.body.style.setProperty('--cursor-x', `${x}px`);
+  document.body.style.setProperty('--cursor-y', `${y}px`);
+}
+
+document.addEventListener("mousemove", (e) => updateCursorPos(e.clientX, e.clientY));
+document.addEventListener("touchmove", (e) => {
+  if (e.touches.length > 0) {
+    updateCursorPos(e.touches[0].clientX, e.touches[0].clientY);
+  }
+});
+
+// Card 3D Tilt Effect
+document.querySelectorAll('.card').forEach(card => {
+  card.addEventListener('mousemove', (e) => {
+    const rect = card.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    card.style.setProperty('--card-x', `${x}px`);
+    card.style.setProperty('--card-y', `${y}px`);
+
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    const rotateX = -((y - centerY) / 12);
+    const rotateY = (x - centerX) / 12;
+
+    card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-4px)`;
   });
-}
 
-if (overlay) {
-  overlay.addEventListener("click", () => {
-    sideMenu.classList.remove("open");
-    overlay.classList.remove("show");
+  card.addEventListener('mouseleave', () => {
+    card.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px)`;
   });
-}
+});
 
-// ================= DOM LOADED =================
+// ================= 5. DOM LOADED (THEME, AUTH, SIDEMENU & HIGHLIGHT) =================
 document.addEventListener("DOMContentLoaded", async () => {
-  // Dark / Light Mode
+  // Initialize Dynamic Watermark
+  setupDynamicWatermark();
+
+  // Sidemenu Controls
+  const sideMenu = document.querySelector(".side-menu");
+  const overlay = document.getElementById("overlay");
+  const menuBtn = document.getElementById("menuBtn");
+
+  if (menuBtn) {
+    menuBtn.addEventListener("click", () => {
+      sideMenu.classList.toggle("open");
+      overlay.classList.toggle("show");
+    });
+  }
+
+  if (overlay) {
+    overlay.addEventListener("click", () => {
+      sideMenu.classList.remove("open");
+      overlay.classList.remove("show");
+    });
+  }
+
+  // Dark / Light Theme Toggle
   const modeToggle = document.getElementById("modeToggle");
   if (modeToggle) {
     const saved = localStorage.getItem("theme");
@@ -38,7 +126,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  // ================= DYNAMIC AUTH / PROFILE LOGIC =================
+  // Dynamic Auth Sync
   const authContainer = document.getElementById("navAuthContainer");
   const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
 
@@ -47,8 +135,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (isLoggedIn && authContainer) {
     authContainer.innerHTML = `
-      <a href="profile.html" class="user-profile-link">
-        <img src="${userPhoto}" alt="Avatar" class="user-avatar" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">
+      <a href="profile.html" class="user-profile-link" style="display: flex; align-items: center; gap: 8px; text-decoration: none; color: inherit;">
+        <img src="${userPhoto}" alt="Avatar" class="user-avatar" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid var(--accent);">
         <span style="font-weight: 600;">${userName}</span>
       </a>
     `;
@@ -76,8 +164,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         if (authContainer) {
           authContainer.innerHTML = `
-            <a href="profile.html" class="user-profile-link">
-              <img src="${userPhoto}" alt="Avatar" class="user-avatar" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">
+            <a href="profile.html" class="user-profile-link" style="display: flex; align-items: center; gap: 8px; text-decoration: none; color: inherit;">
+              <img src="${userPhoto}" alt="Avatar" class="user-avatar" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid var(--accent);">
               <span style="font-weight: 600;">${userName}</span>
             </a>
           `;
@@ -87,290 +175,18 @@ document.addEventListener("DOMContentLoaded", async () => {
       console.warn("Could not fetch profile for navbar:", err);
     }
   }
-});
 
-
-// ================= YEAR =================
-const yearElement = document.getElementById("year");
-if (yearElement) {
-  yearElement.textContent = new Date().getFullYear();
-}
-
-// ================= MOTIVATION POPUP =================
-const quotes = [
- "Success = Consistency × Hard Work!",
-"Winners are not born, they are built!",
-"Focus on progress, not perfection!",
-"Work in silence, let success make the noise!",
-"Every expert was once a beginner!",
-"Small steps every day lead to big results!",
-"Stop doubting yourself, work hard and make it happen!",
-"Discipline beats motivation every time!",
-"Your only limit is your mind!",
-"If it was easy, everyone would do it!",
-"Dream big. Start small. Act now!",
-"Don't stop until you're proud!",
-"You don't need to be perfect — just be consistent!",
-"The best view comes after the hardest climb!",
-"It's never too late to start again!",
-"Your future is created by what you do today!",
-"Push yourself. Because no one else will!",
-"Stay focused. Stay determined. Stay hungry!",
-"A little progress each day adds up to big results!",
-"Believe in yourself, even when no one else does!",
-"Your grind will pay off — trust the process!",
-"Don't wait for motivation — create discipline!",
-"Learn from yesterday. Work for today. Plan for tomorrow!",
-"Focus on your goals, not people.",
-"Failure is not opposite of success — it’s part of it!",
-"Success starts with self-discipline!",
-"Do something today that your future self will thank you for!",
-"Make yourself a priority!",
-"Study now so life becomes easy later!",
-"The harder you work, the luckier you get!",
-"You only fail when you stop trying!",
-"Don't compare yourself to others — compare with old you!",
-"Win in silence so no one can destroy your success!",
-"You are stronger than your excuses!",
-"Champions keep going even when they are tired!",
-"You don’t need a perfect plan, just start!",
-"Be addicted to improvement!",
-"Dreams don't work unless you do!",
-"The moment you feel like quitting is when you must keep going!",
-"You are built for greatness!",
-"Keep studying — the results are loading!",
-"Nothing changes if nothing changes!",
-"Do it for the version of you who never gave up!",
-"Let your success make the noise!",
-"Excuses make today easy but tomorrow hard.",
-"Hard work makes today hard but tomorrow easy.",
-"Hustle until your haters ask if you're hiring!",
-"Stay low, work hard and surprise everyone!",
-"You are one decision away from a totally different life!",
-"If you're not willing to learn, no one can help you.",
-"Be better than you were yesterday!",
-"Sacrifice now or regret later — your choice!",
-"Losers complain. Winners work.",
-"Your success is your responsibility!",
-"You have no competition when you focus on yourself!",
-"When you feel lazy, remember your goals!",
-"Don't wish for it — work for it!",
-"Prove yourself to yourself!",
-"Success begins with a single step!",
-"Make your parents proud!",
-"Grow through what you go through!",
-"Don't stop when you're tired — stop when you're done!",
-"Work until you no longer have to introduce yourself!",
-"Pain is temporary, pride is forever!",
-"Your habits decide your future!",
-"You become what you do daily!",
-"Your success will silence them!",
-"Time is limited — don’t waste it!",
-"Only dead fish go with the flow!",
-"Be the hardest worker in the room!",
-"The only bad study session is the one you didn’t do!",
-"Winners focus on winning, losers focus on winners!",
-"Suffer the pain of discipline or suffer the pain of regret!",
-"Consistency creates champions!",
-"Be the student who wants A+, not the one who wants shortcuts.",
-"Kill your excuses before they kill your dreams!",
-"Get comfortable being uncomfortable!",
-"Success hits different when no one believed in you!",
-"Grind in private. Shine in public!",
-"Never beg for results — work for them!",
-"The world is yours if you're willing to work for it!",
-"Wasting time is the biggest disrespect to your future!",
-"Stay disciplined — motivation will follow!",
-"Set goals. Crush them. Repeat!",
-"The road to success is always under construction!",
-"If you want something you never had, do something you've never done!",
-"You can’t have a million-dollar dream with a lazy mindset!",
-"Don't be afraid to start over — it's a new chance!",
-"One day or day one — you decide!",
-"Study hard so your future self lives better!",
-"Be unstoppable — like time!",
-"Results require action, not wishes!",
-"You are closer than you think — keep going!",
-"You were born to win — don’t quit now!",
-"You don’t need motivation daily — just consistency!",
-"Every minute you study adds power to your future!",
-"Give your best today — tomorrow depends on it!",
-"You can discipline yourself or disappoint yourself!",
-"The grind never ends — only improves!",
-"Make yourself someone you’d be proud of!",
-];
-
-// Create popup HTML
-const popupHTML = `
-<div class="popup" id="motivationPopup" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); justify-content:center; align-items:center; z-index:1000;">
-  <div class="popup-content" style="background:#e0e5ec; padding:20px; border-radius:16px; max-width:300px; text-align:center;">
-    <p id="motivationText"></p>
-  </div>
-</div>`;
-document.body.insertAdjacentHTML("beforeend", popupHTML);
-
-function showMotivation() {
-  const quote = quotes[Math.floor(Math.random() * quotes.length)];
-  document.getElementById("motivationText").textContent = quote;
-  const popup = document.getElementById("motivationPopup");
-  popup.style.display = "flex";
-  setTimeout(() => popup.style.display = "none", 7000);
-}
-
-const motivationPopupElem = document.getElementById("motivationPopup");
-if (motivationPopupElem) {
-  motivationPopupElem.addEventListener("click", e => {
-    if(e.target.id === "motivationPopup") e.target.style.display = "none";
-  });
-}
-
-// ================= CANVAS STARS BACKGROUND =================
-const c = document.getElementById("bgCanvas");
-if (c) {
-  const ctx = c.getContext("2d");
-  let dots = [];
-  
-  function createDots() {
-    const numDots = Math.floor(window.innerWidth / 25);
-    dots = [];
-    for (let i = 0; i < numDots; i++) {
-      dots.push({
-        x: Math.random() * c.width,
-        y: Math.random() * c.height,
-        r: 1.5 + Math.random() * 2,
-        dx: (Math.random() - 0.5) * 0.4,
-        dy: (Math.random() - 0.5) * 0.4
-      });
-    }
-  }
-
-  function resizeCanvas() {
-    c.width = window.innerWidth;
-    c.height = window.innerHeight;
-    createDots();
-  }
-  window.addEventListener("resize", resizeCanvas);
-  resizeCanvas();
-
-  function animateDots() {
-    ctx.clearRect(0, 0, c.width, c.height);
-    dots.forEach(d => {
-      ctx.beginPath();
-      ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
-      ctx.fillStyle = "rgba(255,255,255,0.25)";
-      ctx.fill();
-      d.x += d.dx;
-      d.y += d.dy;
-      if (d.x < 0 || d.x > c.width) d.dx *= -1;
-      if (d.y < 0 || d.y > c.height) d.dy *= -1;
-    });
-    requestAnimationFrame(animateDots);
-  }
-  animateDots();
-}
-
-// ================= FULL-WIDTH CINEMATIC WAVE =================
-const wavePathBottom = document.getElementById("waveBottomPath");
-if (wavePathBottom) {
-  let t = 0;
-  function animateWave() {
-    t += 0.015;
-    const waveHeight = 120;     
-    const amplitude1 = 18;      
-    const amplitude2 = 10;      
-    const frequency1 = 0.007;   
-    const frequency2 = 0.014;
-    const bottomLimit = 220;    
-
-    let d = `M0 ${waveHeight} `;
-    for (let x = 0; x <= window.innerWidth; x += 5) {
-      const y = waveHeight
-                + Math.sin(x * frequency1 + t) * amplitude1
-                + Math.sin(x * frequency2 + t * 1.3) * amplitude2;
-      d += `L ${x} ${y} `;
-    }
-    d += `L ${window.innerWidth} ${bottomLimit} L0 ${bottomLimit} Z`;
-
-    wavePathBottom.setAttribute("d", d);
-    requestAnimationFrame(animateWave);
-  }
-  animateWave();
-}
-
-// ================= APP LOAD EFFECT =================
-window.addEventListener("load", () => {
-  document.body.classList.add("app-loaded");
-});
-
-// share //
-const shareBtn = document.querySelector('#share-button');
-if (shareBtn) {
-  const shareData = {
-    title: 'Roitx - Personal Study Hub',
-    text: 'Check out these amazing study notes and tools!',
-    url: 'https://roitx.github.io/'
-  }
-
-  shareBtn.addEventListener('click', async () => {
-    try {
-      await navigator.share(shareData);
-    } catch (err) {
-      console.log('Error: ' + err);
+  // Highlight Active Menu Item
+  const currentPath = window.location.pathname.split("/").pop();
+  document.querySelectorAll(".side-menu a").forEach(link => {
+    if (link.getAttribute("href") === currentPath) {
+      link.classList.add("active");
+      link.style.borderLeft = "4px solid var(--accent, #3aa0ff)";
+      link.style.background = "rgba(58, 160, 255, 0.12)";
     }
   });
-}
-// =====================================================
-// ADVANCED OFFLINE / ONLINE STATUS & REDIRECT
-// =====================================================
-window.addEventListener('DOMContentLoaded', () => {
-  const banner = document.getElementById('offlineBanner');
-  const bannerText = document.getElementById('bannerText');
 
-  if (!banner) return;
-
-  // Banner click par Library redirect logic
-  banner.addEventListener('click', () => {
-    // Agar offline hai tabhi library par bheje ya hamesha ke liye rakhna ho toh condition hata sakte hain
-    window.location.href = 'library.html';
-  });
-
-  function updateOnlineStatus() {
-    if (navigator.onLine) {
-      // Online Status
-      banner.classList.add('online');
-      if (bannerText) bannerText.textContent = 'Back online';
-      banner.classList.add('show');
-
-      setTimeout(() => {
-        banner.classList.remove('show');
-      }, 3500);
-    } else {
-      // Offline Status
-      banner.classList.remove('online');
-      if (bannerText) bannerText.textContent = 'Offline • Tap to view Library';
-      banner.classList.add('show');
-    }
-  }
-
-  window.addEventListener('online', updateOnlineStatus);
-  window.addEventListener('offline', updateOnlineStatus);
-
-  // Initial Check
-  if (!navigator.onLine) {
-    updateOnlineStatus();
-  }
-});
-        
-// Auto-update trigger for Service Worker
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
-    window.location.reload();
-  });
-}
-
-
-// ================= COOKIE CONSENT LOGIC =================
-document.addEventListener("DOMContentLoaded", () => {
+  // Cookie Consent Banner
   const cookieBanner = document.getElementById("cookieBanner");
   const acceptBtn = document.getElementById("acceptCookies");
   const declineBtn = document.getElementById("declineCookies");
@@ -393,27 +209,181 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
-// =====================================================
-// FUTURISTIC SPOTLIGHT & CURSOR EFFECT
-// =====================================================
-const spotlight = document.createElement("div");
-spotlight.id = "cursorSpotlight";
-document.body.appendChild(spotlight);
 
-document.addEventListener("mousemove", (e) => {
-  spotlight.style.left = `${e.clientX}px`;
-  spotlight.style.top = `${e.clientY}px`;
+// ================= 6. MOTIVATION POPUP SYSTEM =================
+async function showMotivation() {
+  const popup = document.getElementById("motivationPopup");
+  const textElem = document.getElementById("motivationText");
+
+  if (!popup || !textElem) return;
+
+  textElem.textContent = "Loading motivation...";
+  popup.style.display = "flex";
+
+  if (navigator.onLine) {
+    try {
+      const response = await fetch("https://dummyjson.com/quotes/random");
+      const data = await response.json();
+      textElem.textContent = `"${data.quote}" — ${data.author}`;
+    } catch (err) {
+      loadFallbackQuote(textElem);
+    }
+  } else {
+    loadFallbackQuote(textElem);
+  }
+
+  setTimeout(() => {
+    popup.style.display = "none";
+  }, 7000);
+}
+
+function loadFallbackQuote(element) {
+  if (typeof fallbackQuotes !== "undefined" && fallbackQuotes.length > 0) {
+    const randomQuote = fallbackQuotes[Math.floor(Math.random() * fallbackQuotes.length)];
+    element.textContent = randomQuote;
+  } else {
+    element.textContent = "Focus on progress, not perfection!";
+  }
+}
+
+const motivationPopupElem = document.getElementById("motivationPopup");
+if (motivationPopupElem) {
+  motivationPopupElem.addEventListener("click", e => {
+    if (e.target.id === "motivationPopup") e.target.style.display = "none";
+  });
+}
+
+// ================= 7. CANVAS BACKGROUND ANIMATION =================
+const c = document.getElementById("bgCanvas");
+if (c) {
+  const ctx = c.getContext("2d");
+  let dots = [];
+
+  function createDots() {
+    const numDots = Math.floor(window.innerWidth / 25);
+    dots = [];
+    for (let i = 0; i < numDots; i++) {
+      dots.push({
+        x: Math.random() * c.width,
+        y: Math.random() * c.height,
+        r: 1.5 + Math.random() * 2,
+        dx: (Math.random() - 0.5) * 0.4,
+        dy: (Math.random() - 0.5) * 0.4
+      });
+    }
+  }
+
+  function resizeCanvas() {
+    c.width = window.innerWidth;
+    c.height = window.innerHeight;
+    createDots();
+  }
+
+  let resizeTimer;
+  window.addEventListener("resize", () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(resizeCanvas, 200);
+  });
+
+  resizeCanvas();
+
+  function animateDots() {
+    ctx.clearRect(0, 0, c.width, c.height);
+    dots.forEach(d => {
+      ctx.beginPath();
+      ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
+      ctx.fillStyle = document.body.classList.contains("light") ? "rgba(37, 99, 235, 0.15)" : "rgba(255,255,255,0.25)";
+      ctx.fill();
+      d.x += d.dx;
+      d.y += d.dy;
+      if (d.x < 0 || d.x > c.width) d.dx *= -1;
+      if (d.y < 0 || d.y > c.height) d.dy *= -1;
+    });
+    requestAnimationFrame(animateDots);
+  }
+  animateDots();
+}
+
+// ================= 8. CINEMATIC WAVE ANIMATION =================
+const wavePathBottom = document.getElementById("waveBottomPath");
+if (wavePathBottom) {
+  let t = 0;
+  function animateWave() {
+    t += 0.015;
+    const waveHeight = 120;
+    const amplitude1 = 18;
+    const amplitude2 = 10;
+    const frequency1 = 0.007;
+    const frequency2 = 0.014;
+    const bottomLimit = 220;
+
+    let d = `M0 ${waveHeight} `;
+    for (let x = 0; x <= window.innerWidth; x += 5) {
+      const y = waveHeight
+        + Math.sin(x * frequency1 + t) * amplitude1
+        + Math.sin(x * frequency2 + t * 1.3) * amplitude2;
+      d += `L ${x} ${y} `;
+    }
+    d += `L ${window.innerWidth} ${bottomLimit} L0 ${bottomLimit} Z`;
+
+    wavePathBottom.setAttribute("d", d);
+    requestAnimationFrame(animateWave);
+  }
+  animateWave();
+}
+
+// ================= 9. OFFLINE BANNER & SERVICE WORKER =================
+window.addEventListener('DOMContentLoaded', () => {
+  const banner = document.getElementById('offlineBanner');
+  const bannerText = document.getElementById('bannerText');
+
+  if (!banner) return;
+
+  banner.addEventListener('click', () => {
+    window.location.href = 'library.html';
+  });
+
+  function updateOnlineStatus() {
+    if (navigator.onLine) {
+      banner.classList.add('online');
+      if (bannerText) bannerText.textContent = 'Back online';
+      banner.classList.add('show');
+
+      setTimeout(() => {
+        banner.classList.remove('show');
+      }, 3500);
+    } else {
+      banner.classList.remove('online');
+      if (bannerText) bannerText.textContent = 'Offline • Tap to view Library';
+      banner.classList.add('show');
+    }
+  }
+
+  window.addEventListener('online', updateOnlineStatus);
+  window.addEventListener('offline', updateOnlineStatus);
+
+  if (!navigator.onLine) {
+    updateOnlineStatus();
+  }
 });
-// Dynamic 3D Card Tilt
-document.querySelectorAll('.card').forEach(card => {
-  card.addEventListener('mousemove', (e) => {
-    const rect = card.getBoundingClientRect();
-    const x = e.clientX - rect.left - rect.width / 2;
-    const y = e.clientY - rect.top - rect.height / 2;
-    card.style.transform = `perspective(1000px) rotateX(${-y / 12}deg) rotateY(${x / 12}deg) translateY(-6px)`;
-  });
 
-  card.addEventListener('mouseleave', () => {
-    card.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px)`;
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    window.location.reload();
   });
+}
+
+// ================= 10. KEYBOARD SHORTCUTS & APP LOAD =================
+document.addEventListener("keydown", (e) => {
+  if (e.altKey && e.key.toLowerCase() === 't') {
+    goto('study-timer.html');
+  } else if (e.altKey && e.key.toLowerCase() === 's') {
+    goto('solver.html');
+  } else if (e.altKey && e.key.toLowerCase() === 'c') {
+    goto('classes.html');
+  }
+});
+
+window.addEventListener("load", () => {
+  document.body.classList.add("app-loaded");
 });
