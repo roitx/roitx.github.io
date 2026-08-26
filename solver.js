@@ -107,6 +107,11 @@ function clearQuestionInput() {
   if (el) el.value = "";
 }
 
+function getCurrentFormattedTime() {
+  const now = new Date();
+  return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
 function renderMathSafely(element) {
   if (window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
     window.MathJax.typesetPromise([element]).catch((err) => console.warn("MathJax error:", err));
@@ -115,13 +120,15 @@ function renderMathSafely(element) {
   }
 }
 
-function appendChatMessage(htmlContent, type = "ai") {
+function appendChatMessage(htmlContent, type = "ai", showTime = true) {
   const container = document.getElementById("answerHistory");
   if (!container) return;
 
   const msgDiv = document.createElement("div");
   msgDiv.className = `chat-bubble ${type}`;
-  msgDiv.innerHTML = htmlContent;
+  
+  const timeStamp = showTime ? `<span class="chat-time">${getCurrentFormattedTime()}</span>` : '';
+  msgDiv.innerHTML = htmlContent + timeStamp;
 
   container.appendChild(msgDiv);
   scrollToBottom();
@@ -132,7 +139,12 @@ function appendChatMessage(htmlContent, type = "ai") {
 function scrollToBottom() {
   const container = document.getElementById("answerHistory");
   if (container) {
-    container.scrollTop = container.scrollHeight;
+    setTimeout(() => {
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: 'smooth'
+      });
+    }, 100);
   }
 }
 
@@ -187,7 +199,7 @@ function renderLanguageSelection() {
       </div>
     </div>
   `;
-  appendChatMessage(cardHTML, "ai");
+  appendChatMessage(cardHTML, "ai", false);
 }
 
 function selectLanguage(lang, label) {
@@ -230,7 +242,7 @@ function renderFieldSelection() {
       </div>
     </div>
   `;
-  appendChatMessage(cardHTML, "ai");
+  appendChatMessage(cardHTML, "ai", false);
 }
 
 function selectField(field) {
@@ -264,7 +276,7 @@ function selectField(field) {
         </div>
       </div>
     `;
-    appendChatMessage(cardHTML, "ai");
+    appendChatMessage(cardHTML, "ai", false);
   }, 200);
 }
 
@@ -321,7 +333,6 @@ async function openAdminDoubtModal() {
     return;
   }
 
-  // Create Modal if not already injected
   let modal = document.getElementById("adminDoubtModal");
   if (!modal) {
     modal = document.createElement("div");
@@ -333,7 +344,7 @@ async function openAdminDoubtModal() {
     `;
     modal.innerHTML = `
       <div style="background: #1e293b; border: 1px solid #3b82f6; border-radius: 12px; width: 90%; max-width: 420px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); color: #f8fafc; font-family: sans-serif;">
-        <div style="display:flex; justify-between; align-items:center; margin-bottom: 12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
           <h3 style="margin: 0; font-size: 16px; color: #60a5fa; display: flex; align-items: center; gap: 6px;">
             ${SVG_ICONS.admin} Send Doubt to Admin
           </h3>
@@ -354,7 +365,6 @@ async function openAdminDoubtModal() {
     modal.style.display = "flex";
   }
 
-  // Pre-fill input if user had typed something in main input
   const mainInput = getQuestion();
   if (mainInput) {
     const modalInput = document.getElementById("adminDoubtInput");
@@ -437,13 +447,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
 async function solveWithAI(questionText) {
   const loadingId = "loading-" + Date.now();
-  appendChatMessage(`<span id="${loadingId}">⏳ AI Reading & Solving in real-time...</span>`, "ai");
+  appendChatMessage(`
+    <div id="${loadingId}" class="typing-indicator">
+      <span>AI Thinking</span>
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+    </div>`, "ai", false);
 
   const sendBtn = document.getElementById("solveBtn");
   if (sendBtn) sendBtn.disabled = true;
 
-  const SUPABASE_FUNCTION_URL = "https://ktastwehnnqicriknewr.supabase.co/functions/v1/smart-task";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0YXN0d2Vobm5xaWNyaWtuZXdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyNTk5NTEsImV4cCI6MjA4MDgzNTk1MX0.5_UvwaG0X8k_Emj-cMC0KjEqlvU6hgAt5IsHJdgARvk"; 
+  const SUPABASE_FUNCTION_URL = window.SUPABASE_FUNCTION_URL || "https://ktastwehnnqicriknewr.supabase.co/functions/v1/smart-task";
+  const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0YXN0d2Vobm5xaWNyaWtuZXdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyNTk5NTEsImV4cCI6MjA4MDgzNTk1MX0.5_UvwaG0X8k_Emj-cMC0KjEqlvU6hgAt5IsHJdgARvk"; 
 
   let PROMPT = "";
   if (currentLanguage === 'en') {
@@ -474,7 +490,9 @@ Solve in clean Hinglish (Roman Hindi + English). Use LaTeX for math ($...$ inlin
     const data = await response.json();
 
     const loadingElem = document.getElementById(loadingId);
-    if (loadingElem && loadingElem.parentElement) loadingElem.parentElement.remove();
+    if (loadingElem && loadingElem.closest('.chat-bubble')) {
+      loadingElem.closest('.chat-bubble').remove();
+    }
 
     let rawText = "";
 
@@ -503,7 +521,9 @@ Solve in clean Hinglish (Roman Hindi + English). Use LaTeX for math ($...$ inlin
   } catch (err) {
     console.error("Full Error Debug:", err);
     const loadingElem = document.getElementById(loadingId);
-    if (loadingElem && loadingElem.parentElement) loadingElem.parentElement.remove();
+    if (loadingElem && loadingElem.closest('.chat-bubble')) {
+      loadingElem.closest('.chat-bubble').remove();
+    }
     appendChatMessage(`⚠️ Error: ${err.message || 'Network issue'}.`, "system-error");
   } finally {
     const sendBtn = document.getElementById("solveBtn");

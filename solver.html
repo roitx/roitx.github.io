@@ -57,40 +57,15 @@
       </div>
     </div>
 
-    <!-- CONTINUOUS CHAT STREAM CONTAINER -->
-    <div id="answerHistory" class="chat-container">
-      
-      <!-- DEFAULT WHATSAPP INTERACTIVE CARD (LANGUAGE SELECTION) -->
-      <div class="chat-bubble ai" style="background: transparent; padding: 0; border: none;">
-        <div class="interactive-card">
-          <div class="card-text">
-            Namaste 🙏 Welcome to ROITX AI Tutor.<br>
-            Kripya apni pasandida bhasha chunein / Choose your language:
-          </div>
-          <div class="interactive-btn-group">
-            <button class="wa-action-btn" onclick="selectLanguage('hinglish', 'Hinglish')">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-              Hinglish (Mix)
-            </button>
-            <button class="wa-action-btn" onclick="selectLanguage('hi', 'हिंदी (Hindi)')">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
-              हिंदी (Hindi)
-            </button>
-            <button class="wa-action-btn" onclick="selectLanguage('en', 'English')">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
-              English
-            </button>
-          </div>
-        </div>
-      </div>
-
-    </div>
+    <!-- CONTINUOUS CHAT STREAM CONTAINER (JS will render initial UI card dynamic) -->
+    <div id="answerHistory" class="chat-container"></div>
 
     <!-- QUESTION INPUT -->
     <div class="input-group">
       <textarea
         id="question"
         placeholder="Apna sawaal, equation ya theory problem type karein..."
+        onkeydown="if(event.key === 'Enter' && !event.shiftKey){ event.preventDefault(); solve(); }"
       ></textarea>
       <button id="solveBtn" onclick="solve()">
         Bhejen 
