@@ -548,14 +548,16 @@
             if (!confirm(`Confirm payment approval for ${userEmail}?`)) return;
 
             try {
+                // 1. Fetch User UUID safely
                 const { data: userData } = await window.supabaseClient
                     .from('profiles')
                     .select('id')
                     .eq('email', userEmail)
-                    .single();
+                    .maybeSingle();
 
                 let userId = userData ? userData.id : null;
 
+                // 2. Update status in user_orders
                 const { error: orderErr } = await window.supabaseClient
                     .from('user_orders')
                     .update({ status: 'approved' })
@@ -563,6 +565,7 @@
 
                 if (orderErr) throw orderErr;
 
+                // 3. Insert purchase record
                 if (userId && noteId) {
                     await window.supabaseClient
                         .from('user_purchases')
@@ -573,7 +576,19 @@
                         }]);
                 }
 
-                alert("🎉 Order Approved & Access Granted!");
+                // 4. Send Notification to User Table
+                const { error: notifErr } = await window.supabaseClient
+                    .from('notifications')
+                    .insert([{
+                        user_id: userId,
+                        title: "🎉 Note Access Granted!",
+                        message: `Your payment for order #${orderId} was verified. Access granted to your premium note!`,
+                        link: "premium-notes.html"
+                    }]);
+
+                if (notifErr) console.warn("Notification error:", notifErr);
+
+                alert("🎉 Order Approved & User Notified!");
                 await fetchOrders();
 
             } catch (err) {
@@ -585,6 +600,24 @@
             if (!confirm("Are you sure you want to REJECT this payment?")) return;
 
             try {
+                // Fetch User Info
+                const { data: orderData } = await window.supabaseClient
+                    .from('user_orders')
+                    .select('user_email')
+                    .eq('id', orderId)
+                    .single();
+
+                let userId = null;
+                if (orderData?.user_email) {
+                    const { data: userData } = await window.supabaseClient
+                        .from('profiles')
+                        .select('id')
+                        .eq('email', orderData.user_email)
+                        .maybeSingle();
+                    if (userData) userId = userData.id;
+                }
+
+                // Update Order Status
                 const { error } = await window.supabaseClient
                     .from('user_orders')
                     .update({ status: 'rejected' })
@@ -592,7 +625,17 @@
 
                 if (error) throw error;
 
-                alert("Order Rejected ❌");
+                // Send Rejection Notification
+                await window.supabaseClient
+                    .from('notifications')
+                    .insert([{
+                        user_id: userId,
+                        title: "❌ Payment Verification Failed",
+                        message: `Payment order #${orderId} was rejected. Please verify your UTR code and resubmit.`,
+                        link: "premium-notes.html"
+                    }]);
+
+                alert("Order Rejected & User Notified ❌");
                 await fetchOrders();
             } catch (err) {
                 alert("Reject Error: " + err.message);

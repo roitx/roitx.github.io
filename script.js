@@ -1,5 +1,5 @@
 /* =========================================================
-   PM ROITX - MAIN CONTROLLER SCRIPT (WITH SUPABASE NOTIF)
+   PM ROITX - MAIN CONTROLLER SCRIPT (FULL NOTIFICATION FIXED)
    ========================================================= */
 
 // Global Fallback Quotes
@@ -65,7 +65,6 @@ document.addEventListener("touchmove", (e) => {
   }
 });
 
-// Card 3D Tilt Effect Initialization
 function initCardTilt() {
   document.querySelectorAll('.card').forEach(card => {
     card.addEventListener('mousemove', (e) => {
@@ -90,70 +89,43 @@ function initCardTilt() {
   });
 }
 
-// 5. NOTIFICATION SYSTEM (UPDATED WITH MODAL & SUPABASE)
+// 5. NOTIFICATION SYSTEM (DROPDOWN + MODAL + BROADCASTS)
 let readNotifIds = JSON.parse(localStorage.getItem("read_notifs") || "[]");
 let deletedNotifIds = JSON.parse(localStorage.getItem("deleted_notifs") || "[]");
 
 function toggleNotif() {
-  const notifModal = document.getElementById('notifModal');
-  if (notifModal) {
-    notifModal.classList.add('active'); // Fullscreen modal kholne ke liye
-  }
-
-  // Modal ke header ya actions container mein JS se "Mark all as read" button inject karne ke liye
-  const modalHeader = notifModal.querySelector('.notif-modal-header') || notifModal;
-  
-  // Check karein ki button pehle se toh nahi bana hai
-  if (!document.getElementById('dynamicMarkReadBtn')) {
-    const markBtn = document.createElement('button');
-    markBtn.id = 'dynamicMarkReadBtn';
-    markBtn.className = 'btn-modal-action';
-    markBtn.innerHTML = `
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-      <span>Mark all as read</span>
-    `;
-    markBtn.style.marginLeft = 'auto';
-    markBtn.style.marginRight = '10px';
-    markBtn.style.padding = '6px 12px';
-    markBtn.style.fontSize = '12px';
-    
-    markBtn.onclick = function() {
-      if (typeof markAllAsRead === 'function') {
-        markAllAsRead();
-      }
-    };
-
-    // Header ke close button se pehle inject kar dein
-    const closeBtn = modalHeader.querySelector('.notif-modal-close');
-    if (closeBtn) {
-      modalHeader.insertBefore(markBtn, closeBtn);
-    } else {
-      modalHeader.appendChild(markBtn);
-    }
-  }
-
-  // Agar notifications read karni hain
-  if (typeof loadNotifications === 'function') {
-    loadNotifications();
+  const box = document.getElementById("notifBox");
+  if (box) {
+    box.classList.toggle("show");
+  } else {
+    // Dropdown na milne par fallback Modal Active trigger
+    const notifModal = document.getElementById('notifModal');
+    if (notifModal) notifModal.style.display = 'flex';
   }
 }
 
 function markAllAsRead() {
   const badge = document.getElementById("notifBadge");
+  const tag = document.getElementById("notifCountTag");
+
   if (badge) {
     badge.classList.remove("active");
     badge.style.display = "none";
   }
-  
+  if (tag) tag.textContent = "0 New";
+
   const allItems = document.querySelectorAll(".notif-item");
   allItems.forEach(item => {
     const id = item.getAttribute("data-id");
-    if (id && !readNotifIds.includes(id)) readNotifIds.push(id);
+    if (id && !readNotifIds.includes(String(id))) readNotifIds.push(String(id));
+    item.classList.remove("unread");
+    item.classList.add("read");
+    const dot = item.querySelector("span[style*='background: #00c6ff']");
+    if (dot) dot.remove();
   });
   localStorage.setItem("read_notifs", JSON.stringify(readNotifIds));
 }
 
-// Open Notification Fullscreen/Expanded Modal
 function openNotifModal(id, title, message, link, timestamp) {
   const modal = document.getElementById("notifModal");
   const modalTitle = document.getElementById("modalNotifTitle");
@@ -168,7 +140,7 @@ function openNotifModal(id, title, message, link, timestamp) {
   if (modalMsg) modalMsg.textContent = message;
   if (modalTime) modalTime.textContent = timestamp ? `Received on: ${new Date(timestamp).toLocaleString()}` : "";
 
-  if (link && link !== "#") {
+  if (link && link !== "#" && link !== "null") {
     linkBtn.style.display = "inline-flex";
     linkBtn.onclick = () => { window.location.href = link; };
   } else {
@@ -182,9 +154,8 @@ function openNotifModal(id, title, message, link, timestamp) {
     };
   }
 
-  modal.classList.add("active");
+  modal.style.display = "flex";
 
-  // Mark specific item as read instantly
   if (!readNotifIds.includes(String(id))) {
     readNotifIds.push(String(id));
     localStorage.setItem("read_notifs", JSON.stringify(readNotifIds));
@@ -200,11 +171,11 @@ function openNotifModal(id, title, message, link, timestamp) {
 
 function closeNotifModal() {
   const modal = document.getElementById("notifModal");
-  if (modal) modal.classList.remove("active");
+  if (modal) modal.style.display = "none";
 }
 
 function deleteNotification(e, id) {
-  e.stopPropagation(); 
+  if (e) e.stopPropagation(); 
   const notifItem = document.getElementById(`notif-item-${id}`);
   if (notifItem) {
     notifItem.style.opacity = "0";
@@ -216,7 +187,7 @@ function deleteNotification(e, id) {
 
       const notifList = document.getElementById("notifList");
       if (notifList && notifList.querySelectorAll(".notif-item").length === 0) {
-        notifList.innerHTML = `<div class="notif-empty" style="padding: 15px; text-align: center; color: var(--muted); font-size: 13px;">No new notifications</div>`;
+        notifList.innerHTML = `<div class="notif-empty" style="padding: 15px; text-align: center; color: var(--muted, #8a99ad); font-size: 13px;">Koi naya notification nahi hai.</div>`;
       }
     }, 200);
   }
@@ -229,6 +200,8 @@ function addNotification(id, title, message, link = "#", isNew = false, createdA
 
   if (!notifList || deletedNotifIds.includes(String(id))) return;
 
+  if (document.getElementById(`notif-item-${id}`)) return;
+
   const emptyMsg = notifList.querySelector(".notif-empty");
   if (emptyMsg) notifList.innerHTML = "";
 
@@ -238,23 +211,24 @@ function addNotification(id, title, message, link = "#", isNew = false, createdA
     badge.style.display = "block";
   }
 
-  const safeTitle = title.replace(/"/g, '&quot;');
-  const safeMessage = message.replace(/"/g, '&quot;');
+  const safeTitle = (title || '').replace(/"/g, '&quot;');
+  const safeMessage = (message || '').replace(/"/g, '&quot;');
   const safeLink = link || "#";
   const timeStr = createdAt || new Date().toISOString();
 
   const itemHtml = `
-    <div class="notif-item ${isRead ? 'read' : 'unread'}" id="notif-item-${id}" data-id="${id}" onclick="openNotifModal('${id}', '${safeTitle}', '${safeMessage}', '${safeLink}', '${timeStr}')" style="position: relative; padding: 10px 30px 10px 10px; border-bottom: 1px solid var(--glass-border, rgba(255,255,255,0.1)); transition: all 0.2s ease; cursor: pointer;">
+    <div class="notif-item ${isRead ? 'read' : 'unread'}" id="notif-item-${id}" data-id="${id}" onclick="openNotifModal('${id}', '${safeTitle}', '${safeMessage}', '${safeLink}', '${timeStr}')" style="position: relative; padding: 10px 30px 10px 10px; border-bottom: 1px solid rgba(255,255,255,0.08); transition: all 0.2s ease; cursor: pointer;">
       <div>
-        <div style="font-size: 13px; font-weight: 700; color: var(--text, #333); display: flex; align-items: center; gap: 6px;">
+        <div style="font-size: 13px; font-weight: 700; color: var(--text, #fff); display: flex; align-items: center; gap: 6px;">
           ${!isRead ? '<span style="width: 6px; height: 6px; background: #00c6ff; border-radius: 50%; display: inline-block;"></span>' : ''}
           ${title}
         </div>
-        <div style="font-size: 12px; color: var(--muted, #666); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${message}</div>
+        <div style="font-size: 12px; color: var(--muted, #8a99ad); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${message}</div>
       </div>
-      <button onclick="deleteNotification(event, '${id}')" title="Delete" style="position: absolute; right: 5px; top: 10px; background: transparent; border: none; color: #e53e3e; cursor: pointer; font-size: 14px; opacity: 0.6;">✕</button>
+      <button onclick="deleteNotification(event, '${id}')" title="Delete" style="position: absolute; right: 5px; top: 10px; background: transparent; border: none; color: #ff4757; cursor: pointer; font-size: 14px; opacity: 0.6;">✕</button>
     </div>
   `;
+  
   notifList.insertAdjacentHTML("afterbegin", itemHtml);
 
   const totalItems = notifList.querySelectorAll(".notif-item").length;
@@ -265,24 +239,23 @@ function addNotification(id, title, message, link = "#", isNew = false, createdA
   }
 }
 
-// Live Toast Notification Alert
 function showToastNotification(title, message, link) {
   const toast = document.createElement("div");
   toast.className = "notif-toast";
   toast.style.cssText = `
     position: fixed; top: 20px; right: 20px; z-index: 99999;
-    background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(10px);
+    background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px);
     color: #fff; padding: 12px 18px; border-radius: 14px;
     border: 1px solid rgba(0, 198, 255, 0.4);
-    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-    cursor: pointer; transition: all 0.3s ease; animation: slideIn 0.3s ease;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    cursor: pointer; transition: all 0.3s ease;
   `;
   toast.innerHTML = `
     <div style="font-size: 13px; font-weight: 700; color: #00c6ff;">🔔 ${title}</div>
     <div style="font-size: 12px; margin-top: 2px; color: #cbd5e0;">${message}</div>
   `;
   
-  if (link && link !== "#") {
+  if (link && link !== "#" && link !== "null") {
     toast.onclick = () => window.location.href = link;
   }
   
@@ -294,16 +267,27 @@ function showToastNotification(title, message, link) {
   }, 4500);
 }
 
-// Supabase Loader Update
+// SUPABASE NOTIFICATION LOADER
 async function loadSupabaseNotifications() {
   if (!window.supabaseClient) return;
 
   try {
-    const { data: notifications, error } = await window.supabaseClient
+    let currentUserId = null;
+
+    if (typeof window.getCurrentUser === "function") {
+      try {
+        const user = await window.getCurrentUser();
+        if (user) currentUserId = user.id;
+      } catch (e) {
+        console.warn("User fetch error:", e);
+      }
+    }
+
+    let { data: notifications, error } = await window.supabaseClient
       .from('notifications')
       .select('*')
-      .order('created_at', { ascending: false })
-      .limit(15);
+      .order('created_at', { ascending: true })
+      .limit(30);
 
     if (error) throw error;
 
@@ -311,8 +295,10 @@ async function loadSupabaseNotifications() {
       const notifList = document.getElementById("notifList");
       if (notifList) notifList.innerHTML = "";
 
-      notifications.reverse().forEach(n => {
-        addNotification(n.id, n.title, n.message, n.link, false, n.created_at);
+      notifications.forEach(n => {
+        if (!n.user_id || n.user_id === currentUserId) {
+          addNotification(n.id, n.title, n.message, n.link, false, n.created_at);
+        }
       });
     }
 
@@ -320,7 +306,9 @@ async function loadSupabaseNotifications() {
       .channel('public:notifications')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, payload => {
         const n = payload.new;
-        addNotification(n.id, n.title, n.message, n.link, true, n.created_at);
+        if (!n.user_id || n.user_id === currentUserId) {
+          addNotification(n.id, n.title, n.message, n.link, true, n.created_at);
+        }
       })
       .subscribe();
 
@@ -329,14 +317,22 @@ async function loadSupabaseNotifications() {
   }
 }
 
-// 6. DOM LOADED INITIALIZATIONS
+// 6. DOM INITIALIZATION & EVENT LISTENERS
 document.addEventListener("DOMContentLoaded", async () => {
   setupDynamicWatermark();
   initCardTilt();
   
   loadSupabaseNotifications();
 
-  // Close modal when clicking outside modal card
+  // Close Notif Dropdown on Outside Click
+  document.addEventListener("click", (e) => {
+    const notifWrapper = document.querySelector(".notif-wrapper");
+    const notifBox = document.getElementById("notifBox");
+    if (notifWrapper && notifBox && !notifWrapper.contains(e.target)) {
+      notifBox.classList.remove("show");
+    }
+  });
+
   const notifModal = document.getElementById("notifModal");
   if (notifModal) {
     notifModal.addEventListener("click", (e) => {
@@ -344,24 +340,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  // Sidemenu Controls
-  const sideMenu = document.querySelector(".side-menu");
-  const overlay = document.getElementById("overlay");
-  const menuBtn = document.getElementById("menuBtn");
-
-  if (menuBtn && sideMenu && overlay) {
-    menuBtn.addEventListener("click", () => {
-      sideMenu.classList.toggle("open");
-      overlay.classList.toggle("show");
-    });
-
-    overlay.addEventListener("click", () => {
-      sideMenu.classList.remove("open");
-      overlay.classList.remove("show");
-    });
-  }
-
-  // Dark / Light Theme Toggle + SUN & MOON ICON GENERATOR
+  // Theme Toggle Logic
   const modeToggle = document.getElementById("modeToggle");
   if (modeToggle) {
     const slider = modeToggle.parentElement.querySelector(".slider");
@@ -394,55 +373,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  // Dynamic Auth Sync
-  const authContainer = document.getElementById("navAuthContainer");
-  const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
-  let userName = localStorage.getItem("userName") || "Profile";
-  let userPhoto = localStorage.getItem("userPhoto") || "profile.jpg";
-
-  const renderAuthUser = (name, photo) => {
-    if (!authContainer) return;
-    authContainer.innerHTML = `
-      <a href="profile.html" class="user-profile-link" style="display: flex; align-items: center; gap: 8px; text-decoration: none; color: inherit;">
-        <img src="${photo}" alt="Avatar" class="user-avatar" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid var(--accent);">
-        <span style="font-weight: 600;">${name}</span>
-      </a>
-    `;
-  };
-
-  if (isLoggedIn) {
-    renderAuthUser(userName, userPhoto);
-
-    if (window.supabaseClient && typeof window.getCurrentUser === "function") {
-      try {
-        const user = await window.getCurrentUser();
-        if (user) {
-          const { data } = await window.supabaseClient
-            .from('profiles')
-            .select('full_name, avatar_url')
-            .eq('id', user.id)
-            .single();
-
-          if (data) {
-            if (data.full_name) {
-              userName = data.full_name;
-              localStorage.setItem("userName", userName);
-            }
-            if (data.avatar_url) {
-              userPhoto = data.avatar_url;
-              localStorage.setItem("userPhoto", userPhoto);
-            }
-            renderAuthUser(userName, userPhoto);
-          }
-        }
-      } catch (err) {
-        console.warn("Could not fetch profile for navbar:", err);
-      }
-    }
-  }
-
-  // Highlight Active Side Menu Item
-  const currentPath = window.location.pathname.split("/").pop();
+  // Highlight Active Side Menu Link
+  const currentPath = window.location.pathname.split("/").pop() || "index.html";
   document.querySelectorAll(".side-menu a").forEach(link => {
     if (link.getAttribute("href") === currentPath) {
       link.classList.add("active");
@@ -451,7 +383,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  // Cookie Consent Banner
+  // Cookie Consent Banner Controls
   const cookieBanner = document.getElementById("cookieBanner");
   const acceptBtn = document.getElementById("acceptCookies");
   const declineBtn = document.getElementById("declineCookies");
@@ -514,7 +446,7 @@ if (motivationPopupElem) {
   });
 }
 
-// 8. CANVAS BACKGROUND ANIMATION
+// 8. CANVAS BACKGROUND PARTICLES ENGINE
 const c = document.getElementById("bgCanvas");
 if (c) {
   const ctx = c.getContext("2d");
@@ -565,7 +497,7 @@ if (c) {
   animateDots();
 }
 
-// 9. CINEMATIC WAVE ANIMATION
+// 9. WAVE ANIMATION AT BOTTOM
 const wavePathBottom = document.getElementById("waveBottomPath");
 if (wavePathBottom) {
   let t = 0;
@@ -593,7 +525,7 @@ if (wavePathBottom) {
   animateWave();
 }
 
-// 10. OFFLINE BANNER & SERVICE WORKER
+// 10. OFFLINE BANNER CONTROLLER
 window.addEventListener('DOMContentLoaded', () => {
   const banner = document.getElementById('offlineBanner');
   const bannerText = document.getElementById('bannerText');
@@ -634,7 +566,7 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// 11. KEYBOARD SHORTCUTS & APP LOAD
+// 11. KEYBOARD SHORTCUTS
 document.addEventListener("keydown", (e) => {
   if (e.altKey) {
     const key = e.key.toLowerCase();
