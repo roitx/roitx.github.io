@@ -90,57 +90,211 @@ function initCardTilt() {
   });
 }
 
-// 5. NOTIFICATION SYSTEM (UPDATED WITH SUPABASE)
+// 5. NOTIFICATION SYSTEM (UPDATED WITH MODAL & SUPABASE)
+let readNotifIds = JSON.parse(localStorage.getItem("read_notifs") || "[]");
+let deletedNotifIds = JSON.parse(localStorage.getItem("deleted_notifs") || "[]");
+
 function toggleNotif() {
-  const notifBox = document.getElementById("notifBox");
-  const badge = document.getElementById("notifBadge");
+  const notifModal = document.getElementById('notifModal');
+  if (notifModal) {
+    notifModal.classList.add('active'); // Fullscreen modal kholne ke liye
+  }
 
-  if (!notifBox) return;
-  notifBox.classList.toggle("active");
+  // Modal ke header ya actions container mein JS se "Mark all as read" button inject karne ke liye
+  const modalHeader = notifModal.querySelector('.notif-modal-header') || notifModal;
+  
+  // Check karein ki button pehle se toh nahi bana hai
+  if (!document.getElementById('dynamicMarkReadBtn')) {
+    const markBtn = document.createElement('button');
+    markBtn.id = 'dynamicMarkReadBtn';
+    markBtn.className = 'btn-modal-action';
+    markBtn.innerHTML = `
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+      <span>Mark all as read</span>
+    `;
+    markBtn.style.marginLeft = 'auto';
+    markBtn.style.marginRight = '10px';
+    markBtn.style.padding = '6px 12px';
+    markBtn.style.fontSize = '12px';
+    
+    markBtn.onclick = function() {
+      if (typeof markAllAsRead === 'function') {
+        markAllAsRead();
+      }
+    };
 
-  if (notifBox.classList.contains("active") && badge) {
-    badge.classList.remove("active");
+    // Header ke close button se pehle inject kar dein
+    const closeBtn = modalHeader.querySelector('.notif-modal-close');
+    if (closeBtn) {
+      modalHeader.insertBefore(markBtn, closeBtn);
+    } else {
+      modalHeader.appendChild(markBtn);
+    }
+  }
+
+  // Agar notifications read karni hain
+  if (typeof loadNotifications === 'function') {
+    loadNotifications();
   }
 }
 
-document.addEventListener("click", (e) => {
-  const notifBtn = document.getElementById("notifBtn");
-  const notifBox = document.getElementById("notifBox");
+function markAllAsRead() {
+  const badge = document.getElementById("notifBadge");
+  if (badge) {
+    badge.classList.remove("active");
+    badge.style.display = "none";
+  }
+  
+  const allItems = document.querySelectorAll(".notif-item");
+  allItems.forEach(item => {
+    const id = item.getAttribute("data-id");
+    if (id && !readNotifIds.includes(id)) readNotifIds.push(id);
+  });
+  localStorage.setItem("read_notifs", JSON.stringify(readNotifIds));
+}
 
-  if (notifBtn && notifBox) {
-    if (!notifBtn.contains(e.target) && !notifBox.contains(e.target)) {
-      notifBox.classList.remove("active");
+// Open Notification Fullscreen/Expanded Modal
+function openNotifModal(id, title, message, link, timestamp) {
+  const modal = document.getElementById("notifModal");
+  const modalTitle = document.getElementById("modalNotifTitle");
+  const modalMsg = document.getElementById("modalNotifMessage");
+  const modalTime = document.getElementById("modalNotifTime");
+  const linkBtn = document.getElementById("modalNotifLinkBtn");
+  const deleteBtn = document.getElementById("modalDeleteBtn");
+
+  if (!modal) return;
+
+  if (modalTitle) modalTitle.textContent = title;
+  if (modalMsg) modalMsg.textContent = message;
+  if (modalTime) modalTime.textContent = timestamp ? `Received on: ${new Date(timestamp).toLocaleString()}` : "";
+
+  if (link && link !== "#") {
+    linkBtn.style.display = "inline-flex";
+    linkBtn.onclick = () => { window.location.href = link; };
+  } else {
+    linkBtn.style.display = "none";
+  }
+
+  if (deleteBtn) {
+    deleteBtn.onclick = (e) => {
+      deleteNotification(e, id);
+      closeNotifModal();
+    };
+  }
+
+  modal.classList.add("active");
+
+  // Mark specific item as read instantly
+  if (!readNotifIds.includes(String(id))) {
+    readNotifIds.push(String(id));
+    localStorage.setItem("read_notifs", JSON.stringify(readNotifIds));
+    const itemElem = document.getElementById(`notif-item-${id}`);
+    if (itemElem) {
+      itemElem.classList.remove("unread");
+      itemElem.classList.add("read");
+      const dot = itemElem.querySelector("span[style*='background: #00c6ff']");
+      if (dot) dot.remove();
     }
   }
-});
+}
 
-function addNotification(title, message, link = "#") {
+function closeNotifModal() {
+  const modal = document.getElementById("notifModal");
+  if (modal) modal.classList.remove("active");
+}
+
+function deleteNotification(e, id) {
+  e.stopPropagation(); 
+  const notifItem = document.getElementById(`notif-item-${id}`);
+  if (notifItem) {
+    notifItem.style.opacity = "0";
+    notifItem.style.transform = "translateX(20px)";
+    setTimeout(() => {
+      notifItem.remove();
+      if (!deletedNotifIds.includes(String(id))) deletedNotifIds.push(String(id));
+      localStorage.setItem("deleted_notifs", JSON.stringify(deletedNotifIds));
+
+      const notifList = document.getElementById("notifList");
+      if (notifList && notifList.querySelectorAll(".notif-item").length === 0) {
+        notifList.innerHTML = `<div class="notif-empty" style="padding: 15px; text-align: center; color: var(--muted); font-size: 13px;">No new notifications</div>`;
+      }
+    }, 200);
+  }
+}
+
+function addNotification(id, title, message, link = "#", isNew = false, createdAt = null) {
   const badge = document.getElementById("notifBadge");
   const notifList = document.getElementById("notifList");
   const notifCountTag = document.getElementById("notifCountTag");
 
-  if (!notifList) return;
-
-  if (badge) badge.classList.add("active");
+  if (!notifList || deletedNotifIds.includes(String(id))) return;
 
   const emptyMsg = notifList.querySelector(".notif-empty");
   if (emptyMsg) notifList.innerHTML = "";
 
-  const linkAttr = (link && link !== "#") ? `onclick="window.location.href='${link}'" style="cursor: pointer;"` : '';
+  const isRead = readNotifIds.includes(String(id));
+  if (!isRead && badge) {
+    badge.classList.add("active");
+    badge.style.display = "block";
+  }
+
+  const safeTitle = title.replace(/"/g, '&quot;');
+  const safeMessage = message.replace(/"/g, '&quot;');
+  const safeLink = link || "#";
+  const timeStr = createdAt || new Date().toISOString();
 
   const itemHtml = `
-    <div class="notif-item" ${linkAttr} style="padding: 10px 0; border-bottom: 1px solid var(--glass-border, rgba(255,255,255,0.1));">
-      <div style="font-size: 13px; font-weight: 700; color: var(--text, #333);">${title}</div>
-      <div style="font-size: 12px; color: var(--muted, #666); margin-top: 2px;">${message}</div>
+    <div class="notif-item ${isRead ? 'read' : 'unread'}" id="notif-item-${id}" data-id="${id}" onclick="openNotifModal('${id}', '${safeTitle}', '${safeMessage}', '${safeLink}', '${timeStr}')" style="position: relative; padding: 10px 30px 10px 10px; border-bottom: 1px solid var(--glass-border, rgba(255,255,255,0.1)); transition: all 0.2s ease; cursor: pointer;">
+      <div>
+        <div style="font-size: 13px; font-weight: 700; color: var(--text, #333); display: flex; align-items: center; gap: 6px;">
+          ${!isRead ? '<span style="width: 6px; height: 6px; background: #00c6ff; border-radius: 50%; display: inline-block;"></span>' : ''}
+          ${title}
+        </div>
+        <div style="font-size: 12px; color: var(--muted, #666); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${message}</div>
+      </div>
+      <button onclick="deleteNotification(event, '${id}')" title="Delete" style="position: absolute; right: 5px; top: 10px; background: transparent; border: none; color: #e53e3e; cursor: pointer; font-size: 14px; opacity: 0.6;">✕</button>
     </div>
   `;
   notifList.insertAdjacentHTML("afterbegin", itemHtml);
 
   const totalItems = notifList.querySelectorAll(".notif-item").length;
-  if (notifCountTag) notifCountTag.innerText = `${totalItems} New`;
+  if (notifCountTag) notifCountTag.innerText = `${totalItems} Items`;
+
+  if (isNew) {
+    showToastNotification(title, message, link);
+  }
 }
 
-// Supabase Notifications Loader & Realtime Listener
+// Live Toast Notification Alert
+function showToastNotification(title, message, link) {
+  const toast = document.createElement("div");
+  toast.className = "notif-toast";
+  toast.style.cssText = `
+    position: fixed; top: 20px; right: 20px; z-index: 99999;
+    background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(10px);
+    color: #fff; padding: 12px 18px; border-radius: 14px;
+    border: 1px solid rgba(0, 198, 255, 0.4);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    cursor: pointer; transition: all 0.3s ease; animation: slideIn 0.3s ease;
+  `;
+  toast.innerHTML = `
+    <div style="font-size: 13px; font-weight: 700; color: #00c6ff;">🔔 ${title}</div>
+    <div style="font-size: 12px; margin-top: 2px; color: #cbd5e0;">${message}</div>
+  `;
+  
+  if (link && link !== "#") {
+    toast.onclick = () => window.location.href = link;
+  }
+  
+  document.body.appendChild(toast);
+  setTimeout(() => {
+    toast.style.opacity = "0";
+    toast.style.transform = "translateY(-10px)";
+    setTimeout(() => toast.remove(), 300);
+  }, 4500);
+}
+
+// Supabase Loader Update
 async function loadSupabaseNotifications() {
   if (!window.supabaseClient) return;
 
@@ -149,26 +303,24 @@ async function loadSupabaseNotifications() {
       .from('notifications')
       .select('*')
       .order('created_at', { ascending: false })
-      .limit(10);
+      .limit(15);
 
     if (error) throw error;
 
     if (notifications && notifications.length > 0) {
-      // Clear initial dummy text
       const notifList = document.getElementById("notifList");
       if (notifList) notifList.innerHTML = "";
 
       notifications.reverse().forEach(n => {
-        addNotification(n.title, n.message, n.link);
+        addNotification(n.id, n.title, n.message, n.link, false, n.created_at);
       });
     }
 
-    // Subscribe to Realtime Updates (New broadcast arrives live)
     window.supabaseClient
       .channel('public:notifications')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, payload => {
-        const newNotif = payload.new;
-        addNotification(newNotif.title, newNotif.message, newNotif.link);
+        const n = payload.new;
+        addNotification(n.id, n.title, n.message, n.link, true, n.created_at);
       })
       .subscribe();
 
@@ -182,8 +334,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   setupDynamicWatermark();
   initCardTilt();
   
-  // Load Supabase Notifications for Bell Icon
   loadSupabaseNotifications();
+
+  // Close modal when clicking outside modal card
+  const notifModal = document.getElementById("notifModal");
+  if (notifModal) {
+    notifModal.addEventListener("click", (e) => {
+      if (e.target === notifModal) closeNotifModal();
+    });
+  }
 
   // Sidemenu Controls
   const sideMenu = document.querySelector(".side-menu");
@@ -207,7 +366,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (modeToggle) {
     const slider = modeToggle.parentElement.querySelector(".slider");
 
-    // Inject Sun/Moon icons dynamically if not present
     if (slider && !slider.querySelector(".theme-icon")) {
       slider.innerHTML = `<span class="theme-icon" style="position: absolute; right: 5px; top: 3px; font-size: 12px; transition: 0.3s;">🌙</span>`;
     }

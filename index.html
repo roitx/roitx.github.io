@@ -137,10 +137,10 @@
   </div>
 
   <!-- Right Side: Bell Icon & Switcher Grouped Together -->
-  <div class="topbar-actions">
+  <div class="topbar-actions" style="display: flex; align-items: center; gap: 12px;">
     <!-- Notification Bell -->
     <div class="notif-wrapper">
-      <button class="notif-icon-btn" id="notifBtn" onclick="toggleNotif()">
+      <button class="notif-icon-btn" id="notifBtn" onclick="toggleNotif()" title="Notifications">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
           <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
@@ -151,8 +151,11 @@
       <!-- Dropdown Box -->
       <div class="notif-dropdown-box" id="notifBox">
         <div class="notif-header">
-          <span class="notif-title">Notifications</span>
-          <span class="notif-count-tag" id="notifCountTag">0 New</span>
+          <div class="notif-header-left">
+            <span class="notif-title">Notifications</span>
+            <span class="notif-count-tag" id="notifCountTag">0 New</span>
+          </div>
+          <button class="mark-read-btn" onclick="markAllAsRead()">Mark all as read</button>
         </div>
         <div class="notif-body" id="notifList">
           <div class="notif-empty">Koi naya notification nahi hai.</div>
@@ -348,6 +351,49 @@
   <div id="offlineBanner">
     <div class="status-dot"></div>
     <span id="bannerText">No internet connection • Offline mode</span>
+  </div>
+
+  <!-- FULLSCREEN / EXPANDED NOTIFICATION MODAL WITH SVG ICONS -->
+  <div id="notifModal" class="notif-modal-overlay">
+    <div class="notif-modal-card">
+      <div class="notif-modal-header">
+        <span class="notif-modal-tag" style="display: flex; align-items: center; gap: 6px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00c6ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+          Notification Details
+        </span>
+        <button class="notif-modal-close" onclick="closeNotifModal()" title="Close">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="notif-modal-body">
+        <h3 id="modalNotifTitle">Notification Title</h3>
+        <p id="modalNotifMessage">Detailed notification message content goes here...</p>
+        <div id="modalNotifTime" style="font-size: 11px; opacity: 0.6; margin-top: 10px;"></div>
+      </div>
+      <div class="notif-modal-footer">
+        <button id="modalNotifLinkBtn" class="btn-modal-action" style="display: none; align-items: center; gap: 6px;">
+          <span>Open Link</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+            <polyline points="15 3 21 3 21 9"></polyline>
+            <line x1="10" y1="14" x2="21" y2="3"></line>
+          </svg>
+        </button>
+        <button id="modalDeleteBtn" class="btn-modal-delete" style="display: inline-flex; align-items: center; gap: 6px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+          <span>Delete</span>
+        </button>
+      </div>
+    </div>
   </div>
 
 </main>
