@@ -3,609 +3,642 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PM-Roit | Premium Notes Hub</title>
+    <title>Admin - Secure Payment Approvals</title>
     <link rel="stylesheet" href="premium.css">
-    <!-- Supabase SDK -->
+    <!-- FontAwesome for Vector Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Supabase CDN + Central Config -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase.js"></script>
 
     <style>
-        /* Enhanced Glassmorphic Layout & Container */
-        .notes-container {
-            max-width: 950px;
-            margin: 0 auto;
-            padding: 15px 10px;
-        }
-
-        .header-box {
-            text-align: center;
-            margin-bottom: 20px;
-            padding: 22px 15px;
-            background: rgba(17, 22, 34, 0.75);
-            backdrop-filter: blur(12px);
-            border-radius: 16px;
-            border: 1px solid rgba(0, 210, 255, 0.2);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-        }
-
-        .header-box h1 {
-            font-size: 1.5rem;
-            margin: 0;
+        body {
+            -webkit-user-select: none;
+            user-select: none;
+            background-color: #080c14;
             color: #fff;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .bg-glow-1 {
+            position: fixed;
+            top: -100px;
+            left: -100px;
+            width: 350px;
+            height: 350px;
+            background: radial-gradient(circle, rgba(0, 210, 255, 0.15) 0%, transparent 70%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .bg-glow-2 {
+            position: fixed;
+            bottom: -100px;
+            right: -100px;
+            width: 350px;
+            height: 350px;
+            background: radial-gradient(circle, rgba(112, 0, 255, 0.15) 0%, transparent 70%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .security-banner {
+            background: rgba(255, 71, 87, 0.1);
+            border: 1px solid rgba(255, 71, 87, 0.25);
+            color: #ff4757;
+            font-size: 0.78rem;
+            text-align: center;
+            padding: 10px;
+            font-weight: 600;
             letter-spacing: 0.5px;
+            margin-bottom: 16px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            backdrop-filter: blur(8px);
         }
 
-        .header-box span {
-            color: #00d2ff;
-            text-shadow: 0 0 10px rgba(0, 210, 255, 0.4);
+        .admin-header {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 18px 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(12px);
         }
 
-        .header-box p {
-            font-size: 0.85rem;
-            color: #8a99ad;
-            margin-top: 6px;
-        }
-
-        /* 2-Column Responsive Grid System */
-        .compact-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
             gap: 12px;
         }
 
-        @media (min-width: 600px) {
-            .compact-grid {
-                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-                gap: 16px;
+        .admin-header h1 {
+            font-size: 1.35rem;
+            margin: 0;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .admin-header span.badge-admin {
+            font-size: 0.75rem;
+            background: linear-gradient(135deg, #00d2ff, #0072ff);
+            color: #fff;
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-weight: 700;
+            text-transform: uppercase;
+            box-shadow: 0 0 12px rgba(0, 210, 255, 0.4);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .admin-header p {
+            margin: 8px 0 0 0;
+            font-size: 0.82rem;
+            color: #8a99ad;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .card {
+            background: rgba(17, 22, 34, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 18px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+        }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: 210px 1fr;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        @media (max-width: 600px) {
+            .filter-grid {
+                grid-template-columns: 1fr;
             }
         }
 
-        .mini-card {
-            background: linear-gradient(145deg, #111622, #182030);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 14px;
-            padding: 14px;
+        /* CUSTOM DROPDOWN STYLING */
+        .custom-dropdown {
+            position: relative;
+            user-select: none;
+        }
+
+        .dropdown-trigger {
+            background: #0d121d;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #fff;
+            padding: 11px 14px;
+            border-radius: 10px;
+            font-size: 0.85rem;
             display: flex;
-            flex-direction: column;
+            align-items: center;
             justify-content: space-between;
-            text-align: center;
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.35);
-            transition: transform 0.25 ease, border-color 0.25s ease;
+            cursor: pointer;
+            transition: all 0.25s ease;
         }
 
-        .mini-card:hover {
-            border-color: rgba(0, 210, 255, 0.3);
-            transform: translateY(-3px);
+        .dropdown-trigger:hover {
+            border-color: #00d2ff;
+            background: #111726;
         }
 
-        .badge-tag {
-            font-size: 0.68rem;
-            font-weight: 600;
+        .dropdown-trigger span {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 110%;
+            left: 0;
+            right: 0;
+            background: #0d121d;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 6px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            backdrop-filter: blur(16px);
+            z-index: 100;
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .dropdown-menu.show {
+            display: flex;
+        }
+
+        .dropdown-item {
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 0.83rem;
+            color: #d1d5db;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .dropdown-item:hover, .dropdown-item.active {
             background: rgba(0, 210, 255, 0.12);
             color: #00d2ff;
-            border: 1px solid rgba(0, 210, 255, 0.25);
-            padding: 3px 8px;
-            border-radius: 6px;
-            display: inline-block;
-            margin-bottom: 8px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 90%;
         }
 
-        .card-title {
-            font-size: 0.98rem;
-            font-weight: 700;
-            margin: 4px 0 2px 0;
-            line-height: 1.3;
-            color: #ffffff;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            min-height: 2.6em;
-        }
-
-        .chapter-sub {
-            color: #7f8c9d;
-            font-size: 0.78rem;
-            margin-bottom: 8px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .price-tag {
-            font-size: 1.15rem;
-            font-weight: 800;
-            color: #00d2ff;
-            margin: 6px 0 10px 0;
-            text-shadow: 0 0 8px rgba(0, 210, 255, 0.2);
-        }
-
-        .btn-stack {
+        .input-box-wrapper {
+            position: relative;
             display: flex;
-            flex-direction: column;
+            align-items: center;
+        }
+
+        .input-box-wrapper i {
+            position: absolute;
+            left: 14px;
+            color: #8a99ad;
+            font-size: 0.85rem;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            background: #0d121d;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #fff;
+            padding: 11px 14px 11px 36px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            outline: none;
+            box-sizing: border-box;
+            transition: all 0.25s ease;
+        }
+
+        input[type="text"]:focus {
+            border-color: #00d2ff;
+            box-shadow: 0 0 10px rgba(0, 210, 255, 0.25);
+            background: #111726;
+        }
+
+        .orders-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+        }
+
+        .orders-table th, .orders-table td {
+            padding: 12px 14px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .orders-table th {
+            background: rgba(255, 255, 255, 0.03);
+            color: #00d2ff;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.72rem;
+            letter-spacing: 0.6px;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .action-btns {
+            display: flex;
             gap: 8px;
         }
 
-        .btn-mini {
-            width: 100%;
-            padding: 9px 6px;
-            font-size: 0.82rem;
-            border-radius: 8px;
+        .btn-approve {
+            background: linear-gradient(135deg, #2ed573, #10ac84);
+            color: #fff;
             border: none;
+            padding: 7px 14px;
+            border-radius: 8px;
             cursor: pointer;
             font-weight: 600;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
+            font-size: 0.75rem;
+            box-shadow: 0 4px 12px rgba(46, 213, 115, 0.3);
             transition: all 0.2s ease;
-            box-sizing: border-box;
-        }
-
-        .btn-mini svg {
-            width: 15px;
-            height: 15px;
-            fill: none;
-            stroke: currentColor;
-            stroke-width: 2.2;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-            flex-shrink: 0;
-        }
-
-        .btn-preview {
-            background: rgba(255, 255, 255, 0.08);
-            color: #d1d5db;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .btn-preview:hover {
-            background: rgba(255, 255, 255, 0.15);
-            color: #fff;
-        }
-
-        .btn-read {
-            background: linear-gradient(135deg, #00c6ff, #0072ff);
-            color: #ffffff;
-            box-shadow: 0 4px 12px rgba(0, 198, 255, 0.35);
-        }
-        .btn-read:hover {
-            box-shadow: 0 6px 18px rgba(0, 198, 255, 0.5);
-        }
-
-        .btn-unlock {
-            background: linear-gradient(135deg, #7928ca, #00d2ff);
-            color: #fff;
-            box-shadow: 0 4px 12px rgba(121, 40, 202, 0.35);
-        }
-        .btn-unlock:hover {
-            box-shadow: 0 6px 18px rgba(121, 40, 202, 0.5);
-        }
-
-        .btn-pending {
-            background: rgba(255, 171, 0, 0.15);
-            color: #ffab00;
-            border: 1px dashed rgba(255, 171, 0, 0.4);
-            cursor: not-allowed;
-        }
-
-        /* Payment Modal Styling */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 2000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(8px);
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal-content {
-            background: #111622;
-            border: 1px solid rgba(0, 210, 255, 0.35);
-            border-radius: 18px;
-            padding: 22px;
-            width: 90%;
-            max-width: 360px;
-            text-align: center;
-            box-shadow: 0 12px 40px rgba(0, 210, 255, 0.25);
-            color: #fff;
-        }
-
-        .qr-container {
-            background: #ffffff;
-            padding: 10px;
-            border-radius: 14px;
-            display: inline-block;
-            margin: 10px 0;
-            box-shadow: 0 4px 15px rgba(255,255,255,0.1);
-        }
-
-        .qr-img {
-            width: 165px;
-            height: 165px;
-            display: block;
-        }
-
-        /* Direct UPI App Button */
-        .btn-upi-app {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            background: linear-gradient(135deg, #28a745, #1e7e34);
-            color: #ffffff;
-            text-decoration: none;
-            font-weight: bold;
-            font-size: 0.82rem;
-            padding: 10px;
-            border-radius: 10px;
-            margin: 8px 0;
-            box-shadow: 0 4px 14px rgba(40, 167, 69, 0.4);
-            transition: all 0.2s ease;
-        }
-
-        .btn-upi-app svg {
-            width: 16px;
-            height: 16px;
-            fill: none;
-            stroke: currentColor;
-            stroke-width: 2.2;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-        }
-
-        .btn-upi-app:active {
-            transform: scale(0.97);
-        }
-
-        .copy-box {
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: 5px;
+        }
+
+        .btn-approve:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(46, 213, 115, 0.4);
+        }
+
+        .btn-reject {
+            background: linear-gradient(135deg, #ff4757, #ff6b6b);
+            color: #fff;
+            border: none;
+            padding: 7px 14px;
+            border-radius: 8px;
             cursor: pointer;
-            color: #fff;
-            background: rgba(255,255,255,0.05);
-            padding: 2px 6px;
-            border-radius: 4px;
-        }
-
-        .copy-box svg {
-            width: 14px;
-            height: 14px;
-            fill: none;
-            stroke: #00d2ff;
-            stroke-width: 2.2;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-        }
-
-        .input-utr {
-            width: 100%;
-            padding: 11px 12px;
-            margin: 12px 0;
-            border-radius: 10px;
-            border: 1px solid rgba(0, 210, 255, 0.3);
-            background: #090d16;
-            color: #00d2ff;
-            font-size: 0.92rem;
             font-weight: 600;
-            text-align: center;
-            box-sizing: border-box;
-            outline: none;
-            transition: border-color 0.2s;
+            font-size: 0.75rem;
+            box-shadow: 0 4px 12px rgba(255, 71, 87, 0.3);
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
         }
 
-        .input-utr:focus {
-            border-color: #00d2ff;
+        .btn-reject:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(255, 71, 87, 0.4);
         }
 
-        .input-utr::placeholder {
-            color: #5fb5ff66;
-            font-size: 0.8rem;
-            font-weight: normal;
+        .badge-status {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
         }
 
-        .modal-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 5px;
+        .status-pending { 
+            background: rgba(255, 165, 0, 0.12); 
+            color: #ffa500; 
+            border: 1px solid rgba(255, 165, 0, 0.3); 
         }
 
-        .btn-cancel {
-            background: rgba(255, 255, 255, 0.1);
-            color: #aaa;
+        .status-approved { 
+            background: rgba(46, 213, 115, 0.12); 
+            color: #2ed573; 
+            border: 1px solid rgba(46, 213, 115, 0.3); 
         }
-        .btn-cancel:hover {
-            background: rgba(255, 255, 255, 0.18);
-            color: #fff;
+
+        .status-rejected { 
+            background: rgba(255, 71, 87, 0.12); 
+            color: #ff4757; 
+            border: 1px solid rgba(255, 71, 87, 0.3); 
         }
     </style>
 </head>
-<body>
-    <div class="notes-container">
-        <div class="header-box">
-            <h1>PM-Roit <span>Premium Notes</span></h1>
-            <p>Select your chapter and unlock full study access</p>
+<body oncontextmenu="return false;">
+
+    <div class="bg-glow-1"></div>
+    <div class="bg-glow-2"></div>
+
+    <div class="admin-container" style="max-width: 980px; margin: 0 auto; padding: 14px;">
+        
+        <div class="security-banner">
+            <i class="fa-solid fa-user-lock"></i> RESTRICTED ACCESS: Authorized Admin Personnel Only. All actions are logged securely.
         </div>
 
-        <div class="compact-grid" id="notesGrid">
-            <!-- Dynamic Compact Cards -->
-        </div>
-    </div>
+        <header class="admin-header">
+            <div class="header-top">
+                <h1><i class="fa-solid fa-shield-halved" style="color: #00d2ff;"></i> Admin Panel</h1>
+                <span class="badge-admin"><i class="fa-solid fa-file-invoice-dollar"></i> Payment Approvals</span>
+            </div>
+            <p><i class="fa-solid fa-circle-check" style="color: #2ed573;"></i> Verify user UTR codes securely to grant instant access to notes.</p>
+        </header>
 
-    <!-- Payment Modal -->
-    <div id="paymentModal" class="modal">
-        <div class="modal-content">
-            <h3 id="modalTitle" style="margin: 0 0 5px 0; font-size: 1.1rem; color: #fff;">Complete Payment</h3>
-            <p style="font-size: 0.85rem; color: #8a99ad; margin: 0;">Scan or Pay <b id="modalPrice" style="color:#00d2ff;"></b></p>
-            
-            <div class="qr-container">
-                <img id="upiQrCode" src="" alt="Payment QR Code" class="qr-img">
+        <section class="card">
+            <div class="filter-grid">
+                <!-- Custom SVG Icon Dropdown Menu -->
+                <div class="custom-dropdown" id="statusDropdown">
+                    <div class="dropdown-trigger" onclick="toggleDropdown()">
+                        <span id="selectedOption"><i class="fa-solid fa-hourglass-half" style="color:#ffa500;"></i> Pending Approvals</span>
+                        <i class="fa-solid fa-chevron-down" style="font-size:0.75rem; color:#8a99ad;"></i>
+                    </div>
+                    <div class="dropdown-menu" id="dropdownMenu">
+                        <div class="dropdown-item active" onclick="selectFilter('pending', '<i class=\'fa-solid fa-hourglass-half\' style=\'color:#ffa500;\'></i> Pending Approvals', this)">
+                            <i class="fa-solid fa-hourglass-half" style="color:#ffa500;"></i> Pending Approvals
+                        </div>
+                        <div class="dropdown-item" onclick="selectFilter('approved', '<i class=\'fa-solid fa-circle-check\' style=\'color:#2ed573;\'></i> Approved Payments', this)">
+                            <i class="fa-solid fa-circle-check" style="color:#2ed573;"></i> Approved Payments
+                        </div>
+                        <div class="dropdown-item" onclick="selectFilter('rejected', '<i class=\'fa-solid fa-circle-xmark\' style=\'color:#ff4757;\'></i> Rejected Payments', this)">
+                            <i class="fa-solid fa-circle-xmark" style="color:#ff4757;"></i> Rejected Payments
+                        </div>
+                        <div class="dropdown-item" onclick="selectFilter('ALL', '<i class=\'fa-solid fa-list-check\' style=\'color:#00d2ff;\'></i> All Transactions', this)">
+                            <i class="fa-solid fa-list-check" style="color:#00d2ff;"></i> All Transactions
+                        </div>
+                    </div>
+                </div>
+
+                <div class="input-box-wrapper">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="searchInput" placeholder="Search by User Email or UTR Code..." oninput="filterOrders()">
+                </div>
             </div>
 
-            <!-- Direct App Trigger Button -->
-            <a id="payDirectBtn" href="#" class="btn-upi-app">
-                <svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
-                Tap to Open PhonePe / GPay / Paytm
-            </a>
-
-            <p style="font-size: 0.75rem; color: #aaa; margin: 6px 0;">
-                UPI ID: <span class="copy-box" onclick="copyUpiId()"><b style="color: #fff;">9199364179-3@ibl</b> <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></span>
-            </p>
-
-            <input type="text" id="utrInput" class="input-utr" placeholder="Enter 12-digit UTR / Trans ID" maxlength="20">
-
-            <div class="modal-actions">
-                <button class="btn-mini btn-unlock" onclick="submitManualPayment()">
-                    <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg> Confirm Payment
-                </button>
-                <button class="btn-mini btn-cancel" onclick="document.getElementById('paymentModal').style.display='none'">Cancel</button>
+            <div class="table-responsive">
+                <table class="orders-table">
+                    <thead>
+                        <tr>
+                            <th><i class="fa-solid fa-envelope"></i> User Email</th>
+                            <th><i class="fa-solid fa-book"></i> Note Title</th>
+                            <th><i class="fa-solid fa-indian-rupee-sign"></i> Amount</th>
+                            <th><i class="fa-solid fa-key"></i> UTR Code</th>
+                            <th><i class="fa-solid fa-signal"></i> Status</th>
+                            <th><i class="fa-solid fa-sliders"></i> Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ordersTableBody">
+                        <tr>
+                            <td colspan="6" style="text-align:center; color:#8a99ad; padding: 25px;">
+                                <i class="fa-solid fa-spinner fa-spin" style="font-size: 1.2rem; margin-right: 8px;"></i> Loading payment orders...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
-        </div>
+        </section>
     </div>
 
     <script>
-        const MY_UPI_ID = "9199364179-3@ibl";
-        let currentUser = null;
-        let purchases = [];
-        let orderStatuses = {}; // Track user orders
-        let selectedNoteForPay = null;
-        const loadedNotesMap = {};
+        let cachedOrders = [];
+        let currentStatusFilter = 'pending';
 
         window.onload = async () => {
-            if (typeof window.getCurrentUser === "function") {
-                currentUser = await window.getCurrentUser();
+            if (typeof window.requireAdminAuth === "function") {
+                await window.requireAdminAuth();
             }
-
-            if (currentUser) {
-                // Load approved user purchases
-                const { data: purchaseData } = await window.supabaseClient
-                    .from('user_purchases')
-                    .select('note_id')
-                    .eq('user_id', currentUser.id);
-                
-                purchases = (purchaseData || []).map(p => String(p.note_id));
-
-                // Load order history status
-                const { data: ordersData } = await window.supabaseClient
-                    .from('user_orders')
-                    .select('note_id, status')
-                    .eq('user_email', currentUser.email);
-
-                if (ordersData) {
-                    ordersData.forEach(o => {
-                        const nId = String(o.note_id);
-                        orderStatuses[nId] = o.status;
-                        if (o.status === 'approved' && !purchases.includes(nId)) {
-                            purchases.push(nId);
-                        }
-                    });
-                }
-
-                // Real-time Supabase listener for order updates
-                setupRealtimeOrderListener();
-            }
-
-            loadNotes();
+            await fetchOrders();
         };
 
-        function setupRealtimeOrderListener() {
-            if (!currentUser || !window.supabaseClient) return;
-
-            window.supabaseClient
-                .channel('public:user_orders')
-                .on('postgres_changes', { 
-                    event: 'UPDATE', 
-                    schema: 'public', 
-                    table: 'user_orders',
-                    filter: `user_email=eq.${currentUser.email}`
-                }, payload => {
-                    const updatedOrder = payload.new;
-                    if (updatedOrder) {
-                        const noteIdStr = String(updatedOrder.note_id);
-                        orderStatuses[noteIdStr] = updatedOrder.status;
-                        
-                        if (updatedOrder.status === 'approved') {
-                            if (!purchases.includes(noteIdStr)) {
-                                purchases.push(noteIdStr);
-                            }
-                        }
-                        loadNotes(); // Live grid update
-                    }
-                })
-                .subscribe();
+        // Custom Dropdown Control Logic
+        function toggleDropdown() {
+            const menu = document.getElementById('dropdownMenu');
+            menu.classList.toggle('show');
         }
 
-        async function loadNotes() {
-            const { data: notes, error } = await window.supabaseClient
-                .from('premium_notes')
+        function selectFilter(status, htmlContent, element) {
+            currentStatusFilter = status;
+            document.getElementById('selectedOption').innerHTML = htmlContent;
+            
+            document.querySelectorAll('.dropdown-item').forEach(el => el.classList.remove('active'));
+            element.classList.add('active');
+            
+            document.getElementById('dropdownMenu').classList.remove('show');
+            filterOrders();
+        }
+
+        // Close dropdown when clicked outside
+        document.addEventListener('click', (e) => {
+            const dropdown = document.getElementById('statusDropdown');
+            if (!dropdown.contains(e.target)) {
+                document.getElementById('dropdownMenu').classList.remove('show');
+            }
+        });
+
+        // Screenshot Protection Alert
+        document.addEventListener("keyup", (e) => {
+            if (e.key === "PrintScreen") {
+                navigator.clipboard.writeText("");
+                alert("🔒 Screenshots & Screen Captures are disabled on this Admin Panel!");
+            }
+        });
+
+        async function fetchOrders() {
+            const { data, error } = await window.supabaseClient
+                .from('user_orders')
                 .select('*')
                 .order('id', { ascending: false });
 
-            const container = document.getElementById('notesGrid');
-            container.innerHTML = "";
-
-            if (!notes || notes.length === 0) {
-                container.innerHTML = "<p style='color:#888; grid-column:1/-1; text-align:center;'>No notes uploaded yet.</p>";
+            if (error) {
+                console.error("Orders fetch error:", error);
+                document.getElementById('ordersTableBody').innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align:center; color:#ff4757; padding: 20px;">
+                            <i class="fa-solid fa-triangle-exclamation"></i> Error loading data: ${error.message}
+                        </td>
+                    </tr>`;
                 return;
             }
 
-            notes.forEach(note => {
-                const noteIdStr = String(note.id);
-                loadedNotesMap[note.id] = note;
+            cachedOrders = data || [];
+            filterOrders();
+        }
+
+        function filterOrders() {
+            const searchQuery = document.getElementById('searchInput').value.toLowerCase().trim();
+
+            const filtered = cachedOrders.filter(order => {
+                const matchStatus = (currentStatusFilter === 'ALL') || (order.status === currentStatusFilter);
                 
-                const isApproved = purchases.includes(noteIdStr) || orderStatuses[noteIdStr] === 'approved';
-                const isPending = orderStatuses[noteIdStr] === 'pending';
+                const emailStr = (order.user_email || '').toLowerCase();
+                const utrStr = (order.utr_code || '').toLowerCase();
+                const matchSearch = !searchQuery || emailStr.includes(searchQuery) || utrStr.includes(searchQuery);
 
-                // SVG Icons
-                const readIconSvg = `<svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`;
-                const previewIconSvg = `<svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
-                const unlockIconSvg = `<svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>`;
-                const clockIconSvg = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`;
+                return matchStatus && matchSearch;
+            });
 
-                // Action Button Logic
-                let actionBtnHtml = '';
-                if (isApproved) {
-                    // Direct View / Read Option
-                    actionBtnHtml = `
-                        <button class="btn-mini btn-read" onclick="openInViewer(${note.id})">
-                            ${readIconSvg} Read Note
-                        </button>`;
-                } else if (isPending) {
-                    actionBtnHtml = `
-                        <button class="btn-mini btn-pending" disabled>
-                            ${clockIconSvg} Verification Pending
-                        </button>`;
+            renderTable(filtered);
+        }
+
+        function renderTable(orders) {
+            const tbody = document.getElementById('ordersTableBody');
+            tbody.innerHTML = "";
+
+            if (orders.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align:center; color:#8a99ad; padding: 25px;">
+                            <i class="fa-solid fa-inbox" style="font-size: 1.5rem; display:block; margin-bottom: 6px;"></i> No matching orders found.
+                        </td>
+                    </tr>`;
+                return;
+            }
+
+            orders.forEach(order => {
+                let statusBadge = '';
+                if (order.status === 'pending') {
+                    statusBadge = `<span class="badge-status status-pending"><i class="fa-solid fa-hourglass-half"></i> PENDING</span>`;
+                } else if (order.status === 'approved') {
+                    statusBadge = `<span class="badge-status status-approved"><i class="fa-solid fa-circle-check"></i> APPROVED</span>`;
                 } else {
-                    actionBtnHtml = `
-                        <button class="btn-mini btn-unlock" onclick="openPaymentModal(${note.id})">
-                            ${unlockIconSvg} Unlock Note
-                        </button>`;
+                    statusBadge = `<span class="badge-status status-rejected"><i class="fa-solid fa-circle-xmark"></i> REJECTED</span>`;
+                }
+                
+                let actionButtons = `<span style="color:#666; font-size:0.75rem;"><i class="fa-solid fa-lock"></i> Processed</span>`;
+                if (order.status === 'pending') {
+                    actionButtons = `
+                        <div class="action-btns">
+                            <button class="btn-approve" onclick="approveOrder(${order.id}, '${order.user_email}', ${order.note_id})">
+                                <i class="fa-solid fa-check"></i> Approve
+                            </button>
+                            <button class="btn-reject" onclick="rejectOrder(${order.id})">
+                                <i class="fa-solid fa-xmark"></i> Reject
+                            </button>
+                        </div>
+                    `;
                 }
 
-                container.innerHTML += `
-                    <div class="mini-card">
-                        <div>
-                            <span class="badge-tag">${note.class_no || ''} | ${note.subject || ''}</span>
-                            <div class="card-title">${note.title}</div>
-                            <div class="chapter-sub">${note.chapter_no || ''}</div>
-                        </div>
-                        
-                        <div>
-                            <div class="price-tag">₹${note.price}</div>
-                            <div class="btn-stack">
-                                ${!isApproved ? `
-                                    <button class="btn-mini btn-preview" onclick="openInViewer(${note.id})">
-                                        ${previewIconSvg} Preview
-                                    </button>
-                                ` : ''}
-                                ${actionBtnHtml}
-                            </div>
-                        </div>
-                    </div>
+                tbody.innerHTML += `
+                    <tr>
+                        <td><strong style="color:#fff;"><i class="fa-regular fa-user" style="color:#8a99ad; margin-right:5px;"></i>${order.user_email}</strong></td>
+                        <td style="color:#d1d5db;">${order.note_title}</td>
+                        <td style="color:#2ed573; font-weight:bold;">₹${order.amount}</td>
+                        <td style="font-family:monospace; color:#00d2ff; font-weight:bold; font-size: 0.88rem;">${order.utr_code}</td>
+                        <td>${statusBadge}</td>
+                        <td>${actionButtons}</td>
+                    </tr>
                 `;
             });
         }
 
-        function openInViewer(noteId) {
-            const note = loadedNotesMap[noteId];
-            if (!note) return;
+        async function approveOrder(orderId, userEmail, noteId) {
+            if (!confirm(`Confirm payment approval for ${userEmail}?`)) return;
 
-            const noteIdStr = String(note.id);
-            const isApproved = purchases.includes(noteIdStr) || orderStatuses[noteIdStr] === 'approved';
-            let targetFilePath = note.file_path || note.full_pdf_url || '';
+            try {
+                // 1. Fetch User UUID safely
+                const { data: userData } = await window.supabaseClient
+                    .from('profiles')
+                    .select('id')
+                    .eq('email', userEmail)
+                    .maybeSingle();
 
-            let rawClass = note.class_no ? String(note.class_no) : '';
-            let classDigits = rawClass.replace(/\D/g, ''); 
-            const classPart = classDigits ? classDigits : rawClass;
+                let userId = userData ? userData.id : null;
 
-            const subjectPart = note.subject ? note.subject.toUpperCase() : '';
-            const titlePart = note.title || 'Note';
-            const prefixSymbol = "📘";
-            
-            const descriptiveName = [prefixSymbol, classPart, subjectPart, titlePart].filter(Boolean).join(' • ');
+                // 2. Update status in user_orders
+                const { error: orderErr } = await window.supabaseClient
+                    .from('user_orders')
+                    .update({ status: 'approved' })
+                    .eq('id', orderId);
 
-            const cleanPath = encodeURIComponent(targetFilePath);
-            const cleanName = encodeURIComponent(descriptiveName);
-            
-            let url = `notes-viewer.html?path=${cleanPath}&name=${cleanName}&type=premium&status=premium`;
-            if (isApproved) {
-                url += `&purchased=true`;
+                if (orderErr) throw orderErr;
+
+                // 3. Insert purchase record
+                if (userId && noteId) {
+                    await window.supabaseClient
+                        .from('user_purchases')
+                        .insert([{
+                            user_id: userId,
+                            note_id: noteId,
+                            txn_id: `MANUAL_UTR_${orderId}`
+                        }]);
+                }
+
+                // 4. Send Notification to User Table
+                const { error: notifErr } = await window.supabaseClient
+                    .from('notifications')
+                    .insert([{
+                        user_id: userId,
+                        title: "🎉 Note Access Granted!",
+                        message: `Your payment for order #${orderId} was verified. Access granted to your premium note!`,
+                        link: "premium-notes.html"
+                    }]);
+
+                if (notifErr) console.warn("Notification error:", notifErr);
+
+                alert("🎉 Order Approved & User Notified!");
+                await fetchOrders();
+
+            } catch (err) {
+                alert("Approval Error: " + err.message);
             }
-
-            window.location.href = url;
         }
 
-        async function openPaymentModal(noteId) {
-            const note = loadedNotesMap[noteId];
-            if (!note) return;
+        async function rejectOrder(orderId) {
+            if (!confirm("Are you sure you want to REJECT this payment?")) return;
 
-            if (typeof window.getCurrentUser === "function") {
-                currentUser = await window.getCurrentUser();
-            }
-            
-            if (!currentUser) {
-                alert("🔒 Unlock karne ke liye pehle login karein!");
-                sessionStorage.setItem("redirect_after_login", window.location.href);
-                const loginUrl = typeof window.getPageUrl === "function" ? window.getPageUrl("login.html") : "login.html";
-                window.location.href = loginUrl;
-                return;
-            }
+            try {
+                // Fetch User Info
+                const { data: orderData } = await window.supabaseClient
+                    .from('user_orders')
+                    .select('user_email')
+                    .eq('id', orderId)
+                    .single();
 
-            selectedNoteForPay = note;
-            document.getElementById('modalTitle').innerText = "Pay for " + note.title;
-            document.getElementById('modalPrice').innerText = "₹" + note.price;
-            
-            const upiUri = `upi://pay?pa=${encodeURIComponent(MY_UPI_ID)}&pn=PM-Roit&am=${note.price}&cu=INR&tn=${encodeURIComponent('Note: ' + note.title)}`;
-            
-            document.getElementById('payDirectBtn').href = upiUri;
+                let userId = null;
+                if (orderData?.user_email) {
+                    const { data: userData } = await window.supabaseClient
+                        .from('profiles')
+                        .select('id')
+                        .eq('email', orderData.user_email)
+                        .maybeSingle();
+                    if (userData) userId = userData.id;
+                }
 
-            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(upiUri)}`;
-            document.getElementById('upiQrCode').src = qrUrl;
-            
-            document.getElementById('paymentModal').style.display = 'flex';
-        }
+                // Update Order Status
+                const { error } = await window.supabaseClient
+                    .from('user_orders')
+                    .update({ status: 'rejected' })
+                    .eq('id', orderId);
 
-        function copyUpiId() {
-            navigator.clipboard.writeText(MY_UPI_ID);
-            alert("UPI ID Copied to Clipboard!");
-        }
+                if (error) throw error;
 
-        async function submitManualPayment() {
-            const utr = document.getElementById('utrInput').value.trim();
-            if (utr.length < 8) {
-                alert("Please enter a valid UTR/Transaction number!");
-                return;
-            }
+                // Send Rejection Notification
+                await window.supabaseClient
+                    .from('notifications')
+                    .insert([{
+                        user_id: userId,
+                        title: "❌ Payment Verification Failed",
+                        message: `Payment order #${orderId} was rejected. Please verify your UTR code and resubmit.`,
+                        link: "premium-notes.html"
+                    }]);
 
-            const { error } = await window.supabaseClient
-                .from('user_orders')
-                .insert([{
-                    user_email: currentUser.email,
-                    note_title: selectedNoteForPay.title,
-                    note_id: selectedNoteForPay.id,
-                    amount: selectedNoteForPay.price,
-                    utr_code: utr,
-                    status: 'pending'
-                }]);
-
-            if (!error) {
-                alert("Payment details submitted successfully! Admin will verify and approve soon.");
-                document.getElementById('paymentModal').style.display = 'none';
-                document.getElementById('utrInput').value = '';
-                
-                orderStatuses[String(selectedNoteForPay.id)] = 'pending';
-                loadNotes();
-            } else {
-                alert("Database sync failed: " + error.message);
+                alert("Order Rejected & User Notified ❌");
+                await fetchOrders();
+            } catch (err) {
+                alert("Reject Error: " + err.message);
             }
         }
     </script>
