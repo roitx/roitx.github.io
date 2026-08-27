@@ -93,6 +93,34 @@ function initCardTilt() {
 let readNotifIds = JSON.parse(localStorage.getItem("read_notifs") || "[]");
 let deletedNotifIds = JSON.parse(localStorage.getItem("deleted_notifs") || "[]");
 
+// Helper function to update badge and header text dynamically
+function updateUnreadCount() {
+  const badge = document.getElementById("notifBadge");
+  const countTag = document.getElementById("notifCountTag");
+  const allItems = document.querySelectorAll(".notif-item");
+  
+  let unreadCount = 0;
+  allItems.forEach(item => {
+    if (item.classList.contains("unread")) {
+      unreadCount++;
+    }
+  });
+
+  if (badge) {
+    if (unreadCount > 0) {
+      badge.classList.add("active");
+      badge.style.display = "block";
+    } else {
+      badge.classList.remove("active");
+      badge.style.display = "none";
+    }
+  }
+
+  if (countTag) {
+    countTag.innerText = unreadCount > 0 ? `${unreadCount} New` : `${allItems.length} Items`;
+  }
+}
+
 function toggleNotif() {
   const box = document.getElementById("notifBox");
   if (box) {
@@ -111,12 +139,6 @@ function markAllAsRead() {
   const badge = document.getElementById("notifBadge");
   const tag = document.getElementById("notifCountTag");
 
-  if (badge) {
-    badge.classList.remove("active");
-    badge.style.display = "none";
-  }
-  if (tag) tag.textContent = "0 New";
-
   const allItems = document.querySelectorAll(".notif-item");
   allItems.forEach(item => {
     const id = item.getAttribute("data-id");
@@ -127,10 +149,12 @@ function markAllAsRead() {
     if (dot) dot.remove();
   });
   localStorage.setItem("read_notifs", JSON.stringify(readNotifIds));
+  
+  updateUnreadCount();
 }
 
 function openNotifModal(id, title, message, link, timestamp) {
-  // Dropdown ko hide kar rahe hain taaki Modal background overlay overlay par correctly show ho
+  // Dropdown ko hide kar rahe hain taaki Modal background overlay par correctly show ho
   const notifBox = document.getElementById("notifBox");
   if (notifBox) notifBox.classList.remove("show");
 
@@ -174,6 +198,9 @@ function openNotifModal(id, title, message, link, timestamp) {
       const dot = itemElem.querySelector("span[style*='background: #00c6ff']");
       if (dot) dot.remove();
     }
+    
+    // Counter live update
+    updateUnreadCount();
   }
 }
 
@@ -196,6 +223,8 @@ function deleteNotification(e, id) {
       if (!deletedNotifIds.includes(String(id))) deletedNotifIds.push(String(id));
       localStorage.setItem("deleted_notifs", JSON.stringify(deletedNotifIds));
 
+      updateUnreadCount();
+
       const notifList = document.getElementById("notifList");
       if (notifList && notifList.querySelectorAll(".notif-item").length === 0) {
         notifList.innerHTML = `<div class="notif-empty" style="padding: 15px; text-align: center; color: var(--muted, #8a99ad); font-size: 13px;">Koi naya notification nahi hai.</div>`;
@@ -205,9 +234,7 @@ function deleteNotification(e, id) {
 }
 
 function addNotification(id, title, message, link = "#", isNew = false, createdAt = null) {
-  const badge = document.getElementById("notifBadge");
   const notifList = document.getElementById("notifList");
-  const notifCountTag = document.getElementById("notifCountTag");
 
   if (!notifList || deletedNotifIds.includes(String(id))) return;
 
@@ -217,10 +244,6 @@ function addNotification(id, title, message, link = "#", isNew = false, createdA
   if (emptyMsg) notifList.innerHTML = "";
 
   const isRead = readNotifIds.includes(String(id));
-  if (!isRead && badge) {
-    badge.classList.add("active");
-    badge.style.display = "block";
-  }
 
   const safeTitle = (title || '').replace(/"/g, '&quot;');
   const safeMessage = (message || '').replace(/"/g, '&quot;');
@@ -242,8 +265,7 @@ function addNotification(id, title, message, link = "#", isNew = false, createdA
   
   notifList.insertAdjacentHTML("afterbegin", itemHtml);
 
-  const totalItems = notifList.querySelectorAll(".notif-item").length;
-  if (notifCountTag) notifCountTag.innerText = `${totalItems} Items`;
+  updateUnreadCount();
 
   if (isNew) {
     showToastNotification(title, message, link);
