@@ -1,4 +1,3 @@
-<!-- about.html -->
 <!DOCTYPE html>
 <html lang="hi">
 <head>
@@ -264,11 +263,9 @@
             transform: translateY(0);
         }
     </style>
-    <!-- Supabase & Solver Dependencies -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js"></script>
-<script src="solver.js"></script>
-
+    <!-- Supabase Dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase.js"></script>
 </head>
 <body>
 
@@ -310,13 +307,14 @@
         
         <div class="faq-item">
             <button class="faq-question" onclick="toggleFaq(this)">
-                <span>Q: Mai notes kaise download kar skta  sakta hu?</span>
+                <span>Q: Mai notes kaise download kar sakta hu?</span>
                 <span class="faq-icon">▼</span>
             </button>
             <div class="faq-answer">
                 <p>A: Aap jaha apka file khulta h wah setting ⚙️ par tap karke download kar sakte hain.</p>
             </div>
         </div>
+
         <div class="faq-item">
             <button class="faq-question" onclick="toggleFaq(this)">
                 <span>Q: Mai apna feedback ka jawab kaha pa sakta hu?</span>
@@ -326,7 +324,6 @@
                 <p>A: Aap home page se menu ke through ask-doubt page par jakar waha feedback 💬 button par tap karke uska status dekh sakte hain.</p>
             </div>
         </div>
-        
 
         <div class="faq-item">
             <button class="faq-question" onclick="toggleFaq(this)">
@@ -370,91 +367,133 @@
 </div>
 
 <script>
-        // Accordion FAQ Toggle Function
-    function toggleFaq(button) {
-        const item = button.parentElement;
-        const isActive = item.classList.contains('active');
+// FAQ Accordion Toggle Function
+function toggleFaq(button) {
+    const item = button.parentElement;
+    const isActive = item.classList.contains('active');
+    document.querySelectorAll('.faq-item').forEach(el => el.classList.remove('active'));
+    if (!isActive) {
+        item.classList.add('active');
+    }
+}
 
-        // Close all other open items
-        document.querySelectorAll('.faq-item').forEach(el => el.classList.remove('active'));
+// Word Count Helpers
+function countWords(str) {
+    const trimmed = str.trim();
+    if (!trimmed) return 0;
+    return trimmed.split(/\s+/).length;
+}
 
-        if (!isActive) {
-            item.classList.add('active');
-        }
+function validateWordCount() {
+    const textarea = document.getElementById('description');
+    let text = textarea.value;
+    let words = countWords(text);
+
+    const maxWords = 150;
+    const errorMsg = document.getElementById('errorMsg');
+
+    if (words > maxWords) {
+        const wordArray = text.trim().split(/\s+/).slice(0, maxWords);
+        textarea.value = wordArray.join(" ") + " ";
+        words = maxWords;
     }
 
-    // Accurate Word Counting Logic
-    function countWords(str) {
-        const trimmed = str.trim();
-        if (!trimmed) return 0;
-        return trimmed.split(/\s+/).length;
+    document.getElementById('currentCount').innerText = words;
+
+    if (words === maxWords) {
+        errorMsg.innerText = "Max 150 words reached!";
+        errorMsg.style.display = 'block';
+    } else {
+        errorMsg.style.display = 'none';
+    }
+}
+
+// Session ID Helper
+function getSessionId() {
+    let sid = localStorage.getItem("solver_sid");
+    if (!sid) {
+        sid = crypto.randomUUID();
+        localStorage.setItem("solver_sid", sid);
+    }
+    return sid;
+}
+
+// Feedback Submit Handler (Login check tabhi hoga jab Send/Submit button click hoga)
+async function handleFeedback(event) {
+    event.preventDefault();
+
+    // 1. Submit par tap karte hi Login status check
+    let session = null;
+    if (window.supabaseClient && window.supabaseClient.auth) {
+        const authRes = await window.supabaseClient.auth.getSession();
+        session = authRes.data ? authRes.data.session : null;
     }
 
-    // Live Word Count & Max Limit Enforcement
-    function validateWordCount() {
-        const textarea = document.getElementById('description');
-        let text = textarea.value;
-        let words = countWords(text);
-
-        const maxWords = 150;
-        const errorMsg = document.getElementById('errorMsg');
-
-        // Agar 150 words se zyada hone lagein, toh extra words truncate kar do
-        if (words > maxWords) {
-            const wordArray = text.trim().split(/\s+/).slice(0, maxWords);
-            textarea.value = wordArray.join(" ") + " ";
-            words = maxWords;
-        }
-
-        document.getElementById('currentCount').innerText = words;
-
-        // Visual warning agar exactly 150 words ho jayein
-        if (words === maxWords) {
-            errorMsg.innerText = "Max 150 words reached!";
-            errorMsg.style.display = 'block';
-        } else {
-            errorMsg.style.display = 'none';
-        }
+    if (!session || !session.user) {
+        alert("Kripya feedback bhejne ke liye pehle login karein!");
+        window.location.href = "login.html"; // Root me login.html par redirect
+        return;
     }
 
-    // Feedback Submit Handler
-    async function handleFeedback(event) {
-        event.preventDefault();
-        const topic = document.getElementById('topic').value;
-        const text = document.getElementById('description').value.trim();
-        const words = countWords(text);
+    // 2. Feedback inputs validation
+    const topic = document.getElementById('topic').value;
+    const text = document.getElementById('description').value.trim();
+    const words = countWords(text);
 
-        if (words === 0) {
-            alert('Kripya apna feedback likhein!');
-            return;
-        }
+    if (words === 0) {
+        alert('Kripya apna feedback likhein!');
+        return;
+    }
 
-        if (words > 150) {
-            alert('Feedback 150 words se chota hona chahiye.');
-            return;
-        }
+    const topicNames = {
+        ui_design: "UI / User Interface Issue",
+        content_quality: "Content & Notes Quality",
+        feature_request: "New Feature Request",
+        bug_report: "Bug / Technical Issue",
+        other: "Other"
+    };
 
-        // Dynamic Topic Names Map
-        const topicNames = {
-            ui_design: "UI / User Interface Issue",
-            content_quality: "Content & Notes Quality",
-            feature_request: "New Feature Request",
-            bug_report: "Bug / Technical Issue",
-            other: "Other"
-        };
+    const fullMessage = `[FEEDBACK - ${topicNames[topic] || topic}]:\n${text}`;
 
-        const fullMessage = `[About Page - ${topicNames[topic] || topic}]:\n${text}`;
+    try {
+        const user = session.user;
+        let fullName = user.email ? user.email.split('@')[0] : "User";
+        let avatarUrl = "";
 
-        if (typeof sendToAdmin === "function") {
-            await sendToAdmin(fullMessage);
+        try {
+            const { data: profileData } = await window.supabaseClient
+                .from('profiles').select('full_name, avatar_url').eq('id', user.id).single();
+            if (profileData) {
+                if (profileData.full_name) fullName = profileData.full_name;
+                if (profileData.avatar_url) avatarUrl = profileData.avatar_url;
+            }
+        } catch (err) {}
+
+        // 3. Insert into 'doubts' table
+        const { error } = await window.supabaseClient.from("doubts").insert([{
+            question: fullMessage,
+            status: "pending",
+            session_id: getSessionId(),
+            user_id: user.id,
+            user_email: user.email,
+            user_name: fullName,
+            user_photo: avatarUrl
+        }]);
+
+        if (!error) {
+            alert("✅ Aapka Feedback safaltapurvak bhej diya gaya hai!");
             document.getElementById('feedbackForm').reset();
             document.getElementById('currentCount').innerText = '0';
             document.getElementById('errorMsg').style.display = 'none';
         } else {
-            alert("❌ Error: solver.js load nahi ho paya!");
+            alert("❌ Database Error: " + error.message);
         }
-    }
 
+    } catch (err) {
+        console.error("Submission Error:", err);
+        alert("❌ Feedback bhejne me error aaya!");
+    }
+}
 </script>
 
 </body>
