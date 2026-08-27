@@ -79,7 +79,14 @@
       "type": "image/png",
       "form_factor": "wide",
       "label": "Roitx Desktop - Ask chat Ai"
-    }
+    },
+  {
+      "src": "desktop-4.png",
+      "sizes": "2400x1080",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Roitx Desktop - study Timer"
+  }
   ],
   
   "shortcuts": [
