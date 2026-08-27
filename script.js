@@ -100,7 +100,10 @@ function toggleNotif() {
   } else {
     // Dropdown na milne par fallback Modal Active trigger
     const notifModal = document.getElementById('notifModal');
-    if (notifModal) notifModal.style.display = 'flex';
+    if (notifModal) {
+      notifModal.classList.add('active');
+      notifModal.style.display = 'flex';
+    }
   }
 }
 
@@ -127,6 +130,10 @@ function markAllAsRead() {
 }
 
 function openNotifModal(id, title, message, link, timestamp) {
+  // Dropdown ko hide kar rahe hain taaki Modal background overlay overlay par correctly show ho
+  const notifBox = document.getElementById("notifBox");
+  if (notifBox) notifBox.classList.remove("show");
+
   const modal = document.getElementById("notifModal");
   const modalTitle = document.getElementById("modalNotifTitle");
   const modalMsg = document.getElementById("modalNotifMessage");
@@ -154,6 +161,7 @@ function openNotifModal(id, title, message, link, timestamp) {
     };
   }
 
+  modal.classList.add("active");
   modal.style.display = "flex";
 
   if (!readNotifIds.includes(String(id))) {
@@ -171,7 +179,10 @@ function openNotifModal(id, title, message, link, timestamp) {
 
 function closeNotifModal() {
   const modal = document.getElementById("notifModal");
-  if (modal) modal.style.display = "none";
+  if (modal) {
+    modal.classList.remove("active");
+    modal.style.display = "none";
+  }
 }
 
 function deleteNotification(e, id) {

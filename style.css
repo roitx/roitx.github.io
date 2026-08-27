@@ -743,13 +743,17 @@ body.light .notif-item:hover {
   font-weight: 700 !important;
 }
 
+/* --- FIXED Z-INDEX MODAL OVERLAY --- */
 .notif-modal-overlay {
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
+  top: 0; 
+  left: 0; 
+  right: 0; 
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.75);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  z-index: 99999;
+  z-index: 100000 !important; /* FIXED: Always rendered on top of dropdown */
   display: none;
   justify-content: center;
   align-items: center;
@@ -881,7 +885,8 @@ body.light .notif-item:hover {
   position: absolute;
   top: 2px;
   right: 2px;
-  width: 10px;
+  width: 100%;
+  max-width: 10px;
   height: 10px;
   background: #ff3b30;
   border-radius: 50%;
@@ -902,6 +907,7 @@ body.light .notif-item:hover {
   100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 59, 48, 0); }
 }
 
+/* --- DROPDOWN BOX WITH LOWER Z-INDEX --- */
 .notif-dropdown-box {
   position: absolute;
   top: 55px;
@@ -914,7 +920,7 @@ body.light .notif-item:hover {
   border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.15));
   border-radius: 18px;
   box-shadow: 0 12px 35px rgba(0, 0, 0, 0.5);
-  z-index: 9999;
+  z-index: 9999; /* Lower than modal overlay */
   display: none;
   flex-direction: column;
   overflow: hidden;
