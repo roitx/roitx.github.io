@@ -4,8 +4,8 @@ document.addEventListener("DOMContentLoaded", () => {
     renderActivityFeed();
 });
 
-function getData(key){
-  return JSON.parse(localStorage.getItem(key) || "[]");
+function getData(key) {
+    return JSON.parse(localStorage.getItem(key) || "[]");
 }
 
 function toggleFilter() {
@@ -21,14 +21,14 @@ function toggleFilter() {
     renderActivityFeed();
 }
 
-// Global helper to track and prevent duplicates cleanly
+// Global helper to track activity cleanly
 function trackActivityLocally(fileData, isDownloaded = false) {
     try {
         let recent = getData("recentFiles");
         let downloads = getData("downloadedFiles");
 
-        // Clean base URL for duplicate checking
-        let cleanBaseUrl = fileData.url ? fileData.url.split('?')[0] : "";
+        let rawUrl = fileData.url || "";
+        let cleanBaseUrl = rawUrl.split('?')[0];
 
         if (isDownloaded && !downloads.some(f => f.url && f.url.split('?')[0] === cleanBaseUrl)) {
             fileData.timeDownloaded = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -37,15 +37,13 @@ function trackActivityLocally(fileData, isDownloaded = false) {
         }
 
         const alreadyDownloaded = downloads.some(f => f.url && f.url.split('?')[0] === cleanBaseUrl) || isDownloaded;
+        const isCurrentPremium = fileData.isPremium || cleanBaseUrl.toLowerCase().includes("premium") || cleanBaseUrl.toLowerCase().includes("paid") || cleanBaseUrl.toLowerCase().includes("locked");
 
-        // Check if current file is premium
-        const isCurrentPremium = fileData.isPremium || (fileData.url && (fileData.url.toLowerCase().includes("premium") || fileData.url.toLowerCase().includes("paid") || fileData.url.toLowerCase().includes("locked")));
-
-        // Remove duplicate entry based on clean base URL
+        // Remove duplicate entry
         recent = recent.filter(f => !f.url || f.url.split('?')[0] !== cleanBaseUrl);
         recent.unshift({
             title: fileData.title,
-            url: fileData.url,
+            url: cleanBaseUrl, // Pure Clean URL without params
             meta: fileData.meta || "Viewer",
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             downloaded: alreadyDownloaded,
@@ -59,19 +57,60 @@ function trackActivityLocally(fileData, isDownloaded = false) {
     }
 }
 
-function renderActivityFeed() {
+async function renderActivityFeed() {
     const recentList = document.getElementById("recentList");
     if (!recentList) return;
 
     let recent = getData("recentFiles");
     let downloads = getData("downloadedFiles");
-    let purchasedNotes = getData("userPurchasedNotes"); // Purchase records array
+    let localPurchases = getData("userPurchasedNotes") || [];
+
+    // 🌟 1. SUPABASE SYNC: Fetch Supabase purchases if user is logged in
+    let supabaseApprovedTitles = [];
+    try {
+        if (window.supabaseClient && typeof window.getCurrentUser === "function") {
+            const user = await window.getCurrentUser();
+            if (user) {
+                // Fetch approved user_orders
+                const { data: ordersData } = await window.supabaseClient
+                    .from('user_orders')
+                    .select('note_title, status')
+                    .eq('user_email', user.email)
+                    .eq('status', 'approved');
+
+                if (ordersData) {
+                    supabaseApprovedTitles = ordersData.map(o => o.note_title ? o.note_title.toLowerCase() : "");
+                }
+
+                // Fetch user_purchases
+                const { data: purchaseData } = await window.supabaseClient
+                    .from('user_purchases')
+                    .select('note_id')
+                    .eq('user_id', user.id);
+
+                if (purchaseData && purchaseData.length > 0) {
+                    const noteIds = purchaseData.map(p => p.note_id);
+                    const { data: notes } = await window.supabaseClient
+                        .from('premium_notes')
+                        .select('title')
+                        .in('id', noteIds);
+                    
+                    if (notes) {
+                        notes.forEach(n => {
+                            if (n.title) supabaseApprovedTitles.push(n.title.toLowerCase());
+                        });
+                    }
+                }
+            }
+        }
+    } catch (err) {
+        console.log("Supabase fetch skip in activity feed:", err);
+    }
 
     if (showOnlyDownloaded) {
         recent = recent.filter(f => {
             let cleanPath = f.url ? f.url.split('?')[0] : "";
-            let isDownloaded = downloads.some(item => (item.url && item.url.split('?')[0] === cleanPath) || item.title === f.title) || f.downloaded;
-            return isDownloaded;
+            return downloads.some(item => (item.url && item.url.split('?')[0] === cleanPath) || item.title === f.title) || f.downloaded;
         });
     }
 
@@ -86,12 +125,15 @@ function renderActivityFeed() {
         let viewerPage = "notes-viewer.html";
         let rawUrl = f.url || "";
         
-        // Step 1: Base URL me se purane parameters (&type=premium wagairah) ko clean karein
+        // 🌟 Clean path (Stripping old query params)
         let cleanPath = rawUrl.split('?')[0];
 
-        // Step 2: Dynamic Purchase & Download Verification
         let isDownloaded = downloads.some(item => (item.url && item.url.split('?')[0] === cleanPath) || item.title === f.title) || f.downloaded;
-        let isPurchased = purchasedNotes.some(item => (item.url && item.url.split('?')[0] === cleanPath) || item.title === f.title);
+        
+        // 🌟 Dynamic Purchase Check (Localstorage + Supabase Live Sync)
+        const fileTitleLower = (f.title || "").toLowerCase();
+        let isPurchased = localPurchases.some(item => (item.url && item.url.split('?')[0] === cleanPath) || (item.title && item.title.toLowerCase() === fileTitleLower)) 
+                          || supabaseApprovedTitles.includes(fileTitleLower);
 
         if (cleanPath.match(/\.(jpg|jpeg|png|webp|gif)$/i) || f.meta?.includes("Image")) {
             viewerPage = "image-viewer.html";
@@ -104,13 +146,17 @@ function renderActivityFeed() {
             }
         }
 
-        // Step 3: Check overall premium flag
-        let isFilePremium = f.isPremium || cleanPath.toLowerCase().includes("premium") || cleanPath.toLowerCase().includes("paid") || cleanPath.toLowerCase().includes("locked") || cleanPath.toLowerCase().includes("special");
+        let isFilePremium = f.isPremium || cleanPath.toLowerCase().includes("premium") || cleanPath.toLowerCase().includes("paid") || cleanPath.toLowerCase().includes("locked");
 
-        // Step 4: Agar item Purchase ya Download nahi hua hai TABHI &type=premium attach hoga
-        let extraParam = (isFilePremium && !isPurchased && !isDownloaded) ? "&type=premium" : "";
+        // 🌟 Dynamic URL Construction: Agar Purchase HO CHUKA HAIN to type=premium NOHI lagega, &purchased=true lagega
+        let extraParams = "";
+        if (isPurchased || isDownloaded) {
+            extraParams = "&purchased=true";
+        } else if (isFilePremium) {
+            extraParams = "&type=premium&status=premium";
+        }
 
-        const viewTargetUrl = `${viewerPage}?path=${encodeURIComponent(cleanPath)}&name=${encodeURIComponent(f.title)}${extraParam}`;
+        const viewTargetUrl = `${viewerPage}?path=${encodeURIComponent(cleanPath)}&name=${encodeURIComponent(f.title)}${extraParams}`;
 
         const div = document.createElement("div");
         div.className = "activity-item";
