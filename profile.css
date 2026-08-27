@@ -244,7 +244,43 @@ button.btn-admin {
   border: 1px solid rgba(90, 46, 255, 0.2);
   box-shadow: 6px 6px 14px #b8bec7, -6px -6px 14px #ffffff, 0 0 12px rgba(90, 46, 255, 0.2);
 }
-button.btn-explore { color: #3182ce; }
+
+/* UPGRADED DISCOVERY / EXPLORE BUTTON (SHAKE & LIGHT SHINE EFFECT) */
+button.btn-explore { 
+  background: linear-gradient(135deg, #00c6ff, #0072ff) !important;
+  color: #ffffff !important;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 6px 20px rgba(0, 198, 255, 0.45), 6px 6px 14px #b8bec7, -6px -6px 14px #ffffff;
+  animation: exploreShake 2.5s infinite ease-in-out, pulseGlow 2s infinite alternate ease-in-out;
+  position: relative;
+  overflow: hidden;
+}
+
+button.btn-explore:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(0, 198, 255, 0.65), 6px 6px 14px #b8bec7, -6px -6px 14px #ffffff;
+}
+
+/* CONTINUOUS ATTENTION-GETTING SHAKE ANIMATION */
+@keyframes exploreShake {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  10%, 30%, 50% { transform: rotate(-3deg) scale(1.02); }
+  20%, 40% { transform: rotate(3deg) scale(1.02); }
+  60% { transform: rotate(0deg) scale(1); }
+}
+
+/* PULSING NEON LIGHT GLOW */
+@keyframes pulseGlow {
+  0% {
+    box-shadow: 0 4px 15px rgba(0, 198, 255, 0.35), 6px 6px 14px #b8bec7, -6px -6px 14px #ffffff;
+  }
+  100% {
+    box-shadow: 0 8px 28px rgba(0, 198, 255, 0.75), 0 0 12px rgba(0, 114, 255, 0.6), 6px 6px 14px #b8bec7, -6px -6px 14px #ffffff;
+  }
+}
+
 button.btn-danger { color: #e53e3e; }
 
 button.btn:active {

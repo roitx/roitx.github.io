@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Broadcast Notifications</title>
+    <link rel="stylesheet" href="premium.css">
+    <!-- FontAwesome Vector Icons CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Supabase CDN + Central Config -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase.js"></script>
+
+    <style>
+        body {
+            -webkit-user-select: none;
+            user-select: none;
+            background-color: #080c14;
+            color: #fff;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Ambient Radial Background Glows */
+        .bg-glow-1 {
+            position: fixed;
+            top: -120px;
+            left: -100px;
+            width: 380px;
+            height: 380px;
+            background: radial-gradient(circle, rgba(0, 210, 255, 0.14) 0%, transparent 70%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .bg-glow-2 {
+            position: fixed;
+            bottom: -100px;
+            right: -100px;
+            width: 380px;
+            height: 380px;
+            background: radial-gradient(circle, rgba(112, 0, 255, 0.14) 0%, transparent 70%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .security-banner {
+            background: rgba(0, 210, 255, 0.08);
+            border: 1px solid rgba(0, 210, 255, 0.25);
+            color: #00d2ff;
+            font-size: 0.78rem;
+            text-align: center;
+            padding: 10px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            margin-bottom: 16px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            backdrop-filter: blur(8px);
+        }
+
+        .admin-header {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 18px 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(12px);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .admin-header h1 {
+            font-size: 1.35rem;
+            margin: 0;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .admin-header span.badge-admin {
+            font-size: 0.75rem;
+            background: linear-gradient(135deg, #00d2ff, #0072ff);
+            color: #fff;
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-weight: 700;
+            text-transform: uppercase;
+            box-shadow: 0 0 12px rgba(0, 210, 255, 0.4);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .admin-header p {
+            margin: 8px 0 0 0;
+            font-size: 0.82rem;
+            color: #8a99ad;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .card {
+            background: rgba(17, 22, 34, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            margin-top: 0;
+            margin-bottom: 16px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 14px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.8rem;
+            color: #8a99ad;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        .input-box-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-box-wrapper i {
+            position: absolute;
+            left: 14px;
+            color: #8a99ad;
+            font-size: 0.85rem;
+        }
+
+        input[type="text"], textarea {
+            width: 100%;
+            background: #0d121d;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #fff;
+            padding: 11px 14px 11px 38px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            outline: none;
+            box-sizing: border-box;
+            transition: all 0.25s ease;
+            font-family: inherit;
+        }
+
+        textarea {
+            padding-left: 14px;
+            resize: vertical;
+        }
+
+        input[type="text"]:focus, textarea:focus {
+            border-color: #00d2ff;
+            box-shadow: 0 0 10px rgba(0, 210, 255, 0.25);
+            background: #111726;
+        }
+
+        .btn-broadcast {
+            background: linear-gradient(135deg, #00d2ff, #0072ff);
+            color: #fff;
+            border: none;
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            width: 100%;
+            box-shadow: 0 4px 15px rgba(0, 210, 255, 0.3);
+            transition: all 0.25s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .btn-broadcast:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 210, 255, 0.5);
+        }
+
+        .notes-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+        }
+
+        .notes-table th, .notes-table td {
+            padding: 12px 14px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .notes-table th {
+            background: rgba(255, 255, 255, 0.03);
+            color: #00d2ff;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.72rem;
+            letter-spacing: 0.6px;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn-view-sm {
+            background: rgba(0, 210, 255, 0.12);
+            color: #00d2ff;
+            border: 1px solid rgba(0, 210, 255, 0.3);
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn-view-sm:hover {
+            background: rgba(0, 210, 255, 0.25);
+            box-shadow: 0 0 8px rgba(0, 210, 255, 0.3);
+        }
+
+        .btn-danger-sm {
+            background: linear-gradient(135deg, #ff4757, #ff6b6b);
+            color: #fff;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            box-shadow: 0 2px 8px rgba(255, 71, 87, 0.3);
+            transition: all 0.2s;
+        }
+
+        .btn-danger-sm:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(255, 71, 87, 0.4);
+        }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <div class="bg-glow-1"></div>
+    <div class="bg-glow-2"></div>
+
+    <div class="admin-container" style="max-width: 950px; margin: 0 auto; padding: 14px;">
+        
+        <div class="security-banner">
+            <i class="fa-solid fa-bullhorn"></i> BROADCAST CONTROL: Push instant alerts directly to all active app users.
+        </div>
+
+        <header class="admin-header">
+            <div class="header-top">
+                <h1><i class="fa-solid fa-shield-halved" style="color: #00d2ff;"></i> Admin Panel</h1>
+                <span class="badge-admin"><i class="fa-solid fa-paper-plane"></i> Live Broadcast</span>
+            </div>
+            <p><i class="fa-solid fa-circle-check" style="color: #2ed573;"></i> Publish site-wide updates, new notes releases, and direct links.</p>
+        </header>
+
+        <!-- Notification Form Card -->
+        <section class="card">
+            <h2 class="card-title">
+                <i class="fa-solid fa-bell-ring" style="color: #00d2ff;"></i> Send New Notification
+            </h2>
+            
+            <div class="form-grid">
+                <div class="input-group">
+                    <label>Notification Title</label>
+                    <div class="input-box-wrapper">
+                        <i class="fa-solid fa-heading"></i>
+                        <input type="text" id="notifTitle" placeholder="e.g. 🎯 Class 12th New Physics Notes Uploaded!">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Target Redirect Link (Optional)</label>
+                    <div class="input-box-wrapper">
+                        <i class="fa-solid fa-link"></i>
+                        <input type="text" id="notifLink" placeholder="e.g. premium-notes.html or https://roitx.qd.je/classes.html">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Message Content</label>
+                    <textarea id="notifMessage" rows="3" placeholder="Write brief broadcast description here..."></textarea>
+                </div>
+            </div>
+
+            <button class="btn-broadcast" id="sendBtn" onclick="sendNotification()">
+                <i class="fa-solid fa-paper-plane"></i> Broadcast Notification Now
+            </button>
+        </section>
+
+        <!-- Notification History Card -->
+        <section class="card" style="margin-top: 20px;">
+            <h2 class="card-title">
+                <i class="fa-solid fa-clock-rotate-left" style="color: #00d2ff;"></i> Broadcast History
+            </h2>
+            
+            <div style="margin-bottom: 16px;">
+                <div class="input-box-wrapper">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="filterSearch" placeholder="Search Title or Message content..." oninput="filterNotifs()">
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="notes-table">
+                    <thead>
+                        <tr>
+                            <th><i class="fa-solid fa-message"></i> Title & Message</th>
+                            <th><i class="fa-solid fa-arrow-up-right-from-square"></i> Action Link</th>
+                            <th><i class="fa-solid fa-calendar-days"></i> Sent Date</th>
+                            <th><i class="fa-solid fa-sliders"></i> Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="notifTableBody">
+                        <tr>
+                            <td colspan="4" style="text-align:center; color:#8a99ad; padding: 25px;">
+                                <i class="fa-solid fa-spinner fa-spin" style="font-size: 1.2rem; margin-right: 8px;"></i> Loading notification logs...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        let cachedNotifs = [];
+
+        window.onload = async () => {
+            if (typeof window.requireAdminAuth === "function") {
+                await window.requireAdminAuth();
+            }
+            await fetchNotifications();
+        };
+
+        // Screen Capture Alert Logic
+        document.addEventListener("keyup", (e) => {
+            if (e.key === "PrintScreen") {
+                navigator.clipboard.writeText("");
+                alert("🔒 Screen capture actions disabled on Admin Panel!");
+            }
+        });
+
+        async function sendNotification() {
+            const title = document.getElementById('notifTitle').value.trim();
+            const message = document.getElementById('notifMessage').value.trim();
+            const link = document.getElementById('notifLink').value.trim();
+
+            if (!title || !message) {
+                alert("Please fill in both Title and Message fields!");
+                return;
+            }
+
+            const btn = document.getElementById('sendBtn');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Broadcasting...`;
+
+            try {
+                const dbPayload = {
+                    title: title,
+                    message: message,
+                    link: link || null,
+                    created_at: new Date().toISOString()
+                };
+
+                const { error } = await window.supabaseClient
+                    .from('notifications')
+                    .insert([dbPayload]);
+
+                if (error) throw error;
+
+                alert("🎉 Success! Notification Broadcasted!");
+                
+                document.getElementById('notifTitle').value = "";
+                document.getElementById('notifMessage').value = "";
+                document.getElementById('notifLink').value = "";
+
+                await fetchNotifications();
+
+            } catch (err) {
+                alert("❌ Error sending notification: " + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Broadcast Notification Now`;
+            }
+        }
+
+        async function fetchNotifications() {
+            const { data, error } = await window.supabaseClient
+                .from('notifications')
+                .select('*')
+                .order('id', { ascending: false })
+                .limit(20);
+
+            if (error) {
+                console.error("Fetch error:", error);
+                document.getElementById('notifTableBody').innerHTML = `
+                    <tr>
+                        <td colspan="4" style="text-align:center; color:#ff4757; padding: 20px;">
+                            <i class="fa-solid fa-triangle-exclamation"></i> Error loading logs: ${error.message}
+                        </td>
+                    </tr>`;
+                return;
+            }
+
+            cachedNotifs = data || [];
+            filterNotifs();
+        }
+
+        function filterNotifs() {
+            const searchQuery = document.getElementById('filterSearch').value.toLowerCase().trim();
+
+            const filtered = cachedNotifs.filter(notif => {
+                const titleStr = (notif.title || '').toLowerCase();
+                const msgStr = (notif.message || '').toLowerCase();
+                return !searchQuery || titleStr.includes(searchQuery) || msgStr.includes(searchQuery);
+            });
+
+            renderTable(filtered);
+        }
+
+        function renderTable(notifs) {
+            const tbody = document.getElementById('notifTableBody');
+            tbody.innerHTML = "";
+
+            if (notifs.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="4" style="text-align:center; color:#8a99ad; padding: 25px;">
+                            <i class="fa-solid fa-inbox" style="font-size: 1.4rem; display:block; margin-bottom: 6px;"></i> No broadcast notifications found.
+                        </td>
+                    </tr>`;
+                return;
+            }
+
+            notifs.forEach(notif => {
+                const dateStr = notif.created_at ? new Date(notif.created_at).toLocaleDateString() : 'N/A';
+                const linkAttr = notif.link ? `<a href="${notif.link}" class="btn-view-sm" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square"></i> Open Link</a>` : '<span style="color:#666; font-size:0.75rem;"><i class="fa-solid fa-link-slash"></i> None</span>';
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td>
+                            <strong style="color:#00d2ff; font-size: 0.88rem;">${notif.title}</strong><br>
+                            <span style="color:#c5d1e0; font-size:0.78rem;">${notif.message}</span>
+                        </td>
+                        <td>${linkAttr}</td>
+                        <td style="color:#8a99ad; white-space:nowrap; font-size:0.78rem;">
+                            <i class="fa-regular fa-calendar" style="margin-right:4px;"></i>${dateStr}
+                        </td>
+                        <td>
+                            <div class="action-btns">
+                                <button class="btn-danger-sm" onclick="deleteNotification(${notif.id})">
+                                    <i class="fa-solid fa-trash-can"></i> Delete
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        async function deleteNotification(id) {
+            if (!confirm("Are you sure you want to delete this broadcast alert?")) return;
+
+            try {
+                const { error } = await window.supabaseClient
+                    .from('notifications')
+                    .delete()
+                    .eq('id', id);
+
+                if (error) throw error;
+
+                alert("Notification deleted! 🗑️");
+                await fetchNotifications();
+            } catch (err) {
+                alert("Delete failed: " + err.message);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,24 +1,24 @@
 /* =========================================================
-   PM ROITX - MAIN CONTROLLER SCRIPT
+   PM ROITX - MAIN CONTROLLER SCRIPT (WITH SUPABASE NOTIF)
    ========================================================= */
 
-// ================= 1. GLOBAL NAVIGATION & HELPERS =================
+// Global Fallback Quotes
+const GLOBAL_FALLBACK_QUOTES = [
+  "Work Hard in Silence Let Success Make Noise",
+  "Believe You Can And You Are Halfway There",
+  "Push Yourself Because No One Else Is Going To Do It For You",
+  "Power ∝ Work • PM Roitx Study Hub",
+  "Your Only Limit Is You • Stay Focused"
+];
+
+// 1. NAVIGATION & UTILITIES
 function goto(page) {
   window.location.href = page;
 }
 
-// ================= 2. DYNAMIC WATERMARK & QUOTES SYSTEM =================
+// 2. DYNAMIC WATERMARK & QUOTES SYSTEM
 function setupDynamicWatermark() {
-  const fallbackQuotes = [
-    "Work Hard in Silence Let Success Make Noise",
-    "Believe You Can And You Are Halfway There",
-    "Push Yourself Because No One Else Is Going To Do It For You",
-    "Power ∝ Work • PM Roitx Study Hub",
-    "Your Only Limit Is You • Stay Focused"
-  ];
-
-  let activeQuotes = fallbackQuotes;
-
+  let activeQuotes = GLOBAL_FALLBACK_QUOTES;
   try {
     const storedQuotes = JSON.parse(localStorage.getItem('quotes'));
     if (Array.isArray(storedQuotes) && storedQuotes.length > 0) {
@@ -34,19 +34,19 @@ function setupDynamicWatermark() {
   document.body.setAttribute('data-watermark', watermarkText);
 }
 
-// ================= 3. DISABLE ZOOM, TOUCH & SELECTION =================
+// 3. DISABLE CONTEXT MENU & DOUBLE-TAP ZOOM
 document.addEventListener('contextmenu', (e) => e.preventDefault(), false);
 
 let lastTouchEnd = 0;
 document.addEventListener('touchend', (e) => {
-  const now = new Date().getTime();
+  const now = Date.now();
   if (now - lastTouchEnd <= 300) {
     e.preventDefault();
   }
   lastTouchEnd = now;
 }, false);
 
-// ================= 4. CURSOR SPOTLIGHT & CARD 3D TILT =================
+// 4. CURSOR SPOTLIGHT & CARD 3D TILT
 const spotlight = document.createElement("div");
 spotlight.id = "cursorSpotlight";
 document.body.appendChild(spotlight);
@@ -65,118 +65,225 @@ document.addEventListener("touchmove", (e) => {
   }
 });
 
-// Card 3D Tilt Effect
-document.querySelectorAll('.card').forEach(card => {
-  card.addEventListener('mousemove', (e) => {
-    const rect = card.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+// Card 3D Tilt Effect Initialization
+function initCardTilt() {
+  document.querySelectorAll('.card').forEach(card => {
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
 
-    card.style.setProperty('--card-x', `${x}px`);
-    card.style.setProperty('--card-y', `${y}px`);
+      card.style.setProperty('--card-x', `${x}px`);
+      card.style.setProperty('--card-y', `${y}px`);
 
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-    const rotateX = -((y - centerY) / 12);
-    const rotateY = (x - centerX) / 12;
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+      const rotateX = -((y - centerY) / 12);
+      const rotateY = (x - centerX) / 12;
 
-    card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-4px)`;
+      card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-4px)`;
+    });
+
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px)`;
+    });
   });
+}
 
-  card.addEventListener('mouseleave', () => {
-    card.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px)`;
-  });
+// 5. NOTIFICATION SYSTEM (UPDATED WITH SUPABASE)
+function toggleNotif() {
+  const notifBox = document.getElementById("notifBox");
+  const badge = document.getElementById("notifBadge");
+
+  if (!notifBox) return;
+  notifBox.classList.toggle("active");
+
+  if (notifBox.classList.contains("active") && badge) {
+    badge.classList.remove("active");
+  }
+}
+
+document.addEventListener("click", (e) => {
+  const notifBtn = document.getElementById("notifBtn");
+  const notifBox = document.getElementById("notifBox");
+
+  if (notifBtn && notifBox) {
+    if (!notifBtn.contains(e.target) && !notifBox.contains(e.target)) {
+      notifBox.classList.remove("active");
+    }
+  }
 });
 
-// ================= 5. DOM LOADED (THEME, AUTH, SIDEMENU & HIGHLIGHT) =================
+function addNotification(title, message, link = "#") {
+  const badge = document.getElementById("notifBadge");
+  const notifList = document.getElementById("notifList");
+  const notifCountTag = document.getElementById("notifCountTag");
+
+  if (!notifList) return;
+
+  if (badge) badge.classList.add("active");
+
+  const emptyMsg = notifList.querySelector(".notif-empty");
+  if (emptyMsg) notifList.innerHTML = "";
+
+  const linkAttr = (link && link !== "#") ? `onclick="window.location.href='${link}'" style="cursor: pointer;"` : '';
+
+  const itemHtml = `
+    <div class="notif-item" ${linkAttr} style="padding: 10px 0; border-bottom: 1px solid var(--glass-border, rgba(255,255,255,0.1));">
+      <div style="font-size: 13px; font-weight: 700; color: var(--text, #333);">${title}</div>
+      <div style="font-size: 12px; color: var(--muted, #666); margin-top: 2px;">${message}</div>
+    </div>
+  `;
+  notifList.insertAdjacentHTML("afterbegin", itemHtml);
+
+  const totalItems = notifList.querySelectorAll(".notif-item").length;
+  if (notifCountTag) notifCountTag.innerText = `${totalItems} New`;
+}
+
+// Supabase Notifications Loader & Realtime Listener
+async function loadSupabaseNotifications() {
+  if (!window.supabaseClient) return;
+
+  try {
+    const { data: notifications, error } = await window.supabaseClient
+      .from('notifications')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(10);
+
+    if (error) throw error;
+
+    if (notifications && notifications.length > 0) {
+      // Clear initial dummy text
+      const notifList = document.getElementById("notifList");
+      if (notifList) notifList.innerHTML = "";
+
+      notifications.reverse().forEach(n => {
+        addNotification(n.title, n.message, n.link);
+      });
+    }
+
+    // Subscribe to Realtime Updates (New broadcast arrives live)
+    window.supabaseClient
+      .channel('public:notifications')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, payload => {
+        const newNotif = payload.new;
+        addNotification(newNotif.title, newNotif.message, newNotif.link);
+      })
+      .subscribe();
+
+  } catch (err) {
+    console.warn("Error fetching notifications:", err);
+  }
+}
+
+// 6. DOM LOADED INITIALIZATIONS
 document.addEventListener("DOMContentLoaded", async () => {
-  // Initialize Dynamic Watermark
   setupDynamicWatermark();
+  initCardTilt();
+  
+  // Load Supabase Notifications for Bell Icon
+  loadSupabaseNotifications();
 
   // Sidemenu Controls
   const sideMenu = document.querySelector(".side-menu");
   const overlay = document.getElementById("overlay");
   const menuBtn = document.getElementById("menuBtn");
 
-  if (menuBtn) {
+  if (menuBtn && sideMenu && overlay) {
     menuBtn.addEventListener("click", () => {
       sideMenu.classList.toggle("open");
       overlay.classList.toggle("show");
     });
-  }
 
-  if (overlay) {
     overlay.addEventListener("click", () => {
       sideMenu.classList.remove("open");
       overlay.classList.remove("show");
     });
   }
 
-  // Dark / Light Theme Toggle
+  // Dark / Light Theme Toggle + SUN & MOON ICON GENERATOR
   const modeToggle = document.getElementById("modeToggle");
   if (modeToggle) {
-    const saved = localStorage.getItem("theme");
-    if (saved === "light") {
+    const slider = modeToggle.parentElement.querySelector(".slider");
+
+    // Inject Sun/Moon icons dynamically if not present
+    if (slider && !slider.querySelector(".theme-icon")) {
+      slider.innerHTML = `<span class="theme-icon" style="position: absolute; right: 5px; top: 3px; font-size: 12px; transition: 0.3s;">🌙</span>`;
+    }
+
+    const updateThemeIcon = (isLight) => {
+      const icon = slider ? slider.querySelector(".theme-icon") : null;
+      if (icon) {
+        icon.textContent = isLight ? "☀️" : "🌙";
+        icon.style.left = isLight ? "5px" : "auto";
+        icon.style.right = isLight ? "auto" : "5px";
+      }
+    };
+
+    const savedTheme = localStorage.getItem("theme");
+    if (savedTheme === "light") {
       document.body.classList.add("light");
       modeToggle.checked = true;
+      updateThemeIcon(true);
     }
+
     modeToggle.addEventListener("change", () => {
-      document.body.classList.toggle("light", modeToggle.checked);
-      localStorage.setItem("theme", modeToggle.checked ? "light" : "dark");
+      const isLight = modeToggle.checked;
+      document.body.classList.toggle("light", isLight);
+      localStorage.setItem("theme", isLight ? "light" : "dark");
+      updateThemeIcon(isLight);
     });
   }
 
   // Dynamic Auth Sync
   const authContainer = document.getElementById("navAuthContainer");
   const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
-
   let userName = localStorage.getItem("userName") || "Profile";
   let userPhoto = localStorage.getItem("userPhoto") || "profile.jpg";
 
-  if (isLoggedIn && authContainer) {
+  const renderAuthUser = (name, photo) => {
+    if (!authContainer) return;
     authContainer.innerHTML = `
       <a href="profile.html" class="user-profile-link" style="display: flex; align-items: center; gap: 8px; text-decoration: none; color: inherit;">
-        <img src="${userPhoto}" alt="Avatar" class="user-avatar" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid var(--accent);">
-        <span style="font-weight: 600;">${userName}</span>
+        <img src="${photo}" alt="Avatar" class="user-avatar" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid var(--accent);">
+        <span style="font-weight: 600;">${name}</span>
       </a>
     `;
-  }
+  };
 
-  if (isLoggedIn && window.supabaseClient) {
-    try {
-      const user = await window.getCurrentUser();
-      if (user) {
-        const { data } = await window.supabaseClient
-          .from('profiles')
-          .select('full_name, avatar_url')
-          .eq('id', user.id)
-          .single();
+  if (isLoggedIn) {
+    renderAuthUser(userName, userPhoto);
 
-        if (data && data.full_name) {
-          userName = data.full_name;
-          localStorage.setItem("userName", userName);
+    if (window.supabaseClient && typeof window.getCurrentUser === "function") {
+      try {
+        const user = await window.getCurrentUser();
+        if (user) {
+          const { data } = await window.supabaseClient
+            .from('profiles')
+            .select('full_name, avatar_url')
+            .eq('id', user.id)
+            .single();
+
+          if (data) {
+            if (data.full_name) {
+              userName = data.full_name;
+              localStorage.setItem("userName", userName);
+            }
+            if (data.avatar_url) {
+              userPhoto = data.avatar_url;
+              localStorage.setItem("userPhoto", userPhoto);
+            }
+            renderAuthUser(userName, userPhoto);
+          }
         }
-
-        if (data && data.avatar_url) {
-          userPhoto = data.avatar_url;
-          localStorage.setItem("userPhoto", userPhoto);
-        }
-
-        if (authContainer) {
-          authContainer.innerHTML = `
-            <a href="profile.html" class="user-profile-link" style="display: flex; align-items: center; gap: 8px; text-decoration: none; color: inherit;">
-              <img src="${userPhoto}" alt="Avatar" class="user-avatar" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid var(--accent);">
-              <span style="font-weight: 600;">${userName}</span>
-            </a>
-          `;
-        }
+      } catch (err) {
+        console.warn("Could not fetch profile for navbar:", err);
       }
-    } catch (err) {
-      console.warn("Could not fetch profile for navbar:", err);
     }
   }
 
-  // Highlight Active Menu Item
+  // Highlight Active Side Menu Item
   const currentPath = window.location.pathname.split("/").pop();
   document.querySelectorAll(".side-menu a").forEach(link => {
     if (link.getAttribute("href") === currentPath) {
@@ -198,19 +305,19 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (acceptBtn) {
     acceptBtn.addEventListener("click", () => {
       localStorage.setItem("cookieConsent", "accepted");
-      cookieBanner.style.display = "none";
+      if (cookieBanner) cookieBanner.style.display = "none";
     });
   }
 
   if (declineBtn) {
     declineBtn.addEventListener("click", () => {
       localStorage.setItem("cookieConsent", "declined");
-      cookieBanner.style.display = "none";
+      if (cookieBanner) cookieBanner.style.display = "none";
     });
   }
 });
 
-// ================= 6. MOTIVATION POPUP SYSTEM =================
+// 7. MOTIVATION POPUP SYSTEM
 async function showMotivation() {
   const popup = document.getElementById("motivationPopup");
   const textElem = document.getElementById("motivationText");
@@ -238,22 +345,18 @@ async function showMotivation() {
 }
 
 function loadFallbackQuote(element) {
-  if (typeof fallbackQuotes !== "undefined" && fallbackQuotes.length > 0) {
-    const randomQuote = fallbackQuotes[Math.floor(Math.random() * fallbackQuotes.length)];
-    element.textContent = randomQuote;
-  } else {
-    element.textContent = "Focus on progress, not perfection!";
-  }
+  const randomQuote = GLOBAL_FALLBACK_QUOTES[Math.floor(Math.random() * GLOBAL_FALLBACK_QUOTES.length)];
+  element.textContent = randomQuote || "Focus on progress, not perfection!";
 }
 
 const motivationPopupElem = document.getElementById("motivationPopup");
 if (motivationPopupElem) {
-  motivationPopupElem.addEventListener("click", e => {
+  motivationPopupElem.addEventListener("click", (e) => {
     if (e.target.id === "motivationPopup") e.target.style.display = "none";
   });
 }
 
-// ================= 7. CANVAS BACKGROUND ANIMATION =================
+// 8. CANVAS BACKGROUND ANIMATION
 const c = document.getElementById("bgCanvas");
 if (c) {
   const ctx = c.getContext("2d");
@@ -304,7 +407,7 @@ if (c) {
   animateDots();
 }
 
-// ================= 8. CINEMATIC WAVE ANIMATION =================
+// 9. CINEMATIC WAVE ANIMATION
 const wavePathBottom = document.getElementById("waveBottomPath");
 if (wavePathBottom) {
   let t = 0;
@@ -332,7 +435,7 @@ if (wavePathBottom) {
   animateWave();
 }
 
-// ================= 9. OFFLINE BANNER & SERVICE WORKER =================
+// 10. OFFLINE BANNER & SERVICE WORKER
 window.addEventListener('DOMContentLoaded', () => {
   const banner = document.getElementById('offlineBanner');
   const bannerText = document.getElementById('bannerText');
@@ -373,14 +476,13 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// ================= 10. KEYBOARD SHORTCUTS & APP LOAD =================
+// 11. KEYBOARD SHORTCUTS & APP LOAD
 document.addEventListener("keydown", (e) => {
-  if (e.altKey && e.key.toLowerCase() === 't') {
-    goto('study-timer.html');
-  } else if (e.altKey && e.key.toLowerCase() === 's') {
-    goto('solver.html');
-  } else if (e.altKey && e.key.toLowerCase() === 'c') {
-    goto('classes.html');
+  if (e.altKey) {
+    const key = e.key.toLowerCase();
+    if (key === 't') goto('study-timer.html');
+    if (key === 's') goto('solver.html');
+    if (key === 'c') goto('classes.html');
   }
 });
 

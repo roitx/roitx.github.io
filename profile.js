@@ -25,7 +25,8 @@ async function loadUserProfile() {
   if (isAdmin) {
     document.getElementById("userRoleBadge").innerHTML = '<i class="fa-solid fa-crown"></i> Platform Admin';
     if (document.getElementById("adminBtn")) document.getElementById("adminBtn").style.display = "flex";
-    if (document.getElementById("createFileBtn")) document.getElementById("createFileBtn").style.display = "flex";
+    // REPLACED: Show Notification Button for Admin
+    if (document.getElementById("sendNotifBtn")) document.getElementById("sendNotifBtn").style.display = "flex";
   } else {
     document.getElementById("userRoleBadge").innerHTML = '<i class="fa-solid fa-graduation-cap"></i> Active Student';
   }
@@ -133,7 +134,7 @@ function closeCropModal() {
   if (cropper) cropper.destroy();
 }
 
-// 4. Crop & Upload Image to Supabase Storage (FIXED)
+// 4. Crop & Upload Image to Supabase Storage
 async function cropAndUpload() {
   if (!cropper || !currentUser) return;
 
@@ -150,12 +151,10 @@ async function cropAndUpload() {
   msgBox.style.display = "block";
 
   canvas.toBlob(async (blob) => {
-    // Unique file path per upload
     const fileExt = "png";
     const filePath = `${currentUser.id}/avatar_${Date.now()}.${fileExt}`;
 
     try {
-      // 1. Upload to Supabase Storage
       const { error: uploadErr } = await window.supabaseClient
         .storage
         .from('avatars')
@@ -163,7 +162,6 @@ async function cropAndUpload() {
 
       if (uploadErr) throw uploadErr;
 
-      // 2. Fetch Public URL correctly
       const { data: publicData } = window.supabaseClient
         .storage
         .from('avatars')
@@ -176,10 +174,8 @@ async function cropAndUpload() {
       currentAvatarUrl = publicData.publicUrl;
       localStorage.setItem("userPhoto", currentAvatarUrl);
 
-      // Instant UI Preview before database update completes
       renderAvatarImage(currentAvatarUrl);
 
-      // 3. Upsert to Profiles table with guaranteed Public URL
       const { error: dbErr } = await window.supabaseClient
         .from('profiles')
         .upsert({ 
@@ -266,7 +262,6 @@ async function saveProfileDetails() {
 
     if (error) throw error;
 
-    // Direct UI Sync
     if (fullName) {
       document.getElementById("userDisplayName").innerText = fullName;
     }
@@ -300,7 +295,7 @@ async function setGoogleUserPassword() {
 
 // Navigation Actions
 function goToAdminPanel() { window.location.href = "admin-panel.html"; }
-function goToCreateFile() { window.location.href = "createfile.html"; }
+function goToSendNotification() { window.location.href = "admin-notifications.html"; }
 function goToHome() { window.location.href = "index.html"; }
 
 async function logoutUser() {

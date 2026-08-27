@@ -5,44 +5,71 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin - Secure Payment Approvals</title>
     <link rel="stylesheet" href="premium.css">
+    <!-- FontAwesome for Vector Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Supabase CDN + Central Config -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase.js"></script>
 
     <style>
-        /* 🛡️ Anti-Screenshot & Security Styling */
         body {
             -webkit-user-select: none;
             user-select: none;
-            -webkit-touch-callout: none;
-            background-color: #0b0f19;
+            background-color: #080c14;
             color: #fff;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
             margin: 0;
             padding: 0;
         }
 
-        /* Security Warning Banner */
+        .bg-glow-1 {
+            position: fixed;
+            top: -100px;
+            left: -100px;
+            width: 350px;
+            height: 350px;
+            background: radial-gradient(circle, rgba(0, 210, 255, 0.15) 0%, transparent 70%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .bg-glow-2 {
+            position: fixed;
+            bottom: -100px;
+            right: -100px;
+            width: 350px;
+            height: 350px;
+            background: radial-gradient(circle, rgba(112, 0, 255, 0.15) 0%, transparent 70%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
         .security-banner {
-            background: rgba(255, 71, 87, 0.12);
-            border: 1px solid rgba(255, 71, 87, 0.3);
+            background: rgba(255, 71, 87, 0.1);
+            border: 1px solid rgba(255, 71, 87, 0.25);
             color: #ff4757;
-            font-size: 0.75rem;
+            font-size: 0.78rem;
             text-align: center;
-            padding: 6px;
+            padding: 10px;
             font-weight: 600;
             letter-spacing: 0.5px;
-            margin-bottom: 12px;
-            border-radius: 8px;
+            margin-bottom: 16px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            backdrop-filter: blur(8px);
         }
 
         .admin-header {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.01));
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
             border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 14px;
-            padding: 16px;
-            margin-bottom: 15px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border-radius: 16px;
+            padding: 18px 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(12px);
         }
 
         .header-top {
@@ -50,48 +77,55 @@
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 12px;
         }
 
         .admin-header h1 {
-            font-size: 1.3rem;
+            font-size: 1.35rem;
             margin: 0;
             color: #fff;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
         }
 
         .admin-header span.badge-admin {
-            font-size: 0.7rem;
+            font-size: 0.75rem;
             background: linear-gradient(135deg, #00d2ff, #0072ff);
             color: #fff;
-            padding: 3px 10px;
+            padding: 5px 14px;
             border-radius: 20px;
             font-weight: 700;
             text-transform: uppercase;
-            box-shadow: 0 2px 10px rgba(0, 210, 255, 0.3);
+            box-shadow: 0 0 12px rgba(0, 210, 255, 0.4);
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
         .admin-header p {
-            margin: 6px 0 0 0;
-            font-size: 0.8rem;
+            margin: 8px 0 0 0;
+            font-size: 0.82rem;
             color: #8a99ad;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
         .card {
-            background: #111622;
+            background: rgba(17, 22, 34, 0.85);
             border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 14px;
-            padding: 15px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            border-radius: 16px;
+            padding: 18px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
         }
 
         .filter-grid {
             display: grid;
-            grid-template-columns: 140px 1fr;
-            gap: 10px;
-            margin-bottom: 15px;
+            grid-template-columns: 210px 1fr;
+            gap: 12px;
+            margin-bottom: 18px;
         }
 
         @media (max-width: 600px) {
@@ -100,31 +134,115 @@
             }
         }
 
-        select, input[type="text"] {
-            width: 100%;
-            background: #090d16;
-            border: 1px solid rgba(255, 255, 255, 0.15);
+        /* CUSTOM DROPDOWN STYLING */
+        .custom-dropdown {
+            position: relative;
+            user-select: none;
+        }
+
+        .dropdown-trigger {
+            background: #0d121d;
+            border: 1px solid rgba(255, 255, 255, 0.12);
             color: #fff;
+            padding: 11px 14px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+
+        .dropdown-trigger:hover {
+            border-color: #00d2ff;
+            background: #111726;
+        }
+
+        .dropdown-trigger span {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 110%;
+            left: 0;
+            right: 0;
+            background: #0d121d;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 6px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            backdrop-filter: blur(16px);
+            z-index: 100;
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .dropdown-menu.show {
+            display: flex;
+        }
+
+        .dropdown-item {
             padding: 10px 12px;
             border-radius: 8px;
+            font-size: 0.83rem;
+            color: #d1d5db;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .dropdown-item:hover, .dropdown-item.active {
+            background: rgba(0, 210, 255, 0.12);
+            color: #00d2ff;
+        }
+
+        .input-box-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-box-wrapper i {
+            position: absolute;
+            left: 14px;
+            color: #8a99ad;
+            font-size: 0.85rem;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            background: #0d121d;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #fff;
+            padding: 11px 14px 11px 36px;
+            border-radius: 10px;
             font-size: 0.85rem;
             outline: none;
             box-sizing: border-box;
+            transition: all 0.25s ease;
         }
 
-        select:focus, input[type="text"]:focus {
+        input[type="text"]:focus {
             border-color: #00d2ff;
-            box-shadow: 0 0 8px rgba(0, 210, 255, 0.2);
+            box-shadow: 0 0 10px rgba(0, 210, 255, 0.25);
+            background: #111726;
         }
 
         .orders-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.8rem;
+            font-size: 0.82rem;
         }
 
         .orders-table th, .orders-table td {
-            padding: 12px 10px;
+            padding: 12px 14px;
             text-align: left;
             border-bottom: 1px solid rgba(255, 255, 255, 0.06);
         }
@@ -134,113 +252,159 @@
             color: #00d2ff;
             font-weight: 600;
             text-transform: uppercase;
-            font-size: 0.7rem;
-            letter-spacing: 0.5px;
+            font-size: 0.72rem;
+            letter-spacing: 0.6px;
         }
 
         .table-responsive {
             overflow-x: auto;
-            border-radius: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
 
         .action-btns {
             display: flex;
-            gap: 6px;
+            gap: 8px;
         }
 
         .btn-approve {
-            background: linear-gradient(135deg, #2ed573, #1e7e34);
+            background: linear-gradient(135deg, #2ed573, #10ac84);
             color: #fff;
             border: none;
-            padding: 6px 12px;
-            border-radius: 6px;
+            padding: 7px 14px;
+            border-radius: 8px;
             cursor: pointer;
-            font-weight: bold;
+            font-weight: 600;
             font-size: 0.75rem;
-            box-shadow: 0 2px 8px rgba(46, 213, 115, 0.3);
-            transition: transform 0.1s;
+            box-shadow: 0 4px 12px rgba(46, 213, 115, 0.3);
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
         }
 
-        .btn-approve:active { transform: scale(0.95); }
+        .btn-approve:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(46, 213, 115, 0.4);
+        }
 
         .btn-reject {
-            background: linear-gradient(135deg, #ff4757, #c0392b);
+            background: linear-gradient(135deg, #ff4757, #ff6b6b);
             color: #fff;
             border: none;
-            padding: 6px 12px;
-            border-radius: 6px;
+            padding: 7px 14px;
+            border-radius: 8px;
             cursor: pointer;
-            font-weight: bold;
+            font-weight: 600;
             font-size: 0.75rem;
-            box-shadow: 0 2px 8px rgba(255, 71, 87, 0.3);
-            transition: transform 0.1s;
+            box-shadow: 0 4px 12px rgba(255, 71, 87, 0.3);
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
         }
 
-        .btn-reject:active { transform: scale(0.95); }
+        .btn-reject:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(255, 71, 87, 0.4);
+        }
 
         .badge-status {
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 0.68rem;
-            font-weight: bold;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
             letter-spacing: 0.5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
         }
 
-        .status-pending { background: rgba(255, 165, 0, 0.15); color: #ffa500; border: 1px solid rgba(255, 165, 0, 0.3); }
-        .status-approved { background: rgba(46, 213, 115, 0.15); color: #2ed573; border: 1px solid rgba(46, 213, 115, 0.3); }
-        .status-rejected { background: rgba(255, 71, 87, 0.15); color: #ff4757; border: 1px solid rgba(255, 71, 87, 0.3); }
+        .status-pending { 
+            background: rgba(255, 165, 0, 0.12); 
+            color: #ffa500; 
+            border: 1px solid rgba(255, 165, 0, 0.3); 
+        }
+
+        .status-approved { 
+            background: rgba(46, 213, 115, 0.12); 
+            color: #2ed573; 
+            border: 1px solid rgba(46, 213, 115, 0.3); 
+        }
+
+        .status-rejected { 
+            background: rgba(255, 71, 87, 0.12); 
+            color: #ff4757; 
+            border: 1px solid rgba(255, 71, 87, 0.3); 
+        }
     </style>
 </head>
 <body oncontextmenu="return false;">
 
-    <div class="admin-container" style="max-width: 950px; margin: 0 auto; padding: 12px;">
+    <div class="bg-glow-1"></div>
+    <div class="bg-glow-2"></div>
+
+    <div class="admin-container" style="max-width: 980px; margin: 0 auto; padding: 14px;">
         
-        <!-- 🔒 Strict Admin Access Banner -->
         <div class="security-banner">
-            ⚠️ RESTRICTED AREA: Authorized Admin Personnel Only. All activities are monitored.
+            <i class="fa-solid fa-user-lock"></i> RESTRICTED ACCESS: Authorized Admin Personnel Only. All actions are logged securely.
         </div>
 
         <header class="admin-header">
             <div class="header-top">
-                <h1>Admin Panel</h1>
-                <span class="badge-admin">Payment Approvals</span>
+                <h1><i class="fa-solid fa-shield-halved" style="color: #00d2ff;"></i> Admin Panel</h1>
+                <span class="badge-admin"><i class="fa-solid fa-file-invoice-dollar"></i> Payment Approvals</span>
             </div>
-            <p>Verify user UTR codes securely and unlock study notes instantly.</p>
+            <p><i class="fa-solid fa-circle-check" style="color: #2ed573;"></i> Verify user UTR codes securely to grant instant access to notes.</p>
         </header>
 
         <section class="card">
-            <!-- Search & Filter Controls -->
             <div class="filter-grid">
-                <div>
-                    <select id="statusFilter" onchange="filterOrders()">
-                        <option value="pending" selected>Pending Only</option>
-                        <option value="approved">Approved</option>
-                        <option value="rejected">Rejected</option>
-                        <option value="ALL">All Orders</option>
-                    </select>
+                <!-- Custom SVG Icon Dropdown Menu -->
+                <div class="custom-dropdown" id="statusDropdown">
+                    <div class="dropdown-trigger" onclick="toggleDropdown()">
+                        <span id="selectedOption"><i class="fa-solid fa-hourglass-half" style="color:#ffa500;"></i> Pending Approvals</span>
+                        <i class="fa-solid fa-chevron-down" style="font-size:0.75rem; color:#8a99ad;"></i>
+                    </div>
+                    <div class="dropdown-menu" id="dropdownMenu">
+                        <div class="dropdown-item active" onclick="selectFilter('pending', '<i class=\'fa-solid fa-hourglass-half\' style=\'color:#ffa500;\'></i> Pending Approvals', this)">
+                            <i class="fa-solid fa-hourglass-half" style="color:#ffa500;"></i> Pending Approvals
+                        </div>
+                        <div class="dropdown-item" onclick="selectFilter('approved', '<i class=\'fa-solid fa-circle-check\' style=\'color:#2ed573;\'></i> Approved Payments', this)">
+                            <i class="fa-solid fa-circle-check" style="color:#2ed573;"></i> Approved Payments
+                        </div>
+                        <div class="dropdown-item" onclick="selectFilter('rejected', '<i class=\'fa-solid fa-circle-xmark\' style=\'color:#ff4757;\'></i> Rejected Payments', this)">
+                            <i class="fa-solid fa-circle-xmark" style="color:#ff4757;"></i> Rejected Payments
+                        </div>
+                        <div class="dropdown-item" onclick="selectFilter('ALL', '<i class=\'fa-solid fa-list-check\' style=\'color:#00d2ff;\'></i> All Transactions', this)">
+                            <i class="fa-solid fa-list-check" style="color:#00d2ff;"></i> All Transactions
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <input type="text" id="searchInput" placeholder="🔍 Search by Email or UTR Code..." oninput="filterOrders()">
+
+                <div class="input-box-wrapper">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="searchInput" placeholder="Search by User Email or UTR Code..." oninput="filterOrders()">
                 </div>
             </div>
 
-            <!-- Orders Table -->
             <div class="table-responsive">
                 <table class="orders-table">
                     <thead>
                         <tr>
-                            <th>User Email</th>
-                            <th>Note Title</th>
-                            <th>Amount</th>
-                            <th>UTR Code</th>
-                            <th>Status</th>
-                            <th>Action</th>
+                            <th><i class="fa-solid fa-envelope"></i> User Email</th>
+                            <th><i class="fa-solid fa-book"></i> Note Title</th>
+                            <th><i class="fa-solid fa-indian-rupee-sign"></i> Amount</th>
+                            <th><i class="fa-solid fa-key"></i> UTR Code</th>
+                            <th><i class="fa-solid fa-signal"></i> Status</th>
+                            <th><i class="fa-solid fa-sliders"></i> Action</th>
                         </tr>
                     </thead>
                     <tbody id="ordersTableBody">
                         <tr>
-                            <td colspan="6" style="text-align:center; color:#888; padding: 20px;">Loading payment orders...</td>
+                            <td colspan="6" style="text-align:center; color:#8a99ad; padding: 25px;">
+                                <i class="fa-solid fa-spinner fa-spin" style="font-size: 1.2rem; margin-right: 8px;"></i> Loading payment orders...
+                            </td>
                         </tr>
                     </tbody>
                 </table>
@@ -250,6 +414,7 @@
 
     <script>
         let cachedOrders = [];
+        let currentStatusFilter = 'pending';
 
         window.onload = async () => {
             if (typeof window.requireAdminAuth === "function") {
@@ -258,11 +423,36 @@
             await fetchOrders();
         };
 
-        // 🚫 Screenshot / Screen Recording Blocker Warning Layer
+        // Custom Dropdown Control Logic
+        function toggleDropdown() {
+            const menu = document.getElementById('dropdownMenu');
+            menu.classList.toggle('show');
+        }
+
+        function selectFilter(status, htmlContent, element) {
+            currentStatusFilter = status;
+            document.getElementById('selectedOption').innerHTML = htmlContent;
+            
+            document.querySelectorAll('.dropdown-item').forEach(el => el.classList.remove('active'));
+            element.classList.add('active');
+            
+            document.getElementById('dropdownMenu').classList.remove('show');
+            filterOrders();
+        }
+
+        // Close dropdown when clicked outside
+        document.addEventListener('click', (e) => {
+            const dropdown = document.getElementById('statusDropdown');
+            if (!dropdown.contains(e.target)) {
+                document.getElementById('dropdownMenu').classList.remove('show');
+            }
+        });
+
+        // Screenshot Protection Alert
         document.addEventListener("keyup", (e) => {
-            if (e.key == "PrintScreen") {
+            if (e.key === "PrintScreen") {
                 navigator.clipboard.writeText("");
-                alert("🔒 Screenshots & Screen Captures are disabled on this Secure Admin Panel!");
+                alert("🔒 Screenshots & Screen Captures are disabled on this Admin Panel!");
             }
         });
 
@@ -274,7 +464,12 @@
 
             if (error) {
                 console.error("Orders fetch error:", error);
-                document.getElementById('ordersTableBody').innerHTML = `<tr><td colspan="6" style="text-align:center; color:#ff4757;">Error loading: ${error.message}</td></tr>`;
+                document.getElementById('ordersTableBody').innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align:center; color:#ff4757; padding: 20px;">
+                            <i class="fa-solid fa-triangle-exclamation"></i> Error loading data: ${error.message}
+                        </td>
+                    </tr>`;
                 return;
             }
 
@@ -283,11 +478,10 @@
         }
 
         function filterOrders() {
-            const statusFilter = document.getElementById('statusFilter').value;
             const searchQuery = document.getElementById('searchInput').value.toLowerCase().trim();
 
             const filtered = cachedOrders.filter(order => {
-                const matchStatus = (statusFilter === 'ALL') || (order.status === statusFilter);
+                const matchStatus = (currentStatusFilter === 'ALL') || (order.status === currentStatusFilter);
                 
                 const emailStr = (order.user_email || '').toLowerCase();
                 const utrStr = (order.utr_code || '').toLowerCase();
@@ -304,29 +498,45 @@
             tbody.innerHTML = "";
 
             if (orders.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#888; padding: 20px;">No orders found.</td></tr>`;
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align:center; color:#8a99ad; padding: 25px;">
+                            <i class="fa-solid fa-inbox" style="font-size: 1.5rem; display:block; margin-bottom: 6px;"></i> No matching orders found.
+                        </td>
+                    </tr>`;
                 return;
             }
 
             orders.forEach(order => {
-                let statusBadge = `<span class="badge-status status-${order.status}">${order.status}</span>`;
+                let statusBadge = '';
+                if (order.status === 'pending') {
+                    statusBadge = `<span class="badge-status status-pending"><i class="fa-solid fa-hourglass-half"></i> PENDING</span>`;
+                } else if (order.status === 'approved') {
+                    statusBadge = `<span class="badge-status status-approved"><i class="fa-solid fa-circle-check"></i> APPROVED</span>`;
+                } else {
+                    statusBadge = `<span class="badge-status status-rejected"><i class="fa-solid fa-circle-xmark"></i> REJECTED</span>`;
+                }
                 
-                let actionButtons = '-';
+                let actionButtons = `<span style="color:#666; font-size:0.75rem;"><i class="fa-solid fa-lock"></i> Processed</span>`;
                 if (order.status === 'pending') {
                     actionButtons = `
                         <div class="action-btns">
-                            <button class="btn-approve" onclick="approveOrder(${order.id}, '${order.user_email}', ${order.note_id})">Approve</button>
-                            <button class="btn-reject" onclick="rejectOrder(${order.id})">Reject</button>
+                            <button class="btn-approve" onclick="approveOrder(${order.id}, '${order.user_email}', ${order.note_id})">
+                                <i class="fa-solid fa-check"></i> Approve
+                            </button>
+                            <button class="btn-reject" onclick="rejectOrder(${order.id})">
+                                <i class="fa-solid fa-xmark"></i> Reject
+                            </button>
                         </div>
                     `;
                 }
 
                 tbody.innerHTML += `
                     <tr>
-                        <td><strong style="color:#fff;">${order.user_email}</strong></td>
+                        <td><strong style="color:#fff;"><i class="fa-regular fa-user" style="color:#8a99ad; margin-right:5px;"></i>${order.user_email}</strong></td>
                         <td style="color:#d1d5db;">${order.note_title}</td>
                         <td style="color:#2ed573; font-weight:bold;">₹${order.amount}</td>
-                        <td style="font-family:monospace; color:#00d2ff; font-weight:bold;">${order.utr_code}</td>
+                        <td style="font-family:monospace; color:#00d2ff; font-weight:bold; font-size: 0.88rem;">${order.utr_code}</td>
                         <td>${statusBadge}</td>
                         <td>${actionButtons}</td>
                     </tr>
@@ -335,10 +545,10 @@
         }
 
         async function approveOrder(orderId, userEmail, noteId) {
-            if (!confirm(`Confirm approval for ${userEmail}?`)) return;
+            if (!confirm(`Confirm payment approval for ${userEmail}?`)) return;
 
             try {
-                const { data: userData, error: userErr } = await window.supabaseClient
+                const { data: userData } = await window.supabaseClient
                     .from('profiles')
                     .select('id')
                     .eq('email', userEmail)
