@@ -920,19 +920,23 @@ async function updateOrdersBadge() {
   try {
     const { count, error } = await window.supabaseClient
       .from("orders")
-      .select("id", { count: "exact", head: true })
+      .select("*", { count: "exact", head: true })
       .eq("status", "pending");
 
     if (!error && count !== null) {
       badge.innerText = count;
-      badge.style.display = count > 0 ? "inline-block" : "none";
+      badge.style.display = count > 0 ? "inline-flex" : "none";
     }
   } catch (err) {
     console.error("Error updating orders badge:", err);
   }
 }
 
-setInterval(updateOrdersBadge, 5000);
+// Page load hone par instant fetch aur har 5 second mein auto-update
+document.addEventListener("DOMContentLoaded", () => {
+  updateOrdersBadge();
+  setInterval(updateOrdersBadge, 5000);
+});
 
 /* ---------- HELPER FUNCTIONS ---------- */
 
