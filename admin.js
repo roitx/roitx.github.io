@@ -908,9 +908,8 @@ window.deleteDoubt = async function(id) {
 
   openDoubtOverlay();
 };
-
 /* =====================================================
-   PART 6: ORDERS SYSTEM & UTILS
+   PART 6: ORDERS SYSTEM & UTILS (FINAL FIX FOR BADGE COUNT)
    ===================================================== */
 
 async function updateOrdersBadge() {
@@ -918,25 +917,50 @@ async function updateOrdersBadge() {
   if (!badge) return;
 
   try {
-    const { count, error } = await window.supabaseClient
-      .from("orders")
-      .select("*", { count: "exact", head: true })
+    // Check pending orders from user_orders or orders table
+    let count = 0;
+    
+    // Query 1: Check 'user_orders' table (used in premium notes)
+    const { data: userOrders, error: err1 } = await window.supabaseClient
+      .from("user_orders")
+      .select("id")
       .eq("status", "pending");
 
-    if (!error && count !== null) {
-      badge.innerText = count;
-      badge.style.display = count > 0 ? "inline-flex" : "none";
+    if (!err1 && userOrders) {
+      count += userOrders.length;
+    } else {
+      // Query 2: Fallback to 'orders' table
+      const { data: mainOrders, error: err2 } = await window.supabaseClient
+        .from("orders")
+        .select("id")
+        .eq("status", "pending");
+
+      if (!err2 && mainOrders) {
+        count += mainOrders.length;
+      }
     }
+
+    // Set count text and display badge
+    badge.innerText = count;
+    if (count > 0) {
+      badge.style.display = "flex";
+      badge.style.alignItems = "center";
+      badge.style.justifyContent = "center";
+    } else {
+      badge.style.display = "none";
+    }
+
   } catch (err) {
     console.error("Error updating orders badge:", err);
   }
 }
 
-// Page load hone par instant fetch aur har 5 second mein auto-update
+// Automatic Run on Load & Polling
 document.addEventListener("DOMContentLoaded", () => {
   updateOrdersBadge();
-  setInterval(updateOrdersBadge, 5000);
+  setInterval(updateOrdersBadge, 3000);
 });
+
 
 /* ---------- HELPER FUNCTIONS ---------- */
 
