@@ -27,19 +27,22 @@ function trackActivityLocally(fileData, isDownloaded = false) {
         let recent = getData("recentFiles");
         let downloads = getData("downloadedFiles");
 
-        if (isDownloaded && !downloads.some(f => f.url === fileData.url)) {
+        // Clean base URL for duplicate checking
+        let cleanBaseUrl = fileData.url ? fileData.url.split('?')[0] : "";
+
+        if (isDownloaded && !downloads.some(f => f.url && f.url.split('?')[0] === cleanBaseUrl)) {
             fileData.timeDownloaded = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             downloads.unshift(fileData);
             localStorage.setItem("downloadedFiles", JSON.stringify(downloads));
         }
 
-        const alreadyDownloaded = downloads.some(f => f.url === fileData.url) || isDownloaded;
+        const alreadyDownloaded = downloads.some(f => f.url && f.url.split('?')[0] === cleanBaseUrl) || isDownloaded;
 
         // Check if current file is premium
         const isCurrentPremium = fileData.isPremium || (fileData.url && (fileData.url.toLowerCase().includes("premium") || fileData.url.toLowerCase().includes("paid") || fileData.url.toLowerCase().includes("locked")));
 
-        // Remove duplicate entry so it only appears once at the top
-        recent = recent.filter(f => f.url !== fileData.url);
+        // Remove duplicate entry based on clean base URL
+        recent = recent.filter(f => !f.url || f.url.split('?')[0] !== cleanBaseUrl);
         recent.unshift({
             title: fileData.title,
             url: fileData.url,
@@ -62,10 +65,12 @@ function renderActivityFeed() {
 
     let recent = getData("recentFiles");
     let downloads = getData("downloadedFiles");
+    let purchasedNotes = getData("userPurchasedNotes"); // Purchase records array
 
     if (showOnlyDownloaded) {
         recent = recent.filter(f => {
-            let isDownloaded = downloads.some(item => item.url === f.url || item.title === f.title) || f.downloaded;
+            let cleanPath = f.url ? f.url.split('?')[0] : "";
+            let isDownloaded = downloads.some(item => (item.url && item.url.split('?')[0] === cleanPath) || item.title === f.title) || f.downloaded;
             return isDownloaded;
         });
     }
@@ -78,11 +83,16 @@ function renderActivityFeed() {
     recentList.innerHTML = "";
 
     recent.forEach(f => {
-        let isDownloaded = downloads.some(item => item.url === f.url || item.title === f.title) || f.downloaded;
-
         let viewerPage = "notes-viewer.html";
-        let cleanPath = f.url || "";
+        let rawUrl = f.url || "";
         
+        // Step 1: Base URL me se purane parameters (&type=premium wagairah) ko clean karein
+        let cleanPath = rawUrl.split('?')[0];
+
+        // Step 2: Dynamic Purchase & Download Verification
+        let isDownloaded = downloads.some(item => (item.url && item.url.split('?')[0] === cleanPath) || item.title === f.title) || f.downloaded;
+        let isPurchased = purchasedNotes.some(item => (item.url && item.url.split('?')[0] === cleanPath) || item.title === f.title);
+
         if (cleanPath.match(/\.(jpg|jpeg|png|webp|gif)$/i) || f.meta?.includes("Image")) {
             viewerPage = "image-viewer.html";
             if (!cleanPath.startsWith("formulas/") && !cleanPath.includes("/")) {
@@ -94,9 +104,11 @@ function renderActivityFeed() {
             }
         }
 
-        // 🌟 SECURE LOOPHOLE FIX: Strict check for premium status from saved data or path name
+        // Step 3: Check overall premium flag
         let isFilePremium = f.isPremium || cleanPath.toLowerCase().includes("premium") || cleanPath.toLowerCase().includes("paid") || cleanPath.toLowerCase().includes("locked") || cleanPath.toLowerCase().includes("special");
-        let extraParam = isFilePremium ? "&type=premium" : "";
+
+        // Step 4: Agar item Purchase ya Download nahi hua hai TABHI &type=premium attach hoga
+        let extraParam = (isFilePremium && !isPurchased && !isDownloaded) ? "&type=premium" : "";
 
         const viewTargetUrl = `${viewerPage}?path=${encodeURIComponent(cleanPath)}&name=${encodeURIComponent(f.title)}${extraParam}`;
 
