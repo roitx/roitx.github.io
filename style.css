@@ -782,18 +782,7 @@ footer {
 }
 
 /* ================= FIXED INSTALL PWA BANNER & HOVER GLOW ================= */
-#installContainer {
-  position: fixed;
-  bottom: 25px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 10000;
-  width: 92%;
-  max-width: 400px;
-  pointer-events: auto;
-  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s ease;
-  will-change: transform, opacity;
-  touch-action: pan-x;
+
 
   /* Extra outer background & border yahan se hataya gaya hai taaki double-border na bane */
   background: transparent;
