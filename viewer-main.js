@@ -37,7 +37,7 @@ function trackActivityLocally(fileData, isDownloaded = false) {
 
         const isPurchasedFromUrl = params.get("purchased") === "true";
         
-        // Agar URL me purchased=true aaya h to local list me bhi save kar do
+        // Save purchased status locally if present in URL
         if (isPurchasedFromUrl && !purchasedList.includes(rawPath)) {
             purchasedList.push(rawPath);
             localStorage.setItem("purchasedFiles", JSON.stringify(purchasedList));
@@ -47,7 +47,17 @@ function trackActivityLocally(fileData, isDownloaded = false) {
         const alreadyDownloaded = downloads.some(f => f.url === fileData.url) || isDownloaded;
         const isCurrentPremium = params.get("type") === "premium" || (rawPath && (rawPath.toLowerCase().includes("premium") || rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked")));
 
-        recent = recent.filter(f => f.url !== rawPath);
+        // 🟢 FIX: Purane viewCount ko preserve aur increment (+1) karne ka logic
+        let existingIndex = recent.findIndex(f => f.url === rawPath);
+        let viewCount = 1;
+
+        if (existingIndex !== -1) {
+            // Agar file pehle se recent me hai, toh count 1 badha do
+            viewCount = Number(recent[existingIndex].viewCount || 1) + 1;
+            recent.splice(existingIndex, 1); // Delete old entry
+        }
+
+        // Top par nayi update entry add karo
         recent.unshift({
             title: fileData.title,
             url: rawPath,
@@ -55,7 +65,8 @@ function trackActivityLocally(fileData, isDownloaded = false) {
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             downloaded: alreadyDownloaded,
             isPremium: isCurrentPremium,
-            isPurchased: isAlreadyPurchased // Persistent Purchase Status
+            isPurchased: isAlreadyPurchased, // Persistent Purchase Status
+            viewCount: viewCount // 🟢 Counter Value Stored Properly
         });
 
         recent = recent.slice(0, 10);

@@ -15,13 +15,24 @@ function trackActivityLocally(fileData, isDownloaded = false) {
 
         const alreadyDownloaded = downloads.some(f => f.url === fileData.url) || isDownloaded;
 
-        recent = recent.filter(f => f.url !== fileData.url);
+        // 🟢 FIX: Purani entry dhoond kar viewCount increment (+1) karne ka logic
+        let existingIndex = recent.findIndex(f => f.url === fileData.url);
+        let viewCount = 1;
+
+        if (existingIndex !== -1) {
+            // Purane view count me 1 add karein
+            viewCount = Number(recent[existingIndex].viewCount || 1) + 1;
+            recent.splice(existingIndex, 1); // Old record clear karein
+        }
+
+        // Top par latest open time aur count ke saath save karein
         recent.unshift({
             title: fileData.title,
             url: fileData.url,
             meta: fileData.meta || "Image Viewer",
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            downloaded: alreadyDownloaded
+            downloaded: alreadyDownloaded,
+            viewCount: viewCount // 🟢 View Count perfectly tracked
         });
 
         recent = recent.slice(0, 10);
