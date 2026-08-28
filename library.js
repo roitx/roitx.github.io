@@ -122,7 +122,7 @@ async function renderActivityFeed() {
 
     recentList.innerHTML = "";
 
-    // SVG Icons
+    // Minimalist SVG Icons (Text removed, purely symbol-based badges)
     const checkSvg = `<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
     const lockSvg = `<svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>`;
     const giftSvg = `<svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`;
@@ -162,18 +162,18 @@ async function renderActivityFeed() {
 
         const viewTargetUrl = `${viewerPage}?path=${encodeURIComponent(cleanPath)}&name=${encodeURIComponent(f.title)}${extraParams}`;
 
-        // Download Status Badge (Only for Downloaded / Not Downloaded)
+        // Download Status Badge (Only for Downloaded / Not Downloaded text badge)
         let downloadBadgeClass = isDownloaded ? "downloaded" : "not-downloaded";
         let downloadBadgeText = isDownloaded ? "Downloaded" : "Not Downloaded";
 
-        // SVG Access Tag (Purchased / Locked / Free)
+        // Minimalist Icon-only Access Tags (Symbol representation only)
         let accessTagHtml = "";
         if (isPurchased) {
-            accessTagHtml = `<span class="access-tag purchased" title="Purchased">${checkSvg} Purchased</span>`;
+            accessTagHtml = `<span class="access-tag purchased" title="Purchased">${checkSvg}</span>`;
         } else if (isFilePremium) {
-            accessTagHtml = `<span class="access-tag locked" title="Premium Locked">${lockSvg} Locked</span>`;
+            accessTagHtml = `<span class="access-tag locked" title="Locked / Premium">${lockSvg}</span>`;
         } else {
-            accessTagHtml = `<span class="access-tag free" title="Free Access">${giftSvg} Free</span>`;
+            accessTagHtml = `<span class="access-tag free" title="Free File">${giftSvg}</span>`;
         }
 
         const div = document.createElement("div");
