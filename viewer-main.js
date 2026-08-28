@@ -29,18 +29,21 @@ function enableContentProtection() {
     window.addEventListener('blur', () => { document.body.style.filter = "blur(20px)"; });
     window.addEventListener('focus', () => { document.body.style.filter = "none"; });
 }
-
 function trackActivityLocally(fileData, isDownloaded = false) {
     try {
         let recent = JSON.parse(localStorage.getItem("recentFiles") || "[]");
         let downloads = JSON.parse(localStorage.getItem("downloadedFiles") || "[]");
+        let purchasedList = JSON.parse(localStorage.getItem("purchasedFiles") || "[]");
 
-        if (isDownloaded && !downloads.some(f => f.url === fileData.url)) {
-            fileData.timeDownloaded = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            downloads.unshift(fileData);
-            localStorage.setItem("downloadedFiles", JSON.stringify(downloads));
+        const isPurchasedFromUrl = params.get("purchased") === "true";
+        
+        // Agar URL me purchased=true aaya h to local list me bhi save kar do
+        if (isPurchasedFromUrl && !purchasedList.includes(rawPath)) {
+            purchasedList.push(rawPath);
+            localStorage.setItem("purchasedFiles", JSON.stringify(purchasedList));
         }
 
+        const isAlreadyPurchased = purchasedList.includes(rawPath) || isPurchasedFromUrl;
         const alreadyDownloaded = downloads.some(f => f.url === fileData.url) || isDownloaded;
         const isCurrentPremium = params.get("type") === "premium" || (rawPath && (rawPath.toLowerCase().includes("premium") || rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked")));
 
@@ -51,7 +54,8 @@ function trackActivityLocally(fileData, isDownloaded = false) {
             meta: "Notes Viewer",
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             downloaded: alreadyDownloaded,
-            isPremium: isCurrentPremium 
+            isPremium: isCurrentPremium,
+            isPurchased: isAlreadyPurchased // Persistent Purchase Status
         });
 
         recent = recent.slice(0, 10);

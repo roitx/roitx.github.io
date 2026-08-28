@@ -31,15 +31,19 @@ function trackActivityLocally(fileData, isDownloaded = false) {
         let rawUrl = fileData.url || "";
         let cleanBaseUrl = rawUrl.split('?')[0];
 
+        // Ensure isPurchased flag is stored
+        const isPurchased = fileData.isPurchased || false;
+
         // Agar user click kar ke viewer par gaya ya purchase/downloaded state h
-        if ((isDownloaded || fileData.isPurchased) && !downloads.some(f => f.url && f.url.split('?')[0] === cleanBaseUrl)) {
+        if ((isDownloaded || isPurchased) && !downloads.some(f => f.url && f.url.split('?')[0] === cleanBaseUrl)) {
             fileData.timeDownloaded = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            fileData.isPurchased = true;
             downloads.unshift(fileData);
             localStorage.setItem("downloadedFiles", JSON.stringify(downloads));
         }
 
         // Offline storage me purchased entry add karo
-        if (fileData.isPurchased && !localPurchases.some(f => f.title === fileData.title)) {
+        if (isPurchased && !localPurchases.some(f => f.title && f.title.toLowerCase() === (fileData.title || "").toLowerCase())) {
             localPurchases.unshift({ title: fileData.title, url: cleanBaseUrl });
             localStorage.setItem("userPurchasedNotes", JSON.stringify(localPurchases));
         }
@@ -54,7 +58,7 @@ function trackActivityLocally(fileData, isDownloaded = false) {
             meta: fileData.meta || "Viewer",
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             downloaded: alreadyDownloaded,
-            isPurchased: fileData.isPurchased || false,
+            isPurchased: isPurchased,
             isPremium: isCurrentPremium
         });
 
@@ -63,6 +67,12 @@ function trackActivityLocally(fileData, isDownloaded = false) {
     } catch (e) {
         console.error("Tracking Error: ", e);
     }
+}
+
+// Helper to normalize strings for comparison (Removes special chars like 💎 and spaces)
+function cleanTitleString(str) {
+    if (!str) return "";
+    return str.replace(/[^\w\s]/gi, '').toLowerCase().trim();
 }
 
 async function renderActivityFeed() {
@@ -74,25 +84,41 @@ async function renderActivityFeed() {
     let localPurchases = getData("userPurchasedNotes");
 
     let supabaseApprovedTitles = [];
+    let supabaseApprovedNoteIds = [];
 
-    // 🌟 SUPABASE SYNC: Fetch Supabase purchases if user is online
+    // 🌟 SUPABASE SYNC: Fetch Supabase purchases & user_purchases if user is online
     try {
         if (window.supabaseClient && typeof window.getCurrentUser === "function") {
             const user = await window.getCurrentUser();
             if (user) {
+                // Fetch approved orders
                 const { data: ordersData } = await window.supabaseClient
                     .from('user_orders')
-                    .select('note_title, status')
+                    .select('note_id, note_title, status')
                     .eq('user_email', user.email)
                     .eq('status', 'approved');
 
+                // Fetch direct user_purchases
+                const { data: userPurchasesData } = await window.supabaseClient
+                    .from('user_purchases')
+                    .select('note_id')
+                    .eq('user_id', user.id);
+
+                if (userPurchasesData) {
+                    userPurchasesData.forEach(p => supabaseApprovedNoteIds.push(String(p.note_id)));
+                }
+
                 if (ordersData) {
-                    supabaseApprovedTitles = ordersData.map(o => o.note_title ? o.note_title.toLowerCase() : "");
-                    
-                    // Offline Cache Backup
                     ordersData.forEach(o => {
-                        if (o.note_title && !localPurchases.some(lp => lp.title.toLowerCase() === o.note_title.toLowerCase())) {
-                            localPurchases.push({ title: o.note_title });
+                        if (o.note_id) supabaseApprovedNoteIds.push(String(o.note_id));
+                        if (o.note_title) {
+                            const cleaned = cleanTitleString(o.note_title);
+                            if (cleaned) supabaseApprovedTitles.push(cleaned);
+                            
+                            // Offline Cache Backup
+                            if (!localPurchases.some(lp => cleanTitleString(lp.title) === cleaned)) {
+                                localPurchases.push({ title: o.note_title });
+                            }
                         }
                     });
                     localStorage.setItem("userPurchasedNotes", JSON.stringify(localPurchases));
@@ -106,10 +132,13 @@ async function renderActivityFeed() {
     if (showOnlyDownloaded) {
         recent = recent.filter(f => {
             let cleanPath = f.url ? f.url.split('?')[0] : "";
-            let fTitleLower = (f.title || "").toLowerCase();
-            return downloads.some(item => (item.url && item.url.split('?')[0] === cleanPath) || item.title === f.title) 
-                   || localPurchases.some(lp => lp.title.toLowerCase() === fTitleLower)
-                   || supabaseApprovedTitles.includes(fTitleLower);
+            let cleanedTitle = cleanTitleString(f.title);
+
+            const isDownloaded = downloads.some(item => (item.url && item.url.split('?')[0] === cleanPath) || cleanTitleString(item.title) === cleanedTitle);
+            const isLocalPurchased = localPurchases.some(lp => cleanTitleString(lp.title) === cleanedTitle);
+            const isSupabasePurchased = supabaseApprovedTitles.some(st => cleanedTitle.includes(st) || st.includes(cleanedTitle));
+
+            return f.isPurchased || isDownloaded || isLocalPurchased || isSupabasePurchased;
         });
     }
 
@@ -125,13 +154,13 @@ async function renderActivityFeed() {
         let rawUrl = f.url || "";
         let cleanPath = rawUrl.split('?')[0];
 
-        const fileTitleLower = (f.title || "").toLowerCase();
+        const cleanedFileTitle = cleanTitleString(f.title);
         
         let isPurchased = f.isPurchased 
-                          || localPurchases.some(item => (item.title && item.title.toLowerCase() === fileTitleLower)) 
-                          || supabaseApprovedTitles.includes(fileTitleLower);
+                          || localPurchases.some(item => cleanTitleString(item.title) === cleanedFileTitle) 
+                          || supabaseApprovedTitles.some(st => cleanedFileTitle.includes(st) || st.includes(cleanedFileTitle));
 
-        let isDownloaded = downloads.some(item => (item.url && item.url.split('?')[0] === cleanPath) || item.title === f.title) || f.downloaded;
+        let isDownloaded = downloads.some(item => (item.url && item.url.split('?')[0] === cleanPath) || cleanTitleString(item.title) === cleanedFileTitle) || f.downloaded;
 
         if (cleanPath.match(/\.(jpg|jpeg|png|webp|gif)$/i) || f.meta?.includes("Image")) {
             viewerPage = "image-viewer.html";
@@ -146,6 +175,7 @@ async function renderActivityFeed() {
 
         let isFilePremium = f.isPremium || cleanPath.toLowerCase().includes("premium") || cleanPath.toLowerCase().includes("paid");
 
+        // 🌟 FORCE PURCHASED QUERY PARAMETER: Agar purchased ho chuka hai toh strict purchased=true hi jayega
         let extraParams = "";
         if (isPurchased || isDownloaded) {
             extraParams = "&purchased=true";
@@ -161,7 +191,7 @@ async function renderActivityFeed() {
 
         if (isPurchased || isDownloaded) {
             badgeClass = "downloaded";
-            badgeText = isDownloaded ? "Downloaded" : "Purchased";
+            badgeText = isPurchased ? "Purchased" : "Downloaded";
         }
 
         const div = document.createElement("div");
