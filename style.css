@@ -217,6 +217,127 @@ body.light .book-cover {
   50% { transform: translateZ(-10px) rotateY(-25deg); }
   100% { transform: translateZ(-2px) rotateY(-5deg); }
 }
+/* Splash Overlay */
+#splashScreen {
+  position: fixed;
+  inset: 0;
+  background: #030b20;
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: opacity 0.8s cubic-bezier(0.77, 0, 0.175, 1), visibility 0.8s;
+}
+
+#splashScreen.fade-out {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.splash-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+/* Energy Rings */
+.energy-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 140px;
+  height: 140px;
+  margin-top: -110px;
+  margin-left: -70px;
+  border-radius: 50%;
+  border: 2px dashed rgba(0, 240, 255, 0.6);
+  animation: rotateRing 6s linear infinite;
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
+}
+
+.ring-2 {
+  width: 170px;
+  height: 170px;
+  margin-top: -125px;
+  margin-left: -85px;
+  border: 2px solid transparent;
+  border-top-color: #ffd700;
+  border-bottom-color: #ec4899;
+  animation: rotateRingReverse 4s ease-in-out infinite alternate;
+}
+
+/* Core Logo Animation */
+.logo-core {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 0 50px rgba(0, 240, 255, 0.5), 0 0 100px rgba(255, 215, 0, 0.3);
+  animation: logoZoom 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.splash-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.shimmer-overlay {
+  position: absolute;
+  top: 0; left: -100%;
+  width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+  animation: shimmer 1.5s infinite 1s;
+}
+
+/* Animated Text */
+.splash-text {
+  margin-top: 25px;
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: 4px;
+  display: flex;
+}
+
+.splash-text .letter {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(20px) scale(0.5);
+  animation: letterReveal 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  color: #ffffff;
+}
+
+.splash-text .accent {
+  background: linear-gradient(135deg, #00f0ff, #ffd700);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.splash-tagline {
+  margin-top: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #9fb4d6;
+  opacity: 0;
+  animation: fadeIn 0.8s ease forwards 1.2s;
+}
+
+/* Keyframe Animations */
+@keyframes rotateRing { 100% { transform: rotate(360deg); } }
+@keyframes rotateRingReverse { 100% { transform: rotate(-360deg); } }
+@keyframes logoZoom {
+  0% { transform: scale(0) rotate(-45deg); opacity: 0; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+@keyframes shimmer { 100% { left: 100%; } }
+@keyframes letterReveal {
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes fadeIn { to { opacity: 1; } }
 
 /* ================= TOPBAR & RIGHT ACTIONS ================= */
 .topbar {
@@ -256,17 +377,22 @@ body.light .book-cover {
   align-items: center;
   gap: 12px;
 }
+/* Custom App Icon Design */
 .logo {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  transition: transform 0.5s ease, box-shadow 0.5s ease;
-  border: 1px solid var(--glass-border);
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  object-fit: cover;
+  border: 1.5px solid rgba(0, 240, 255, 0.4);
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.25);
+  transition: transform 0.4s ease, box-shadow 0.4s ease;
 }
+
 .logo:hover {
-  transform: rotate(10deg) scale(1.1);
-  box-shadow: 0 0 20px var(--accent);
+  transform: scale(1.08) rotate(4deg);
+  box-shadow: 0 0 25px rgba(0, 240, 255, 0.6);
 }
+
 .brand-name {
   font-size: 18px;
   font-weight: 800;

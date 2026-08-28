@@ -621,3 +621,20 @@ document.addEventListener("keydown", (e) => {
 window.addEventListener("load", () => {
   document.body.classList.add("app-loaded");
 });
+// Splash Screen Handler
+document.addEventListener("DOMContentLoaded", () => {
+  // Stagger letter animations
+  const letters = document.querySelectorAll('.splash-text .letter');
+  letters.forEach((letter, idx) => {
+    letter.style.animationDelay = `${0.6 + (idx * 0.08)}s`;
+  });
+
+  // Hide Splash Screen after loading
+  setTimeout(() => {
+    const splash = document.getElementById('splashScreen');
+    if (splash) {
+      splash.classList.add('fade-out');
+      setTimeout(() => splash.remove(), 800);
+    }
+  }, 2600);
+});

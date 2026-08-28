@@ -27,8 +27,7 @@
       "purpose": "maskable"
     }
   ],
-"screenshots": [
-  
+  "screenshots": [
     {
       "src": "mobile-1.png",
       "sizes": "1080x2400",
@@ -57,8 +56,6 @@
       "form_factor": "narrow",
       "label": "Roitx Mobile - Study Timer"
     },
-    
-   
     {
       "src": "desktop-1.png",
       "sizes": "2400x1080",
@@ -80,15 +77,14 @@
       "form_factor": "wide",
       "label": "Roitx Desktop - Ask chat Ai"
     },
-  {
+    {
       "src": "desktop-4.png",
       "sizes": "2400x1080",
       "type": "image/png",
       "form_factor": "wide",
       "label": "Roitx Desktop - study Timer"
-  }
+    }
   ],
-  
   "shortcuts": [
     {
       "name": "Study Timer",
@@ -107,6 +103,12 @@
       "short_name": "Books",
       "url": "/refbook.html",
       "icons": [{ "src": "books.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Calendar",
+      "short_name": "Calendar",
+      "url": "/calendar.html",
+      "icons": [{ "src": "calendar.png", "sizes": "96x96" }]
     }
   ],
   "prefer_related_applications": false,
