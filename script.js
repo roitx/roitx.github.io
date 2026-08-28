@@ -468,7 +468,16 @@ async function showMotivation() {
 }
 
 function loadFallbackQuote(element) {
-  const randomQuote = GLOBAL_FALLBACK_QUOTES[Math.floor(Math.random() * GLOBAL_FALLBACK_QUOTES.length)];
+  let quotesList = GLOBAL_FALLBACK_QUOTES;
+
+  // Check if quotes.js list exists
+  if (typeof fallbackQuotes !== 'undefined' && Array.isArray(fallbackQuotes) && fallbackQuotes.length > 0) {
+    quotesList = fallbackQuotes;
+  } else if (window.quotes && Array.isArray(window.quotes) && window.quotes.length > 0) {
+    quotesList = window.quotes;
+  }
+
+  const randomQuote = quotesList[Math.floor(Math.random() * quotesList.length)];
   element.textContent = randomQuote || "Focus on progress, not perfection!";
 }
 
