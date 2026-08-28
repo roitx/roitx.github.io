@@ -88,13 +88,18 @@
             min-width: 0;
         }
 
+        .title-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
         .file-info a {
-            display: block;
             font-size: 14px;
             font-weight: 600;
             color: var(--text-color);
             text-decoration: none;
-            margin-bottom: 4px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -109,6 +114,47 @@
             display: block;
             font-size: 11px;
             color: var(--text-secondary);
+        }
+
+        /* Access Status SVG Badges */
+        .access-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 6px;
+            flex-shrink: 0;
+            text-transform: uppercase;
+        }
+
+        .access-tag svg {
+            width: 12px;
+            height: 12px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2.2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .access-tag.purchased {
+            color: #10b981;
+            background: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .access-tag.locked {
+            color: #f59e0b;
+            background: rgba(245, 158, 11, 0.12);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .access-tag.free {
+            color: #3b82f6;
+            background: rgba(59, 130, 246, 0.12);
+            border: 1px solid rgba(59, 130, 246, 0.3);
         }
 
         .badges-group {
