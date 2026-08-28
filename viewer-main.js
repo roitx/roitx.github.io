@@ -165,12 +165,19 @@ function startEngine(blob) {
         console.error("Size calculation error:", e);
     }
 
+    // 1. View activity track (Only views note, marks isDownloaded = false)
+    const isParamPremium = params.get("type") === "premium";
+    const isInPaidFolder = rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium"));
+    const isPremiumNote = isParamPremium || isInPaidFolder;
+
     trackActivityLocally({
         title: docName || "PDF Document",
         url: rawPath,
-        meta: "Notes Viewer"
+        meta: "Notes Viewer",
+        isPremium: isPremiumNote
     }, false);
 
+    // 2. Download button logic setup
     const dl = document.getElementById("download-trigger");
     if (dl) { 
         dl.removeAttribute("href"); 
@@ -178,9 +185,7 @@ function startEngine(blob) {
             e.preventDefault();
             
             const isPurchased = params.get("purchased") === "true";
-            const isInPaidFolder = rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("special") || rawPath.toLowerCase().includes("premium"));
-            const isParamPremium = params.get("type") === "premium";
-            const isPremium = isParamPremium || isInPaidFolder;
+            const isPremium = isPremiumNote;
 
             if (isPremium && !isPurchased) {
                 alert("🔒 Yeh ek Premium Note hai! Bina purchase kiye aap ise download nahi kar sakte.");
@@ -204,6 +209,7 @@ function startEngine(blob) {
             tempLink.click();
             document.body.removeChild(tempLink);
 
+            // Marks isDownloaded = true ONLY when user actually clicks download
             trackActivityLocally({
                 title: docName || "PDF Document",
                 url: rawPath,
@@ -219,9 +225,7 @@ function startEngine(blob) {
         pdfDoc = pdf;
 
         const isPurchased = params.get("purchased") === "true";
-        const isInPaidFolder = rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("special") || rawPath.toLowerCase().includes("premium"));
-        const isParamPremium = params.get("type") === "premium";
-        const isPremium = isParamPremium || isInPaidFolder;
+        const isPremium = isPremiumNote;
 
         let maxAllowedPages = pdf.numPages;
         if (isPremium && !isPurchased) {
