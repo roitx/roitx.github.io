@@ -217,6 +217,7 @@ body.light .book-cover {
   50% { transform: translateZ(-10px) rotateY(-25deg); }
   100% { transform: translateZ(-2px) rotateY(-5deg); }
 }
+
 /* Splash Overlay */
 #splashScreen {
   position: fixed;
@@ -268,13 +269,13 @@ body.light .book-cover {
   animation: rotateRingReverse 4s ease-in-out infinite alternate;
 }
 
-/* Core Logo Animation */
+/* Core Logo Animation - FIXED TO ROUND */
 .logo-core {
   position: relative;
   width: 100px;
   height: 100px;
-  border-radius: 24px;
-  overflow: hidden;
+  border-radius: 50% !important;
+  overflow: hidden !important;
   box-shadow: 0 0 50px rgba(0, 240, 255, 0.5), 0 0 100px rgba(255, 215, 0, 0.3);
   animation: logoZoom 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
@@ -282,7 +283,8 @@ body.light .book-cover {
 .splash-logo {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: cover !important;
+  border-radius: 50% !important;
 }
 
 .shimmer-overlay {
@@ -377,12 +379,13 @@ body.light .book-cover {
   align-items: center;
   gap: 12px;
 }
-/* Custom App Icon Design */
+
+/* Custom App Icon Design - FIXED TO ROUND */
 .logo {
   width: 44px;
   height: 44px;
-  border-radius: 12px;
-  object-fit: cover;
+  border-radius: 50% !important;
+  object-fit: cover !important;
   border: 1.5px solid rgba(0, 240, 255, 0.4);
   box-shadow: 0 0 15px rgba(0, 240, 255, 0.25);
   transition: transform 0.4s ease, box-shadow 0.4s ease;
@@ -778,6 +781,7 @@ footer {
   color: var(--muted);
 }
 
+/* ================= FIXED INSTALL PWA BANNER & HOVER GLOW ================= */
 #installContainer {
   position: fixed;
   bottom: 25px;
@@ -790,13 +794,20 @@ footer {
   transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s ease;
   will-change: transform, opacity;
   touch-action: pan-x;
+
+  /* Extra outer background & border yahan se hataya gaya hai taaki double-border na bane */
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
 }
 
 #installApp {
   width: 100%;
   padding: 14px 22px;
-  background: var(--glass); 
-  backdrop-filter: blur(15px) saturate(160%);
+  background: var(--glass);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
   color: var(--text);
   border: 1px solid var(--glass-border);
   border-radius: 20px;
@@ -804,13 +815,32 @@ footer {
   align-items: center;
   gap: 15px;
   cursor: pointer;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
+/* Inner App Image round fix */
+#installApp img {
+  width: 42px;
+  height: 42px;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  border: 1.5px solid rgba(0, 240, 255, 0.4);
+}
+
+/* Vibrant Hover Glow & Chamak Effect */
 #installApp:hover {
   border-color: var(--gold-glow);
-  box-shadow: 0 0 25px var(--gold-shadow);
+  background: rgba(255, 255, 255, 0.18);
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 0 25px var(--gold-shadow), 0 0 45px rgba(255, 215, 0, 0.4);
 }
+
+#installApp:hover img {
+  border-color: var(--gold-glow);
+  box-shadow: 0 0 15px var(--gold-glow);
+}
+
 
 #offlineBanner {
   position: fixed;
@@ -879,7 +909,7 @@ body.light .notif-item:hover {
   background: rgba(0, 0, 0, 0.75);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  z-index: 100000 !important; /* FIXED: Always rendered on top of dropdown */
+  z-index: 100000 !important;
   display: none;
   justify-content: center;
   align-items: center;
@@ -1033,7 +1063,7 @@ body.light .notif-item:hover {
   100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 59, 48, 0); }
 }
 
-/* --- DROPDOWN BOX WITH LOWER Z-INDEX --- */
+/* --- DROPDOWN BOX --- */
 .notif-dropdown-box {
   position: absolute;
   top: 55px;
@@ -1046,7 +1076,7 @@ body.light .notif-item:hover {
   border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.15));
   border-radius: 18px;
   box-shadow: 0 12px 35px rgba(0, 0, 0, 0.5);
-  z-index: 9999; /* Lower than modal overlay */
+  z-index: 9999;
   display: none;
   flex-direction: column;
   overflow: hidden;
