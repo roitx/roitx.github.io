@@ -15,10 +15,10 @@
   "categories": ["education", "productivity"],
   "icons": [
     {
-      "src": "1profile.jpg",
+      "src": "apo.jpg",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "maskable"
     },
     {
       "src": "app.jpg",
