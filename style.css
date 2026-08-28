@@ -774,12 +774,18 @@ body.light .ai-card {
 }
 
 /* ================= FOOTER & COMPONENTS ================= */
+/* Footer text overlapping fix for PWA bar */
 footer {
-  text-align: center;
-  padding: 20px;
-  font-size: 13px;
-  color: var(--muted);
+  padding-bottom: 90px !important; /* Bottom spacing taaki install bar links ko na dhake */
 }
+
+/* Base footer content layout fix */
+footer .footer-content, 
+.footer-links {
+  position: relative;
+  z-index: 1;
+}
+
 
 /* ================= FIXED INSTALL PWA BANNER (CLEAN SINGLE BOX) ================= */
 #installContainer {
