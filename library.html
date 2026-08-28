@@ -91,6 +91,7 @@
         .title-row {
             display: flex;
             align-items: center; 
+            justify-content: space-between;
             gap: 8px;
             margin-bottom: 4px;
         }
@@ -107,6 +108,7 @@
             overflow: hidden;
             word-break: break-word;
             line-height: 1.4;
+            flex: 1;
         }
 
         .file-info a:hover {
@@ -118,6 +120,37 @@
             display: block;
             font-size: 11px;
             color: var(--text-secondary);
+        }
+
+        /* Right Side Actions & Icons */
+        .right-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Info 'i' Button */
+        .info-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .info-btn:hover {
+            background: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
         }
 
         /* Minimalist SVG Icon Access Tags */
@@ -141,23 +174,9 @@
             stroke-linejoin: round;
         }
 
-        .access-tag.purchased {
-            color: #10b981;
-            background: rgba(16, 185, 129, 0.15);
-            border: 1px solid rgba(16, 185, 129, 0.3);
-        }
-
-        .access-tag.locked {
-            color: #f59e0b;
-            background: rgba(245, 158, 11, 0.15);
-            border: 1px solid rgba(245, 158, 11, 0.3);
-        }
-
-        .access-tag.free {
-            color: #3b82f6;
-            background: rgba(59, 130, 246, 0.15);
-            border: 1px solid rgba(59, 130, 246, 0.3);
-        }
+        .access-tag.purchased { color: #10b981; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); }
+        .access-tag.locked { color: #f59e0b; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); }
+        .access-tag.free { color: #3b82f6; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.3); }
 
         .badges-group {
             display: flex;
@@ -176,17 +195,8 @@
             white-space: nowrap;
         }
 
-        .badge.downloaded {
-            background-color: rgba(16, 185, 129, 0.15);
-            color: var(--success-color);
-            border: 1px solid rgba(16, 185, 129, 0.3);
-        }
-
-        .badge.not-downloaded {
-            background-color: rgba(245, 158, 11, 0.15);
-            color: var(--warning-color);
-            border: 1px solid rgba(245, 158, 11, 0.3);
-        }
+        .badge.downloaded { background-color: rgba(16, 185, 129, 0.15); color: var(--success-color); border: 1px solid rgba(16, 185, 129, 0.3); }
+        .badge.not-downloaded { background-color: rgba(245, 158, 11, 0.15); color: var(--warning-color); border: 1px solid rgba(245, 158, 11, 0.3); }
 
         .view-btn {
             font-size: 11px;
@@ -204,6 +214,32 @@
             font-style: italic;
             padding: 20px;
         }
+
+        /* Popup Modal Styles */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px);
+            display: none; justify-content: center; align-items: center; z-index: 1000;
+            padding: 20px;
+        }
+        .modal-card {
+            background: var(--panel-bg); border: 1px solid var(--border-color);
+            width: 100%; max-width: 400px; border-radius: 14px; padding: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5); animation: scaleIn 0.2s ease;
+        }
+        @keyframes scaleIn {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .modal-header {
+            font-size: 16px; font-weight: 600; margin-bottom: 14px;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--border-color); padding-bottom: 8px;
+        }
+        .modal-close { background: none; border: none; color: var(--text-secondary); font-size: 18px; cursor: pointer; }
+        .modal-body { display: flex; flex-direction: column; gap: 10px; font-size: 13px; }
+        .modal-row { display: flex; justify-content: space-between; background: var(--card-bg); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color); }
+        .modal-row span:last-child { font-weight: 600; color: var(--text-color); }
     </style>
 </head>
 <body>
@@ -215,6 +251,19 @@
         </div>
         
         <div id="recentList" class="activity-list"></div>
+    </div>
+
+    <!-- Details Popup Modal -->
+    <div id="infoModal" class="modal-overlay" onclick="closeInfoModal(event)">
+        <div class="modal-card" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <span>File Details</span>
+                <button class="modal-close" onclick="closeInfoModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modalContent">
+                <!-- Dynamic Content Will Load Here -->
+            </div>
+        </div>
     </div>
 
     <script src="library.js"></script>

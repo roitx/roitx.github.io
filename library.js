@@ -45,7 +45,14 @@ function trackActivityLocally(fileData, isDownloaded = false) {
         const alreadyDownloaded = downloads.some(f => f.url && f.url.split('?')[0] === cleanBaseUrl) || isDownloaded;
         const isCurrentPremium = fileData.isPremium || cleanBaseUrl.toLowerCase().includes("premium") || cleanBaseUrl.toLowerCase().includes("paid");
 
-        recent = recent.filter(f => !f.url || f.url.split('?')[0] !== cleanBaseUrl);
+        // Check if file already exists in recent to track view count
+        let existingIndex = recent.findIndex(f => f.url && f.url.split('?')[0] === cleanBaseUrl);
+        let viewCount = 1;
+        if (existingIndex !== -1) {
+            viewCount = (recent[existingIndex].viewCount || 1) + 1;
+            recent.splice(existingIndex, 1);
+        }
+
         recent.unshift({
             title: fileData.title,
             url: cleanBaseUrl,
@@ -53,7 +60,8 @@ function trackActivityLocally(fileData, isDownloaded = false) {
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             downloaded: alreadyDownloaded,
             isPurchased: isPurchased,
-            isPremium: isCurrentPremium
+            isPremium: isCurrentPremium,
+            viewCount: viewCount
         });
 
         recent = recent.slice(0, 10);
@@ -122,12 +130,11 @@ async function renderActivityFeed() {
 
     recentList.innerHTML = "";
 
-    // Minimalist SVG Icons (Text removed, purely symbol-based badges)
     const checkSvg = `<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
     const lockSvg = `<svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>`;
     const giftSvg = `<svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`;
 
-    recent.forEach(f => {
+    recent.forEach((f, index) => {
         let viewerPage = "notes-viewer.html";
         let rawUrl = f.url || "";
         let cleanPath = rawUrl.split('?')[0];
@@ -162,28 +169,43 @@ async function renderActivityFeed() {
 
         const viewTargetUrl = `${viewerPage}?path=${encodeURIComponent(cleanPath)}&name=${encodeURIComponent(f.title)}${extraParams}`;
 
-        // Download Status Badge (Only for Downloaded / Not Downloaded text badge)
         let downloadBadgeClass = isDownloaded ? "downloaded" : "not-downloaded";
         let downloadBadgeText = isDownloaded ? "Downloaded" : "Not Downloaded";
 
-        // Minimalist Icon-only Access Tags (Symbol representation only)
         let accessTagHtml = "";
+        let accessStatusText = "Free";
         if (isPurchased) {
             accessTagHtml = `<span class="access-tag purchased" title="Purchased">${checkSvg}</span>`;
+            accessStatusText = "Purchased";
         } else if (isFilePremium) {
             accessTagHtml = `<span class="access-tag locked" title="Locked / Premium">${lockSvg}</span>`;
+            accessStatusText = "Locked (Premium)";
         } else {
             accessTagHtml = `<span class="access-tag free" title="Free File">${giftSvg}</span>`;
+            accessStatusText = "Free";
         }
 
         const div = document.createElement("div");
         div.className = "activity-item";
 
+        // Store file details safely for modal popup
+        window.fileDetailsMap = window.fileDetailsMap || {};
+        window.fileDetailsMap[index] = {
+            title: f.title,
+            time: f.time,
+            views: f.viewCount || 1,
+            downloaded: isDownloaded ? "Yes (Downloaded)" : "No",
+            access: accessStatusText
+        };
+
         div.innerHTML = `
             <div class="file-info">
                 <div class="title-row">
                     <a href="${viewTargetUrl}" title="${f.title}">${f.title}</a>
-                    ${accessTagHtml}
+                    <div class="right-actions">
+                        ${accessTagHtml}
+                        <button class="info-btn" onclick="openInfoModal(${index})" title="View Details">i</button>
+                    </div>
                 </div>
                 <span>Viewed at ${f.time} • ${f.meta}</span>
             </div>
@@ -197,4 +219,24 @@ async function renderActivityFeed() {
 
         recentList.appendChild(div);
     });
+}
+
+function openInfoModal(index) {
+    const data = window.fileDetailsMap[index];
+    if (!data) return;
+
+    const modalContent = document.getElementById("modalContent");
+    modalContent.innerHTML = `
+        <div class="modal-row"><span>File Name:</span> <span>${data.title}</span></div>
+        <div class="modal-row"><span>Last Viewed Time:</span> <span>${data.time}</span></div>
+        <div class="modal-row"><span>Total Opens (Views):</span> <span>${data.views} times</span></div>
+        <div class="modal-row"><span>Download Status:</span> <span>${data.downloaded}</span></div>
+        <div class="modal-row"><span>Access Type:</span> <span>${data.access}</span></div>
+    `;
+
+    document.getElementById("infoModal").style.display = "flex";
+}
+
+function closeInfoModal() {
+    document.getElementById("infoModal").style.display = "none";
 }
