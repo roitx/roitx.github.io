@@ -46,151 +46,145 @@
             margin-top: 6px;
         }
 
-        /* 2-Column Responsive Grid System */
-        .compact-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-        }
+       /* Compact & Uniform Grid Layout */
+.compact-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    align-items: start; /* Row ke andar cards stretch nahi honge */
+}
 
-        @media (min-width: 600px) {
-            .compact-grid {
-                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-                gap: 16px;
-            }
-        }
+@media (min-width: 600px) {
+    .compact-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 12px;
+    }
+}
 
-        .mini-card {
-            background: linear-gradient(145deg, #111622, #182030);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 14px;
-            padding: 14px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            text-align: center;
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.35);
-            transition: transform 0.25 ease, border-color 0.25s ease;
-        }
+.mini-card {
+    background: linear-gradient(145deg, #111622, #182030);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 10px 12px; /* Reduced Padding */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
 
-        .mini-card:hover {
-            border-color: rgba(0, 210, 255, 0.3);
-            transform: translateY(-3px);
-        }
+.mini-card:hover {
+    border-color: rgba(0, 210, 255, 0.3);
+    transform: translateY(-2px);
+}
 
-        .badge-tag {
-            font-size: 0.68rem;
-            font-weight: 600;
-            background: rgba(0, 210, 255, 0.12);
-            color: #00d2ff;
-            border: 1px solid rgba(0, 210, 255, 0.25);
-            padding: 3px 8px;
-            border-radius: 6px;
-            display: inline-block;
-            margin-bottom: 8px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 90%;
-        }
+.badge-tag {
+    font-size: 0.65rem;
+    font-weight: 600;
+    background: rgba(0, 210, 255, 0.12);
+    color: #00d2ff;
+    border: 1px solid rgba(0, 210, 255, 0.25);
+    padding: 2px 6px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
 
-        .card-title {
-            font-size: 0.98rem;
-            font-weight: 700;
-            margin: 4px 0 2px 0;
-            line-height: 1.3;
-            color: #ffffff;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            min-height: 2.6em;
-        }
+.card-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    margin: 2px 0;
+    line-height: 1.2;
+    color: #ffffff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; /* Single line truncated title for clean height */
+}
 
-        .chapter-sub {
-            color: #7f8c9d;
-            font-size: 0.78rem;
-            margin-bottom: 8px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
+/* Subtitle + Price In One Compact Row */
+.meta-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 4px 0 8px 0;
+}
 
-        .price-tag {
-            font-size: 1.15rem;
-            font-weight: 800;
-            color: #00d2ff;
-            margin: 6px 0 10px 0;
-            text-shadow: 0 0 8px rgba(0, 210, 255, 0.2);
-        }
+.chapter-sub {
+    color: #7f8c9d;
+    font-size: 0.72rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
 
-        .btn-stack {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
+.price-tag {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #00d2ff;
+    text-shadow: 0 0 6px rgba(0, 210, 255, 0.2);
+}
 
-        .btn-mini {
-            width: 100%;
-            padding: 9px 6px;
-            font-size: 0.82rem;
-            border-radius: 8px;
-            border: none;
-            cursor: pointer;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            transition: all 0.2s ease;
-            box-sizing: border-box;
-        }
+.btn-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
 
-        .btn-mini svg {
-            width: 15px;
-            height: 15px;
-            fill: none;
-            stroke: currentColor;
-            stroke-width: 2.2;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-            flex-shrink: 0;
-        }
+.btn-mini {
+    width: 100%;
+    padding: 7px 6px; /* Compact Button Padding */
+    font-size: 0.78rem;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
 
-        .btn-preview {
-            background: rgba(255, 255, 255, 0.08);
-            color: #d1d5db;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .btn-preview:hover {
-            background: rgba(255, 255, 255, 0.15);
-            color: #fff;
-        }
+.btn-mini svg {
+    width: 13px;
+    height: 13px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    flex-shrink: 0;
+}
 
-        .btn-read {
-            background: linear-gradient(135deg, #00c6ff, #0072ff);
-            color: #ffffff;
-            box-shadow: 0 4px 12px rgba(0, 198, 255, 0.35);
-        }
-        .btn-read:hover {
-            box-shadow: 0 6px 18px rgba(0, 198, 255, 0.5);
-        }
+.btn-preview {
+    background: rgba(255, 255, 255, 0.08);
+    color: #d1d5db;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
 
-        .btn-unlock {
-            background: linear-gradient(135deg, #7928ca, #00d2ff);
-            color: #fff;
-            box-shadow: 0 4px 12px rgba(121, 40, 202, 0.35);
-        }
-        .btn-unlock:hover {
-            box-shadow: 0 6px 18px rgba(121, 40, 202, 0.5);
-        }
+.btn-read {
+    background: linear-gradient(135deg, #00c6ff, #0072ff);
+    color: #ffffff;
+}
 
-        .btn-pending {
-            background: rgba(255, 171, 0, 0.15);
-            color: #ffab00;
-            border: 1px dashed rgba(255, 171, 0, 0.4);
-            cursor: not-allowed;
-        }
+.btn-unlock {
+    background: linear-gradient(135deg, #7928ca, #00d2ff);
+    color: #fff;
+}
+
+.btn-pending {
+    background: rgba(255, 171, 0, 0.15);
+    color: #ffab00;
+    border: 1px dashed rgba(255, 171, 0, 0.4);
+    cursor: not-allowed;
+}
+
 
         /* Payment Modal Styling */
         .modal {
@@ -492,26 +486,28 @@
                 }
 
                 container.innerHTML += `
-                    <div class="mini-card">
-                        <div>
-                            <span class="badge-tag">${note.class_no || ''} | ${note.subject || ''}</span>
-                            <div class="card-title">${note.title}</div>
-                            <div class="chapter-sub">${note.chapter_no || ''}</div>
-                        </div>
-                        
-                        <div>
-                            <div class="price-tag">₹${note.price}</div>
-                            <div class="btn-stack">
-                                ${!isApproved ? `
-                                    <button class="btn-mini btn-preview" onclick="openInViewer(${note.id})">
-                                        ${previewIconSvg} Preview
-                                    </button>
-                                ` : ''}
-                                ${actionBtnHtml}
-                            </div>
-                        </div>
-                    </div>
-                `;
+    <div class="mini-card">
+        <div>
+            <span class="badge-tag">${note.class_no || ''} | ${note.subject || ''}</span>
+            <div class="card-title" title="${note.title}">${note.title}</div>
+            
+            <div class="meta-row">
+                <span class="chapter-sub">${note.chapter_no || ''}</span>
+                <span class="price-tag">₹${note.price}</span>
+            </div>
+        </div>
+        
+        <div class="btn-stack">
+            ${!isApproved ? `
+                <button class="btn-mini btn-preview" onclick="openInViewer(${note.id})">
+                    ${previewIconSvg} Preview
+                </button>
+            ` : ''}
+            ${actionBtnHtml}
+        </div>
+    </div>
+`;
+
             });
         }
 
