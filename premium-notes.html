@@ -10,7 +10,7 @@
     <script src="supabase.js"></script>
 
     <style>
-        /* Enhanced Glassmorphic Layout & Container */
+        /* Base Container */
         .notes-container {
             max-width: 950px;
             margin: 0 auto;
@@ -20,7 +20,7 @@
         .header-box {
             text-align: center;
             margin-bottom: 20px;
-            padding: 22px 15px;
+            padding: 18px 15px;
             background: rgba(17, 22, 34, 0.75);
             backdrop-filter: blur(12px);
             border-radius: 16px;
@@ -29,7 +29,7 @@
         }
 
         .header-box h1 {
-            font-size: 1.5rem;
+            font-size: 1.3rem;
             margin: 0;
             color: #fff;
             letter-spacing: 0.5px;
@@ -41,150 +41,166 @@
         }
 
         .header-box p {
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: #8a99ad;
-            margin-top: 6px;
+            margin-top: 4px;
         }
 
-       /* Compact & Uniform Grid Layout */
-.compact-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-    align-items: start; /* Row ke andar cards stretch nahi honge */
-}
+        /* Responsive Ultra-Compact Grid */
+        .compact-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
 
-@media (min-width: 600px) {
-    .compact-grid {
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        gap: 12px;
-    }
-}
+        @media (min-width: 600px) {
+            .compact-grid {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                gap: 14px;
+            }
+        }
 
-.mini-card {
-    background: linear-gradient(145deg, #111622, #182030);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 12px;
-    padding: 10px 12px; /* Reduced Padding */
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    text-align: center;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    transition: transform 0.2s ease, border-color 0.2s ease;
-}
+        .mini-card {
+            background: linear-gradient(145deg, #121826, #1a2333);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+            padding: 10px 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+            position: relative;
+            box-sizing: border-box;
+        }
 
-.mini-card:hover {
-    border-color: rgba(0, 210, 255, 0.3);
-    transform: translateY(-2px);
-}
+        .card-header-line {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            gap: 6px;
+        }
 
-.badge-tag {
-    font-size: 0.65rem;
-    font-weight: 600;
-    background: rgba(0, 210, 255, 0.12);
-    color: #00d2ff;
-    border: 1px solid rgba(0, 210, 255, 0.25);
-    padding: 2px 6px;
-    border-radius: 4px;
-    display: inline-block;
-    margin-bottom: 4px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
-}
+        .badge-tag {
+            font-size: 0.6rem;
+            font-weight: 700;
+            background: rgba(0, 210, 255, 0.1);
+            color: #00d2ff;
+            border: 1px solid rgba(0, 210, 255, 0.2);
+            padding: 2px 6px;
+            border-radius: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 75%;
+            text-transform: uppercase;
+        }
 
-.card-title {
-    font-size: 0.9rem;
-    font-weight: 700;
-    margin: 2px 0;
-    line-height: 1.2;
-    color: #ffffff;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis; /* Single line truncated title for clean height */
-}
+        /* Top-Right Eye Only Preview Icon Button */
+        .icon-btn-preview {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #94a3b8;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
 
-/* Subtitle + Price In One Compact Row */
-.meta-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin: 4px 0 8px 0;
-}
+        .icon-btn-preview:hover {
+            color: #00d2ff;
+            background: rgba(0, 210, 255, 0.15);
+            border-color: rgba(0, 210, 255, 0.3);
+        }
 
-.chapter-sub {
-    color: #7f8c9d;
-    font-size: 0.72rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
+        .icon-btn-preview svg {
+            width: 13px;
+            height: 13px;
+            stroke: currentColor;
+            stroke-width: 2.2;
+            fill: none;
+        }
 
-.price-tag {
-    font-size: 0.95rem;
-    font-weight: 800;
-    color: #00d2ff;
-    text-shadow: 0 0 6px rgba(0, 210, 255, 0.2);
-}
+        .card-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 6px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
 
-.btn-stack {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
+        .meta-info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
 
-.btn-mini {
-    width: 100%;
-    padding: 7px 6px; /* Compact Button Padding */
-    font-size: 0.78rem;
-    border-radius: 6px;
-    border: none;
-    cursor: pointer;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    transition: all 0.2s ease;
-    box-sizing: border-box;
-}
+        .chapter-sub {
+            color: #64748b;
+            font-size: 0.7rem;
+            font-weight: 500;
+        }
 
-.btn-mini svg {
-    width: 13px;
-    height: 13px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 2.2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    flex-shrink: 0;
-}
+        .price-tag {
+            font-size: 0.92rem;
+            font-weight: 800;
+            color: #00d2ff;
+        }
 
-.btn-preview {
-    background: rgba(255, 255, 255, 0.08);
-    color: #d1d5db;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
+        /* Sleek Button Styles */
+        .btn-mini {
+            width: 100%;
+            padding: 8px 0;
+            font-size: 0.78rem;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            box-sizing: border-box;
+            transition: all 0.2s ease;
+        }
 
-.btn-read {
-    background: linear-gradient(135deg, #00c6ff, #0072ff);
-    color: #ffffff;
-}
+        .btn-mini svg {
+            width: 14px;
+            height: 14px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2.2;
+        }
 
-.btn-unlock {
-    background: linear-gradient(135deg, #7928ca, #00d2ff);
-    color: #fff;
-}
+        .btn-read { 
+            background: linear-gradient(135deg, #00c6ff, #0072ff); 
+            color: #fff; 
+            box-shadow: 0 3px 10px rgba(0, 198, 255, 0.25);
+        }
 
-.btn-pending {
-    background: rgba(255, 171, 0, 0.15);
-    color: #ffab00;
-    border: 1px dashed rgba(255, 171, 0, 0.4);
-    cursor: not-allowed;
-}
+        .btn-unlock { 
+            background: linear-gradient(135deg, #7928ca, #00d2ff); 
+            color: #fff; 
+            box-shadow: 0 3px 10px rgba(121, 40, 202, 0.25);
+        }
 
+        /* Clean Pending State (Only Clock Icon + Short Text) */
+        .btn-pending {
+            background: rgba(255, 171, 0, 0.12);
+            color: #ffab00;
+            border: 1px dashed rgba(255, 171, 0, 0.4);
+            cursor: not-allowed;
+            pointer-events: none;
+            font-size: 0.75rem;
+        }
 
         /* Payment Modal Styling */
         .modal {
@@ -228,7 +244,6 @@
             display: block;
         }
 
-        /* Direct UPI App Button */
         .btn-upi-app {
             display: flex;
             align-items: center;
@@ -254,10 +269,6 @@
             stroke-width: 2.2;
             stroke-linecap: round;
             stroke-linejoin: round;
-        }
-
-        .btn-upi-app:active {
-            transform: scale(0.97);
         }
 
         .copy-box {
@@ -294,11 +305,6 @@
             text-align: center;
             box-sizing: border-box;
             outline: none;
-            transition: border-color 0.2s;
-        }
-
-        .input-utr:focus {
-            border-color: #00d2ff;
         }
 
         .input-utr::placeholder {
@@ -317,10 +323,6 @@
             background: rgba(255, 255, 255, 0.1);
             color: #aaa;
         }
-        .btn-cancel:hover {
-            background: rgba(255, 255, 255, 0.18);
-            color: #fff;
-        }
     </style>
 </head>
 <body>
@@ -331,7 +333,7 @@
         </div>
 
         <div class="compact-grid" id="notesGrid">
-            <!-- Dynamic Compact Cards -->
+            <!-- Dynamic Cards -->
         </div>
     </div>
 
@@ -345,7 +347,6 @@
                 <img id="upiQrCode" src="" alt="Payment QR Code" class="qr-img">
             </div>
 
-            <!-- Direct App Trigger Button -->
             <a id="payDirectBtn" href="#" class="btn-upi-app">
                 <svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
                 Tap to Open PhonePe / GPay / Paytm
@@ -359,7 +360,7 @@
 
             <div class="modal-actions">
                 <button class="btn-mini btn-unlock" onclick="submitManualPayment()">
-                    <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg> Confirm Payment
+                    <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg> Confirm
                 </button>
                 <button class="btn-mini btn-cancel" onclick="document.getElementById('paymentModal').style.display='none'">Cancel</button>
             </div>
@@ -370,7 +371,7 @@
         const MY_UPI_ID = "9199364179-3@ibl";
         let currentUser = null;
         let purchases = [];
-        let orderStatuses = {}; // Track user orders
+        let orderStatuses = {}; 
         let selectedNoteForPay = null;
         const loadedNotesMap = {};
 
@@ -380,7 +381,6 @@
             }
 
             if (currentUser) {
-                // Load approved user purchases
                 const { data: purchaseData } = await window.supabaseClient
                     .from('user_purchases')
                     .select('note_id')
@@ -388,7 +388,6 @@
                 
                 purchases = (purchaseData || []).map(p => String(p.note_id));
 
-                // Load order history status
                 const { data: ordersData } = await window.supabaseClient
                     .from('user_orders')
                     .select('note_id, status')
@@ -404,7 +403,6 @@
                     });
                 }
 
-                // Real-time Supabase listener for order updates
                 setupRealtimeOrderListener();
             }
 
@@ -432,7 +430,7 @@
                                 purchases.push(noteIdStr);
                             }
                         }
-                        loadNotes(); // Live grid update
+                        loadNotes(); 
                     }
                 })
                 .subscribe();
@@ -459,55 +457,44 @@
                 const isApproved = purchases.includes(noteIdStr) || orderStatuses[noteIdStr] === 'approved';
                 const isPending = orderStatuses[noteIdStr] === 'pending';
 
-                // SVG Icons
                 const readIconSvg = `<svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`;
-                const previewIconSvg = `<svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
+                const eyeIconSvg = `<svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
                 const unlockIconSvg = `<svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>`;
-                const clockIconSvg = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`;
+                const clockIconSvg = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 16 14"></polyline></svg>`;
 
-                // Action Button Logic
+                // Action Button logic (Unlock / Pending / Read)
                 let actionBtnHtml = '';
                 if (isApproved) {
-                    // Direct View / Read Option
-                    actionBtnHtml = `
-                        <button class="btn-mini btn-read" onclick="openInViewer(${note.id})">
-                            ${readIconSvg} Read Note
-                        </button>`;
+                    actionBtnHtml = `<button class="btn-mini btn-read" onclick="openInViewer(${note.id})">${readIconSvg} Read Note</button>`;
                 } else if (isPending) {
-                    actionBtnHtml = `
-                        <button class="btn-mini btn-pending" disabled>
-                            ${clockIconSvg} Verification Pending
-                        </button>`;
+                    actionBtnHtml = `<button class="btn-mini btn-pending" disabled>${clockIconSvg} Pending</button>`;
                 } else {
-                    actionBtnHtml = `
-                        <button class="btn-mini btn-unlock" onclick="openPaymentModal(${note.id})">
-                            ${unlockIconSvg} Unlock Note
-                        </button>`;
+                    actionBtnHtml = `<button class="btn-mini btn-unlock" onclick="openPaymentModal(${note.id})">${unlockIconSvg} Unlock Note</button>`;
                 }
 
-                container.innerHTML += `
-    <div class="mini-card">
-        <div>
-            <span class="badge-tag">${note.class_no || ''} | ${note.subject || ''}</span>
-            <div class="card-title" title="${note.title}">${note.title}</div>
-            
-            <div class="meta-row">
-                <span class="chapter-sub">${note.chapter_no || ''}</span>
-                <span class="price-tag">₹${note.price}</span>
-            </div>
-        </div>
-        
-        <div class="btn-stack">
-            ${!isApproved ? `
-                <button class="btn-mini btn-preview" onclick="openInViewer(${note.id})">
-                    ${previewIconSvg} Preview
-                </button>
-            ` : ''}
-            ${actionBtnHtml}
-        </div>
-    </div>
-`;
+                // Eye Icon Only for Preview on Top-Right
+                let previewIconHtml = !isApproved 
+                    ? `<div class="icon-btn-preview" title="Preview Note" onclick="openInViewer(${note.id})">${eyeIconSvg}</div>`
+                    : `<div class="icon-btn-preview" style="color:#2ed573; border-color:rgba(46,213,115,0.3); background:rgba(46,213,115,0.1); cursor:default;">✓</div>`;
 
+                container.innerHTML += `
+                    <div class="mini-card">
+                        <div class="card-header-line">
+                            <span class="badge-tag">${note.class_no || ''} | ${note.subject || ''}</span>
+                            ${previewIconHtml}
+                        </div>
+                        
+                        <div>
+                            <div class="card-title" title="${note.title}">${note.title}</div>
+                            <div class="meta-info-row">
+                                <span class="chapter-sub">${note.chapter_no || 'Chapter'}</span>
+                                <span class="price-tag">₹${note.price}</span>
+                            </div>
+                        </div>
+                        
+                        ${actionBtnHtml}
+                    </div>
+                `;
             });
         }
 
