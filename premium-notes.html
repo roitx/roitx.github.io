@@ -499,55 +499,46 @@
         }
 
         function openInViewer(noteId) {
-    const note = loadedNotesMap[noteId];
-    if (!note) return;
+            const note = loadedNotesMap[noteId];
+            if (!note) return;
 
-    const noteIdStr = String(note.id);
-    const isApproved = purchases.includes(noteIdStr) || orderStatuses[noteIdStr] === 'approved';
-    let targetFilePath = note.file_path || note.full_pdf_url || '';
+            const noteIdStr = String(note.id);
+            const isApproved = purchases.includes(noteIdStr) || orderStatuses[noteIdStr] === 'approved';
+            let targetFilePath = note.file_path || note.full_pdf_url || '';
 
-    let rawClass = note.class_no ? String(note.class_no) : '';
-    let classDigits = rawClass.replace(/\D/g, ''); 
-    const classPart = classDigits ? classDigits : rawClass;
+            let rawClass = note.class_no ? String(note.class_no) : '';
+            let classDigits = rawClass.replace(/\D/g, ''); 
+            const classPart = classDigits ? classDigits : rawClass;
 
-    const subjectPart = note.subject ? note.subject.toUpperCase() : '';
-    const titlePart = note.title || 'Note';
-    const prefixSymbol = "💎";
-    
-    // Exact title format build
-    const descriptiveName = [prefixSymbol, classPart, subjectPart, titlePart].filter(Boolean).join(' • ');
+            const subjectPart = note.subject ? note.subject.toUpperCase() : '';
+            const titlePart = note.title || 'Note';
+            const prefixSymbol = "💎";
+            
+            // Exact title format build
+            const descriptiveName = [prefixSymbol, classPart, subjectPart, titlePart].filter(Boolean).join(' • ');
 
-    const cleanPath = encodeURIComponent(targetFilePath);
-    const cleanName = encodeURIComponent(descriptiveName);
+            const cleanPath = encodeURIComponent(targetFilePath);
+            const cleanName = encodeURIComponent(descriptiveName);
 
-    // Save purchase & activity to local storage before opening viewer
-    if (typeof trackActivityLocally === "function") {
-        trackActivityLocally({
-            title: descriptiveName,
-            url: targetFilePath,
-            meta: "Notes Viewer",
-            isPremium: true,
-            isPurchased: isApproved
-        }, isApproved);
-    }
-    
-    let url = `notes-viewer.html?path=${cleanPath}&name=${cleanName}&type=premium&status=premium`;
-    if (isApproved) {
-        url += `&purchased=true`;
-    }
+            // Save purchase & activity to local storage before opening viewer
+            if (typeof trackActivityLocally === "function") {
+                trackActivityLocally({
+                    title: descriptiveName,
+                    url: targetFilePath,
+                    meta: "Notes Viewer",
+                    isPremium: true,
+                    isPurchased: isApproved
+                }, isApproved);
+            }
+            
+            let url = `notes-viewer.html?path=${cleanPath}&name=${cleanName}&type=premium&status=premium`;
+            if (isApproved) {
+                url += `&purchased=true`;
+            }
 
-    window.location.href = url;
-}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Page title</title>
-</head>
-<body>
-    
-</body>
-</html>
+            window.location.href = url;
+        }
+
         async function openPaymentModal(noteId) {
             const note = loadedNotesMap[noteId];
             if (!note) return;
