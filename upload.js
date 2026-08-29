@@ -9,7 +9,7 @@ function buildAutoName(author, subject, cls, chapterNo, chapter){
   return `${author}_${subject}_Class${cls}_Ch${chapterNo}-${chapter}`;
 }
 
-/* LIVE PREVIEW */
+/* LIVE PREVIEW & INPUT LISTENERS */
 ["authorInput","subjectSelect","classSelect","chapter_noInput","chapterInput"]
 .forEach(id=>{
   const el = document.getElementById(id);
@@ -24,6 +24,16 @@ function buildAutoName(author, subject, cls, chapterNo, chapter){
       const name = buildAutoName(author, subject, cls, chapterNo, chapter);
       if(preview) preview.innerText = name ? "📘 " + name : "Select values to generate name";
     });
+  }
+});
+
+/* AUTHOR DROPDOWN SE INPUT FIELD AUTO-FILL KARNA */
+document.getElementById("authorSelect")?.addEventListener("change", (e) => {
+  if (e.target.value) {
+    const authorInput = document.getElementById("authorInput");
+    authorInput.value = e.target.value;
+    // Live preview update karne ke liye input event trigger kar rahe hain
+    authorInput.dispatchEvent(new Event("input"));
   }
 });
 
@@ -82,27 +92,52 @@ async function uploadBook(){
   }
 
   if(statusBox) statusBox.innerText = "✅ Book uploaded successfully";
+  
+  // Form Reset
   fileInput.value = "";
+  document.getElementById("authorInput").value = "";
+  const authorSelect = document.getElementById("authorSelect");
+  if(authorSelect) authorSelect.value = "";
   if(preview) preview.innerText = "Select values to generate name";
 
   await loadBooks();
 }
 
+/* UPDATE BOTH AUTHOR DROPDOWNS (UPLOAD FORM & LIST FILTER) */
 function updateAuthorDropdown(data) {
-  const authorSelect = document.getElementById("filterAuthor");
-  if (!authorSelect) return;
+  const filterAuthorSelect = document.getElementById("filterAuthor");
+  const uploadAuthorSelect = document.getElementById("authorSelect");
+  
+  if (!filterAuthorSelect && !uploadAuthorSelect) return;
 
-  const currentSelected = authorSelect.value;
-  const authors = [...new Set(data.map(b => b.author))].sort();
+  const currentFilterSelected = filterAuthorSelect ? filterAuthorSelect.value : "";
+  const currentUploadSelected = uploadAuthorSelect ? uploadAuthorSelect.value : "";
+  
+  const authors = [...new Set(data.map(b => b.author))].filter(Boolean).sort();
 
-  authorSelect.innerHTML = '<option value="">All Authors</option>';
-  authors.forEach(author => {
-    const opt = document.createElement("option");
-    opt.value = author;
-    opt.textContent = author;
-    if (author === currentSelected) opt.selected = true;
-    authorSelect.appendChild(opt);
-  });
+  // 1. Update List Filter Dropdown
+  if (filterAuthorSelect) {
+    filterAuthorSelect.innerHTML = '<option value="">All Authors</option>';
+    authors.forEach(author => {
+      const opt = document.createElement("option");
+      opt.value = author;
+      opt.textContent = author;
+      if (author === currentFilterSelected) opt.selected = true;
+      filterAuthorSelect.appendChild(opt);
+    });
+  }
+
+  // 2. Update Upload Panel Dropdown
+  if (uploadAuthorSelect) {
+    uploadAuthorSelect.innerHTML = '<option value="">-- Or Select Existing Author --</option>';
+    authors.forEach(author => {
+      const opt = document.createElement("option");
+      opt.value = author;
+      opt.textContent = author;
+      if (author === currentUploadSelected) opt.selected = true;
+      uploadAuthorSelect.appendChild(opt);
+    });
+  }
 }
 
 /* LOAD BOOK LIST WITH SVG ICONS */

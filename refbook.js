@@ -18,7 +18,21 @@ if (homeBtn) {
 let allBooks = [], currentLevel = "author";
 let selectedAuthor = "", selectedClass = "", selectedSubject = "";
 
-const roman = { 1:"I", 2:"II", 3:"III", 4:"IV", 5:"V", 6:"VI", 7:"VII", 8:"VIII", 9:"IX", 10:"X", 11:"XI", 12:"XII" };
+// Roman mapping with Part support
+const roman = { 
+  1: "Part I", 
+  2: "Part II", 
+  3: "III", 
+  4: "IV", 
+  5: "V", 
+  6: "VI", 
+  7: "VII", 
+  8: "VIII", 
+  9: "IX", 
+  10: "X", 
+  11: "XI", 
+  12: "XII" 
+};
 
 const bookPresets = [
   { bg: "linear-gradient(135deg, #ff7e5f, #feb47b)", text: "RD", tilt: "-4deg", ribbon: "#ff4757" },
@@ -71,7 +85,7 @@ function showAuthors() {
   });
 }
 
-// LEVEL 2: Classes
+// LEVEL 2: Classes / Parts
 function showClasses(author) {
   currentLevel = "class";
   selectedAuthor = author;
@@ -84,10 +98,14 @@ function showClasses(author) {
   const classes = [...new Set(allBooks.filter(b => b.author === author).map(b => b.class_no))].sort((a,b)=>a-b);
   
   classes.forEach((c, i) => {
-    const romanClass = roman[c] || c;
+    // Check if value represents a Part (1 or 2) or standard Class
+    const isPart = (c == 1 || c == 2);
+    const displayTitle = isPart ? `Part ${c}` : `Class ${roman[c] || c}`;
+    const badge = isPart ? `P${c}` : (roman[c] || c);
+
     createCard({
-      title: `Class ${romanClass}`,
-      badgeText: romanClass,
+      title: displayTitle,
+      badgeText: badge,
       coverBg: "linear-gradient(135deg, #2af598, #009efd)",
       tilt: i % 2 === 0 ? "-3deg" : "3deg",
       ribbonColor: "#ff4757",
@@ -103,7 +121,10 @@ function showSubjects(cls) {
   selectedClass = cls;
   backBtn.style.opacity = "1";
   backBtn.style.pointerEvents = "auto";
-  topTitle.textContent = `${selectedAuthor} • Class ${roman[cls] || cls}`;
+  
+  const isPart = (cls == 1 || cls == 2);
+  const classLabel = isPart ? `Part ${cls}` : `Class ${roman[cls] || cls}`;
+  topTitle.textContent = `${selectedAuthor} • ${classLabel}`;
   
   resetGridToGridStyle();
   const subjects = [...new Set(allBooks.filter(b => b.author === selectedAuthor && b.class_no == cls).map(b => b.subject))];
@@ -122,7 +143,7 @@ function showSubjects(cls) {
   });
 }
 
-// LEVEL 4: Chapters (Sleek Glassmorphism List View with Premium SVG Action Icon)
+// LEVEL 4: Chapters (Sleek Glassmorphism List View)
 function showChapters(sub) {
   currentLevel = "chapter";
   selectedSubject = sub;
@@ -203,7 +224,7 @@ function resetGridToGridStyle() {
   grid.style.padding = "16px";
 }
 
-// Ultra Realistic 3D Book Cards Builder (Compact & Perfectly Sized)
+// Ultra Realistic 3D Book Cards Builder
 function createCard({ title, badgeText, coverBg, tilt, ribbonColor, index, callback }) {
   const card = document.createElement("div");
   card.className = "card";

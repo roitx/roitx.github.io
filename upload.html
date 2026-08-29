@@ -14,8 +14,14 @@
   <h2>📘 Upload Reference Book</h2>
   <p class="sub">Admin only • Chapter based • Auto naming</p>
 
-  <label class="label">Author / Book Name</label>
-  <input type="text" id="authorInput" placeholder="e.g. RD Sharma">
+ <!-- AUTHOR MANUAL INPUT -->
+<label class="label">Author / Book Name</label>
+<input type="text" id="authorInput" placeholder="e.g. RD Sharma">
+
+<!-- NEW: DYNAMIC AUTHOR DROPDOWN FOR EASY SELECTION -->
+<select id="authorSelect" style="margin-top: 6px;">
+  <option value="">-- Or Select Existing Author --</option>
+</select>
 
   <label class="label">Class</label>
   <select id="classSelect">
