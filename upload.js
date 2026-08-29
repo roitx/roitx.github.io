@@ -1,25 +1,11 @@
-/* =====================================================
-   ROITX • REFERENCE BOOK UPLOAD (CHAPTER VERSION)
-   FULLY UPDATED WITH DYNAMIC AUTHOR, CLASS, SUBJECT FILTERS
-   ===================================================== */
-
 const fileInput = document.getElementById("bookFile");
 const preview   = document.getElementById("previewName");
 const statusBox = document.getElementById("status");
 const bookList  = document.getElementById("bookList");
 
-/* =====================================================
-   AUTO NAME BUILDER
-   ===================================================== */
-function buildAutoName(){
-  const author    = document.getElementById("authorInput").value.trim();
-  const subject   = document.getElementById("subjectSelect").value;
-  const cls       = document.getElementById("classSelect").value;
-  const chapterNo = document.getElementById("chapter_noInput").value.trim();
-  const chapter   = document.getElementById("chapterInput").value.trim();
-
+/* AUTO NAME BUILDER */
+function buildAutoName(author, subject, cls, chapterNo, chapter){
   if(!author || !chapterNo || !chapter) return "";
-
   return `${author}_${subject}_Class${cls}_Ch${chapterNo}-${chapter}`;
 }
 
@@ -29,101 +15,84 @@ function buildAutoName(){
   const el = document.getElementById(id);
   if(el){
     el.addEventListener("input",()=>{
-      const name = buildAutoName();
+      const author = document.getElementById("authorInput").value.trim();
+      const subject = document.getElementById("subjectSelect").value;
+      const cls = document.getElementById("classSelect").value;
+      const chapterNo = document.getElementById("chapter_noInput").value.trim();
+      const chapter = document.getElementById("chapterInput").value.trim();
+      
+      const name = buildAutoName(author, subject, cls, chapterNo, chapter);
       if(preview) preview.innerText = name ? "📘 " + name : "Select values to generate name";
     });
   }
 });
 
-/* =====================================================
-   UPLOAD BOOK
-   ===================================================== */
+/* UPLOAD BOOK */
 async function uploadBook(){
+  if(!window.supabaseClient) return alert("Supabase not ready");
 
-  if(!window.supabaseClient){
-    alert("Supabase not ready");
-    return;
-  }
-
-  const file      = fileInput.files[0];
-  const author    = document.getElementById("authorInput").value.trim();
-  const subject   = document.getElementById("subjectSelect").value;
-  const cls       = document.getElementById("classSelect").value;
+  const file = fileInput.files[0];
+  const author = document.getElementById("authorInput").value.trim();
+  const subject = document.getElementById("subjectSelect").value;
+  const cls = document.getElementById("classSelect").value;
   const chapterNo = document.getElementById("chapter_noInput").value.trim();
-  const chapter   = document.getElementById("chapterInput").value.trim();
+  const chapter = document.getElementById("chapterInput").value.trim();
 
   if(!file || !author || !chapterNo || !chapter){
-    alert("❌ Author, Chapter No, Chapter Name & File required");
-    return;
+    return alert("❌ Author, Chapter No, Chapter Name & File required");
   }
 
-  const bookName = buildAutoName();
+  const bookName = buildAutoName(author, subject, cls, chapterNo, chapter);
   const safeName = bookName.replace(/[^a-z0-9_-]/gi,"_");
-  const ext      = file.name.split(".").pop();
+  const ext = file.name.split(".").pop();
 
   if(statusBox) statusBox.innerText = "⏳ Uploading book...";
 
-  /* STORAGE PATH */
-  const storagePath =
-    `refbooks/class_${cls}/${subject}/ch_${chapterNo}/${safeName}.${ext}`;
+  const storagePath = `refbooks/class_${cls}/${subject}/ch_${chapterNo}/${safeName}.${ext}`;
 
-  /* -------- STORAGE UPLOAD -------- */
-  const { error: uploadError } =
-    await window.supabaseClient.storage
-      .from("admin-files")
-      .upload(storagePath, file, { upsert:false });
+  const { error: uploadError } = await window.supabaseClient.storage
+    .from("admin-files")
+    .upload(storagePath, file, { upsert:false });
 
   if(uploadError){
     if(statusBox) statusBox.innerText = "❌ Storage upload failed";
-    console.error(uploadError);
-    return;
+    return console.error(uploadError);
   }
 
-  /* -------- PUBLIC URL -------- */
-  const { data: urlData } =
-    window.supabaseClient.storage
-      .from("admin-files")
-      .getPublicUrl(storagePath);
+  const { data: urlData } = window.supabaseClient.storage
+    .from("admin-files")
+    .getPublicUrl(storagePath);
 
-  /* -------- DATABASE INSERT -------- */
-  const { error: dbError } =
-    await window.supabaseClient
-      .from("ref_books")
-      .insert([{
-        name: bookName,
-        author: author,
-        subject: subject,
-        class_no: cls,
-        chapter_no: chapterNo,
-        chapter: chapter,
-        file_url: urlData.publicUrl,
-        storage_path: storagePath
-      }]);
+  const { error: dbError } = await window.supabaseClient
+    .from("ref_books")
+    .insert([{
+      name: bookName,
+      author: author,
+      subject: subject,
+      class_no: cls,
+      chapter_no: chapterNo,
+      chapter: chapter,
+      file_url: urlData.publicUrl,
+      storage_path: storagePath
+    }]);
 
   if(dbError){
     if(statusBox) statusBox.innerText = "❌ Database error";
-    console.error(dbError);
-    return;
+    return console.error(dbError);
   }
 
   if(statusBox) statusBox.innerText = "✅ Book uploaded successfully";
   fileInput.value = "";
   if(preview) preview.innerText = "Select values to generate name";
 
-  // Instant Refresh after upload
   await loadBooks();
 }
 
-/* =====================================================
-   POPULATE AUTHOR DROPDOWN DYNAMICALLY
-   ===================================================== */
 function updateAuthorDropdown(data) {
   const authorSelect = document.getElementById("filterAuthor");
   if (!authorSelect) return;
 
   const currentSelected = authorSelect.value;
-  
-  // Unique authors extract karna
   const authors = [...new Set(data.map(b => b.author))].sort();
 
   authorSelect.innerHTML = '<option value="">All Authors</option>';
@@ -136,15 +105,12 @@ function updateAuthorDropdown(data) {
   });
 }
 
-/* =====================================================
-   LOAD BOOK LIST (WITH SEARCH, DYNAMIC AUTHORS & LIMIT 20)
-   ===================================================== */
+/* LOAD BOOK LIST WITH SVG ICONS */
 async function loadBooks(){
   if(!bookList) return;
-
   bookList.innerHTML = "⏳ Loading books...";
 
-  let query = window.supabaseClient
+  const { data, error } = await window.supabaseClient
     .from("ref_books")
     .select("*")
     .order("class_no",{ ascending:true })
@@ -152,35 +118,23 @@ async function loadBooks(){
     .order("chapter_no",{ ascending:true })
     .limit(20);
 
-  const { data, error } = await query;
-
-  if(error){
-    bookList.innerHTML = "❌ Failed to load books";
-    console.error(error);
+  if(error || !data || data.length === 0){
+    bookList.innerHTML = error ? "❌ Failed to load books" : "<em>No books uploaded yet</em>";
     return;
   }
 
-  if(!data || data.length === 0){
-    bookList.innerHTML = "<em>No books uploaded yet</em>";
-    return;
-  }
-
-  // Update author dropdown options based on available data
   updateAuthorDropdown(data);
 
-  // Get values from filters
-  const searchVal  = document.getElementById("searchBook")?.value.toLowerCase().trim() || "";
-  const authorVal  = document.getElementById("filterAuthor")?.value || "";
-  const classVal   = document.getElementById("filterClass")?.value || "";
-  const subVal     = document.getElementById("filterSubject")?.value || "";
+  const searchVal = document.getElementById("searchBook")?.value.toLowerCase().trim() || "";
+  const authorVal = document.getElementById("filterAuthor")?.value || "";
+  const classVal  = document.getElementById("filterClass")?.value || "";
+  const subVal    = document.getElementById("filterSubject")?.value || "";
 
-  // Apply filters logic
   const filtered = data.filter(b => {
-    const textMatch  = `${b.author} ${b.subject} ${b.chapter} Class ${b.class_no}`.toLowerCase().includes(searchVal);
-    const authorMatch= authorVal === "" || b.author === authorVal;
-    const classMatch = classVal === "" || String(b.class_no) === String(classVal);
-    const subMatch   = subVal === "" || b.subject === subVal;
-
+    const textMatch = `${b.author} ${b.subject} ${b.chapter} Class ${b.class_no}`.toLowerCase().includes(searchVal);
+    const authorMatch = authorVal === "" || b.author === authorVal;
+    const classMatch  = classVal === "" || String(b.class_no) === String(classVal);
+    const subMatch    = subVal === "" || b.subject === subVal;
     return textMatch && authorMatch && classMatch && subMatch;
   });
 
@@ -190,77 +144,107 @@ async function loadBooks(){
   }
 
   bookList.innerHTML = "";
-
-  filtered.forEach(b=>{
+  filtered.forEach(b => {
     const div = document.createElement("div");
     div.className = "book-item";
 
-    // Notes-viewer par redirect karne ke liye path handle karna
-    // Agar aapke paas storage_path hai toh use karenge, warna file_url
     const targetPath = b.storage_path || `refbooks/class_${b.class_no}/${b.subject}/ch_${b.chapter_no}/${b.name}.pdf`;
     const fileName = `${b.name}.pdf`;
+
+    const svgView = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+    const svgEdit = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+    const svgTrash = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`;
 
     div.innerHTML = `
       <div class="book-info">
         <b>${b.author} • Class ${b.class_no} • ${b.subject}</b>
-        <div class="meta">
-          Chapter ${b.chapter_no} — ${b.chapter}
-        </div>
+        <div class="meta">Chapter ${b.chapter_no} — ${b.chapter}</div>
       </div>
-
       <div class="book-actions">
         <button class="view-btn" onclick="openPdfViewer('${encodeURIComponent(targetPath)}', '${encodeURIComponent(fileName)}')">
-          👀 View
+          ${svgView} View
+        </button>
+        <button class="edit-btn" onclick="openBookEditModal('${b.id}', '${escapeQuotes(b.author)}', '${b.class_no}', '${b.subject}', '${b.chapter_no}', '${escapeQuotes(b.chapter)}')">
+          ${svgEdit}
         </button>
         <button class="danger" onclick="deleteBook('${b.id}','${b.storage_path}')">
-          🗑
+          ${svgTrash}
         </button>
       </div>
     `;
-
     bookList.appendChild(div);
   });
 }
 
-/* =====================================================
-   OPEN PDF VIEWER (NOTES-VIEWER.HTML)
-   ===================================================== */
 function openPdfViewer(encodedPath, encodedName) {
-  const viewerUrl = `notes-viewer.html?path=${encodedPath}&name=${encodedName}`;
-  window.location.href = viewerUrl;
+  window.location.href = `notes-viewer.html?path=${encodedPath}&name=${encodedName}`;
 }
 
-/* =====================================================
-   DELETE BOOK
-   ===================================================== */
-async function deleteBook(id,path){
+/* EDIT MODAL FUNCTIONS */
+function openBookEditModal(id, author, cls, sub, chNo, chapter) {
+  document.getElementById("editBookId").value = id;
+  document.getElementById("editAuthorInput").value = author;
+  document.getElementById("editClassSelect").value = cls;
+  document.getElementById("editSubjectSelect").value = sub;
+  document.getElementById("editChapterNoInput").value = chNo;
+  document.getElementById("editChapterInput").value = chapter;
+  
+  document.getElementById("editBookModal").style.display = "flex";
+}
+
+function closeBookEditModal() {
+  document.getElementById("editBookModal").style.display = "none";
+}
+
+async function saveBookEdit() {
+  const id = document.getElementById("editBookId").value;
+  const author = document.getElementById("editAuthorInput").value.trim();
+  const cls = document.getElementById("editClassSelect").value;
+  const sub = document.getElementById("editSubjectSelect").value;
+  const chNo = document.getElementById("editChapterNoInput").value.trim();
+  const chapter = document.getElementById("editChapterInput").value.trim();
+
+  if(!author || !chNo || !chapter) return alert("❌ All fields required");
+
+  const newName = buildAutoName(author, sub, cls, chNo, chapter);
+
+  const { error } = await window.supabaseClient
+    .from("ref_books")
+    .update({
+      name: newName,
+      author: author,
+      class_no: cls,
+      subject: sub,
+      chapter_no: chNo,
+      chapter: chapter
+    })
+    .eq("id", id);
+
+  if(error) return alert("❌ Update failed: " + error.message);
+
+  closeBookEditModal();
+  await loadBooks();
+}
+
+/* DELETE BOOK */
+async function deleteBook(id, path){
   if(!confirm("Delete this book permanently?")) return;
 
-  const { error: storageError } = await window.supabaseClient.storage
-    .from("admin-files")
-    .remove([path]);
-
-  if(storageError) {
-    console.error(storageError);
-  }
-
-  const { error: dbError } = await window.supabaseClient
-    .from("ref_books")
-    .delete()
-    .eq("id",id);
-
-  if(dbError){
-    alert("❌ Delete failed");
-    return;
-  }
+  if(path) await window.supabaseClient.storage.from("admin-files").remove([path]);
+  
+  const { error } = await window.supabaseClient.from("ref_books").delete().eq("id", id);
+  if(error) return alert("❌ Delete failed");
 
   await loadBooks();
 }
 
-/* INIT & FILTER EVENT LISTENERS */
+function escapeQuotes(str) {
+  if (!str) return "";
+  return String(str).replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;");
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   loadBooks();
-  
   document.getElementById("searchBook")?.addEventListener("input", loadBooks);
   document.getElementById("filterAuthor")?.addEventListener("change", loadBooks);
   document.getElementById("filterClass")?.addEventListener("change", loadBooks);
