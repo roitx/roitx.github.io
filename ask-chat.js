@@ -52,18 +52,15 @@
 
   window.runCommand = (text) => { if (!input) return; input.value = text; onSend(); };
 
-  // ---- USER WELCOME & ACCURATE AUTH GREETING ----
+  // ---- USER WELCOME GREETING (CLEANED) ----
   async function initUserGreeting() {
     let displayName = "Student";
-    let isLoggedIn = false;
 
     try {
       if (window.supabaseClient) {
-        // Strict session check
         const { data: { session }, error } = await window.supabaseClient.auth.getSession();
         if (session && session.user && !error) {
           const user = session.user;
-          isLoggedIn = true;
           const { data: profile } = await window.supabaseClient
             .from('profiles')
             .select('full_name')
@@ -75,9 +72,6 @@
           } else if (user.email) {
             displayName = user.email.split('@')[0];
           }
-        } else {
-          isLoggedIn = false;
-          displayName = "Guest";
         }
       }
     } catch (err) {
@@ -86,11 +80,8 @@
 
     addBotMsg(`
       <div style="background: linear-gradient(135deg, rgba(6,182,212,0.1), rgba(59,130,246,0.1)); border: 1px solid rgba(6,182,212,0.3); border-radius: 10px; padding: 12px;">
-        <div style="font-weight: bold; color: #38bdf8; font-size: 14px; display: flex; align-items: center; justify-content: space-between;">
-          <span style="display: flex; align-items: center; gap: 6px;">${SVG.user} Namaste, ${escapeHtml(displayName)}!</span>
-          <span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: ${isLoggedIn ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)'}; color: ${isLoggedIn ? '#34d399' : '#f87171'}; border: 1px solid ${isLoggedIn ? '#059669' : '#dc2626'};">
-            ${isLoggedIn ? '🔒 Logged In' : '🔑 Guest'}
-          </span>
+        <div style="font-weight: bold; color: #38bdf8; font-size: 14px; display: flex; align-items: center; gap: 6px;">
+          ${SVG.user} Namaste, ${escapeHtml(displayName)}!
         </div>
         <div style="font-size: 12px; color: #e2e8f0; margin-top: 6px;">
           Main aapka <b>Roitx AI Assistant</b> hu. Books, PDF Notes, Formulas, Calculator, Hisab-Kitab, ya PDF Export tools accessibility active hain.
@@ -98,6 +89,7 @@
       </div>
     `);
   }
+
 
   // ---- UI MESSAGING HELPERS ----
   function addUserMsg(text) {
