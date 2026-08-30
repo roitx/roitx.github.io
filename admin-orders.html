@@ -265,6 +265,30 @@
         .action-btns {
             display: flex;
             gap: 8px;
+            align-items: center;
+        }
+
+        .btn-info {
+            background: rgba(0, 210, 255, 0.15);
+            color: #00d2ff;
+            border: 1px solid rgba(0, 210, 255, 0.3);
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .btn-info:hover {
+            background: #00d2ff;
+            color: #000;
+            box-shadow: 0 0 10px rgba(0, 210, 255, 0.5);
+            transform: scale(1.08);
         }
 
         .btn-approve {
@@ -337,6 +361,97 @@
             color: #ff4757; 
             border: 1px solid rgba(255, 71, 87, 0.3); 
         }
+
+        /* MODAL POPUP STYLING */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-card {
+            background: #0d121d;
+            border: 1px solid rgba(0, 210, 255, 0.3);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 440px;
+            padding: 24px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9);
+            position: relative;
+        }
+        
+        /* Prominent Red Close Button */
+        .modal-close-btn {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            background: rgba(255, 71, 87, 0.15);
+            border: 1px solid rgba(255, 71, 87, 0.3);
+            color: #ff4757;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            font-size: 0.95rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+        .modal-close-btn:hover {
+            background: #ff4757;
+            color: #fff;
+            transform: rotate(90deg);
+        }
+
+        .user-profile-avatar {
+            width: 75px; 
+            height: 75px;
+            border-radius: 50%;
+            margin: 0 auto 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #00d2ff, #0072ff);
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #fff;
+            overflow: hidden;
+            border: 2px solid #00d2ff;
+        }
+        .user-profile-avatar img {
+            width: 100%; height: 100%; object-fit: cover;
+        }
+        .profile-field-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 16px;
+            text-align: left;
+        }
+        .profile-field {
+            background: rgba(255,255,255,0.03);
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+        .profile-field label {
+            display: block;
+            font-size: 0.68rem;
+            color: #00d2ff;
+            margin-bottom: 2px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        .profile-field span {
+            font-size: 0.83rem;
+            color: #fff;
+            word-break: break-all;
+        }
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -360,7 +475,7 @@
 
         <section class="card">
             <div class="filter-grid">
-                <!-- Custom SVG Icon Dropdown Menu -->
+                <!-- Custom Dropdown Menu -->
                 <div class="custom-dropdown" id="statusDropdown">
                     <div class="dropdown-trigger" onclick="toggleDropdown()">
                         <span id="selectedOption"><i class="fa-solid fa-hourglass-half" style="color:#ffa500;"></i> Pending Approvals</span>
@@ -412,6 +527,20 @@
         </section>
     </div>
 
+    <!-- USER DETAILS MODAL -->
+    <div class="modal-overlay" id="userProfileModal" onclick="if(event.target === this) closeProfileModal()">
+        <div class="modal-card">
+            <!-- Close Cross Button -->
+            <button class="modal-close-btn" onclick="closeProfileModal()"><i class="fa-solid fa-xmark"></i></button>
+            <div id="modalContent">
+                <div style="text-align: center; padding: 25px;">
+                    <i class="fa-solid fa-spinner fa-spin" style="font-size: 1.5rem; color:#00d2ff;"></i>
+                    <p style="margin-top: 10px; font-size: 0.85rem; color: #8a99ad;">Fetching User Profile...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         let cachedOrders = [];
         let currentStatusFilter = 'pending';
@@ -423,7 +552,6 @@
             await fetchOrders();
         };
 
-        // Custom Dropdown Control Logic
         function toggleDropdown() {
             const menu = document.getElementById('dropdownMenu');
             menu.classList.toggle('show');
@@ -432,15 +560,12 @@
         function selectFilter(status, htmlContent, element) {
             currentStatusFilter = status;
             document.getElementById('selectedOption').innerHTML = htmlContent;
-            
             document.querySelectorAll('.dropdown-item').forEach(el => el.classList.remove('active'));
             element.classList.add('active');
-            
             document.getElementById('dropdownMenu').classList.remove('show');
             filterOrders();
         }
 
-        // Close dropdown when clicked outside
         document.addEventListener('click', (e) => {
             const dropdown = document.getElementById('statusDropdown');
             if (!dropdown.contains(e.target)) {
@@ -448,7 +573,6 @@
             }
         });
 
-        // Screenshot Protection Alert
         document.addEventListener("keyup", (e) => {
             if (e.key === "PrintScreen") {
                 navigator.clipboard.writeText("");
@@ -482,7 +606,6 @@
 
             const filtered = cachedOrders.filter(order => {
                 const matchStatus = (currentStatusFilter === 'ALL') || (order.status === currentStatusFilter);
-                
                 const emailStr = (order.user_email || '').toLowerCase();
                 const utrStr = (order.utr_code || '').toLowerCase();
                 const matchSearch = !searchQuery || emailStr.includes(searchQuery) || utrStr.includes(searchQuery);
@@ -518,9 +641,13 @@
                 }
                 
                 let actionButtons = `<span style="color:#666; font-size:0.75rem;"><i class="fa-solid fa-lock"></i> Processed</span>`;
+                
                 if (order.status === 'pending') {
                     actionButtons = `
                         <div class="action-btns">
+                            <button class="btn-info" title="View Profile Info" onclick="viewUserProfile('${order.user_email}')">
+                                <i class="fa-solid fa-info"></i>
+                            </button>
                             <button class="btn-approve" onclick="approveOrder(${order.id}, '${order.user_email}', ${order.note_id})">
                                 <i class="fa-solid fa-check"></i> Approve
                             </button>
@@ -544,11 +671,104 @@
             });
         }
 
+        // Updated Profile Fetching Logic Priority: Email First, then ID
+        async function viewUserProfile(email) {
+            const modal = document.getElementById('userProfileModal');
+            const content = document.getElementById('modalContent');
+            modal.style.display = 'flex';
+            
+            content.innerHTML = `
+                <div style="text-align: center; padding: 25px;">
+                    <i class="fa-solid fa-spinner fa-spin" style="font-size: 1.5rem; color:#00d2ff;"></i>
+                    <p style="margin-top: 10px; font-size: 0.85rem; color: #8a99ad;">Fetching profile details...</p>
+                </div>
+            `;
+
+            try {
+                let profileData = null;
+
+                // 1. Sabse pehle Email se query karenge kyuki email hamesha table me stored rehta hai
+                if (email) {
+                    const { data, error: emailErr } = await window.supabaseClient
+                        .from('profiles')
+                        .select('*')
+                        .eq('email', email)
+                        .maybeSingle();
+
+                    if (!emailErr) {
+                        profileData = data;
+                    }
+                }
+
+                if (!profileData) {
+                    content.innerHTML = `
+                        <div style="text-align:center; padding: 15px;">
+                            <i class="fa-solid fa-user-slash" style="font-size: 2rem; color:#ffa500; margin-bottom: 8px;"></i>
+                            <h3 style="margin: 5px 0; font-size: 1rem;">Profile Data Not Available</h3>
+                            <p style="font-size: 0.78rem; color: #8a99ad;">User has registered but hasn't updated profile fields yet.</p>
+                            <p style="font-size: 0.85rem; color:#00d2ff; margin-top:8px;"><strong>Email:</strong> ${email}</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const initial = (profileData.full_name || email).charAt(0).toUpperCase();
+                const avatarHtml = profileData.avatar_url 
+                    ? `<img src="${profileData.avatar_url}" alt="Profile">` 
+                    : initial;
+
+                content.innerHTML = `
+                    <div style="text-align:center;">
+                        <div class="user-profile-avatar">${avatarHtml}</div>
+                        <h3 style="margin: 0; font-size: 1.15rem; color:#fff;">${profileData.full_name || 'N/A'}</h3>
+                        <span style="font-size: 0.78rem; color:#8a99ad;"><i class="fa-solid fa-envelope"></i> ${profileData.email || email}</span>
+                    </div>
+
+                    <div class="profile-field-grid">
+                        <div class="profile-field">
+                            <label><i class="fa-solid fa-phone"></i> Phone</label>
+                            <span>${profileData.country_code || '+91'} ${profileData.phone || 'N/A'}</span>
+                        </div>
+                        <div class="profile-field">
+                            <label><i class="fa-solid fa-graduation-cap"></i> Class</label>
+                            <span>${profileData.target_class || 'N/A'}</span>
+                        </div>
+                        <div class="profile-field">
+                            <label><i class="fa-solid fa-book-open"></i> Stream</label>
+                            <span>${profileData.stream || 'N/A'}</span>
+                        </div>
+                        <div class="profile-field">
+                            <label><i class="fa-solid fa-building-columns"></i> Institution</label>
+                            <span>${profileData.institution || 'N/A'}</span>
+                        </div>
+                        <div class="profile-field">
+                            <label><i class="fa-solid fa-city"></i> City</label>
+                            <span>${profileData.city || 'N/A'}</span>
+                        </div>
+                        <div class="profile-field">
+                            <label><i class="fa-solid fa-map-location-dot"></i> State</label>
+                            <span>${profileData.state || 'N/A'}</span>
+                        </div>
+                    </div>
+                `;
+            } catch (err) {
+                content.innerHTML = `
+                    <div style="text-align:center; color:#ff4757; padding: 15px;">
+                        <i class="fa-solid fa-triangle-exclamation" style="font-size: 1.5rem;"></i>
+                        <p style="font-size:0.85rem;">Error: ${err.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function closeProfileModal() {
+            document.getElementById('userProfileModal').style.display = 'none';
+        }
+
         async function approveOrder(orderId, userEmail, noteId) {
             if (!confirm(`Confirm payment approval for ${userEmail}?`)) return;
 
             try {
-                // 1. Fetch User UUID safely
                 const { data: userData } = await window.supabaseClient
                     .from('profiles')
                     .select('id')
@@ -557,7 +777,6 @@
 
                 let userId = userData ? userData.id : null;
 
-                // 2. Update status in user_orders
                 const { error: orderErr } = await window.supabaseClient
                     .from('user_orders')
                     .update({ status: 'approved' })
@@ -565,7 +784,6 @@
 
                 if (orderErr) throw orderErr;
 
-                // 3. Insert purchase record
                 if (userId && noteId) {
                     await window.supabaseClient
                         .from('user_purchases')
@@ -576,8 +794,7 @@
                         }]);
                 }
 
-                // 4. Send Notification to User Table
-                const { error: notifErr } = await window.supabaseClient
+                await window.supabaseClient
                     .from('notifications')
                     .insert([{
                         user_id: userId,
@@ -585,8 +802,6 @@
                         message: `Your payment for order #${orderId} was verified. Access granted to your premium note!`,
                         link: "premium-notes.html"
                     }]);
-
-                if (notifErr) console.warn("Notification error:", notifErr);
 
                 alert("🎉 Order Approved & User Notified!");
                 await fetchOrders();
@@ -600,7 +815,6 @@
             if (!confirm("Are you sure you want to REJECT this payment?")) return;
 
             try {
-                // Fetch User Info
                 const { data: orderData } = await window.supabaseClient
                     .from('user_orders')
                     .select('user_email')
@@ -617,7 +831,6 @@
                     if (userData) userId = userData.id;
                 }
 
-                // Update Order Status
                 const { error } = await window.supabaseClient
                     .from('user_orders')
                     .update({ status: 'rejected' })
@@ -625,7 +838,6 @@
 
                 if (error) throw error;
 
-                // Send Rejection Notification
                 await window.supabaseClient
                     .from('notifications')
                     .insert([{

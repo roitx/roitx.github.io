@@ -514,13 +514,11 @@
             const titlePart = note.title || 'Note';
             const prefixSymbol = "💎";
             
-            // Exact title format build
             const descriptiveName = [prefixSymbol, classPart, subjectPart, titlePart].filter(Boolean).join(' • ');
 
             const cleanPath = encodeURIComponent(targetFilePath);
             const cleanName = encodeURIComponent(descriptiveName);
 
-            // Save purchase & activity to local storage before opening viewer
             if (typeof trackActivityLocally === "function") {
                 trackActivityLocally({
                     title: descriptiveName,
@@ -575,34 +573,45 @@
         }
 
         async function submitManualPayment() {
-            const utr = document.getElementById('utrInput').value.trim();
-            if (utr.length < 8) {
-                alert("Please enter a valid UTR/Transaction number!");
-                return;
-            }
+    const utr = document.getElementById('utrInput').value.trim();
+    if (utr.length < 8) {
+        alert("Please enter a valid UTR/Transaction number!");
+        return;
+    }
 
-            const { error } = await window.supabaseClient
-                .from('user_orders')
-                .insert([{
-                    user_email: currentUser.email,
-                    note_title: selectedNoteForPay.title,
-                    note_id: selectedNoteForPay.id,
-                    amount: selectedNoteForPay.price,
-                    utr_code: utr,
-                    status: 'pending'
-                }]);
+    // Pehle profiles table se user ki extra details fetch kar lo
+    const { data: profileData } = await window.supabaseClient
+        .from('profiles')
+        .select('full_name, phone, avatar_url')
+        .eq('email', currentUser.email)
+        .maybeSingle();
 
-            if (!error) {
-                alert("Payment details submitted successfully! Admin will verify and approve soon.");
-                document.getElementById('paymentModal').style.display = 'none';
-                document.getElementById('utrInput').value = '';
-                
-                orderStatuses[String(selectedNoteForPay.id)] = 'pending';
-                loadNotes();
-            } else {
-                alert("Database sync failed: " + error.message);
-            }
-        }
+    const { error } = await window.supabaseClient
+        .from('user_orders')
+        .insert([{
+            user_email: currentUser.email,
+            user_name: profileData?.full_name || currentUser.user_metadata?.full_name || 'N/A',
+            user_phone: profileData?.phone || 'N/A',
+            avatar_url: profileData?.avatar_url || '',
+            note_title: selectedNoteForPay.title,
+            note_id: selectedNoteForPay.id,
+            amount: selectedNoteForPay.price,
+            utr_code: utr,
+            status: 'pending'
+        }]);
+
+    if (!error) {
+        alert("Payment details submitted successfully! Admin will verify and approve soon.");
+        document.getElementById('paymentModal').style.display = 'none';
+        document.getElementById('utrInput').value = '';
+        
+        orderStatuses[String(selectedNoteForPay.id)] = 'pending';
+        loadNotes();
+    } else {
+        alert("Database sync failed: " + error.message);
+    }
+}
+
     </script>
 </body>
 </html>
