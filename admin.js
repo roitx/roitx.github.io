@@ -429,8 +429,20 @@ async function deleteEvent(id) {
 
 
 /* =====================================================
-   PART 4: FORMULAS SYSTEM & GLOBAL INIT
+   PART 4: FORMULAS SYSTEM & GLOBAL INIT (OPTIMIZED)
    ===================================================== */
+
+// Search fast typing optimize karne ke liye debounce function
+function debounce(fn, delay = 250) {
+  let timer;
+  return function (...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(this, args), delay);
+  };
+}
+
+// Background memory cleanup ke liye array
+window.adminIntervals = window.adminIntervals || [];
 
 document.addEventListener("DOMContentLoaded", () => {
   const fType = document.getElementById("fType");
@@ -467,49 +479,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Doubts Panel toggling & Floating Position Fix
   const doubtBtn = document.getElementById("doubtBtn");
-  const doubtPanel = document.getElementById("doubtPanel");
-
-  if (doubtBtn && doubtPanel) {
-    doubtPanel.style.display = "none";
-    
-    doubtPanel.style.position = "fixed";
-    doubtPanel.style.bottom = "80px";
-    doubtPanel.style.right = "20px";
-    doubtPanel.style.zIndex = "999999";
-    doubtPanel.style.background = "#0f172a";
-    doubtPanel.style.border = "1px solid rgba(255, 255, 255, 0.15)";
-    doubtPanel.style.borderRadius = "12px";
-    doubtPanel.style.padding = "12px";
-    doubtPanel.style.width = "320px";
-    doubtPanel.style.boxShadow = "0 10px 25px rgba(0, 0, 0, 0.5)";
-
+  if (doubtBtn) {
     doubtBtn.addEventListener("click", (e) => {
       e.stopPropagation();
-      const isVisible = doubtPanel.style.display === "block";
-      doubtPanel.style.display = isVisible ? "none" : "block";
-      if (!isVisible && typeof window.updateDoubtBadge === "function") {
-        window.updateDoubtBadge();
-      }
-    });
-
-    document.addEventListener("click", (e) => {
-      if (!doubtPanel.contains(e.target) && !doubtBtn.contains(e.target)) {
-        doubtPanel.style.display = "none";
-      }
+      window.toggleDoubtPanel();
     });
   }
 
-  // Filter Listeners
-  document.getElementById("searchNotes")?.addEventListener("input", loadFiles);
+  // Filter & Search Listeners (Debounced Search)
+  document.getElementById("searchNotes")?.addEventListener("input", debounce(loadFiles));
   document.getElementById("filterNotesClass")?.addEventListener("change", loadFiles);
   document.getElementById("filterNotesSubject")?.addEventListener("change", loadFiles);
 
-  document.getElementById("searchEvent")?.addEventListener("input", loadEvents);
+  document.getElementById("searchEvent")?.addEventListener("input", debounce(loadEvents));
   document.getElementById("filterEventMonth")?.addEventListener("change", loadEvents);
   document.getElementById("filterEventYear")?.addEventListener("change", loadEvents);
   document.getElementById("filterEventType")?.addEventListener("change", loadEvents);
 
-  document.getElementById("searchFormula")?.addEventListener("input", loadFormulas);
+  document.getElementById("searchFormula")?.addEventListener("input", debounce(loadFormulas));
   document.getElementById("filterFClass")?.addEventListener("change", loadFormulas);
   document.getElementById("filterFSubject")?.addEventListener("change", loadFormulas);
   document.getElementById("filterFCategory")?.addEventListener("change", loadFormulas);
@@ -522,9 +509,24 @@ document.addEventListener("DOMContentLoaded", () => {
   if (typeof window.updateDoubtBadge === "function") window.updateDoubtBadge();
   if (typeof window.updateOrdersBadge === "function") window.updateOrdersBadge();
 
-  // Periodic Checks
-  setInterval(() => { if (typeof window.updateDoubtBadge === "function") window.updateDoubtBadge(); }, 5000);
-  setInterval(() => { if (typeof window.updateOrdersBadge === "function") window.updateOrdersBadge(); }, 5000);
+  // Periodic Checks (Safely Stored Intervals)
+  const doubtInterval = setInterval(() => { 
+    if (typeof window.updateDoubtBadge === "function") window.updateDoubtBadge(); 
+  }, 5000);
+  
+  const ordersInterval = setInterval(() => { 
+    if (typeof window.updateOrdersBadge === "function") window.updateOrdersBadge(); 
+  }, 5000);
+
+  window.adminIntervals.push(doubtInterval, ordersInterval);
+});
+
+// Page change karne par background timer clear karne ke liye
+window.addEventListener("beforeunload", () => {
+  if (window.adminIntervals) {
+    window.adminIntervals.forEach(clearInterval);
+    window.adminIntervals = [];
+  }
 });
 
 window.uploadFormula = async function () {
@@ -782,7 +784,7 @@ window.deleteFormula = async function (id, filePath) {
 
 
 /* =====================================================
-   PART 5: DOUBTS & OVERLAY SYSTEM (MINI PANEL + EMAIL + THUMBNAIL + HOME OVERLAY)
+   PART 5: DOUBTS & OVERLAY SYSTEM (WITH CLOSE BUTTON)
    ===================================================== */
 
 window.updateDoubtBadge = async function() {
@@ -819,19 +821,14 @@ window.updateDoubtBadge = async function() {
       } else {
         const recentThree = data.slice(0, 3);
         recentThree.forEach(d => {
-          const statusLower = (d.status || "pending").toLowerCase();
-          const isSolved = statusLower === "solved" || statusLower === "resolved";
-          
           const userEmail = d.user_email || "No Email";
           const userName = d.user_name || userEmail.split('@')[0];
           const userInitial = userName.charAt(0).toUpperCase();
 
-          // User Profile Photo / Letter Icon
           const userPhotoHtml = d.user_photo 
             ? `<img src="${d.user_photo}" style="width:26px; height:26px; border-radius:50%; object-fit:cover; margin-right:6px; flex-shrink:0;">` 
             : `<div style="width:26px; height:26px; border-radius:50%; background:#0072ff; color:#fff; display:inline-flex; align-items:center; justify-content:center; margin-right:6px; font-size:10px; font-weight:bold; flex-shrink:0;">${userInitial}</div>`;
 
-          // Doubt Image Thumbnail
           const doubtImgHtml = d.image_url 
             ? `<img src="${d.image_url}" alt="Thumbnail" style="width:36px; height:36px; border-radius:4px; object-fit:cover; margin-left:6px; border:1px solid #38bdf8; flex-shrink:0;">`
             : ``;
@@ -858,19 +855,19 @@ window.updateDoubtBadge = async function() {
         });
       }
 
-      // Mini Panel Header & Footer
       miniPanel.innerHTML = `
-        <div style="font-weight:bold; font-size:13px; color:#38bdf8; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:4px;">
-          <span>Recent Doubts</span>
-          <span style="font-size:11px; color:#ffc107;">(${pendingItems.length} pending)</span>
+        <div style="font-weight:bold; font-size:13px; color:#38bdf8; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:6px;">
+          <span>Recent Doubts <span style="font-size:11px; color:#ffc107; font-weight:normal; margin-left:4px;">(${pendingItems.length} pending)</span></span>
+          <button onclick="toggleDoubtPanel()" style="background:none; border:none; color:#94a3b8; font-size:18px; line-height:1; cursor:pointer; padding:0 4px;" title="Close Panel">&times;</button>
         </div>
         <div id="doubtList">${itemsHtml}</div>
         <div style="display:flex; gap:6px; margin-top:10px;">
-          <button onclick="openDoubtOverlay()" style="flex:1; background:#0072ff; color:#fff; border:none; padding:6px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer;">
-            Open in Home Panel
+          <button onclick="openDoubtOverlay()" style="flex:1; background:#0072ff; color:#fff; border:none; padding:6px 10px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            Open Dashboard
           </button>
-          <button onclick="toggleDoubtFullScreen()" style="background:#1e293b; color:#38bdf8; border:1px solid #38bdf8; padding:6px 10px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer;" title="Full Screen Overlay">
-            ⛶ Full Screen
+          <button onclick="toggleDoubtFullScreen()" style="background:#1e293b; color:#38bdf8; border:1px solid #38bdf8; padding:6px 10px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center;" title="Full Screen Overlay">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
           </button>
         </div>
       `;
@@ -881,20 +878,43 @@ window.updateDoubtBadge = async function() {
   }
 };
 
+
 window.filterDoubts = function() {
   openDoubtOverlay();
+};
+
+window.toggleDoubtPanel = function() {
+  const miniPanel = document.getElementById("doubtPanel");
+  const overlay = document.getElementById("doubtOverlay");
+
+  if (!miniPanel) return;
+
+  // Full Overlay open hai toh usko hide kar do
+  if (overlay && overlay.style.display === "flex") {
+    overlay.style.display = "none";
+  }
+
+  // Toggle Mini Panel
+  if (miniPanel.style.display === "none" || miniPanel.style.display === "") {
+    miniPanel.style.display = "block";
+    window.updateDoubtBadge();
+  } else {
+    miniPanel.style.display = "none";
+  }
 };
 
 window.openDoubtOverlay = async function(targetDoubtId = null) {
   const overlay = document.getElementById("doubtOverlay");
   const overlayList = document.getElementById("doubtOverlayList");
   const filterSelect = document.getElementById("doubtFilter");
+  const miniPanel = document.getElementById("doubtPanel");
+
+  // Mini Panel ko chupao jab full overlay khule
+  if (miniPanel) {
+    miniPanel.style.display = "none";
+  }
 
   if (!overlay || !overlayList) return;
-  
-  // Close mini panel after click
-  const miniPanel = document.getElementById("doubtPanel");
-  if (miniPanel) miniPanel.style.display = "none";
 
   overlay.style.display = "flex";
   overlayList.innerHTML = "<div style='color:#b9c9e0; text-align:center; padding:20px;'>⏳ Loading doubts & feedbacks...</div>";
@@ -962,7 +982,9 @@ window.openDoubtOverlay = async function(targetDoubtId = null) {
           <span class="doubt-status-tag ${isSolved ? "resolved" : "pending"}" style="flex-shrink:0;">
             ${isSolved ? "✓ SOLVED" : "⏳ PENDING"}
           </span>
-          <button onclick="toggleCardFullScreen('${d.id}')" style="background:transparent; border:none; color:#38bdf8; cursor:pointer;" title="Toggle Focus Mode">⛶</button>
+          <button onclick="toggleCardFullScreen('${d.id}')" style="background:transparent; border:none; color:#38bdf8; cursor:pointer; padding:2px; display:inline-flex; align-items:center; justify-content:center;" title="Toggle Focus Mode">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+          </button>
         </div>
       </div>
       
@@ -977,10 +999,10 @@ window.openDoubtOverlay = async function(targetDoubtId = null) {
 
       <div class="doubt-card-actions">
         <button class="btn-save-resolve" onclick="publishAnswer('${d.id}')">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/></svg> Save & Resolve
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save & Resolve
         </button>
         <button class="btn-delete-doubt" onclick="deleteDoubt('${d.id}')">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg> Delete
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg> Delete
         </button>
       </div>
     `;
@@ -1000,7 +1022,7 @@ window.toggleDoubtFullScreen = function() {
     overlay.style.height = "";
     overlay.style.zIndex = "";
   } else {
-    openDoubtOverlay();
+    window.openDoubtOverlay();
     overlay.style.position = "fixed";
     overlay.style.top = "0";
     overlay.style.left = "0";
@@ -1035,7 +1057,10 @@ window.toggleCardFullScreen = function(id) {
 
 window.closeDoubtOverlay = function() {
   const overlay = document.getElementById("doubtOverlay");
+  const miniPanel = document.getElementById("doubtPanel");
+  
   if (overlay) overlay.style.display = "none";
+  if (miniPanel) miniPanel.style.display = "none";
 };
 
 window.publishAnswer = async function(id) {
@@ -1061,7 +1086,7 @@ window.publishAnswer = async function(id) {
   }
 
   window.updateDoubtBadge();
-  openDoubtOverlay();
+  window.openDoubtOverlay();
 };
 
 window.deleteDoubt = async function(id) {
@@ -1075,7 +1100,7 @@ window.deleteDoubt = async function(id) {
   }
 
   window.updateDoubtBadge();
-  openDoubtOverlay();
+  window.openDoubtOverlay();
 };
 
 
