@@ -673,93 +673,98 @@
 
         // Updated Profile Fetching Logic Priority: Email First, then ID
         async function viewUserProfile(email) {
-            const modal = document.getElementById('userProfileModal');
-            const content = document.getElementById('modalContent');
-            modal.style.display = 'flex';
-            
-            content.innerHTML = `
-                <div style="text-align: center; padding: 25px;">
-                    <i class="fa-solid fa-spinner fa-spin" style="font-size: 1.5rem; color:#00d2ff;"></i>
-                    <p style="margin-top: 10px; font-size: 0.85rem; color: #8a99ad;">Fetching profile details...</p>
-                </div>
-            `;
+    const modal = document.getElementById('userProfileModal');
+    const content = document.getElementById('modalContent');
+    modal.style.display = 'flex';
+    
+    content.innerHTML = `
+        <div style="text-align: center; padding: 25px;">
+            <i class="fa-solid fa-spinner fa-spin" style="font-size: 1.5rem; color:#00d2ff;"></i>
+            <p style="margin-top: 10px; font-size: 0.85rem; color: #8a99ad;">Fetching profile details...</p>
+        </div>
+    `;
 
-            try {
-                let profileData = null;
+    try {
+        let profileData = null;
 
-                // 1. Sabse pehle Email se query karenge kyuki email hamesha table me stored rehta hai
-                if (email) {
-                    const { data, error: emailErr } = await window.supabaseClient
-                        .from('profiles')
-                        .select('*')
-                        .eq('email', email)
-                        .maybeSingle();
+        if (email) {
+            const { data, error: orderErr } = await window.supabaseClient
+                .from('user_orders')
+                .select('*')
+                .eq('user_email', email)
+                .order('id', { ascending: false })
+                .limit(1)
+                .maybeSingle();
 
-                    if (!emailErr) {
-                        profileData = data;
-                    }
-                }
-
-                if (!profileData) {
-                    content.innerHTML = `
-                        <div style="text-align:center; padding: 15px;">
-                            <i class="fa-solid fa-user-slash" style="font-size: 2rem; color:#ffa500; margin-bottom: 8px;"></i>
-                            <h3 style="margin: 5px 0; font-size: 1rem;">Profile Data Not Available</h3>
-                            <p style="font-size: 0.78rem; color: #8a99ad;">User has registered but hasn't updated profile fields yet.</p>
-                            <p style="font-size: 0.85rem; color:#00d2ff; margin-top:8px;"><strong>Email:</strong> ${email}</p>
-                        </div>
-                    `;
-                    return;
-                }
-
-                const initial = (profileData.full_name || email).charAt(0).toUpperCase();
-                const avatarHtml = profileData.avatar_url 
-                    ? `<img src="${profileData.avatar_url}" alt="Profile">` 
-                    : initial;
-
-                content.innerHTML = `
-                    <div style="text-align:center;">
-                        <div class="user-profile-avatar">${avatarHtml}</div>
-                        <h3 style="margin: 0; font-size: 1.15rem; color:#fff;">${profileData.full_name || 'N/A'}</h3>
-                        <span style="font-size: 0.78rem; color:#8a99ad;"><i class="fa-solid fa-envelope"></i> ${profileData.email || email}</span>
-                    </div>
-
-                    <div class="profile-field-grid">
-                        <div class="profile-field">
-                            <label><i class="fa-solid fa-phone"></i> Phone</label>
-                            <span>${profileData.country_code || '+91'} ${profileData.phone || 'N/A'}</span>
-                        </div>
-                        <div class="profile-field">
-                            <label><i class="fa-solid fa-graduation-cap"></i> Class</label>
-                            <span>${profileData.target_class || 'N/A'}</span>
-                        </div>
-                        <div class="profile-field">
-                            <label><i class="fa-solid fa-book-open"></i> Stream</label>
-                            <span>${profileData.stream || 'N/A'}</span>
-                        </div>
-                        <div class="profile-field">
-                            <label><i class="fa-solid fa-building-columns"></i> Institution</label>
-                            <span>${profileData.institution || 'N/A'}</span>
-                        </div>
-                        <div class="profile-field">
-                            <label><i class="fa-solid fa-city"></i> City</label>
-                            <span>${profileData.city || 'N/A'}</span>
-                        </div>
-                        <div class="profile-field">
-                            <label><i class="fa-solid fa-map-location-dot"></i> State</label>
-                            <span>${profileData.state || 'N/A'}</span>
-                        </div>
-                    </div>
-                `;
-            } catch (err) {
-                content.innerHTML = `
-                    <div style="text-align:center; color:#ff4757; padding: 15px;">
-                        <i class="fa-solid fa-triangle-exclamation" style="font-size: 1.5rem;"></i>
-                        <p style="font-size:0.85rem;">Error: ${err.message}</p>
-                    </div>
-                `;
+            if (!orderErr) {
+                profileData = data;
             }
         }
+
+        if (!profileData) {
+            content.innerHTML = `
+                <div style="text-align:center; padding: 15px;">
+                    <i class="fa-solid fa-user-slash" style="font-size: 2rem; color:#ffa500; margin-bottom: 8px;"></i>
+                    <h3 style="margin: 5px 0; font-size: 1rem;">Profile Data Not Available</h3>
+                    <p style="font-size: 0.78rem; color: #8a99ad;">No order details found for this user.</p>
+                    <p style="font-size: 0.85rem; color:#00d2ff; margin-top:8px;"><strong>Email:</strong> ${email}</p>
+                </div>
+            `;
+            return;
+        }
+
+        const nameToShow = profileData.user_name || 'N/A';
+        const initial = nameToShow.charAt(0).toUpperCase();
+        const avatarHtml = profileData.avatar_url 
+            ? `<img src="${profileData.avatar_url}" alt="Profile">` 
+            : initial;
+
+        content.innerHTML = `
+            <div style="text-align:center;">
+                <div class="user-profile-avatar">${avatarHtml}</div>
+                <h3 style="margin: 0; font-size: 1.15rem; color:#fff;">${nameToShow}</h3>
+                <span style="font-size: 0.78rem; color:#8a99ad;"><i class="fa-solid fa-envelope"></i> ${profileData.user_email || email}</span>
+            </div>
+
+            <div class="profile-field-grid">
+                <div class="profile-field">
+                    <label><i class="fa-solid fa-phone"></i> Phone</label>
+                    <span>${profileData.user_phone || 'N/A'}</span>
+                </div>
+                <div class="profile-field">
+                    <label><i class="fa-solid fa-graduation-cap"></i> Class</label>
+                    <span>${profileData.target_class || 'N/A'}</span>
+                </div>
+                <div class="profile-field">
+                    <label><i class="fa-solid fa-book-open"></i> Stream</label>
+                    <span>${profileData.stream || 'N/A'}</span>
+                </div>
+                <div class="profile-field">
+                    <label><i class="fa-solid fa-building-columns"></i> Institution</label>
+                    <span>${profileData.institution || 'N/A'}</span>
+                </div>
+                <div class="profile-field">
+                    <label><i class="fa-solid fa-city"></i> City</label>
+                    <span>${profileData.city || 'N/A'}</span>
+                </div>
+                <div class="profile-field">
+                    <label><i class="fa-solid fa-map-location-dot"></i> State</label>
+                    <span>${profileData.state || 'N/A'}</span>
+                </div>
+            </div>
+            <div style="margin-top: 12px; text-align: center;">
+                <span style="font-size: 0.78rem; color:#00d2ff; font-family:monospace;">UTR: ${profileData.utr_code || 'N/A'}</span>
+            </div>
+        `;
+    } catch (err) {
+        content.innerHTML = `
+            <div style="text-align:center; color:#ff4757; padding: 15px;">
+                <i class="fa-solid fa-triangle-exclamation" style="font-size: 1.5rem;"></i>
+                <p style="font-size:0.85rem;">Error: ${err.message}</p>
+            </div>
+        `;
+    }
+}
 
         function closeProfileModal() {
             document.getElementById('userProfileModal').style.display = 'none';
@@ -856,3 +861,4 @@
     </script>
 </body>
 </html>
+

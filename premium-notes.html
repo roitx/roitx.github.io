@@ -579,38 +579,35 @@
         return;
     }
 
-    // Pehle profiles table se user ki extra details fetch kar lo
-    const { data: profileData } = await window.supabaseClient
-        .from('profiles')
-        .select('full_name, phone, avatar_url')
-        .eq('email', currentUser.email)
-        .maybeSingle();
+    // Jab user order submit kare tab profiles se data fetch karke user_orders me daalein:
+const { data: profile } = await window.supabaseClient
+    .from('profiles')
+    .select('*')
+    .eq('id', currentUser.id)
+    .single();
 
-    const { error } = await window.supabaseClient
-        .from('user_orders')
-        .insert([{
-            user_email: currentUser.email,
-            user_name: profileData?.full_name || currentUser.user_metadata?.full_name || 'N/A',
-            user_phone: profileData?.phone || 'N/A',
-            avatar_url: profileData?.avatar_url || '',
-            note_title: selectedNoteForPay.title,
-            note_id: selectedNoteForPay.id,
-            amount: selectedNoteForPay.price,
-            utr_code: utr,
-            status: 'pending'
-        }]);
+const orderPayload = {
+    user_id: currentUser.id,
+    user_email: currentUser.email,
+    note_id: noteId,
+    note_title: noteTitle,
+    amount: amount,
+    utr_code: utrCode,
+    status: 'pending',
+    // Extra details jo admin ko dikhani hain
+    user_name: profile?.full_name || '',
+    user_phone: profile?.phone || '',
+    target_class: profile?.target_class || '',
+    stream: profile?.stream || '',
+    institution: profile?.institution || '',
+    city: profile?.city || '',
+    state: profile?.state || '',
+    avatar_url: profile?.avatar_url || ''
+};
 
-    if (!error) {
-        alert("Payment details submitted successfully! Admin will verify and approve soon.");
-        document.getElementById('paymentModal').style.display = 'none';
-        document.getElementById('utrInput').value = '';
-        
-        orderStatuses[String(selectedNoteForPay.id)] = 'pending';
-        loadNotes();
-    } else {
-        alert("Database sync failed: " + error.message);
-    }
-}
+const { error: orderError } = await window.supabaseClient
+    .from('user_orders')
+    .insert([orderPayload]);
 
     </script>
 </body>
