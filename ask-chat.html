@@ -149,6 +149,7 @@
           <button type="button" class="toolBtn" onclick="runCommand('open pdf 10 physics ch3')">Open PDF</button>
           <button type="button" class="toolBtn" onclick="runCommand('formula class 10')">Formulas</button>
           <button type="button" class="toolBtn" onclick="showCalendarModalDirect()">Calendar</button>
+          <button type="button" class="toolBtn" onclick="showCalculatorModalDirect()">Calculator</button>
           <button type="button" class="toolBtn" onclick="promptCreateNote()">Create Note</button>
           <button type="button" class="toolBtn" onclick="showNotesModalDirect()">Show Notes</button>
           <button type="button" class="toolBtn" onclick="downloadNotesFileDirect()">Download Notes</button>
@@ -189,7 +190,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
   const SUPABASE_URL = "https://ktastwehnnqicriknewr.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0YXN0d2Vobm5xaWNyaWtuZXdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUysetIntOTUxLCJleHBfIjoyMDgwODM1OTUxf0.5_UvwaG0X8k_Emj-cMC0KjEqlvU6hgAt5IsHJdgARvk";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0YXN0d2Vobm5xaWNyaWtuZXdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyNTk5NTEsImV4cCI6MjA4MDgzNTk1MX0.5_UvwaG0X8k_Emj-cMC0KjEqlvU6hgAt5IsHJdgARvk";
   window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 </script>
 
