@@ -302,7 +302,7 @@ button:hover {
   margin-top: 10px;
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: space-between;
   gap: 10px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
@@ -324,6 +324,9 @@ button:hover {
   color: var(--text-main);
   line-height: 1.4;
   margin: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -369,98 +372,44 @@ button:hover {
   color: #fff;
 }
 
-/* ================= FLOATING ACTION BUTTONS & BADGES ================= */
-
-/* 1. Doubt Button (Bottom-most) */
-#doubtBtn {
+/* ================= FLOATING ACTION BUTTONS & WRAPPER ================= */
+.floating-container {
   position: fixed;
   right: 22px;
   bottom: 22px;
-  width: 54px;
-  height: 54px;
-  border-radius: 50%;
-  background: #3aa0ff;
-  color: #fff;
-  font-size: 24px;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
+  flex-direction: column;
+  gap: 12px;
   z-index: 9999;
-  box-shadow: 0 0 18px rgba(58,160,255,0.6);
-  transition: 0.3s ease;
-  overflow: visible !important;
 }
 
-/* 2. Reference Books Button */
-#bookBtn {
-  position: fixed;
-  right: 22px;
-  bottom: 88px;
+.floating-btn {
+  position: relative;
   width: 54px;
   height: 54px;
   border-radius: 50%;
   background: linear-gradient(135deg, #6bc6ff, #3aa0ff);
   color: #fff;
-  font-size: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  z-index: 9999;
-  box-shadow: 0 0 18px rgba(58,160,255,0.5);
-  transition: 0.3s ease;
-  overflow: visible !important;
+  box-shadow: 0 0 18px rgba(58, 160, 255, 0.5);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* 3. Student List / Premium Button */
-#stBtn {
-  position: fixed;
-  right: 22px;
-  bottom: 154px;
-  width: 54px;
-  height: 54px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #6bc6ff, #3aa0ff);
-  color: #fff;
-  font-size: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 9999;
-  box-shadow: 0 0 18px rgba(58,160,255,0.5);
-  transition: 0.3s ease;
-  overflow: visible !important;
-}
-
-/* 4. Payment Orders Floating Button */
 #ordersBtn {
-  position: fixed;
-  right: 22px;
-  bottom: 220px;
-  width: 54px;
-  height: 54px;
-  border-radius: 50%;
   background: linear-gradient(135deg, #00d2ff, #0072ff);
-  color: #ffffff;
   border: 2px solid rgba(255, 255, 255, 0.35);
   box-shadow: 0 6px 20px rgba(0, 210, 255, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 9999;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow: visible !important;
 }
 
-#ordersBtn:hover, #bookBtn:hover, #stBtn:hover, #doubtBtn:hover {
+.floating-btn:hover {
   transform: scale(1.1);
-  box-shadow: 0 0 25px rgba(58,160,255,0.8);
+  box-shadow: 0 0 25px rgba(58, 160, 255, 0.8);
 }
 
-/* Green Status Dot on Payment Button */
+/* Green Pulse Dot on Payment Button */
 #ordersBtn::after {
   content: '';
   position: absolute;
@@ -482,9 +431,8 @@ button:hover {
   100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 213, 115, 0); }
 }
 
-/* Common Counter Badges (Red Dots with Number) */
-#pendingCount,
-#pendingOrdersCount {
+/* Counter Badges (Red Notification Dots) */
+.badge {
   position: absolute;
   top: -4px;
   right: -4px;

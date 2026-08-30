@@ -42,23 +42,25 @@
   </button>
 </header>
 
-<!-- 4 FLOATING BUTTONS FIXED ON SCREEN -->
-<div id="ordersBtn" class="floating-btn" title="Payment Orders & Approvals" onclick="window.location.href='admin-orders.html'">
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
-  <span id="pendingOrdersCount" class="badge">0</span>
-</div>
+<!-- 4 FLOATING BUTTONS WRAPPED TOGETHER FIXED ON SCREEN -->
+<div class="floating-container">
+  <div id="ordersBtn" class="floating-btn" title="Payment Orders & Approvals" onclick="window.location.href='admin-orders.html'">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+    <span id="pendingOrdersCount" class="badge">0</span>
+  </div>
 
-<div id="stBtn" class="floating-btn" title="Student List" onclick="window.location.href='upload-premium.html'">
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14v2H5z"/></svg>
-</div>
+  <div id="stBtn" class="floating-btn" title="Student List" onclick="window.location.href='upload-premium.html'">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14v2H5z"/></svg>
+  </div>
 
-<div id="bookBtn" class="floating-btn" title="Reference Books" onclick="goUpload()">
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h12"/><path d="M6 10h12"/></svg>
-</div>
+  <div id="bookBtn" class="floating-btn" title="Reference Books" onclick="goUpload()">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h12"/><path d="M6 10h12"/></svg>
+  </div>
 
-<div id="doubtBtn" class="floating-btn" title="View Doubts">
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
-  <span id="pendingCount" class="badge">0</span>
+  <div id="doubtBtn" class="floating-btn" title="View Doubts" onclick="openDoubtOverlay()">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+    <span id="pendingCount" class="badge">0</span>
+  </div>
 </div>
 
 <!-- FULL SCREEN DOUBT OVERLAY -->
