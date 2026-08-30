@@ -1,8 +1,8 @@
 /* =====================================================
-   ADMIN PANEL — MASTER STYLESHEET
+   ADMIN PANEL — MASTER STYLESHEET (COMPACT & SLEEK)
    ===================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
 /* ================= ROOT VARIABLES ================= */
 :root {
@@ -13,10 +13,12 @@
   --accent: #3aa0ff;
   --accent-soft: rgba(58, 160, 255, 0.35);
   --danger: #ff4b4b;
+  --success: #2ed573;
+  --warning: #ffb703;
   --text-main: #e9f2ff;
   --text-muted: #b9c9e0;
-  --radius: 14px;
-  --blur: blur(12px);
+  --radius: 12px;
+  --blur: blur(14px);
 }
 
 /* ================= GLOBAL RESET & HIGHLIGHT DISABLE ================= */
@@ -25,29 +27,24 @@
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
   -webkit-user-select: none;
-  -khtml-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
   user-select: none;
 }
 
 input, textarea {
   -webkit-user-select: text;
-  -moz-user-select: text;
-  -ms-user-select: text;
   user-select: text;
 }
 
 body {
   background: radial-gradient(circle at top, #10203a, #070d18);
   color: var(--text-main);
-  font-family: "Segoe UI", system-ui, sans-serif;
+  font-family: 'Poppins', "Segoe UI", system-ui, sans-serif;
   margin: 0;
   min-height: 100vh;
 }
 
 main {
-  padding: 24px;
+  padding: 16px;
   max-width: 1100px;
   margin: auto;
 }
@@ -58,7 +55,7 @@ main {
   top: 0;
   z-index: 10;
   background: linear-gradient(180deg, #162a45, #0f1f35);
-  padding: 14px 22px;
+  padding: 12px 18px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -67,42 +64,38 @@ main {
 
 .logout {
   background: linear-gradient(135deg, #ff5b5b, #ff2f2f);
-  padding: 8px 16px;
+  padding: 6px 14px;
   border-radius: 999px;
   font-weight: 600;
+  font-size: 13px;
   color: #fff;
   border: none;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .logout:hover {
-  transform: scale(1.05);
-}
-
-/* ================= SIDE MENU & OVERLAY ================= */
-.side-menu::-webkit-scrollbar {
-  width: 0;
-}
-
-.overlay {
-  transition: .3s;
-  opacity: 0;
-}
-
-.overlay.show {
-  opacity: 1;
+  transform: scale(1.04);
 }
 
 /* ================= CARDS & CONTAINERS ================= */
 .box {
   background: var(--bg-card);
   backdrop-filter: var(--blur);
-  padding: 22px;
-  margin-bottom: 26px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
   border-radius: var(--radius);
   border: 1px solid rgba(255,255,255,0.06);
-  box-shadow: 0 15px 40px rgba(0,0,0,0.55), inset 0 0 0 1px rgba(255,255,255,0.03);
-  transition: 0.35s ease;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255,255,255,0.03);
+  transition: 0.25s ease;
+}
+
+.box h2, .box h3 {
+  font-size: 16px;
+  margin-top: 0;
+  margin-bottom: 10px;
 }
 
 .box:hover {
@@ -112,9 +105,9 @@ main {
 /* ================= STATS OVERVIEW SECTION ================= */
 .stats-container {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
-  margin-bottom: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
 }
 
 .stat-card {
@@ -123,45 +116,29 @@ main {
   backdrop-filter: blur(14px);
   border: 1px solid rgba(58, 160, 255, 0.2);
   border-radius: var(--radius);
-  padding: 20px;
+  padding: 14px 16px;
   display: flex;
   align-items: center;
-  gap: 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  gap: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
 }
 
 .stat-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-2px);
   border-color: var(--accent);
-  box-shadow: 0 15px 35px rgba(58, 160, 255, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.2);
-}
-
-.stat-card::after {
-  content: '';
-  position: absolute;
-  top: -50%;
-  right: -50%;
-  width: 100px;
-  height: 100px;
-  background: var(--accent);
-  opacity: 0.1;
-  filter: blur(30px);
-  border-radius: 50%;
-  pointer-events: none;
 }
 
 .stat-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
   background: rgba(58, 160, 255, 0.12);
   border: 1px solid rgba(58, 160, 255, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
   flex-shrink: 0;
 }
 
@@ -171,36 +148,35 @@ main {
 }
 
 .stat-title {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.4px;
 }
 
 .stat-count {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 700;
   color: var(--text-main);
-  margin-top: 2px;
 }
 
-/* ================= INPUTS & SELECTS ================= */
+/* ================= INPUTS & SELECTS (COMPACT & PATLA) ================= */
 select,
 input[type="file"],
 input[type="text"],
 input[type="date"],
 textarea {
   width: 100%;
-  margin-top: 12px;
-  padding: 12px 14px;
+  margin-top: 6px;
+  padding: 8px 12px;
   background: var(--bg-input);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 8px;
   color: var(--text-main);
-  font-size: 14px;
+  font-size: 13px;
   outline: none;
-  transition: 0.25s;
+  transition: 0.2s;
 }
 
 select:focus,
@@ -210,183 +186,44 @@ textarea:focus {
   box-shadow: 0 0 0 2px rgba(58, 160, 255, 0.25);
 }
 
-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 12px;
-  font-size: 14px;
-}
-
-/* ================= FORMULA EDITOR & MATH TOOLBAR ================= */
-#formulaText {
-  min-height: 130px;
+textarea {
   resize: vertical;
-}
-
-#mathToolbar {
-  margin-top: 14px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-#mathToolbar button {
-  background: #1c3252;
-  border: 1px solid var(--border);
-  padding: 7px 12px;
-  border-radius: 8px;
-  font-size: 15px;
-  color: #fff;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
-}
-
-#mathToolbar button:hover {
-  background: var(--accent);
-  color: #fff;
-}
-
-#formulaPreview {
-  margin-top: 16px;
-  padding: 14px;
-  background: linear-gradient(180deg, #0c182d, #0a1426);
-  border: 1px dashed var(--accent);
-  border-radius: 12px;
-  min-height: 70px;
-  color: #cfe7ff;
-  font-style: italic;
 }
 
 /* ================= BUTTONS & GENERAL CONTROLS ================= */
 button {
-  margin-top: 10px;
-  padding: 11px 20px;
+  margin-top: 8px;
+  padding: 8px 16px;
   background: linear-gradient(135deg, var(--accent), #5fb5ff);
   color: #fff;
   border: none;
-  border-radius: 10px;
+  border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
-  letter-spacing: 0.3px;
-  transition: 0.3s ease;
+  font-size: 13px;
+  letter-spacing: 0.2px;
+  transition: 0.25s ease;
 }
 
 button:hover {
-  box-shadow: 0 0 12px var(--accent);
-}
-
-.calculator button {
-  padding: 14px;
-  font-size: 18px;
-  background: #1b254f;
-}
-
-#formulaList button {
-  background: linear-gradient(135deg, #ff5a5a, #ff3030);
-  padding: 6px 12px;
-  font-size: 12px;
-  border-radius: 8px;
-}
-
-#formulaList button:hover {
-  box-shadow: 0 0 15px rgba(255, 75, 75, 0.6);
-}
-
-/* ================= LIST ITEMS & ACTION BUTTONS ================= */
-#fileList div,
-#eventList div,
-#formulaList div {
-  background: rgba(31, 53, 84, 0.75);
-  padding: 10px 14px;
-  border-radius: 12px;
-  margin-top: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-  transition: 0.25s;
-}
-
-#fileList div:hover,
-#eventList div:hover,
-#formulaList div:hover {
-  background: rgba(58, 160, 255, 0.12);
-  border-color: rgba(58, 160, 255, 0.3);
-}
-
-#fileList div span, 
-#eventList div span, 
-#formulaList div span {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-main);
-  line-height: 1.4;
-  margin: 0;
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-#fileList div div,
-#eventList div div,
-#formulaList div div {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  background: transparent !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-#fileList div button,
-#eventList div button,
-#formulaList div button {
-  margin-top: 0 !important;
-  padding: 6px 10px !important;
-  font-size: 13px !important;
-  border-radius: 8px !important;
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.btn-view {
-  background: linear-gradient(135deg, #00d2ff, #0072ff) !important;
-  color: #fff;
-}
-
-.btn-edit {
-  background: linear-gradient(135deg, #ffb703, #fb8500) !important;
-  color: #000;
-}
-
-.btn-delete {
-  background: linear-gradient(135deg, #ff5a5a, #ff3030) !important;
-  color: #fff;
+  box-shadow: 0 0 10px var(--accent);
 }
 
 /* ================= FLOATING ACTION BUTTONS & WRAPPER ================= */
 .floating-container {
   position: fixed;
-  right: 22px;
-  bottom: 22px;
+  right: 14px;
+  bottom: 14px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   z-index: 9999;
 }
 
 .floating-btn {
   position: relative;
-  width: 54px;
-  height: 54px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   background: linear-gradient(135deg, #6bc6ff, #3aa0ff);
   color: #fff;
@@ -394,116 +231,62 @@ button:hover {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 0 18px rgba(58, 160, 255, 0.5);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 15px rgba(58, 160, 255, 0.4);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 #ordersBtn {
   background: linear-gradient(135deg, #00d2ff, #0072ff);
-  border: 2px solid rgba(255, 255, 255, 0.35);
-  box-shadow: 0 6px 20px rgba(0, 210, 255, 0.5);
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 4px 15px rgba(0, 210, 255, 0.4);
 }
 
 .floating-btn:hover {
-  transform: scale(1.1);
-  box-shadow: 0 0 25px rgba(58, 160, 255, 0.8);
-}
-
-/* Green Pulse Dot on Payment Button */
-#ordersBtn::after {
-  content: '';
-  position: absolute;
-  top: -2px;
-  right: -2px;
-  width: 12px;
-  height: 12px;
-  background-color: #2ed573;
-  border-radius: 50%;
-  border: 2px solid #0b1423;
-  box-shadow: 0 0 10px #2ed573;
-  animation: pulseDot 1.8s infinite;
-  z-index: 9999;
-}
-
-@keyframes pulseDot {
-  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 213, 115, 0.7); }
-  70% { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(46, 213, 115, 0); }
-  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 213, 115, 0); }
+  transform: scale(1.08);
 }
 
 /* Counter Badges (Red Notification Dots) */
 .badge {
   position: absolute;
-  top: -4px;
-  right: -4px;
+  top: -2px;
+  right: -2px;
   background: #ff3b30;
   color: #ffffff;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
-  min-width: 20px;
-  height: 20px;
+  min-width: 18px;
+  height: 18px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0 4px;
   border: 2px solid #0b1423;
-  box-shadow: 0 2px 8px rgba(255, 59, 48, 0.6);
+  box-shadow: 0 2px 6px rgba(255, 59, 48, 0.6);
   z-index: 10000;
   pointer-events: none;
 }
 
-/* ================= DOUBTS PANEL & FULLSCREEN OVERLAY ================= */
+/* ================= DOUBTS MINI PANEL ================= */
 #doubtPanel {
+  display: none;
   position: absolute;
-  top: 60px;
-  right: 20px;
-  width: 320px;
+  top: 55px;
+  right: 16px;
+  width: 300px;
   background: #0b1220;
-  border-radius: 14px;
-  padding: 12px;
-  box-shadow: 0 0 25px rgba(0,0,0,0.4);
+  border-radius: 12px;
+  padding: 10px;
+  box-shadow: 0 0 20px rgba(0,0,0,0.5);
   z-index: 999;
 }
 
-#doubtList {
-  max-height: 45vh;
-  overflow-y: auto;
-  padding-right: 6px;
-}
-
-#viewAllWrap {
-  position: sticky;
-  bottom: 0;
-  background: linear-gradient(to top, #0b1220 70%, transparent);
-  padding-top: 10px;
-  margin-top: 10px;
-}
-
-.view-all-btn {
-  display: block;
-  width: 100%;
-  text-align: center;
-  padding: 10px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #3aa0ff, #6bc6ff);
-  color: #021;
-  font-weight: bold;
-  text-decoration: none;
-  box-shadow: 0 0 15px rgba(58,160,255,0.6);
-  transition: 0.2s ease;
-}
-
-.view-all-btn:hover {
-  transform: scale(1.03);
-  box-shadow: 0 0 25px rgba(58,160,255,0.9);
-}
-
-/* Full Screen Overlay */
+/* ================= FULLSCREEN DOUBT OVERLAY — COMPACT & SLEEK UI ================= */
 .doubt-overlay {
   position: fixed;
   inset: 0;
-  background: #050b18;
+  background: rgba(5, 11, 24, 0.96);
+  backdrop-filter: blur(16px);
   z-index: 99999;
   display: none;
   flex-direction: column;
@@ -513,26 +296,226 @@ button:hover {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 16px;
-  background: #0f1b35;
-  font-size: 18px;
+  padding: 12px 18px;
+  background: linear-gradient(180deg, #13243d, #0b172a);
+  border-bottom: 1px solid rgba(58, 160, 255, 0.2);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
 }
 
-.doubt-header button {
-  background: none;
-  border: none;
+.doubt-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--accent);
+}
+
+.doubt-title-wrap h2 {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.doubt-actions-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.doubt-actions-header select {
+  margin: 0;
+  padding: 6px 10px;
+  min-width: 120px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+#closeDoubt {
+  margin: 0;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 6px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: #fff;
-  font-size: 20px;
+}
+
+#closeDoubt:hover {
+  background: var(--danger);
+  transform: rotate(90deg);
 }
 
 .doubt-overlay-list {
   flex: 1;
-  padding: 16px;
+  padding: 14px 16px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px; /* Patla dynamic height layout */
+  align-content: start;
 }
+
+/* Patla & Compact Doubt Card */
+.doubt-card {
+  background: linear-gradient(145deg, rgba(21, 38, 60, 0.95), rgba(12, 23, 40, 0.95));
+  border: 1px solid rgba(58, 160, 255, 0.2);
+  border-radius: 12px;
+  padding: 10px 14px; /* Reduced vertical padding */
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease;
+}
+
+.doubt-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 6px 20px rgba(58, 160, 255, 0.15);
+}
+
+.doubt-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.doubt-student-name {
+  font-weight: 600;
+  font-size: 13.5px;
+  color: #3aa0ff;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.doubt-user-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.doubt-status-tag {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.doubt-status-tag.pending {
+  background: rgba(255, 183, 3, 0.15);
+  color: var(--warning);
+  border: 1px solid rgba(255, 183, 3, 0.3);
+}
+
+.doubt-status-tag.resolved {
+  background: rgba(46, 213, 115, 0.15);
+  color: var(--success);
+  border: 1px solid rgba(46, 213, 115, 0.3);
+}
+
+.doubt-text {
+  font-size: 13px;
+  color: var(--text-main);
+  line-height: 1.35;
+  margin: 2px 0;
+  word-break: break-word;
+}
+
+/* Ultra Sleek Textareas & Inputs inside Doubt Card */
+.doubt-card input[type="text"] {
+  height: 34px;
+  font-size: 12.5px;
+  padding: 6px 10px;
+  margin-top: 4px;
+}
+
+.doubt-card textarea {
+  height: 46px; /* Patla solution field */
+  min-height: 40px;
+  font-size: 12.5px;
+  padding: 6px 10px;
+  margin-top: 4px;
+}
+
+/* Sleek Single Row Buttons */
+.doubt-card-actions {
+  display: flex;
+  gap: 8px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  padding-top: 8px;
+  margin-top: 4px;
+}
+
+.doubt-card-actions button {
+  margin: 0;
+  flex: 1;
+  font-size: 12px;
+  padding: 6px 10px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.btn-save-resolve {
+  background: linear-gradient(135deg, #3aa0ff, #0072ff) !important;
+}
+
+.btn-delete-doubt {
+  background: linear-gradient(135deg, #ff4b4b, #d32f2f) !important;
+}
+
+/* ================= UPLOADED NOTES / FORMULAS LIST CARDS ================= */
+.file-item-card, 
+.note-list-card {
+  background: rgba(21, 38, 60, 0.7);
+  border: 1px solid rgba(58, 160, 255, 0.18);
+  border-radius: 8px;
+  padding: 6px 12px; /* Patla & compact card padding */
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.note-info-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: #e9f2ff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.note-action-buttons {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.note-action-buttons button {
+  margin: 0;
+  padding: 4px 10px;
+  height: 30px;
+  font-size: 12px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-view-note { background: #2b7fff !important; }
+.btn-edit-note { background: #ff9800 !important; }
+.btn-delete-note { background: #ff3b30 !important; }
 
 /* ================= MODAL OVERLAYS ================= */
 .edit-modal-overlay {
@@ -550,17 +533,8 @@ button:hover {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 24px;
+  padding: 18px;
   width: 90%;
   max-width: 400px;
   box-shadow: 0 15px 40px rgba(0,0,0,0.7);
-}
-
-/* ================= STATUS & MESSAGES ================= */
-#uploadStatus,
-#uploadMsg,
-#eventMsg {
-  margin-top: 12px;
-  font-size: 13px;
-  color: var(--text-muted);
 }

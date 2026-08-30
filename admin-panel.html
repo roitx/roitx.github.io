@@ -21,26 +21,26 @@
     Admin Panel
   </h2>
 
-  <!-- DOUBT PANEL (MINI) -->
-  <div id="doubtPanel">
-    <h3>
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
-      Recent Doubts
-    </h3>
-    <div id="doubtList">Loading...</div>
-    <div id="viewAllWrap">
-      <button id="viewAllDoubts" class="view-all-btn" onclick="openDoubtOverlay()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-        View All Doubts
-      </button>
-    </div>
-  </div>
-
   <button class="logout" onclick="logout()">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
     Logout
   </button>
 </header>
+
+<!-- DOUBT PANEL (MINI) - Shifted outside header for proper visibility -->
+<div id="doubtPanel">
+  <h3>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+    Recent Doubts
+  </h3>
+  <div id="doubtList">Loading...</div>
+  <div id="viewAllWrap">
+    <button id="viewAllDoubts" class="view-all-btn" onclick="openDoubtOverlay()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+      View All Doubts
+    </button>
+  </div>
+</div>
 
 <!-- 4 FLOATING BUTTONS WRAPPED TOGETHER FIXED ON SCREEN -->
 <div class="floating-container">
@@ -63,18 +63,29 @@
   </div>
 </div>
 
-<!-- FULL SCREEN DOUBT OVERLAY -->
+<!-- FULL SCREEN DOUBT OVERLAY (UPGRADED UI) -->
 <div id="doubtOverlay" class="doubt-overlay">
   <div class="doubt-header">
-    <span>
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 6px;"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
-      All Doubts
-    </span>
-    <button id="closeDoubt" onclick="closeDoubtOverlay()">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-    </button>
+    <div class="doubt-title-wrap">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+      <h2>Student Doubts Dashboard</h2>
+    </div>
+    <div class="doubt-actions-header">
+      <select id="doubtFilter" onchange="filterDoubts()">
+        <option value="all" selected>All Doubts</option>
+        <option value="pending">Pending Only</option>
+        <option value="solved">Solved Only</option>
+      </select>
+      
+      <button id="closeDoubt" onclick="closeDoubtOverlay()" title="Close Overlay">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
   </div>
-  <div id="doubtOverlayList" class="doubt-overlay-list">⏳ Loading doubts...</div>
+
+  <div id="doubtOverlayList" class="doubt-overlay-list">
+    <!-- JS will inject dynamic doubt cards with SVG actions here -->
+  </div>
 </div>
 
 <!-- EDIT MODAL FOR NOTES -->
@@ -264,10 +275,10 @@
 
     <select id="classSelect">
       <option value="">Select Class</option>
-      <option value="class9">Class 9</option>
-      <option value="class10">Class 10</option>
-      <option value="class11">Class 11</option>
-      <option value="class12">Class 12</option>
+      <option value="9">Class 9</option>
+      <option value="10">Class 10</option>
+      <option value="11">Class 11</option>
+      <option value="12">Class 12</option>
     </select><br><br>
 
     <select id="subjectSelect">
@@ -286,14 +297,14 @@
 
     <select id="chapterSelect">
       <option value="">Select Chapter</option>
-      <option value="ch1">Chapter 1</option>
-      <option value="ch2">Chapter 2</option>
-      <option value="ch3">Chapter 3</option>
-      <option value="ch4">Chapter 4</option>
-      <option value="ch5">Chapter 5</option>
-      <option value="ch6">Chapter 6</option>
-      <option value="ch7">Chapter 7</option>
-      <option value="ch8">Chapter 8</option>
+      <option value="1">Chapter 1</option>
+      <option value="2">Chapter 2</option>
+      <option value="3">Chapter 3</option>
+      <option value="4">Chapter 4</option>
+      <option value="5">Chapter 5</option>
+      <option value="6">Chapter 6</option>
+      <option value="7">Chapter 7</option>
+      <option value="8">Chapter 8</option>
     </select><br><br>
 
     <input type="text" id="chapterNameInput" placeholder="Enter Chapter Name (e.g. Real Numbers)" required /><br><br>
@@ -423,11 +434,11 @@
 
     <select id="fChapter">
       <option value="">Select Chapter</option>
-      <option value="ch1">Chapter 1</option>
-      <option value="ch2">Chapter 2</option>
-      <option value="ch3">Chapter 3</option>
-      <option value="ch4">Chapter 4</option>
-      <option value="ch5">Chapter 5</option>
+      <option value="1">Chapter 1</option>
+      <option value="2">Chapter 2</option>
+      <option value="3">Chapter 3</option>
+      <option value="4">Chapter 4</option>
+      <option value="5">Chapter 5</option>
     </select><br><br>
 
     <input type="text" id="fChapterNameInput" placeholder="Enter Chapter Name (e.g. Matrix)" required /><br><br>
