@@ -14,14 +14,17 @@
   <h2>📘 Upload Reference Book</h2>
   <p class="sub">Admin only • Chapter based • Auto naming</p>
 
- <!-- AUTHOR MANUAL INPUT -->
-<label class="label">Author / Book Name</label>
-<input type="text" id="authorInput" placeholder="e.g. RD Sharma">
+  <!-- TOP DASHBOARD: DYNAMIC STAT CARDS (TOTAL STATS + MAX 5 LOWEST UPLOADED AUTHORS) -->
+  <div id="statsDashboard" class="stats-grid"></div>
 
-<!-- NEW: DYNAMIC AUTHOR DROPDOWN FOR EASY SELECTION -->
-<select id="authorSelect" style="margin-top: 6px;">
-  <option value="">-- Or Select Existing Author --</option>
-</select>
+  <!-- AUTHOR MANUAL INPUT -->
+  <label class="label">Author / Book Name</label>
+  <input type="text" id="authorInput" placeholder="e.g. RD Sharma">
+
+  <!-- DYNAMIC AUTHOR DROPDOWN FOR EASY SELECTION -->
+  <select id="authorSelect" style="margin-top: 6px;">
+    <option value="">-- Or Select Existing Author --</option>
+  </select>
 
   <label class="label">Class</label>
   <select id="classSelect">

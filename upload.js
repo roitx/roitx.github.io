@@ -32,10 +32,71 @@ document.getElementById("authorSelect")?.addEventListener("change", (e) => {
   if (e.target.value) {
     const authorInput = document.getElementById("authorInput");
     authorInput.value = e.target.value;
-    // Live preview update karne ke liye input event trigger kar rahe hain
     authorInput.dispatchEvent(new Event("input"));
   }
 });
+
+/* DYNAMIC STATS CARDS GENERATOR (MAX 5 LOWEST UPLOADED AUTHORS + TOTAL CARD) */
+function renderStatsCards(allBooks) {
+  const container = document.getElementById("statsDashboard");
+  if (!container) return;
+
+  if (!allBooks || allBooks.length === 0) {
+    container.innerHTML = "";
+    return;
+  }
+
+  // 1. Author wise count aggregate
+  const authorCounts = {};
+  allBooks.forEach(b => {
+    if (b.author) {
+      authorCounts[b.author] = (authorCounts[b.author] || 0) + 1;
+    }
+  });
+
+  // 2. Sort Ascending (Sabse Kam Pehle) & Pick Top 5
+  const sortedAuthors = Object.entries(authorCounts)
+    .sort((a, b) => a[1] - b[1])
+    .slice(0, 5);
+
+  const totalBooks = allBooks.length;
+  const totalAuthors = Object.keys(authorCounts).length;
+
+  // Clean SVG Icons for Stat Cards
+  const svgTotal = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>`;
+  const svgBook  = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`;
+
+  let html = `
+    <!-- TOTAL CARD -->
+    <div class="stat-card total-card" onclick="filterByAuthor('')">
+      <div class="stat-title" style="display:flex; align-items:center; gap:4px;">${svgTotal} Total Books</div>
+      <div class="stat-value">${totalBooks}</div>
+      <div class="stat-badge">${totalAuthors} Authors</div>
+    </div>
+  `;
+
+  // 3. Render Top 5 Lowest Upload Cards
+  sortedAuthors.forEach(([author, count]) => {
+    html += `
+      <div class="stat-card" onclick="filterByAuthor('${escapeQuotes(author)}')">
+        <div class="stat-title" title="${author}" style="display:flex; align-items:center; gap:4px;">${svgBook} ${author}</div>
+        <div class="stat-value">${count}</div>
+        <div class="stat-badge">Low Uploads</div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
+/* Quick Author Filter Trigger via Cards */
+function filterByAuthor(authorName) {
+  const filterAuthorSelect = document.getElementById("filterAuthor");
+  if (filterAuthorSelect) {
+    filterAuthorSelect.value = authorName;
+    filterAuthorSelect.dispatchEvent(new Event("change"));
+  }
+}
 
 /* UPLOAD BOOK */
 async function uploadBook(){
@@ -115,7 +176,6 @@ function updateAuthorDropdown(data) {
   
   const authors = [...new Set(data.map(b => b.author))].filter(Boolean).sort();
 
-  // 1. Update List Filter Dropdown
   if (filterAuthorSelect) {
     filterAuthorSelect.innerHTML = '<option value="">All Authors</option>';
     authors.forEach(author => {
@@ -127,7 +187,6 @@ function updateAuthorDropdown(data) {
     });
   }
 
-  // 2. Update Upload Panel Dropdown
   if (uploadAuthorSelect) {
     uploadAuthorSelect.innerHTML = '<option value="">-- Or Select Existing Author --</option>';
     authors.forEach(author => {
@@ -140,7 +199,7 @@ function updateAuthorDropdown(data) {
   }
 }
 
-/* LOAD BOOK LIST WITH SVG ICONS */
+/* LOAD BOOK LIST WITH FIXED SVG ICONS */
 async function loadBooks(){
   if(!bookList) return;
   bookList.innerHTML = "⏳ Loading books...";
@@ -150,13 +209,16 @@ async function loadBooks(){
     .select("*")
     .order("class_no",{ ascending:true })
     .order("subject",{ ascending:true })
-    .order("chapter_no",{ ascending:true })
-    .limit(20);
+    .order("chapter_no",{ ascending:true });
 
   if(error || !data || data.length === 0){
     bookList.innerHTML = error ? "❌ Failed to load books" : "<em>No books uploaded yet</em>";
+    renderStatsCards([]);
     return;
   }
+
+  // Calculate & Render Dashboard Stat Cards
+  renderStatsCards(data);
 
   updateAuthorDropdown(data);
 
@@ -186,9 +248,10 @@ async function loadBooks(){
     const targetPath = b.storage_path || `refbooks/class_${b.class_no}/${b.subject}/ch_${b.chapter_no}/${b.name}.pdf`;
     const fileName = `${b.name}.pdf`;
 
-    const svgView = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
-    const svgEdit = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
-    const svgTrash = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`;
+    // Valid SVG Vectors for View, Edit, and Delete
+    const svgView  = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+    const svgEdit  = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>`;
+    const svgTrash = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`;
 
     div.innerHTML = `
       <div class="book-info">
@@ -199,10 +262,10 @@ async function loadBooks(){
         <button class="view-btn" onclick="openPdfViewer('${encodeURIComponent(targetPath)}', '${encodeURIComponent(fileName)}')">
           ${svgView} View
         </button>
-        <button class="edit-btn" onclick="openBookEditModal('${b.id}', '${escapeQuotes(b.author)}', '${b.class_no}', '${b.subject}', '${b.chapter_no}', '${escapeQuotes(b.chapter)}')">
+        <button class="edit-btn" title="Edit Book" onclick="openBookEditModal('${b.id}', '${escapeQuotes(b.author)}', '${b.class_no}', '${b.subject}', '${b.chapter_no}', '${escapeQuotes(b.chapter)}')">
           ${svgEdit}
         </button>
-        <button class="danger" onclick="deleteBook('${b.id}','${b.storage_path}')">
+        <button class="danger" title="Delete Book" onclick="deleteBook('${b.id}','${b.storage_path}')">
           ${svgTrash}
         </button>
       </div>

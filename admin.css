@@ -371,35 +371,93 @@ button:hover {
 
 /* ================= FLOATING ACTION BUTTONS & BADGES ================= */
 
-/* Payment Orders Floating Button */
+/* 1. Doubt Button (Bottom-most) */
+#doubtBtn {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: #3aa0ff;
+  color: #fff;
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 9999;
+  box-shadow: 0 0 18px rgba(58,160,255,0.6);
+  transition: 0.3s ease;
+  overflow: visible !important;
+}
+
+/* 2. Reference Books Button */
+#bookBtn {
+  position: fixed;
+  right: 22px;
+  bottom: 88px;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6bc6ff, #3aa0ff);
+  color: #fff;
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 9999;
+  box-shadow: 0 0 18px rgba(58,160,255,0.5);
+  transition: 0.3s ease;
+  overflow: visible !important;
+}
+
+/* 3. Student List / Premium Button */
+#stBtn {
+  position: fixed;
+  right: 22px;
+  bottom: 154px;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6bc6ff, #3aa0ff);
+  color: #fff;
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 9999;
+  box-shadow: 0 0 18px rgba(58,160,255,0.5);
+  transition: 0.3s ease;
+  overflow: visible !important;
+}
+
+/* 4. Payment Orders Floating Button */
 #ordersBtn {
-  width: 48px;
-  height: 48px;
+  position: fixed;
+  right: 22px;
+  bottom: 220px;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
   background: linear-gradient(135deg, #00d2ff, #0072ff);
   color: #ffffff;
   border: 2px solid rgba(255, 255, 255, 0.35);
   box-shadow: 0 6px 20px rgba(0, 210, 255, 0.5);
-  position: relative;
-  overflow: visible !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
-  border-radius: 14px;
-  margin: 0 4px;
+  cursor: pointer;
+  z-index: 9999;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: visible !important;
 }
 
-#ordersBtn:hover {
-  transform: translateY(-4px) scale(1.15);
-  box-shadow: 0 10px 30px rgba(0, 210, 255, 0.8), 0 0 15px rgba(0, 210, 255, 0.6);
-  background: linear-gradient(135deg, #0072ff, #00d2ff);
-}
-
-#ordersBtn:active {
-  transform: translateY(2px) scale(0.92);
-  box-shadow: 0 3px 12px rgba(0, 210, 255, 0.4);
+#ordersBtn:hover, #bookBtn:hover, #stBtn:hover, #doubtBtn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 25px rgba(58,160,255,0.8);
 }
 
 /* Green Status Dot on Payment Button */
@@ -422,47 +480,6 @@ button:hover {
   0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 213, 115, 0.7); }
   70% { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(46, 213, 115, 0); }
   100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 213, 115, 0); }
-}
-
-/* Other Circular Floating Buttons */
-#bookBtn, #stBtn, #doubtBtn {
-  position: fixed;
-  right: 22px;
-  width: 54px;
-  height: 54px;
-  border-radius: 50%;
-  color: #fff;
-  font-size: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 9999;
-  transition: 0.3s ease;
-  overflow: visible !important;
-}
-
-#doubtBtn {
-  bottom: 22px;
-  background: #3aa0ff;
-  box-shadow: 0 0 18px rgba(58,160,255,0.6);
-}
-
-#bookBtn {
-  bottom: 86px;
-  background: linear-gradient(135deg, #6bc6ff, #3aa0ff);
-  box-shadow: 0 0 18px rgba(58,160,255,0.5);
-}
-
-#stBtn {
-  bottom: 150px;
-  background: linear-gradient(135deg, #6bc6ff, #3aa0ff);
-  box-shadow: 0 0 18px rgba(58,160,255,0.5);
-}
-
-#bookBtn:hover, #stBtn:hover {
-  transform: scale(1.1);
-  box-shadow: 0 0 25px rgba(58,160,255,0.8);
 }
 
 /* Common Counter Badges (Red Dots with Number) */
@@ -534,31 +551,6 @@ button:hover {
   box-shadow: 0 0 25px rgba(58,160,255,0.9);
 }
 
-.open-doubts {
-  display: block;
-  margin-top: 12px;
-  padding: 10px 12px;
-  text-align: center;
-  text-decoration: none;
-  font-size: 14px;
-  font-weight: 600;
-  color: #9fd3ff;
-  border-radius: 10px;
-  background: rgba(58,160,255,0.15);
-  border: 1px solid rgba(58,160,255,0.4);
-  transition: 0.25s;
-}
-
-.open-doubts:hover {
-  background: #3aa0ff;
-  color: #001b33;
-  box-shadow: 0 0 14px rgba(58,160,255,0.7);
-}
-
-.open-doubts:active {
-  transform: scale(0.96);
-}
-
 /* Full Screen Overlay */
 .doubt-overlay {
   position: fixed;
@@ -594,128 +586,6 @@ button:hover {
   gap: 12px;
 }
 
-.admin-doubt-card {
-  background: rgba(255,255,255,0.06);
-  padding: 12px;
-  border-radius: 10px;
-}
-
-.admin-doubt-card p {
-  margin: 6px 0;
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-.admin-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 10px;
-}
-
-.admin-actions button {
-  flex: 1;
-  padding: 8px;
-  border-radius: 8px;
-  border: none;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.admin-actions button.publish {
-  background: linear-gradient(135deg, #3aa0ff, #5fb5ff);
-  color: #fff;
-}
-
-.admin-actions button.delete {
-  background: linear-gradient(135deg, #ff5a5a, #ff2f2f);
-  color: #fff;
-}
-
-/* Status Labels & Badges */
-.status {
-  margin-top: 6px;
-  font-size: 12px;
-}
-
-.status.pending { color: #ffcc66; }
-.status.solved { color: #4cff8f; }
-
-.solved-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 8px;
-  padding: 6px 12px;
-  background: linear-gradient(135deg,#18c964,#4ade80);
-  color: #03210f;
-  font-weight: 600;
-  font-size: 13px;
-  border-radius: 999px;
-  box-shadow: 0 0 18px rgba(24,201,100,.45);
-  animation: solvedPulse .9s ease-out;
-}
-
-@keyframes solvedPulse {
-  0% { transform: scale(.9); opacity: 0; }
-  60% { transform: scale(1.05); }
-  100% { transform: scale(1); opacity: 1; }
-}
-
-/* Specific Input/Textarea Selectors inside Doubts */
-input[id^="greet_"] {
-  width: 100%;
-  padding: 10px 14px;
-  border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.15);
-  background: linear-gradient(180deg,#0f1e3a,#0b162d);
-  color: #eaf2ff;
-  font-size: 14px;
-  outline: none;
-  margin: 8px 0 6px;
-}
-
-input[id^="greet_"]::placeholder {
-  color: #9bb0d1;
-}
-
-textarea[id^="ans_"] {
-  width: 100%;
-  min-height: 90px;
-  padding: 12px 14px;
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.15);
-  background: linear-gradient(180deg,#0b1936,#07142b);
-  color: #eaf2ff;
-  font-size: 14px;
-  resize: none;
-  outline: none;
-  margin-bottom: 10px;
-}
-
-textarea[id^="ans_"]::placeholder {
-  color: #9bb0d1;
-}
-
-.greet-bubble {
-  display: inline-block;
-  max-width: 90%;
-  margin: 6px 0 10px;
-  padding: 8px 14px;
-  background: linear-gradient(135deg,#1e90ff,#4aa3ff);
-  color: #fff;
-  font-size: 14px;
-  font-weight: 500;
-  border-radius: 18px 18px 18px 4px;
-  box-shadow: 0 6px 18px rgba(30,144,255,.35);
-  animation: greetPop .25s ease-out;
-}
-
-@keyframes greetPop {
-  from { transform: scale(.95); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
-}
-
 /* ================= MODAL OVERLAYS ================= */
 .edit-modal-overlay {
   position: fixed;
@@ -736,21 +606,6 @@ textarea[id^="ans_"]::placeholder {
   width: 90%;
   max-width: 400px;
   box-shadow: 0 15px 40px rgba(0,0,0,0.7);
-}
-
-.edit-modal-card h3 {
-  margin-top: 0;
-  color: var(--text-main);
-}
-
-.modal-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 15px;
-}
-
-.modal-actions button {
-  flex: 1;
 }
 
 /* ================= STATUS & MESSAGES ================= */

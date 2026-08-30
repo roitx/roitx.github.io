@@ -168,9 +168,15 @@ async function loadFiles() {
       </div>
       
       <div style="display:flex; gap:6px; align-items:center; width:100%;">
-        <button style="flex:1; padding:4px 0; font-size:13px; border-radius:6px; border:none; background:#3b82f6; color:#ffffff; cursor:pointer;" onclick="openFile('${note.file_path}', '${note.class}', '${note.subject}', '${escapeQuotes(note.chapter_name || "")}')" title="View">👁️</button>
-        <button style="flex:1; padding:4px 0; font-size:13px; border-radius:6px; border:none; background:#f59e0b; color:#ffffff; cursor:pointer;" onclick="openNoteEditModal('${note.id}', '${note.class}', '${note.subject}', '${note.chapter_number}', '${escapeQuotes(note.chapter_name || "")}', '${note.file_path}')" title="Edit">🖋️</button>
-        <button style="flex:1; padding:4px 0; font-size:13px; border-radius:6px; border:none; background:#ef4444; color:#ffffff; cursor:pointer;" onclick="deleteNoteRecord('${note.id}', '${note.file_path}')" title="Delete">🗑️</button>
+        <button style="flex:1; padding:6px 0; font-size:13px; border-radius:6px; border:none; background:#3b82f6; color:#ffffff; cursor:pointer; display:inline-flex; align-items:center; justify-content:center;" onclick="openFile('${note.file_path}', '${note.class}', '${note.subject}', '${escapeQuotes(note.chapter_name || "")}')" title="View">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+        <button style="flex:1; padding:6px 0; font-size:13px; border-radius:6px; border:none; background:#f59e0b; color:#ffffff; cursor:pointer; display:inline-flex; align-items:center; justify-content:center;" onclick="openNoteEditModal('${note.id}', '${note.class}', '${note.subject}', '${note.chapter_number}', '${escapeQuotes(note.chapter_name || "")}', '${note.file_path}')" title="Edit">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+        </button>
+        <button style="flex:1; padding:6px 0; font-size:13px; border-radius:6px; border:none; background:#ef4444; color:#ffffff; cursor:pointer; display:inline-flex; align-items:center; justify-content:center;" onclick="deleteNoteRecord('${note.id}', '${note.file_path}')" title="Delete">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+        </button>
       </div>
     `;
     list.appendChild(row);
@@ -240,7 +246,6 @@ async function saveNoteEdit() {
     return;
   }
 
-  // Pehle modal band aur instant UI reload execute karo
   closeNoteEditModal();
   await loadFiles();
   await updateStats();
@@ -301,7 +306,6 @@ async function loadEvents() {
 
   list.innerHTML = "⏳ Loading events...";
 
-  // Sort directly by event_date
   const { data, error } = await window.supabaseClient
     .from("events")
     .select("*")
@@ -355,8 +359,12 @@ async function loadEvents() {
       </div>
 
       <div style="display:flex; gap:6px; align-items:center; width:100%;">
-        <button style="flex:1; padding:4px 0; font-size:13px; border-radius:6px; border:none; background:#f59e0b; color:#ffffff; cursor:pointer;" onclick="openEventEditModal('${ev.id}', '${ev.event_date}', '${escapeQuotes(ev.event_name)}')" title="Edit">✏️ Edit</button>
-        <button style="flex:1; padding:4px 0; font-size:13px; border-radius:6px; border:none; background:#ef4444; color:#ffffff; cursor:pointer;" onclick="deleteEvent('${ev.id}')" title="Delete">🗑️ Delete</button>
+        <button style="flex:1; padding:6px 0; font-size:13px; border-radius:6px; border:none; background:#f59e0b; color:#ffffff; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:4px;" onclick="openEventEditModal('${ev.id}', '${ev.event_date}', '${escapeQuotes(ev.event_name)}')" title="Edit">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg> Edit
+        </button>
+        <button style="flex:1; padding:6px 0; font-size:13px; border-radius:6px; border:none; background:#ef4444; color:#ffffff; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:4px;" onclick="deleteEvent('${ev.id}')" title="Delete">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg> Delete
+        </button>
       </div>
     `;
     list.appendChild(row);
@@ -405,7 +413,6 @@ async function saveEventEdit() {
     return;
   }
 
-  // Instant UI Reloading (Modal closure pehle)
   closeEventEditModal();
   await loadEvents();
   await updateStats();
@@ -418,6 +425,7 @@ async function deleteEvent(id) {
   await loadEvents();
   await updateStats();
 }
+
 /* =====================================================
    PART 4: FORMULAS SYSTEM
    ===================================================== */
@@ -589,9 +597,15 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
 
         <div style="display:flex; gap:6px; align-items:center; width:100%;">
-          <button style="flex:1; padding:4px 0; font-size:13px; border-radius:6px; border:none; background:#3b82f6; color:#ffffff; cursor:pointer;" onclick="viewFormula('${f.id}')" title="View">👁️</button>
-          <button style="flex:1; padding:4px 0; font-size:13px; border-radius:6px; border:none; background:#f59e0b; color:#ffffff; cursor:pointer;" onclick="openFormulaEditModal('${f.id}', '${f.class}', '${f.subject}', '${chNum}', '${escapeQuotes(f.chapter_name || "")}', '${f.category || "other"}')" title="Edit">🖋️</button>
-          <button style="flex:1; padding:4px 0; font-size:13px; border-radius:6px; border:none; background:#ef4444; color:#ffffff; cursor:pointer;" onclick="deleteFormula('${f.id}','${f.file_path || ""}')" title="Delete">🗑️</button>
+          <button style="flex:1; padding:6px 0; font-size:13px; border-radius:6px; border:none; background:#3b82f6; color:#ffffff; cursor:pointer; display:inline-flex; align-items:center; justify-content:center;" onclick="viewFormula('${f.id}')" title="View">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+          <button style="flex:1; padding:6px 0; font-size:13px; border-radius:6px; border:none; background:#f59e0b; color:#ffffff; cursor:pointer; display:inline-flex; align-items:center; justify-content:center;" onclick="openFormulaEditModal('${f.id}', '${f.class}', '${f.subject}', '${chNum}', '${escapeQuotes(f.chapter_name || "")}', '${f.category || "other"}')" title="Edit">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+          </button>
+          <button style="flex:1; padding:6px 0; font-size:13px; border-radius:6px; border:none; background:#ef4444; color:#ffffff; cursor:pointer; display:inline-flex; align-items:center; justify-content:center;" onclick="deleteFormula('${f.id}','${f.file_path || ""}')" title="Delete">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+          </button>
         </div>
       `;
       list.appendChild(row);
@@ -674,7 +688,6 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // Modal pehle band hoga fir non-blocking UI loading chalegi
     closeFormulaEditModal();
     await loadFormulas();
     await updateStats();
@@ -697,7 +710,6 @@ document.addEventListener("DOMContentLoaded", () => {
     await updateStats();
   };
 
-  // Event Listeners for Filters
   document.getElementById("searchNotes")?.addEventListener("input", loadFiles);
   document.getElementById("filterNotesClass")?.addEventListener("change", loadFiles);
   document.getElementById("filterNotesSubject")?.addEventListener("change", loadFiles);
@@ -862,7 +874,9 @@ window.openDoubtOverlay = async function() {
 
       <div class="admin-actions">
         <button class="publish" onclick="publishAnswer('${d.id}')">💾 Save & Resolve</button>
-        <button class="delete" onclick="deleteDoubt('${d.id}')">🗑️ Delete</button>
+        <button class="delete" onclick="deleteDoubt('${d.id}')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg> Delete
+        </button>
       </div>
     `;
     overlayList.appendChild(card);
@@ -908,8 +922,9 @@ window.deleteDoubt = async function(id) {
 
   openDoubtOverlay();
 };
+
 /* =====================================================
-   PART 6: ORDERS SYSTEM & UTILS (FINAL FIX FOR BADGE COUNT)
+   PART 6: ORDERS SYSTEM & UTILS
    ===================================================== */
 
 async function updateOrdersBadge() {
@@ -917,49 +932,26 @@ async function updateOrdersBadge() {
   if (!badge) return;
 
   try {
-    // Check pending orders from user_orders or orders table
-    let count = 0;
-    
-    // Query 1: Check 'user_orders' table (used in premium notes)
-    const { data: userOrders, error: err1 } = await window.supabaseClient
-      .from("user_orders")
-      .select("id")
-      .eq("status", "pending");
+    const { count, error } = await window.supabaseClient
+      .from("orders")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "pending"); // 👈 PENDING orders check karne ke liye filter
 
-    if (!err1 && userOrders) {
-      count += userOrders.length;
-    } else {
-      // Query 2: Fallback to 'orders' table
-      const { data: mainOrders, error: err2 } = await window.supabaseClient
-        .from("orders")
-        .select("id")
-        .eq("status", "pending");
-
-      if (!err2 && mainOrders) {
-        count += mainOrders.length;
-      }
+    if (!error && count !== null) {
+      badge.innerText = count;
+      // Badge hamesha visible rahega aur count update hoga
+      badge.style.display = "inline-flex"; 
     }
-
-    // Set count text and display badge
-    badge.innerText = count;
-    if (count > 0) {
-      badge.style.display = "flex";
-      badge.style.alignItems = "center";
-      badge.style.justifyContent = "center";
-    } else {
-      badge.style.display = "none";
-    }
-
   } catch (err) {
     console.error("Error updating orders badge:", err);
   }
 }
 
-// Automatic Run on Load & Polling
 document.addEventListener("DOMContentLoaded", () => {
   updateOrdersBadge();
-  setInterval(updateOrdersBadge, 3000);
 });
+
+setInterval(updateOrdersBadge, 5000);
 
 
 /* ---------- HELPER FUNCTIONS ---------- */
@@ -971,3 +963,4 @@ function escapeQuotes(str) {
     .replace(/'/g, "\\'")
     .replace(/"/g, "&quot;");
 }
+

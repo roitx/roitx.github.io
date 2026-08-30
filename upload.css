@@ -70,6 +70,70 @@ body {
   margin-bottom: 18px;
 }
 
+/* =====================================================
+   DASHBOARD STAT CARDS STYLES (DYNAMIC GRID)
+   ===================================================== */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.stat-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.stat-card:hover {
+  background: rgba(58, 134, 255, 0.12);
+  border-color: rgba(58, 134, 255, 0.4);
+  transform: translateY(-2px);
+}
+
+.stat-card.total-card {
+  background: linear-gradient(135deg, rgba(58, 134, 255, 0.2), rgba(15, 23, 42, 0.6));
+  border-color: rgba(58, 134, 255, 0.35);
+}
+
+.stat-title {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stat-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 2px 0;
+}
+
+.stat-badge {
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  background: rgba(255, 107, 107, 0.2);
+  color: #ff8e8e;
+  display: inline-block;
+  width: fit-content;
+}
+
+.total-card .stat-badge {
+  background: rgba(58, 160, 255, 0.2);
+  color: #90beff;
+}
+
 /* LABEL */
 .label {
   font-size: 12px;
@@ -137,6 +201,10 @@ input:focus, select:focus {
   cursor: pointer;
   box-shadow: 0 8px 25px rgba(58, 134, 255, 0.35);
   transition: 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .upload-card > button:hover {
@@ -178,7 +246,7 @@ input:focus, select:focus {
 }
 
 /* =====================================================
-   BOOK ITEM & BUTTONS PERFECT ALIGNMENT (FIXED)
+   BOOK ITEM & BUTTONS ALIGNMENT
    ===================================================== */
 .book-item {
   display: grid;
@@ -198,7 +266,7 @@ input:focus, select:focus {
 }
 
 .book-info {
-  min-width: 0; /* Text overflow aur container expansion rokne ke liye sabse zaroori hai */
+  min-width: 0;
 }
 
 .book-info b {
@@ -216,12 +284,12 @@ input:focus, select:focus {
   word-break: break-word;
 }
 
-/* ACTIONS CONTAINER (View & Delete buttons ke liye) */
+/* ACTIONS CONTAINER */
 .book-actions {
   display: flex;
   align-items: center;
   gap: 6px;
-  flex-shrink: 0; /* Buttons kabhi sikdenge ya bahar nahi jayenge */
+  flex-shrink: 0;
 }
 
 /* VIEW BUTTON */
@@ -249,7 +317,7 @@ input:focus, select:focus {
   transform: scale(0.95);
 }
 
-/* DELETE / OTHER BUTTONS INSIDE BOOK-ACTIONS */
+/* OTHER ACTION BUTTONS */
 .book-actions a,
 .book-actions button {
   margin-top: 0 !important;
@@ -272,7 +340,8 @@ input:focus, select:focus {
   background: rgba(58, 160, 255, 0.2);
   border-color: var(--accent);
 }
-/* SEARCH INPUT STYLE */
+
+/* SEARCH INPUT */
 #searchBook {
   width: 100%;
   padding: 10px 14px;
@@ -294,7 +363,8 @@ input:focus, select:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 2px rgba(58, 134, 255, 0.25);
 }
-/* MODAL OVERLAY STYLES FOR EDIT */
+
+/* MODAL OVERLAY STYLES */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -335,7 +405,7 @@ input:focus, select:focus {
 .book-actions .edit-btn:hover {
   background: rgba(245, 158, 11, 0.3) !important;
 }
-/* EDIT MODAL BUTTONS STYLES */
+
 .modal-box button {
   padding: 10px 16px;
   border-radius: 8px;
@@ -350,7 +420,6 @@ input:focus, select:focus {
   gap: 6px;
 }
 
-/* Save Button (Primary Accent) */
 .modal-box button:first-child {
   background: linear-gradient(135deg, #3b82f6, #2563eb);
   color: #ffffff;
@@ -362,7 +431,6 @@ input:focus, select:focus {
   transform: translateY(-1px);
 }
 
-/* Cancel Button (Danger/Secondary Accent) */
 .modal-box button:last-child {
   background: rgba(239, 68, 68, 0.15) !important;
   color: #ef4444 !important;
@@ -374,7 +442,6 @@ input:focus, select:focus {
   transform: translateY(-1px);
 }
 
-/* DANGER / DELETE BUTTON COLOR FIX */
 .book-actions .danger,
 .book-actions button.danger,
 .book-actions button[onclick*="delete"] {
