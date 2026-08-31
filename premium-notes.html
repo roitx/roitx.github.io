@@ -192,7 +192,6 @@
             box-shadow: 0 3px 10px rgba(121, 40, 202, 0.25);
         }
 
-        /* Clean Pending State (Only Clock Icon + Short Text) */
         .btn-pending {
             background: rgba(255, 171, 0, 0.12);
             color: #ffab00;
@@ -462,7 +461,6 @@
                 const unlockIconSvg = `<svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>`;
                 const clockIconSvg = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 16 14"></polyline></svg>`;
 
-                // Action Button logic (Unlock / Pending / Read)
                 let actionBtnHtml = '';
                 if (isApproved) {
                     actionBtnHtml = `<button class="btn-mini btn-read" onclick="openInViewer(${note.id})">${readIconSvg} Read Note</button>`;
@@ -472,7 +470,6 @@
                     actionBtnHtml = `<button class="btn-mini btn-unlock" onclick="openPaymentModal(${note.id})">${unlockIconSvg} Unlock Note</button>`;
                 }
 
-                // Eye Icon Only for Preview on Top-Right
                 let previewIconHtml = !isApproved 
                     ? `<div class="icon-btn-preview" title="Preview Note" onclick="openInViewer(${note.id})">${eyeIconSvg}</div>`
                     : `<div class="icon-btn-preview" style="color:#2ed573; border-color:rgba(46,213,115,0.3); background:rgba(46,213,115,0.1); cursor:default;">✓</div>`;
@@ -573,42 +570,55 @@
         }
 
         async function submitManualPayment() {
-    const utr = document.getElementById('utrInput').value.trim();
-    if (utr.length < 8) {
-        alert("Please enter a valid UTR/Transaction number!");
-        return;
-    }
+            const utr = document.getElementById('utrInput').value.trim();
+            if (utr.length < 8) {
+                alert("Please enter a valid UTR/Transaction number!");
+                return;
+            }
 
-    // Jab user order submit kare tab profiles se data fetch karke user_orders me daalein:
-const { data: profile } = await window.supabaseClient
-    .from('profiles')
-    .select('*')
-    .eq('id', currentUser.id)
-    .single();
+            if (!selectedNoteForPay || !currentUser) {
+                alert("Something went wrong. Refresh and try again.");
+                return;
+            }
 
-const orderPayload = {
-    user_id: currentUser.id,
-    user_email: currentUser.email,
-    note_id: noteId,
-    note_title: noteTitle,
-    amount: amount,
-    utr_code: utrCode,
-    status: 'pending',
-    // Extra details jo admin ko dikhani hain
-    user_name: profile?.full_name || '',
-    user_phone: profile?.phone || '',
-    target_class: profile?.target_class || '',
-    stream: profile?.stream || '',
-    institution: profile?.institution || '',
-    city: profile?.city || '',
-    state: profile?.state || '',
-    avatar_url: profile?.avatar_url || ''
-};
+            const { data: profile } = await window.supabaseClient
+                .from('profiles')
+                .select('*')
+                .eq('id', currentUser.id)
+                .single();
 
-const { error: orderError } = await window.supabaseClient
-    .from('user_orders')
-    .insert([orderPayload]);
+            const orderPayload = {
+                user_id: currentUser.id,
+                user_email: currentUser.email,
+                note_id: selectedNoteForPay.id,
+                note_title: selectedNoteForPay.title,
+                amount: selectedNoteForPay.price,
+                utr_code: utr,
+                status: 'pending',
+                user_name: profile?.full_name || '',
+                user_phone: profile?.phone || '',
+                target_class: profile?.target_class || '',
+                stream: profile?.stream || '',
+                institution: profile?.institution || '',
+                city: profile?.city || '',
+                state: profile?.state || '',
+                avatar_url: profile?.avatar_url || ''
+            };
 
+            const { error: orderError } = await window.supabaseClient
+                .from('user_orders')
+                .insert([orderPayload]);
+
+            if (orderError) {
+                alert("Order submit nahi ho paya: " + orderError.message);
+            } else {
+                alert("✅ Payment request submit ho gayi hai! Verification ke baad note unlock ho jayega.");
+                orderStatuses[String(selectedNoteForPay.id)] = 'pending';
+                document.getElementById('paymentModal').style.display = 'none';
+                document.getElementById('utrInput').value = '';
+                loadNotes();
+            }
+        }
     </script>
 </body>
 </html>
