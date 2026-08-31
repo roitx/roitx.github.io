@@ -644,8 +644,8 @@ When asked for classes, study materials, or site pages, generate HTML standard <
 - <a href="classes.html">Classes Overview (Class 9, 10, 11, 12)</a>
 - <a href="premium-notes.html">Premium Notes Hub</a>
 - <a href="about.html">About Page</a>
-- <a href="aboutus.html">Policies & Terms</a>
-- <a href="ask-doubt.html">Ask Doubt & Feedback Page</a>
+- <a href="aboutus.html"> Legal Policies & Terms</a>
+- <a href="solver.html">Ask Doubt & Feedback Page</a>
 
 2. Class & Stream Pages:
 - <a href="subjects-9.html">Class 9 Subjects</a>
