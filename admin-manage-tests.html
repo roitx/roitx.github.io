@@ -32,10 +32,18 @@
     <h1><i class="fa-solid fa-list-check"></i> Test Management</h1>
     <p class="subtitle">Aapke sabhi live aur published tests ki list. Yahan se edit ya delete kar sakte hain.</p>
 
-    <!-- Search & Filter Controls -->
-    <div class="grid-2">
+    <!-- Search & Filter Controls (Class, Subject & Title Filter) -->
+    <div class="grid-3" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 20px;">
       <div class="form-group">
         <input type="text" id="searchInput" class="input-box" placeholder="Search by topic or title..." oninput="filterTests()">
+      </div>
+      <div class="form-group">
+        <select id="filterClass" class="input-box" onchange="filterTests()">
+          <option value="ALL">All Classes</option>
+          <option value="10">Class 10</option>
+          <option value="11">Class 11</option>
+          <option value="12">Class 12</option>
+        </select>
       </div>
       <div class="form-group">
         <select id="filterSubject" class="input-box" onchange="filterTests()">
@@ -106,24 +114,25 @@
       </div>
     </div>
   </div>
-<!-- Read-Only Preview Modal -->
-<div id="previewModal" class="modal-overlay" style="display: none;">
-  <div class="modal-card" style="max-width: 650px; width: 90%; max-height: 85vh; overflow-y: auto;">
-    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 15px;">
-      <h3 id="previewTitle" style="margin: 0; color: #2d3748;">Test Preview</h3>
-      <button onclick="closePreviewModal()" style="background: none; border: none; font-size: 18px; cursor: pointer;">✕</button>
-    </div>
-    
-    <div id="previewMeta" style="font-size: 12px; color: #718096; margin-bottom: 15px;"></div>
-    
-    <div id="previewQuestionsContainer"></div>
 
-    <div style="margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 15px; display: flex; justify-content: space-between; align-items: center;">
-      <button onclick="submitTestPreview()" style="background: #4A00E0; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600;">Submit Test (Check Score)</button>
-      <button onclick="closePreviewModal()" style="background: #e2e8f0; color: #4a5568; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">Close</button>
+  <!-- Read-Only Preview Modal -->
+  <div id="previewModal" class="modal-overlay" style="display: none;">
+    <div class="modal-card" style="max-width: 650px; width: 90%; max-height: 85vh; overflow-y: auto;">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 15px;">
+        <h3 id="previewTitle" style="margin: 0; color: #2d3748;">Test Preview</h3>
+        <button onclick="closePreviewModal()" style="background: none; border: none; font-size: 18px; cursor: pointer;">✕</button>
+      </div>
+      
+      <div id="previewMeta" style="font-size: 12px; color: #718096; margin-bottom: 15px;"></div>
+      
+      <div id="previewQuestionsContainer"></div>
+
+      <div style="margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 15px; display: flex; justify-content: space-between; align-items: center;">
+        <button onclick="submitTestPreview()" style="background: #4A00E0; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600;">Submit Test (Check Score)</button>
+        <button onclick="closePreviewModal()" style="background: #e2e8f0; color: #4a5568; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">Close</button>
+      </div>
     </div>
   </div>
-</div>
 
   <script src="admin-manage-tests.js"></script>
 </body>

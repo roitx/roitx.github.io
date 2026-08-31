@@ -6,7 +6,7 @@ window.addEventListener('DOMContentLoaded', async function() {
   await checkAdminAuth();
 });
 
-// --- STRICT ADMIN AUTHENTICATION CHECK (FIXED & IMPROVED) ---
+// --- STRICT ADMIN AUTHENTICATION CHECK ---
 async function checkAdminAuth() {
   var loaderBox = document.getElementById("loaderBox");
   var statusMsg = document.getElementById("statusMsg");
@@ -18,7 +18,7 @@ async function checkAdminAuth() {
   }
 
   try {
-    // Priority 1: Check via global helper if available (Same as ai-test.js)
+    // Priority 1: Check via global helper if available
     if (typeof window.requireAdminAuth === "function") {
       try {
         await window.requireAdminAuth();
@@ -32,12 +32,10 @@ async function checkAdminAuth() {
     // Priority 2: Direct Session Check with getUser() Fallback
     let currentUser = null;
     
-    // Check local session
-    const { data: sessionData, error: sessionError } = await window.supabaseClient.auth.getSession();
+    const { data: sessionData } = await window.supabaseClient.auth.getSession();
     if (sessionData && sessionData.session) {
       currentUser = sessionData.session.user;
     } else {
-      // Direct server-side user check if session wasn't immediately hydrated
       const { data: userData } = await window.supabaseClient.auth.getUser();
       if (userData && userData.user) {
         currentUser = userData.user;
@@ -100,7 +98,8 @@ function fetchPublishedTests() {
       if (response.error) throw response.error;
 
       allTests = response.data || [];
-      renderTests(allTests);
+      populateDynamicFilters(allTests);
+      filterTests(); // Auto filter & render initial list
     })
     .catch(function(err) {
       console.error("Fetch Error:", err);
@@ -113,6 +112,66 @@ function fetchPublishedTests() {
     });
 }
 
+// --- DYNAMICALLY GENERATE FILTER OPTIONS (Like tests.js) ---
+function populateDynamicFilters(tests) {
+  var classSelect = document.getElementById("filterClass");
+  var subjectSelect = document.getElementById("filterSubject");
+
+  var classes = new Set();
+  var subjects = new Set();
+
+  tests.forEach(function(test) {
+    if (test.class_level) classes.add(test.class_level.trim());
+    if (test.subject) subjects.add(test.subject.trim());
+  });
+
+  if (classSelect) {
+    var classHtml = '<option value="ALL">All Classes</option>';
+    classes.forEach(function(c) {
+      classHtml += '<option value="' + c + '">' + c + '</option>';
+    });
+    classSelect.innerHTML = classHtml;
+  }
+
+  if (subjectSelect) {
+    var subjectHtml = '<option value="ALL">All Subjects</option>';
+    subjects.forEach(function(s) {
+      subjectHtml += '<option value="' + s + '">' + s + '</option>';
+    });
+    subjectSelect.innerHTML = subjectHtml;
+  }
+}
+
+// --- SMART MULTI-FILTER LOGIC (Search + Class + Subject) ---
+function filterTests() {
+  var searchInput = document.getElementById("searchInput");
+  var filterClass = document.getElementById("filterClass");
+  var filterSubject = document.getElementById("filterSubject");
+
+  var searchVal = searchInput ? searchInput.value.toLowerCase().trim() : "";
+  var classVal = filterClass ? filterClass.value.toLowerCase().trim() : "all";
+  var subjectVal = filterSubject ? filterSubject.value.toLowerCase().trim() : "all";
+
+  var filtered = allTests.filter(function(test) {
+    var testTitle = (test.title || '').toLowerCase();
+    var testClassLevel = (test.class_level || '').toLowerCase();
+    var testSubject = (test.subject || '').toLowerCase();
+
+    // 1. Search Query Match
+    var matchesSearch = searchVal === "" || testTitle.indexOf(searchVal) !== -1 || testClassLevel.indexOf(searchVal) !== -1;
+
+    // 2. Class Filter Match
+    var matchesClass = (classVal === "all" || classVal === "") || testClassLevel === classVal || testClassLevel.indexOf(classVal) !== -1;
+
+    // 3. Subject Filter Match
+    var matchesSubject = (subjectVal === "all" || subjectVal === "") || testSubject === subjectVal;
+
+    return matchesSearch && matchesClass && matchesSubject;
+  });
+
+  renderTests(filtered);
+}
+
 function renderTests(tests) {
   var testsContainer = document.getElementById("testsContainer");
   if (!testsContainer) return;
@@ -120,7 +179,7 @@ function renderTests(tests) {
   testsContainer.innerHTML = "";
 
   if (!tests || tests.length === 0) {
-    testsContainer.innerHTML = '<p style="text-align:center; color:#718096; font-size:13px; padding:20px;">Koi published test nahi mila.</p>';
+    testsContainer.innerHTML = '<p style="text-align:center; color:#718096; font-size:13px; padding:20px;">Koi matching test nahi mila.</p>';
     return;
   }
 
@@ -210,7 +269,6 @@ function closePreviewModal() {
   currentPreviewTest = null;
 }
 
-// Preview test submit (Only shows score locally, does NOT write to database)
 function submitTestPreview() {
   if (!currentPreviewTest) return;
 
@@ -232,23 +290,6 @@ function submitTestPreview() {
   var totalScore = totalQuestions * marksPerQ;
 
   alert("🧪 MOCK TEST PREVIEW RESULT\n\nCorrect: " + correctCount + "/" + totalQuestions + "\nScore: " + score + "/" + totalScore + "\n\n(Note: Ye safe preview hai, database me koi record save nahi hua.)");
-}
-
-// --- Search & Filter ---
-function filterTests() {
-  var searchInput = document.getElementById("searchInput");
-  var filterSubject = document.getElementById("filterSubject");
-
-  var searchVal = searchInput ? searchInput.value.toLowerCase() : "";
-  var subjectVal = filterSubject ? filterSubject.value : "ALL";
-
-  var filtered = allTests.filter(function(test) {
-    var matchesSearch = (test.title || '').toLowerCase().indexOf(searchVal) !== -1;
-    var matchesSubject = subjectVal === "ALL" || test.subject === subjectVal;
-    return matchesSearch && matchesSubject;
-  });
-
-  renderTests(filtered);
 }
 
 // --- Edit Modal Controls ---

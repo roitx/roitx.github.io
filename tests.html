@@ -7,6 +7,58 @@
     <link rel="stylesheet" href="tests.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+      /* PAGE-STYLE EXPLORE VIEW CSS */
+      .explore-page-view {
+          background: #ffffff;
+          border-radius: 16px;
+          padding: 20px;
+          border: 1px solid #e2e8f0;
+          box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+          margin-bottom: 25px;
+      }
+      .step-block {
+          margin-bottom: 20px;
+      }
+      .step-title {
+          font-size: 14px;
+          font-weight: 700;
+          color: #4A00E0;
+          margin-bottom: 10px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+      }
+      .option-grid {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px;
+      }
+      .chip-btn {
+          background: #f7fafc;
+          border: 1px solid #cbd5e0;
+          padding: 8px 16px;
+          border-radius: 20px;
+          font-size: 13px;
+          font-weight: 600;
+          color: #4a5568;
+          cursor: pointer;
+          transition: all 0.2s ease;
+      }
+      .chip-btn:hover {
+          border-color: #4A00E0;
+          color: #4A00E0;
+          background: #f3e8ff;
+      }
+      .chip-btn.active {
+          background: linear-gradient(135deg, #4A00E0, #8E2DE2);
+          color: #ffffff;
+          border-color: transparent;
+          box-shadow: 0 4px 10px rgba(74, 0, 224, 0.3);
+      }
+    </style>
 </head>
 <body>
 
@@ -32,41 +84,58 @@
     </button>
 </div>
 
-<!-- SECTION 1: DYNAMIC TESTS WITH BOARD & CLASS FILTERS -->
+<!-- SECTION 1: TESTS & EXPLORE PAGE VIEW -->
 <div id="testsSection">
-    <div class="filter-bar">
-        <div class="search-input-wrapper">
+    
+    <!-- EXPLORE HEADER & SEARCH BAR -->
+    <div style="margin-bottom: 15px; display: flex; gap: 10px; align-items: center; justify-content: space-between;">
+        <button id="exploreBtn" onclick="toggleExplorePage()" style="background: linear-gradient(135deg, #4A00E0, #8E2DE2); color: white; border: none; padding: 12px 20px; border-radius: 10px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 14px; box-shadow: 0 4px 12px rgba(74, 0, 224, 0.3);">
+            <i class="fa-solid fa-compass"></i> Explore Categories <i class="fa-solid fa-chevron-down" id="exploreChevron"></i>
+        </button>
+        <div class="search-input-wrapper" style="flex: 1; max-width: 300px;">
             <i class="fa-solid fa-magnifying-glass search-icon"></i>
             <input type="text" id="searchInput" onkeyup="filterStudentTests()" placeholder="Search test title...">
         </div>
+    </div>
+
+    <!-- VISUAL STEP-BY-STEP PAGE VIEW CONTAINER -->
+    <div id="explorePageView" class="explore-page-view" style="display: none;">
         
-        <!-- Board Filter (Populated dynamically) -->
-        <div class="select-wrapper">
-            <i class="fa-solid fa-building-columns filter-icon"></i>
-            <select id="filterBoard" onchange="filterStudentTests()">
-                <option value="all">All Boards / Exams</option>
-            </select>
+        <!-- STEP 1: BOARD -->
+        <div class="step-block">
+            <div class="step-title"><i class="fa-solid fa-building-columns"></i> 1. Select Board / Exam</div>
+            <div id="boardOptionsGrid" class="option-grid"></div>
         </div>
 
-        <!-- Class Filter (Populated dynamically) -->
-        <div class="select-wrapper">
-            <i class="fa-solid fa-graduation-cap filter-icon"></i>
-            <select id="filterClass" onchange="filterStudentTests()">
-                <option value="all">All Classes</option>
-            </select>
+        <!-- STEP 2: CLASS -->
+        <div class="step-block" id="classStepBlock" style="display: none;">
+            <div class="step-title"><i class="fa-solid fa-graduation-cap"></i> 2. Select Class</div>
+            <div id="classOptionsGrid" class="option-grid"></div>
         </div>
 
-        <!-- Subject Filter (Populated dynamically) -->
-        <div class="select-wrapper">
-            <i class="fa-solid fa-book filter-icon"></i>
-            <select id="filterSubject" onchange="filterStudentTests()">
-                <option value="all">All Subjects</option>
-            </select>
+        <!-- STEP 3: SUBJECT -->
+        <div class="step-block" id="subjectStepBlock" style="display: none;">
+            <div class="step-title"><i class="fa-solid fa-book"></i> 3. Select Subject</div>
+            <div id="subjectOptionsGrid" class="option-grid"></div>
+        </div>
+
+        <div style="margin-top: 15px; text-align: right; border-top: 1px solid #edf2f7; padding-top: 10px;">
+            <button onclick="resetExploreSelections()" style="background: none; border: none; color: #e53e3e; font-size: 12px; font-weight: bold; cursor: pointer;">
+                <i class="fa-solid fa-rotate-left"></i> Reset Selections
+            </button>
         </div>
     </div>
 
+    <!-- HEADING SECTION -->
+    <div id="sectionHeading" style="margin: 15px 0 10px 0; display: flex; justify-content: space-between; align-items: center;">
+        <h3 id="headingTitle" style="font-size: 16px; color: #2d3748; margin: 0; display: flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-bolt" style="color: #f6e05e;"></i> Recently Added Tests
+        </h3>
+        <span id="testCountBadge" style="font-size: 12px; background: #edf2f7; color: #4a5568; padding: 2px 8px; border-radius: 12px; font-weight: 600;">Top 5</span>
+    </div>
+
     <div id="loaderBox" class="loader-box">
-        <i class="fa-solid fa-circle-notch fa-spin"></i> Loading available tests...
+        <i class="fa-solid fa-circle-notch fa-spin"></i> Loading tests...
     </div>
     <div id="statusMsg" class="status-msg" style="display: none;"></div>
 
@@ -108,7 +177,7 @@
     </a>
 </div>
 
-<!-- AUTH POPUP MODAL (Same component logic as calculator.js) -->
+<!-- AUTH POPUP MODAL -->
 <div id="authModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; justify-content: center; align-items: center;">
     <div class="modal-content" style="background: #fff; padding: 25px; border-radius: 12px; width: 90%; max-width: 350px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
         <h3 style="margin-bottom: 10px; color: #333;"><i class="fa-solid fa-lock" style="color: #007bff;"></i> Login Required</h3>
