@@ -1,7 +1,8 @@
 const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
+const ctx = canvas ? canvas.getContext("2d") : null;
 
 function resize() { 
+    if (!canvas) return;
     canvas.width = window.innerWidth; 
     canvas.height = window.innerHeight; 
     if (player) {
@@ -18,6 +19,22 @@ const finalScore = document.getElementById("final-score"), monsterAlert = docume
 const toggleBtn = document.getElementById("toggleControl"), pauseBtn = document.getElementById("pauseBtn"), shopBtn = document.getElementById("shopBtn"), audioBtn = document.getElementById("audioBtn");
 const ultiBtn = document.getElementById("ultimateBtn"), dashBtn = document.getElementById("dashBtn");
 const shipCards = document.querySelectorAll(".ship-card");
+
+// Leaderboard Modal DOM Elements
+const leaderboardScreen = document.getElementById("leaderboard-screen");
+const openLeaderboardBtn = document.getElementById("openLeaderboardBtn");
+const closeLeaderboardBtn = document.getElementById("closeLeaderboardBtn");
+const leaderboardList = document.getElementById("leaderboard-list");
+const startBtn = document.getElementById("startBtn");
+const restartBtn = document.getElementById("restartBtn");
+
+// Core Game Variables
+let game = false, paused = false, score = 0, coins = 0, lives = 12, level = 1;
+let bullets = [], missiles = [], enemies = [], asteroids = [], particles = [], stars = [], enemyBullets = [], powerups = [], floatingTexts = [], coinDrops = [], shockwaves = [], trails = [];
+let controlMode = "buttons", screenShake = 0, combo = 1, comboTimer = 0;
+let timeFreeze = false, monsterActive = false, monster = null;
+let scenarioEvent = null, scenarioTimer = 0, gridOffset = 0;
+let currentUser = null;
 
 // Audio Synthesizer
 let audioEnabled = true;
@@ -50,19 +67,21 @@ function playSynthSound(type) {
     }
 }
 
+// SVG Icons Dictionary
+const svgIcons = {
+    rocket: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle; display:inline-block;"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.71 1.1-1.35 1.32-1.92L14.4 12.1a12.98 12.98 0 0 0 5.1-6.1c.36-.91-.32-1.59-1.23-1.23a12.98 12.98 0 0 0-6.1 5.1l-5.48 5.58c-.57.22-1.21.61-1.92 1.32z"/><path d="m12 15 4 4"/><path d="m15 12 4 4"/></svg>`,
+    calendar: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle; display:inline-block;"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>`,
+    star: `<svg width="13" height="13" viewBox="0 0 24 24" fill="#facc15" stroke="#facc15" stroke-width="1" style="vertical-align:middle; display:inline-block;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
+    coin: `<svg width="12" height="12" viewBox="0 0 24 24" fill="#ffd600" stroke="#b45309" stroke-width="1.5" style="vertical-align:middle; display:inline-block;"><circle cx="12" cy="12" r="9"/><path d="M12 6v12M15 9.5H10.5a1.5 1.5 0 0 0 0 3h3a1.5 1.5 0 0 1 0 3H9"/></svg>`,
+    user: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`
+};
+
 if (audioBtn) {
     audioBtn.onclick = () => {
         audioEnabled = !audioEnabled;
         audioBtn.innerText = audioEnabled ? "🔊 Audio Engine" : "🔇 Muted";
     };
 }
-
-// Core Variables
-let game = false, paused = false, score = 0, coins = 0, lives = 12, level = 1;
-let bullets = [], missiles = [], enemies = [], asteroids = [], particles = [], stars = [], enemyBullets = [], powerups = [], floatingTexts = [], coinDrops = [], shockwaves = [], trails = [];
-let controlMode = "buttons", screenShake = 0, combo = 1, comboTimer = 0;
-let timeFreeze = false, monsterActive = false, monster = null;
-let scenarioEvent = null, scenarioTimer = 0, gridOffset = 0;
 
 const shipTypes = {
     pulse: { speed: 10, hp: 12, fireRate: 5, color: "#10b981", coreColor: "#6ee7b7" },
@@ -76,7 +95,7 @@ for(let i = 0; i < 60; i++) {
     stars.push({ x: Math.random() * window.innerWidth, y: Math.random() * window.innerHeight, s: Math.random() * 2 + 1, speed: Math.random() * 2 + 0.5, opacity: Math.random() });
 }
 
-// Dynamic Character Switching
+// Dynamic Character/Mode Switching
 shipCards.forEach(card => {
     card.addEventListener("click", () => {
         shipCards.forEach(c => c.classList.remove("active"));
@@ -88,7 +107,7 @@ shipCards.forEach(card => {
             player.speed = ship.speed;
             addFloatingText(player.x, player.y, "SHIP CHANGED!", ship.color);
         }
-        saveUserData();
+        if (currentUser) saveUserData();
     });
 });
 
@@ -107,17 +126,39 @@ window.addEventListener("keydown", e => {
 });
 window.addEventListener("keyup", e => keys[e.key] = false);
 
-// Leaderboard Modal Logic
-const leaderboardScreen = document.getElementById("leaderboard-screen");
-const openLeaderboardBtn = document.getElementById("openLeaderboardBtn");
-const closeLeaderboardBtn = document.getElementById("closeLeaderboardBtn");
-const leaderboardList = document.getElementById("leaderboard-list");
+// Auth Check System
+async function checkAuthStatus() {
+    if (!window.supabaseClient) return false;
+    try {
+        const { data: { user } } = await window.supabaseClient.auth.getUser();
+        if (user) {
+            currentUser = user;
+            await loadUserData();
+            return true;
+        }
+    } catch (err) {
+        console.error("Auth status error:", err);
+    }
+    currentUser = null;
+    return false;
+}
 
+// Leaderboard Modal Event Listeners
 if (openLeaderboardBtn) {
     openLeaderboardBtn.onclick = async () => {
+        if (!currentUser) {
+            const loginModal = document.getElementById("login-modal");
+            if (loginModal) {
+                loginModal.classList.add("show");
+            } else {
+                alert("Leaderboard dekhne ke liye pehle login karein!");
+            }
+            return;
+        }
+        
         if (startScreen) startScreen.classList.remove("show");
         if (leaderboardScreen) leaderboardScreen.classList.add("show");
-        await fetchLeaderboard();
+        await fetchLeaderboard(selectedShip);
     };
 }
 
@@ -128,39 +169,74 @@ if (closeLeaderboardBtn) {
     };
 }
 
-async function fetchLeaderboard() {
+// Fetch Leaderboard Function (Fixed Zero-Data Filter & SVG Icons)
+async function fetchLeaderboard(shipMode) {
+    if (!leaderboardList) return;
     if (!window.supabaseClient) {
-        if (leaderboardList) leaderboardList.innerHTML = "Supabase not connected.";
+        leaderboardList.innerHTML = "<div style='color:#ef4444; text-align:center;'>Supabase connection issue.</div>";
         return;
     }
 
     try {
-        if (leaderboardList) leaderboardList.innerHTML = "Loading leaderboard...";
+        leaderboardList.innerHTML = `<div style='color:#38bdf8; text-align:center;'>Fetching ${shipMode.toUpperCase()} mode rankings...</div>`;
         
-        const { data, error } = await window.supabaseClient
+        const oneMonthAgo = new Date();
+        oneMonthAgo.setDate(oneMonthAgo.getDate() - 30);
+        const isoOneMonthAgo = oneMonthAgo.toISOString();
+
+        // `.gt('score', 0)` add kar diya hai jisse zero score wale hide ho jayein
+        const { data: gameData, error: gameErr } = await window.supabaseClient
             .from('game_profiles')
-            .select('id, score, selected_ship, name, avatar_url')
+            .select('id, score, coins, selected_ship, name, avatar_url, updated_at')
+            .eq('selected_ship', shipMode)
+            .gt('score', 0)
+            .gte('updated_at', isoOneMonthAgo)
             .order('score', { ascending: false })
             .limit(10);
 
-        if (error) throw error;
+        if (gameErr) throw gameErr;
 
-        if (data && data.length > 0) {
-            let html = "<div style='display:flex; flex-direction:column; gap:8px;'>";
-            data.forEach((row, index) => {
-                let pilotName = row.name || "Unknown Pilot";
-                let pilotAvatar = row.avatar_url ? `<img src="${row.avatar_url}" style="width:30px; height:30px; border-radius:50%; object-fit:cover;">` : `<div style="width:30px; height:30px; border-radius:50%; background:#0ea5e9; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:12px;">👤</div>`;
+        if (gameData && gameData.length > 0) {
+            const userIds = gameData.map(g => g.id);
+            const { data: profilesData } = await window.supabaseClient
+                .from('profiles')
+                .select('id, full_name, avatar_url')
+                .in('id', userIds);
+
+            const profileMap = {};
+            if (profilesData) {
+                profilesData.forEach(p => { profileMap[p.id] = p; });
+            }
+
+            let html = `
+                <div style="text-align:center; font-size:12px; color:#38bdf8; font-weight:bold; margin-bottom:12px; display:flex; align-items:center; justify-content:center; gap:6px;">
+                    ${svgIcons.rocket} Mode: <span style="color:#facc15; text-transform:uppercase;">${shipMode}</span> | ${svgIcons.calendar} Last 30 Days Active
+                </div>
+                <div style="display:flex; flex-direction:column; gap:8px;">
+            `;
+
+            gameData.forEach((row, index) => {
+                const freshProfile = profileMap[row.id];
+                let pilotName = freshProfile?.full_name || row.name || "Cyber Pilot";
+                let pilotAvatar = freshProfile?.avatar_url || row.avatar_url;
+
+                let avatarHtml = pilotAvatar 
+                    ? `<img src="${pilotAvatar}" style="width:34px; height:34px; border-radius:50%; object-fit:cover; border: 1px solid #38bdf8;">` 
+                    : `<div style="width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg, #0284c7, #0369a1); display:flex; align-items:center; justify-content:center;">${svgIcons.user}</div>`;
                 
                 html += `
-                    <div style="display:flex; align-items:center; justify-content:space-between; background:rgba(255,255,255,0.05); padding:8px 12px; border-radius:6px;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; background:rgba(255,255,255,0.05); padding:10px 12px; border-radius:8px; border: 1px solid rgba(56, 189, 248, 0.2);">
                         <div style="display:flex; align-items:center; gap:10px;">
-                            <span style="font-weight:bold; color:#38bdf8; width:20px;">#${index + 1}</span>
-                            ${pilotAvatar}
-                            <span style="font-size:14px; color:#fff; font-weight:500; max-width:110px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${pilotName}</span>
+                            <span style="font-weight:bold; color:#38bdf8; width:22px; font-size:14px;">#${index + 1}</span>
+                            ${avatarHtml}
+                            <div style="display:flex; flex-direction:column;">
+                                <span style="font-size:13px; color:#fff; font-weight:600; max-width:110px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${pilotName}</span>
+                                <span style="font-size:10px; color:#38bdf8; display:flex; align-items:center; gap:3px;">${svgIcons.rocket} Mode: ${row.selected_ship}</span>
+                            </div>
                         </div>
                         <div style="text-align:right;">
-                            <span style="color:#facc15; font-weight:bold; font-size:13px; display:block;">⭐ ${row.score || 0}</span>
-                            <span style="font-size:10px; color:#94a3b8;">${row.selected_ship || 'pulse'}</span>
+                            <span style="color:#facc15; font-weight:bold; font-size:13px; display:flex; align-items:center; justify-content:flex-end; gap:3px;">${svgIcons.star} ${row.score || 0} pts</span>
+                            <span style="font-size:11px; color:#ffd600; display:flex; align-items:center; justify-content:flex-end; gap:3px; margin-top:2px;">${svgIcons.coin} ${row.coins || 0}</span>
                         </div>
                     </div>
                 `;
@@ -168,14 +244,15 @@ async function fetchLeaderboard() {
             html += "</div>";
             leaderboardList.innerHTML = html;
         } else {
-            leaderboardList.innerHTML = "No scores recorded yet!";
+            leaderboardList.innerHTML = `<div style='color:#94a3b8; text-align:center; padding: 20px 0;'>No active scores recorded in ${shipMode.toUpperCase()} mode over the past 30 days!</div>`;
         }
     } catch (err) {
         console.error("Error fetching leaderboard:", err);
-        if (leaderboardList) leaderboardList.innerHTML = "Failed to load leaderboard.";
+        leaderboardList.innerHTML = "<div style='color:#ef4444; text-align:center;'>Failed to sync leaderboard data.</div>";
     }
 }
 
+// Mobile Touch Controls
 const leftBtn = document.getElementById("leftBtn");
 const rightBtn = document.getElementById("rightBtn");
 
@@ -189,15 +266,16 @@ if (leftBtn && rightBtn) {
 if (ultiBtn) ultiBtn.onclick = triggerUltimate;
 if (dashBtn) dashBtn.onclick = triggerDash;
 
-// Canvas Touch Drag support
-canvas.addEventListener("touchmove", (e) => {
-    e.preventDefault();
-    if (!game || paused) return;
-    let touch = e.touches[0];
-    player.x = touch.clientX - player.w / 2;
-    if (player.x < 0) player.x = 0;
-    if (player.x + player.w > canvas.width) player.x = canvas.width - player.w;
-}, { passive: false });
+if (canvas) {
+    canvas.addEventListener("touchmove", (e) => {
+        e.preventDefault();
+        if (!game || paused) return;
+        let touch = e.touches[0];
+        player.x = touch.clientX - player.w / 2;
+        if (player.x < 0) player.x = 0;
+        if (player.x + player.w > canvas.width) player.x = canvas.width - player.w;
+    }, { passive: false });
+}
 
 if (toggleBtn) {
     toggleBtn.onclick = () => {
@@ -214,7 +292,7 @@ window.addEventListener("deviceorientation", (e) => {
     }
 });
 
-// Shop listeners
+// Shop Logic
 if (shopBtn) {
     shopBtn.onclick = () => {
         if (!game) return;
@@ -241,7 +319,7 @@ if (buyFireRate) {
             shipTypes[selectedShip].fireRate = Math.max(2, shipTypes[selectedShip].fireRate - 2);
             if(shopCoins) shopCoins.textContent = coins;
             updateHUD();
-            saveUserData();
+            if (currentUser) saveUserData();
         }
     };
 }
@@ -254,7 +332,7 @@ if (buyShield) {
             player.shield = true;
             if(shopCoins) shopCoins.textContent = coins;
             updateHUD();
-            saveUserData();
+            if (currentUser) saveUserData();
         }
     };
 }
@@ -267,7 +345,7 @@ if (buyHealth) {
             lives += 6;
             if(shopCoins) shopCoins.textContent = coins;
             updateHUD();
-            saveUserData();
+            if (currentUser) saveUserData();
         }
     };
 }
@@ -355,7 +433,7 @@ function shoot() {
 }
 
 function triggerScenario() {
-    if (scenarioEvent || monsterActive) return;
+    if (scenarioEvent || monsterActive || !canvas) return;
     const events = ["asteroid", "warp"];
     scenarioEvent = events[Math.floor(Math.random() * events.length)];
     scenarioTimer = 350;
@@ -365,7 +443,7 @@ function triggerScenario() {
 }
 
 function spawnEnemy() {
-    if (monsterActive || timeFreeze) return; 
+    if (monsterActive || timeFreeze || !canvas) return; 
     const s = 42;
     enemies.push({ 
         x: Math.random() * (canvas.width - s), 
@@ -377,6 +455,7 @@ function spawnEnemy() {
 }
 
 function spawnAsteroid() {
+    if (!canvas) return;
     const size = Math.random() * 30 + 25;
     asteroids.push({
         x: Math.random() * (canvas.width - size),
@@ -397,6 +476,7 @@ function spawnPowerup(x, y) {
 }
 
 function spawnMonster() {
+    if (!canvas) return;
     monsterActive = true;
     if(monsterAlert) {
         monsterAlert.style.display = "block";
@@ -436,14 +516,17 @@ function hitPlayer() {
     if (lives <= 0) gameOver();
 }
 
-function gameOver() {
+async function gameOver() {
     game = false;
     if (finalScore) finalScore.textContent = score;
     if (gameOverScreen) gameOverScreen.classList.add("show");
-    saveUserData();
+    
+    if (currentUser) {
+        await saveUserData();
+    }
 }
 
-function startGame() {
+async function startGame() {
     resize();
     game = true;
     paused = false;
@@ -454,8 +537,10 @@ function startGame() {
     particles = []; enemyBullets = []; powerups = []; coinDrops = [];
     monsterActive = false; monster = null;
     
-    player.x = canvas.width / 2 - player.w / 2;
-    player.y = canvas.height - 120;
+    if (canvas) {
+        player.x = canvas.width / 2 - player.w / 2;
+        player.y = canvas.height - 120;
+    }
     player.speed = shipTypes[selectedShip].speed;
     
     if (startScreen) startScreen.classList.remove("show");
@@ -464,46 +549,44 @@ function startGame() {
     update();
 }
 
-const startBtn = document.getElementById("startBtn");
-const restartBtn = document.getElementById("restartBtn");
 if(startBtn) startBtn.onclick = startGame;
 if(restartBtn) restartBtn.onclick = startGame;
 
-// --- SUPABASE USER DATA SYNC SYSTEM ---
+// Database Load & Save Logic
 async function loadUserData() {
     try {
-        if (!window.supabaseClient) return;
-        const { data: { user } } = await window.supabaseClient.auth.getUser();
-        if (!user) return;
+        if (!window.supabaseClient || !currentUser) return;
 
-        const { data, error } = await window.supabaseClient
+        const { data: profileData } = await window.supabaseClient
+            .from('profiles')
+            .select('full_name, avatar_url')
+            .eq('id', currentUser.id)
+            .maybeSingle();
+
+        let fullName = profileData?.full_name || currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || "Cyber Pilot";
+        let avatarUrl = profileData?.avatar_url || currentUser.user_metadata?.avatar_url || currentUser.user_metadata?.picture || "";
+
+        const { data } = await window.supabaseClient
             .from('game_profiles')
             .select('*')
-            .eq('id', user.id)
+            .eq('id', currentUser.id)
             .maybeSingle();
 
         if (data) {
             coins = data.coins || 0;
-            selectedShip = data.selected_ship || 'pulse';
+            if (data.selected_ship) selectedShip = data.selected_ship;
             updateHUD();
             setActiveShipCard(selectedShip);
-        } else {
-            let fullName = user.user_metadata?.full_name || user.user_metadata?.name || "Cyber Pilot";
-            let avatarUrl = user.user_metadata?.avatar_url || user.user_metadata?.picture || "";
 
-            const { data: profileData } = await window.supabaseClient
-                .from('profiles')
-                .select('full_name, avatar_url')
-                .eq('id', user.id)
-                .maybeSingle();
-
-            if (profileData) {
-                if (profileData.full_name) fullName = profileData.full_name;
-                if (profileData.avatar_url) avatarUrl = profileData.avatar_url;
+            if (data.name !== fullName || data.avatar_url !== avatarUrl) {
+                await window.supabaseClient
+                    .from('game_profiles')
+                    .update({ name: fullName, avatar_url: avatarUrl })
+                    .eq('id', currentUser.id);
             }
-
+        } else {
             await window.supabaseClient.from('game_profiles').insert([{
-                id: user.id,
+                id: currentUser.id,
                 score: 0,
                 coins: 0,
                 selected_ship: selectedShip,
@@ -518,29 +601,21 @@ async function loadUserData() {
 
 async function saveUserData() {
     try {
-        if (!window.supabaseClient) return;
-        const { data: { user } } = await window.supabaseClient.auth.getUser();
-        if (!user) return;
-
-        let fullName = user.user_metadata?.full_name || user.user_metadata?.name || "Cyber Pilot";
-        let avatarUrl = user.user_metadata?.avatar_url || user.user_metadata?.picture || "";
+        if (!window.supabaseClient || !currentUser) return;
 
         const { data: profileData } = await window.supabaseClient
             .from('profiles')
             .select('full_name, avatar_url')
-            .eq('id', user.id)
+            .eq('id', currentUser.id)
             .maybeSingle();
 
-        if (profileData) {
-            if (profileData.full_name) fullName = profileData.full_name;
-            if (profileData.avatar_url) avatarUrl = profileData.avatar_url;
-        }
+        let fullName = profileData?.full_name || currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || "Cyber Pilot";
+        let avatarUrl = profileData?.avatar_url || currentUser.user_metadata?.avatar_url || currentUser.user_metadata?.picture || "";
 
-        // Fetch existing top score so we don't overwrite high scores with a lower current game score
         const { data: existingGameProfile } = await window.supabaseClient
             .from('game_profiles')
             .select('score')
-            .eq('id', user.id)
+            .eq('id', currentUser.id)
             .maybeSingle();
 
         let highestScore = Math.max(score, existingGameProfile?.score || 0);
@@ -548,14 +623,15 @@ async function saveUserData() {
         await window.supabaseClient
             .from('game_profiles')
             .upsert({
-                id: user.id,
+                id: currentUser.id,
                 score: highestScore,
                 coins: coins,
                 selected_ship: selectedShip,
                 name: fullName,
                 avatar_url: avatarUrl,
-                updated_at: new Date()
+                updated_at: new Date().toISOString()
             }, { onConflict: 'id' });
+
     } catch (err) {
         console.error("Error saving user data:", err);
     }
@@ -571,15 +647,17 @@ function setActiveShipCard(shipName) {
     });
 }
 
-// Auto Load profile on page ready
+// Auto Load Init
 window.addEventListener('DOMContentLoaded', async () => {
     resize();
-    setTimeout(loadUserData, 800);
+    setTimeout(async () => {
+        await checkAuthStatus();
+    }, 400);
 });
-// ---------------------------------------
 
+// Main Game Loop
 function update() {
-    if (!game || paused) return;
+    if (!game || paused || !ctx) return;
 
     ctx.save();
     if (screenShake > 0) {
@@ -711,7 +789,7 @@ function update() {
             coins += 10;
             addFloatingText(c.x, c.y, "+10 🪙", "#ffd600");
             coinDrops.splice(i, 1); updateHUD();
-            saveUserData();
+            if (currentUser) saveUserData();
         }
     });
 
