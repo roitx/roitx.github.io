@@ -1,10 +1,54 @@
 var allTests = [];
 var currentPreviewTest = null;
 
-// Page load hote hi tests fetch honge
+// Page load hote hi Admin check hoga, uske baad hi tests fetch honge
 window.onload = function() {
-  fetchPublishedTests();
+  checkAdminAuth();
 };
+
+// --- STRICT ADMIN AUTHENTICATION CHECK ---
+async function checkAdminAuth() {
+  var loaderBox = document.getElementById("loaderBox");
+  var statusMsg = document.getElementById("statusMsg");
+
+  if (!window.supabaseClient) {
+    alert("❌ Supabase client initialize nahi hua hai!");
+    window.location.href = "index.html";
+    return;
+  }
+
+  try {
+    // 1. Session check
+    const { data: { session }, error: sessionError } = await window.supabaseClient.auth.getSession();
+    
+    if (sessionError || !session) {
+      alert("⚠️ Unauthorized access! Kripya pehle Admin account se login karein.");
+      window.location.href = "index.html";
+      return;
+    }
+
+    // 2. Profile se Role verify karna
+    const { data: profile, error: profileError } = await window.supabaseClient
+      .from('profiles')
+      .select('role')
+      .eq('id', session.user.id)
+      .single();
+
+    if (profileError || !profile || profile.role !== 'admin') {
+      alert("🚫 Access Denied! Sirf Admin hi is page ko access kar sakte hain.");
+      window.location.href = "index.html";
+      return;
+    }
+
+    // Authorization successful -> Tests fetch karo
+    fetchPublishedTests();
+
+  } catch (err) {
+    console.error("Auth Check Error:", err);
+    alert("❌ Security Check Error: " + err.message);
+    window.location.href = "index.html";
+  }
+}
 
 function fetchPublishedTests() {
   var loaderBox = document.getElementById("loaderBox");
@@ -14,16 +58,6 @@ function fetchPublishedTests() {
   if (loaderBox) loaderBox.style.display = "block";
   if (testsContainer) testsContainer.innerHTML = "";
   if (statusMsg) statusMsg.style.display = "none";
-
-  if (!window.supabaseClient) {
-    if (loaderBox) loaderBox.style.display = "none";
-    if (statusMsg) {
-      statusMsg.className = "status-msg error";
-      statusMsg.innerText = "❌ Error: Supabase client initialize nahi hua hai!";
-      statusMsg.style.display = "block";
-    }
-    return;
-  }
 
   window.supabaseClient
     .from('tests')
