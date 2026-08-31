@@ -1,0 +1,232 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  background: #e0e5ec;
+  padding: 30px 15px;
+  position: relative;
+  overflow-x: hidden;
+  visibility: visible !important; /* Fully visible by default */
+}
+
+
+body.admin-authenticated {
+  visibility: visible !important;
+}
+
+.bg-glow {
+  position: fixed;
+  width: 380px;
+  height: 380px;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.35;
+  z-index: 0;
+  animation: float 12s infinite alternate ease-in-out;
+}
+.bg-glow.top-left { background: #8E2DE2; top: -60px; left: -60px; }
+.bg-glow.bottom-right { background: #4A00E0; bottom: -60px; right: -60px; }
+
+@keyframes float {
+  to { transform: translateY(-30px) scale(1.05); }
+}
+
+.admin-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 650px;
+  padding: 28px 22px;
+  border-radius: 28px;
+  background: #e0e5ec;
+  box-shadow: 20px 20px 40px #b8bec7, -20px -20px 40px #ffffff;
+}
+
+.header-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.back-btn {
+  background: #e0e5ec;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 12px;
+  color: #4a5568;
+  cursor: pointer;
+  box-shadow: 4px 4px 8px #b8bec7, -4px -4px 8px #ffffff;
+  transition: 0.2s ease;
+}
+
+.back-btn:hover { color: #8E2DE2; }
+.back-btn:active { box-shadow: inset 3px 3px 6px #b8bec7, inset -3px -3px 6px #ffffff; }
+
+h1 {
+  font-size: 22px;
+  color: #2d3748;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+p.subtitle {
+  font-size: 13px;
+  color: #718096;
+  margin-bottom: 20px;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 15px;
+}
+
+.form-group { text-align: left; }
+
+.input-box {
+  width: 100%;
+  padding: 11px 14px;
+  border: none;
+  border-radius: 14px;
+  background: #e0e5ec;
+  box-shadow: inset 4px 4px 8px #b8bec7, inset -4px -4px 8px #ffffff;
+  outline: none;
+  font-size: 13px;
+  color: #2d3748;
+}
+
+.tests-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.test-item {
+  background: #e0e5ec;
+  padding: 16px 18px;
+  border-radius: 18px;
+  box-shadow: 6px 6px 14px #b8bec7, -6px -6px 14px #ffffff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+
+.test-info h3 {
+  font-size: 14px;
+  color: #2d3748;
+  margin-bottom: 6px;
+}
+
+.test-badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 10px;
+  box-shadow: inset 2px 2px 4px #b8bec7, inset -2px -2px 4px #ffffff;
+  color: #8E2DE2;
+}
+
+.btn-delete {
+  background: #e0e5ec;
+  border: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  color: #e53e3e;
+  cursor: pointer;
+  box-shadow: 4px 4px 8px #b8bec7, -4px -4px 8px #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.2s ease;
+}
+
+.btn-delete:active {
+  box-shadow: inset 3px 3px 6px #b8bec7, inset -3px -3px 6px #ffffff;
+}
+
+.loader-box {
+  text-align: center;
+  margin: 20px 0;
+  color: #8E2DE2;
+}
+
+.status-msg {
+  font-size: 13px;
+  margin-top: 12px;
+  font-weight: 600;
+  text-align: center;
+  display: none;
+}
+.status-msg.error { color: #e53e3e; display: block; }
+/* Existing styles... */
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(5px);
+  z-index: 99;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 15px;
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 480px;
+  background: #e0e5ec;
+  padding: 24px;
+  border-radius: 24px;
+  box-shadow: 12px 12px 24px #b8bec7, -12px -12px 24px #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modal-card h2 {
+  font-size: 18px;
+  color: #2d3748;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.save-modal-btn {
+  background: #8E2DE2 !important;
+  color: #fff !important;
+}

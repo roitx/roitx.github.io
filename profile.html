@@ -56,20 +56,29 @@
     </div>
 
     <div class="form-group">
-      <label><i class="fa-solid fa-phone"></i> Phone Number</label>
-      <div class="phone-wrapper">
-        <select id="countryCodeSelect" class="input-box">
-          <option value="+91">+91 (IN)</option>
-          <option value="+1">+1 (US)</option>
-          <option value="+971">+971 (UAE)</option>
-          <option value="+977">+977 (NP)</option>
-          <option value="+880">+880 (BD)</option>
-          <option value="+92">+92 (PK)</option>
-          <option value="+44">+44 (UK)</option>
-        </select>
-        <input type="tel" id="phoneInput" class="input-box" placeholder="10-digit Mobile No">
-      </div>
-    </div>
+  <label><i class="fa-solid fa-phone"></i> Phone Number</label>
+  <div class="phone-wrapper">
+    <select id="countryCodeSelect" class="input-box">
+      <option value="+91">+91 (IN)</option>
+      <option value="+1">+1 (US)</option>
+      <option value="+971">+971 (UAE)</option>
+      <option value="+977">+977 (NP)</option>
+      <option value="+880">+880 (BD)</option>
+      <option value="+92">+92 (PK)</option>
+      <option value="+44">+44 (UK)</option>
+    </select>
+    <!-- Numbers only & Max 10 digits restriction -->
+    <input 
+      type="tel" 
+      id="phoneInput" 
+      class="input-box" 
+      placeholder="10-digit Mobile No" 
+      maxlength="10" 
+      oninput="this.value = this.value.replace(/[^0-9]/g, '');"
+    >
+  </div>
+</div>
+
 
     <!-- Section 2: Academic Info -->
     <div class="section-title"><i class="fa-solid fa-graduation-cap"></i> Academic Details</div>
@@ -106,6 +115,7 @@
       <input type="text" id="institutionInput" class="input-box" placeholder="e.g. KV School / Allen / Physics Wallah">
     </div>
 
+    <!-- UPDATED: Grid layout with City, State & Pincode -->
     <div class="grid-2">
       <div class="form-group">
         <label><i class="fa-solid fa-city"></i> City</label>
@@ -115,6 +125,12 @@
         <label><i class="fa-solid fa-map-location-dot"></i> State</label>
         <input type="text" id="stateInput" class="input-box" placeholder="Your State">
       </div>
+    </div>
+
+    <!-- NEW PINCODE FIELD FOR LEADERBOARD -->
+    <div class="form-group">
+      <label><i class="fa-solid fa-location-pin"></i> Area Pincode <span style="color:#5a2eff; font-size:10px;">(Required for Leaderboard)</span></label>
+      <input type="text" id="pincodeInput" class="input-box" placeholder="e.g. 800001" maxlength="6">
     </div>
 
     <p id="statusMsg" class="status-msg"></p>
@@ -130,14 +146,22 @@
       </button>
     </div>
 
-    <!-- Admin Buttons -->
-    <button class="btn btn-admin" id="adminBtn" style="display: none;" onclick="goToAdminPanel()">
-      <i class="fa-solid fa-shield-halved"></i> Open Admin Panel
-    </button>
-    <!-- REPLACED BUTTON: Send Broadcast Notification -->
-    <button class="btn btn-admin" id="sendNotifBtn" style="display: none; margin-top: 8px; background: linear-gradient(135deg, #00d2ff, #0072ff); color: #fff;" onclick="window.location.href='admin-notifications.html'">
-      <i class="fa-solid fa-paper-plane"></i> Send Notification
-    </button>
+  <!-- Admin Buttons -->
+<button class="btn btn-admin" id="adminBtn" style="display: none;" onclick="goToAdminPanel()">
+  <i class="fa-solid fa-shield-halved"></i> Open Admin Panel
+</button>
+<button class="btn btn-admin" id="sendNotifBtn" style="display: none; margin-top: 8px; background: linear-gradient(135deg, #00d2ff, #0072ff); color: #fff;" onclick="goToSendNotification()">
+  <i class="fa-solid fa-paper-plane"></i> Send Notification
+</button>
+<!-- NEW ADMIN BUTTON 1: UPLOAD TEST -->
+<button class="btn btn-admin" id="uploadTestBtn" style="display: none; margin-top: 8px; background: linear-gradient(135deg, #11998e, #38ef7d); color: #fff;" onclick="goToUploadTest()">
+  <i class="fa-solid fa-file-arrow-up"></i> Upload Manual Test
+</button>
+<!-- NEW ADMIN BUTTON 2: AI TEST CREATOR -->
+<button class="btn btn-admin" id="aiTestBtn" style="display: none; margin-top: 8px; background: linear-gradient(135deg, #8E2DE2, #4A00E0); color: #fff;" onclick="goToAiTestCreator()">
+  <i class="fa-solid fa-wand-magic-sparkles"></i> Create AI Test
+</button>
+
 
     <!-- General Action Buttons -->
     <div class="btn-group">

@@ -3,57 +3,124 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tests</title>
+    <title>Tests Center</title>
     <link rel="stylesheet" href="tests.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
 <header>
-    <h2>📘 Tests Center</h2>
+    <h2><i class="fa-solid fa-book-bookmark" style="color: #007bff; margin-right: 8px;"></i>Tests Center</h2>
 
     <label class="switch">
-  <input type="checkbox" id="modeToggle">
-  <span class="slider">
-    <span class="icon sun">🔆</span>
-    <span class="icon moon">🌙</span>
-  </span>
+      <input type="checkbox" id="modeToggle">
+      <span class="slider">
+        <span class="icon sun"><i class="fa-solid fa-sun"></i></span>
+        <span class="icon moon"><i class="fa-solid fa-moon"></i></span>
+      </span>
     </label>
 </header>
 
-<section class="tests-container">
+<!-- Navigation Tabs -->
+<div class="tabs-bar">
+    <button id="tabTestsBtn" class="tab-btn active" onclick="switchTab('tests')">
+        <i class="fa-solid fa-file-pen"></i> Available Tests
+    </button>
+    <button id="tabLeaderboardBtn" class="tab-btn" onclick="switchTab('leaderboard')">
+        <i class="fa-solid fa-trophy"></i> Leaderboard
+    </button>
+</div>
 
-    <!-- Test Card 1 -->
-    <div class="test-card">
-        <h3>Chapter Test</h3>
-        <p>10 Questions • Auto-check • Instant Score</p>
-        <button onclick="startTest('chapter')">Start Test</button>
-        <span class="badge-new">NEW</span>
+<!-- SECTION 1: DYNAMIC TESTS WITH BOARD & CLASS FILTERS -->
+<div id="testsSection">
+    <div class="filter-bar">
+        <div class="search-input-wrapper">
+            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+            <input type="text" id="searchInput" onkeyup="filterStudentTests()" placeholder="Search test title...">
+        </div>
+        
+        <!-- Board Filter (Populated dynamically) -->
+        <div class="select-wrapper">
+            <i class="fa-solid fa-building-columns filter-icon"></i>
+            <select id="filterBoard" onchange="filterStudentTests()">
+                <option value="all">All Boards / Exams</option>
+            </select>
+        </div>
+
+        <!-- Class Filter (Populated dynamically) -->
+        <div class="select-wrapper">
+            <i class="fa-solid fa-graduation-cap filter-icon"></i>
+            <select id="filterClass" onchange="filterStudentTests()">
+                <option value="all">All Classes</option>
+            </select>
+        </div>
+
+        <!-- Subject Filter (Populated dynamically) -->
+        <div class="select-wrapper">
+            <i class="fa-solid fa-book filter-icon"></i>
+            <select id="filterSubject" onchange="filterStudentTests()">
+                <option value="all">All Subjects</option>
+            </select>
+        </div>
     </div>
 
-    <!-- Test Card 2 -->
-    <div class="test-card">
-        <h3>Unit Test</h3>
-        <p>20 Questions • Timer Enabled • Detailed Review</p>
-        <button onclick="startTest('unit')">Start Test</button>
+    <div id="loaderBox" class="loader-box">
+        <i class="fa-solid fa-circle-notch fa-spin"></i> Loading available tests...
+    </div>
+    <div id="statusMsg" class="status-msg" style="display: none;"></div>
+
+    <section id="studentTestsContainer" class="tests-container"></section>
+</div>
+
+<!-- SECTION 2: LEADERBOARD -->
+<div id="leaderboardSection" style="display: none;">
+    <div class="leaderboard-filter">
+        <h3><i class="fa-solid fa-crown" style="color: #f6e05e;"></i> Top Rankers</h3>
+        <select id="leaderboardFilterTest" onchange="loadLeaderboardData()">
+            <option value="ALL">All Tests Combined</option>
+        </select>
     </div>
 
-    <!-- Test Card 3 -->
-    <div class="test-card">
-        <h3>Full Syllabus Test</h3>
-        <p>50 Questions • Advanced Mode • Leaderboard</p>
-        <button onclick="startTest('full')">Start Test</button>
+    <div class="table-container">
+        <table class="leaderboard-table">
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Student Name</th>
+                    <th>Area</th>
+                    <th>Test Title</th>
+                    <th>Score</th>
+                </tr>
+            </thead>
+            <tbody id="leaderboardBody"></tbody>
+        </table>
     </div>
-
-</section>
-
-<div class="popup" id="testPopup">
-    <div class="popup-box">
-        <h3 id="testTitle"></h3>
-        <p>This feature will open the test window.</p>
-        <button onclick="closePopup()">OK</button>
+    <div id="leaderboardLoader" class="loader-box" style="display: none;">
+        <i class="fa-solid fa-circle-notch fa-spin"></i> Loading Leaderboard...
     </div>
 </div>
 
+<!-- MOVABLE FLOATING HOME BUTTON -->
+<div id="movableHomeBtn" class="home-btn-wrapper">
+    <a href="index.html" class="home-btn" title="Go to Home">
+        <i class="fa-solid fa-house-chimney"></i>
+    </a>
+</div>
+
+<!-- AUTH POPUP MODAL (Same component logic as calculator.js) -->
+<div id="authModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; justify-content: center; align-items: center;">
+    <div class="modal-content" style="background: #fff; padding: 25px; border-radius: 12px; width: 90%; max-width: 350px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
+        <h3 style="margin-bottom: 10px; color: #333;"><i class="fa-solid fa-lock" style="color: #007bff;"></i> Login Required</h3>
+        <p id="authModalMsg" style="color: #666; font-size: 14px; margin-bottom: 20px;">Test attempt karne ke liye pehle login karein!</p>
+        <div style="display: flex; gap: 10px; justify-content: center;">
+            <button onclick="closeAuthModal()" style="padding: 8px 16px; background: #ccc; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">Cancel</button>
+            <button onclick="redirectToLogin()" style="padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">Login Now</button>
+        </div>
+    </div>
+</div>
+
+<script src="supabase.js"></script>
 <script src="tests.js"></script>
 </body>
 </html>

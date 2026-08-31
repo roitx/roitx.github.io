@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AI Test Generator - Admin Panel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- FontAwesome & Base CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="admin-ai-test.css">
+
+  <!-- Supabase CDN + Central Config -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+</head>
+
+<body oncontextmenu="return false;">
+
+  <div class="bg-glow top-left"></div>
+  <div class="bg-glow bottom-right"></div>
+
+  <div class="admin-card">
+    <div class="security-banner">
+      <i class="fa-solid fa-shield-halved"></i> SECURE ADMIN ENGINE: Edge Function & Supabase Direct Pipeline
+    </div>
+
+    <div class="header-nav">
+      <button class="back-btn" onclick="window.location.href='admin-manage-tests.html'">
+        <i class="fa-solid fa-list-check"></i> Manage Tests
+      </button>
+      <div class="admin-badge"><i class="fa-solid fa-bolt"></i> Gemini Edge AI</div>
+    </div>
+
+    <h1><i class="fa-solid fa-wand-magic-sparkles"></i> AI Test Generator</h1>
+    <p class="subtitle">Instant Board/JEE/NEET Level MCQ Quizzes generate karke database me publish karein.</p>
+
+    <!-- Test Meta Details -->
+    <div class="section-title"><i class="fa-solid fa-sliders"></i> Test Parameters</div>
+
+    <!-- Category & Level Selection -->
+    <div class="grid-2">
+      <div class="form-group">
+        <label><i class="fa-solid fa-graduation-cap"></i> Exam Category</label>
+        <select id="targetCategory" class="input-box" onchange="updateSubCategories()">
+          <option value="board" selected>School & Board Exams (Class 9 - 12)</option>
+          <option value="competitive">Competitive Exams (JEE / NEET)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label><i class="fa-solid fa-book-open"></i> Class / Target Exam</label>
+        <select id="targetClass" class="input-box" onchange="updateSubjectOptions()">
+          <!-- Populated dynamically via JS -->
+        </select>
+      </div>
+    </div>
+
+    <!-- Stream & Subject Selection -->
+    <div class="grid-2">
+      <div class="form-group" id="streamGroup" style="display: none;">
+        <label><i class="fa-solid fa-microscope"></i> Stream</label>
+        <select id="streamSelect" class="input-box" onchange="updateSubjectOptions()">
+          <option value="science_math" selected>Science (Mathematics)</option>
+          <option value="science_bio">Science (Biology)</option>
+          <option value="arts">Arts / Humanities</option>
+          <option value="commerce">Commerce</option>
+        </select>
+      </div>
+
+      <div class="form-group" id="subjectGroup">
+        <label><i class="fa-solid fa-flask"></i> Subject</label>
+        <select id="subjectSelect" class="input-box">
+          <!-- Populated dynamically via JS -->
+        </select>
+      </div>
+    </div>
+
+    <!-- Chapter / Topic Input -->
+    <div class="form-group">
+      <label><i class="fa-solid fa-heading"></i> Chapter / Topic Name</label>
+      <input type="text" id="topicInput" class="input-box" placeholder="e.g. Determinants, Solid State, India civilization and culture...">
+    </div>
+
+    <!-- Exam Rules Settings -->
+    <div class="grid-2">
+      <div class="form-group">
+        <label><i class="fa-solid fa-language"></i> Language</label>
+        <select id="languageSelect" class="input-box">
+          <option value="English" selected>English</option>
+          <option value="Hindi">Hindi</option>
+          <option value="Bilingual (Hindi + English)">Bilingual (Hinglish)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label><i class="fa-solid fa-clock"></i> Time Limit (Mins)</label>
+        <input type="number" id="timeLimitInput" class="input-box" value="15" min="1">
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="form-group">
+        <label><i class="fa-solid fa-circle-plus"></i> Marks Per Que (+)</label>
+        <input type="number" id="marksPerQueInput" class="input-box" value="4" step="0.5">
+      </div>
+
+      <div class="form-group">
+        <label><i class="fa-solid fa-circle-minus"></i> Negative Mark (-)</label>
+        <input type="number" id="negativeMarkInput" class="input-box" value="1" step="0.25">
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="form-group">
+        <label><i class="fa-solid fa-list-ol"></i> Total Questions</label>
+        <select id="questionsCount" class="input-box">
+          <option value="5">5 Questions</option>
+          <option value="10" selected>10 Questions</option>
+          <option value="15">15 Questions</option>
+          <option value="20">20 Questions</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label><i class="fa-solid fa-layer-group"></i> Difficulty Level</label>
+        <select id="difficultySelect" class="input-box">
+          <option value="Easy (Board Level Direct Questions)">Easy (Board Level)</option>
+          <option value="Medium (NCERT & PYQ Mixed)" selected>Medium (NCERT + PYQ)</option>
+          <option value="Hard (Topper Level Conceptual)">Hard (Topper Level)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Additional Custom Prompting -->
+    <div class="form-group">
+      <label><i class="fa-solid fa-comment-dots"></i> Special Instructions (Optional)</label>
+      <input type="text" id="customPrompt" class="input-box" placeholder="e.g. Include Bihar Board PYQs, conceptual questions...">
+    </div>
+
+    <!-- Generate Action Button -->
+    <button class="btn btn-ai-generate" id="generateBtn" onclick="generateAiQuiz()">
+      <i class="fa-solid fa-wand-magic-sparkles"></i> Generate Quiz via Edge AI
+    </button>
+
+    <div id="loaderBox" class="loader-box" style="display: none;">
+      <i class="fa-solid fa-circle-notch fa-spin"></i>
+      <p id="loaderText">Gemini AI se questions process ho rahe hain...</p>
+    </div>
+
+    <p id="statusMsg" class="status-msg"></p>
+
+    <!-- Quiz Output & Preview Box -->
+    <div id="quizPreviewSection" style="display: none; margin-top: 25px;">
+      <div class="section-title"><i class="fa-solid fa-eye"></i> Generated Quiz Preview</div>
+
+      <div class="form-group">
+        <label><i class="fa-solid fa-file-signature"></i> Final Test Title</label>
+        <input type="text" id="finalTestTitle" class="input-box">
+      </div>
+
+      <div class="form-group">
+        <label><i class="fa-solid fa-code"></i> Generated Data (JSON)</label>
+        <textarea id="jsonOutput" class="json-box" rows="8"></textarea>
+      </div>
+
+      <button class="btn btn-save-db" id="saveDbBtn" onclick="saveQuizToSupabase()">
+        <i class="fa-solid fa-cloud-arrow-up"></i> Publish Test to Supabase Database
+      </button>
+    </div>
+
+  </div>
+
+  <script src="admin-ai-test.js"></script>
+</body>
+</html>
