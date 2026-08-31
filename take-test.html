@@ -235,12 +235,12 @@
         const q = questions[idx];
 
         document.getElementById("currentQNum").innerText = `Question ${idx + 1} of ${questions.length}`;
-        document.getElementById("questionText").innerText = q.question_text || q.question;
+        document.getElementById("questionText").innerText = q.question_text || q.question || q.qText || q.title || '';
 
         const optionsBox = document.getElementById("optionsContainer");
         optionsBox.innerHTML = "";
 
-        const options = q.options || [q.option1, q.option2, q.option3, q.option4];
+        const options = q.options || q.opts || [q.option1, q.option2, q.option3, q.option4];
 
         options.forEach((opt, oIdx) => {
             const card = document.createElement("div");
@@ -281,6 +281,8 @@
     }
 
     function startTimer() {
+        if (timerInterval) clearInterval(timerInterval);
+        
         timerInterval = setInterval(() => {
             timeRemaining--;
             let mins = Math.floor(timeRemaining / 60);
@@ -296,19 +298,30 @@
         }, 1000);
     }
 
-    function parseCorrectOption(val) {
+    // --- SMART CORRECT ANSWER RESOLVER (FIXED BUG) ---
+    function parseCorrectOption(q) {
+        if (!q) return 0;
+        
+        // Dynamic Key Pick (Sabhi possible admin keys ko support karega)
+        let val = q.correct_option !== undefined ? q.correct_option : 
+                 (q.correct !== undefined ? q.correct : 
+                 (q.ans !== undefined ? q.ans : 
+                 (q.correctAnswer !== undefined ? q.correctAnswer : 0)));
+
         if (typeof val === 'number') return val;
-        if (!val) return 0;
+        
         let str = val.toString().trim().toUpperCase();
         if (str === 'A' || str === '0') return 0;
         if (str === 'B' || str === '1') return 1;
         if (str === 'C' || str === '2') return 2;
         if (str === 'D' || str === '3') return 3;
-        return parseInt(str, 10) || 0;
+        
+        let parsed = parseInt(str, 10);
+        return isNaN(parsed) ? 0 : parsed;
     }
 
     function confirmSubmission() {
-        if (confirm("Kyu aap exam submit karna chahte hain?")) {
+        if (confirm("Kya aap exam submit karna chahte hain?")) {
             submitTest();
         }
     }
@@ -322,7 +335,7 @@
         let negMarking = parseFloat(currentTest.negative_marking) || 0;
 
         questions.forEach((q, idx) => {
-            let correctIdx = parseCorrectOption(q.correct_option);
+            let correctIdx = parseCorrectOption(q); // Whole question object pass kiya
             if (userAnswers[idx] !== undefined) {
                 if (userAnswers[idx] === correctIdx) {
                     correctCount++;
@@ -354,7 +367,6 @@
                 return;
             }
 
-            // High Score logic: Upsert ensures duplicate rows for single user are avoided
             const { error } = await window.supabaseClient
                 .from('test_results')
                 .upsert([{
@@ -387,9 +399,9 @@
     function renderSolutions() {
         let html = "";
         questions.forEach((q, idx) => {
-            let correctIdx = parseCorrectOption(q.correct_option);
+            let correctIdx = parseCorrectOption(q); // Whole question object pass kiya
             let userAnsIdx = userAnswers[idx];
-            let options = q.options || [q.option1, q.option2, q.option3, q.option4];
+            let options = q.options || q.opts || [q.option1, q.option2, q.option3, q.option4];
 
             let isCorrect = userAnsIdx === correctIdx;
             let badgeClass = isCorrect ? 'badge-success' : (userAnsIdx === undefined ? 'badge-warning' : 'badge-danger');
@@ -398,9 +410,9 @@
             html += `
                 <div class="sol-card">
                     <span class="badge ${badgeClass}">${badgeText}</span>
-                    <h4 style="margin-bottom: 8px;">Q${idx + 1}. ${q.question_text || q.question}</h4>
-                    <p style="font-size: 14px; margin-bottom: 4px;"><b>Your Choice:</b> ${userAnsIdx !== undefined ? options[userAnsIdx] : 'None'}</p>
-                    <p style="font-size: 14px; color: var(--success); margin-bottom: 6px;"><b>Correct Answer:</b> ${options[correctIdx]}</p>
+                    <h4 style="margin-bottom: 8px;">Q${idx + 1}. ${q.question_text || q.question || q.qText || ''}</h4>
+                    <p style="font-size: 14px; margin-bottom: 4px;"><b>Your Choice:</b> ${userAnsIdx !== undefined ? (options[userAnsIdx] || 'Option ' + (userAnsIdx + 1)) : 'None'}</p>
+                    <p style="font-size: 14px; color: var(--success); margin-bottom: 6px;"><b>Correct Answer:</b> ${options[correctIdx] || 'Option ' + (correctIdx + 1)}</p>
                     ${q.explanation ? `<p style="font-size: 13px; color: #64748b; background: #f8fafc; padding: 8px; border-radius:6px; margin-top:6px;"><i>Explanations: ${q.explanation}</i></p>` : ''}
                 </div>
             `;
@@ -408,5 +420,6 @@
         document.getElementById("solutionsList").innerHTML = html;
     }
 </script>
+
 </body>
 </html>
