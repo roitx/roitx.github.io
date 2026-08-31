@@ -248,7 +248,6 @@ function switchTab(tab) {
         tabTestsBtn.classList.add("active");
         tabLeaderboardBtn.classList.remove("active");
     } else {
-        // Strict Login Verification for Leaderboard
         const userLoggedIn = isLoggedIn || localStorage.getItem("isLoggedIn") === "true";
         if (!userLoggedIn) {
             showAuthModal("Leaderboard dekhne ke liye pehle login karein!");
@@ -334,7 +333,7 @@ function renderPodiumCards(data) {
     container.innerHTML = html;
 }
 
-// 8. LEADERBOARD DATA LOADER (FILTERED BY LOGGED-IN USER PINCODE)
+// 8. LEADERBOARD DATA LOADER (MONTHLY AUTO-RESET & PINCODE FILTERED)
 async function loadLeaderboardData() {
     const tbody = document.getElementById("leaderboardBody");
     const loader = document.getElementById("leaderboardLoader");
@@ -378,7 +377,11 @@ async function loadLeaderboardData() {
             }
         }
 
-        // Query Test Results Filtered by Pincode
+        // 🗓️ Current Month 1st Date calculation (Auto Reset every month)
+        const now = new Date();
+        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
+        // Query Test Results Filtered by Pincode & Current Month
         let query = window.supabaseClient
             .from('test_results')
             .select(`
@@ -388,6 +391,7 @@ async function loadLeaderboardData() {
                 profiles!inner ( full_name, pincode, avatar_url, city )
             `)
             .eq('profiles.pincode', currentPincode)
+            .gte('created_at', firstDayOfMonth)
             .order('score', { ascending: false })
             .limit(30);
 
@@ -411,6 +415,11 @@ async function loadLeaderboardData() {
             let areaName = row.profiles?.city || 'N/A';
             let pincodeText = row.profiles?.pincode ? `<div style="font-size: 11px; color: #718096; margin-top: 2px;">${row.profiles.pincode}</div>` : '';
 
+            // Percentage Calculation
+            let percentage = (row.total_marks && row.total_marks > 0) 
+                ? Math.round((row.score / row.total_marks) * 100) 
+                : 0;
+
             html += `
                 <tr>
                     <td><strong>${rankDisplay}</strong></td>
@@ -425,13 +434,16 @@ async function loadLeaderboardData() {
                         ${pincodeText}
                     </td>
                     <td>${row.tests?.title || 'Test'}</td>
-                    <td><span style="color:#007bff; font-weight:800;">${row.score}</span> / ${row.total_marks}</td>
+                    <td>
+                        <span style="color:#007bff; font-weight:800;">${row.score}</span> / ${row.total_marks}
+                        <div style="font-size: 11px; color: #10b981; font-weight: bold; margin-top: 2px;">(${percentage}%)</div>
+                    </td>
                 </tr>
             `;
         });
 
         if (tbody) {
-            tbody.innerHTML = html || `<tr><td colspan="5" style="text-align:center;">Pincode (${currentPincode}) ke liye koi leaderboard entries nahi mili.</td></tr>`;
+            tbody.innerHTML = html || `<tr><td colspan="5" style="text-align:center;">Pincode (${currentPincode}) ke liye is mahine koi leaderboard entries nahi mili.</td></tr>`;
         }
     } catch (err) {
         if (tbody) {
