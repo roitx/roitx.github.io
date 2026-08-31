@@ -235,7 +235,7 @@ function redirectToLogin() {
     window.location.href = "login.html";
 }
 
-// 7. TAB SWITCHING LOGIC
+// 7. TAB SWITCHING LOGIC WITH STRICT LOGIN GUARD
 function switchTab(tab) {
     const testsSec = document.getElementById("testsSection");
     const leaderSec = document.getElementById("leaderboardSection");
@@ -248,6 +248,13 @@ function switchTab(tab) {
         tabTestsBtn.classList.add("active");
         tabLeaderboardBtn.classList.remove("active");
     } else {
+        // Strict Login Verification for Leaderboard
+        const userLoggedIn = isLoggedIn || localStorage.getItem("isLoggedIn") === "true";
+        if (!userLoggedIn) {
+            showAuthModal("Leaderboard dekhne ke liye pehle login karein!");
+            return;
+        }
+
         testsSec.style.display = "none";
         leaderSec.style.display = "block";
         tabTestsBtn.classList.remove("active");
@@ -256,213 +263,11 @@ function switchTab(tab) {
     }
 }
 
-// 8. HIGH PERFORMANCE RESPONSIVE LEADERBOARD DATA LOADER WITH PHOTO & AREA SUPPORT
-async function loadLeaderboardData() {
-    const tbody = document.getElementById("leaderboardBody");
-    const loader = document.getElementById("leaderboardLoader");
-    const filterSelect = document.getElementById("leaderboardFilterTest");
-    const selectedTestId = filterSelect ? filterSelect.value : "ALL";
-
-    if (loader) loader.style.display = "block";
-
-    try {
-        let query = window.supabaseClient
-            .from('test_results')
-            .select(`
-                score,
-                total_marks,
-                tests ( title ),
-                profiles ( full_name, pincode, avatar_url, city )
-            `)
-            .order('score', { ascending: false })
-            .limit(30);
-
-        if (selectedTestId && selectedTestId !== "ALL") {
-            query = query.eq('test_id', selectedTestId);
-        }
-
-        const { data, error } = await query;
-        if (error) throw error;
-
-        // Render Top 3 Podium Cards with Photos
-        renderPodiumCards(data || []);
-
-        let html = "";
-        const defaultAvatar = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
-
-        (data || []).forEach((row, index) => {
-            let rankClass = index === 0 ? '🥇' : (index === 1 ? '🥈' : (index === 2 ? '🥉' : `#${index + 1}`));
-            let userPhoto = row.profiles?.avatar_url || defaultAvatar;
-            let areaName = row.profiles?.city || row.profiles?.pincode || 'N/A';
-
-            html += `
-                <tr>
-                    <td><strong>${rankClass}</strong></td>
-                    <td>
-                        <div class="student-name-cell">
-                            <img src="${userPhoto}" class="table-avatar" alt="profile" onerror="this.src='${defaultAvatar}'">
-                            <b>${row.profiles?.full_name || 'Student'}</b>
-                        </div>
-                    </td>
-                    <td><i class="fa-solid fa-location-dot" style="color:#a0aec0; font-size:12px;"></i> ${areaName}</td>
-                    <td>${row.tests?.title || 'Test'}</td>
-                    <td><span style="color:#007bff; font-weight:800;">${row.score}</span> / ${row.total_marks}</td>
-                </tr>
-            `;
-        });
-        tbody.innerHTML = html || `<tr><td colspan="5" style="text-align:center;">No leaderboard entries found.</td></tr>`;
-    } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:red;">Error loading leaderboard: ${err.message}</td></tr>`;
-    } finally {
-        if (loader) loader.style.display = "none";
-    }
-}
-// TOP 3 PODIUM RENDERER WITH PROFILE PHOTOS
-function renderPodiumCards(data) {
-    let container = document.getElementById("podiumContainer");
-    const defaultAvatar = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
-    
-    if (!container) {
-        const lbSection = document.getElementById("leaderboardSection");
-        if (!lbSection) return;
-        container = document.createElement("div");
-        container.id = "podiumContainer";
-        container.className = "podium-container";
-        const tableContainer = lbSection.querySelector(".table-container");
-        if (tableContainer) {
-            lbSection.insertBefore(container, tableContainer);
-        } else {
-            lbSection.appendChild(container);
-        }
-    }
-
-    if (!data || data.length === 0) {
-        container.innerHTML = "";
-        return;
-    }
-
-    const top1 = data[0] || null;
-    const top2 = data[1] || null;
-    const top3 = data[2] || null;
-
-    let html = "";
-
-    // Rank 2 Card
-    if (top2) {
-        let photo = top2.profiles?.avatar_url || defaultAvatar;
-        html += `
-            <div class="podium-card rank-2">
-                <img src="${photo}" class="podium-avatar" alt="Rank 2" onerror="this.src='${defaultAvatar}'">
-                <div class="podium-badge">2</div>
-                <div class="podium-name">${top2.profiles?.full_name || 'Student'}</div>
-                <div class="podium-score">${top2.score}/${top2.total_marks}</div>
-            </div>
-        `;
-    }
-
-    // Rank 1 Card
-    if (top1) {
-        let photo = top1.profiles?.avatar_url || defaultAvatar;
-        html += `
-            <div class="podium-card rank-1">
-                <i class="fa-solid fa-crown" style="color: #f6e05e; position: absolute; top: -14px; font-size: 18px;"></i>
-                <img src="${photo}" class="podium-avatar" alt="Rank 1" onerror="this.src='${defaultAvatar}'">
-                <div class="podium-badge">1</div>
-                <div class="podium-name">${top1.profiles?.full_name || 'Student'}</div>
-                <div class="podium-score">${top1.score}/${top1.total_marks}</div>
-            </div>
-        `;
-    }
-
-    // Rank 3 Card
-    if (top3) {
-        let photo = top3.profiles?.avatar_url || defaultAvatar;
-        html += `
-            <div class="podium-card rank-3">
-                <img src="${photo}" class="podium-avatar" alt="Rank 3" onerror="this.src='${defaultAvatar}'">
-                <div class="podium-badge">3</div>
-                <div class="podium-name">${top3.profiles?.full_name || 'Student'}</div>
-                <div class="podium-score">${top3.score}/${top3.total_marks}</div>
-            </div>
-        `;
-    }
-
-    container.innerHTML = html;
-}
-
-// 8. HIGH PERFORMANCE RESPONSIVE LEADERBOARD DATA LOADER
-async function loadLeaderboardData() {
-    const tbody = document.getElementById("leaderboardBody");
-    const loader = document.getElementById("leaderboardLoader");
-    const filterSelect = document.getElementById("leaderboardFilterTest");
-    const selectedTestId = filterSelect ? filterSelect.value : "ALL";
-
-    if (loader) loader.style.display = "block";
-
-    try {
-        let query = window.supabaseClient
-            .from('test_results')
-            .select(`
-                score,
-                total_marks,
-                tests ( title ),
-                profiles ( full_name, pincode, avatar_url, city )
-            `)
-            .order('score', { ascending: false })
-            .limit(30);
-
-        if (selectedTestId && selectedTestId !== "ALL") {
-            query = query.eq('test_id', selectedTestId);
-        }
-
-        const { data, error } = await query;
-        if (error) throw error;
-
-        // Render Top 3 Podium Cards
-        renderPodiumCards(data || []);
-
-        let html = "";
-        const defaultAvatar = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
-
-        (data || []).forEach((row, index) => {
-            let rankClass = index === 0 ? '🥇' : (index === 1 ? '🥈' : (index === 2 ? '🥉' : `#${index + 1}`));
-            let userPhoto = row.profiles?.avatar_url || defaultAvatar;
-            let areaName = row.profiles?.city || row.profiles?.pincode || 'N/A';
-
-            html += `
-                <tr>
-                    <td><strong>${rankClass}</strong></td>
-                    <td>
-                        <div class="student-name-cell" style="display: flex; align-items: center; gap: 8px;">
-                            <img src="${userPhoto}" class="table-avatar" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover;" alt="profile" onerror="this.src='${defaultAvatar}'">
-                            <b>${row.profiles?.full_name || 'Student'}</b>
-                        </div>
-                    </td>
-                    <td><i class="fa-solid fa-location-dot" style="color:#a0aec0; font-size:12px;"></i> ${areaName}</td>
-                    <td>${row.tests?.title || 'Test'}</td>
-                    <td><span style="color:#007bff; font-weight:800;">${row.score}</span> / ${row.total_marks}</td>
-                </tr>
-            `;
-        });
-        if (tbody) {
-            tbody.innerHTML = html || `<tr><td colspan="5" style="text-align:center;">No leaderboard entries found.</td></tr>`;
-        }
-    } catch (err) {
-        if (tbody) {
-            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:red;">Error loading leaderboard: ${err.message}</td></tr>`;
-        }
-    } finally {
-        if (loader) loader.style.display = "none";
-    }
-   
-}
 // TOP 3 PODIUM RENDERER WITH SVG ICONS
 function renderPodiumCards(data) {
     let container = document.getElementById("podiumContainer");
     const defaultAvatar = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
-    
-    // SVG Icons
-    const crownSvg = `<svg width="22" height="22" viewBox="0 0 24 24" fill="#f6e05e" style="position: absolute; top: -14px;"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/></svg>`;
+    const crownSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="#f6e05e"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/></svg>`;
     
     if (!container) {
         const lbSection = document.getElementById("leaderboardSection");
@@ -489,7 +294,6 @@ function renderPodiumCards(data) {
 
     let html = "";
 
-    // Rank 2 Card
     if (top2) {
         let photo = top2.profiles?.avatar_url || defaultAvatar;
         html += `
@@ -502,7 +306,6 @@ function renderPodiumCards(data) {
         `;
     }
 
-    // Rank 1 Card
     if (top1) {
         let photo = top1.profiles?.avatar_url || defaultAvatar;
         html += `
@@ -516,7 +319,6 @@ function renderPodiumCards(data) {
         `;
     }
 
-    // Rank 3 Card
     if (top3) {
         let photo = top3.profiles?.avatar_url || defaultAvatar;
         html += `
@@ -532,7 +334,7 @@ function renderPodiumCards(data) {
     container.innerHTML = html;
 }
 
-// 8. LEADERBOARD DATA LOADER (WITH AREA + PINCODE BELOW)
+// 8. LEADERBOARD DATA LOADER (FILTERED BY LOGGED-IN USER PINCODE)
 async function loadLeaderboardData() {
     const tbody = document.getElementById("leaderboardBody");
     const loader = document.getElementById("leaderboardLoader");
@@ -542,14 +344,50 @@ async function loadLeaderboardData() {
     if (loader) loader.style.display = "block";
 
     try {
+        const { data: { user } } = await window.supabaseClient.auth.getUser();
+        if (!user) {
+            showAuthModal("Leaderboard dekhne ke liye pehle login karein!");
+            if (loader) loader.style.display = "none";
+            return;
+        }
+
+        // Fetch user's current pincode
+        const { data: userProfile, error: profileErr } = await window.supabaseClient
+            .from('profiles')
+            .select('pincode')
+            .eq('id', user.id)
+            .maybeSingle();
+
+        let currentPincode = userProfile?.pincode;
+
+        // If Pincode is not updated, prompt user to add one
+        if (!currentPincode || currentPincode.trim() === "") {
+            const enteredPin = prompt("📍 Apne ilake ka Leaderboard dekhne ke liye apna 6-digit Pincode darj karein:");
+            if (enteredPin && enteredPin.trim().length === 6) {
+                currentPincode = enteredPin.trim();
+                await window.supabaseClient
+                    .from('profiles')
+                    .update({ pincode: currentPincode })
+                    .eq('id', user.id);
+            } else {
+                if (tbody) {
+                    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#e53e3e; font-weight:bold; padding:20px;">⚠️ Leaderboard dekhne ke liye valid Pincode add karna zaroori hai. Page refresh karke dobara try karein.</td></tr>`;
+                }
+                renderPodiumCards([]);
+                return;
+            }
+        }
+
+        // Query Test Results Filtered by Pincode
         let query = window.supabaseClient
             .from('test_results')
             .select(`
                 score,
                 total_marks,
                 tests ( title ),
-                profiles ( full_name, pincode, avatar_url, city )
+                profiles!inner ( full_name, pincode, avatar_url, city )
             `)
+            .eq('profiles.pincode', currentPincode)
             .order('score', { ascending: false })
             .limit(30);
 
@@ -564,15 +402,12 @@ async function loadLeaderboardData() {
 
         let html = "";
         const defaultAvatar = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
-        
-        // Inline SVG Icons
         const locationSvg = `<svg width="12" height="12" viewBox="0 0 24 24" fill="#a0aec0" style="vertical-align: middle; margin-right: 3px;"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>`;
         const crownSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="#f6e05e"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/></svg>`;
 
         (data || []).forEach((row, index) => {
             let rankDisplay = index === 0 ? crownSvg : (index === 1 ? '🥈' : (index === 2 ? '🥉' : `#${index + 1}`));
             let userPhoto = row.profiles?.avatar_url || defaultAvatar;
-            
             let areaName = row.profiles?.city || 'N/A';
             let pincodeText = row.profiles?.pincode ? `<div style="font-size: 11px; color: #718096; margin-top: 2px;">${row.profiles.pincode}</div>` : '';
 
@@ -594,8 +429,9 @@ async function loadLeaderboardData() {
                 </tr>
             `;
         });
+
         if (tbody) {
-            tbody.innerHTML = html || `<tr><td colspan="5" style="text-align:center;">No leaderboard entries found.</td></tr>`;
+            tbody.innerHTML = html || `<tr><td colspan="5" style="text-align:center;">Pincode (${currentPincode}) ke liye koi leaderboard entries nahi mili.</td></tr>`;
         }
     } catch (err) {
         if (tbody) {

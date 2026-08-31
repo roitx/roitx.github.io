@@ -88,6 +88,7 @@ shipCards.forEach(card => {
             player.speed = ship.speed;
             addFloatingText(player.x, player.y, "SHIP CHANGED!", ship.color);
         }
+        saveUserData();
     });
 });
 
@@ -106,7 +107,6 @@ window.addEventListener("keydown", e => {
 });
 window.addEventListener("keyup", e => keys[e.key] = false);
 
-// Mobile Controls (Buttons & Touch Drag)
 // Leaderboard Modal Logic
 const leaderboardScreen = document.getElementById("leaderboard-screen");
 const openLeaderboardBtn = document.getElementById("openLeaderboardBtn");
@@ -189,7 +189,7 @@ if (leftBtn && rightBtn) {
 if (ultiBtn) ultiBtn.onclick = triggerUltimate;
 if (dashBtn) dashBtn.onclick = triggerDash;
 
-// Canvas Touch Drag support for smooth Mobile Play
+// Canvas Touch Drag support
 canvas.addEventListener("touchmove", (e) => {
     e.preventDefault();
     if (!game || paused) return;
@@ -241,6 +241,7 @@ if (buyFireRate) {
             shipTypes[selectedShip].fireRate = Math.max(2, shipTypes[selectedShip].fireRate - 2);
             if(shopCoins) shopCoins.textContent = coins;
             updateHUD();
+            saveUserData();
         }
     };
 }
@@ -253,6 +254,7 @@ if (buyShield) {
             player.shield = true;
             if(shopCoins) shopCoins.textContent = coins;
             updateHUD();
+            saveUserData();
         }
     };
 }
@@ -265,6 +267,7 @@ if (buyHealth) {
             lives += 6;
             if(shopCoins) shopCoins.textContent = coins;
             updateHUD();
+            saveUserData();
         }
     };
 }
@@ -445,7 +448,6 @@ function startGame() {
     game = true;
     paused = false;
     score = 0;
-    coins = 0;
     level = 1;
     lives = shipTypes[selectedShip].hp;
     bullets = []; missiles = []; enemies = []; asteroids = [];
@@ -470,6 +472,7 @@ if(restartBtn) restartBtn.onclick = startGame;
 // --- SUPABASE USER DATA SYNC SYSTEM ---
 async function loadUserData() {
     try {
+        if (!window.supabaseClient) return;
         const { data: { user } } = await window.supabaseClient.auth.getUser();
         if (!user) return;
 
@@ -477,10 +480,9 @@ async function loadUserData() {
             .from('game_profiles')
             .select('*')
             .eq('id', user.id)
-            .single();
+            .maybeSingle();
 
         if (data) {
-            score = data.score || 0;
             coins = data.coins || 0;
             selectedShip = data.selected_ship || 'pulse';
             updateHUD();
@@ -489,7 +491,6 @@ async function loadUserData() {
             let fullName = user.user_metadata?.full_name || user.user_metadata?.name || "Cyber Pilot";
             let avatarUrl = user.user_metadata?.avatar_url || user.user_metadata?.picture || "";
 
-            // profiles टेबल से भी डिटेल्स पढ़ने की कोशिश करें
             const { data: profileData } = await window.supabaseClient
                 .from('profiles')
                 .select('full_name, avatar_url')
@@ -505,7 +506,7 @@ async function loadUserData() {
                 id: user.id,
                 score: 0,
                 coins: 0,
-                selected_ship: 'pulse',
+                selected_ship: selectedShip,
                 name: fullName,
                 avatar_url: avatarUrl
             }]);
@@ -521,7 +522,6 @@ async function saveUserData() {
         const { data: { user } } = await window.supabaseClient.auth.getUser();
         if (!user) return;
 
-        // 1. Google / Auth या profiles टेबल से यूजर का नाम और फोटो निकालना
         let fullName = user.user_metadata?.full_name || user.user_metadata?.name || "Cyber Pilot";
         let avatarUrl = user.user_metadata?.avatar_url || user.user_metadata?.picture || "";
 
@@ -536,17 +536,26 @@ async function saveUserData() {
             if (profileData.avatar_url) avatarUrl = profileData.avatar_url;
         }
 
+        // Fetch existing top score so we don't overwrite high scores with a lower current game score
+        const { data: existingGameProfile } = await window.supabaseClient
+            .from('game_profiles')
+            .select('score')
+            .eq('id', user.id)
+            .maybeSingle();
+
+        let highestScore = Math.max(score, existingGameProfile?.score || 0);
+
         await window.supabaseClient
             .from('game_profiles')
             .upsert({
                 id: user.id,
-                score: score,
+                score: highestScore,
                 coins: coins,
                 selected_ship: selectedShip,
                 name: fullName,
                 avatar_url: avatarUrl,
                 updated_at: new Date()
-            });
+            }, { onConflict: 'id' });
     } catch (err) {
         console.error("Error saving user data:", err);
     }
@@ -561,6 +570,12 @@ function setActiveShipCard(shipName) {
         }
     });
 }
+
+// Auto Load profile on page ready
+window.addEventListener('DOMContentLoaded', async () => {
+    resize();
+    setTimeout(loadUserData, 800);
+});
 // ---------------------------------------
 
 function update() {
