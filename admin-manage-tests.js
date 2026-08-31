@@ -2,11 +2,11 @@ var allTests = [];
 var currentPreviewTest = null;
 
 // Page load hote hi Admin check hoga, uske baad hi tests fetch honge
-window.onload = function() {
-  checkAdminAuth();
-};
+window.addEventListener('DOMContentLoaded', async function() {
+  await checkAdminAuth();
+});
 
-// --- STRICT ADMIN AUTHENTICATION CHECK ---
+// --- STRICT ADMIN AUTHENTICATION CHECK (FIXED & IMPROVED) ---
 async function checkAdminAuth() {
   var loaderBox = document.getElementById("loaderBox");
   var statusMsg = document.getElementById("statusMsg");
@@ -18,25 +18,57 @@ async function checkAdminAuth() {
   }
 
   try {
-    // 1. Session check
-    const { data: { session }, error: sessionError } = await window.supabaseClient.auth.getSession();
+    // Priority 1: Check via global helper if available (Same as ai-test.js)
+    if (typeof window.requireAdminAuth === "function") {
+      try {
+        await window.requireAdminAuth();
+        fetchPublishedTests();
+        return;
+      } catch (e) {
+        console.warn("Global admin helper failed, falling back to manual check:", e);
+      }
+    }
+
+    // Priority 2: Direct Session Check with getUser() Fallback
+    let currentUser = null;
     
-    if (sessionError || !session) {
+    // Check local session
+    const { data: sessionData, error: sessionError } = await window.supabaseClient.auth.getSession();
+    if (sessionData && sessionData.session) {
+      currentUser = sessionData.session.user;
+    } else {
+      // Direct server-side user check if session wasn't immediately hydrated
+      const { data: userData } = await window.supabaseClient.auth.getUser();
+      if (userData && userData.user) {
+        currentUser = userData.user;
+      }
+    }
+
+    if (!currentUser) {
       alert("⚠️ Unauthorized access! Kripya pehle Admin account se login karein.");
-      window.location.href = "index.html";
+      window.location.href = "login.html";
       return;
     }
 
-    // 2. Profile se Role verify karna
-    const { data: profile, error: profileError } = await window.supabaseClient
-      .from('profiles')
-      .select('role')
-      .eq('id', session.user.id)
-      .single();
+    // Role verification from database
+    let isAdmin = false;
+    if (typeof window.checkIsAdmin === 'function') {
+      isAdmin = await window.checkIsAdmin();
+    } else {
+      const { data: profile, error: profileError } = await window.supabaseClient
+        .from('profiles')
+        .select('role')
+        .eq('id', currentUser.id)
+        .single();
 
-    if (profileError || !profile || profile.role !== 'admin') {
+      if (!profileError && profile && profile.role === 'admin') {
+        isAdmin = true;
+      }
+    }
+
+    if (!isAdmin) {
       alert("🚫 Access Denied! Sirf Admin hi is page ko access kar sakte hain.");
-      window.location.href = "index.html";
+      window.location.href = "profile.html";
       return;
     }
 
@@ -46,7 +78,7 @@ async function checkAdminAuth() {
   } catch (err) {
     console.error("Auth Check Error:", err);
     alert("❌ Security Check Error: " + err.message);
-    window.location.href = "index.html";
+    window.location.href = "login.html";
   }
 }
 

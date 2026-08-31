@@ -154,6 +154,109 @@ async function verifyAdminStrictly() {
   }
 }
 
+// Smart Helper Function to Extract Correct Index
+function getCorrectIndex(q) {
+  var val = q.correct !== undefined ? q.correct : (q.correctAnswer ?? q.ans ?? q.correct_option ?? 0);
+  var parsed = parseInt(val);
+  return isNaN(parsed) ? 0 : parsed;
+}
+
+// Function to Shuffle Options & Randomize Correct Index
+function shuffleQuizQuestions(questions) {
+  if (!Array.isArray(questions)) return [];
+
+  return questions.map((q) => {
+    let originalOpts = [...(q.options || q.opts || [])];
+    let correctIdx = getCorrectIndex(q);
+    let correctAnswerValue = originalOpts[correctIdx];
+
+    // Fisher-Yates Random Shuffle
+    let shuffledOpts = [...originalOpts];
+    for (let i = shuffledOpts.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffledOpts[i], shuffledOpts[j]] = [shuffledOpts[j], shuffledOpts[i]];
+    }
+
+    // Find new correct index
+    let newCorrectIdx = shuffledOpts.indexOf(correctAnswerValue);
+
+    return {
+      ...q,
+      options: shuffledOpts,
+      correct: newCorrectIdx !== -1 ? newCorrectIdx : 0
+    };
+  });
+}
+
+// Render Visual Preview directly in the UI
+function renderUiPreview(parsedJson) {
+  let previewContainer = document.getElementById("uiQuestionsPreview");
+  if (!previewContainer) {
+    // Dynamically inject visual preview container above JSON Box if not present in HTML
+    const jsonGroup = document.getElementById("jsonOutput")?.parentElement;
+    if (jsonGroup) {
+      previewContainer = document.createElement("div");
+      previewContainer.id = "uiQuestionsPreview";
+      previewContainer.style.cssText = "margin-bottom: 20px;";
+      jsonGroup.parentNode.insertBefore(previewContainer, jsonGroup);
+    } else {
+      return;
+    }
+  }
+
+  previewContainer.innerHTML = "<h3 style='margin: 15px 0 10px 0; color: #4A00E0; font-size: 15px;'><i class='fa-solid fa-list-check'></i> Live Questions Preview</h3>";
+
+  const questions = parsedJson.questions || parsedJson.questions_data || [];
+  if (questions.length === 0) {
+    previewContainer.innerHTML += "<p style='color:#a0aec0; font-size:13px;'>No questions generated.</p>";
+    return;
+  }
+
+  questions.forEach((q, idx) => {
+    const qDiv = document.createElement("div");
+    qDiv.style.cssText = "background: #ffffff; border-radius: 8px; padding: 12px; margin-bottom: 12px; border: 1px solid #e2e8f0; text-align: left;";
+
+    let optionsHtml = "";
+    const opts = q.options || q.opts || [];
+    const correctIdx = getCorrectIndex(q);
+
+    opts.forEach((opt, optIdx) => {
+      const isCorrect = optIdx === correctIdx;
+      optionsHtml += `
+        <div style="display: flex; align-items: center; margin: 6px 0; font-size: 13px; color: ${isCorrect ? '#276749' : '#2d3748'}; font-weight: ${isCorrect ? 'bold' : 'normal'};">
+          <span style="margin-right: 8px; border-radius: 50%; width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; background: ${isCorrect ? '#c6f6d5' : '#edf2f7'}; font-size: 11px;">
+            ${String.fromCharCode(65 + optIdx)}
+          </span>
+          <span>${opt} ${isCorrect ? '✓' : ''}</span>
+        </div>`;
+    });
+
+    qDiv.innerHTML = `
+      <p style="font-weight: 600; font-size: 14px; margin: 0 0 8px 0; color: #1a202c;">Q${idx + 1}: ${q.question || ''}</p>
+      <div>${optionsHtml}</div>
+      ${q.explanation ? `<p style="font-size: 11px; color: #718096; margin-top: 6px; background: #f7fafc; padding: 6px; border-radius: 4px;"><strong>Explanation:</strong> ${q.explanation}</p>` : ''}
+    `;
+
+    previewContainer.appendChild(qDiv);
+  });
+}
+
+// Sync Preview when JSON Textarea is edited manually
+document.addEventListener("DOMContentLoaded", () => {
+  const jsonArea = document.getElementById("jsonOutput");
+  if (jsonArea) {
+    jsonArea.addEventListener("input", () => {
+      try {
+        const parsed = JSON.parse(jsonArea.value);
+        generatedQuizData = parsed;
+        renderUiPreview(parsed);
+      } catch (e) {
+        // Suppress parse errors while typing
+      }
+    });
+  }
+});
+
 // Generate AI Quiz via Supabase Edge Function Engine
 async function generateAiQuiz() {
   const targetCategory = document.getElementById("targetCategory").value;
@@ -183,7 +286,9 @@ Exam Type: ${targetCategory}.
 Difficulty Level: ${difficulty}.
 Additional Notes: ${customPrompt || "Follow exact official latest exam syllabus pattern"}.
 
-STRICT REQUIREMENT: Respond ONLY with pure, valid JSON. No markdown backticks, no markdown codeblock wrapper (do NOT wrap in \`\`\`json), and no introductory text.
+STRICT REQUIREMENTS:
+1. Respond ONLY with pure, valid JSON. No markdown backticks, no markdown codeblock wrapper, and no introductory text.
+2. RANDOMIZE THE CORRECT OPTION INDEX! The "correct" field must be evenly distributed among index values 0, 1, 2, and 3 across questions.
 
 JSON Format Schema:
 {
@@ -196,12 +301,11 @@ JSON Format Schema:
       "id": 1,
       "question": "Question text here",
       "options": ["Option A", "Option B", "Option C", "Option D"],
-      "correct": 0,
-      "explanation": "Detailed step-by-step solution using LaTeX if needed ($...$ inline)"
+      "correct": 2,
+      "explanation": "Detailed step-by-step solution"
     }
   ]
-}
-Note: "correct" index must be an integer (0, 1, 2, or 3).`;
+}`;
 
   try {
     const response = await fetch(window.SUPABASE_FUNCTION_URL, {
@@ -234,10 +338,19 @@ Note: "correct" index must be an integer (0, 1, 2, or 3).`;
     rawText = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
 
     const parsedJson = JSON.parse(rawText);
+
+    // Auto Shuffle Options & Correct Answer Index
+    if (parsedJson.questions && Array.isArray(parsedJson.questions)) {
+      parsedJson.questions = shuffleQuizQuestions(parsedJson.questions);
+    }
+
     generatedQuizData = parsedJson;
 
     document.getElementById("finalTestTitle").value = parsedJson.title || `${subject}: ${topic} Quiz`;
     document.getElementById("jsonOutput").value = JSON.stringify(parsedJson, null, 2);
+
+    // Render Live Preview Section inside Generator UI
+    renderUiPreview(parsedJson);
 
     document.getElementById("quizPreviewSection").style.display = "block";
     statusMsg.className = "status-msg success";
@@ -281,7 +394,7 @@ async function saveQuizToSupabase() {
   statusMsg.style.display = "block";
   saveDbBtn.disabled = true;
 
-  // Exact Database Schema Matching
+  // Database Schema Payload
   const dbPayload = {
     title: finalTitle,
     class_level: document.getElementById("targetClass").value,
