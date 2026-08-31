@@ -643,8 +643,8 @@ When asked for classes, study materials, or site pages, generate HTML standard <
 - <a href="index.html">Home Page</a>
 - <a href="classes.html">Classes Overview (Class 9, 10, 11, 12)</a>
 - <a href="premium-notes.html">Premium Notes Hub</a>
-- <a href="about.html">About Page</a>
-- <a href="aboutus.html"> Legal Policies & Terms</a>
+- <a href="about.html">About author</a>
+- <a href="aboutus.html"> Legal Policies & Terms / about us</a>
 - <a href="solver.html">Ask Doubt & Feedback Page</a>
 
 2. Class & Stream Pages:
