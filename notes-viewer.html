@@ -8,6 +8,8 @@
     <title>Roitx Reader Elite</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- 3D Page Flip Engine -->
+    <script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.js"></script>
     <script src="supabase.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="viewer-style.css">
@@ -37,11 +39,12 @@
 
     <main id="viewport" onclick="handleViewportClick(event)">
         <div id="canvas-stage">
-            </div>
+            <div id="book-container"></div>
+        </div>
         
         <div id="master-loader">
             <div class="loader-ring"><div></div><div></div><div></div><div></div></div>
-            <p>Optimizing for your screen...</p>
+            <p id="loader-text">Optimizing for your screen...</p>
         </div>
     </main>
 

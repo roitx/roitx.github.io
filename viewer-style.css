@@ -4,7 +4,6 @@
     --safe-top: env(safe-area-inset-top); --safe-bottom: env(safe-area-inset-bottom);
 }
 
-/* Roitx Elite Themes */
 body.theme-light { --bg: #f5f5f7; --surf: #ffffff; --txt: #1d1d1f; --accent: #0071e3; --border: rgba(0,0,0,0.05); --glass: rgba(255,255,255,0.9); }
 body.theme-sepia { --bg: #f4ecd8; --surf: #e6dac1; --txt: #5b4636; --accent: #8b5a2b; --border: rgba(0,0,0,0.05); --glass: rgba(230,218,193,0.95); }
 body.theme-oled { --bg: #000000; --surf: #000000; --txt: #ffffff; --accent: #007aff; --border: #222; --glass: rgba(0,0,0,0.9); }
@@ -26,7 +25,6 @@ body {
   transition: background 0.4s; 
 }
 
-/* NAVBAR & FLOATING TOOLBAR */
 .navbar {
     position: fixed; top: 0; left: 0; width: 100%; height: calc(70px + var(--safe-top));
     padding: var(--safe-top) 20px 0; background: var(--glass); backdrop-filter: saturate(180%) blur(20px);
@@ -43,7 +41,6 @@ body {
 body.ui-hidden .navbar { transform: translateY(-100%); }
 body.ui-hidden .scrub-bar { transform: translateY(100%); }
 
-/* METADATA & BUTTONS */
 .metadata h1 { font-size: 15px; margin: 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
 .sub-meta { font-size: 11px; color: var(--txt); opacity: 0.5; margin-top: 2px; }
 .dot { margin: 0 5px; }
@@ -54,7 +51,6 @@ body.ui-hidden .scrub-bar { transform: translateY(100%); }
 }
 .icon-btn:active { scale: 0.9; background: var(--accent); color: white; }
 
-/* VIEWPORT & STAGE ARCHITECTURE MATCHING IMAGE VIEWER */
 #viewport { 
     position: fixed;
     top: calc(70px + var(--safe-top));
@@ -75,17 +71,45 @@ body.ui-hidden .scrub-bar { transform: translateY(100%); }
     align-items: center;
     transform-origin: center center;
     transition: transform 0.05s ease-out;
+    overflow: hidden; /* Prevent extra page corners bleeding outside stage */
+}
+
+/* Hard fix for extra bottom bleed on page turn */
+#book-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    overflow: hidden !important;
+    border-radius: 4px;
+}
+
+.page-flip-page {
+    background-color: #ffffff;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    position: relative;
+    overflow: hidden !important;
+}
+
+.page-loader-placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fdfdfd;
+    color: #888;
+    font-size: 12px;
 }
 
 canvas { 
-    border-radius: 6px; 
-    box-shadow: 0 15px 35px rgba(0,0,0,0.5); 
+    border-radius: 4px; 
     background: #ffffff; 
-    pointer-events: none;
     display: block;
+    width: 100%;
+    height: 100%;
 }
 
-/* SCRUB BAR CONTROLS */
 .scrub-container { display: flex; align-items: center; gap: 15px; height: 100%; max-width: 800px; margin: 0 auto; width: 100%; }
 .scrub-track { flex: 1; position: relative; }
 input[type=range] { width: 100%; accent-color: var(--accent); height: 4px; }
@@ -97,7 +121,6 @@ input[type=range] { width: 100%; accent-color: var(--accent); height: 4px; }
     align-items: center; justify-content: center; font-size: 16px; cursor: pointer;
 }
 
-/* ADVANCED SETTINGS PANEL */
 #settings-panel { 
     position: fixed; bottom: -100%; left: 0; width: 100%; background: var(--surf); 
     z-index: 2000; border-radius: 24px 24px 0 0; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
@@ -121,7 +144,6 @@ input[type=range] { width: 100%; accent-color: var(--accent); height: 4px; }
 .full-btn { width: 100%; padding: 15px; margin-top: 10px; background: var(--bg); border: 1px solid var(--border); color: var(--txt); border-radius: 12px; cursor: pointer; font-weight: 500; text-decoration: none; display: block; text-align: center; }
 .full-btn.primary { background: var(--accent); border: none; color: white; }
 
-/* MASTER LOADER */
 #master-loader { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
 .loader-ring { display: inline-block; position: relative; width: 80px; height: 80px; }
 .loader-ring div { box-sizing: border-box; display: block; position: absolute; width: 64px; height: 64px; margin: 8px; border: 6px solid var(--accent); border-radius: 50%; animation: loader-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite; border-color: var(--accent) transparent transparent transparent; }
