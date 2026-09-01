@@ -1,8 +1,8 @@
 /* =================================================================
-   ROITX ELITE VIEWER v8.0 — FULL 3D FLIP (FORWARD & REVERSE FIX)
+   ROITX ELITE VIEWER v8.1 — FULL 3D FLIP & SECURITY ENHANCED
    ================================================================= */
 
-// PDF.js Worker Setup (Fixes TT: undefined function & lag)
+// PDF.js Worker Setup
 const pdfjsVersion = pdfjsLib.version || '2.16.105'; 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsVersion}/pdf.worker.min.js`;
 
@@ -30,8 +30,18 @@ function enableContentProtection() {
         }
     });
 
-    window.addEventListener('blur', () => { document.body.style.filter = "blur(20px)"; });
+    // Mobile/Web blur protection on screen capture or tab switch
+    window.addEventListener('blur', () => { document.body.style.filter = "blur(25px)"; });
     window.addEventListener('focus', () => { document.body.style.filter = "none"; });
+    
+    // Visibility change protection for screen recording attempts
+    document.addEventListener("visibilitychange", () => {
+        if (document.hidden) {
+            document.body.style.filter = "blur(25px)";
+        } else {
+            document.body.style.filter = "none";
+        }
+    });
 }
 
 function trackActivityLocally(fileData, isDownloaded = false) {
@@ -334,7 +344,17 @@ async function setupFlipEngineStructure(maxPages, isPremium, isPurchased) {
 
     const savedPage = getSavedPageProgress();
     const targetPage = (savedPage > maxPages) ? 1 : savedPage;
+    currentPage = targetPage;
     
+    // FIX FOR "Page 0 of 0": Update text immediately on load
+    const indicator = document.getElementById("page-indicator-top");
+    if (indicator) {
+        const totalText = (isPremium && !isPurchased) ? "1 (Preview)" : maxPages;
+        indicator.innerText = `Page ${targetPage} of ${totalText}`;
+    }
+    const slider = document.getElementById("page-slider");
+    if (slider) slider.value = targetPage;
+
     await renderSingleCanvasPage(targetPage);
     lazyRenderPagesAround(targetPage, maxPages);
 
@@ -365,6 +385,14 @@ async function renderSingleCanvasPage(pageNum) {
         ctx.scale(dpr, dpr);
         await page.render({ canvasContext: ctx, viewport: viewport }).promise;
 
+        // Overlay Watermark to prevent clear screenshot sharing
+        ctx.save();
+        ctx.rotate(-45 * Math.PI / 180);
+        ctx.font = "bold 22px Inter, sans-serif";
+        ctx.fillStyle = "rgba(0, 0, 0, 0.08)";
+        ctx.fillText("ROITX SECURE • DO NOT SHARE", -canvas.width / 4, canvas.height / 2);
+        ctx.restore();
+
         pageDiv.innerHTML = '';
         pageDiv.appendChild(canvas);
         renderedPagesMap.set(pageNum, true);
@@ -392,7 +420,6 @@ function updateTransform() {
     if (zoomVal) zoomVal.innerText = Math.round(zoomScale * 100) + "%";
 }
 
-/* HIGH-PRECISION PINCH ZOOM & GESTURE CONFLICT RESOLVER */
 function setupPinchAndPanEngine() {
     const viewport = document.getElementById("viewport");
     let initialDist = 0;
@@ -460,7 +487,6 @@ window.handleViewportClick = (e) => {
     document.body.classList.toggle("ui-hidden", !isUIVisible);
 };
 
-/* GUARANTEED 3D REVERSE & FORWARD PAGE NAVIGATION */
 window.navPage = (dir) => {
     if (!pageFlipInstance || isPinching) return;
     
@@ -473,7 +499,6 @@ window.navPage = (dir) => {
     }
 };
 
-/* COMBINED SLIDER NAVIGATION HANDLER WITH REAL 3D ANIMATION */
 const pageSlider = document.getElementById("page-slider");
 if (pageSlider) {
     const bubble = document.getElementById("bubble-tip");
