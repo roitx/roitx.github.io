@@ -14,7 +14,7 @@
   <script src="supabase.js"></script>
 </head>
 
-<body oncontextmenu="return false;">
+<body>
 
   <div class="bg-glow top-left"></div>
   <div class="bg-glow bottom-right"></div>
@@ -113,12 +113,11 @@
     <div class="grid-2">
       <div class="form-group">
         <label><i class="fa-solid fa-list-ol"></i> Total Questions</label>
-        <select id="questionsCount" class="input-box">  
+        <select id="questionsCount" class="input-box">
+          <option value="5">5 Questions</option>
           <option value="10" selected>10 Questions</option>
           <option value="15">15 Questions</option>
           <option value="20">20 Questions</option>
-          <option value="30">30 Questions</option>
-          <option value="50">50 Questions</option>
         </select>
       </div>
 
@@ -132,10 +131,10 @@
       </div>
     </div>
 
-    <!-- Additional Custom Prompting -->
+    <!-- Additional Custom Prompting Textarea -->
     <div class="form-group">
       <label><i class="fa-solid fa-comment-dots"></i> Special Instructions (Optional)</label>
-      <input type="text" id="customPrompt" class="input-box" placeholder="e.g. Include Bihar Board PYQs, conceptual questions...">
+      <textarea id="customPrompt" class="input-box custom-textarea" rows="4" placeholder="Yahan apne instructions type ya copy-paste karein... (e.g. Include Bihar Board PYQs, extra numericals, detailed explanations)"></textarea>
     </div>
 
     <!-- Generate Action Button -->
@@ -161,7 +160,7 @@
 
       <div class="form-group">
         <label><i class="fa-solid fa-code"></i> Generated Data (JSON)</label>
-        <textarea id="jsonOutput" class="json-box" rows="8"></textarea>
+        <textarea id="jsonOutput" class="json-box custom-textarea" rows="8"></textarea>
       </div>
 
       <button class="btn btn-save-db" id="saveDbBtn" onclick="saveQuizToSupabase()">

@@ -4,6 +4,19 @@ window.SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5
 
 let generatedQuizData = null;
 
+// --- GLOBAL EVENT LISTENERS: DISABLE DBLCLICK & LONG-PRESS (EXCEPT TEXTAREA/INPUT) ---
+document.addEventListener('dblclick', function (e) {
+  if (e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'INPUT') {
+    e.preventDefault();
+  }
+}, { passive: false });
+
+document.addEventListener('contextmenu', function (e) {
+  if (e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'INPUT') {
+    e.preventDefault();
+  }
+}, { passive: false });
+
 // Subject Mapping Configuration
 const subjectData = {
   class9_10: [

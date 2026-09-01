@@ -3,6 +3,22 @@
   padding: 0;
   box-sizing: border-box;
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  
+  /* 1. Global: Text Selection & Long-Press Callout Disabled */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* 2. Exception: Textarea & Input Boxes Me Text Selection & Copy/Paste Allowed */
+input, textarea, .custom-textarea {
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+  user-select: text !important;
+  -webkit-touch-callout: default !important;
 }
 
 body {
@@ -163,6 +179,15 @@ p.subtitle {
 
 .input-box:focus, .json-box:focus {
   box-shadow: inset 2px 2px 5px #b8bec7, inset -2px -2px 5px #ffffff;
+}
+
+/* Custom Large Multi-line Textarea Styling */
+.custom-textarea {
+  min-height: 110px;
+  resize: vertical;
+  line-height: 1.5;
+  font-family: inherit;
+  white-space: pre-wrap;
 }
 
 .json-box {
