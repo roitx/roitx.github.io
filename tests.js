@@ -310,11 +310,24 @@ function renderStudentTests(tests) {
         let timeMins = test.time_limit_mins || 15;
         let classBadge = test.class_level ? `<span style="background: #edf2f7; color: #4a5568; padding: 2px 8px; border-radius: 4px; font-size: 11px; margin-left: 6px;">${test.class_level}</span>` : '';
 
+        // --- NEW BADGE LOGIC (START) ---
+        let isNew = false;
+        if (test.created_at) {
+            const testDate = new Date(test.created_at);
+            const now = new Date();
+            const diffDays = (now - testDate) / (1000 * 60 * 60 * 24); // Din ka difference nikalna
+            if (diffDays <= 7) { // Agar 7 din ya usse kam purana hai toh True
+                isNew = true;
+            }
+        }
+        let newBadgeHtml = isNew ? `<span class="badge-new">NEW</span>` : '';
+        // --- NEW BADGE LOGIC (END) ---
+
         html += `
             <div class="test-card">
                 <div class="test-card-header" style="display: flex; justify-content: space-between; align-items: center;">
                     <h3>${test.title} ${classBadge}</h3>
-                    <span class="badge-new">NEW</span>
+                    ${newBadgeHtml}
                 </div>
                 <div class="test-meta">
                     <span><i class="fa-solid fa-file-alt"></i> ${qCount} Qs</span> • 
