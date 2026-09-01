@@ -1,10 +1,19 @@
 /* =====================================================
    SOLVER.JS — HYBRID CHATBOT, QUEUE ENGINE & MODAL PANEL
+   (RESPONSIVE HIGHLIGHT MODAL + CAMERA & FILE CHOICE)
    ===================================================== */
 
 let userMsgCount = 0;    
 let currentLanguage = 'hinglish'; 
 let selectedSubject = 'General';
+let selectedBase64Image = null; // Stores final image payload for Vision AI
+let cropperInstance = null;      // Cropper.js instance
+
+// Pencil / Highlight Canvas Variables
+let isDrawing = false;
+let drawColor = '#ef4444'; // Default Red Pencil
+let drawLineWidth = 4;
+let strokeHistory = []; // Undo Stack
 
 if (!window.supabaseClient) {
   console.error("❌ Supabase connection missing");
@@ -24,6 +33,411 @@ const SVG_ICONS = {
   lang: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1 4-10z"></path></svg>`,
   admin: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"></path><path d="M22 2l-7 20-4-9-9-4 20-7z"></path></svg>`
 };
+
+/* =====================================================
+   CAMERA vs GALLERY SELECTOR MODAL
+   ===================================================== */
+
+function triggerImagePicker() {
+  let modal = document.getElementById("imageSourceModal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "imageSourceModal";
+    modal.style.cssText = `
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.7); display: flex; align-items: center;
+      justify-content: center; z-index: 10000; backdrop-filter: blur(4px);
+    `;
+    modal.innerHTML = `
+      <div style="background: #1e293b; border: 1px solid #334155; border-radius: 14px; width: 90%; max-width: 340px; padding: 20px; text-align: center; color: #fff; font-family: system-ui, sans-serif; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+        <h4 style="margin: 0 0 14px 0; font-size: 16px; color: #60a5fa;">📸 Image Source Chunein</h4>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <button onclick="openCameraInput()" style="background: #2563eb; color: #fff; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            📷 Direct Camera Kholein
+          </button>
+          <button onclick="openGalleryInput()" style="background: #334155; color: #fff; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            📁 File Manager / Gallery
+          </button>
+          <button onclick="closeImageSourceModal()" style="background: transparent; color: #94a3b8; border: none; padding: 8px; font-size: 13px; cursor: pointer;">
+            ✖ Cancel
+          </button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  } else {
+    modal.style.display = "flex";
+  }
+}
+
+function closeImageSourceModal() {
+  const modal = document.getElementById("imageSourceModal");
+  if (modal) modal.style.display = "none";
+}
+
+function openCameraInput() {
+  closeImageSourceModal();
+  let input = document.getElementById("cameraDirectInput");
+  if (!input) {
+    input = document.createElement("input");
+    input.type = "file";
+    input.id = "cameraDirectInput";
+    input.accept = "image/*";
+    input.capture = "environment";
+    input.style.display = "none";
+    input.onchange = handleSolverImagePreview;
+    document.body.appendChild(input);
+  }
+  input.click();
+}
+
+function openGalleryInput() {
+  closeImageSourceModal();
+  let input = document.getElementById("solverImageInput");
+  if (input) {
+    input.removeAttribute("capture");
+    input.click();
+  }
+}
+
+/* =====================================================
+   IMAGE UPLOAD, CROP & PENCIL HIGHLIGHT HELPERS
+   ===================================================== */
+
+function updateModalTitle(titleText) {
+  const modalHeader = document.querySelector("#cropperModal h3") || document.querySelector("#cropperModal .modal-title");
+  if (modalHeader) {
+    modalHeader.innerText = titleText;
+  }
+}
+
+function handleSolverImagePreview(event) {
+  const file = event.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const cropperModal = document.getElementById("cropperModal");
+      const cropperImg = document.getElementById("cropperImageSrc");
+
+      if (cropperImg && cropperModal) {
+        updateModalTitle("✂️ Question Crop Karein"); 
+        
+        const oldActions = document.getElementById("cropperActionBtns");
+        if(oldActions) oldActions.remove();
+
+        // Enforce parent modal container styling fixes dynamically
+        const modalContainer = cropperModal.querySelector('.modal-content') || cropperModal.firstElementChild;
+        if (modalContainer) {
+          modalContainer.style.cssText = `
+            display: flex !important;
+            flex-direction: column !important;
+            max-height: 90vh !important;
+            width: 92% !important;
+            max-width: 500px !important;
+            overflow-y: auto !important;
+            box-sizing: border-box !important;
+            padding: 16px !important;
+            background: #1e293b !important;
+            border-radius: 12px !important;
+          `;
+        }
+
+        cropperImg.style.display = "block";
+        cropperImg.style.maxWidth = "100%";
+        cropperImg.style.maxHeight = "55vh";
+        cropperImg.src = e.target.result;
+        cropperModal.style.display = "flex";
+
+        if (cropperInstance) {
+          cropperInstance.destroy();
+        }
+
+        setTimeout(() => {
+          if (typeof Cropper !== 'undefined') {
+            cropperInstance = new Cropper(cropperImg, {
+              viewMode: 1,
+              autoCropArea: 0.9,
+              responsive: true,
+              background: false
+            });
+          } else {
+            selectedBase64Image = e.target.result;
+            showPreviewUI(selectedBase64Image);
+            closeCropperModal();
+          }
+        }, 150);
+      } else {
+        selectedBase64Image = e.target.result;
+        showPreviewUI(selectedBase64Image);
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+function applyImageCrop() {
+  if (cropperInstance) {
+    const croppedCanvas = cropperInstance.getCroppedCanvas({
+      maxWidth: 1024,
+      maxHeight: 1024
+    });
+
+    if (croppedCanvas) {
+      setupPencilCanvas(croppedCanvas);
+      return;
+    }
+  }
+  closeCropperModal();
+}
+
+/* =====================================================
+   FIXED RESPONSIVE HIGHLIGHT CANVAS & MODAL LOGIC
+   ===================================================== */
+
+function setupPencilCanvas(croppedCanvas) {
+  updateModalTitle("✏️ Question Highlight Karein");
+
+  if (cropperInstance) {
+    cropperInstance.destroy();
+    cropperInstance = null;
+  }
+
+  const cropperImg = document.getElementById("cropperImageSrc");
+  if (cropperImg) cropperImg.style.display = "none";
+
+  // 1. Root Modal Body Container Layout Override (Forces Vertical Layout)
+  const modalBody = cropperImg ? cropperImg.parentElement : null;
+  if (modalBody) {
+    modalBody.setAttribute("style", "display: flex !important; flex-direction: column !important; align-items: center !important; width: 100% !important; box-sizing: border-box !important; overflow-y: auto !important;");
+  }
+
+  let drawCanvas = document.getElementById("pencilCanvas");
+  if (!drawCanvas) {
+    drawCanvas = document.createElement("canvas");
+    drawCanvas.id = "pencilCanvas";
+    if (cropperImg && cropperImg.parentNode) {
+      cropperImg.parentNode.appendChild(drawCanvas);
+    }
+  }
+
+  // Purely Responsive Fixed Layout Settings
+  drawCanvas.style.cssText = `
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: 42vh !important;
+    border-radius: 8px;
+    touch-action: none;
+    cursor: crosshair;
+    display: block !important;
+    margin: 0 auto 12px auto !important;
+    object-fit: contain;
+    background: #0f172a;
+    box-sizing: border-box;
+    border: 1px solid #334155;
+  `;
+
+  drawCanvas.width = croppedCanvas.width;
+  drawCanvas.height = croppedCanvas.height;
+  const ctx = drawCanvas.getContext("2d");
+  ctx.drawImage(croppedCanvas, 0, 0);
+
+  strokeHistory = [];
+  saveCanvasState(drawCanvas);
+
+  setupDrawingEvents(drawCanvas, ctx);
+
+  let actionBtnGroup = document.getElementById("cropperActionBtns");
+  if (!actionBtnGroup) {
+    actionBtnGroup = document.createElement("div");
+    actionBtnGroup.id = "cropperActionBtns";
+    if (drawCanvas.parentNode) {
+      drawCanvas.parentNode.appendChild(actionBtnGroup);
+    }
+  }
+
+  // Force pure vertical layout for controls below canvas
+  actionBtnGroup.style.cssText = `
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    margin-top: 8px !important;
+    width: 100% !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+  `;
+
+  actionBtnGroup.innerHTML = `
+    <!-- Color Palette & Tools Bar -->
+    <div style="display: flex; gap: 8px; align-items: center; justify-content: center; background: #0f172a; padding: 8px 12px; border-radius: 20px; border: 1px solid #334155; width: 100%; max-width: 100%; box-sizing: border-box; flex-wrap: wrap;">
+      <span style="font-size: 12px; color: #cbd5e1; font-weight: bold; white-space: nowrap;">Color:</span>
+      <button type="button" onclick="setDrawColor('#ef4444')" style="width:24px; height:24px; border-radius:50%; background:#ef4444; border:2px solid #fff; cursor:pointer; flex-shrink:0;"></button>
+      <button type="button" onclick="setDrawColor('#f59e0b')" style="width:24px; height:24px; border-radius:50%; background:#f59e0b; border:2px solid #fff; cursor:pointer; flex-shrink:0;"></button>
+      <button type="button" onclick="setDrawColor('#10b981')" style="width:24px; height:24px; border-radius:50%; background:#10b981; border:2px solid #fff; cursor:pointer; flex-shrink:0;"></button>
+      <div style="width: 1px; height: 16px; background: #334155; margin: 0 4px;"></div>
+      <button type="button" onclick="undoLastStroke()" style="background:#334155; border:none; color:#f8fafc; padding:6px 12px; border-radius:6px; font-size:12px; cursor:pointer; font-weight:bold; white-space:nowrap;">↩️ Undo</button>
+      <button type="button" onclick="clearCanvasStrokes()" style="background:#334155; border:none; color:#f8fafc; padding:6px 12px; border-radius:6px; font-size:12px; cursor:pointer; font-weight:bold; white-space:nowrap;">🗑️ Reset</button>
+    </div>
+
+    <!-- Action Buttons Row -->
+    <div style="display: flex; gap: 10px; width: 100%; justify-content: space-between; box-sizing: border-box;">
+      <button type="button" onclick="saveHighlightedImage()" style="flex: 1; background: #2563eb; color: #fff; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; text-align: center;">✅ Done & Send</button>
+      <button type="button" onclick="closeCropperModal()" style="background: #475569; color: #fff; border: none; padding: 12px 18px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: bold;">✖ Cancel</button>
+    </div>
+  `;
+
+  const defaultFooter = document.getElementById("cropperDefaultFooter");
+  if (defaultFooter) defaultFooter.style.display = "none";
+}
+
+  
+
+function setupDrawingEvents(canvas, ctx) {
+  function getPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+
+    let clientX = e.clientX;
+    let clientY = e.clientY;
+    if (e.touches && e.touches[0]) {
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    }
+    return {
+      x: (clientX - rect.left) * scaleX,
+      y: (clientY - rect.top) * scaleY
+    };
+  }
+
+  function startDraw(e) {
+    isDrawing = true;
+    const pos = getPos(e);
+    ctx.beginPath();
+    ctx.moveTo(pos.x, pos.y);
+    ctx.strokeStyle = drawColor;
+    ctx.lineWidth = drawLineWidth * (canvas.width / 600);
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+  }
+
+  function draw(e) {
+    if (!isDrawing) return;
+    if (e.cancelable) e.preventDefault();
+    const pos = getPos(e);
+    ctx.lineTo(pos.x, pos.y);
+    ctx.stroke();
+  }
+
+  function stopDraw() {
+    if (isDrawing) {
+      isDrawing = false;
+      saveCanvasState(canvas);
+    }
+  }
+
+  canvas.onmousedown = startDraw;
+  canvas.onmousemove = draw;
+  canvas.onmouseup = stopDraw;
+
+  canvas.ontouchstart = startDraw;
+  canvas.ontouchmove = draw;
+  canvas.ontouchend = stopDraw;
+}
+
+function setDrawColor(color) {
+  drawColor = color;
+}
+
+function saveCanvasState(canvas) {
+  if (strokeHistory.length > 10) strokeHistory.shift();
+  strokeHistory.push(canvas.toDataURL());
+}
+
+function undoLastStroke() {
+  const drawCanvas = document.getElementById("pencilCanvas");
+  if (!drawCanvas || strokeHistory.length <= 1) return;
+  
+  strokeHistory.pop();
+  const previousState = strokeHistory[strokeHistory.length - 1];
+  
+  const ctx = drawCanvas.getContext("2d");
+  const img = new Image();
+  img.onload = () => {
+    ctx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+    ctx.drawImage(img, 0, 0);
+  };
+  img.src = previousState;
+}
+
+function clearCanvasStrokes() {
+  if (strokeHistory.length > 0) {
+    const drawCanvas = document.getElementById("pencilCanvas");
+    const ctx = drawCanvas.getContext("2d");
+    const originalState = strokeHistory[0];
+    const img = new Image();
+    img.onload = () => {
+      ctx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+      ctx.drawImage(img, 0, 0);
+      strokeHistory = [originalState];
+    };
+    img.src = originalState;
+  }
+}
+
+function saveHighlightedImage() {
+  const drawCanvas = document.getElementById("pencilCanvas");
+  if (drawCanvas) {
+    selectedBase64Image = drawCanvas.toDataURL("image/jpeg", 0.85);
+    showPreviewUI(selectedBase64Image);
+  }
+  closeCropperModal();
+}
+
+function showPreviewUI(base64Src) {
+  const previewImg = document.getElementById("imagePreview");
+  const previewContainer = document.getElementById("imagePreviewContainer");
+  if (previewImg) previewImg.src = base64Src;
+  if (previewContainer) previewContainer.style.display = "inline-block";
+}
+
+function closeCropperModal() {
+  const cropperModal = document.getElementById("cropperModal");
+  if (cropperModal) cropperModal.style.display = "none";
+
+  if (cropperInstance) {
+    cropperInstance.destroy();
+    cropperInstance = null;
+  }
+
+  const cropperImg = document.getElementById("cropperImageSrc");
+  if (cropperImg) cropperImg.style.display = "block";
+
+  const drawCanvas = document.getElementById("pencilCanvas");
+  if (drawCanvas) drawCanvas.remove();
+
+  const actionBtns = document.getElementById("cropperActionBtns");
+  if (actionBtns) actionBtns.remove();
+
+  const fileInput = document.getElementById("solverImageInput");
+  if (fileInput) fileInput.value = "";
+
+  const camInput = document.getElementById("cameraDirectInput");
+  if (camInput) camInput.value = "";
+  
+  updateModalTitle("✂️ Question Crop Karein"); 
+}
+
+function removeSelectedImage() {
+  selectedBase64Image = null;
+  const previewImg = document.getElementById("imagePreview");
+  const previewContainer = document.getElementById("imagePreviewContainer");
+  const fileInput = document.getElementById("solverImageInput");
+  
+  if (previewImg) previewImg.src = "";
+  if (previewContainer) previewContainer.style.display = "none";
+  if (fileInput) fileInput.value = "";
+}
 
 /* =====================================================
    DRAGGABLE MOVABLE FAB BUTTON LOGIC
@@ -250,11 +664,11 @@ function selectField(field) {
   appendChatMessage(field, "user");
 
   setTimeout(() => {
-    let responseText = `Aapka vishay <b>${field}</b> select ho gaya hai! Aap neeche input box me apna sawaal type kijiye, main realtime read kar raha hu aur turant solution bhej dunga.`;
+    let responseText = `Aapka vishay <b>${field}</b> select ho gaya hai! Aap neeche input box me apna sawaal type kijiye ya photo upload karein, main turant solution bhej dunga.`;
     if (currentLanguage === 'hi') {
-      responseText = `आपका विषय <b>${field}</b> सेलेक्ट हो गया है! आप नीचे इनपुट बॉक्स में अपना सवाल टाइप कीजिए, मैं रियल-टाइम रीड कर रहा हूँ और तुरंत सॉल्यूशन भेज दूंगा।`;
+      responseText = `आपका विषय <b>${field}</b> सेलेक्ट हो गया है! आप नीचे सवाल टाइप करें या फोटो अपलोड करें, मैं तुरंत सॉल्यूशन भेज दूंगा।`;
     } else if (currentLanguage === 'en') {
-      responseText = `Your subject <b>${field}</b> is selected! Please type your question in the input box below. I'm reading in real-time and will provide an instant solution.`;
+      responseText = `Your subject <b>${field}</b> is selected! Please type your question or upload an image. I'll provide an instant solution.`;
     }
 
     const cardHTML = `
@@ -287,7 +701,6 @@ function renderMainMenu() {
   }, 200);
 }
 
-// QUEUE STATUS CHECKER
 async function checkQueueStatus() {
   try {
     const { count, error } = await window.supabaseClient
@@ -321,7 +734,6 @@ async function openAdminDoubtModal() {
     console.warn("Auth check error:", e);
   }
 
-  // LOGIN CHECK
   if (!currentUser) {
     alert("🔒 Admin ko doubt bhejne ke liye pehle Login / Signup karein!");
     sessionStorage.setItem("redirect_after_login", window.location.href);
@@ -439,17 +851,22 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   checkSolvedNotification();
   makeFABMovable();
+
+  const camBtn = document.querySelector(".upload-btn") || document.querySelector("label[for='solverImageInput']");
+  if (camBtn) {
+    camBtn.setAttribute("onclick", "triggerImagePicker(); return false;");
+  }
 });
 
 /* =====================================================
-   UNIFIED FAST AI SOLVER ENGINE
+   UNIFIED FAST AI SOLVER ENGINE (WITH VISION SUPPORT)
    ===================================================== */
 
-async function solveWithAI(questionText) {
+async function solveWithAI(questionText, imageBase64 = null) {
   const loadingId = "loading-" + Date.now();
   appendChatMessage(`
     <div id="${loadingId}" class="typing-indicator">
-      <span>AI Thinking</span>
+      <span>AI Analyzing Request</span>
       <div class="typing-dot"></div>
       <div class="typing-dot"></div>
       <div class="typing-dot"></div>
@@ -482,8 +899,9 @@ Solve in clean Hinglish (Roman Hindi + English). Use LaTeX for math ($...$ inlin
         "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
       },
       body: JSON.stringify({ 
-        prompt: `${PROMPT}\n\nQuery: ${questionText}`,
-        language: currentLanguage 
+        prompt: `${PROMPT}\n\nQuery: ${questionText || "Solve the attached question/image"}`,
+        language: currentLanguage,
+        image: imageBase64
       })
     });
 
@@ -502,6 +920,8 @@ Solve in clean Hinglish (Roman Hindi + English). Use LaTeX for math ($...$ inlin
       rawText = data.candidates[0].content.parts[0].text;
     } else if (data.content) {
       rawText = data.content;
+    } else if (data.result || data.response || data.output || data.message) {
+      rawText = data.result || data.response || data.output || data.message;
     } else if (data.error) {
       let errMsg = typeof data.error === 'string' ? data.error : (data.error.message || JSON.stringify(data.error));
       if (errMsg.includes("Quota exceeded") || errMsg.includes("rate-limits")) {
@@ -532,12 +952,17 @@ Solve in clean Hinglish (Roman Hindi + English). Use LaTeX for math ($...$ inlin
 }
 
 /* =====================================================
-   MAIN SOLVE TRIGGER WITH GUEST LIMIT
+   MAIN SOLVE TRIGGER WITH IMAGE & GUEST LIMIT
    ===================================================== */
 
 async function solve() {
   const qRaw = getQuestion();
-  if (!qRaw) return;
+  const currentImg = selectedBase64Image;
+
+  if (!qRaw && !currentImg) {
+    alert("Kripya koi question type karein ya photo upload karein!");
+    return;
+  }
 
   let currentUser = null;
   try {
@@ -569,10 +994,18 @@ async function solve() {
   }
 
   userMsgCount++; 
-  appendChatMessage(escapeHtml(qRaw), "user");
-  clearQuestionInput();
 
-  solveWithAI(qRaw);
+  let userHtml = escapeHtml(qRaw);
+  if (currentImg) {
+    userHtml = `<div style="margin-bottom:6px;"><img src="${currentImg}" style="max-width:180px; max-height:140px; border-radius:8px; border:1px solid #334155;"></div>` + userHtml;
+  }
+
+  appendChatMessage(userHtml, "user");
+
+  clearQuestionInput();
+  removeSelectedImage();
+
+  solveWithAI(qRaw, currentImg);
 }
 
 /* =====================================================

@@ -10,6 +10,9 @@
 
   <!-- MARKDOWN PARSER -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<!-- Cropper.js CSS & JS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 
   <!-- MATHJAX SETUP -->
   <script>
@@ -61,12 +64,27 @@
     <div id="answerHistory" class="chat-container"></div>
 
     <!-- QUESTION INPUT -->
+        <!-- QUESTION INPUT WITH IMAGE UPLOAD -->
+    <div id="imagePreviewContainer" class="image-preview-box" style="display:none;">
+      <img id="imagePreview" src="" alt="Selected Math Question">
+      <button type="button" class="remove-img-btn" onclick="removeSelectedImage()">✖</button>
+    </div>
+
     <div class="input-group">
+      <label for="solverImageInput" class="attach-btn" title="Photo Bhejen">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+          <circle cx="12" cy="13" r="4"></circle>
+        </svg>
+      </label>
+      <input type="file" id="solverImageInput" accept="image/*" style="display:none;" onchange="handleSolverImagePreview(event)">
+
       <textarea
         id="question"
-        placeholder="Apna sawaal, equation ya theory problem type karein..."
+        placeholder="Apna sawaal, equation type karein ya photo upload karein..."
         onkeydown="if(event.key === 'Enter' && !event.shiftKey){ event.preventDefault(); solve(); }"
       ></textarea>
+      
       <button id="solveBtn" onclick="solve()">
         Bhejen 
         <svg class="send-btn-svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -75,6 +93,7 @@
         </svg>
       </button>
     </div>
+
 
     <!-- FLOATING MY FEEDBACKS BUTTON -->
     <button class="doubt-fab" title="Mere Feedbacks" onclick="toggleMyDoubt()">
@@ -99,6 +118,24 @@
     </div>
 
   </div>
+<!-- IMAGE CROPPER MODAL -->
+<div id="cropperModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.85); z-index:10000; align-items:center; justify-content:center; backdrop-filter:blur(5px);">
+  <div style="background:#1e293b; border:1px solid #3b82f6; border-radius:12px; width:90%; max-width:500px; padding:15px; color:#fff; display:flex; flex-direction:column; gap:12px;">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h3 style="margin:0; font-size:15px; color:#60a5fa;">✂️ Question Crop / Highlight Karein</h3>
+      <button onclick="closeCropperModal()" style="background:none; border:none; color:#94a3b8; font-size:18px; cursor:pointer;">✖</button>
+    </div>
+    
+    <div id="cropperWrapper" style="max-height:55vh; overflow:hidden; background:#0f172a; border-radius:8px; display:flex; justify-content:center; align-items:center;">
+      <img id="cropperImageSrc" src="" style="max-width:100%; display:block;">
+    </div>
+
+    <div id="cropperDefaultFooter" style="display:flex; gap:10px; justify-content:flex-end;">
+      <button onclick="closeCropperModal()" style="background:#334155; border:none; color:#cbd5e1; padding:8px 14px; border-radius:6px; cursor:pointer; font-size:12px;">Cancel</button>
+      <button onclick="applyImageCrop()" style="background:#2563eb; border:none; color:#fff; padding:8px 16px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:12px;">Crop & Highlight</button>
+    </div>
+  </div>
+</div>
 
   <!-- SOLVER JS PATH -->
   <script src="solver.js"></script>

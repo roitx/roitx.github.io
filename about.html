@@ -222,6 +222,66 @@
             min-height: 110px;
         }
 
+        /* Image Attachment Styling */
+        .image-upload-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .custom-file-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 16px;
+            background: rgba(51, 65, 85, 0.6);
+            border: 1px dashed #3b82f6;
+            border-radius: 10px;
+            color: #60a5fa;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s;
+        }
+
+        .custom-file-btn:hover {
+            background: rgba(59, 130, 246, 0.15);
+        }
+
+        .image-preview-container {
+            display: none;
+            position: relative;
+            width: fit-content;
+            margin-top: 6px;
+        }
+
+        .image-preview-container img {
+            max-width: 140px;
+            max-height: 100px;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            object-fit: cover;
+        }
+
+        .remove-img-btn {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+        }
+
         .form-footer {
             display: flex;
             justify-content: space-between;
@@ -361,12 +421,28 @@
                 </div>
             </div>
 
-            <button type="submit" class="submit-btn">Submit Feedback</button>
+            <!-- Screenshot/Photo Upload Attachment -->
+            <div class="image-upload-wrapper">
+                <label>Screenshot / Photo Attach Karein (Optional):</label>
+                <label for="feedbackImgInput" class="custom-file-btn">
+                    📷 Attach Image / Screenshot
+                </label>
+                <input type="file" id="feedbackImgInput" accept="image/*" style="display: none;" onchange="previewFeedbackImage(event)">
+                
+                <div id="feedbackImgPreview" class="image-preview-container">
+                    <img id="previewImgTag" src="" alt="Preview">
+                    <button type="button" class="remove-img-btn" onclick="removeFeedbackImage()">✖</button>
+                </div>
+            </div>
+
+            <button type="submit" class="submit-btn" style="margin-top: 10px;">Submit Feedback</button>
         </form>
     </div>
 </div>
 
 <script>
+let attachedBase64Image = null;
+
 // FAQ Accordion Toggle Function
 function toggleFaq(button) {
     const item = button.parentElement;
@@ -408,6 +484,27 @@ function validateWordCount() {
     }
 }
 
+// Image Preview & Base64 Logic
+function previewFeedbackImage(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            attachedBase64Image = e.target.result;
+            document.getElementById('previewImgTag').src = attachedBase64Image;
+            document.getElementById('feedbackImgPreview').style.display = 'inline-block';
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+function removeFeedbackImage() {
+    attachedBase64Image = null;
+    document.getElementById('previewImgTag').src = '';
+    document.getElementById('feedbackImgPreview').style.display = 'none';
+    document.getElementById('feedbackImgInput').value = '';
+}
+
 // Session ID Helper
 function getSessionId() {
     let sid = localStorage.getItem("solver_sid");
@@ -418,7 +515,7 @@ function getSessionId() {
     return sid;
 }
 
-// Feedback Submit Handler (Login check tabhi hoga jab Send/Submit button click hoga)
+// Feedback Submit Handler
 async function handleFeedback(event) {
     event.preventDefault();
 
@@ -431,7 +528,7 @@ async function handleFeedback(event) {
 
     if (!session || !session.user) {
         alert("Kripya feedback bhejne ke liye pehle login karein!");
-        window.location.href = "login.html"; // Root me login.html par redirect
+        window.location.href = "login.html";
         return;
     }
 
@@ -440,8 +537,8 @@ async function handleFeedback(event) {
     const text = document.getElementById('description').value.trim();
     const words = countWords(text);
 
-    if (words === 0) {
-        alert('Kripya apna feedback likhein!');
+    if (words === 0 && !attachedBase64Image) {
+        alert('Kripya apna feedback likhein ya photo attach karein!');
         return;
     }
 
@@ -453,7 +550,11 @@ async function handleFeedback(event) {
         other: "Other"
     };
 
-    const fullMessage = `[FEEDBACK - ${topicNames[topic] || topic}]:\n${text}`;
+    // Prepare Question Payload with Image if attached
+    let fullMessage = `[FEEDBACK - ${topicNames[topic] || topic}]:\n${text}`;
+    if (attachedBase64Image) {
+        fullMessage = `<div style="margin-bottom:8px;"><img src="${attachedBase64Image}" style="max-width:200px; max-height:150px; border-radius:8px; border:1px solid #334155;"></div>` + fullMessage;
+    }
 
     try {
         const user = session.user;
@@ -483,6 +584,7 @@ async function handleFeedback(event) {
         if (!error) {
             alert("✅ Aapka Feedback safaltapurvak bhej diya gaya hai!");
             document.getElementById('feedbackForm').reset();
+            removeFeedbackImage();
             document.getElementById('currentCount').innerText = '0';
             document.getElementById('errorMsg').style.display = 'none';
         } else {

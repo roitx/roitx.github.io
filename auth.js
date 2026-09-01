@@ -2,6 +2,17 @@
    ROITX PLATFORM — AUTHENTICATION ENGINE (auth.js)
    ===================================================== */
 
+// Helper Function for Redirect Handling
+function handlePostLoginRedirect() {
+  const redirectTarget = sessionStorage.getItem("redirect_after_login");
+  if (redirectTarget) {
+    sessionStorage.removeItem("redirect_after_login");
+    window.location.href = redirectTarget;
+  } else {
+    window.location.href = window.getPageUrl("profile.html");
+  }
+}
+
 // 1. User Login Handler
 async function loginUser() {
   const email = document.getElementById("email").value.trim();
@@ -25,15 +36,8 @@ async function loginUser() {
       return;
     }
 
-    // Direct Redirect to profile.html for ALL users (User & Admin both)
-    const redirectTarget = sessionStorage.getItem("redirect_after_login");
-
-    if (redirectTarget) {
-      sessionStorage.removeItem("redirect_after_login");
-      window.location.href = redirectTarget;
-    } else {
-      window.location.href = window.getPageUrl("profile.html");
-    }
+    // Dynamic Redirect Executed
+    handlePostLoginRedirect();
 
   } catch (err) {
     if (window.triggerErrorAnim) window.triggerErrorAnim();
@@ -114,10 +118,17 @@ async function updatePassword() {
 
 // 5. Google Sign-In Handler
 async function signInWithGoogle() {
+  const redirectTarget = sessionStorage.getItem("redirect_after_login");
+  
+  // Google login karne ke baad exact same page par return aane ke liye setup
+  const callbackUrl = redirectTarget 
+    ? window.getPageUrl('login.html') 
+    : window.getPageUrl('login.html');
+
   const { data, error } = await window.supabaseClient.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: window.getPageUrl('login.html')
+      redirectTo: callbackUrl
     }
   });
 
@@ -133,3 +144,4 @@ window.signUpUser = signUpUser;
 window.sendResetLink = sendResetLink;
 window.updatePassword = updatePassword;
 window.signInWithGoogle = signInWithGoogle;
+window.handlePostLoginRedirect = handlePostLoginRedirect;

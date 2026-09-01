@@ -217,6 +217,74 @@ body {
 
 .typing-dot:nth-child(1) { animation-delay: -0.32s; }
 .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+/* Image Attachment & Preview Styles */
+.image-preview-box {
+  position: relative;
+  display: inline-block;
+  margin: 8px 15px;
+  padding: 5px;
+  background: #1e293b;
+  border: 1px solid #3b82f6;
+  border-radius: 8px;
+  max-width: 140px;
+}
+
+.image-preview-box img {
+  width: 100%;
+  max-height: 100px;
+  object-fit: contain;
+  border-radius: 6px;
+  display: block;
+}
+
+.remove-img-btn {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.attach-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: #38bdf8;
+  padding: 8px;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.attach-btn:hover {
+  background: rgba(56, 189, 248, 0.15);
+}
+/* Modal Container Responsiveness Override */
+#cropperModal > div {
+  max-width: 95vw !important;
+  width: 400px !important;
+  box-sizing: border-box !important;
+  padding: 12px !important;
+  overflow: hidden !important;
+}
+
+/* Image/Canvas Container Inside Modal */
+#cropperModal .cropper-container,
+#pencilCanvas {
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
 
 /* ==========================================
    4. INTERACTIVE CARDS & ACTION BUTTONS
