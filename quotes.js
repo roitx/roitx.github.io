@@ -1,4 +1,3 @@
-// ================= OFFLINE FALLBACK QUOTES ARRAY =================
 const fallbackQuotes = [
   "Success = Consistency × Hard Work!",
   "Winners are not born, they are built!",
@@ -101,5 +100,6 @@ const fallbackQuotes = [
   "The grind never ends — only improves!",
   "Make yourself someone you’d be proud of!"
 ];
-// quotes.js ke bilkul aakhri me ye line add karein:
+
 window.quotes = fallbackQuotes;
+

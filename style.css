@@ -1,5 +1,5 @@
 /* =========================================================
-   PM ROITX - FIXED CLEAN UI & SYNCD NOTIFICATION SYSTEM
+   PM ROITX - FULLY UPDATED RESPONSIVE & LIGHT MODE ENHANCED CSS
    ========================================================= */
 
 /* ================= ROOT & COLORS ================= */
@@ -28,26 +28,27 @@
 }
 
 body.light {
-  --bg-dark-1: #eef3ff;
-  --bg-dark-2: #dbeafe;
-  --text: #081427;
-  --muted: #475569;
+  /* Rich & Vibrant Ultra-Clean Light Mode Palette */
+  --bg-dark-1: #f4f7fc;
+  --bg-dark-2: #e2ebf8;
+  --text: #0f172a;
+  --muted: #64748b;
   --accent: #2563eb;
 
-  --glass: rgba(255, 255, 255, 0.75);
-  --glass-border: rgba(37, 99, 235, 0.25);
+  --glass: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(37, 99, 235, 0.2);
 
-  --gold-glow: #d4af37;
-  --gold-shadow: rgba(212, 175, 55, 0.5);
-  --gold-linear: linear-gradient(135deg, #f6d365, #fda085);
+  --gold-glow: #eab308;
+  --gold-shadow: rgba(234, 179, 8, 0.4);
+  --gold-linear: linear-gradient(135deg, #fde047, #f97316);
 
-  --book-glow: rgba(37, 99, 235, 0.3);
-  --book-spine: #dbeafe;
+  --book-glow: rgba(37, 99, 235, 0.25);
+  --book-spine: #e2e8f0;
 
-  /* Soft Light Mode Gradients */
-  --grad-1: rgba(186, 230, 253, 0.6);
-  --grad-2: rgba(199, 210, 254, 0.5);
-  --grad-3: rgba(254, 205, 211, 0.4);
+  /* Enhanced Crisp Light Mode Gradients */
+  --grad-1: rgba(56, 189, 248, 0.22);
+  --grad-2: rgba(129, 140, 248, 0.18);
+  --grad-3: rgba(244, 63, 94, 0.12);
 }
 
 /* ================= RESET & DISABLE SELECTION / TOUCH ================= */
@@ -88,7 +89,7 @@ body {
     radial-gradient(1000px at 90% 25%, var(--grad-2), transparent 55%),
     radial-gradient(900px at 50% 90%, var(--grad-3), transparent 60%),
     linear-gradient(180deg, var(--bg-dark-1), var(--bg-dark-2));
-  background-attachment: fixed;
+  background-attachment: scroll; /* Fixed blue box/artifact bug resolved via scroll attachment */
   transition: background 0.5s ease, color 0.4s ease;
   position: relative;
   min-height: 100vh;
@@ -112,7 +113,7 @@ body::before {
 }
 
 body.light::before {
-  color: rgba(0, 0, 0, 0.06);
+  color: rgba(15, 23, 42, 0.04);
 }
 
 #cursorSpotlight {
@@ -129,7 +130,7 @@ body.light::before {
 }
 
 body.light #cursorSpotlight {
-  background: radial-gradient(circle, rgba(37, 99, 235, 0.12) 0%, transparent 75%);
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.08) 0%, transparent 75%);
   mix-blend-mode: multiply;
 }
 
@@ -175,9 +176,9 @@ body.light #cursorSpotlight {
 }
 
 body.light .book-cover {
-  background: linear-gradient(135deg, #ffffff, #e2e8f0);
-  border-color: rgba(37, 99, 235, 0.3);
-  box-shadow: 10px 15px 30px rgba(0, 0, 0, 0.15), inset 0 0 15px rgba(37, 99, 235, 0.1);
+  background: linear-gradient(135deg, #ffffff, #cbd5e1);
+  border-color: rgba(37, 99, 235, 0.25);
+  box-shadow: 10px 15px 30px rgba(15, 23, 42, 0.1), inset 0 0 15px rgba(37, 99, 235, 0.05);
 }
 
 .book-cover::before {
@@ -269,7 +270,7 @@ body.light .book-cover {
   animation: rotateRingReverse 4s ease-in-out infinite alternate;
 }
 
-/* Core Logo Animation - FIXED TO ROUND */
+/* Core Logo Animation - ROUND */
 .logo-core {
   position: relative;
   width: 100px;
@@ -341,13 +342,13 @@ body.light .book-cover {
 }
 @keyframes fadeIn { to { opacity: 1; } }
 
-/* ================= TOPBAR & RIGHT ACTIONS ================= */
+/* ================= TOPBAR & HEADER FIXED OVERFLOW FIX ================= */
 .topbar {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
-  padding: 12px 24px;
+  padding: 10px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -355,22 +356,47 @@ body.light .book-cover {
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   border-bottom: 1px solid var(--glass-border);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
   z-index: 1000;
+  box-sizing: border-box;
+  overflow: visible; /* Fixed notification button clipping bug */
 }
 
 .topbar-actions {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
+  flex-shrink: 0;
 }
 
 @media (max-width: 480px) {
   .topbar {
-    padding: 10px 14px;
+    padding: 8px 10px;
+    gap: 8px;
+  }
+  .brand {
+    gap: 8px;
+    min-width: 0;
+    flex: 1;
+  }
+  .brand-text-wrap {
+    min-width: 0;
+    overflow: hidden;
+  }
+  .brand-name {
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .brand-sub {
+    font-size: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .topbar-actions {
-    gap: 10px;
+    gap: 8px;
   }
 }
 
@@ -380,15 +406,16 @@ body.light .book-cover {
   gap: 12px;
 }
 
-/* Custom App Icon Design - FIXED TO ROUND */
+/* Custom App Icon Design - ROUND */
 .logo {
-  width: 44px;
-  height: 44px;
+  width: 38px;
+  height: 38px;
   border-radius: 50% !important;
   object-fit: cover !important;
   border: 1.5px solid rgba(0, 240, 255, 0.4);
   box-shadow: 0 0 15px rgba(0, 240, 255, 0.25);
   transition: transform 0.4s ease, box-shadow 0.4s ease;
+  flex-shrink: 0;
 }
 
 .logo:hover {
@@ -397,12 +424,12 @@ body.light .book-cover {
 }
 
 .brand-name {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 800;
   color: var(--text);
 }
 .brand-sub {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--muted);
 }
 .glow {
@@ -411,24 +438,28 @@ body.light .book-cover {
 
 /* ================= SWITCH ================= */
 .switch {
-  width: 52px;
-  height: 26px;
+  width: 46px;
+  height: 24px;
   position: relative;
+  flex-shrink: 0;
 }
 .switch input { display: none; }
 .slider {
   position: absolute;
   inset: 0;
   border-radius: 50px;
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.25);
   cursor: pointer;
   border: 1px solid var(--glass-border);
+}
+body.light .slider {
+  background: rgba(15, 23, 42, 0.12);
 }
 .slider::before {
   content: "";
   position: absolute;
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   top: 2px;
   left: 2px;
   border-radius: 50%;
@@ -436,29 +467,30 @@ body.light .book-cover {
   transition: 0.35s;
 }
 .switch input:checked + .slider::before {
-  transform: translateX(26px);
+  transform: translateX(22px);
 }
 
 /* ================= MENU ICON ================= */
 .menu-icon {
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   border-radius: 10px;
   background: linear-gradient(135deg, #7c4dff, #3d5afe);
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 5px;
-  box-shadow: 0 0 15px rgba(61, 90, 254, 0.6), 0 4px 10px rgba(0, 0, 0, 0.3);
+  gap: 4.5px;
+  box-shadow: 0 0 15px rgba(61, 90, 254, 0.5), 0 4px 10px rgba(0, 0, 0, 0.2);
   cursor: pointer;
   transition: all 0.3s ease;
   border: 1px solid rgba(255, 255, 255, 0.2);
+  flex-shrink: 0;
 }
 
 .menu-icon span {
-  width: 20px;
-  height: 2.5px;
+  width: 18px;
+  height: 2px;
   background: #ffffff;
   border-radius: 4px;
   box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
@@ -508,7 +540,7 @@ body.light .book-cover {
 }
 
 body.light .side-menu a:hover {
-  background: rgba(212, 175, 55, 0.18);
+  background: rgba(234, 179, 8, 0.15);
 }
 
 .menu-svg-icon {
@@ -547,7 +579,7 @@ body.light .side-menu a:hover {
 #overlay.show { display: block; }
 
 main {
-  margin-top: 80px;
+  margin-top: 75px;
   padding-bottom: 40px;
   position: relative;
   z-index: 1;
@@ -556,11 +588,11 @@ main {
 /* ================= VIBRANT HEADING ================= */
 .hero {
   text-align: center;
-  padding: clamp(36px, 6vw, 70px) 16px;
+  padding: clamp(30px, 5vw, 60px) 16px;
 }
 
 .hero h1 {
-  font-size: clamp(32px, 6vw, 48px);
+  font-size: clamp(28px, 5vw, 44px);
   font-weight: 900;
   background: linear-gradient(135deg, #00f0ff 0%, #7000ff 50%, #ec4899 100%);
   -webkit-background-clip: text;
@@ -572,6 +604,7 @@ body.light .hero h1 {
   background: linear-gradient(135deg, #0284c7 0%, #6366f1 50%, #db2777 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 20px rgba(37, 99, 235, 0.15);
 }
 
 .visually-hidden {
@@ -587,7 +620,7 @@ body.light .hero h1 {
 }
 
 .hero .power-title {
-  font-size: clamp(24px, 5vw, 36px);
+  font-size: clamp(22px, 4vw, 32px);
   font-weight: 800;
   margin-top: 8px;
   background: linear-gradient(90deg, #38bdf8, #fbbf24, #a855f7);
@@ -642,18 +675,18 @@ body.light .hero h1 {
   box-shadow: 0 0 35px var(--gold-glow), 0 0 50px rgba(255, 215, 0, 0.5);
 }
 
-/* ================= CARDS ================= */
+/* ================= CARDS (MOBILE ONE-BY-ONE / GRID LOGIC) ================= */
 .card-container {
-  margin-top: 42px;
+  margin-top: 32px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
+  grid-template-columns: 1fr;
+  gap: 16px;
   padding: 0 16px;
 }
 
 .card {
-  padding: 24px 20px;
-  border-radius: 24px;
+  padding: 22px 20px;
+  border-radius: 22px;
   background: var(--glass);
   backdrop-filter: blur(22px) saturate(180%);
   border: 1px solid var(--glass-border);
@@ -666,6 +699,13 @@ body.light .hero h1 {
   align-items: flex-start;
   will-change: transform;
   color: var(--text);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.06);
+}
+
+body.light .card {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(37, 99, 235, 0.18);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
 }
 
 .card h3 {
@@ -718,8 +758,8 @@ body.light .hero h1 {
 }
 
 body.light .ai-card {
-  background: rgba(37, 99, 235, 0.06);
-  border: 1px solid rgba(37, 99, 235, 0.3) !important;
+  background: rgba(37, 99, 235, 0.04);
+  border: 1px solid rgba(37, 99, 235, 0.25) !important;
 }
 
 .ai-card:hover {
@@ -781,7 +821,7 @@ footer {
   color: var(--muted);
 }
 
-/* ================= FIXED INSTALL PWA BANNER (CLEAN SINGLE BOX) ================= */
+/* ================= FIXED INSTALL PWA BANNER ================= */
 #installContainer {
   position: fixed;
   bottom: 25px;
@@ -795,7 +835,6 @@ footer {
   will-change: transform, opacity;
   touch-action: pan-x;
 
-  /* Sabhi extra box, background, border aur shadow yahan se NULL kar diye gaye hain */
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
@@ -817,11 +856,15 @@ footer {
   align-items: center;
   gap: 12px;
   cursor: pointer;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
   transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-/* Inner App Image Round Fix */
+body.light #installApp {
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+}
+
 #installApp img {
   width: 40px;
   height: 40px;
@@ -831,7 +874,6 @@ footer {
   flex-shrink: 0;
 }
 
-/* Single Box Hover Glow */
 #installApp:hover {
   border-color: var(--gold-glow);
   background: rgba(255, 255, 255, 0.18);
@@ -843,7 +885,6 @@ footer {
   border-color: var(--gold-glow);
   box-shadow: 0 0 12px var(--gold-glow);
 }
-
 
 #offlineBanner {
   position: fixed;
@@ -870,16 +911,17 @@ footer {
   transform: translateX(-50%) translateY(0);
 }
 
-/* ================= NOTIFICATIONS (OPTIMIZED & SYNCD) ================= */
+/* ================= NOTIFICATIONS ================= */
 .notif-wrapper {
   position: relative;
   display: inline-block;
+  flex-shrink: 0;
 }
 
 .notif-item {
   position: relative;
   padding: 10px 32px 10px 12px;
-  border-bottom: 1px solid var(--glass-border, rgba(255, 255, 255, 0.08));
+  border-bottom: 1px solid var(--glass-border);
   transition: opacity 0.25s ease, transform 0.25s ease, background 0.2s ease;
   border-radius: 8px;
 }
@@ -889,7 +931,7 @@ footer {
 }
 
 body.light .notif-item:hover {
-  background: rgba(0, 0, 0, 0.04);
+  background: rgba(15, 23, 42, 0.04);
 }
 
 .notif-item.read {
@@ -902,13 +944,9 @@ body.light .notif-item:hover {
   font-weight: 700 !important;
 }
 
-/* --- FIXED Z-INDEX MODAL OVERLAY --- */
 .notif-modal-overlay {
   position: fixed;
-  top: 0; 
-  left: 0; 
-  right: 0; 
-  bottom: 0;
+  top: 0; left: 0; right: 0; bottom: 0;
   background: rgba(0, 0, 0, 0.75);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -932,12 +970,12 @@ body.light .notif-item:hover {
 .notif-modal-card {
   width: 100%;
   max-width: 480px;
-  background: var(--bg-dark-1, #0f172a);
-  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.15));
+  background: var(--bg-dark-1);
+  border: 1px solid var(--glass-border);
   border-radius: 22px;
   padding: 24px;
-  color: var(--text, #fff);
-  box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+  color: var(--text);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.4);
 }
 
 .notif-modal-header {
@@ -951,14 +989,14 @@ body.light .notif-item:hover {
   font-size: 11px;
   font-weight: 800;
   text-transform: uppercase;
-  color: var(--accent, #00c6ff);
+  color: var(--accent);
   letter-spacing: 1px;
 }
 
 .notif-modal-close {
   background: transparent;
   border: none;
-  color: var(--muted, #a0aec0);
+  color: var(--muted);
   font-size: 20px;
   cursor: pointer;
   line-height: 1;
@@ -972,13 +1010,13 @@ body.light .notif-item:hover {
 .notif-modal-body h3 {
   font-size: 18px;
   margin-bottom: 10px;
-  color: var(--text, #fff);
+  color: var(--text);
 }
 
 .notif-modal-body p {
   font-size: 14px;
   line-height: 1.6;
-  color: var(--muted, #cbd5e0);
+  color: var(--muted);
 }
 
 .notif-modal-footer {
@@ -989,7 +1027,7 @@ body.light .notif-item:hover {
 }
 
 .btn-modal-action {
-  background: linear-gradient(135deg, var(--accent, #00c6ff), #6f7bff);
+  background: linear-gradient(135deg, var(--accent), #6f7bff);
   color: #fff;
   border: none;
   padding: 8px 18px;
@@ -1022,8 +1060,8 @@ body.light .notif-item:hover {
   background: var(--glass);
   border: 1px solid var(--glass-border);
   color: var(--text);
-  width: 42px;
-  height: 42px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -1044,12 +1082,11 @@ body.light .notif-item:hover {
   position: absolute;
   top: 2px;
   right: 2px;
-  width: 100%;
-  max-width: 10px;
-  height: 10px;
+  width: 9px;
+  height: 9px;
   background: #ff3b30;
   border-radius: 50%;
-  box-shadow: 0 0 8px #ff3b30, 0 0 12px rgba(255, 59, 48, 0.8);
+  box-shadow: 0 0 8px #ff3b30;
   border: 2px solid var(--bg-dark-1);
   display: none;
   z-index: 5;
@@ -1066,19 +1103,18 @@ body.light .notif-item:hover {
   100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 59, 48, 0); }
 }
 
-/* --- DROPDOWN BOX --- */
 .notif-dropdown-box {
   position: absolute;
-  top: 55px;
+  top: 52px;
   right: 0;
-  width: 320px;
-  max-height: 420px;
-  background: var(--bg-dark-1, rgba(15, 23, 42, 0.95));
+  width: 310px;
+  max-height: 400px;
+  background: var(--bg-dark-1);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.15));
+  border: 1px solid var(--glass-border);
   border-radius: 18px;
-  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.35);
   z-index: 9999;
   display: none;
   flex-direction: column;
@@ -1092,9 +1128,9 @@ body.light .notif-item:hover {
 @media (max-width: 480px) {
   .notif-dropdown-box {
     position: fixed;
-    left: 14px;
-    right: 14px;
-    top: 65px;
+    left: 12px;
+    right: 12px;
+    top: 60px;
     width: auto;
   }
 }
@@ -1104,7 +1140,7 @@ body.light .notif-item:hover {
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  border-bottom: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
+  border-bottom: 1px solid var(--glass-border);
   background: rgba(255, 255, 255, 0.03);
 }
 
@@ -1117,7 +1153,7 @@ body.light .notif-item:hover {
 .mark-read-btn {
   background: transparent;
   border: none;
-  color: var(--accent, #00c6ff);
+  color: var(--accent);
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
@@ -1164,7 +1200,7 @@ body.light .notif-item:hover {
 }
 
 .notif-body {
-  max-height: 320px;
+  max-height: 300px;
   overflow-y: auto;
   padding: 8px;
 }
@@ -1189,12 +1225,17 @@ body.light .notif-item:hover {
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   border: 1px solid var(--glass-border);
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
   border-radius: 20px;
   padding: 16px 20px;
   z-index: 99999;
   color: var(--text);
   font-size: 13.5px;
+}
+
+body.light .cookie-banner {
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 15px 35px rgba(15, 23, 42, 0.1);
 }
 
 .cookie-content {
@@ -1245,7 +1286,7 @@ body.light .notif-item:hover {
   color: var(--text);
 }
 
-/* ================= GLOBAL SCROLLBAR & RESPONSIVE ================= */
+/* ================= GLOBAL SCROLLBAR & RESPONSIVE BREAKPOINTS ================= */
 ::-webkit-scrollbar {
   width: 6px;
 }
@@ -1260,12 +1301,11 @@ body.light .notif-item:hover {
   background: var(--gold-glow);
 }
 
-@media(max-width: 480px) {
-  .brand-name { font-size: 16px; }
-  .logo { width: 38px; height: 38px; }
-  .card { padding: 18px; }
-  .card-container { gap: 16px; grid-template-columns: 1fr 1fr; }
-  .book-wrapper { width: 140px; height: 190px; }
+@media(min-width: 768px) {
+  .card-container {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
 }
 
 @media(min-width: 1024px) {

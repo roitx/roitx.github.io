@@ -2,7 +2,6 @@
    PM ROITX - MAIN CONTROLLER SCRIPT (FULL NOTIFICATION FIXED)
    ========================================================= */
 
-// Global Fallback Quotes
 const GLOBAL_FALLBACK_QUOTES = [
   "Work Hard in Silence Let Success Make Noise",
   "Believe You Can And You Are Halfway There",
@@ -11,12 +10,10 @@ const GLOBAL_FALLBACK_QUOTES = [
   "Your Only Limit Is You • Stay Focused"
 ];
 
-// 1. NAVIGATION & UTILITIES
 function goto(page) {
   window.location.href = page;
 }
 
-// 2. DYNAMIC WATERMARK & QUOTES SYSTEM
 function setupDynamicWatermark() {
   let activeQuotes = GLOBAL_FALLBACK_QUOTES;
   try {
@@ -34,19 +31,19 @@ function setupDynamicWatermark() {
   document.body.setAttribute('data-watermark', watermarkText);
 }
 
-// 3. DISABLE CONTEXT MENU & DOUBLE-TAP ZOOM
 document.addEventListener('contextmenu', (e) => e.preventDefault(), false);
 
 let lastTouchEnd = 0;
 document.addEventListener('touchend', (e) => {
   const now = Date.now();
   if (now - lastTouchEnd <= 300) {
-    e.preventDefault();
+    if (e.cancelable) {
+      e.preventDefault();
+    }
   }
   lastTouchEnd = now;
-}, false);
+}, { passive: true });
 
-// 4. CURSOR SPOTLIGHT & CARD 3D TILT
 const spotlight = document.createElement("div");
 spotlight.id = "cursorSpotlight";
 document.body.appendChild(spotlight);
@@ -89,11 +86,9 @@ function initCardTilt() {
   });
 }
 
-// 5. NOTIFICATION SYSTEM (DROPDOWN + MODAL + BROADCASTS)
 let readNotifIds = JSON.parse(localStorage.getItem("read_notifs") || "[]");
 let deletedNotifIds = JSON.parse(localStorage.getItem("deleted_notifs") || "[]");
 
-// Helper function to update badge and header text dynamically
 function updateUnreadCount() {
   const badge = document.getElementById("notifBadge");
   const countTag = document.getElementById("notifCountTag");
@@ -126,7 +121,6 @@ function toggleNotif() {
   if (box) {
     box.classList.toggle("show");
   } else {
-    // Dropdown na milne par fallback Modal Active trigger
     const notifModal = document.getElementById('notifModal');
     if (notifModal) {
       notifModal.classList.add('active');
@@ -154,7 +148,6 @@ function markAllAsRead() {
 }
 
 function openNotifModal(id, title, message, link, timestamp) {
-  // Dropdown ko hide kar rahe hain taaki Modal background overlay par correctly show ho
   const notifBox = document.getElementById("notifBox");
   if (notifBox) notifBox.classList.remove("show");
 
@@ -199,7 +192,6 @@ function openNotifModal(id, title, message, link, timestamp) {
       if (dot) dot.remove();
     }
     
-    // Counter live update
     updateUnreadCount();
   }
 }
@@ -300,7 +292,6 @@ function showToastNotification(title, message, link) {
   }, 4500);
 }
 
-// SUPABASE NOTIFICATION LOADER
 async function loadSupabaseNotifications() {
   if (!window.supabaseClient) return;
 
@@ -350,14 +341,12 @@ async function loadSupabaseNotifications() {
   }
 }
 
-// 6. DOM INITIALIZATION & EVENT LISTENERS
 document.addEventListener("DOMContentLoaded", async () => {
   setupDynamicWatermark();
   initCardTilt();
   
   loadSupabaseNotifications();
 
-  // Close Notif Dropdown on Outside Click
   document.addEventListener("click", (e) => {
     const notifWrapper = document.querySelector(".notif-wrapper");
     const notifBox = document.getElementById("notifBox");
@@ -373,7 +362,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  // Theme Toggle Logic
   const modeToggle = document.getElementById("modeToggle");
   if (modeToggle) {
     const slider = modeToggle.parentElement.querySelector(".slider");
@@ -406,7 +394,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  // Highlight Active Side Menu Link
   const currentPath = window.location.pathname.split("/").pop() || "index.html";
   document.querySelectorAll(".side-menu a").forEach(link => {
     if (link.getAttribute("href") === currentPath) {
@@ -416,7 +403,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  // Cookie Consent Banner Controls
   const cookieBanner = document.getElementById("cookieBanner");
   const acceptBtn = document.getElementById("acceptCookies");
   const declineBtn = document.getElementById("declineCookies");
@@ -440,7 +426,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
-// 7. MOTIVATION POPUP SYSTEM
 async function showMotivation() {
   const popup = document.getElementById("motivationPopup");
   const textElem = document.getElementById("motivationText");
@@ -470,7 +455,6 @@ async function showMotivation() {
 function loadFallbackQuote(element) {
   let quotesList = GLOBAL_FALLBACK_QUOTES;
 
-  // Check if quotes.js list exists
   if (typeof fallbackQuotes !== 'undefined' && Array.isArray(fallbackQuotes) && fallbackQuotes.length > 0) {
     quotesList = fallbackQuotes;
   } else if (window.quotes && Array.isArray(window.quotes) && window.quotes.length > 0) {
@@ -488,7 +472,6 @@ if (motivationPopupElem) {
   });
 }
 
-// 8. CANVAS BACKGROUND PARTICLES ENGINE
 const c = document.getElementById("bgCanvas");
 if (c) {
   const ctx = c.getContext("2d");
@@ -539,7 +522,6 @@ if (c) {
   animateDots();
 }
 
-// 9. WAVE ANIMATION AT BOTTOM
 const wavePathBottom = document.getElementById("waveBottomPath");
 if (wavePathBottom) {
   let t = 0;
@@ -567,7 +549,6 @@ if (wavePathBottom) {
   animateWave();
 }
 
-// 10. OFFLINE BANNER CONTROLLER
 window.addEventListener('DOMContentLoaded', () => {
   const banner = document.getElementById('offlineBanner');
   const bannerText = document.getElementById('bannerText');
@@ -608,7 +589,6 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// 11. KEYBOARD SHORTCUTS
 document.addEventListener("keydown", (e) => {
   if (e.altKey) {
     const key = e.key.toLowerCase();
@@ -621,15 +601,13 @@ document.addEventListener("keydown", (e) => {
 window.addEventListener("load", () => {
   document.body.classList.add("app-loaded");
 });
-// Splash Screen Handler
+
 document.addEventListener("DOMContentLoaded", () => {
-  // Stagger letter animations
   const letters = document.querySelectorAll('.splash-text .letter');
   letters.forEach((letter, idx) => {
     letter.style.animationDelay = `${0.6 + (idx * 0.08)}s`;
   });
 
-  // Hide Splash Screen after loading
   setTimeout(() => {
     const splash = document.getElementById('splashScreen');
     if (splash) {
