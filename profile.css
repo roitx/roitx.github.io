@@ -52,13 +52,13 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 15px;
+  margin-bottom: 24px;
 }
 
 .avatar-wrapper {
   position: relative;
-  width: 105px;
-  height: 105px;
+  width: 110px;
+  height: 110px;
   cursor: pointer;
 }
 
@@ -89,7 +89,7 @@ body {
 
 .avatar-edit-badge {
   position: absolute;
-  bottom: 2px;
+  top: 2px;
   right: 2px;
   width: 32px;
   height: 32px;
@@ -105,31 +105,38 @@ body {
   transition: transform 0.2s;
 }
 
+/* PROFILE PROGRESS BADGE UNDER PHOTO */
+.profile-progress-badge {
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1a202c;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 4px 14px;
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+  border: 2px solid #e0e5ec;
+  z-index: 5;
+  transition: all 0.3s ease;
+  min-width: 48px;
+  text-align: center;
+}
+
+.profile-progress-badge.completed {
+  background: linear-gradient(135deg, #ffb703, #fb8500);
+  color: #ffffff;
+  font-size: 15px;
+  box-shadow: 0 0 15px rgba(251, 133, 0, 0.6);
+}
+
 .avatar-wrapper:hover .avatar-edit-badge {
   transform: scale(1.1);
 }
 
-.delete-photo-btn {
-  margin-top: 10px;
-  background: transparent;
-  border: none;
-  color: #e53e3e;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  opacity: 0.85;
-  transition: opacity 0.2s;
-}
-
-.delete-photo-btn:hover {
-  opacity: 1;
-  text-decoration: underline;
-}
-
-#avatarFileInput { display: none; }
+#avatarFileInputCamera, #avatarFileInputGallery { display: none; }
 
 h1 { font-size: 22px; color: #2d3748; margin-bottom: 6px; font-weight: 700; word-break: break-all; }
 
@@ -163,6 +170,11 @@ p.role-badge {
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+.section-title.danger-title {
+  color: #e53e3e;
+  border-bottom-color: rgba(229, 62, 62, 0.3);
 }
 
 .form-group {
@@ -245,7 +257,6 @@ button.btn-admin {
   box-shadow: 6px 6px 14px #b8bec7, -6px -6px 14px #ffffff, 0 0 12px rgba(90, 46, 255, 0.2);
 }
 
-/* UPGRADED DISCOVERY / EXPLORE BUTTON (SHAKE & LIGHT SHINE EFFECT) */
 button.btn-explore { 
   background: linear-gradient(135deg, #00c6ff, #0072ff) !important;
   color: #ffffff !important;
@@ -263,7 +274,6 @@ button.btn-explore:hover {
   box-shadow: 0 8px 25px rgba(0, 198, 255, 0.65), 6px 6px 14px #b8bec7, -6px -6px 14px #ffffff;
 }
 
-/* CONTINUOUS ATTENTION-GETTING SHAKE ANIMATION */
 @keyframes exploreShake {
   0%, 100% { transform: rotate(0deg) scale(1); }
   10%, 30%, 50% { transform: rotate(-3deg) scale(1.02); }
@@ -271,17 +281,17 @@ button.btn-explore:hover {
   60% { transform: rotate(0deg) scale(1); }
 }
 
-/* PULSING NEON LIGHT GLOW */
 @keyframes pulseGlow {
-  0% {
-    box-shadow: 0 4px 15px rgba(0, 198, 255, 0.35), 6px 6px 14px #b8bec7, -6px -6px 14px #ffffff;
-  }
-  100% {
-    box-shadow: 0 8px 28px rgba(0, 198, 255, 0.75), 0 0 12px rgba(0, 114, 255, 0.6), 6px 6px 14px #b8bec7, -6px -6px 14px #ffffff;
-  }
+  0% { box-shadow: 0 4px 15px rgba(0, 198, 255, 0.35), 6px 6px 14px #b8bec7, -6px -6px 14px #ffffff; }
+  100% { box-shadow: 0 8px 28px rgba(0, 198, 255, 0.75), 0 0 12px rgba(0, 114, 255, 0.6), 6px 6px 14px #b8bec7, -6px -6px 14px #ffffff; }
 }
 
-button.btn-danger { color: #e53e3e; }
+button.btn-logout { color: #4a5568; }
+
+button.btn-danger {
+  color: #e53e3e;
+  border: 1px solid rgba(229, 62, 62, 0.25);
+}
 
 button.btn:active {
   box-shadow: inset 4px 4px 8px #b8bec7, inset -4px -4px 8px #ffffff;
@@ -297,7 +307,6 @@ button.btn:active {
 .status-msg.success { color: #20c997; display: block; }
 .status-msg.error { color: #e53e3e; display: block; }
 
-/* TOP RIGHT INFO BUTTON */
 .info-btn {
   position: absolute;
   top: 20px;
@@ -317,22 +326,140 @@ button.btn:active {
   z-index: 10;
 }
 
-.info-btn:hover {
-  transform: scale(1.08);
-  box-shadow: 6px 6px 12px #b8bec7, -6px -6px 12px #ffffff;
+/* BOTTOM SHEET MODAL STYLES */
+.sheet-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(3px);
+  z-index: 999;
+  display: flex;
+  align-items: flex-end;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
 }
 
-.info-btn:active {
-  box-shadow: inset 3px 3px 6px #b8bec7, inset -3px -3px 6px #ffffff;
+.sheet-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
 }
 
-/* CROPPER MODAL POPUP */
+.sheet-card {
+  width: 100%;
+  background: #2a2e37;
+  border-top-left-radius: 24px;
+  border-top-right-radius: 24px;
+  padding: 16px 20px 30px;
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.1, 0.9, 0.2, 1);
+  box-shadow: 0 -5px 25px rgba(0,0,0,0.3);
+}
+
+.sheet-overlay.active .sheet-card {
+  transform: translateY(0);
+}
+
+.sheet-handle {
+  width: 40px;
+  height: 4px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 2px;
+  margin: 0 auto 16px;
+}
+
+.sheet-title {
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.sheet-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sheet-btn {
+  background: transparent;
+  border: none;
+  color: #e2e8f0;
+  font-size: 16px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 8px;
+  width: 100%;
+  cursor: pointer;
+  border-radius: 12px;
+  transition: background 0.2s;
+}
+
+.sheet-btn:hover { background: rgba(255,255,255,0.05); }
+.sheet-btn.text-danger { color: #fc8181; }
+
+/* AVATAR GRID STYLES */
+.avatar-grid {
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 0;
+  overflow-x: auto;
+}
+
+.avatar-card-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  width: 65px;
+  text-align: center;
+}
+
+.avatar-option-item {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  transition: transform 0.2s, border-color 0.2s;
+  overflow: hidden;
+  background: #1a1d24;
+}
+
+.avatar-option-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-card-item:hover .avatar-option-item {
+  transform: scale(1.1);
+  border-color: #5a2eff;
+}
+
+.avatar-label {
+  color: #a0aec0;
+  font-size: 11px;
+  font-weight: 600;
+  margin-top: 6px;
+  line-height: 1.2;
+  word-break: break-word;
+}
+.avatar-card-item:hover .avatar-label {
+  color: #fff;
+}
+
+/* CROPPER & CONFIRMATION MODAL POPUP */
 .crop-modal-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
   background: rgba(0,0,0,0.65);
   backdrop-filter: blur(4px);
-  z-index: 999;
+  z-index: 1000;
   display: none;
   justify-content: center;
   align-items: center;
@@ -343,7 +470,7 @@ button.btn:active {
   width: 100%;
   max-width: 400px;
   background: #e0e5ec;
-  padding: 20px;
+  padding: 24px 20px;
   border-radius: 24px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.3);
   text-align: center;
@@ -359,8 +486,4 @@ button.btn:active {
 }
 
 .cropper-img-container img { max-width: 100%; }
-
-.cropper-view-box,
-.cropper-face {
-  border-radius: 50% !important;
-}
+.cropper-view-box, .cropper-face { border-radius: 50% !important; }

@@ -2,8 +2,52 @@
    ROITX PLATFORM — AUTHENTICATION ENGINE (auth.js)
    ===================================================== */
 
+// Helper Function: Google/Auth User Metadata ko Profile Table me Auto-Sync karne ke liye
+async function syncUserProfileFromAuth(user) {
+  if (!user) return;
+
+  try {
+    // 1. Google Auth Metadata se Name aur Avatar Pic URL pick karein
+    const metaName = user.user_metadata?.full_name || user.user_metadata?.name || "";
+    const metaAvatar = user.user_metadata?.avatar_url || user.user_metadata?.picture || null;
+    const defaultName = metaName || user.email.split('@')[0];
+
+    // 2. Database `profiles` table check karein
+    const { data: profile } = await window.supabaseClient
+      .from('profiles')
+      .select('full_name, avatar_url')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    // 3. Agar profile record miss hai ya full_name/avatar missing hai toh Auto-Upsert karein
+    if (!profile || !profile.full_name || !profile.avatar_url) {
+      await window.supabaseClient
+        .from('profiles')
+        .upsert({
+          id: user.id,
+          email: user.email,
+          full_name: profile?.full_name || defaultName,
+          avatar_url: profile?.avatar_url || metaAvatar,
+          updated_at: new Date().toISOString()
+        });
+    }
+  } catch (err) {
+    console.warn("Auto profile sync error:", err);
+  }
+}
+
 // Helper Function for Redirect Handling
-function handlePostLoginRedirect() {
+async function handlePostLoginRedirect() {
+  // Login confirmation ke baad profile sync verify karein
+  try {
+    const user = await window.getCurrentUser();
+    if (user) {
+      await syncUserProfileFromAuth(user);
+    }
+  } catch (err) {
+    console.warn("Redirect sync check failed:", err);
+  }
+
   const redirectTarget = sessionStorage.getItem("redirect_after_login");
   if (redirectTarget) {
     sessionStorage.removeItem("redirect_after_login");
@@ -36,6 +80,11 @@ async function loginUser() {
       return;
     }
 
+    // Direct profile auto-sync logic
+    if (data?.user) {
+      await syncUserProfileFromAuth(data.user);
+    }
+
     // Dynamic Redirect Executed
     handlePostLoginRedirect();
 
@@ -56,7 +105,7 @@ async function signUpUser() {
     return;
   }
 
-  const { error } = await window.supabaseClient.auth.signUp({
+  const { data, error } = await window.supabaseClient.auth.signUp({
     email,
     password
   });
@@ -65,6 +114,9 @@ async function signUpUser() {
     if (window.triggerErrorAnim) window.triggerErrorAnim();
     alert(error.message);
   } else {
+    if (data?.user) {
+      await syncUserProfileFromAuth(data.user);
+    }
     alert("Signup successful! Apne account me login karein.");
     if (window.switchMode) window.switchMode("login");
   }
@@ -120,7 +172,7 @@ async function updatePassword() {
 async function signInWithGoogle() {
   const redirectTarget = sessionStorage.getItem("redirect_after_login");
   
-  // Google login karne ke baad exact same page par return aane ke liye setup
+  // Google login karne ke baad login.html callback handler trigger karega
   const callbackUrl = redirectTarget 
     ? window.getPageUrl('login.html') 
     : window.getPageUrl('login.html');
@@ -138,6 +190,18 @@ async function signInWithGoogle() {
   }
 }
 
+// Auto-run Sync check jab page load ho (Jaise Google OAuth redirect par return aane par)
+window.addEventListener("DOMContentLoaded", async () => {
+  try {
+    const user = await window.getCurrentUser();
+    if (user) {
+      await syncUserProfileFromAuth(user);
+    }
+  } catch (err) {
+    // Silent catch
+  }
+});
+
 // Global Exports
 window.loginUser = loginUser;
 window.signUpUser = signUpUser;
@@ -145,3 +209,4 @@ window.sendResetLink = sendResetLink;
 window.updatePassword = updatePassword;
 window.signInWithGoogle = signInWithGoogle;
 window.handlePostLoginRedirect = handlePostLoginRedirect;
+window.syncUserProfileFromAuth = syncUserProfileFromAuth;

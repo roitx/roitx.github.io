@@ -11,6 +11,9 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+  
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
   <!-- Custom External CSS -->
   <link rel="stylesheet" href="profile.css">
@@ -27,17 +30,20 @@
       <i class="fa-solid fa-circle-info"></i>
     </a>
 
+    <!-- Avatar Section -->
     <div class="avatar-section">
-      <div class="avatar-wrapper" onclick="triggerPhotoSelect()" title="Click to Change Photo">
+      <div class="avatar-wrapper" onclick="openPhotoOptions()" title="Click to Change Photo">
         <div class="avatar" id="avatarContainer">U</div>
         <div class="avatar-edit-badge"><i class="fa-solid fa-camera"></i></div>
+        
+        <!-- Profile Progress Badge Under Photo -->
+        <div class="profile-progress-badge" id="profileProgressBadge">0%</div>
       </div>
-      <button type="button" id="deletePhotoBtn" class="delete-photo-btn" style="display: none;" onclick="deleteAvatarPhoto()">
-        <i class="fa-solid fa-trash-can"></i> Delete Photo
-      </button>
     </div>
 
-    <input type="file" id="avatarFileInput" accept="image/*" onchange="handleFileSelected(event)">
+    <!-- Hidden file inputs for Camera & Gallery -->
+    <input type="file" id="avatarFileInputGallery" accept="image/*" onchange="handleFileSelected(event)">
+    <input type="file" id="avatarFileInputCamera" accept="image/*" capture="environment" onchange="handleFileSelected(event)">
 
     <h1 id="userDisplayName">Loading...</h1>
     <p class="role-badge" id="userRoleBadge"><i class="fa-solid fa-spinner fa-spin"></i> Fetching Role...</p>
@@ -47,7 +53,7 @@
 
     <div class="form-group">
       <label><i class="fa-solid fa-signature"></i> Full Name</label>
-      <input type="text" id="fullNameInput" class="input-box" placeholder="Enter your full name" oninput="updateInitialAvatar()">
+      <input type="text" id="fullNameInput" class="input-box" placeholder="Enter your full name" oninput="updateProfileProgress()">
     </div>
 
     <div class="form-group">
@@ -56,36 +62,34 @@
     </div>
 
     <div class="form-group">
-  <label><i class="fa-solid fa-phone"></i> Phone Number</label>
-  <div class="phone-wrapper">
-    <select id="countryCodeSelect" class="input-box">
-      <option value="+91">+91 (IN)</option>
-      <option value="+1">+1 (US)</option>
-      <option value="+971">+971 (UAE)</option>
-      <option value="+977">+977 (NP)</option>
-      <option value="+880">+880 (BD)</option>
-      <option value="+92">+92 (PK)</option>
-      <option value="+44">+44 (UK)</option>
-    </select>
-    <!-- Numbers only & Max 10 digits restriction -->
-    <input 
-      type="tel" 
-      id="phoneInput" 
-      class="input-box" 
-      placeholder="10-digit Mobile No" 
-      maxlength="10" 
-      oninput="this.value = this.value.replace(/[^0-9]/g, '');"
-    >
-  </div>
-</div>
-
+      <label><i class="fa-solid fa-phone"></i> Phone Number</label>
+      <div class="phone-wrapper">
+        <select id="countryCodeSelect" class="input-box">
+          <option value="+91">+91 (IN)</option>
+          <option value="+1">+1 (US)</option>
+          <option value="+971">+971 (UAE)</option>
+          <option value="+977">+977 (NP)</option>
+          <option value="+880">+880 (BD)</option>
+          <option value="+92">+92 (PK)</option>
+          <option value="+44">+44 (UK)</option>
+        </select>
+        <input 
+          type="tel" 
+          id="phoneInput" 
+          class="input-box" 
+          placeholder="10-digit Mobile No" 
+          maxlength="10" 
+          oninput="this.value = this.value.replace(/[^0-9]/g, ''); updateProfileProgress();"
+        >
+      </div>
+    </div>
 
     <!-- Section 2: Academic Info -->
     <div class="section-title"><i class="fa-solid fa-graduation-cap"></i> Academic Details</div>
 
     <div class="form-group">
       <label><i class="fa-solid fa-book-open"></i> Target Exam / Class</label>
-      <select id="classSelect" class="input-box">
+      <select id="classSelect" class="input-box" onchange="updateProfileProgress()">
         <option value="">Select Class / Target Exam</option>
         <option value="Class 9th">Class 9th</option>
         <option value="Class 10th">Class 10th</option>
@@ -99,7 +103,7 @@
 
     <div class="form-group">
       <label><i class="fa-solid fa-microscope"></i> Stream / Subject Branch</label>
-      <select id="streamSelect" class="input-box">
+      <select id="streamSelect" class="input-box" onchange="updateProfileProgress()">
         <option value="">Select Stream</option>
         <option value="PCM (Physics, Chem, Math)">PCM (Maths)</option>
         <option value="PCB (Physics, Chem, Bio)">PCB (Biology)</option>
@@ -112,25 +116,23 @@
 
     <div class="form-group">
       <label><i class="fa-solid fa-building-columns"></i> School / Coaching Name</label>
-      <input type="text" id="institutionInput" class="input-box" placeholder="e.g. KV School / Allen / Physics Wallah">
+      <input type="text" id="institutionInput" class="input-box" placeholder="e.g. KV School / Allen / Physics Wallah" oninput="updateProfileProgress()">
     </div>
 
-    <!-- UPDATED: Grid layout with City, State & Pincode -->
     <div class="grid-2">
       <div class="form-group">
         <label><i class="fa-solid fa-city"></i> City</label>
-        <input type="text" id="cityInput" class="input-box" placeholder="Your City">
+        <input type="text" id="cityInput" class="input-box" placeholder="Your City" oninput="updateProfileProgress()">
       </div>
       <div class="form-group">
         <label><i class="fa-solid fa-map-location-dot"></i> State</label>
-        <input type="text" id="stateInput" class="input-box" placeholder="Your State">
+        <input type="text" id="stateInput" class="input-box" placeholder="Your State" oninput="updateProfileProgress()">
       </div>
     </div>
 
-    <!-- NEW PINCODE FIELD FOR LEADERBOARD -->
     <div class="form-group">
       <label><i class="fa-solid fa-location-pin"></i> Area Pincode <span style="color:#5a2eff; font-size:10px;">(Required for Leaderboard)</span></label>
-      <input type="text" id="pincodeInput" class="input-box" placeholder="e.g. 800001" maxlength="6">
+      <input type="text" id="pincodeInput" class="input-box" placeholder="e.g. 800001" maxlength="6" oninput="updateProfileProgress()">
     </div>
 
     <p id="statusMsg" class="status-msg"></p>
@@ -146,22 +148,19 @@
       </button>
     </div>
 
-  <!-- Admin Buttons -->
-<button class="btn btn-admin" id="adminBtn" style="display: none;" onclick="goToAdminPanel()">
-  <i class="fa-solid fa-shield-halved"></i> Open Admin Panel
-</button>
-<button class="btn btn-admin" id="sendNotifBtn" style="display: none; margin-top: 8px; background: linear-gradient(135deg, #00d2ff, #0072ff); color: #fff;" onclick="goToSendNotification()">
-  <i class="fa-solid fa-paper-plane"></i> Send Notification
-</button>
-<!-- NEW ADMIN BUTTON 1: UPLOAD TEST -->
-<button class="btn btn-admin" id="uploadTestBtn" style="display: none; margin-top: 8px; background: linear-gradient(135deg, #11998e, #38ef7d); color: #fff;" onclick="goToUploadTest()">
-  <i class="fa-solid fa-file-arrow-up"></i> Manage Test
-</button>
-<!-- NEW ADMIN BUTTON 2: AI TEST CREATOR -->
-<button class="btn btn-admin" id="aiTestBtn" style="display: none; margin-top: 8px; background: linear-gradient(135deg, #8E2DE2, #4A00E0); color: #fff;" onclick="goToAiTestCreator()">
-  <i class="fa-solid fa-wand-magic-sparkles"></i> Create AI Test
-</button>
-
+    <!-- Admin Buttons -->
+    <button class="btn btn-admin" id="adminBtn" style="display: none;" onclick="goToAdminPanel()">
+      <i class="fa-solid fa-shield-halved"></i> Open Admin Panel
+    </button>
+    <button class="btn btn-admin" id="sendNotifBtn" style="display: none; margin-top: 8px; background: linear-gradient(135deg, #00d2ff, #0072ff); color: #fff;" onclick="goToSendNotification()">
+      <i class="fa-solid fa-paper-plane"></i> Send Notification
+    </button>
+    <button class="btn btn-admin" id="uploadTestBtn" style="display: none; margin-top: 8px; background: linear-gradient(135deg, #11998e, #38ef7d); color: #fff;" onclick="goToUploadTest()">
+      <i class="fa-solid fa-file-arrow-up"></i> Upload Manual Test
+    </button>
+    <button class="btn btn-admin" id="aiTestBtn" style="display: none; margin-top: 8px; background: linear-gradient(135deg, #8E2DE2, #4A00E0); color: #fff;" onclick="goToAiTestCreator()">
+      <i class="fa-solid fa-wand-magic-sparkles"></i> Create AI Test
+    </button>
 
     <!-- General Action Buttons -->
     <div class="btn-group">
@@ -171,9 +170,51 @@
       <button class="btn btn-explore" onclick="goToHome()">
         <i class="fa-solid fa-compass"></i> Explore Notes & Formulas
       </button>
-      <button class="btn btn-danger" onclick="logoutUser()">
+      <button class="btn btn-logout" onclick="logoutUser()">
         <i class="fa-solid fa-right-from-bracket"></i> Logout Account
       </button>
+    </div>
+
+    <!-- Section 3: Danger Zone (Account Deletion) -->
+    <div class="section-title danger-title"><i class="fa-solid fa-triangle-exclamation"></i> Danger Zone</div>
+    <div style="margin-top: 10px;">
+      <button class="btn btn-danger" onclick="openDeleteConfirmModal()">
+        <i class="fa-solid fa-user-xmark"></i> Delete My Account Permanently
+      </button>
+    </div>
+  </div>
+
+  <!-- Bottom Sheet / Photo Actions Modal -->
+  <div class="sheet-overlay" id="photoOptionsSheet" onclick="closePhotoOptions(event)">
+    <div class="sheet-card" onclick="event.stopPropagation()">
+      <div class="sheet-handle"></div>
+      <h3 class="sheet-title">Add photo</h3>
+      
+      <div class="sheet-options">
+        <button class="sheet-btn" onclick="triggerCamera()">
+          <i class="fa-solid fa-camera"></i> Take a photo
+        </button>
+        <button class="sheet-btn" onclick="triggerGallery()">
+          <i class="fa-solid fa-image"></i> Select from Gallery
+        </button>
+        <button class="sheet-btn" onclick="openAvatarSelector()">
+          <i class="fa-solid fa-user-ninja"></i> Choose Avatar
+        </button>
+        <button class="sheet-btn text-danger" id="sheetRemoveBtn" onclick="deleteAvatarPhoto()">
+          <i class="fa-solid fa-minus-circle"></i> Remove current photo
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Choose Avatar Picker Modal -->
+  <div class="sheet-overlay" id="avatarPickerSheet" onclick="closeAvatarSelector(event)">
+    <div class="sheet-card" onclick="event.stopPropagation()">
+      <div class="sheet-handle"></div>
+      <h3 class="sheet-title">Choose Your Avatar</h3>
+      <div class="avatar-grid" id="avatarGrid">
+        <!-- Built-in SVGs generated via JS -->
+      </div>
     </div>
   </div>
 
@@ -185,7 +226,7 @@
         <img id="cropTargetImage" src="" alt="Crop Target">
       </div>
       <div style="display: flex; gap: 10px; margin-top: 15px;">
-        <button class="btn btn-danger" onclick="closeCropModal()" style="padding: 10px;">Cancel</button>
+        <button class="btn btn-logout" onclick="closeCropModal()" style="padding: 10px;">Cancel</button>
         <button class="btn btn-save" onclick="cropAndUpload()" style="padding: 10px;">
           <i class="fa-solid fa-check"></i> Crop & Upload
         </button>
@@ -193,7 +234,25 @@
     </div>
   </div>
 
-  <!-- Custom External JS -->
+  <!-- Account Delete Confirmation Modal -->
+  <div class="crop-modal-overlay" id="deleteConfirmModal">
+    <div class="crop-modal-card">
+      <div style="font-size: 38px; color: #e53e3e; margin-bottom: 8px;">
+        <i class="fa-solid fa-circle-exclamation"></i>
+      </div>
+      <h3 style="color: #2d3748; font-size: 18px; margin-bottom: 8px;">Are you absolutely sure?</h3>
+      <p style="font-size: 13px; color: #718096; margin-bottom: 20px; line-height: 1.5;">
+        Aapka sara profile data aur account permanently delete ho jayega. Is action ko **undo nahi kiya ja sakta**.
+      </p>
+      <div style="display: flex; gap: 10px;">
+        <button class="btn btn-logout" onclick="closeDeleteConfirmModal()" style="padding: 12px; font-size: 13px;">Cancel</button>
+        <button class="btn btn-danger" onclick="deleteUserAccount()" style="padding: 12px; font-size: 13px; background: #fff5f5;">
+          <i class="fa-solid fa-trash-can"></i> Confirm Delete
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script src="profile.js"></script>
 </body>
 </html>

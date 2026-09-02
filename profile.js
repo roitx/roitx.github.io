@@ -2,16 +2,177 @@ let currentUser = null;
 let currentAvatarUrl = null;
 let cropper = null;
 
+// High-Quality 3D Realistic Avatars (URL-encoded Clean Data URIs)
+const PRESET_AVATARS = [
+  {
+    title: "Student Boy",
+    src: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'><defs><radialGradient id='bg1' cx='50%' cy='30%' r='70%'><stop offset='0%' stop-color='%236366F1'/><stop offset='100%' stop-color='%23312E81'/></radialGradient><filter id='shadow' x='-20%' y='-20%' width='140%' height='140%'><feDropShadow dx='0' dy='4' stdDeviation='4' flood-opacity='0.3'/></filter></defs><circle cx='60' cy='60' r='60' fill='url(%23bg1)'/><g filter='url(%23shadow)'><circle cx='60' cy='48' r='22' fill='%23FDBA74'/><path d='M38 42 C38 25 82 25 82 42 C75 32 45 30 38 42 Z' fill='%231E1B4B'/><ellipse cx='52' cy='48' rx='2.5' ry='3.5' fill='%23334155'/><ellipse cx='68' cy='48' rx='2.5' ry='3.5' fill='%23334155'/><path d='M54 58 Q60 63 66 58' stroke='%23EA580C' stroke-width='2.5' stroke-linecap='round' fill='none'/><path d='M24 110 C24 82 40 70 60 70 C80 70 96 82 96 110 Z' fill='%236366F1'/><path d='M48 70 L72 70 L66 95 L54 95 Z' fill='%23FFFFFF' opacity='0.9'/></g></svg>"
+  },
+  {
+    title: "Student Girl",
+    src: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'><defs><radialGradient id='bg2' cx='50%' cy='30%' r='70%'><stop offset='0%' stop-color='%23EC4899'/><stop offset='100%' stop-color='%23831843'/></radialGradient></defs><circle cx='60' cy='60' r='60' fill='url(%23bg2)'/><path d='M28 58 C22 28 98 28 92 58 C92 80 82 85 82 85 L38 85 C38 85 28 80 28 58 Z' fill='%23271510'/><circle cx='60' cy='50' r='20' fill='%23FED7AA'/><ellipse cx='52' cy='49' rx='2.5' ry='3.5' fill='%231F2937'/><ellipse cx='68' cy='49' rx='2.5' ry='3.5' fill='%231F2937'/><path d='M54 58 Q60 63 66 58' stroke='%23BE123C' stroke-width='2.5' stroke-linecap='round' fill='none'/><path d='M26 110 C26 84 42 72 60 72 C78 72 94 84 94 110 Z' fill='%23F472B6'/></svg>"
+  },
+  {
+    title: "Gamer",
+    src: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'><defs><radialGradient id='bg3' cx='50%' cy='30%' r='70%'><stop offset='0%' stop-color='%238B5CF6'/><stop offset='100%' stop-color='%234C1D95'/></radialGradient></defs><circle cx='60' cy='60' r='60' fill='url(%23bg3)'/><circle cx='60' cy='50' r='21' fill='%23FDBA74'/><rect x='28' y='40' width='14' height='26' rx='7' fill='%2306B6D4'/><rect x='78' y='40' width='14' height='26' rx='7' fill='%2306B6D4'/><path d='M40 38 Q60 28 80 38' stroke='%2306B6D4' stroke-width='5' stroke-linecap='round' fill='none'/><ellipse cx='51' cy='50' rx='2.5' ry='3' fill='%231E293B'/><ellipse cx='69' cy='50' rx='2.5' ry='3' fill='%231E293B'/><path d='M55 60 Q60 63 65 60' stroke='%231E293B' stroke-width='2' fill='none'/><path d='M24 110 C24 82 40 72 60 72 C80 72 96 82 96 110 Z' fill='%230F172A'/><path d='M50 82 L70 82 L60 98 Z' fill='%23A855F7'/></svg>"
+  },
+  {
+    title: "Topper",
+    src: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'><defs><radialGradient id='bg4' cx='50%' cy='30%' r='70%'><stop offset='0%' stop-color='%2310B981'/><stop offset='100%' stop-color='%23064E3B'/></radialGradient></defs><circle cx='60' cy='60' r='60' fill='url(%23bg4)'/><circle cx='60' cy='50' r='22' fill='%231E293B'/><rect x='38' y='42' width='44' height='15' rx='7.5' fill='%23FED7AA'/><circle cx='51' cy='49.5' r='3.5' fill='%230F172A'/><circle cx='69' cy='49.5' r='3.5' fill='%230F172A'/><path d='M34 40 L86 40 L80 28 L40 28 Z' fill='%230F172A'/><rect x='74' y='26' width='20' height='7' rx='3.5' fill='%23EF4444'/><path d='M22 110 C22 82 40 70 60 70 C80 70 98 82 98 110 Z' fill='%230F172A'/></svg>"
+  },
+  {
+    title: "Master",
+    src: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'><defs><radialGradient id='bg5' cx='50%' cy='30%' r='70%'><stop offset='0%' stop-color='%23F59E0B'/><stop offset='100%' stop-color='%2378350F'/></radialGradient></defs><circle cx='60' cy='60' r='60' fill='url(%23bg5)'/><circle cx='60' cy='52' r='21' fill='%23FDBA74'/><path d='M20 28 L60 12 L100 28 L60 42 Z' fill='%231E1B4B'/><rect x='57' y='36' width='6' height='24' fill='%23FBBF24'/><circle cx='49' cy='51' r='8' stroke='%23334155' stroke-width='2.5' fill='none'/><circle cx='71' cy='51' r='8' stroke='%23334155' stroke-width='2.5' fill='none'/><line x1='57' y1='51' x2='63' y2='51' stroke='%23334155' stroke-width='2.5'/><path d='M22 110 C22 84 40 74 60 74 C80 74 98 84 98 110 Z' fill='%23312E81'/></svg>"
+  }
+];
+
+function renderAvatarGrid() {
+  const grid = document.getElementById("avatarGrid");
+  if (!grid) return;
+  
+  grid.innerHTML = PRESET_AVATARS.map((item, index) => {
+    return `
+      <div class="avatar-card-item" onclick="selectPresetAvatar(${index})">
+        <div class="avatar-option-item">
+          <img src="${item.src}" alt="${item.title}">
+        </div>
+        <span class="avatar-label">${item.title}</span>
+      </div>
+    `;
+  }).join('');
+}
+
+async function selectPresetAvatar(index) {
+  const selected = PRESET_AVATARS[index];
+  if (!selected) return;
+
+  closeAvatarSelector();
+  
+  currentAvatarUrl = selected.src;
+  localStorage.setItem("userPhoto", currentAvatarUrl);
+  renderAvatarImage(currentAvatarUrl);
+
+  if (currentUser) {
+    try {
+      await window.supabaseClient
+        .from('profiles')
+        .upsert({ 
+          id: currentUser.id, 
+          email: currentUser.email,
+          avatar_url: currentAvatarUrl, 
+          updated_at: new Date().toISOString()
+        });
+    } catch (err) {
+      console.warn("Avatar DB update error:", err);
+    }
+  }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   loadUserProfile();
+  renderAvatarGrid();
 });
 
-// 1. Load User Profile Data from Supabase
+// Calculate Profile Completion %
+function getCompletionPercentage() {
+  const fields = [
+    document.getElementById("fullNameInput")?.value.trim(),
+    document.getElementById("phoneInput")?.value.trim(),
+    document.getElementById("classSelect")?.value.trim(),
+    document.getElementById("streamSelect")?.value.trim(),
+    document.getElementById("institutionInput")?.value.trim(),
+    document.getElementById("cityInput")?.value.trim(),
+    document.getElementById("stateInput")?.value.trim(),
+    document.getElementById("pincodeInput")?.value.trim(),
+    currentAvatarUrl
+  ];
+
+  let filledCount = 0;
+  fields.forEach(val => {
+    if (val) filledCount++;
+  });
+
+  return Math.round((filledCount / fields.length) * 100);
+}
+
+// Update Badge UI without firing confetti automatically
+function updateProfileProgress() {
+  const percentage = getCompletionPercentage();
+  const badge = document.getElementById("profileProgressBadge");
+
+  if (badge) {
+    if (percentage >= 100) {
+      badge.innerHTML = '<i class="fa-solid fa-star"></i>';
+      badge.classList.add("completed");
+    } else {
+      badge.innerText = `${percentage}%`;
+      badge.classList.remove("completed");
+    }
+  }
+}
+
+// Trigger Confetti Celebration (Only called when Save Profile Button is pressed & 100% complete)
+function triggerCongratulationsAnimation() {
+  if (typeof confetti === "function") {
+    confetti({
+      particleCount: 130,
+      spread: 80,
+      origin: { y: 0.6 }
+    });
+  }
+}
+
+// Bottom Sheet Option Handlers
+function openPhotoOptions() {
+  const removeBtn = document.getElementById("sheetRemoveBtn");
+  if (currentAvatarUrl) {
+    removeBtn.style.display = "flex";
+  } else {
+    removeBtn.style.display = "none";
+  }
+  document.getElementById("photoOptionsSheet").classList.add("active");
+}
+
+function closePhotoOptions(e) {
+  if (e) e.stopPropagation();
+  document.getElementById("photoOptionsSheet").classList.remove("active");
+}
+
+function triggerCamera() {
+  closePhotoOptions();
+  document.getElementById("avatarFileInputCamera").click();
+}
+
+function triggerGallery() {
+  closePhotoOptions();
+  document.getElementById("avatarFileInputGallery").click();
+}
+
+// SVG Avatar Selector Modal Handlers
+function openAvatarSelector() {
+  closePhotoOptions();
+  document.getElementById("avatarPickerSheet").classList.add("active");
+}
+
+function closeAvatarSelector(e) {
+  if (e) e.stopPropagation();
+  document.getElementById("avatarPickerSheet").classList.remove("active");
+}
+
+// Modal Handlers for Account Delete Confirmation
+function openDeleteConfirmModal() {
+  document.getElementById("deleteConfirmModal").style.display = "flex";
+}
+
+function closeDeleteConfirmModal() {
+  document.getElementById("deleteConfirmModal").style.display = "none";
+}
+
+// 1. Load User Profile Data
 async function loadUserProfile() {
   if (!window.supabaseClient) return;
 
   const user = await window.getCurrentUser();
-
   if (!user) {
     window.location.href = window.getPageUrl("login.html");
     return;
@@ -20,12 +181,9 @@ async function loadUserProfile() {
   currentUser = user;
   document.getElementById("emailInput").value = user.email || "";
 
-  // Check Admin Authorization & Show Admin-Only Buttons
   const isAdmin = await window.checkIsAdmin();
   if (isAdmin) {
     document.getElementById("userRoleBadge").innerHTML = '<i class="fa-solid fa-crown"></i> Platform Admin';
-    
-    // Admin Only Buttons Show Logic
     if (document.getElementById("adminBtn")) document.getElementById("adminBtn").style.display = "flex";
     if (document.getElementById("sendNotifBtn")) document.getElementById("sendNotifBtn").style.display = "flex";
     if (document.getElementById("uploadTestBtn")) document.getElementById("uploadTestBtn").style.display = "flex";
@@ -34,9 +192,8 @@ async function loadUserProfile() {
     document.getElementById("userRoleBadge").innerHTML = '<i class="fa-solid fa-graduation-cap"></i> Active Student';
   }
 
-  // Fetch Profile Record (Including Pincode)
   try {
-    const { data, error } = await window.supabaseClient
+    const { data } = await window.supabaseClient
       .from('profiles')
       .select('*')
       .eq('id', user.id)
@@ -72,41 +229,27 @@ async function loadUserProfile() {
     document.getElementById("userDisplayName").innerText = user.email.split('@')[0];
     renderInitialAvatar();
   }
+
+  updateProfileProgress();
 }
 
-// 2. Render Initial Letter Avatar
 function renderInitialAvatar() {
   currentAvatarUrl = null;
   const name = document.getElementById("fullNameInput").value.trim();
   const email = document.getElementById("emailInput").value.trim();
 
   let initial = "U";
-  if (name) {
-    initial = name.charAt(0).toUpperCase();
-  } else if (email) {
-    initial = email.charAt(0).toUpperCase();
-  }
+  if (name) initial = name.charAt(0).toUpperCase();
+  else if (email) initial = email.charAt(0).toUpperCase();
 
   document.getElementById("avatarContainer").innerText = initial;
-  document.getElementById("deletePhotoBtn").style.display = "none";
+  updateProfileProgress();
 }
 
-function updateInitialAvatar() {
-  if (!currentAvatarUrl) {
-    renderInitialAvatar();
-  }
-}
-
-// Render Avatar Image with Cache Busting
 function renderAvatarImage(url) {
-  const cacheBustUrl = `${url}?t=${Date.now()}`;
+  const cacheBustUrl = url.startsWith("data:") ? url : `${url}?t=${Date.now()}`;
   document.getElementById("avatarContainer").innerHTML = `<img src="${cacheBustUrl}" alt="Profile" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
-  document.getElementById("deletePhotoBtn").style.display = "inline-flex";
-}
-
-// 3. Photo Selection & Cropper Logic
-function triggerPhotoSelect() {
-  document.getElementById("avatarFileInput").click();
+  updateProfileProgress();
 }
 
 function handleFileSelected(event) {
@@ -117,12 +260,9 @@ function handleFileSelected(event) {
   reader.onload = function (e) {
     const cropImg = document.getElementById("cropTargetImage");
     cropImg.src = e.target.result;
-
     document.getElementById("cropModal").style.display = "flex";
 
-    if (cropper) {
-      cropper.destroy();
-    }
+    if (cropper) cropper.destroy();
 
     cropper = new Cropper(cropImg, {
       aspectRatio: 1,
@@ -140,15 +280,10 @@ function closeCropModal() {
   if (cropper) cropper.destroy();
 }
 
-// 4. Crop & Upload Image to Supabase Storage
 async function cropAndUpload() {
   if (!cropper || !currentUser) return;
 
-  const canvas = cropper.getCroppedCanvas({
-    width: 300,
-    height: 300
-  });
-
+  const canvas = cropper.getCroppedCanvas({ width: 300, height: 300 });
   closeCropModal();
 
   const msgBox = document.getElementById("statusMsg");
@@ -157,8 +292,7 @@ async function cropAndUpload() {
   msgBox.style.display = "block";
 
   canvas.toBlob(async (blob) => {
-    const fileExt = "png";
-    const filePath = `${currentUser.id}/avatar_${Date.now()}.${fileExt}`;
+    const filePath = `${currentUser.id}/avatar_${Date.now()}.png`;
 
     try {
       const { error: uploadErr } = await window.supabaseClient
@@ -173,16 +307,14 @@ async function cropAndUpload() {
         .from('avatars')
         .getPublicUrl(filePath);
 
-      if (!publicData || !publicData.publicUrl) {
-        throw new Error("Failed to generate Public URL for Avatar.");
-      }
+      if (!publicData || !publicData.publicUrl) throw new Error("Failed to generate Public URL.");
 
       currentAvatarUrl = publicData.publicUrl;
       localStorage.setItem("userPhoto", currentAvatarUrl);
 
       renderAvatarImage(currentAvatarUrl);
 
-      const { error: dbErr } = await window.supabaseClient
+      await window.supabaseClient
         .from('profiles')
         .upsert({ 
           id: currentUser.id, 
@@ -190,8 +322,6 @@ async function cropAndUpload() {
           avatar_url: currentAvatarUrl, 
           updated_at: new Date().toISOString()
         });
-
-      if (dbErr) throw dbErr;
 
       msgBox.className = "status-msg success";
       msgBox.innerText = "✅ Profile photo updated!";
@@ -205,8 +335,8 @@ async function cropAndUpload() {
   }, 'image/png');
 }
 
-// 5. Delete Profile Photo
 async function deleteAvatarPhoto() {
+  closePhotoOptions();
   if (!currentUser) return;
   if (!confirm("Kya aap photo hatana chahte hain?")) return;
 
@@ -235,7 +365,7 @@ async function deleteAvatarPhoto() {
   }
 }
 
-// 6. Save Full Profile Info (Strict 10-Digit Mobile & Pincode Validation)
+// 6. Save Full Profile Info
 async function saveProfileDetails() {
   if (!currentUser) return;
 
@@ -244,7 +374,6 @@ async function saveProfileDetails() {
 
   const phone = document.getElementById("phoneInput").value.trim();
 
-  // Strict 10-Digit Validation
   if (phone !== "" && phone.length !== 10) {
     msgBox.className = "status-msg error";
     msgBox.innerText = "❌ Mobile number exactly 10 digits ka hona chahiye!";
@@ -256,8 +385,6 @@ async function saveProfileDetails() {
   msgBox.style.display = "block";
 
   const fullName = document.getElementById("fullNameInput").value.trim();
-  const pincodeVal = document.getElementById("pincodeInput") ? document.getElementById("pincodeInput").value.trim() : "";
-
   const profileData = {
     id: currentUser.id,
     email: currentUser.email,
@@ -269,20 +396,24 @@ async function saveProfileDetails() {
     institution: document.getElementById("institutionInput").value.trim(),
     city: document.getElementById("cityInput").value.trim(),
     state: document.getElementById("stateInput").value.trim(),
-    pincode: pincodeVal,
+    pincode: document.getElementById("pincodeInput") ? document.getElementById("pincodeInput").value.trim() : "",
     avatar_url: currentAvatarUrl,
     updated_at: new Date().toISOString()
   };
 
   try {
-    const { error } = await window.supabaseClient
-      .from('profiles')
-      .upsert(profileData);
-
+    const { error } = await window.supabaseClient.from('profiles').upsert(profileData);
     if (error) throw error;
 
     if (fullName) {
       document.getElementById("userDisplayName").innerText = fullName;
+    }
+
+    updateProfileProgress();
+
+    // Fire Confetti Animation if Profile is 100% complete upon clicking Save
+    if (getCompletionPercentage() >= 100) {
+      triggerCongratulationsAnimation();
     }
 
     msgBox.className = "status-msg success";
@@ -294,7 +425,6 @@ async function saveProfileDetails() {
   }
 }
 
-// Password Actions
 async function setGoogleUserPassword() {
   const newPassword = document.getElementById("newPasswordInput").value;
   if (!newPassword || newPassword.length < 6) {
@@ -312,7 +442,40 @@ async function setGoogleUserPassword() {
   }
 }
 
-// Navigation Actions
+// 7. Delete User Account Permanently Logic
+async function deleteUserAccount() {
+  closeDeleteConfirmModal();
+  if (!currentUser) return;
+
+  const msgBox = document.getElementById("statusMsg");
+  msgBox.className = "status-msg";
+  msgBox.innerText = "Deleting account...";
+  msgBox.style.display = "block";
+
+  try {
+    // 1. Delete user profile record from Supabase table
+    const { error: profileErr } = await window.supabaseClient
+      .from('profiles')
+      .delete()
+      .eq('id', currentUser.id);
+
+    if (profileErr) throw profileErr;
+
+    // 2. Sign Out User Session & Clear Local Data
+    await window.supabaseClient.auth.signOut();
+    localStorage.clear();
+    sessionStorage.clear();
+
+    alert("✅ Aapka account safaltapoorvak delete ho gaya hai.");
+    window.location.href = window.getPageUrl ? window.getPageUrl("login.html") : "login.html";
+
+  } catch (err) {
+    console.error("Account Delete Error:", err);
+    msgBox.className = "status-msg error";
+    msgBox.innerText = "❌ Account delete nahi ho paya: " + err.message;
+  }
+}
+
 function goToAdminPanel() { window.location.href = "admin-panel.html"; }
 function goToSendNotification() { window.location.href = "admin-notifications.html"; }
 function goToUploadTest() { window.location.href = "admin-manage-tests.html"; }
