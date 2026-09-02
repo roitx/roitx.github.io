@@ -13,37 +13,6 @@
 <meta name="author" content="PM Roitx">
 <link rel="canonical" href="https://roitx.qd.je/login.html">
 
-<!-- OPEN GRAPH / FACEBOOK SOCIAL META -->
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://roitx.qd.je/login.html">
-<meta property="og:title" content="Account Authentication Hub — Roitx Pro">
-<meta property="og:description" content="Access your Roitx Pro profile and unlocked features via Google OAuth or secure email authentication.">
-<meta property="og:image" content="https://roitx.qd.je/profile.png">
-
-<!-- TWITTER CARDS -->
-<meta property="twitter:card" content="summary_large_image">
-<meta property="twitter:title" content="Account Authentication Hub — Roitx Pro">
-<meta property="twitter:description" content="Login to Roitx Pro to track study timers and access AI-driven math problem solving tools.">
-<meta property="twitter:image" content="https://roitx.qd.je/profile.png">
-
-<!-- GOOGLE SCHEMA MARKUP (JSON-LD FOR CRAWLERS) -->
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "WebPage",
-  "name": "Roitx Pro Authentication Hub",
-  "url": "https://roitx.qd.je/login.html",
-  "description": "Secure sign-in and user authentication portal for Roitx Pro productivity services.",
-  "publisher": {
-    "@type": "Organization",
-    "name": "PM Roitx Study Hub",
-    "logo": "https://roitx.qd.je/profile.png"
-  }
-}
-</script>
-
-<link rel="icon" href="profile.png" type="image/png">
-
 <!-- External Dependencies -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js"></script>
@@ -145,7 +114,7 @@ body {
 .hand.left { left: -5px; transform: rotate(-25deg); }
 .hand.right { right: -5px; transform: rotate(25deg); }
 
-/* ANIMATION STATES */
+/* ANIMATION STATES (EYE COVER LOGIC) */
 .cover .eye { opacity: 0; }
 .cover .hand { opacity: 1; }
 
@@ -180,7 +149,7 @@ h2 { font-size: 14px; margin-bottom: 20px; color: #777; font-weight: 400; }
 input {
   width: 100%;
   padding: 15px;
-  margin-bottom: 15px;
+  margin-bottom: 12px;
   border: none;
   border-radius: 12px;
   background: #e0e5ec;
@@ -189,13 +158,47 @@ input {
   font-size: 15px;
 }
 
-.eyeBtn {
+/* FIXED PASSWORD WRAPPER WITH EYE TOGGLE */
+.password-field-wrapper {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.password-field-wrapper input {
+  margin-bottom: 0 !important;
+  padding-right: 48px !important;
+}
+.eye-toggle-btn {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
   background: none;
   border: none;
-  font-size: 18px;
   cursor: pointer;
-  margin-bottom: 15px;
-  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #718096;
+  padding: 4px;
+  z-index: 2;
+}
+.eye-toggle-btn svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+}
+
+#confirmPassWrapper {
+  display: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+#confirmPassWrapper.visible {
+  display: flex;
+  opacity: 1;
 }
 
 button.primary-btn {
@@ -210,6 +213,7 @@ button.primary-btn {
   box-shadow: 6px 6px 12px #b8bec7, -6px -6px 12px #fff;
   cursor: pointer;
   transition: 0.2s;
+  margin-top: 6px;
 }
 
 button.primary-btn:active {
@@ -254,6 +258,7 @@ button.primary-btn:active {
 <div class="bg"><span></span><span></span></div>
 
 <main class="wrapper">
+  <!-- CHARACTER WITH ANIMATION -->
   <div class="character" id="char">
     <div class="eye left"></div>
     <div class="eye right"></div>
@@ -266,22 +271,40 @@ button.primary-btn:active {
     <h1 id="titleText">Welcome Back!</h1>
     <h2 id="subText">ROITX HUB</h2>
 
+    <!-- Signup Extra Fields -->
+    <input id="fullName" type="text" placeholder="Full Name" style="display: none;">
+    <input id="phone" type="tel" placeholder="10-digit Phone Number" maxlength="10" style="display: none;" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+    <input id="pincode" type="text" placeholder="Area Pincode (e.g. 800001)" maxlength="6" style="display: none;" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+
     <input id="email" type="email" placeholder="Email Address" autocomplete="email">
-    <input id="password" type="password" placeholder="Password" autocomplete="current-password">
     
-    <button id="toggleSign" class="eyeBtn" type="button" aria-label="Toggle Password Visibility">👁️</button>
+    <!-- Primary Password Input with Eye -->
+    <div class="password-field-wrapper" id="mainPassWrapper">
+      <input id="password" type="password" placeholder="Password" autocomplete="current-password" oninput="handlePasswordTyping()">
+      <button type="button" class="eye-toggle-btn" onclick="togglePassVisibility('password', this)">
+        <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+      </button>
+    </div>
+
+    <!-- Dynamic Confirm Password Field -->
+    <div class="password-field-wrapper" id="confirmPassWrapper">
+      <input id="confirmPassword" type="password" placeholder="Confirm Password">
+      <button type="button" class="eye-toggle-btn" onclick="togglePassVisibility('confirmPassword', this)">
+        <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+      </button>
+    </div>
     
     <button id="mainBtn" class="primary-btn" onclick="handleAuthSubmit()">Login</button>
 
     <!-- Google OAuth Button -->
-    <button id="googleBtn" type="button" class="primary-btn google-btn" onclick="window.signInWithGoogle()">
+    <button id="googleBtn" type="button" class="primary-btn google-btn" onclick="triggerGoogleAuth()">
       <svg width="18" height="18" viewBox="0 0 24 24">
         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
         <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
         <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
         <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
       </svg>
-      Continue with Google
+      <span id="googleBtnText">Login with Google</span>
     </button>
 
     <div class="auth-links" id="linkBox">
@@ -294,9 +317,13 @@ button.primary-btn:active {
 <script>
 let currentMode = "login"; 
 
+const fullNameInput = document.getElementById("fullName");
+const phoneInput = document.getElementById("phone");
+const pincodeInput = document.getElementById("pincode");
 const passwordInput = document.getElementById("password");
+const confirmPassInput = document.getElementById("confirmPassword");
+const confirmPassWrapper = document.getElementById("confirmPassWrapper");
 const emailInput = document.getElementById("email");
-const toggleBtn = document.getElementById("toggleSign");
 
 const char = document.getElementById("char");
 const card = document.getElementById("authCard");
@@ -304,22 +331,64 @@ const titleText = document.getElementById("titleText");
 const subText = document.getElementById("subText");
 const mainBtn = document.getElementById("mainBtn");
 const googleBtn = document.getElementById("googleBtn");
+const googleBtnText = document.getElementById("googleBtnText");
 const linkBox = document.getElementById("linkBox");
+
+// SVG Password Eye Toggle + Character Animation Integration
+function togglePassVisibility(inputId, btnEl) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+
+  const isPassword = input.type === "password";
+  input.type = isPassword ? "text" : "password";
+
+  // Trigger character hands cover when password visible
+  if (isPassword) {
+    char.classList.add("cover");
+  } else {
+    char.classList.remove("cover");
+  }
+
+  const eyeOpen = `<svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>`;
+  const eyeClosed = `<svg viewBox="0 0 24 24"><path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.17c0-1.66-1.34-3-3-3l-.17.02z"/></svg>`;
+
+  btnEl.innerHTML = isPassword ? eyeClosed : eyeOpen;
+}
+
+// Reveal Confirm Password Field on Typing
+function handlePasswordTyping() {
+  if (currentMode === "signup" || currentMode === "update_password") {
+    if (passwordInput.value.length > 0) {
+      confirmPassWrapper.classList.add("visible");
+    } else {
+      confirmPassWrapper.classList.remove("visible");
+      confirmPassInput.value = "";
+    }
+  }
+}
 
 // Mode Switcher UI Logic
 function switchMode(mode) {
   currentMode = mode;
   emailInput.value = "";
   passwordInput.value = "";
+  confirmPassInput.value = "";
+  fullNameInput.value = "";
+  phoneInput.value = "";
+  pincodeInput.value = "";
+  confirmPassWrapper.classList.remove("visible");
 
   if (mode === "login") {
     titleText.innerText = "Welcome Back!";
     subText.innerText = "ROITX HUB";
+    fullNameInput.style.display = "none";
+    phoneInput.style.display = "none";
+    pincodeInput.style.display = "none";
     emailInput.style.display = "block";
-    passwordInput.style.display = "block";
+    document.getElementById("mainPassWrapper").style.display = "flex";
     passwordInput.placeholder = "Password";
-    toggleBtn.style.display = "inline-block";
     googleBtn.style.display = "flex";
+    googleBtnText.innerText = "Login with Google";
     mainBtn.innerText = "Login";
     linkBox.innerHTML = `
       <a onclick="switchMode('forgot')">Forgot Password?</a>
@@ -328,11 +397,14 @@ function switchMode(mode) {
   } else if (mode === "signup") {
     titleText.innerText = "Join Roitx";
     subText.innerText = "CREATE ACCOUNT";
+    fullNameInput.style.display = "block";
+    phoneInput.style.display = "block";
+    pincodeInput.style.display = "block";
     emailInput.style.display = "block";
-    passwordInput.style.display = "block";
-    passwordInput.placeholder = "Password";
-    toggleBtn.style.display = "inline-block";
+    document.getElementById("mainPassWrapper").style.display = "flex";
+    passwordInput.placeholder = "Create Password (min 6 chars)";
     googleBtn.style.display = "flex";
+    googleBtnText.innerText = "Signup with Google";
     mainBtn.innerText = "Sign Up";
     linkBox.innerHTML = `
       <span>Already have an account? <a onclick="switchMode('login')">Login</a></span>
@@ -340,31 +412,38 @@ function switchMode(mode) {
   } else if (mode === "forgot") {
     titleText.innerText = "Reset Password";
     subText.innerText = "ENTER YOUR EMAIL";
+    fullNameInput.style.display = "none";
+    phoneInput.style.display = "none";
+    pincodeInput.style.display = "none";
     emailInput.style.display = "block";
-    passwordInput.style.display = "none";
-    toggleBtn.style.display = "none";
+    document.getElementById("mainPassWrapper").style.display = "none";
     googleBtn.style.display = "none";
     mainBtn.innerText = "Send Reset Link";
     linkBox.innerHTML = `
       <span>Remembered Password? <a onclick="switchMode('login')">Back to Login</a></span>
     `;
   } else if (mode === "update_password") {
-    currentMode = "update_password";
     titleText.innerText = "New Password";
     subText.innerText = "SET YOUR NEW PASSWORD";
+    fullNameInput.style.display = "none";
+    phoneInput.style.display = "none";
+    pincodeInput.style.display = "none";
     emailInput.style.display = "none";
-    passwordInput.style.display = "block";
+    document.getElementById("mainPassWrapper").style.display = "flex";
     passwordInput.placeholder = "Enter New Password";
-    toggleBtn.style.display = "inline-block";
     googleBtn.style.display = "none";
     mainBtn.innerText = "Save New Password";
     linkBox.innerHTML = `<span><a onclick="switchMode('login')">Cancel & Login</a></span>`;
   }
 }
 
+function triggerGoogleAuth() {
+  const forceConsent = currentMode === "signup";
+  window.signInWithGoogle(forceConsent);
+}
+
 // Automatically Detect Session or Reset Token on Load
 document.addEventListener("DOMContentLoaded", async () => {
-  // 1. Password Reset tokens check
   const urlParams = new URLSearchParams(window.location.search);
   const isReset = urlParams.get('reset');
   
@@ -377,43 +456,29 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
-  // 2. Normal Auto-Login Check
+  // Auto Login Redirect Check
   const user = await window.getCurrentUser();
   if (user) {
-    localStorage.setItem("isLoggedIn", "true");
-    localStorage.setItem("userName", user.email ? user.email.split('@')[0] : "Profile");
-    localStorage.setItem("userPhoto", "profile.jpg");
-
     const redirectTarget = sessionStorage.getItem("redirect_after_login");
-
     if (redirectTarget) {
       sessionStorage.removeItem("redirect_after_login");
       window.location.href = redirectTarget;
     } else {
-      // Direct Profile Page Redirect
-      window.location.href = window.getPageUrl("profile.html");
+      window.location.href = window.getPageUrl ? window.getPageUrl("profile.html") : "profile.html";
     }
-    return;
   }
 });
 
-// Character Interactions
-toggleBtn.onclick = () => {
-  if (passwordInput.type === "password") {
-    passwordInput.type = "text";
-    toggleBtn.textContent = "🙈";
-    char.classList.add("cover");
-  } else {
-    passwordInput.type = "password";
-    toggleBtn.textContent = "👁️";
-    char.classList.remove("cover");
-  }
-};
-
+// Hands Cover Animation Listeners
 passwordInput.addEventListener("focus", () => {
   if (passwordInput.type === "password") char.classList.add("cover");
 });
 passwordInput.addEventListener("blur", () => char.classList.remove("cover"));
+
+confirmPassInput.addEventListener("focus", () => {
+  if (confirmPassInput.type === "password") char.classList.add("cover");
+});
+confirmPassInput.addEventListener("blur", () => char.classList.remove("cover"));
 
 window.triggerErrorAnim = () => {
   char.classList.add("wrong");
@@ -426,22 +491,57 @@ window.triggerErrorAnim = () => {
 
 // Submissions Router
 async function handleAuthSubmit() {
-  if (currentMode === "login" || currentMode === "signup") {
-    if (currentMode === "login") {
-      await window.loginUser();
-    } else {
-      await window.signUpUser();
+  if (currentMode === "login") {
+    await window.loginUser();
+  } else if (currentMode === "signup") {
+    const fullName = fullNameInput.value.trim();
+    const phone = phoneInput.value.trim();
+    const pincode = pincodeInput.value.trim();
+    const email = emailInput.value.trim();
+    const p1 = passwordInput.value;
+    const p2 = confirmPassInput.value;
+
+    if (!fullName || !phone || !pincode || !email || !p1) {
+      alert("Kripya saare mandatory fields ko bharein!");
+      if (window.triggerErrorAnim) window.triggerErrorAnim();
+      return;
     }
-    
-    const user = await window.getCurrentUser();
-    if (user) {
-      localStorage.setItem("isLoggedIn", "true");
-      localStorage.setItem("userName", user.email ? user.email.split('@')[0] : "Profile");
-      localStorage.setItem("userPhoto", "profile.jpg");
+
+    if (phone.length !== 10) {
+      alert("Kripya valid 10-digit Phone Number daalein.");
+      if (window.triggerErrorAnim) window.triggerErrorAnim();
+      return;
     }
+
+    if (pincode.length !== 6) {
+      alert("Kripya valid 6-digit Area Pincode daalein.");
+      if (window.triggerErrorAnim) window.triggerErrorAnim();
+      return;
+    }
+
+    if (p1.length < 6) {
+      alert("Password minimum 6 characters ka hona chahiye!");
+      if (window.triggerErrorAnim) window.triggerErrorAnim();
+      return;
+    }
+
+    if (p1 !== p2) {
+      alert("Passwords match nahi ho rahe hain!");
+      if (window.triggerErrorAnim) window.triggerErrorAnim();
+      return;
+    }
+
+    await window.signUpUser();
   } else if (currentMode === "forgot") {
     window.sendResetLink();
   } else if (currentMode === "update_password") {
+    const p1 = passwordInput.value;
+    const p2 = confirmPassInput.value;
+    if (p1 !== p2) {
+      alert("Passwords match nahi ho rahe hain!");
+      if (window.triggerErrorAnim) window.triggerErrorAnim();
+      return;
+    }
     window.updatePassword();
   }
 }
