@@ -1,5 +1,5 @@
 /* =================================================================
-   ROITX ELITE VIEWER v8.3 — FULL 3D FLIP & SECURITY ENHANCED
+   ROITX ELITE VIEWER v8.4 — FULL 3D FLIP & SECURITY ENHANCED
    ================================================================= */
 
 // PDF.js Worker Setup
@@ -47,7 +47,7 @@ function cleanTitleString(str) {
     return str.replace(/[^\w\s]/gi, '').toLowerCase().trim();
 }
 
-// SECURE VERIFICATION: Checks Supabase DB for genuine order status
+// SECURE VERIFICATION: Checks Supabase DB & Local Storage
 async function verifyPurchaseStatusLocallyOrDB(rawPath, docName) {
     let purchasedList = JSON.parse(localStorage.getItem("purchasedFiles") || "[]");
     let userPurchases = JSON.parse(localStorage.getItem("userPurchasedNotes") || "[]");
@@ -91,6 +91,7 @@ async function verifyPurchaseStatusLocallyOrDB(rawPath, docName) {
     return false;
 }
 
+// MODAL FOR NEXT PAGE & UNLOCK RESTRICTION
 function showPurchaseRequiredModal() {
     let existingModal = document.getElementById("purchaseRequiredModal");
     if (existingModal) existingModal.remove();
@@ -99,21 +100,21 @@ function showPurchaseRequiredModal() {
     modal.id = "purchaseRequiredModal";
     modal.style.cssText = `
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(8px);
+        background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(10px);
         display: flex; align-items: center; justify-content: center;
         z-index: 999999; animation: fadeIn 0.2s ease-in-out;
     `;
 
     modal.innerHTML = `
-        <div style="background: #161b26; border: 1px solid rgba(255,255,255,0.12); border-radius: 18px; padding: 24px; max-width: 320px; text-align: center; color: #fff; box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
-            <div style="font-size: 38px; margin-bottom: 10px;">🔒</div>
-            <h3 style="margin: 0 0 8px 0; font-size: 18px; font-weight: 700;">Purchase Required</h3>
-            <p style="font-size: 13px; color: #a0aec0; margin: 0 0 20px 0; line-height: 1.5;">
-                Ise poora padhne ke liye aapko is Premium Note ko purchase karna padega.
+        <div style="background: #161b26; border: 1px solid rgba(255,255,255,0.15); border-radius: 20px; padding: 28px; max-width: 330px; text-align: center; color: #fff; box-shadow: 0 25px 50px rgba(0,0,0,0.6);">
+            <div style="font-size: 42px; margin-bottom: 12px;">🔒</div>
+            <h3 style="margin: 0 0 10px 0; font-size: 20px; font-weight: 700;">Purchase Required</h3>
+            <p style="font-size: 14px; color: #a0aec0; margin: 0 0 24px 0; line-height: 1.5;">
+                Ise poora padhne aur access karne ke liye aapko is Premium Note ko purchase karna padega.
             </p>
-            <div style="display: flex; gap: 10px;">
-                <button onclick="document.getElementById('purchaseRequiredModal').remove()" style="flex: 1; padding: 10px; background: rgba(255,255,255,0.08); border: none; border-radius: 10px; color: #fff; font-weight: 600; cursor: pointer;">Close</button>
-                <button onclick="window.location.href='notes.html'" style="flex: 1; padding: 10px; background: #3182ce; border: none; border-radius: 10px; color: #fff; font-weight: 600; cursor: pointer;">Buy Now</button>
+            <div style="display: flex; gap: 12px;">
+                <button onclick="document.getElementById('purchaseRequiredModal').remove()" style="flex: 1; padding: 12px; background: rgba(255,255,255,0.08); border: none; border-radius: 12px; color: #fff; font-weight: 600; cursor: pointer;">Close</button>
+                <button onclick="window.location.href='notes.html'" style="flex: 1; padding: 12px; background: #3182ce; border: none; border-radius: 12px; color: #fff; font-weight: 600; cursor: pointer;">Buy Now</button>
             </div>
         </div>
     `;
@@ -275,6 +276,7 @@ async function startEngine(blob) {
         isPremium: isPremiumNote
     }, false, isPurchased);
 
+    // DOWNLOAD TRIGGER PROTECTION
     const dl = document.getElementById("download-trigger");
     if (dl) { 
         dl.removeAttribute("href"); 
@@ -383,12 +385,13 @@ async function setupFlipEngineStructure(maxPages, isPremium, isPurchased) {
 
     pageFlipInstance.loadFromHTML(document.querySelectorAll(".page-flip-page"));
 
+    // PAGE FLIP & NEXT PAGE PURCHASE CHECK
     pageFlipInstance.on("flip", (e) => {
         const newPageNum = e.data + 1;
         
         if (isPremium && !isPurchased && newPageNum > 1) {
             showPurchaseRequiredModal();
-            pageFlipInstance.flip(0);
+            pageFlipInstance.flip(0); // Cancel flip and return to page 1
             return;
         }
 
@@ -557,6 +560,18 @@ window.navPage = (dir) => {
     if (zoomScale > 1.05) window.resetZoom();
 
     if (dir === 'next') {
+        const isParamPremium = params.get("type") === "premium";
+        const isInPaidFolder = rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium"));
+        const isPremiumNote = isParamPremium || isInPaidFolder;
+        
+        let purchasedList = JSON.parse(localStorage.getItem("purchasedFiles") || "[]");
+        let isPurchased = purchasedList.includes(rawPath);
+
+        if (isPremiumNote && !isPurchased && currentPage >= 1) {
+            showPurchaseRequiredModal();
+            return;
+        }
+
         pageFlipInstance.flipNext('bottom');
     } else if (dir === 'prev') {
         pageFlipInstance.flipPrev('top');
@@ -583,6 +598,17 @@ if (pageSlider) {
             if (targetIndex < currentIndex) {
                  pageFlipInstance.flipPrev('top');
             } else if (targetIndex > currentIndex) {
+                 const isParamPremium = params.get("type") === "premium";
+                 const isInPaidFolder = rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium"));
+                 const isPremiumNote = isParamPremium || isInPaidFolder;
+                 let purchasedList = JSON.parse(localStorage.getItem("purchasedFiles") || "[]");
+                 let isPurchased = purchasedList.includes(rawPath);
+
+                 if (isPremiumNote && !isPurchased) {
+                     showPurchaseRequiredModal();
+                     this.value = 1;
+                     return;
+                 }
                  pageFlipInstance.flipNext('bottom');
             }
         }
