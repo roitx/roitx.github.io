@@ -1,5 +1,5 @@
 /* =================================================================
-   ROITX ELITE VIEWER v8.2 — FULL 3D FLIP & SECURITY ENHANCED
+   ROITX ELITE VIEWER v8.3 — FULL 3D FLIP & SECURITY ENHANCED
    ================================================================= */
 
 // PDF.js Worker Setup
@@ -54,12 +54,10 @@ async function verifyPurchaseStatusLocallyOrDB(rawPath, docName) {
     
     const cleanDoc = cleanTitleString(docName);
 
-    // Local check
     if (purchasedList.includes(rawPath) || userPurchases.some(lp => cleanTitleString(lp.title) === cleanDoc)) {
         return true;
     }
 
-    // Database check (Primary Security)
     try {
         if (window.supabaseClient) {
             const { data: { session } } = await window.supabaseClient.auth.getSession();
@@ -91,6 +89,36 @@ async function verifyPurchaseStatusLocallyOrDB(rawPath, docName) {
     }
 
     return false;
+}
+
+function showPurchaseRequiredModal() {
+    let existingModal = document.getElementById("purchaseRequiredModal");
+    if (existingModal) existingModal.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "purchaseRequiredModal";
+    modal.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(8px);
+        display: flex; align-items: center; justify-content: center;
+        z-index: 999999; animation: fadeIn 0.2s ease-in-out;
+    `;
+
+    modal.innerHTML = `
+        <div style="background: #161b26; border: 1px solid rgba(255,255,255,0.12); border-radius: 18px; padding: 24px; max-width: 320px; text-align: center; color: #fff; box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
+            <div style="font-size: 38px; margin-bottom: 10px;">🔒</div>
+            <h3 style="margin: 0 0 8px 0; font-size: 18px; font-weight: 700;">Purchase Required</h3>
+            <p style="font-size: 13px; color: #a0aec0; margin: 0 0 20px 0; line-height: 1.5;">
+                Ise poora padhne ke liye aapko is Premium Note ko purchase karna padega.
+            </p>
+            <div style="display: flex; gap: 10px;">
+                <button onclick="document.getElementById('purchaseRequiredModal').remove()" style="flex: 1; padding: 10px; background: rgba(255,255,255,0.08); border: none; border-radius: 10px; color: #fff; font-weight: 600; cursor: pointer;">Close</button>
+                <button onclick="window.location.href='notes.html'" style="flex: 1; padding: 10px; background: #3182ce; border: none; border-radius: 10px; color: #fff; font-weight: 600; cursor: pointer;">Buy Now</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
 }
 
 function trackActivityLocally(fileData, isDownloaded = false, isUserPurchased = false) {
@@ -238,7 +266,6 @@ async function startEngine(blob) {
     const isInPaidFolder = rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium"));
     const isPremiumNote = isParamPremium || isInPaidFolder;
 
-    // Direct URL parameter 'purchased=true' is overridden by DB security check
     const isPurchased = await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "");
 
     trackActivityLocally({
@@ -255,7 +282,7 @@ async function startEngine(blob) {
             e.preventDefault();
 
             if (isPremiumNote && !isPurchased) {
-                alert("🔒 Yeh ek Premium Note hai! Bina purchase kiye aap ise download nahi kar sakte.");
+                showPurchaseRequiredModal();
                 return;
             }
 
@@ -360,7 +387,7 @@ async function setupFlipEngineStructure(maxPages, isPremium, isPurchased) {
         const newPageNum = e.data + 1;
         
         if (isPremium && !isPurchased && newPageNum > 1) {
-            alert("🔒 Complete document dekhne ke liye is Note ko Unlock / Purchase karein!");
+            showPurchaseRequiredModal();
             pageFlipInstance.flip(0);
             return;
         }
