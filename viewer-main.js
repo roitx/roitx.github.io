@@ -1,5 +1,5 @@
 /* =================================================================
-   ROITX ELITE VIEWER v8.1 — FULL 3D FLIP & SECURITY ENHANCED
+   ROITX ELITE VIEWER v8.2 — FULL 3D FLIP & SECURITY ENHANCED
    ================================================================= */
 
 // PDF.js Worker Setup
@@ -30,11 +30,9 @@ function enableContentProtection() {
         }
     });
 
-    // Mobile/Web blur protection on screen capture or tab switch
     window.addEventListener('blur', () => { document.body.style.filter = "blur(25px)"; });
     window.addEventListener('focus', () => { document.body.style.filter = "none"; });
     
-    // Visibility change protection for screen recording attempts
     document.addEventListener("visibilitychange", () => {
         if (document.hidden) {
             document.body.style.filter = "blur(25px)";
@@ -44,20 +42,62 @@ function enableContentProtection() {
     });
 }
 
-function trackActivityLocally(fileData, isDownloaded = false) {
+function cleanTitleString(str) {
+    if (!str) return "";
+    return str.replace(/[^\w\s]/gi, '').toLowerCase().trim();
+}
+
+// SECURE VERIFICATION: Checks Supabase DB for genuine order status
+async function verifyPurchaseStatusLocallyOrDB(rawPath, docName) {
+    let purchasedList = JSON.parse(localStorage.getItem("purchasedFiles") || "[]");
+    let userPurchases = JSON.parse(localStorage.getItem("userPurchasedNotes") || "[]");
+    
+    const cleanDoc = cleanTitleString(docName);
+
+    // Local check
+    if (purchasedList.includes(rawPath) || userPurchases.some(lp => cleanTitleString(lp.title) === cleanDoc)) {
+        return true;
+    }
+
+    // Database check (Primary Security)
+    try {
+        if (window.supabaseClient) {
+            const { data: { session } } = await window.supabaseClient.auth.getSession();
+            if (session && session.user && session.user.email) {
+                const { data: orders } = await window.supabaseClient
+                    .from('user_orders')
+                    .select('id, status, note_title')
+                    .eq('user_email', session.user.email)
+                    .eq('status', 'approved');
+
+                if (orders && orders.length > 0) {
+                    const isApprovedInDB = orders.some(o => {
+                        const cleanOrderTitle = cleanTitleString(o.note_title);
+                        return cleanOrderTitle && (cleanOrderTitle.includes(cleanDoc) || cleanDoc.includes(cleanOrderTitle));
+                    });
+
+                    if (isApprovedInDB) {
+                        if (!purchasedList.includes(rawPath)) {
+                            purchasedList.push(rawPath);
+                            localStorage.setItem("purchasedFiles", JSON.stringify(purchasedList));
+                        }
+                        return true;
+                    }
+                }
+            }
+        }
+    } catch (err) {
+        console.error("Purchase DB Verification Error:", err);
+    }
+
+    return false;
+}
+
+function trackActivityLocally(fileData, isDownloaded = false, isUserPurchased = false) {
     try {
         let recent = JSON.parse(localStorage.getItem("recentFiles") || "[]");
         let downloads = JSON.parse(localStorage.getItem("downloadedFiles") || "[]");
-        let purchasedList = JSON.parse(localStorage.getItem("purchasedFiles") || "[]");
 
-        const isPurchasedFromUrl = params.get("purchased") === "true";
-        
-        if (isPurchasedFromUrl && !purchasedList.includes(rawPath)) {
-            purchasedList.push(rawPath);
-            localStorage.setItem("purchasedFiles", JSON.stringify(purchasedList));
-        }
-
-        const isAlreadyPurchased = purchasedList.includes(rawPath) || isPurchasedFromUrl;
         const alreadyDownloaded = downloads.some(f => f.url === fileData.url) || isDownloaded;
         const isCurrentPremium = params.get("type") === "premium" || (rawPath && (rawPath.toLowerCase().includes("premium") || rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked")));
 
@@ -76,7 +116,7 @@ function trackActivityLocally(fileData, isDownloaded = false) {
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             downloaded: alreadyDownloaded,
             isPremium: isCurrentPremium,
-            isPurchased: isAlreadyPurchased,
+            isPurchased: isUserPurchased,
             viewCount: viewCount
         });
 
@@ -198,23 +238,23 @@ async function startEngine(blob) {
     const isInPaidFolder = rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium"));
     const isPremiumNote = isParamPremium || isInPaidFolder;
 
+    // Direct URL parameter 'purchased=true' is overridden by DB security check
+    const isPurchased = await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "");
+
     trackActivityLocally({
         title: docName || "PDF Document",
         url: rawPath,
         meta: "Notes Viewer",
         isPremium: isPremiumNote
-    }, false);
+    }, false, isPurchased);
 
     const dl = document.getElementById("download-trigger");
     if (dl) { 
         dl.removeAttribute("href"); 
         dl.onclick = async (e) => {
             e.preventDefault();
-            
-            const isPurchased = params.get("purchased") === "true";
-            const isPremium = isPremiumNote;
 
-            if (isPremium && !isPurchased) {
+            if (isPremiumNote && !isPurchased) {
                 alert("🔒 Yeh ek Premium Note hai! Bina purchase kiye aap ise download nahi kar sakte.");
                 return;
             }
@@ -240,8 +280,8 @@ async function startEngine(blob) {
                 title: docName || "PDF Document",
                 url: rawPath,
                 meta: "Notes Viewer",
-                isPremium: isPremium
-            }, true);
+                isPremium: isPremiumNote
+            }, true, isPurchased);
 
             alert("📥 Note successfully downloaded!");
         };
@@ -249,7 +289,6 @@ async function startEngine(blob) {
 
     pdfDoc = await pdfjsLib.getDocument(currentBlobUrl).promise;
 
-    const isPurchased = params.get("purchased") === "true";
     let maxAllowedPages = pdfDoc.numPages;
     if (isPremiumNote && !isPurchased) {
         maxAllowedPages = Math.min(pdfDoc.numPages, 1);
@@ -346,7 +385,6 @@ async function setupFlipEngineStructure(maxPages, isPremium, isPurchased) {
     const targetPage = (savedPage > maxPages) ? 1 : savedPage;
     currentPage = targetPage;
     
-    // FIX FOR "Page 0 of 0": Update text immediately on load
     const indicator = document.getElementById("page-indicator-top");
     if (indicator) {
         const totalText = (isPremium && !isPurchased) ? "1 (Preview)" : maxPages;
@@ -385,7 +423,6 @@ async function renderSingleCanvasPage(pageNum) {
         ctx.scale(dpr, dpr);
         await page.render({ canvasContext: ctx, viewport: viewport }).promise;
 
-        // Overlay Watermark to prevent clear screenshot sharing
         ctx.save();
         ctx.rotate(-45 * Math.PI / 180);
         ctx.font = "bold 22px Inter, sans-serif";
