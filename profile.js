@@ -27,6 +27,34 @@ const PRESET_AVATARS = [
   }
 ];
 
+// Toggle Eye SVG Password Visibility Function
+function togglePasswordVisibility(inputId, btnEl) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+
+  const isPassword = input.type === "password";
+  input.type = isPassword ? "text" : "password";
+
+  // Eye and Eye-Slash SVG Paths
+  const eyeOpenSvg = `<svg class="eye-icon" viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>`;
+  const eyeClosedSvg = `<svg class="eye-icon" viewBox="0 0 24 24"><path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.17c0-1.66-1.34-3-3-3l-.17.02z"/></svg>`;
+
+  btnEl.innerHTML = isPassword ? eyeClosedSvg : eyeOpenSvg;
+}
+
+// Reveal Confirm Password Box dynamically when typing starts
+function handleNewPasswordInput() {
+  const newPass = document.getElementById("newPasswordInput").value;
+  const confirmGroup = document.getElementById("confirmPasswordGroup");
+
+  if (newPass.length > 0) {
+    confirmGroup.classList.add("visible");
+  } else {
+    confirmGroup.classList.remove("visible");
+    document.getElementById("confirmPasswordInput").value = "";
+  }
+}
+
 function renderAvatarGrid() {
   const grid = document.getElementById("avatarGrid");
   if (!grid) return;
@@ -224,18 +252,22 @@ function validateDeleteEmailInput() {
   }
 }
 
-// Load User Profile Data
+// Load User Profile Data with Reliable Fallbacks
 async function loadUserProfile() {
   if (!window.supabaseClient) return;
 
   const user = await window.getCurrentUser();
   if (!user) {
-    window.location.href = window.getPageUrl("login.html");
+    window.location.href = window.getPageUrl ? window.getPageUrl("login.html") : "login.html";
     return;
   }
 
   currentUser = user;
   document.getElementById("emailInput").value = user.email || "";
+
+  // Dynamic Name Resolution (Meta Google Name > Meta Full Name > Saved DB Name > Fallback)
+  const metaGoogleName = user.user_metadata?.full_name || user.user_metadata?.name || user.user_metadata?.custom_name || "";
+  const metaAvatar = user.user_metadata?.avatar_url || user.user_metadata?.picture || null;
 
   const isAdmin = await window.checkIsAdmin();
   if (isAdmin) {
@@ -255,35 +287,43 @@ async function loadUserProfile() {
       .eq('id', user.id)
       .maybeSingle();
 
-    if (data) {
-      document.getElementById("fullNameInput").value = data.full_name || "";
-      document.getElementById("countryCodeSelect").value = data.country_code || "+91";
-      document.getElementById("phoneInput").value = data.phone || "";
-      document.getElementById("classSelect").value = data.target_class || "";
-      document.getElementById("streamSelect").value = data.stream || "";
-      document.getElementById("institutionInput").value = data.institution || "";
-      document.getElementById("cityInput").value = data.city || "";
-      document.getElementById("stateInput").value = data.state || "";
-      if (document.getElementById("pincodeInput")) {
-        document.getElementById("pincodeInput").value = data.pincode || "";
-      }
+    const resolvedName = data?.full_name || metaGoogleName || user.email.split('@')[0];
+    const resolvedAvatar = data?.avatar_url || metaAvatar;
 
-      document.getElementById("userDisplayName").innerText = data.full_name || user.email.split('@')[0];
+    document.getElementById("fullNameInput").value = data?.full_name || metaGoogleName || "";
+    document.getElementById("countryCodeSelect").value = data?.country_code || "+91";
+    document.getElementById("phoneInput").value = data?.phone || "";
+    document.getElementById("classSelect").value = data?.target_class || "";
+    document.getElementById("streamSelect").value = data?.stream || "";
+    document.getElementById("institutionInput").value = data?.institution || "";
+    document.getElementById("cityInput").value = data?.city || "";
+    document.getElementById("stateInput").value = data?.state || "";
+    if (document.getElementById("pincodeInput")) {
+      document.getElementById("pincodeInput").value = data?.pincode || "";
+    }
 
-      if (data.avatar_url) {
-        currentAvatarUrl = data.avatar_url;
-        renderAvatarImage(data.avatar_url);
-      } else {
-        renderInitialAvatar();
-      }
+    document.getElementById("userDisplayName").innerText = resolvedName;
+
+    if (resolvedAvatar) {
+      currentAvatarUrl = resolvedAvatar;
+      renderAvatarImage(resolvedAvatar);
     } else {
-      document.getElementById("userDisplayName").innerText = user.email.split('@')[0];
       renderInitialAvatar();
     }
+
+    // Auto sync back to DB if meta was retrieved
+    if ((!data || !data.full_name || !data.avatar_url) && (metaGoogleName || metaAvatar)) {
+      window.syncUserProfileFromAuth(user);
+    }
+
   } catch (err) {
     console.warn("Could not fetch profile details:", err);
-    document.getElementById("userDisplayName").innerText = user.email.split('@')[0];
-    renderInitialAvatar();
+    document.getElementById("userDisplayName").innerText = metaGoogleName || user.email.split('@')[0];
+    if (metaAvatar) {
+      renderAvatarImage(metaAvatar);
+    } else {
+      renderInitialAvatar();
+    }
   }
 
   updateProfileProgress();
@@ -479,24 +519,42 @@ async function saveProfileDetails() {
   }
 }
 
+// Updated Password Change Execution Function with Confirmation Check
 async function setGoogleUserPassword() {
   const newPassword = document.getElementById("newPasswordInput").value;
+  const confirmPassword = document.getElementById("confirmPasswordInput").value;
+
   if (!newPassword || newPassword.length < 6) {
-    alert("Password kam se kam 6 characters ka hona chahiye!");
+    alert("❌ Password kam se kam 6 characters ka hona chahiye!");
     return;
   }
+
+  if (newPassword !== confirmPassword) {
+    alert("❌ Dono passwords match nahi kar rahe hain! Kripya re-check karein.");
+    return;
+  }
+
+  const msgBox = document.getElementById("statusMsg");
+  msgBox.className = "status-msg";
+  msgBox.innerText = "Updating password...";
+  msgBox.style.display = "block";
 
   const { error } = await window.supabaseClient.auth.updateUser({ password: newPassword });
 
   if (error) {
-    alert("❌ Password update failed: " + error.message);
+    msgBox.className = "status-msg error";
+    msgBox.innerText = "❌ Password update failed: " + error.message;
   } else {
-    alert("✅ Password successfully updated!");
+    msgBox.className = "status-msg success";
+    msgBox.innerText = "✅ Password successfully updated!";
     document.getElementById("newPasswordInput").value = "";
+    document.getElementById("confirmPasswordInput").value = "";
+    document.getElementById("confirmPasswordGroup").classList.remove("visible");
+    setTimeout(() => { msgBox.style.display = "none"; }, 3000);
   }
 }
 
-// Complete & Safe Deletion Execution Function
+// Account Deletion Execution Function
 async function deleteUserAccount() {
   const emailInput = document.getElementById("deleteConfirmEmailInput").value.trim();
   
@@ -513,7 +571,6 @@ async function deleteUserAccount() {
   msgBox.style.display = "block";
 
   try {
-    // 1. Storage Avatar cleanup (if present)
     if (currentAvatarUrl && currentAvatarUrl.includes(currentUser.id)) {
       try {
         const path = currentAvatarUrl.split('/avatars/')[1];
@@ -525,7 +582,6 @@ async function deleteUserAccount() {
       }
     }
 
-    // 2. Delete user profile record from Supabase table
     const { error: profileErr } = await window.supabaseClient
       .from('profiles')
       .delete()
@@ -533,7 +589,6 @@ async function deleteUserAccount() {
 
     if (profileErr) throw profileErr;
 
-    // 3. Clear Local storage & Sign Out Session
     localStorage.clear();
     sessionStorage.clear();
     await window.supabaseClient.auth.signOut();

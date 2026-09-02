@@ -2,38 +2,52 @@
    ROITX PLATFORM — AUTHENTICATION ENGINE (auth.js)
    ===================================================== */
 
-// Helper Function: Auth User Metadata ko Profile Table me Auto-Sync karne ke liye
+// Helper: Enhanced Auth User Metadata to Profile DB Auto-Sync
 async function syncUserProfileFromAuth(user) {
-  if (!user) return;
+  if (!user || !window.supabaseClient) return;
 
   try {
-    const metaName = user.user_metadata?.full_name || user.user_metadata?.name || "";
-    const metaAvatar = user.user_metadata?.avatar_url || user.user_metadata?.picture || null;
-    const defaultName = metaName || user.email.split('@')[0];
+    const metaName = user.user_metadata?.full_name || 
+                     user.user_metadata?.name || 
+                     user.user_metadata?.custom_name || "";
+    
+    const metaAvatar = user.user_metadata?.avatar_url || 
+                      user.user_metadata?.picture || 
+                      null;
 
+    const fallbackName = metaName || (user.email ? user.email.split('@')[0] : "User");
+
+    // Check existing profile record
     const { data: profile } = await window.supabaseClient
       .from('profiles')
       .select('full_name, avatar_url')
       .eq('id', user.id)
       .maybeSingle();
 
-    if (!profile || !profile.full_name || !profile.avatar_url) {
-      await window.supabaseClient
-        .from('profiles')
-        .upsert({
-          id: user.id,
-          email: user.email,
-          full_name: profile?.full_name || defaultName,
-          avatar_url: profile?.avatar_url || metaAvatar,
-          updated_at: new Date().toISOString()
-        });
+    const newFullName = profile?.full_name || fallbackName;
+    const newAvatarUrl = profile?.avatar_url || metaAvatar;
+
+    // Upsert to ensure complete sync on every login/OAuth callback
+    await window.supabaseClient
+      .from('profiles')
+      .upsert({
+        id: user.id,
+        email: user.email,
+        full_name: newFullName,
+        avatar_url: newAvatarUrl,
+        updated_at: new Date().toISOString()
+      });
+
+    if (newAvatarUrl) {
+      localStorage.setItem("userPhoto", newAvatarUrl);
     }
+
   } catch (err) {
-    console.warn("Auto profile sync error:", err);
+    console.warn("Auto profile sync warning:", err);
   }
 }
 
-// Helper Function for Redirect Handling
+// Helper: Post-Login Redirect Handler
 async function handlePostLoginRedirect() {
   try {
     const user = await window.getCurrentUser();
@@ -49,7 +63,7 @@ async function handlePostLoginRedirect() {
     sessionStorage.removeItem("redirect_after_login");
     window.location.href = redirectTarget;
   } else {
-    window.location.href = window.getPageUrl("profile.html");
+    window.location.href = window.getPageUrl ? window.getPageUrl("profile.html") : "profile.html";
   }
 }
 
@@ -88,7 +102,7 @@ async function loginUser() {
   }
 }
 
-// 2. User Sign Up Handler (Updated with metadata & immediate profile creation)
+// 2. User Sign Up Handler
 async function signUpUser() {
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value;
@@ -134,7 +148,7 @@ async function sendResetLink() {
   }
 
   const { error } = await window.supabaseClient.auth.resetPasswordForEmail(email, {
-    redirectTo: window.getPageUrl('login.html?reset=true')
+    redirectTo: window.getPageUrl ? window.getPageUrl('login.html?reset=true') : 'login.html?reset=true'
   });
 
   if (error) {
@@ -165,22 +179,22 @@ async function updatePassword() {
     alert(error.message);
   } else {
     alert("Password successfully update ho gaya hai!");
-    window.location.href = window.getPageUrl("login.html");
+    window.location.href = window.getPageUrl ? window.getPageUrl("login.html") : "login.html";
   }
 }
 
 // 5. Google Sign-In Handler
 async function signInWithGoogle() {
-  const redirectTarget = sessionStorage.getItem("redirect_after_login");
-  
-  const callbackUrl = redirectTarget 
-    ? window.getPageUrl('login.html') 
-    : window.getPageUrl('login.html');
+  const targetUrl = window.getPageUrl ? window.getPageUrl('login.html') : window.location.origin + '/login.html';
 
-  const { data, error } = await window.supabaseClient.auth.signInWithOAuth({
+  const { error } = await window.supabaseClient.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: callbackUrl
+      redirectTo: targetUrl,
+      queryParams: {
+        access_type: 'offline',
+        prompt: 'consent'
+      }
     }
   });
 
@@ -190,17 +204,14 @@ async function signInWithGoogle() {
   }
 }
 
-// Auto-run Sync check jab page load ho
-window.addEventListener("DOMContentLoaded", async () => {
-  try {
-    const user = await window.getCurrentUser();
-    if (user) {
-      await syncUserProfileFromAuth(user);
+// Session state listener & Automatic Sync Engine initialization
+if (window.supabaseClient) {
+  window.supabaseClient.auth.onAuthStateChange(async (event, session) => {
+    if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session?.user) {
+      await syncUserProfileFromAuth(session.user);
     }
-  } catch (err) {
-    // Silent catch
-  }
-});
+  });
+}
 
 // Global Exports
 window.loginUser = loginUser;
