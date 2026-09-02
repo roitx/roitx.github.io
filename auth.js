@@ -2,24 +2,21 @@
    ROITX PLATFORM — AUTHENTICATION ENGINE (auth.js)
    ===================================================== */
 
-// Helper Function: Google/Auth User Metadata ko Profile Table me Auto-Sync karne ke liye
+// Helper Function: Auth User Metadata ko Profile Table me Auto-Sync karne ke liye
 async function syncUserProfileFromAuth(user) {
   if (!user) return;
 
   try {
-    // 1. Google Auth Metadata se Name aur Avatar Pic URL pick karein
     const metaName = user.user_metadata?.full_name || user.user_metadata?.name || "";
     const metaAvatar = user.user_metadata?.avatar_url || user.user_metadata?.picture || null;
     const defaultName = metaName || user.email.split('@')[0];
 
-    // 2. Database `profiles` table check karein
     const { data: profile } = await window.supabaseClient
       .from('profiles')
       .select('full_name, avatar_url')
       .eq('id', user.id)
       .maybeSingle();
 
-    // 3. Agar profile record miss hai ya full_name/avatar missing hai toh Auto-Upsert karein
     if (!profile || !profile.full_name || !profile.avatar_url) {
       await window.supabaseClient
         .from('profiles')
@@ -38,7 +35,6 @@ async function syncUserProfileFromAuth(user) {
 
 // Helper Function for Redirect Handling
 async function handlePostLoginRedirect() {
-  // Login confirmation ke baad profile sync verify karein
   try {
     const user = await window.getCurrentUser();
     if (user) {
@@ -80,12 +76,10 @@ async function loginUser() {
       return;
     }
 
-    // Direct profile auto-sync logic
     if (data?.user) {
       await syncUserProfileFromAuth(data.user);
     }
 
-    // Dynamic Redirect Executed
     handlePostLoginRedirect();
 
   } catch (err) {
@@ -94,7 +88,7 @@ async function loginUser() {
   }
 }
 
-// 2. User Sign Up Handler
+// 2. User Sign Up Handler (Updated with metadata & immediate profile creation)
 async function signUpUser() {
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value;
@@ -105,9 +99,16 @@ async function signUpUser() {
     return;
   }
 
+  const defaultName = email.split('@')[0];
+
   const { data, error } = await window.supabaseClient.auth.signUp({
     email,
-    password
+    password,
+    options: {
+      data: {
+        full_name: defaultName
+      }
+    }
   });
 
   if (error) {
@@ -172,7 +173,6 @@ async function updatePassword() {
 async function signInWithGoogle() {
   const redirectTarget = sessionStorage.getItem("redirect_after_login");
   
-  // Google login karne ke baad login.html callback handler trigger karega
   const callbackUrl = redirectTarget 
     ? window.getPageUrl('login.html') 
     : window.getPageUrl('login.html');
@@ -190,7 +190,7 @@ async function signInWithGoogle() {
   }
 }
 
-// Auto-run Sync check jab page load ho (Jaise Google OAuth redirect par return aane par)
+// Auto-run Sync check jab page load ho
 window.addEventListener("DOMContentLoaded", async () => {
   try {
     const user = await window.getCurrentUser();

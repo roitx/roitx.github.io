@@ -1,6 +1,7 @@
 let currentUser = null;
 let currentAvatarUrl = null;
 let cropper = null;
+let dangerHideTimer = null;
 
 // High-Quality 3D Realistic Avatars (URL-encoded Clean Data URIs)
 const PRESET_AVATARS = [
@@ -73,6 +74,33 @@ document.addEventListener("DOMContentLoaded", () => {
   renderAvatarGrid();
 });
 
+// Danger Zone: 5 Seconds Reveal Handler
+function toggleDangerDeleteBtn() {
+  const wrapper = document.getElementById("dangerDeleteWrapper");
+  const notice = document.getElementById("dangerZoneTimerNotice");
+  if (!wrapper) return;
+
+  if (dangerHideTimer) clearTimeout(dangerHideTimer);
+
+  wrapper.style.display = "block";
+  if (notice) notice.innerText = "(Visible for 5s)";
+
+  let secondsLeft = 5;
+  const interval = setInterval(() => {
+    secondsLeft--;
+    if (secondsLeft > 0) {
+      if (notice) notice.innerText = `(Hiding in ${secondsLeft}s)`;
+    } else {
+      clearInterval(interval);
+    }
+  }, 1000);
+
+  dangerHideTimer = setTimeout(() => {
+    wrapper.style.display = "none";
+    if (notice) notice.innerText = "(Tap to unlock)";
+  }, 5000);
+}
+
 // Calculate Profile Completion %
 function getCompletionPercentage() {
   const fields = [
@@ -95,7 +123,7 @@ function getCompletionPercentage() {
   return Math.round((filledCount / fields.length) * 100);
 }
 
-// Update Badge UI without firing confetti automatically
+// Update Badge UI
 function updateProfileProgress() {
   const percentage = getCompletionPercentage();
   const badge = document.getElementById("profileProgressBadge");
@@ -111,7 +139,6 @@ function updateProfileProgress() {
   }
 }
 
-// Trigger Confetti Celebration (Only called when Save Profile Button is pressed & 100% complete)
 function triggerCongratulationsAnimation() {
   if (typeof confetti === "function") {
     confetti({
@@ -148,7 +175,6 @@ function triggerGallery() {
   document.getElementById("avatarFileInputGallery").click();
 }
 
-// SVG Avatar Selector Modal Handlers
 function openAvatarSelector() {
   closePhotoOptions();
   document.getElementById("avatarPickerSheet").classList.add("active");
@@ -159,8 +185,23 @@ function closeAvatarSelector(e) {
   document.getElementById("avatarPickerSheet").classList.remove("active");
 }
 
-// Modal Handlers for Account Delete Confirmation
+// Account Delete Confirmation Modal Handlers
 function openDeleteConfirmModal() {
+  if (!currentUser || !currentUser.email) return;
+
+  const emailLabel = document.getElementById("confirmEmailLabel");
+  const emailInput = document.getElementById("deleteConfirmEmailInput");
+  const deleteBtn = document.getElementById("confirmDeleteActionBtn");
+
+  if (emailLabel) emailLabel.innerText = `Type "${currentUser.email}" to confirm:`;
+  if (emailInput) emailInput.value = "";
+  
+  if (deleteBtn) {
+    deleteBtn.disabled = true;
+    deleteBtn.style.opacity = "0.5";
+    deleteBtn.style.cursor = "not-allowed";
+  }
+
   document.getElementById("deleteConfirmModal").style.display = "flex";
 }
 
@@ -168,7 +209,22 @@ function closeDeleteConfirmModal() {
   document.getElementById("deleteConfirmModal").style.display = "none";
 }
 
-// 1. Load User Profile Data
+function validateDeleteEmailInput() {
+  const emailInput = document.getElementById("deleteConfirmEmailInput").value.trim();
+  const deleteBtn = document.getElementById("confirmDeleteActionBtn");
+
+  if (currentUser && emailInput.toLowerCase() === currentUser.email.toLowerCase()) {
+    deleteBtn.disabled = false;
+    deleteBtn.style.opacity = "1";
+    deleteBtn.style.cursor = "pointer";
+  } else {
+    deleteBtn.disabled = true;
+    deleteBtn.style.opacity = "0.5";
+    deleteBtn.style.cursor = "not-allowed";
+  }
+}
+
+// Load User Profile Data
 async function loadUserProfile() {
   if (!window.supabaseClient) return;
 
@@ -365,7 +421,6 @@ async function deleteAvatarPhoto() {
   }
 }
 
-// 6. Save Full Profile Info
 async function saveProfileDetails() {
   if (!currentUser) return;
 
@@ -411,7 +466,6 @@ async function saveProfileDetails() {
 
     updateProfileProgress();
 
-    // Fire Confetti Animation if Profile is 100% complete upon clicking Save
     if (getCompletionPercentage() >= 100) {
       triggerCongratulationsAnimation();
     }
@@ -442,18 +496,36 @@ async function setGoogleUserPassword() {
   }
 }
 
-// 7. Delete User Account Permanently Logic
+// Complete & Safe Deletion Execution Function
 async function deleteUserAccount() {
+  const emailInput = document.getElementById("deleteConfirmEmailInput").value.trim();
+  
+  if (!currentUser || emailInput.toLowerCase() !== currentUser.email.toLowerCase()) {
+    alert("❌ Email match nahi hua! Account delete nahi kiya gaya.");
+    return;
+  }
+
   closeDeleteConfirmModal();
-  if (!currentUser) return;
 
   const msgBox = document.getElementById("statusMsg");
   msgBox.className = "status-msg";
-  msgBox.innerText = "Deleting account...";
+  msgBox.innerText = "Deleting account and cleaning database...";
   msgBox.style.display = "block";
 
   try {
-    // 1. Delete user profile record from Supabase table
+    // 1. Storage Avatar cleanup (if present)
+    if (currentAvatarUrl && currentAvatarUrl.includes(currentUser.id)) {
+      try {
+        const path = currentAvatarUrl.split('/avatars/')[1];
+        if (path) {
+          await window.supabaseClient.storage.from('avatars').remove([path]);
+        }
+      } catch (stErr) {
+        console.warn("Storage avatar cleanup skipped:", stErr);
+      }
+    }
+
+    // 2. Delete user profile record from Supabase table
     const { error: profileErr } = await window.supabaseClient
       .from('profiles')
       .delete()
@@ -461,18 +533,18 @@ async function deleteUserAccount() {
 
     if (profileErr) throw profileErr;
 
-    // 2. Sign Out User Session & Clear Local Data
-    await window.supabaseClient.auth.signOut();
+    // 3. Clear Local storage & Sign Out Session
     localStorage.clear();
     sessionStorage.clear();
+    await window.supabaseClient.auth.signOut();
 
-    alert("✅ Aapka account safaltapoorvak delete ho gaya hai.");
+    alert("✅ Aapka account safaltapoorvak permanently delete kar diya gaya hai.");
     window.location.href = window.getPageUrl ? window.getPageUrl("login.html") : "login.html";
 
   } catch (err) {
     console.error("Account Delete Error:", err);
     msgBox.className = "status-msg error";
-    msgBox.innerText = "❌ Account delete nahi ho paya: " + err.message;
+    msgBox.innerText = "❌ Delete failed: " + err.message;
   }
 }
 
