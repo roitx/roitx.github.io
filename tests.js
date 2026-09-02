@@ -1,12 +1,24 @@
+/* ==========================================
+   STATE MANAGEMENT & GLOBAL VARIABLES
+   ========================================== */
 let studentTests = [];
 let isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
 let isExploreOpen = false;
 
-// Selection State Tracker
+// Selection State Tracker for Explore Section (Student Tests)
 let selectedBoard = "ALL";
 let selectedClass = "ALL";
 let selectedSubject = "ALL";
 
+// Selection State Tracker for Leaderboard Step-by-Step Filters
+let selectedLbBoard = "ALL";
+let selectedLbClass = "ALL";
+let selectedLbSubject = "ALL";
+let selectedLbTestId = "ALL";
+
+/* ==========================================
+   INITIALIZATION & AUTHENTICATION
+   ========================================== */
 document.addEventListener("DOMContentLoaded", async () => {
     initDarkModeSupport();
 
@@ -16,7 +28,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             isLoggedIn = !!(session && session.user);
             localStorage.setItem("isLoggedIn", isLoggedIn ? "true" : "false");
 
-            window.supabaseClient.auth.onAuthStateChange((event, session) => {
+            window.supabaseClient.auth.onAuthStateChange((_event, session) => {
                 isLoggedIn = !!(session && session.user);
                 localStorage.setItem("isLoggedIn", isLoggedIn ? "true" : "false");
             });
@@ -24,6 +36,13 @@ document.addEventListener("DOMContentLoaded", async () => {
             console.warn("Supabase auth error:", e);
         }
     }
+
+    // Search Bar Real-Time Listener Setup
+    const searchInput = document.getElementById("searchInput");
+    if (searchInput) {
+        searchInput.addEventListener("input", filterStudentTests);
+    }
+
     fetchStudentTests();
 });
 
@@ -52,6 +71,9 @@ function initDarkModeSupport() {
     }
 }
 
+/* ==========================================
+   DATA FETCHING & RENDERING
+   ========================================== */
 async function fetchStudentTests() {
     const loader = document.getElementById("loaderBox");
     if (loader) loader.style.display = "block";
@@ -66,6 +88,7 @@ async function fetchStudentTests() {
 
         studentTests = data || [];
         populateLeaderboardTestDropdown(studentTests);
+        initLeaderboardStepView(); // Initializes step-by-step filter flow for leaderboard
         renderRecentFiveTests();
     } catch (err) {
         const statusMsg = document.getElementById("statusMsg");
@@ -89,6 +112,9 @@ function renderRecentFiveTests() {
     renderStudentTests(recentFive);
 }
 
+/* ==========================================
+   EXPLORE & FILTER STEP LOGIC (TESTS SECTION)
+   ========================================== */
 function toggleExplorePage() {
     const pageView = document.getElementById("explorePageView");
     const chevron = document.getElementById("exploreChevron");
@@ -108,7 +134,7 @@ function toggleExplorePage() {
     }
 }
 
-// DYNAMIC STEP 1: BOARDS GENERATION (From DB Only)
+// STEP 1: BOARD GENERATION (Tests)
 function renderBoardStep() {
     const grid = document.getElementById("boardOptionsGrid");
     if (!grid) return;
@@ -139,15 +165,17 @@ function selectBoard(board) {
 
     renderBoardStep();
     
-    // Show Step 2
-    document.getElementById("classStepBlock").style.display = "block";
-    document.getElementById("subjectStepBlock").style.display = "none";
+    const classBlock = document.getElementById("classStepBlock");
+    const subjectBlock = document.getElementById("subjectStepBlock");
+
+    if (classBlock) classBlock.style.display = "block";
+    if (subjectBlock) subjectBlock.style.display = "none";
     
     renderClassStep();
     filterStudentTests();
 }
 
-// DYNAMIC STEP 2: CLASS GENERATION (Filtered by selected Board)
+// STEP 2: CLASS GENERATION (Tests)
 function renderClassStep() {
     const grid = document.getElementById("classOptionsGrid");
     if (!grid) return;
@@ -159,7 +187,7 @@ function renderClassStep() {
         
         let boardMatch = (selectedBoard === "ALL") || 
             (selectedBoard === "BSEB" && (fullText.includes("BSEB") || fullText.includes("BIHAR"))) ||
-            fullText.includes(selectedBoard);
+            fullText.includes(selectedBoard.toUpperCase());
 
         if (boardMatch) {
             if (test.class_level && test.class_level.trim() !== "") {
@@ -186,14 +214,14 @@ function selectClass(cls) {
 
     renderClassStep();
 
-    // Show Step 3
-    document.getElementById("subjectStepBlock").style.display = "block";
+    const subjectBlock = document.getElementById("subjectStepBlock");
+    if (subjectBlock) subjectBlock.style.display = "block";
     
     renderSubjectStep();
     filterStudentTests();
 }
 
-// DYNAMIC STEP 3: SUBJECT GENERATION (Filtered by selected Board & Class)
+// STEP 3: SUBJECT GENERATION (Tests)
 function renderSubjectStep() {
     const grid = document.getElementById("subjectOptionsGrid");
     if (!grid) return;
@@ -205,7 +233,7 @@ function renderSubjectStep() {
         
         let boardMatch = (selectedBoard === "ALL") || 
             (selectedBoard === "BSEB" && (fullText.includes("BSEB") || fullText.includes("BIHAR"))) ||
-            fullText.includes(selectedBoard);
+            fullText.includes(selectedBoard.toUpperCase());
 
         let classMatch = (selectedClass === "ALL") ||
             (test.class_level && test.class_level.trim() === selectedClass) ||
@@ -239,18 +267,25 @@ function resetExploreSelections() {
     selectedClass = "ALL";
     selectedSubject = "ALL";
     
-    if (document.getElementById("searchInput")) document.getElementById("searchInput").value = "";
+    const searchInput = document.getElementById("searchInput");
+    if (searchInput) searchInput.value = "";
     
-    document.getElementById("classStepBlock").style.display = "none";
-    document.getElementById("subjectStepBlock").style.display = "none";
+    const classBlock = document.getElementById("classStepBlock");
+    const subjectBlock = document.getElementById("subjectStepBlock");
+    
+    if (classBlock) classBlock.style.display = "none";
+    if (subjectBlock) subjectBlock.style.display = "none";
     
     renderBoardStep();
     filterStudentTests();
 }
 
-// REAL-TIME MULTI-FILTER ENGINE
+/* ==========================================
+   DYNAMIC MULTI-FILTER ENGINE (STUDENT TESTS)
+   ========================================== */
 function filterStudentTests() {
-    var searchVal = document.getElementById("searchInput") ? document.getElementById("searchInput").value.toLowerCase().trim() : "";
+    const searchInput = document.getElementById("searchInput");
+    var searchVal = searchInput ? searchInput.value.toLowerCase().trim() : "";
 
     if (searchVal !== "" && !isExploreOpen) {
         toggleExplorePage();
@@ -310,18 +345,17 @@ function renderStudentTests(tests) {
         let timeMins = test.time_limit_mins || 15;
         let classBadge = test.class_level ? `<span style="background: #edf2f7; color: #4a5568; padding: 2px 8px; border-radius: 4px; font-size: 11px; margin-left: 6px;">${test.class_level}</span>` : '';
 
-        // --- NEW BADGE LOGIC (START) ---
+        // NEW BADGE LOGIC
         let isNew = false;
         if (test.created_at) {
             const testDate = new Date(test.created_at);
             const now = new Date();
-            const diffDays = (now - testDate) / (1000 * 60 * 60 * 24); // Din ka difference nikalna
-            if (diffDays <= 7) { // Agar 7 din ya usse kam purana hai toh True
+            const diffDays = (now - testDate) / (1000 * 60 * 60 * 24);
+            if (diffDays <= 7) {
                 isNew = true;
             }
         }
         let newBadgeHtml = isNew ? `<span class="badge-new">NEW</span>` : '';
-        // --- NEW BADGE LOGIC (END) ---
 
         html += `
             <div class="test-card">
@@ -342,6 +376,9 @@ function renderStudentTests(tests) {
     container.innerHTML = html;
 }
 
+/* ==========================================
+   AUTH & MODAL HANDLING
+   ========================================== */
 function handleStartTest(testId) {
     const userLoggedIn = isLoggedIn || localStorage.getItem("isLoggedIn") === "true";
 
@@ -376,6 +413,9 @@ function redirectToLogin() {
     window.location.href = "login.html";
 }
 
+/* ==========================================
+   NAVIGATION & TAB SWITCHING
+   ========================================== */
 function switchTab(tab) {
     const testsSec = document.getElementById("testsSection");
     const leaderSec = document.getElementById("leaderboardSection");
@@ -383,10 +423,10 @@ function switchTab(tab) {
     const tabLeaderboardBtn = document.getElementById("tabLeaderboardBtn");
 
     if (tab === 'tests') {
-        testsSec.style.display = "block";
-        leaderSec.style.display = "none";
-        tabTestsBtn.classList.add("active");
-        tabLeaderboardBtn.classList.remove("active");
+        if (testsSec) testsSec.style.display = "block";
+        if (leaderSec) leaderSec.style.display = "none";
+        if (tabTestsBtn) tabTestsBtn.classList.add("active");
+        if (tabLeaderboardBtn) tabLeaderboardBtn.classList.remove("active");
     } else {
         const userLoggedIn = isLoggedIn || localStorage.getItem("isLoggedIn") === "true";
         if (!userLoggedIn) {
@@ -394,12 +434,25 @@ function switchTab(tab) {
             return;
         }
 
-        testsSec.style.display = "none";
-        leaderSec.style.display = "block";
-        tabTestsBtn.classList.remove("active");
-        tabLeaderboardBtn.classList.add("active");
+        if (testsSec) testsSec.style.display = "none";
+        if (leaderSec) leaderSec.style.display = "block";
+        if (tabTestsBtn) tabTestsBtn.classList.remove("active");
+        if (tabLeaderboardBtn) tabLeaderboardBtn.classList.add("active");
         loadLeaderboardData();
     }
+}
+
+/* ==========================================
+   STEP-BY-STEP LEADERBOARD FILTER SYSTEM (NEW STEP FLOW)
+   ========================================== */
+function toggleLeaderboardFilters() {
+    const drawer = document.getElementById('leaderboardFilterDrawer');
+    const chevron = document.getElementById('lbChevron');
+    if (!drawer) return;
+
+    const isHidden = drawer.style.display === 'none' || drawer.style.display === '';
+    drawer.style.display = isHidden ? 'block' : 'none';
+    if (chevron) chevron.className = isHidden ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down';
 }
 
 function populateLeaderboardTestDropdown(tests) {
@@ -413,6 +466,205 @@ function populateLeaderboardTestDropdown(tests) {
     lbSelect.innerHTML = html;
 }
 
+// Initializing Leaderboard Step Filters
+function initLeaderboardStepView() {
+    renderLbBoardStep();
+    
+    // Hide future steps initially
+    const classBlock = document.getElementById("lbClassStepBlock");
+    const subjectBlock = document.getElementById("lbSubjectStepBlock");
+    const testBlock = document.getElementById("lbTestStepBlock");
+
+    if (classBlock) classBlock.style.display = "none";
+    if (subjectBlock) subjectBlock.style.display = "none";
+    if (testBlock) testBlock.style.display = "none";
+}
+
+// STEP 1: LEADERBOARD BOARDS
+function renderLbBoardStep() {
+    const boardBox = document.getElementById("lbBoardChips");
+    if (!boardBox) return;
+
+    const boards = new Set();
+    studentTests.forEach(t => {
+        const titleUpper = (t.title || "").toUpperCase();
+        if (titleUpper.includes("BSEB") || titleUpper.includes("BIHAR")) boards.add("BSEB");
+        else if (titleUpper.includes("CBSE")) boards.add("CBSE");
+        else if (titleUpper.includes("NEET")) boards.add("NEET");
+        else if (titleUpper.includes("JEE")) boards.add("JEE");
+    });
+
+    let html = `<button class="chip-btn ${selectedLbBoard === 'ALL' ? 'active' : ''}" onclick="selectLbBoardStep('ALL')">All Boards</button>`;
+    boards.forEach(b => {
+        html += `<button class="chip-btn ${selectedLbBoard === b ? 'active' : ''}" onclick="selectLbBoardStep('${b}')">${b}</button>`;
+    });
+
+    boardBox.innerHTML = html;
+}
+
+function selectLbBoardStep(b) {
+    selectedLbBoard = b;
+    selectedLbClass = "ALL";
+    selectedLbSubject = "ALL";
+    selectedLbTestId = "ALL";
+
+    renderLbBoardStep();
+
+    const classBlock = document.getElementById("lbClassStepBlock");
+    const subjectBlock = document.getElementById("lbSubjectStepBlock");
+    const testBlock = document.getElementById("lbTestStepBlock");
+
+    if (classBlock) classBlock.style.display = "block";
+    if (subjectBlock) subjectBlock.style.display = "none";
+    if (testBlock) testBlock.style.display = "none";
+
+    renderLbClassStep();
+    loadLeaderboardData();
+}
+
+// STEP 2: LEADERBOARD CLASSES
+function renderLbClassStep() {
+    const classBox = document.getElementById("lbClassChips");
+    if (!classBox) return;
+
+    const classes = new Set();
+    studentTests.forEach(t => {
+        const fullText = `${t.title || ''} ${t.class_level || ''}`.toUpperCase();
+        
+        let boardMatch = (selectedLbBoard === "ALL") || 
+            (selectedLbBoard === "BSEB" && (fullText.includes("BSEB") || fullText.includes("BIHAR"))) ||
+            fullText.includes(selectedLbBoard.toUpperCase());
+
+        if (boardMatch) {
+            if (t.class_level && t.class_level.trim() !== "") {
+                classes.add(t.class_level.trim());
+            } else if (fullText.includes("12")) classes.add("Class 12th");
+            else if (fullText.includes("11")) classes.add("Class 11th");
+            else if (fullText.includes("10")) classes.add("Class 10th");
+        }
+    });
+
+    let html = `<button class="chip-btn ${selectedLbClass === 'ALL' ? 'active' : ''}" onclick="selectLbClassStep('ALL')">All Classes</button>`;
+    classes.forEach(c => {
+        html += `<button class="chip-btn ${selectedLbClass === c ? 'active' : ''}" onclick="selectLbClassStep('${c}')">${c}</button>`;
+    });
+
+    classBox.innerHTML = html;
+}
+
+function selectLbClassStep(c) {
+    selectedLbClass = c;
+    selectedLbSubject = "ALL";
+    selectedLbTestId = "ALL";
+
+    renderLbClassStep();
+
+    const subjectBlock = document.getElementById("lbSubjectStepBlock");
+    const testBlock = document.getElementById("lbTestStepBlock");
+
+    if (subjectBlock) subjectBlock.style.display = "block";
+    if (testBlock) testBlock.style.display = "none";
+
+    renderLbSubjectStep();
+    loadLeaderboardData();
+}
+
+// STEP 3: LEADERBOARD SUBJECTS
+function renderLbSubjectStep() {
+    const subjectBox = document.getElementById("lbSubjectChips");
+    if (!subjectBox) return;
+
+    const subjects = new Set();
+    studentTests.forEach(t => {
+        const fullText = `${t.title || ''} ${t.class_level || ''}`.toUpperCase();
+        
+        let boardMatch = (selectedLbBoard === "ALL") || 
+            (selectedLbBoard === "BSEB" && (fullText.includes("BSEB") || fullText.includes("BIHAR"))) ||
+            fullText.includes(selectedLbBoard.toUpperCase());
+
+        let classMatch = (selectedLbClass === "ALL") ||
+            (t.class_level && t.class_level.trim() === selectedLbClass) ||
+            (selectedLbClass.includes("12") && fullText.includes("12")) ||
+            (selectedLbClass.includes("11") && fullText.includes("11")) ||
+            (selectedLbClass.includes("10") && fullText.includes("10"));
+
+        if (boardMatch && classMatch && t.subject) {
+            subjects.add(t.subject.trim());
+        }
+    });
+
+    let html = `<button class="chip-btn ${selectedLbSubject === 'ALL' ? 'active' : ''}" onclick="selectLbSubjectStep('ALL')">All Subjects</button>`;
+    subjects.forEach(s => {
+        html += `<button class="chip-btn ${selectedLbSubject === s ? 'active' : ''}" onclick="selectLbSubjectStep('${s}')">${s}</button>`;
+    });
+
+    subjectBox.innerHTML = html;
+}
+
+function selectLbSubjectStep(s) {
+    selectedLbSubject = s;
+    selectedLbTestId = "ALL";
+
+    renderLbSubjectStep();
+
+    const testBlock = document.getElementById("lbTestStepBlock");
+    if (testBlock) testBlock.style.display = "block";
+
+    renderLbTestStep();
+    loadLeaderboardData();
+}
+
+// STEP 4: LEADERBOARD SPECIFIC TEST
+function renderLbTestStep() {
+    const testBox = document.getElementById("lbTestChips");
+    if (!testBox) return;
+
+    const filteredTests = studentTests.filter(t => {
+        const fullText = `${t.title || ''} ${t.class_level || ''}`.toUpperCase();
+
+        let boardMatch = (selectedLbBoard === "ALL") || 
+            (selectedLbBoard === "BSEB" && (fullText.includes("BSEB") || fullText.includes("BIHAR"))) ||
+            fullText.includes(selectedLbBoard.toUpperCase());
+
+        let classMatch = (selectedLbClass === "ALL") ||
+            (t.class_level && t.class_level.trim() === selectedLbClass) ||
+            (selectedLbClass.includes("12") && fullText.includes("12")) ||
+            (selectedLbClass.includes("11") && fullText.includes("11")) ||
+            (selectedLbClass.includes("10") && fullText.includes("10"));
+
+        let subMatch = (selectedLbSubject === "ALL") || 
+            (t.subject && t.subject.trim().toLowerCase().includes(selectedLbSubject.toLowerCase()));
+
+        return boardMatch && classMatch && subMatch;
+    });
+
+    let html = `<button class="chip-btn ${selectedLbTestId === 'ALL' ? 'active' : ''}" onclick="selectLbTestStep('ALL')">All Tests Combined</button>`;
+    filteredTests.forEach(t => {
+        html += `<button class="chip-btn ${selectedLbTestId === t.id ? 'active' : ''}" onclick="selectLbTestStep('${t.id}')">${t.title}</button>`;
+    });
+
+    testBox.innerHTML = html;
+}
+
+function selectLbTestStep(testId) {
+    selectedLbTestId = testId;
+    renderLbTestStep();
+    loadLeaderboardData();
+}
+
+function resetLeaderboardFilters() {
+    selectedLbBoard = "ALL";
+    selectedLbClass = "ALL";
+    selectedLbSubject = "ALL";
+    selectedLbTestId = "ALL";
+
+    initLeaderboardStepView();
+    loadLeaderboardData();
+}
+
+/* ==========================================
+   PODIUM & LEADERBOARD FETCHING LOGIC
+   ========================================== */
 function renderPodiumCards(data) {
     let container = document.getElementById("podiumContainer");
     const defaultAvatar = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
@@ -486,8 +738,6 @@ function renderPodiumCards(data) {
 async function loadLeaderboardData() {
     const tbody = document.getElementById("leaderboardBody");
     const loader = document.getElementById("leaderboardLoader");
-    const filterSelect = document.getElementById("leaderboardFilterTest");
-    const selectedTestId = filterSelect ? filterSelect.value : "ALL";
 
     if (loader) loader.style.display = "block";
 
@@ -499,7 +749,7 @@ async function loadLeaderboardData() {
             return;
         }
 
-        const { data: userProfile, error: profileErr } = await window.supabaseClient
+        const { data: userProfile } = await window.supabaseClient
             .from('profiles')
             .select('pincode')
             .eq('id', user.id)
@@ -532,29 +782,53 @@ async function loadLeaderboardData() {
             .select(`
                 score,
                 total_marks,
-                tests ( title ),
+                test_id,
+                tests!inner ( title, subject, class_level ),
                 profiles!inner ( full_name, pincode, avatar_url, city )
             `)
             .eq('profiles.pincode', currentPincode)
             .gte('created_at', firstDayOfMonth)
             .order('score', { ascending: false })
-            .limit(30);
+            .limit(50);
 
-        if (selectedTestId && selectedTestId !== "ALL") {
-            query = query.eq('test_id', selectedTestId);
+        if (selectedLbTestId && selectedLbTestId !== "ALL") {
+            query = query.eq('test_id', selectedLbTestId);
         }
 
         const { data, error } = await query;
         if (error) throw error;
 
-        renderPodiumCards(data || []);
+        // Dynamic Filtering
+        let filteredData = (data || []).filter(row => {
+            const testTitle = (row.tests?.title || '').toLowerCase();
+            const testClass = (row.tests?.class_level || '').toLowerCase();
+            const testSub = (row.tests?.subject || '').toLowerCase();
+            const combinedText = testTitle + " " + testClass;
+
+            const matchesBoard = (selectedLbBoard === "ALL") ||
+                (selectedLbBoard === "BSEB" && (combinedText.includes("bseb") || combinedText.includes("bihar"))) ||
+                combinedText.includes(selectedLbBoard.toLowerCase());
+
+            const matchesClass = (selectedLbClass === "ALL") ||
+                (row.tests?.class_level && row.tests.class_level === selectedLbClass) ||
+                (selectedLbClass.includes("12") && combinedText.includes("12")) ||
+                (selectedLbClass.includes("11") && combinedText.includes("11")) ||
+                (selectedLbClass.includes("10") && combinedText.includes("10"));
+
+            const matchesSubject = (selectedLbSubject === "ALL") ||
+                testSub.includes(selectedLbSubject.toLowerCase());
+
+            return matchesBoard && matchesClass && matchesSubject;
+        });
+
+        renderPodiumCards(filteredData);
 
         let html = "";
         const defaultAvatar = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
-        const locationSvg = `<svg width="12" height="12" viewBox="0 0 24 24" fill="#a0aec0" style="vertical-align: middle; margin-right: 3px;"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>`;
+        const locationSvg = `<svg width="12" height="12" viewBox="0 0 24 24" fill="#a0aec0" style="vertical-align: middle; margin-right: 3px;"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5-2.5z"/></svg>`;
         const crownSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="#f6e05e"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/></svg>`;
 
-        (data || []).forEach((row, index) => {
+        filteredData.forEach((row, index) => {
             let rankDisplay = index === 0 ? crownSvg : (index === 1 ? '🥈' : (index === 2 ? '🥉' : `#${index + 1}`));
             let userPhoto = row.profiles?.avatar_url || defaultAvatar;
             let areaName = row.profiles?.city || 'N/A';
@@ -587,7 +861,7 @@ async function loadLeaderboardData() {
         });
 
         if (tbody) {
-            tbody.innerHTML = html || `<tr><td colspan="5" style="text-align:center;">Pincode (${currentPincode}) ke liye is mahine koi leaderboard entries nahi mili.</td></tr>`;
+            tbody.innerHTML = html || `<tr><td colspan="5" style="text-align:center; padding:20px; color:#718096;">Is filter criteria ke liye koi leaderboard entries nahi mili.</td></tr>`;
         }
     } catch (err) {
         if (tbody) {

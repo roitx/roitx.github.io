@@ -3,188 +3,215 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tests Center</title>
+    <title>Roitx TestHub</title>
     <link rel="stylesheet" href="tests.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-      /* PAGE-STYLE EXPLORE VIEW CSS */
-      .explore-page-view {
-          background: #ffffff;
-          border-radius: 16px;
-          padding: 20px;
-          border: 1px solid #e2e8f0;
-          box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-          margin-bottom: 25px;
-      }
-      .step-block {
-          margin-bottom: 20px;
-      }
-      .step-title {
-          font-size: 14px;
-          font-weight: 700;
-          color: #4A00E0;
-          margin-bottom: 10px;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-      }
-      .option-grid {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 10px;
-      }
-      .chip-btn {
-          background: #f7fafc;
-          border: 1px solid #cbd5e0;
-          padding: 8px 16px;
-          border-radius: 20px;
-          font-size: 13px;
-          font-weight: 600;
-          color: #4a5568;
-          cursor: pointer;
-          transition: all 0.2s ease;
-      }
-      .chip-btn:hover {
-          border-color: #4A00E0;
-          color: #4A00E0;
-          background: #f3e8ff;
-      }
-      .chip-btn.active {
-          background: linear-gradient(135deg, #4A00E0, #8E2DE2);
-          color: #ffffff;
-          border-color: transparent;
-          box-shadow: 0 4px 10px rgba(74, 0, 224, 0.3);
-      }
-    </style>
 </head>
-<body oncontextmenu="return false;">
+<body>
 
-<header>
-    <h2><i class="fa-solid fa-book-bookmark" style="color: #007bff; margin-right: 8px;"></i>Tests Center</h2>
+<!-- APP NAVBAR HEADER -->
+<header class="app-header">
+    <div class="brand-logo">
+        <div class="logo-icon"><i class="fa-solid fa-graduation-cap"></i></div>
+        <h2>Roitx TestHub</h2>
+    </div>
 
-    <label class="switch">
-      <input type="checkbox" id="modeToggle">
-      <span class="slider">
-        <span class="icon sun"><i class="fa-solid fa-sun"></i></span>
-        <span class="icon moon"><i class="fa-solid fa-moon"></i></span>
-      </span>
-    </label>
+    <div class="header-actions">
+        <label class="theme-switch" title="Toggle Light/Dark Theme">
+            <input type="checkbox" id="modeToggle">
+            <span class="slider">
+                <i class="fa-solid fa-sun icon-sun"></i>
+                <i class="fa-solid fa-moon icon-moon"></i>
+            </span>
+        </label>
+    </div>
 </header>
 
-<!-- Navigation Tabs -->
-<div class="tabs-bar">
-    <button id="tabTestsBtn" class="tab-btn active" onclick="switchTab('tests')">
-        <i class="fa-solid fa-file-pen"></i> Available Tests
-    </button>
-    <button id="tabLeaderboardBtn" class="tab-btn" onclick="switchTab('leaderboard')">
-        <i class="fa-solid fa-trophy"></i> Leaderboard
-    </button>
-</div>
-
-<!-- SECTION 1: TESTS & EXPLORE PAGE VIEW -->
-<div id="testsSection">
-    
-    <!-- EXPLORE HEADER & SEARCH BAR -->
-    <div style="margin-bottom: 15px; display: flex; gap: 10px; align-items: center; justify-content: space-between;">
-        <button id="exploreBtn" onclick="toggleExplorePage()" style="background: linear-gradient(135deg, #4A00E0, #8E2DE2); color: white; border: none; padding: 12px 20px; border-radius: 10px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 14px; box-shadow: 0 4px 12px rgba(74, 0, 224, 0.3);">
-            <i class="fa-solid fa-compass"></i> Explore Categories <i class="fa-solid fa-chevron-down" id="exploreChevron"></i>
+<!-- MAIN NAVIGATION TABS -->
+<nav class="nav-segment-wrapper">
+    <div class="nav-segment">
+        <button id="tabTestsBtn" class="segment-btn active" onclick="switchTab('tests')">
+            <i class="fa-solid fa-shapes"></i> Explore Tests
         </button>
-        <div class="search-input-wrapper" style="flex: 1; max-width: 300px;">
-            <i class="fa-solid fa-magnifying-glass search-icon"></i>
-            <input type="text" id="searchInput" onkeyup="filterStudentTests()" placeholder="Search test title...">
-        </div>
+        <button id="tabLeaderboardBtn" class="segment-btn" onclick="switchTab('leaderboard')">
+            <i class="fa-solid fa-trophy"></i> Leaderboard
+        </button>
     </div>
+</nav>
 
-    <!-- VISUAL STEP-BY-STEP PAGE VIEW CONTAINER -->
-    <div id="explorePageView" class="explore-page-view" style="display: none;">
+<!-- MAIN CONTENT WRAPPER -->
+<main class="app-container">
+    
+    <!-- SECTION 1: TESTS EXPLORER -->
+    <section id="testsSection" class="section-block active">
         
-        <!-- STEP 1: BOARD -->
-        <div class="step-block">
-            <div class="step-title"><i class="fa-solid fa-building-columns"></i> 1. Select Board / Exam</div>
-            <div id="boardOptionsGrid" class="option-grid"></div>
-        </div>
-
-        <!-- STEP 2: CLASS -->
-        <div class="step-block" id="classStepBlock" style="display: none;">
-            <div class="step-title"><i class="fa-solid fa-graduation-cap"></i> 2. Select Class</div>
-            <div id="classOptionsGrid" class="option-grid"></div>
-        </div>
-
-        <!-- STEP 3: SUBJECT -->
-        <div class="step-block" id="subjectStepBlock" style="display: none;">
-            <div class="step-title"><i class="fa-solid fa-book"></i> 3. Select Subject</div>
-            <div id="subjectOptionsGrid" class="option-grid"></div>
-        </div>
-
-        <div style="margin-top: 15px; text-align: right; border-top: 1px solid #edf2f7; padding-top: 10px;">
-            <button onclick="resetExploreSelections()" style="background: none; border: none; color: #e53e3e; font-size: 12px; font-weight: bold; cursor: pointer;">
-                <i class="fa-solid fa-rotate-left"></i> Reset Selections
+        <!-- SEARCH & FILTER TOOLBAR -->
+        <div class="toolbar-card">
+            <div class="search-field">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" id="searchInput" onkeyup="filterStudentTests()" placeholder="Search by exam, subject, or title..." autocomplete="off">
+            </div>
+            
+            <button id="exploreBtn" class="explore-toggle-btn no-long-press" onclick="toggleExplorePage()" oncontextmenu="return false;">
+                <i class="fa-solid fa-sliders"></i> Filters <i class="fa-solid fa-chevron-down" id="exploreChevron"></i>
             </button>
         </div>
-    </div>
 
-    <!-- HEADING SECTION -->
-    <div id="sectionHeading" style="margin: 15px 0 10px 0; display: flex; justify-content: space-between; align-items: center;">
-        <h3 id="headingTitle" style="font-size: 16px; color: #2d3748; margin: 0; display: flex; align-items: center; gap: 8px;">
-            <i class="fa-solid fa-bolt" style="color: #f6e05e;"></i> Recently Added Tests
-        </h3>
-        <span id="testCountBadge" style="font-size: 12px; background: #edf2f7; color: #4a5568; padding: 2px 8px; border-radius: 12px; font-weight: 600;">Top 5</span>
-    </div>
+        <!-- VISUAL STEPPER EXPANDABLE PANEL -->
+        <div id="explorePageView" class="explore-drawer" style="display: none;">
+            <div class="drawer-header">
+                <span><i class="fa-solid fa-filter"></i> Smart Test Finder</span>
+                <button onclick="resetExploreSelections()" class="reset-link-btn">
+                    <i class="fa-solid fa-rotate-left"></i> Reset All
+                </button>
+            </div>
 
-    <div id="loaderBox" class="loader-box">
-        <i class="fa-solid fa-circle-notch fa-spin"></i> Loading tests...
-    </div>
-    <div id="statusMsg" class="status-msg" style="display: none;"></div>
+            <!-- STEP 1: BOARD SELECTION -->
+            <div class="step-group">
+                <div class="step-label"><span class="step-num">1</span> Board / Exam Category</div>
+                <div id="boardOptionsGrid" class="chips-flex"></div>
+            </div>
 
-    <section id="studentTestsContainer" class="tests-container"></section>
-</div>
+            <!-- STEP 2: CLASS SELECTION -->
+            <div class="step-group" id="classStepBlock" style="display: none;">
+                <div class="step-label"><span class="step-num">2</span> Target Class</div>
+                <div id="classOptionsGrid" class="chips-flex"></div>
+            </div>
 
-<!-- SECTION 2: LEADERBOARD -->
-<div id="leaderboardSection" style="display: none;">
-    <div class="leaderboard-filter">
-        <h3><i class="fa-solid fa-crown" style="color: #f6e05e;"></i> Top Rankers</h3>
-        <select id="leaderboardFilterTest" onchange="loadLeaderboardData()">
-            <option value="ALL">All Tests Combined</option>
-        </select>
-    </div>
+            <!-- STEP 3: SUBJECT SELECTION -->
+            <div class="step-group" id="subjectStepBlock" style="display: none;">
+                <div class="step-label"><span class="step-num">3</span> Subject</div>
+                <div id="subjectOptionsGrid" class="chips-flex"></div>
+            </div>
+        </div>
 
-    <div class="table-container">
-        <table class="leaderboard-table">
-            <thead>
-                <tr>
-                    <th>Rank</th>
-                    <th>Student Name</th>
-                    <th>Area</th>
-                    <th>Test Title</th>
-                    <th>Score</th>
-                </tr>
-            </thead>
-            <tbody id="leaderboardBody"></tbody>
-        </table>
-    </div>
-    <div id="leaderboardLoader" class="loader-box" style="display: none;">
-        <i class="fa-solid fa-circle-notch fa-spin"></i> Loading Leaderboard...
-    </div>
-</div>
+        <!-- TESTS LISTING HEADER -->
+        <div id="sectionHeading" class="results-header">
+            <h3 id="headingTitle">
+                <i class="fa-solid fa-bolt-lightning" style="color: #ecc94b;"></i> Recently Added Tests
+            </h3>
+            <span id="testCountBadge" class="count-pill">Top 5</span>
+        </div>
 
-<!-- MOVABLE FLOATING HOME BUTTON -->
-<div id="movableHomeBtn" class="home-btn-wrapper">
-    <a href="index.html" class="home-btn" title="Go to Home">
-        <i class="fa-solid fa-house-chimney"></i>
+        <!-- LOADERS & ALERTS -->
+        <div id="loaderBox" class="loader-box">
+            <div class="spinner"></div>
+            <span>Fetching available tests...</span>
+        </div>
+        
+        <div id="statusMsg" class="status-msg" style="display: none;"></div>
+
+        <!-- TESTS GRID CONTAINER -->
+        <div id="studentTestsContainer" class="tests-grid"></div>
+    </section>
+
+    <!-- SECTION 2: LEADERBOARD -->
+    <section id="leaderboardSection" class="section-block" style="display: none;">
+        
+        <!-- MODERN LEADERBOARD FILTER BAR -->
+        <div class="leaderboard-header-card">
+            <div class="lb-title">
+                <i class="fa-solid fa-crown" style="color: #ecc94b;"></i>
+                <div>
+                    <h3>Roitx Leaderboard Rankings</h3>
+                    <p>Track top performers and test rankers</p>
+                </div>
+            </div>
+            
+            <button class="explore-toggle-btn" onclick="toggleLeaderboardFilters()">
+                <i class="fa-solid fa-filter"></i> Leaderboard Filters <i class="fa-solid fa-chevron-down" id="lbChevron"></i>
+            </button>
+        </div>
+
+        <!-- EXPANDABLE LEADERBOARD FILTER DRAWER (EXPLORE STYLE) -->
+        <div id="leaderboardFilterDrawer" class="explore-drawer" style="display: none;">
+            <div class="drawer-header">
+                <span><i class="fa-solid fa-trophy"></i> Smart Leaderboard Filters</span>
+                <button onclick="resetLeaderboardFilters()" class="reset-link-btn">
+                    <i class="fa-solid fa-rotate-left"></i> Reset Filter
+                </button>
+            </div>
+
+            <div class="step-group">
+                <div class="step-label"><i class="fa-solid fa-building-columns"></i> Board / Exam</div>
+                <div id="lbBoardChips" class="chips-flex">
+                    <!-- Dynamic chips generated via JS -->
+                    <button class="chip-btn active" data-value="ALL" onclick="selectLbChip('Board', 'ALL', this)">All Boards</button>
+                </div>
+            </div>
+
+            <div class="step-group">
+                <div class="step-label"><i class="fa-solid fa-graduation-cap"></i> Class</div>
+                <div id="lbClassChips" class="chips-flex">
+                    <button class="chip-btn active" data-value="ALL" onclick="selectLbChip('Class', 'ALL', this)">All Classes</button>
+                </div>
+            </div>
+
+            <div class="step-group">
+                <div class="step-label"><i class="fa-solid fa-book"></i> Subject</div>
+                <div id="lbSubjectChips" class="chips-flex">
+                    <button class="chip-btn active" data-value="ALL" onclick="selectLbChip('Subject', 'ALL', this)">All Subjects</button>
+                </div>
+            </div>
+
+            <div class="step-group">
+                <div class="step-label"><i class="fa-solid fa-file-signature"></i> Specific Test</div>
+                <div id="lbTestChips" class="chips-flex">
+                    <button class="chip-btn active" data-value="ALL" onclick="selectLbChip('Test', 'ALL', this)">All Tests Combined</button>
+                </div>
+            </div>
+
+            <!-- Fallback Select Elements kept hidden for JS backward compatibility -->
+            <select id="leaderboardFilterBoard" onchange="loadLeaderboardData()" style="display:none;"><option value="ALL">ALL</option></select>
+            <select id="leaderboardFilterClass" onchange="loadLeaderboardData()" style="display:none;"><option value="ALL">ALL</option></select>
+            <select id="leaderboardFilterSubject" onchange="loadLeaderboardData()" style="display:none;"><option value="ALL">ALL</option></select>
+            <select id="leaderboardFilterTest" onchange="loadLeaderboardData()" style="display:none;"><option value="ALL">ALL</option></select>
+        </div>
+
+        <!-- PODIUM CONTAINER -->
+        <div id="podiumContainer" class="podium-wrapper"></div>
+
+        <!-- TABLE CONTAINER -->
+        <div class="table-card">
+            <table class="leaderboard-table">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Student Name</th>
+                        <th>Area</th>
+                        <th>Test Title</th>
+                        <th>Score</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboardBody"></tbody>
+            </table>
+            
+            <div id="leaderboardLoader" class="loader-box" style="display: none;">
+                <div class="spinner"></div>
+                <span>Updating rankings...</span>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<!-- FLOATING FAB ACTION BUTTON -->
+<div id="movableHomeBtn" class="fab-wrapper">
+    <a href="index.html" class="fab-btn" title="Back to Dashboard">
+        <i class="fa-solid fa-house"></i>
     </a>
 </div>
 
 <!-- AUTH POPUP MODAL -->
-<div id="authModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; justify-content: center; align-items: center;">
-    <div class="modal-content" style="background: #fff; padding: 25px; border-radius: 12px; width: 90%; max-width: 350px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
-        <h3 style="margin-bottom: 10px; color: #333;"><i class="fa-solid fa-lock" style="color: #007bff;"></i> Login Required</h3>
-        <p id="authModalMsg" style="color: #666; font-size: 14px; margin-bottom: 20px;">Test attempt karne ke liye pehle login karein!</p>
-        <div style="display: flex; gap: 10px; justify-content: center;">
-            <button onclick="closeAuthModal()" style="padding: 8px 16px; background: #ccc; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">Cancel</button>
-            <button onclick="redirectToLogin()" style="padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">Login Now</button>
+<div id="authModal" class="modal-overlay" style="display: none;">
+    <div class="modal-card">
+        <div class="modal-icon"><i class="fa-solid fa-lock"></i></div>
+        <h3>Authentication Required</h3>
+        <p id="authModalMsg">Test attempt karne ke liye pehle login karein!</p>
+        <div class="modal-actions">
+            <button onclick="closeAuthModal()" class="btn-secondary">Cancel</button>
+            <button onclick="redirectToLogin()" class="btn-primary">Login Now</button>
         </div>
     </div>
 </div>
