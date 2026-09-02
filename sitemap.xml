@@ -4,120 +4,142 @@
   <!-- Main Pages (Priority 1.0) -->
   <url>
     <loc>https://roitx.qd.je/</loc>
-    <lastmod>2026-08-22</lastmod>
+    <lastmod>2026-09-02</lastmod>
+    <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://roitx.qd.je/index.html</loc>
-    <lastmod>2026-08-22</lastmod>
+    <lastmod>2026-09-02</lastmod>
+    <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
 
   <!-- High Priority Core Features (Priority 0.9) -->
   <url>
     <loc>https://roitx.qd.je/classes.html</loc>
-    <lastmod>2026-08-22</lastmod>
+    <lastmod>2026-09-02</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://roitx.qd.je/premium-notes.html</loc>
-    <lastmod>2026-08-22</lastmod>
+    <lastmod>2026-09-02</lastmod>
+    <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
 
   <!-- Class & Subject Specific Pages (Priority 0.8) -->
   <url>
     <loc>https://roitx.qd.je/subjects-9.html</loc>
-    <lastmod>2026-08-22</lastmod>
+    <lastmod>2026-09-02</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://roitx.qd.je/subjects-10.html</loc>
-    <lastmod>2026-08-22</lastmod>
+    <lastmod>2026-09-02</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://roitx.qd.je/subjects-11.html</loc>
-    <lastmod>2026-08-22</lastmod>
+    <lastmod>2026-09-02</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://roitx.qd.je/11-arts-subjects.html</loc>
-    <lastmod>2026-08-22</lastmod>
+    <lastmod>2026-09-02</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://roitx.qd.je/11-commerce-subjects.html</loc>
-    <lastmod>2026-08-22</lastmod>
+    <lastmod>2026-09-02</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://roitx.qd.je/11-science-subjects.html</loc>
-    <lastmod>2026-08-22</lastmod>
+    <lastmod>2026-09-02</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://roitx.qd.je/subjects-12.html</loc>
-    <lastmod>2026-08-22</lastmod>
+    <lastmod>2026-09-02</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://roitx.qd.je/12-arts-subjects.html</loc>
-    <lastmod>2026-08-22</lastmod>
+    <lastmod>2026-09-02</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://roitx.qd.je/12-commerce-subjects.html</loc>
-    <lastmod>2026-08-22</lastmod>
+    <lastmod>2026-09-02</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://roitx.qd.je/12-science-subjects.html</loc>
-    <lastmod>2026-08-22</lastmod>
+    <lastmod>2026-09-02</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <!-- Tools & Interactive Features (Priority 0.7 - 0.8) -->
   <url>
     <loc>https://roitx.qd.je/ask-chat.html</loc>
-    <lastmod>2026-08-22</lastmod>
+    <lastmod>2026-09-02</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://roitx.qd.je/solver.html</loc>
-    <lastmod>2026-08-22</lastmod>
+    <lastmod>2026-09-02</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://roitx.qd.je/study-timer.html</loc>
-    <lastmod>2026-08-22</lastmod>
+    <lastmod>2026-09-02</lastmod>
+    <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://roitx.qd.je/calculator.html</loc>
-    <lastmod>2026-08-22</lastmod>
+    <lastmod>2026-09-02</lastmod>
+    <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://roitx.qd.je/calendar.html</loc>
-    <lastmod>2026-08-22</lastmod>
+    <lastmod>2026-09-02</lastmod>
+    <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://roitx.qd.je/view.html</loc>
-    <lastmod>2026-08-22</lastmod>
+    <lastmod>2026-09-02</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
 
-  <!-- Information & Legal Policies (Updated Page) -->
+  <!-- Information & Legal Policies -->
   <url>
     <loc>https://roitx.qd.je/aboutus.html</loc>
-    <lastmod>2026-08-22</lastmod>
+    <lastmod>2026-09-02</lastmod>
+    <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://roitx.qd.je/fun.html</loc>
-    <lastmod>2026-08-22</lastmod>
+    <lastmod>2026-09-02</lastmod>
+    <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
 
