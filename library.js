@@ -21,6 +21,28 @@ function toggleFilter() {
     renderActivityFeed();
 }
 
+// Function to safely update view count when opening from Library directly
+function openAndTrackFile(index, viewUrl) {
+    try {
+        let recent = getData("recentFiles");
+        if (recent[index]) {
+            let fileItem = recent[index];
+            // Reuse activity tracking to update view count & latest time
+            trackActivityLocally({
+                title: fileItem.title,
+                url: fileItem.url,
+                meta: fileItem.meta,
+                isPurchased: fileItem.isPurchased,
+                isPremium: fileItem.isPremium
+            }, fileItem.downloaded || false);
+        }
+    } catch(e) {
+        console.error("Click tracking error:", e);
+    }
+    // Navigate to target document/image/test page
+    window.location.href = viewUrl;
+}
+
 function trackActivityLocally(fileData, isDownloaded = false) {
     try {
         let recent = getData("recentFiles");
@@ -46,7 +68,7 @@ function trackActivityLocally(fileData, isDownloaded = false) {
         const isCurrentPremium = fileData.isPremium || cleanBaseUrl.toLowerCase().includes("premium") || cleanBaseUrl.toLowerCase().includes("paid");
 
         // Check if file already exists in recent to track view count
-        let existingIndex = recent.findIndex(f => f.url && f.url.split('?')[0] === cleanBaseUrl);
+        let existingIndex = recent.findIndex(f => (f.url && f.url.split('?')[0] === cleanBaseUrl) || f.title === fileData.title);
         let viewCount = 1;
         if (existingIndex !== -1) {
             viewCount = (recent[existingIndex].viewCount || 1) + 1;
@@ -61,10 +83,11 @@ function trackActivityLocally(fileData, isDownloaded = false) {
             downloaded: alreadyDownloaded,
             isPurchased: isPurchased,
             isPremium: isCurrentPremium,
+            isTest: fileData.isTest || false,
             viewCount: viewCount
         });
 
-        recent = recent.slice(0, 10);
+        recent = recent.slice(0, 15);
         localStorage.setItem("recentFiles", JSON.stringify(recent));
     } catch (e) {
         console.error("Tracking Error: ", e);
@@ -135,6 +158,9 @@ async function renderActivityFeed() {
     const giftSvg = `<svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`;
 
     recent.forEach((f, index) => {
+        let viewTargetUrl = "";
+        let isTestItem = f.isTest || (f.url && f.url.includes("take-test.html"));
+
         let viewerPage = "notes-viewer.html";
         let rawUrl = f.url || "";
         let cleanPath = rawUrl.split('?')[0];
@@ -147,34 +173,35 @@ async function renderActivityFeed() {
 
         let isDownloaded = downloads.some(item => (item.url && item.url.split('?')[0] === cleanPath) || cleanTitleString(item.title) === cleanedFileTitle) || f.downloaded;
 
-        if (cleanPath.match(/\.(jpg|jpeg|png|webp|gif)$/i) || f.meta?.includes("Image")) {
+        let isFilePremium = f.isPremium || cleanPath.toLowerCase().includes("premium") || cleanPath.toLowerCase().includes("paid");
+
+        if (isTestItem) {
+            viewTargetUrl = f.url;
+        } else if (cleanPath.match(/\.(jpg|jpeg|png|webp|gif)$/i) || f.meta?.includes("Image")) {
             viewerPage = "image-viewer.html";
             if (!cleanPath.startsWith("formulas/") && !cleanPath.includes("/")) {
                 cleanPath = `formulas/${cleanPath}`;
             }
+            let extraParams = isPurchased ? "&purchased=true" : "";
+            viewTargetUrl = `${viewerPage}?path=${encodeURIComponent(cleanPath)}&name=${encodeURIComponent(f.title)}${extraParams}`;
         } else {
             if (!cleanPath.startsWith("notes/") && !cleanPath.includes("/")) {
                 cleanPath = `notes/${cleanPath}`;
             }
+            let extraParams = isPurchased ? "&purchased=true" : (isFilePremium ? "&type=premium&status=premium" : "");
+            viewTargetUrl = `${viewerPage}?path=${encodeURIComponent(cleanPath)}&name=${encodeURIComponent(f.title)}${extraParams}`;
         }
-
-        let isFilePremium = f.isPremium || cleanPath.toLowerCase().includes("premium") || cleanPath.toLowerCase().includes("paid");
-
-        let extraParams = "";
-        if (isPurchased) {
-            extraParams = "&purchased=true";
-        } else if (isFilePremium) {
-            extraParams = "&type=premium&status=premium";
-        }
-
-        const viewTargetUrl = `${viewerPage}?path=${encodeURIComponent(cleanPath)}&name=${encodeURIComponent(f.title)}${extraParams}`;
 
         let downloadBadgeClass = isDownloaded ? "downloaded" : "not-downloaded";
-        let downloadBadgeText = isDownloaded ? "Downloaded" : "Not Downloaded";
+        let downloadBadgeText = isTestItem ? "Completed" : (isDownloaded ? "Downloaded" : "Not Downloaded");
+        let actionBtnText = isTestItem ? "Re-take Test →" : "View File →";
 
         let accessTagHtml = "";
         let accessStatusText = "Free";
-        if (isPurchased) {
+        if (isTestItem) {
+            accessTagHtml = `<span class="access-tag purchased" title="Attempted">${checkSvg}</span>`;
+            accessStatusText = "Test Completed";
+        } else if (isPurchased) {
             accessTagHtml = `<span class="access-tag purchased" title="Purchased">${checkSvg}</span>`;
             accessStatusText = "Purchased";
         } else if (isFilePremium) {
@@ -194,26 +221,26 @@ async function renderActivityFeed() {
             title: f.title,
             time: f.time,
             views: f.viewCount || 1,
-            downloaded: isDownloaded ? "Yes (Downloaded)" : "No",
+            downloaded: isTestItem ? "Yes (Attempted)" : (isDownloaded ? "Yes (Downloaded)" : "No"),
             access: accessStatusText
         };
 
         div.innerHTML = `
             <div class="file-info">
                 <div class="title-row">
-                    <a href="${viewTargetUrl}" title="${f.title}">${f.title}</a>
+                    <a href="javascript:void(0)" onclick="openAndTrackFile(${index}, '${viewTargetUrl}')" title="${f.title}">${f.title}</a>
                     <div class="right-actions">
                         ${accessTagHtml}
                         <button class="info-btn" onclick="openInfoModal(${index})" title="View Details">i</button>
                     </div>
                 </div>
-                <span>Viewed at ${f.time} • ${f.meta}</span>
+                <span>${isTestItem ? 'Attempted' : 'Viewed'} at ${f.time} • ${f.meta}</span>
             </div>
             <div class="badges-group">
                 <span class="badge ${downloadBadgeClass}">
                     ${downloadBadgeText}
                 </span>
-                <a href="${viewTargetUrl}" class="view-btn">View File →</a>
+                <a href="javascript:void(0)" onclick="openAndTrackFile(${index}, '${viewTargetUrl}')" class="view-btn">${actionBtnText}</a>
             </div>
         `;
 

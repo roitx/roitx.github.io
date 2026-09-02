@@ -651,6 +651,40 @@
         }
     }
 
+        function trackTestActivityLocally(testData, score, totalMarks, timeTakenSec) {
+        try {
+            let recent = JSON.parse(localStorage.getItem("recentFiles") || "[]");
+            let mins = Math.floor(timeTakenSec / 60);
+            let secs = timeTakenSec % 60;
+            let formattedTime = `${mins}m ${secs}s`;
+            let testUrl = `take-test.html?id=${testData.id}`;
+
+            let existingIndex = recent.findIndex(f => f.testId === testData.id || f.title === testData.title);
+            let viewCount = 1;
+            if (existingIndex !== -1) {
+                viewCount = (recent[existingIndex].viewCount || 1) + 1;
+                recent.splice(existingIndex, 1);
+            }
+
+            recent.unshift({
+                title: testData.title || "Online Test",
+                testId: testData.id,
+                isTest: true,
+                url: testUrl,
+                meta: `Score: ${score}/${totalMarks} • Time: ${formattedTime}`,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                downloaded: true,
+                isPurchased: true,
+                viewCount: viewCount
+            });
+
+            recent = recent.slice(0, 15);
+            localStorage.setItem("recentFiles", JSON.stringify(recent));
+        } catch (e) {
+            console.error("Test Tracking Error: ", e);
+        }
+    }
+
     async function submitTest() {
         clearInterval(timerInterval);
         if (currentTest) localStorage.removeItem(`test_draft_${currentTest.id}`);
@@ -672,6 +706,9 @@
         let timeTakenSec = Math.round((Date.now() - testStartTime) / 1000);
         let accuracy = questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 0;
 
+        // Save activity in local storage
+        trackTestActivityLocally(currentTest, totalScore, totalMarks, timeTakenSec);
+
         document.getElementById("testArea").style.display = "none";
         document.getElementById("resultArea").style.display = "block";
 
@@ -688,6 +725,7 @@
             }], { onConflict: 'user_id, test_id' });
         } catch (err) { console.error(err); }
     }
+
 
     function toggleSolutions() {
         const solContainer = document.getElementById("solutionsContainer");
