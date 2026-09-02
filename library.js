@@ -4,6 +4,18 @@ document.addEventListener("DOMContentLoaded", () => {
     renderActivityFeed();
 });
 
+// Auto-update UI when navigating BACK to library page
+window.addEventListener("pageshow", (event) => {
+    renderActivityFeed();
+});
+
+// Auto-update UI if localStorage changes in another tab
+window.addEventListener("storage", (event) => {
+    if (event.key === "recentFiles" || event.key === "downloadedFiles" || event.key === "userPurchasedNotes") {
+        renderActivityFeed();
+    }
+});
+
 function getData(key) {
     return JSON.parse(localStorage.getItem(key) || "[]");
 }
@@ -19,28 +31,6 @@ function toggleFilter() {
         btn.innerHTML = "✨ Downloaded Only";
     }
     renderActivityFeed();
-}
-
-// Function to safely update view count when opening from Library directly
-function openAndTrackFile(index, viewUrl) {
-    try {
-        let recent = getData("recentFiles");
-        if (recent[index]) {
-            let fileItem = recent[index];
-            // Reuse activity tracking to update view count & latest time
-            trackActivityLocally({
-                title: fileItem.title,
-                url: fileItem.url,
-                meta: fileItem.meta,
-                isPurchased: fileItem.isPurchased,
-                isPremium: fileItem.isPremium
-            }, fileItem.downloaded || false);
-        }
-    } catch(e) {
-        console.error("Click tracking error:", e);
-    }
-    // Navigate to target document/image/test page
-    window.location.href = viewUrl;
 }
 
 function trackActivityLocally(fileData, isDownloaded = false) {
@@ -228,7 +218,7 @@ async function renderActivityFeed() {
         div.innerHTML = `
             <div class="file-info">
                 <div class="title-row">
-                    <a href="javascript:void(0)" onclick="openAndTrackFile(${index}, '${viewTargetUrl}')" title="${f.title}">${f.title}</a>
+                    <a href="${viewTargetUrl}" title="${f.title}">${f.title}</a>
                     <div class="right-actions">
                         ${accessTagHtml}
                         <button class="info-btn" onclick="openInfoModal(${index})" title="View Details">i</button>
@@ -240,7 +230,7 @@ async function renderActivityFeed() {
                 <span class="badge ${downloadBadgeClass}">
                     ${downloadBadgeText}
                 </span>
-                <a href="javascript:void(0)" onclick="openAndTrackFile(${index}, '${viewTargetUrl}')" class="view-btn">${actionBtnText}</a>
+                <a href="${viewTargetUrl}" class="view-btn">${actionBtnText}</a>
             </div>
         `;
 
