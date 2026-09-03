@@ -84,7 +84,7 @@
           ${SVG.user} Namaste, ${escapeHtml(displayName)}!
         </div>
         <div style="font-size: 12px; color: #e2e8f0; margin-top: 6px;">
-          Main aapka <b>Roitx AI Assistant</b> hu. Books, PDF Notes, Formulas, Calculator, Hisab-Kitab, ya PDF Export tools accessibility active hain.
+          Main aapka <b>Roitx AI Assistant</b> hu. Books, PDF Notes, Formulas, Calculator, ya PDF Export tools accessibility active hain.
         </div>
       </div>
     `);
@@ -177,19 +177,19 @@
       return;
     }
 
-    // 2. HISAB & PDF EXPORT / SHARE COMMANDS
-    if (cmd.includes('hisab') || cmd.includes('hissab') || cmd.includes('pdf bhej') || cmd.includes('share pdf') || cmd.includes('export pdf') || cmd.includes('wa bhej')) {
+    // 2. PDF EXPORT / SHARE COMMANDS
+    if (cmd.includes('pdf bhej') || cmd.includes('share pdf') || cmd.includes('export pdf') || cmd.includes('wa bhej')) {
       addBotMsg(`
         <div style="border: 1px solid #10b981; padding: 12px; border-radius: 10px; background: rgba(16, 185, 129, 0.1);">
           <div style="font-size: 13px; font-weight: bold; color: #34d399; display: flex; align-items: center; gap: 6px;">
-            ${SVG.pdf} Hisab & Saved Data PDF Manager
+            ${SVG.pdf} Saved Notes PDF Manager
           </div>
           <div style="font-size: 12px; color: #e0e7ff; margin: 6px 0;">
-            Aapka sara hisab-kitab aur saved notes safe hain. Inhe PDF me download karke WhatsApp ya Message se share kar sakte hain:
+            Aapke saare saved notes safe hain. Inhe PDF me download karke WhatsApp ya Message se share kar sakte hain:
           </div>
           <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px;">
             <button onclick="downloadNotesFileDirect()" style="display: inline-flex; align-items: center; gap: 4px; background: #059669; color: #fff; border: none; padding: 6px 10px; border-radius: 5px; font-weight: bold; font-size: 11px; cursor: pointer;">
-              ${SVG.pdf} Download Notes/Hisab
+              ${SVG.pdf} Download Notes
             </button>
             <button onclick="shareViaWhatsApp()" style="display: inline-flex; align-items: center; gap: 4px; background: #25d366; color: #fff; border: none; padding: 6px 10px; border-radius: 5px; font-weight: bold; font-size: 11px; cursor: pointer;">
               ${SVG.share} Share via WhatsApp
@@ -369,50 +369,50 @@
 
   // ---- CALCULATOR POPUP WITH "VIEW FULL MODAL" REDIRECT ----
   window.showCalculatorModalDirect = function() {
-    const calcHtml = `
-      <div style="background: #0b1329; border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 12px; padding: 16px; color: #fff; max-width: 320px; margin: 0 auto;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-          <h3 style="margin: 0; font-size: 15px; color: #38bdf8; display: flex; align-items: center; gap: 6px;">
-            ${SVG.calculator} Calculator
-          </h3>
-          <button onclick="closeModal()" style="background: none; border: none; color: #94a3b8; cursor: pointer;">${SVG.close}</button>
-        </div>
-        <div style="display: flex; flex-direction: column; gap: 10px;">
-          <input type="text" id="calcDisplay" readonly style="width: 100%; padding: 12px; font-size: 22px; text-align: right; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); background: #040914; color: #38bdf8; font-family: monospace; box-sizing: border-box;" value="0">
-          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
-            <button onclick="clearCalc()" style="padding: 12px; border-radius: 6px; border: none; background: #ef4444; color: #fff; font-weight: bold; cursor: pointer;">C</button>
-            <button onclick="appendCalc('/')" style="padding: 12px; border-radius: 6px; border: none; background: #334155; color: #38bdf8; font-weight: bold; cursor: pointer;">/</button>
-            <button onclick="appendCalc('*')" style="padding: 12px; border-radius: 6px; border: none; background: #334155; color: #38bdf8; font-weight: bold; cursor: pointer;">*</button>
-            <button onclick="deleteCalc()" style="padding: 12px; border-radius: 6px; border: none; background: #334155; color: #f59e0b; font-weight: bold; cursor: pointer;">⌫</button>
-            
-            <button onclick="appendCalc('7')" style="padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">7</button>
-            <button onclick="appendCalc('8')" style="padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">8</button>
-            <button onclick="appendCalc('9')" style="padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">9</button>
-            <button onclick="appendCalc('-')" style="padding: 12px; border-radius: 6px; border: none; background: #334155; color: #38bdf8; font-weight: bold; cursor: pointer;">-</button>
-            
-            <button onclick="appendCalc('4')" style="padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">4</button>
-            <button onclick="appendCalc('5')" style="padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">5</button>
-            <button onclick="appendCalc('6')" style="padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">6</button>
-            <button onclick="appendCalc('+')" style="padding: 12px; border-radius: 6px; border: none; background: #334155; color: #38bdf8; font-weight: bold; cursor: pointer;">+</button>
-            
-            <button onclick="appendCalc('1')" style="padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">1</button>
-            <button onclick="appendCalc('2')" style="padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">2</button>
-            <button onclick="appendCalc('3')" style="padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">3</button>
-            <button onclick="calculateResult()" style="grid-row: span 2; padding: 12px; border-radius: 6px; border: none; background: #0284c7; color: #fff; font-weight: bold; cursor: pointer; font-size: 18px;">=</button>
-            
-            <button onclick="appendCalc('0')" style="grid-column: span 2; padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">0</button>
-            <button onclick="appendCalc('.')" style="padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">.</button>
-          </div>
-        </div>
-        <div style="margin-top: 12px; text-align: center;">
-          <a href="calculator.html" style="display: flex; align-items: center; justify-content: center; gap: 6px; background: rgba(56, 189, 248, 0.1); border: 1px dashed rgba(56, 189, 248, 0.5); color: #38bdf8; text-decoration: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; font-size: 12px;">
-            ${SVG.external} View Full Modal
-          </a>
+  const calcHtml = `
+    <div style="background: #0b1329; border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 12px; padding: 16px; color: #fff; max-width: 320px; margin: 0 auto;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <h3 style="margin: 0; font-size: 15px; color: #38bdf8; display: flex; align-items: center; gap: 6px;">
+          ${SVG.calculator} Calculator
+        </h3>
+        <!-- Yahan se extra close button hata diya gaya hai -->
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <input type="text" id="calcDisplay" readonly style="width: 100%; padding: 12px; font-size: 22px; text-align: right; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); background: #040914; color: #38bdf8; font-family: monospace; box-sizing: border-box;" value="0">
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
+          <button onclick="clearCalc()" style="padding: 12px; border-radius: 6px; border: none; background: #ef4444; color: #fff; font-weight: bold; cursor: pointer;">C</button>
+          <button onclick="appendCalc('/')" style="padding: 12px; border-radius: 6px; border: none; background: #334155; color: #38bdf8; font-weight: bold; cursor: pointer;">/</button>
+          <button onclick="appendCalc('*')" style="padding: 12px; border-radius: 6px; border: none; background: #334155; color: #38bdf8; font-weight: bold; cursor: pointer;">*</button>
+          <button onclick="deleteCalc()" style="padding: 12px; border-radius: 6px; border: none; background: #334155; color: #f59e0b; font-weight: bold; cursor: pointer;">⌫</button>
+          
+          <button onclick="appendCalc('7')" style="padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">7</button>
+          <button onclick="appendCalc('8')" style="padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">8</button>
+          <button onclick="appendCalc('9')" style="padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">9</button>
+          <button onclick="appendCalc('-')" style="padding: 12px; border-radius: 6px; border: none; background: #334155; color: #38bdf8; font-weight: bold; cursor: pointer;">-</button>
+          
+          <button onclick="appendCalc('4')" style="padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">4</button>
+          <button onclick="appendCalc('5')" style="padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">5</button>
+          <button onclick="appendCalc('6')" style="padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">6</button>
+          <button onclick="appendCalc('+')" style="padding: 12px; border-radius: 6px; border: none; background: #334155; color: #38bdf8; font-weight: bold; cursor: pointer;">+</button>
+          
+          <button onclick="appendCalc('1')" style="padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">1</button>
+          <button onclick="appendCalc('2')" style="padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">2</button>
+          <button onclick="appendCalc('3')" style="padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">3</button>
+          <button onclick="calculateResult()" style="grid-row: span 2; padding: 12px; border-radius: 6px; border: none; background: #0284c7; color: #fff; font-weight: bold; cursor: pointer; font-size: 18px;">=</button>
+          
+          <button onclick="appendCalc('0')" style="grid-column: span 2; padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">0</button>
+          <button onclick="appendCalc('.')" style="padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">.</button>
         </div>
       </div>
-    `;
-    openModal(calcHtml);
-  };
+      <div style="margin-top: 12px; text-align: center;">
+        <a href="calculator.html" style="display: flex; align-items: center; justify-content: center; gap: 6px; background: rgba(56, 189, 248, 0.1); border: 1px dashed rgba(56, 189, 248, 0.5); color: #38bdf8; text-decoration: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; font-size: 12px;">
+          ${SVG.external} View Full Modal
+        </a>
+      </div>
+    </div>
+  `;
+  openModal(calcHtml);
+};
 
   window.appendCalc = function(val) {
     const display = document.getElementById("calcDisplay");
@@ -490,7 +490,7 @@
 
     if (!window.supabaseClient) {
       addBotMsg('❌ Database client missing.');
-      return;
+      return; 
     }
 
     const typing = showTyping();
@@ -635,37 +635,51 @@
 
   // ---- SYSTEM KNOWLEDGE FOR GROQ AI ----
   const systemKnowledge = `
-You are an AI study assistant for Rohit's learning platform (roitx.github.io). Answer in simple Hindi/Hinglish.
-When asked for classes, study materials, or site pages, generate HTML standard <a> tags using the relative paths below.
+You are 'Roitx AI', an advanced, highly intelligent study assistant built for Rohit's educational platform (roitx.github.io).
+
+### 🎯 CORE IDENTITY & TONE
+- Respond in clear, simple, and friendly **Hindi / Hinglish** (mix of English and Hindi script/Latin text).
+- Be encouraging, precise, and highly accurate with academic concepts.
+- Avoid unnecessarily long explanations unless explicitly requested. Use bullet points for steps or multi-part answers.
+
+### 🔗 NAVIGATION & HTML LINK RULES
+When a user asks for classes, study materials, subjects, tools, or website navigation, ALWAYS generate valid, standard HTML inline <a> tags using the exact relative paths listed below.
+- ALWAYS use exact relative paths (e.g., <a href="subjects-10.html">Class 10</a>).
+- NEVER invent or fabricate new page URLs/paths that are not in the directory below.
+- Do NOT wrap HTML links in markdown code blocks (\`\`\`). Render them as clean raw HTML strings.
+- Example: "Aap Class 10 ke subjects <a href="subjects-10.html">yahan dekh sakte hain</a>."
 
 --- WORKING HTML PAGES DIRECTORY ---
 1. Core & Main Pages:
-- <a href="index.html">Home Page</a>
-- <a href="classes.html">Classes Overview (Class 9, 10, 11, 12)</a>
-- <a href="premium-notes.html">Premium Notes Hub</a>
-- <a href="about.html">Creator Details</a>
-- <a href="aboutus.html">About us</a>
-- <a href="aboutus.html#privacy">Privacy & Policy</a>
-- <a href="aboutus.html#terms">Terms & Conditions</a>
-- <a href="solver.html">Ask Doubt & Feedback Page</a>
+   - Home Page: <a href="index.html">Home</a>
+   - Classes Directory: <a href="classes.html">All Classes</a>
+   - Premium Notes: <a href="premium-notes.html">Premium Notes Hub</a>
+   - Creator Details: <a href="about.html">About Developer</a>
+   - About Platform: <a href="aboutus.html">About Us</a>
+   - Privacy Policy: <a href="aboutus.html#privacy">Privacy Policy</a>
+   - Terms & Conditions: <a href="aboutus.html#terms">Terms & Conditions</a>
+   - Doubt & Feedback: <a href="solver.html">Doubt Solver & Feedback</a>
 
-2. Class & Stream Pages:
-- <a href="subjects-9.html">Class 9 Subjects</a>
-- <a href="subjects-10.html">Class 10 Subjects</a>
-- <a href="subjects-11.html">Class 11 Streams</a>
-- <a href="subjects-12.html">Class 12 Streams</a>
-- <a href="11-arts-subjects.html">11 Arts</a> | <a href="11-commerce-subjects.html">11 Commerce</a> | <a href="11-science-subjects.html">11 Science</a>
-- <a href="12-arts-subjects.html">12 Arts</a> | <a href="12-commerce-subjects.html">12 Commerce</a> | <a href="12-science-subjects.html">12 Science</a>
+2. Class & Stream Specifics:
+   - Class 9: <a href="subjects-9.html">Class 9 Subjects</a>
+   - Class 10: <a href="subjects-10.html">Class 10 Subjects</a>
+   - Class 11 Main: <a href="subjects-11.html">Class 11 Overview</a>
+   - Class 11 Streams: <a href="11-science-subjects.html">11th Science</a> | <a href="11-commerce-subjects.html">11th Commerce</a> | <a href="11-arts-subjects.html">11th Arts</a>
+   - Class 12 Main: <a href="subjects-12.html">Class 12 Overview</a>
+   - Class 12 Streams: <a href="12-science-subjects.html">12th Science</a> | <a href="12-commerce-subjects.html">12th Commerce</a> | <a href="12-arts-subjects.html">12th Arts</a>
 
 3. Tools & Utilities:
-- <a href="formulas.html">Formulas Page</a>
-- <a href="calculator.html">Calculator</a>
-- <a href="calendar.html">Calendar</a>
-- <a href="study-timer.html">Study Timer</a>
-- <a href="solver.html">Doubt Solver Panel</a>
+   - Formulas Sheet: <a href="formulas.html">Formulas Hub</a>
+   - Calculator: <a href="calculator.html">Scientific Calculator</a>
+   - Calendar & Schedule: <a href="calendar.html">Study Calendar</a>
+   - Focus Timer: <a href="study-timer.html">Pomodoro / Study Timer</a>
+   - Doubt Solver: <a href="solver.html">Instant Doubt Solver</a>
 
-CREATOR RULE:
-DO NOT introduce yourself as created by Rohit by default. ONLY if explicitly asked, state created by Rohit and link <a href="about.html">about.html</a>.
+--- STRICT SAFETY, CREATOR & FALLBACK RULES ---
+1. CREATOR PRIVACY: Do NOT mention "Rohit" or "Created by Rohit" in normal academic answers. Include developer details ONLY if the user explicitly asks "who created this", "who built this", "developer info", or "Rohit kaun hai". When asked, direct them to <a href="about.html">About Developer</a>.
+2. UNCERTAINTY / FALLBACK: If you are unsure about a complex question or lack exact study material, answer to the best of your ability and suggest posting the query on <a href="solver.html">Doubt Solver</a>.
+3. OUT OF SCOPE: If a user asks a query completely unrelated to studies/learning or website navigation, politely redirect them back to study topics.
+4. FORMATTING: Use bold formatting (**like this**) for key terms, definitions, and mathematical formulas.
 `;
 
   // ---- GROQ AI API CALL ----
@@ -796,7 +810,7 @@ ${userQuery}`;
     renderMiniCalendar(miniCalCurDate);
   };
 
-  // ---- LOCAL NOTES & HISAB EXPORT SYSTEM ----
+  // ---- LOCAL NOTES EXPORT SYSTEM ----
   function saveNote(text) {
     const notes = getNotes();
     notes.push({ id: Date.now(), text: String(text), created: new Date().toISOString() });
@@ -822,17 +836,17 @@ ${userQuery}`;
   };
 
   window.clearAllNotes = function() {
-    if (confirm("Kya aap apne saare saved notes/hisab delete karna chahte hain?")) {
+    if (confirm("Kya aap apne saare saved notes delete karna chahte hain?")) {
       localStorage.removeItem('rk_notes');
       updateNotesCount();
       showNotesModal();
-      addBotMsg("Saare notes/hisab delete kar diye gaye hain 🗑️");
+      addBotMsg("Saare notes delete kar diye gaye hain 🗑️");
     }
   };
 
   function showNotesModal() {
     const notes = getNotes();
-    let html = '<h3 style="margin-bottom: 12px; color: #38bdf8;">Your Saved Notes & Hisab</h3>';
+    let html = '<h3 style="margin-bottom: 12px; color: #38bdf8;">Your Saved Notes</h3>';
     
     if (!notes.length) {
       html += '<div style="color: #9fb7c7; padding: 10px 0;">No notes saved yet.</div>';
@@ -866,7 +880,7 @@ ${userQuery}`;
   function downloadNotesFile() {
     const notes = getNotes();
     if (!notes.length) {
-      addBotMsg('⚠️ Koi saved notes ya hisab nahi mila export karne ke liye.');
+      addBotMsg('⚠️ Koi saved notes nahi mila export karne ke liye.');
       return;
     }
     const txt = notes.map((n, i) => `#${i + 1} [${new Date(n.created).toLocaleString()}]\n${n.text}\n\n`).join('');
@@ -874,23 +888,23 @@ ${userQuery}`;
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a'); 
     a.href = url; 
-    a.download = 'rohit_hisab_notes.txt';
+    a.download = 'rohit_notes.txt';
     document.body.appendChild(a); 
     a.click(); 
     document.body.removeChild(a); 
     URL.revokeObjectURL(url);
-    addBotMsg('Hisab / Notes PDF export ready and downloaded successfully ✔');
+    addBotMsg('Notes PDF export ready and downloaded successfully ✔');
     closeModal();
   }
 
   window.shareViaWhatsApp = function() {
     const notes = getNotes();
     if (!notes.length) {
-      addBotMsg('⚠️ Share karne ke liye koi notes/hisab record nahi hai.');
+      addBotMsg('⚠️ Share karne ke liye koi notes record nahi hai.');
       return;
     }
     const txt = notes.map((n, i) => `${i + 1}. ${n.text}`).join('\n');
-    const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent('📋 Roitx Notes/Hisab:\n' + txt)}`;
+    const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent('📋 Roitx Notes:\n' + txt)}`;
     window.open(waUrl, '_blank');
   };
 
@@ -915,10 +929,10 @@ ${userQuery}`;
   window.showNotesModalDirect = showNotesModal;
   window.downloadNotesFileDirect = downloadNotesFile;
   window.promptCreateNote = function() {
-    const noteText = prompt("Apna note ya hisab yahan likhein:");
+    const noteText = prompt("Apna note yahan likhein:");
     if (noteText && noteText.trim() !== "") {
       saveNote(noteText.trim());
-      addBotMsg(`Note / Hisab saved successfully: <b>${escapeHtml(noteText)}</b> ✔`);
+      addBotMsg(`Note saved successfully: <b>${escapeHtml(noteText)}</b> ✔`);
     }
   };
   window.askChatSend = onSend;
