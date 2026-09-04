@@ -1,5 +1,5 @@
 // =========================================================
-// ask-chat.js — UPDATED AUTH CHECK & CALCULATOR REDIRECT
+// ask-chat.js — FULL UPDATED WITH CREATOR & PRIVACY RULES
 // =========================================================
 (function () {
   // ---- PREVENT DOUBLE INITIALIZATION ----
@@ -52,7 +52,7 @@
 
   window.runCommand = (text) => { if (!input) return; input.value = text; onSend(); };
 
-  // ---- USER WELCOME GREETING (CLEANED) ----
+  // ---- USER WELCOME GREETING ----
   async function initUserGreeting() {
     let displayName = "Student";
 
@@ -90,8 +90,7 @@
     `);
   }
 
-
-  // ---- UI MESSAGING HELPERS ----
+  // ---- UI MESSAGING & MATH RENDERING HELPERS ----
   function addUserMsg(text) {
     if (!chatWindow) return;
     const d = document.createElement('div'); 
@@ -101,24 +100,32 @@
     chatWindow.scrollTop = chatWindow.scrollHeight;
   }
 
-  function cleanAndFormatText(text) {
-    if (!text) return "";
-    text = text.replace(/\$\$\s*([\s\S]*?)\s*\$\$/g, '<b style="color: #60a5fa; display: inline-block; margin: 4px 0;">$1</b>');
-    text = text.replace(/\$\s*([^$]+?)\s*\$/g, '<b style="color: #38bdf8;">$1</b>');
-    text = text.replace(/\\\(\s*([\s\S]*?)\s*\\\)/g, '<b style="color: #38bdf8;">$1</b>');
-    text = text.replace(/\\\[\s*([\s\S]*?)\s*\\\]/g, '<b style="color: #60a5fa; display: inline-block;">$1</b>');
-    text = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
-    text = text.replace(/\*(.*?)\*/g, '<i>$1</i>');
-    text = text.replace(/\n/g, "<br>");
-    return text;
+  // SAFE MATHJAX RENDERER FUNCTION
+  function renderMathSafely(element) {
+    if (window.MathJax) {
+      if (typeof window.MathJax.typesetPromise === 'function') {
+        window.MathJax.typesetPromise([element]).catch((err) => console.warn("MathJax error:", err));
+      } else if (typeof window.MathJax.typeset === 'function') {
+        window.MathJax.typeset([element]);
+      }
+    }
   }
 
-  function renderMathSafely(element) {
-    if (window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
-      window.MathJax.typesetPromise([element]).catch((err) => console.warn("MathJax error:", err));
-    } else if (window.MathJax && typeof window.MathJax.typeset === 'function') {
-      window.MathJax.typeset([element]);
-    }
+  function cleanAndFormatText(text) {
+    if (!text) return "";
+
+    // 1. Markdown Headings and Lines
+    text = text.replace(/#{1,6}\s*(.*)/g, '<b>$1</b>');
+    text = text.replace(/---/g, '<hr style="border:0; border-top:1px solid rgba(255,255,255,0.1); margin:8px 0;">');
+
+    // 2. Bold and Italic
+    text = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+    text = text.replace(/\*(.*?)\*/g, '<i>$1</i>');
+
+    // 3. Convert Newlines to <br>
+    text = text.replace(/\n/g, "<br>");
+
+    return text;
   }
 
   function addBotMsg(htmlContent) {
@@ -128,6 +135,8 @@
     d.innerHTML = htmlContent;
     chatWindow.appendChild(d); 
     chatWindow.scrollTop = chatWindow.scrollHeight;
+
+    // Trigger MathJax Render
     renderMathSafely(d);
   }
 
@@ -303,7 +312,7 @@
       return;
     }
 
-    // 10. FORMULA / SUTRA SEARCH
+    // 10. FORMULA SEARCH
     if (cmd.includes('formula') || cmd.includes('formulas') || cmd.includes('sutra')) {
       await fetchAndSuggestFormulas(raw);
       return;
@@ -324,7 +333,7 @@
       return;
     }
 
-    // 12. GENERAL CLASS QUERY DETECTION & SUGGESTION MENU
+    // 12. GENERAL CLASS QUERY DETECTION
     const isGeneralClassQuery = /\b(9|10|11|12)\b/.test(cmd) && 
                                 (cmd.includes('phy') || cmd.includes('physics') || 
                                  cmd.includes('math') || cmd.includes('maths') || 
@@ -367,52 +376,51 @@
     await askGroqAI(raw);
   }
 
-  // ---- CALCULATOR POPUP WITH "VIEW FULL MODAL" REDIRECT ----
+  // ---- CALCULATOR POPUP ----
   window.showCalculatorModalDirect = function() {
-  const calcHtml = `
-    <div style="background: #0b1329; border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 12px; padding: 16px; color: #fff; max-width: 320px; margin: 0 auto;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-        <h3 style="margin: 0; font-size: 15px; color: #38bdf8; display: flex; align-items: center; gap: 6px;">
-          ${SVG.calculator} Calculator
-        </h3>
-        <!-- Yahan se extra close button hata diya gaya hai -->
-      </div>
-      <div style="display: flex; flex-direction: column; gap: 10px;">
-        <input type="text" id="calcDisplay" readonly style="width: 100%; padding: 12px; font-size: 22px; text-align: right; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); background: #040914; color: #38bdf8; font-family: monospace; box-sizing: border-box;" value="0">
-        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
-          <button onclick="clearCalc()" style="padding: 12px; border-radius: 6px; border: none; background: #ef4444; color: #fff; font-weight: bold; cursor: pointer;">C</button>
-          <button onclick="appendCalc('/')" style="padding: 12px; border-radius: 6px; border: none; background: #334155; color: #38bdf8; font-weight: bold; cursor: pointer;">/</button>
-          <button onclick="appendCalc('*')" style="padding: 12px; border-radius: 6px; border: none; background: #334155; color: #38bdf8; font-weight: bold; cursor: pointer;">*</button>
-          <button onclick="deleteCalc()" style="padding: 12px; border-radius: 6px; border: none; background: #334155; color: #f59e0b; font-weight: bold; cursor: pointer;">⌫</button>
-          
-          <button onclick="appendCalc('7')" style="padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">7</button>
-          <button onclick="appendCalc('8')" style="padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">8</button>
-          <button onclick="appendCalc('9')" style="padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">9</button>
-          <button onclick="appendCalc('-')" style="padding: 12px; border-radius: 6px; border: none; background: #334155; color: #38bdf8; font-weight: bold; cursor: pointer;">-</button>
-          
-          <button onclick="appendCalc('4')" style="padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">4</button>
-          <button onclick="appendCalc('5')" style="padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">5</button>
-          <button onclick="appendCalc('6')" style="padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">6</button>
-          <button onclick="appendCalc('+')" style="padding: 12px; border-radius: 6px; border: none; background: #334155; color: #38bdf8; font-weight: bold; cursor: pointer;">+</button>
-          
-          <button onclick="appendCalc('1')" style="padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">1</button>
-          <button onclick="appendCalc('2')" style="padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">2</button>
-          <button onclick="appendCalc('3')" style="padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">3</button>
-          <button onclick="calculateResult()" style="grid-row: span 2; padding: 12px; border-radius: 6px; border: none; background: #0284c7; color: #fff; font-weight: bold; cursor: pointer; font-size: 18px;">=</button>
-          
-          <button onclick="appendCalc('0')" style="grid-column: span 2; padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">0</button>
-          <button onclick="appendCalc('.')" style="padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">.</button>
+    const calcHtml = `
+      <div style="background: #0b1329; border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 12px; padding: 16px; color: #fff; max-width: 320px; margin: 0 auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <h3 style="margin: 0; font-size: 15px; color: #38bdf8; display: flex; align-items: center; gap: 6px;">
+            ${SVG.calculator} Calculator
+          </h3>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <input type="text" id="calcDisplay" readonly style="width: 100%; padding: 12px; font-size: 22px; text-align: right; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); background: #040914; color: #38bdf8; font-family: monospace; box-sizing: border-box;" value="0">
+          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
+            <button onclick="clearCalc()" style="padding: 12px; border-radius: 6px; border: none; background: #ef4444; color: #fff; font-weight: bold; cursor: pointer;">C</button>
+            <button onclick="appendCalc('/')" style="padding: 12px; border-radius: 6px; border: none; background: #334155; color: #38bdf8; font-weight: bold; cursor: pointer;">/</button>
+            <button onclick="appendCalc('*')" style="padding: 12px; border-radius: 6px; border: none; background: #334155; color: #38bdf8; font-weight: bold; cursor: pointer;">*</button>
+            <button onclick="deleteCalc()" style="padding: 12px; border-radius: 6px; border: none; background: #334155; color: #f59e0b; font-weight: bold; cursor: pointer;">⌫</button>
+            
+            <button onclick="appendCalc('7')" style="padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">7</button>
+            <button onclick="appendCalc('8')" style="padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">8</button>
+            <button onclick="appendCalc('9')" style="padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">9</button>
+            <button onclick="appendCalc('-')" style="padding: 12px; border-radius: 6px; border: none; background: #334155; color: #38bdf8; font-weight: bold; cursor: pointer;">-</button>
+            
+            <button onclick="appendCalc('4')" style="padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">4</button>
+            <button onclick="appendCalc('5')" style="padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">5</button>
+            <button onclick="appendCalc('6')" style="padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">6</button>
+            <button onclick="appendCalc('+')" style="padding: 12px; border-radius: 6px; border: none; background: #334155; color: #38bdf8; font-weight: bold; cursor: pointer;">+</button>
+            
+            <button onclick="appendCalc('1')" style="padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">1</button>
+            <button onclick="appendCalc('2')" style="padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">2</button>
+            <button onclick="appendCalc('3')" style="padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">3</button>
+            <button onclick="calculateResult()" style="grid-row: span 2; padding: 12px; border-radius: 6px; border: none; background: #0284c7; color: #fff; font-weight: bold; cursor: pointer; font-size: 18px;">=</button>
+            
+            <button onclick="appendCalc('0')" style="grid-column: span 2; padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">0</button>
+            <button onclick="appendCalc('.')" style="padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">.</button>
+          </div>
+        </div>
+        <div style="margin-top: 12px; text-align: center;">
+          <a href="calculator.html" style="display: flex; align-items: center; justify-content: center; gap: 6px; background: rgba(56, 189, 248, 0.1); border: 1px dashed rgba(56, 189, 248, 0.5); color: #38bdf8; text-decoration: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; font-size: 12px;">
+            ${SVG.external} View Full Modal
+          </a>
         </div>
       </div>
-      <div style="margin-top: 12px; text-align: center;">
-        <a href="calculator.html" style="display: flex; align-items: center; justify-content: center; gap: 6px; background: rgba(56, 189, 248, 0.1); border: 1px dashed rgba(56, 189, 248, 0.5); color: #38bdf8; text-decoration: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; font-size: 12px;">
-          ${SVG.external} View Full Modal
-        </a>
-      </div>
-    </div>
-  `;
-  openModal(calcHtml);
-};
+    `;
+    openModal(calcHtml);
+  };
 
   window.appendCalc = function(val) {
     const display = document.getElementById("calcDisplay");
@@ -569,7 +577,7 @@
     window.location.href = viewer;
   }
 
-  // ---- FORMULAS FETCH WITH DYNAMIC CHAPTER NAME ----
+  // ---- FORMULAS FETCH ----
   async function fetchAndSuggestFormulas(queryText) {
     if (!window.supabaseClient) {
       addBotMsg('❌ Database client missing. Kripya Supabase connection check karein.');
@@ -633,7 +641,7 @@
     addBotMsg(html);
   }
 
-  // ---- SYSTEM KNOWLEDGE FOR GROQ AI ----
+  // ---- SYSTEM KNOWLEDGE & SAFETY RULES FOR GROQ AI ----
   const systemKnowledge = `
 You are 'Roitx AI', an advanced, highly intelligent study assistant built for Rohit's educational platform (roitx.github.io).
 
