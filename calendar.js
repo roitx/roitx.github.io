@@ -30,7 +30,6 @@ async function getCurrentUser() {
   }
 }
 
-
 // 2. Auth UI & Add Event Button Toggle
 async function checkAuthUI() {
   const user = await getCurrentUser();
@@ -116,6 +115,9 @@ async function fetchHolidays(year) {
     console.error("Fetch Network Error:", err);
   }
 }
+
+// GLOBAL EXPORT FOR CHAT SYSTEM
+window.fetchHolidays = fetchHolidays;
 
 function checkTodayWishBanner() {
   const today = new Date();
