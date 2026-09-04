@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="hi" dir="ltr" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rohit Kumar | Secured Mind_Palace</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-main: #0B0F17;
+            --bg-nav: rgba(11, 15, 23, 0.85);
+            --card-bg: rgba(22, 31, 48, 0.65);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --text-primary: #F8FAFC;
+            --text-secondary: #94A3B8;
+            --accent-1: #38BDF8;
+            --accent-2: #C084FC;
+            --accent-3: #FBBF24;
+            --glow: rgba(56, 189, 248, 0.15);
+        }
+
+        [data-theme="light"] {
+            --bg-main: #F8FAFC;
+            --bg-nav: rgba(248, 250, 252, 0.85);
+            --card-bg: rgba(255, 255, 255, 0.8);
+            --card-border: rgba(0, 0, 0, 0.08);
+            --text-primary: #0F172A;
+            --text-secondary: #475569;
+            --accent-1: #0284C7;
+            --accent-2: #9333EA;
+            --accent-3: #D97706;
+            --glow: rgba(2, 132, 199, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; cursor: none; }
+        
+        body {
+            background-color: var(--bg-main); color: var(--text-primary);
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            overflow-x: hidden; 
+            transition: background-color 0.5s ease, color 0.5s ease;
+            -webkit-user-select: none; user-select: none;
+        }
+
+        /* Anti-Screenshot Layer */
+        .security-shield-active {
+            filter: blur(30px) contrast(200%);
+            pointer-events: none;
+            transition: filter 0.3s ease;
+        }
+
+        .ambient-bg {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: radial-gradient(circle at 15% 15%, var(--glow) 0%, transparent 40%),
+                        radial-gradient(circle at 85% 85%, rgba(192, 132, 252, 0.08) 0%, transparent 40%);
+            z-index: -1; pointer-events: none;
+        }
+
+        #scroll-progress {
+            position: fixed; top: 0; left: 0; width: 0%; height: 4px;
+            background: linear-gradient(90deg, var(--accent-1), var(--accent-2));
+            z-index: 100001; transition: width 0.1s ease-out;
+        }
+
+        .cursor-dot, .cursor-outline {
+            position: fixed; top: 0; left: 0; transform: translate(-50%, -50%);
+            border-radius: 50%; z-index: 99999; pointer-events: none;
+        }
+        .cursor-dot { width: 8px; height: 8px; background-color: var(--accent-1); }
+        .cursor-outline { width: 40px; height: 40px; border: 2px solid var(--accent-2); transition: width 0.2s, height 0.2s, background-color 0.2s; }
+        
+        /* SECURITY GATEKEEPER OVERLAY */
+        #gatekeeper {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(7, 10, 15, 0.98); backdrop-filter: blur(30px);
+            z-index: 100000; display: flex; align-items: center; justify-content: center;
+            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.8s;
+            padding: 20px;
+        }
+        .security-box {
+            background: rgba(18, 25, 40, 0.95); border: 1px solid rgba(56, 189, 248, 0.3);
+            padding: 35px 25px; border-radius: 24px; text-align: center; max-width: 520px; width: 100%;
+            box-shadow: 0 0 50px rgba(56, 189, 248, 0.12), inset 0 0 20px rgba(56, 189, 248, 0.05);
+        }
+        .security-box h2 { font-size: 1.2rem; margin-bottom: 6px; color: var(--accent-1); font-family: 'Space Grotesk', sans-serif; letter-spacing: 2px; }
+        .security-box p { color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 20px; }
+        
+        .iq-puzzle {
+            background: #04060a; padding: 18px; border-radius: 12px; 
+            font-family: 'Fira Code', monospace; font-size: 0.85rem; font-weight: 500;
+            text-align: left; color: #cbd5e1; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.06);
+            line-height: 1.6; word-break: break-all;
+        }
+        .iq-puzzle .hl { color: var(--accent-2); font-weight: 700; }
+
+        .hint-box {
+            text-align: left; margin-bottom: 20px; font-family: 'Fira Code', monospace; font-size: 0.75rem;
+        }
+        .hint-header-row { display: flex; justify-content: space-between; align-items: center; }
+        .hint-toggle { color: var(--accent-1); background: none; border: none; cursor: pointer; text-decoration: underline; font-family: inherit; font-size: 0.75rem; padding: 0; }
+        .copy-hint-btn { background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); color: var(--accent-1); font-family: 'Fira Code', monospace; font-size: 0.7rem; padding: 3px 8px; border-radius: 6px; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 4px; }
+        .copy-hint-btn:hover { background: var(--accent-1); color: #0B0F17; }
+        
+        .hint-text { display: none; color: var(--text-secondary); margin-top: 6px; background: rgba(56, 189, 248, 0.05); padding: 8px 12px; border-radius: 6px; border-left: 2px solid var(--accent-1); word-break: break-all; font-size: 0.75rem; }
+
+        .auth-input-group { display: flex; gap: 10px; flex-wrap: wrap; }
+        #auth-input {
+            flex: 1; min-width: 150px; padding: 12px 15px; background: #04060a; border: 1px solid var(--card-border);
+            color: #fff; border-radius: 10px; font-family: 'Fira Code', monospace; outline: none;
+            text-align: center; font-size: 1rem; letter-spacing: 2px;
+        }
+        #auth-input:focus { border-color: var(--accent-1); box-shadow: 0 0 15px rgba(56, 189, 248, 0.2); }
+        #auth-btn {
+            padding: 12px 20px; background: var(--accent-1); color: #0B0F17;
+            border: none; border-radius: 10px; font-weight: 700; cursor: pointer;
+            transition: all 0.3s; font-family: 'Space Grotesk', sans-serif; letter-spacing: 1px;
+        }
+        #auth-btn:hover { box-shadow: 0 0 20px var(--accent-1); transform: translateY(-2px); }
+        
+        .error-shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
+
+        /* MAIN CONTENT */
+        #main-content {
+            opacity: 0; filter: blur(20px); transform: scale(1.02);
+            transition: all 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+            pointer-events: none;
+        }
+        #main-content.unlocked { opacity: 1; filter: blur(0); transform: scale(1); pointer-events: auto; }
+
+        nav {
+            position: fixed; top: 0; left: 0; width: 100%; z-index: 1000;
+            background: var(--bg-nav); backdrop-filter: blur(12px); border-bottom: 1px solid var(--card-border);
+            padding: 12px 5%; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
+        }
+        .logo { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.3rem; letter-spacing: -1px; }
+        .logo span { color: var(--accent-1); }
+        
+        .nav-links { display: flex; gap: 15px; align-items: center; flex-wrap: wrap; }
+        .nav-links a { color: var(--text-primary); text-decoration: none; font-weight: 500; font-size: 0.9rem; transition: color 0.3s; }
+        .nav-links a:hover { color: var(--accent-1); }
+        
+        .theme-toggle { background: none; border: 1px solid var(--card-border); padding: 6px 12px; border-radius: 20px; color: var(--text-primary); outline: none; transition: all 0.3s; font-size: 0.85rem; cursor: pointer; }
+        .theme-toggle:hover { border-color: var(--accent-1); color: var(--accent-1); }
+
+        .container { max-width: 1100px; margin: 90px auto 40px auto; padding: 0 15px; display: flex; flex-direction: column; gap: 30px; }
+        .card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 20px; padding: 25px; backdrop-filter: blur(16px); box-shadow: 0 10px 30px rgba(0,0,0,0.2); transition: transform 0.4s ease, border-color 0.4s ease; }
+        .card:hover { border-color: rgba(56, 189, 248, 0.4); transform: translateY(-3px); }
+
+        .section-title { font-family: 'Space Grotesk', sans-serif; font-size: 1.8rem; margin-bottom: 25px; display: inline-block; background: linear-gradient(90deg, var(--accent-1), var(--accent-2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        .hero { text-align: center; padding: 40px 10px; }
+        .hero h1 { font-family: 'Space Grotesk', sans-serif; font-size: 2.8rem; font-weight: 800; line-height: 1.1; margin-bottom: 15px; }
+        .typewriter { font-family: 'Fira Code', monospace; color: var(--accent-1); font-size: 1.2rem; margin-bottom: 15px; height: 30px;}
+        
+        .terminal { background: #0f111a; border-radius: 12px; overflow-x: auto; font-family: 'Fira Code', monospace; font-size: 0.85rem; border: 1px solid #292d3e; text-align: left; }
+        .terminal-header { background: #1a1c25; padding: 10px 15px; display: flex; gap: 8px; border-bottom: 1px solid #292d3e; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; }
+        .dot.r { background: #ff5f56; } .dot.y { background: #ffbd2e; } .dot.g { background: #27c93f; }
+        .terminal-body { padding: 15px; color: #a6accd; line-height: 1.6; white-space: pre-wrap; word-break: break-all; }
+        .cmd { color: #82aaff; } .str { color: #c3e88d; } .func { color: #ffcb6b; }
+
+        .skills-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-top: 25px; }
+        .skill-bar { width: 100%; background: rgba(255,255,255,0.05); border-radius: 10px; height: 8px; overflow: hidden; position: relative; }
+        .skill-fill { height: 100%; background: linear-gradient(90deg, var(--accent-1), var(--accent-2)); width: 0; transition: width 1.5s cubic-bezier(0.22, 1, 0.36, 1); }
+
+        .filter-btns { display: flex; gap: 8px; justify-content: center; margin-bottom: 25px; flex-wrap: wrap; }
+        .f-btn { background: transparent; border: 1px solid var(--card-border); color: var(--text-primary); padding: 6px 16px; border-radius: 30px; transition: all 0.3s; font-weight: 600; font-size: 0.85rem; cursor: pointer; }
+        .f-btn.active, .f-btn:hover { background: var(--accent-1); color: #0B0F17; border-color: var(--accent-1); }
+
+        .gallery-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
+        .gallery-item { position: relative; border-radius: 16px; overflow: hidden; background: #000; aspect-ratio: 4/5; cursor: none; }
+        .gallery-item img { width: 100%; height: 100%; object-fit: contain; max-height: 100%; transition: transform 0.6s ease, filter 0.6s ease; filter: brightness(0.8); }
+        .gallery-item:hover img { transform: scale(1.05); filter: brightness(1.1); }
+        
+        .gallery-overlay { position: absolute; bottom: -60px; left: 0; right: 0; background: linear-gradient(0deg, rgba(0,0,0,0.9), transparent); padding: 25px 15px 15px; text-align: center; transition: bottom 0.4s ease; }
+        .gallery-item:hover .gallery-overlay { bottom: 0; }
+        .gallery-overlay h3 { color: #fff; font-size: 1rem; margin-bottom: 8px; }
+
+        .action-btns { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+        .act-btn { background: rgba(255,255,255,0.15); border: none; padding: 6px 10px; border-radius: 6px; color: #fff; font-size: 0.75rem; font-weight: 500; transition: all 0.3s; backdrop-filter: blur(5px); cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+        .act-btn:hover { background: var(--accent-1); color: #000; }
+
+        /* CLEAN IMAGE VIEWER MODAL */
+        .image-modal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(4, 9, 20, 0.95); backdrop-filter: blur(20px); z-index: 200000; justify-content: center; align-items: center; padding: 20px; }
+        .image-modal.active { display: flex; }
+        .modal-card { background: #0b1329; border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 16px; max-width: 850px; width: 100%; overflow: hidden; box-shadow: 0 0 40px rgba(0,0,0,0.8); display: flex; flex-direction: column; max-height: 90vh; }
+        .modal-header { padding: 12px 20px; background: #0f172a; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; }
+        .modal-header h4 { font-family: 'Space Grotesk', sans-serif; color: var(--accent-1); }
+        .close-modal { background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 1.2rem; }
+        .close-modal:hover { color: #fff; }
+        .modal-body-img { flex: 1; overflow: auto; display: flex; justify-content: center; align-items: center; padding: 20px; background: #04060a; }
+        .modal-body-img img { max-width: 100%; max-height: 75vh; object-fit: contain; border-radius: 8px; }
+
+        .reveal { opacity: 0; transform: translateY(30px); transition: all 0.8s ease-out; }
+        .reveal.active { opacity: 1; transform: translateY(0); }
+        .tilt-card { transform-style: preserve-3d; transform: perspective(1000px); }
+
+        @media (min-width: 768px) {
+            .container { padding: 0 20px; gap: 40px; }
+            .card { padding: 40px; }
+            .hero h1 { font-size: 4rem; }
+            .security-box { padding: 40px 35px; }
+        }
+    </style>
+</head>
+<body id="app-body">
+
+    <div id="scroll-progress"></div>
+    <div class="ambient-bg"></div>
+    <div class="cursor-dot" id="cursor-dot"></div>
+    <div class="cursor-outline" id="cursor-outline"></div>
+
+    <!-- SECURITY GATEKEEPER -->
+    <div id="gatekeeper">
+        <div class="security-box" id="sec-box">
+            <h2>MIND_PALACE_AUTH</h2>
+            <p>Extreme cryptographic & high-IQ protocol check required.</p>
+            
+            <div class="iq-puzzle" id="puzzle-display"></div>
+
+            <div class="hint-box">
+                <div class="hint-header-row">
+                    <button class="hint-toggle" id="hint-btn">AI Search Prompt Hint</button>
+                    <button class="copy-hint-btn" id="copy-hint-btn">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        Copy Prompt
+                    </button>
+                </div>
+                <div class="hint-text" id="hint-content">Loading prompt...</div>
+            </div>
+            
+            <div class="auth-input-group">
+                <input type="text" id="auth-input" placeholder="SOLUTION KEY" autocomplete="off" spellcheck="false">
+                <button id="auth-btn">VERIFY</button>
+            </div>
+            <p id="auth-msg" style="color: #ff5f56; font-size: 0.75rem; margin-top: 10px; height: 15px; font-family: 'Fira Code', monospace;"></p>
+        </div>
+    </div>
+
+    <!-- MAIN PORTFOLIO CONTENT -->
+    <div id="main-content">
+        <nav>
+            <div class="logo">ROHIT<span>.</span></div>
+            <div class="nav-links">
+                <a href="#about">About</a>
+                <a href="#skills">Skills</a>
+                <a href="#portfolio">Portfolio</a>
+                <button class="theme-toggle" id="theme-btn">☀️ Light Mode</button>
+            </div>
+        </nav>
+
+        <div class="container">
+            <section class="card hero reveal tilt-card" id="about">
+                <h1>Rohit Kumar</h1>
+                <div class="typewriter" id="typewriter"></div>
+                <p style="color: var(--text-secondary); max-width: 600px; margin: 0 auto; line-height: 1.6; font-size: 0.95rem;">
+                    Bridging the gap between flawless logic and breathtaking aesthetics. Dedicated to pushing the boundaries of web development, competitive esports, and traditional fine arts.
+                </p>
+            </section>
+
+            <section class="card reveal" id="skills">
+                <h2 class="section-title">Technical Arsenal</h2>
+                <div class="terminal tilt-card">
+                    <div class="terminal-header">
+                        <div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
+                    </div>
+                    <div class="terminal-body"><span class="cmd">const</span> developer = {
+  name: <span class="str">'Rohit Kumar'</span>,
+  stack: [<span class="str">'React'</span>, <span class="str">'Node.js'</span>, <span class="str">'Express'</span>, <span class="str">'React Native'</span>],
+  speciality: <span class="str">'Unified UI/UX & Robust Backends'</span>,
+  execute: <span class="cmd">() =></span> { <span class="func">buildMasterpiece</span>(); }
+};</div>
+                </div>
+
+                <div class="skills-grid" id="skill-container">
+                    <div>
+                        <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size: 0.9rem;">
+                            <span>Full-Stack Development</span><span style="color:var(--accent-1)">95%</span>
+                        </div>
+                        <div class="skill-bar"><div class="skill-fill" data-width="95%"></div></div>
+                    </div>
+                    <div>
+                        <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size: 0.9rem;">
+                            <span>Fine Arts & Sketching</span><span style="color:var(--accent-2)">90%</span>
+                        </div>
+                        <div class="skill-bar"><div class="skill-fill" data-width="90%"></div></div>
+                    </div>
+                    <div>
+                        <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size: 0.9rem;">
+                            <span>Esports Strategy</span><span style="color:var(--accent-3)">88%</span>
+                        </div>
+                        <div class="skill-bar"><div class="skill-fill" data-width="88%"></div></div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card reveal" id="portfolio">
+                <h2 class="section-title">Master Gallery</h2>
+                
+                <div class="filter-btns">
+                    <button class="f-btn active" data-filter="all">All Work</button>
+                    <button class="f-btn" data-filter="art">Fine Arts</button>
+                    <button class="f-btn" data-filter="gaming">Gaming</button>
+                    <button class="f-btn" data-filter="life">Lifestyle</button>
+                    <button class="f-btn" data-filter="news">Press & News</button>
+                </div>
+
+                <div class="gallery-grid">
+                    <!-- Art Items -->
+                    <div class="gallery-item art tilt-card">
+                        <img src="auth/sivaji.jpg" alt="Shivaji Maharaj" loading="lazy">
+                        <div class="gallery-overlay">
+                            <h3>Chhatrapati Shivaji Maharaj</h3>
+                            <div class="action-btns">
+                                <button class="act-btn" onclick="viewImage('auth/sivaji.jpg', 'Chhatrapati Shivaji Maharaj')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> View
+                                </button>
+                                <button class="act-btn" onclick="dlImage('auth/sivaji.jpg', 'sivaji_maharaj.jpg')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> DL
+                                </button>
+                                <button class="act-btn" onclick="shareImage('auth/sivaji.jpg', 'Chhatrapati Shivaji Maharaj')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> Share
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="gallery-item art tilt-card">
+                        <img src="auth/maharna.jpg" alt="Maharana Pratap" loading="lazy">
+                        <div class="gallery-overlay">
+                            <h3>Maharana Pratap</h3>
+                            <div class="action-btns">
+                                <button class="act-btn" onclick="viewImage('auth/maharna.jpg', 'Maharana Pratap')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> View
+                                </button>
+                                <button class="act-btn" onclick="dlImage('auth/maharna.jpg', 'maharana_pratap.jpg')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> DL
+                                </button>
+                                <button class="act-btn" onclick="shareImage('auth/maharna.jpg', 'Maharana Pratap')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> Share
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="gallery-item art tilt-card">
+                        <img src="auth/radhakrisnan.jpg" alt="Dr. Radhakrishnan" loading="lazy">
+                        <div class="gallery-overlay">
+                            <h3>Dr. S. Radhakrishnan</h3>
+                            <div class="action-btns">
+                                <button class="act-btn" onclick="viewImage('auth/radhakrisnan.jpg', 'Dr. S. Radhakrishnan')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> View
+                                </button>
+                                <button class="act-btn" onclick="dlImage('auth/radhakrisnan.jpg', 'dr_radhakrishnan.jpg')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> DL
+                                </button>
+                                <button class="act-btn" onclick="shareImage('auth/radhakrisnan.jpg', 'Dr. S. Radhakrishnan')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> Share
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="gallery-item art tilt-card">
+                        <img src="auth/image.jpg" alt="Lion Logo" loading="lazy">
+                        <div class="gallery-overlay">
+                            <h3>Crowned Lion Concept</h3>
+                            <div class="action-btns">
+                                <button class="act-btn" onclick="viewImage('auth/image.jpg', 'Crowned Lion Concept')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> View
+                                </button>
+                                <button class="act-btn" onclick="dlImage('auth/image.jpg', 'lion_concept.jpg')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> DL
+                                </button>
+                                <button class="act-btn" onclick="shareImage('auth/image.jpg', 'Crowned Lion Concept')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> Share
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Gaming & Lifestyle -->
+                    <div class="gallery-item gaming tilt-card">
+                        <img src="auth/game.jpg" alt="Esports Profile" loading="lazy">
+                        <div class="gallery-overlay">
+                            <h3>NAUGHTYBOY | Lvl 67</h3>
+                            <div class="action-btns">
+                                <button class="act-btn" onclick="viewImage('auth/game.jpg', 'Esports Profile')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> View
+                                </button>
+                                <button class="act-btn" onclick="dlImage('auth/game.jpg', 'gaming_profile.jpg')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> DL
+                                </button>
+                                <button class="act-btn" onclick="shareImage('auth/game.jpg', 'Esports Profile')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> Share
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="gallery-item life tilt-card">
+                        <img src="auth/physique.jpg" alt="Fitness" loading="lazy">
+                        <div class="gallery-overlay">
+                            <h3>Discipline & Aesthetics</h3>
+                            <div class="action-btns">
+                                <button class="act-btn" onclick="viewImage('auth/physique.jpg', 'Fitness')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> View
+                                </button>
+                                <button class="act-btn" onclick="dlImage('auth/physique.jpg', 'physique.jpg')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> DL
+                                </button>
+                                <button class="act-btn" onclick="shareImage('auth/physique.jpg', 'Fitness')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> Share
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Press & News -->
+                    <div class="gallery-item news tilt-card">
+                        <img src="auth/news1.jpg" alt="Dainik Bhaskar News" loading="lazy">
+                        <div class="gallery-overlay">
+                            <h3>दैनिक भास्कर - सम्मान समारोह</h3>
+                            <div class="action-btns">
+                                <button class="act-btn" onclick="viewImage('auth/news1.jpg', 'दैनिक भास्कर - सम्मान समारोह')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> View
+                                </button>
+                                <button class="act-btn" onclick="dlImage('auth/news1.jpg', 'dainik_bhaskar_news1.jpg')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> DL
+                                </button>
+                                <button class="act-btn" onclick="shareImage('auth/news1.jpg', 'दैनिक भास्कर - सम्मान समारोह')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> Share
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="gallery-item news tilt-card">
+                        <img src="auth/news2.jpg" alt="News Coverage 2" loading="lazy">
+                        <div class="gallery-overlay">
+                            <h3>प्रजापति समन्वय समिति सम्मान</h3>
+                            <div class="action-btns">
+                                <button class="act-btn" onclick="viewImage('auth/news2.jpg', 'प्रजापति समन्वय समिति सम्मान')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> View
+                                </button>
+                                <button class="act-btn" onclick="dlImage('auth/news2.jpg', 'news_coverage_2.jpg')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> DL
+                                </button>
+                                <button class="act-btn" onclick="shareImage('auth/news2.jpg', 'प्रजापति समन्वय समिति सम्मान')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> Share
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="gallery-item news tilt-card">
+                        <img src="auth/news3.jpg" alt="News Coverage 3" loading="lazy">
+                        <div class="gallery-overlay">
+                            <h3>प्रतिभा सम्मान एवं कार्यालय उद्घाटन</h3>
+                            <div class="action-btns">
+                                <button class="act-btn" onclick="viewImage('auth/news3.jpg', 'प्रतिभा सम्मान एवं कार्यालय उद्घाटन')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> View
+                                </button>
+                                <button class="act-btn" onclick="dlImage('auth/news3.jpg', 'news_coverage_3.jpg')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> DL
+                                </button>
+                                <button class="act-btn" onclick="shareImage('auth/news3.jpg', 'प्रतिभा सम्मान एवं कार्यालय उद्घाटन')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> Share
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <footer style="text-align: center; color: var(--text-secondary); margin-top: 20px; padding-bottom: 20px; font-size: 0.85rem; font-weight: 500;">
+                Code Compiled with Absolute Precision. © 2026 Rohit Kumar.
+            </footer>
+        </div>
+    </div>
+
+    <!-- CLEAN IMAGE VIEWER MODAL CONTAINER -->
+    <div class="image-modal" id="imageViewerModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h4 id="modalImageTitle">Image Viewer</h4>
+                <button class="close-modal" onclick="closeViewer()">✕</button>
+            </div>
+            <div class="modal-body-img">
+                <img id="modalImgSource" src="" alt="Preview">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ANTI-SCREENSHOT
+        const bodyEl = document.getElementById('app-body');
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.addEventListener('keydown', e => {
+            if (e.keyCode === 44 || (e.ctrlKey && (e.key === 'p' || e.key === 's' || e.key === 'u' || e.key === 'Shift')) ) {
+                e.preventDefault();
+                triggerSecurityShield();
+            }
+        });
+        document.addEventListener("visibilitychange", () => {
+            if (document.hidden) { bodyEl.classList.add('security-shield-active'); } 
+            else { setTimeout(() => bodyEl.classList.remove('security-shield-active'), 400); }
+        });
+        window.addEventListener('blur', () => bodyEl.classList.add('security-shield-active'));
+        window.addEventListener('focus', () => bodyEl.classList.remove('security-shield-active'));
+        function triggerSecurityShield() {
+            bodyEl.classList.add('security-shield-active');
+            setTimeout(() => bodyEl.classList.remove('security-shield-active'), 1500);
+        }
+
+        // ALGORITHMIC PUZZLE GENERATOR
+        function generateDynamicPuzzle() {
+            const types = ['matrix', 'algebra', 'bitwise', 'primeOffset'];
+            const chosenType = types[Math.floor(Math.random() * types.length)];
+            let puzzleObj = {};
+
+            if (chosenType === 'matrix') {
+                const a = Math.floor(Math.random() * 3) + 2; 
+                const b = Math.floor(Math.random() * 5) + 1; 
+                let seq = [3];
+                for(let i=1; i<5; i++) { seq.push(seq[i-1] * a + b); }
+                const nextVal = seq[seq.length-1] * a + b;
+                
+                puzzleObj.q = `Dynamic Recurrence Matrix:<br>Sequence: ${seq.join(', ')}, <span class='hl'>?</span><br>Formula: a<sub>n</sub> = ${a}a<sub>n-1</sub> + ${b}`;
+                puzzleObj.hintPrompt = `Find the next number in sequence ${seq.join(', ')} where each term is ${a} * previous + ${b}`;
+                puzzleObj.ans = nextVal.toString();
+
+            } else if (chosenType === 'algebra') {
+                const x = Math.floor(Math.random() * 6) + 4; 
+                const res = (x * x) + (2 * x) + 5;
+                
+                puzzleObj.q = `Polynomial Matrix Evaluation:<br>If f(x) = x² + 2x + 5, and f(${x}) = <span class='hl'>?</span>`;
+                puzzleObj.hintPrompt = `Calculate polynomial x² + 2x + 5 when x equals ${x}`;
+                puzzleObj.ans = res.toString();
+
+            } else if (chosenType === 'bitwise') {
+                const n1 = Math.floor(Math.random() * 20) + 10;
+                const n2 = Math.floor(Math.random() * 10) + 5;
+                const res = (n1 ^ n2) + 10;
+
+                puzzleObj.q = `Bitwise XOR Matrix:<br>Evaluate decimal output of: <span class='hl'>(${n1} ^ ${n2}) + 10</span>`;
+                puzzleObj.hintPrompt = `Calculate decimal value of bitwise expression (${n1} XOR ${n2}) + 10`;
+                puzzleObj.ans = res.toString();
+
+            } else {
+                const primes = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37];
+                const idx1 = Math.floor(Math.random() * 4) + 2; 
+                const idx2 = Math.floor(Math.random() * 4) + 7; 
+                const mult = Math.floor(Math.random() * 2) + 2;  
+                
+                const p1 = primes[idx1 - 1];
+                const p2 = primes[idx2 - 1];
+                const res = (p1 + p2) * mult;
+
+                puzzleObj.q = `Prime Index Sequence Offset:<br>Primes: ${primes.join(', ')},<br>Sum of ${idx1}th and ${idx2}th prime values multiplied by ${mult} = <span class='hl'>?</span>`;
+                puzzleObj.hintPrompt = `What is (${idx1}th prime + ${idx2}th prime) * ${mult}? Primes: 2,3,5,7,11,13,17,19,23...`;
+                puzzleObj.ans = res.toString();
+            }
+            return puzzleObj;
+        }
+
+        const currentPuzzle = generateDynamicPuzzle();
+        document.getElementById('puzzle-display').innerHTML = currentPuzzle.q;
+        document.getElementById('hint-content').innerText = currentPuzzle.hintPrompt;
+
+        const hintBtn = document.getElementById('hint-btn');
+        const hintContent = document.getElementById('hint-content');
+        const copyHintBtn = document.getElementById('copy-hint-btn');
+
+        hintBtn.addEventListener('click', () => {
+            hintContent.style.display = hintContent.style.display === 'block' ? 'none' : 'block';
+        });
+
+        copyHintBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(currentPuzzle.hintPrompt).then(() => {
+                copyHintBtn.innerText = "COPIED!";
+                setTimeout(() => { copyHintBtn.innerText = "Copy Prompt"; }, 1500);
+            });
+        });
+
+        const gatekeeper = document.getElementById('gatekeeper');
+        const mainContent = document.getElementById('main-content');
+        const authInput = document.getElementById('auth-input');
+        const authBtn = document.getElementById('auth-btn');
+        const secBox = document.getElementById('sec-box');
+        const authMsg = document.getElementById('auth-msg');
+
+        function verifyToken() {
+            const userVal = authInput.value.trim();
+            if (userVal === currentPuzzle.ans) {
+                authBtn.style.background = "#38BDF8";
+                authBtn.innerText = "GRANTED";
+                authMsg.style.color = "#38BDF8";
+                authMsg.innerText = "Neural handshake successful. Decrypting interface...";
+                
+                setTimeout(() => {
+                    gatekeeper.style.opacity = "0";
+                    gatekeeper.style.visibility = "hidden";
+                    mainContent.classList.add("unlocked");
+                    setTimeout(startTypewriter, 800);
+                }, 800);
+            } else {
+                secBox.classList.add("error-shake");
+                authMsg.innerText = "Access Denied: Incorrect computation key.";
+                authInput.value = "";
+                setTimeout(() => secBox.classList.remove("error-shake"), 400);
+            }
+        }
+
+        authBtn.addEventListener('click', verifyToken);
+        authInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') verifyToken(); });
+
+        window.addEventListener('scroll', () => {
+            const winScroll = document.documentElement.scrollTop || document.body.scrollTop;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            document.getElementById('scroll-progress').style.width = (winScroll / height) * 100 + '%';
+        });
+
+        const dot = document.getElementById("cursor-dot");
+        const outline = document.getElementById("cursor-outline");
+        window.addEventListener("mousemove", (e) => {
+            dot.style.left = outline.style.left = `${e.clientX}px`;
+            dot.style.top = outline.style.top = `${e.clientY}px`;
+        });
+        document.querySelectorAll('a, button, .gallery-item, input').forEach(el => {
+            el.addEventListener('mouseenter', () => { outline.style.width = '55px'; outline.style.height = '55px'; outline.style.backgroundColor = 'rgba(56, 189, 248, 0.1)'; });
+            el.addEventListener('mouseleave', () => { outline.style.width = '40px'; outline.style.height = '40px'; outline.style.backgroundColor = 'transparent'; });
+        });
+
+        const themeBtn = document.getElementById('theme-btn');
+        const htmlElement = document.documentElement;
+        themeBtn.addEventListener('click', () => {
+            const isDark = htmlElement.getAttribute('data-theme') === 'dark';
+            htmlElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+            themeBtn.innerHTML = isDark ? '🌙 Dark Mode' : '☀️ Light Mode';
+        });
+
+        const textArray = ["Full-Stack Developer.", "Fine Artist.", "Esports Strategist.", "Eternal Learner."];
+        let tIdx = 0, cIdx = 0;
+        const typewriterEl = document.getElementById("typewriter");
+
+        function startTypewriter() {
+            if (cIdx < textArray[tIdx].length) {
+                typewriterEl.innerHTML += textArray[tIdx].charAt(cIdx++);
+                setTimeout(startTypewriter, 100);
+            } else { setTimeout(erase, 2000); }
+        }
+        function erase() {
+            if (cIdx > 0) {
+                typewriterEl.innerHTML = textArray[tIdx].substring(0, --cIdx);
+                setTimeout(erase, 50);
+            } else {
+                tIdx = (tIdx + 1) % textArray.length;
+                setTimeout(startTypewriter, 500);
+            }
+        }
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                    if (entry.target.id === 'skills') {
+                        document.querySelectorAll('.skill-fill').forEach(bar => bar.style.width = bar.getAttribute('data-width'));
+                    }
+                }
+            });
+        }, { threshold: 0.1 });
+        document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+        const filterBtns = document.querySelectorAll('.f-btn');
+        const galleryItems = document.querySelectorAll('.gallery-item');
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                filterBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const filterValue = btn.getAttribute('data-filter');
+                galleryItems.forEach(item => {
+                    item.style.display = 'none';
+                    if (filterValue === 'all' || item.classList.contains(filterValue)) {
+                        setTimeout(() => { item.style.display = 'block'; }, 50);
+                    }
+                });
+            });
+        });
+
+        document.querySelectorAll('.tilt-card').forEach(card => {
+            card.addEventListener('mousemove', e => {
+                const rect = card.getBoundingClientRect();
+                const rotateX = ((e.clientY - rect.top - rect.height / 2) / (rect.height / 2)) * -4;
+                const rotateY = ((e.clientX - rect.left - rect.width / 2) / (rect.width / 2)) * 4;
+                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.01)`;
+            });
+            card.addEventListener('mouseleave', () => card.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)` );
+        });
+
+        // CLEAN IMAGE VIEWER FUNCTIONS
+        function viewImage(path, name) {
+            document.getElementById('modalImageTitle').innerText = name;
+            document.getElementById('modalImgSource').src = path;
+            document.getElementById('imageViewerModal').classList.add('active');
+        }
+
+        function closeViewer() {
+            document.getElementById('imageViewerModal').classList.remove('active');
+        }
+
+        function dlImage(url, filename) {
+            const a = document.createElement('a');
+            a.href = url; a.download = filename;
+            document.body.appendChild(a); a.click(); a.remove();
+        }
+
+        async function shareImage(path, title) {
+            const fullUrl = window.location.origin + '/' + path;
+            if (navigator.share) {
+                try { await navigator.share({ title: title, url: fullUrl }); } catch (err) {}
+            } else {
+                navigator.clipboard.writeText(fullUrl);
+                alert("Image link copied to clipboard!");
+            }
+        }
+    </script>
+</body>
+</html>
