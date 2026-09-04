@@ -1,4 +1,6 @@
-let fetchedHolidays = {};
+window.fetchedHolidays = {};
+let fetchedHolidays = window.fetchedHolidays;
+
 let dbEvents = {};
 let selectedGotoDateKey = null;
 let cur = new Date();
@@ -27,6 +29,7 @@ async function getCurrentUser() {
     return null;
   }
 }
+
 
 // 2. Auth UI & Add Event Button Toggle
 async function checkAuthUI() {

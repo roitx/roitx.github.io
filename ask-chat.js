@@ -225,11 +225,52 @@
       return;
     }
 
-    // 4. CALENDAR ACTION & POPUP
-    if (cmd.includes('calendar') || cmd.includes('date') || cmd.includes('holiday')) {
-      showCalendarModalDirect();
+    // 4. CALENDAR ACTION & HOLIDAY POPUP INTEGRATION
+    if (cmd.includes('calendar') || cmd.includes('date') || cmd.includes('holiday') || cmd.includes('chhutti') || cmd.includes('tyohar')) {
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const dd = String(today.getDate()).padStart(2, '0');
+      const todayKey = `${yyyy}-${mm}-${dd}`;
+
+      // Fetch holiday from calendar.js global object
+      const holidayName = window.fetchedHolidays ? window.fetchedHolidays[todayKey] : null;
+
+      if (holidayName) {
+        addBotMsg(`
+          <div style="border: 1px solid #38bdf8; background: rgba(56, 189, 248, 0.1); padding: 12px; border-radius: 10px; margin-top: 5px;">
+            <div style="font-weight: bold; color: #38bdf8; font-size: 14px; display: flex; align-items: center; gap: 6px;">
+              🎉 Aaj Ka Holiday!
+            </div>
+            <div style="font-size: 13px; color: #fff; margin: 6px 0;"><b>${holidayName}</b> (${todayKey})</div>
+            <div style="display: flex; gap: 6px; margin-top: 8px;">
+              <button onclick="showCalendarModalDirect()" style="background: #0284c7; color: #fff; border: none; padding: 6px 10px; border-radius: 5px; font-size: 11px; font-weight: bold; cursor: pointer;">
+                📅 Mini Calendar
+              </button>
+              <a href="calendar.html" style="background: #059669; color: #fff; text-decoration: none; padding: 6px 10px; border-radius: 5px; font-size: 11px; font-weight: bold;">
+                🌐 Full Calendar Page
+              </a>
+            </div>
+          </div>
+        `);
+
+        // Agar calendar.js ka interactive popup screen par show karna ho:
+        if (typeof showInteractivePopup === 'function') {
+          showInteractivePopup([{ type: 'holiday', text: holidayName }], todayKey);
+        }
+      } else {
+        addBotMsg(`
+          <div style="border: 1px solid rgba(255,255,255,0.12); padding: 10px; border-radius: 8px; background: #1e293b; margin-top: 5px;">
+            <div style="font-size: 13px; color: #e2e8f0; margin-bottom: 8px;">📅 Aaj (${todayKey}) koi official holiday nahi hai.</div>
+            <button onclick="showCalendarModalDirect()" style="background: #0284c7; color: #fff; border: none; padding: 6px 10px; border-radius: 5px; font-size: 11px; font-weight: bold; cursor: pointer;">
+              Open Mini Calendar
+            </button>
+          </div>
+        `);
+      }
       return;
     }
+
 
     // 5. CALCULATOR COMMAND
     if (cmd.includes('calc') || cmd.includes('calculator')) {
