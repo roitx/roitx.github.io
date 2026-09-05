@@ -287,7 +287,6 @@
         return;
       }
 
-      // Check if user is SuperAdmin OR Admin OR Teammate with admin_panel access
       const userPerms = await window.getUserPermissions();
       const isOwner = user.email && user.email.toLowerCase().trim() === "rohitrajgoh91@gmail.com";
       
@@ -481,6 +480,17 @@
 
     const canManageTeam = isAdminRole;
 
+    // Allowed features list text banane ke liye
+    let allowedList = [];
+    if (adminPanel) allowedList.push("Admin Panel");
+    if (sendNotif) allowedList.push("Send Notifications");
+    if (manageTest) allowedList.push("Upload/Manage Tests");
+    if (aiTest) allowedList.push("AI Test Creator");
+
+    let accessDetailsText = allowedList.length > 0 
+      ? ` Ab aap ye features/pages access kar payenge: ${allowedList.join(", ")}.`
+      : ` Aapke sabhi extra permissions hata diye gaye hain.`;
+
     const { error } = await window.supabaseClient
       .from('profiles')
       .update({
@@ -499,6 +509,32 @@
     if (error) {
       alert("Save Failed: " + error.message);
     } else {
+      // Notification insert with profile.html link & detailed message
+      const { data: notifData } = await window.supabaseClient
+        .from('notifications')
+        .insert([{
+          user_id: activeEditingUserId,
+          title: "🛡️ Account Role & Permissions Updated!",
+          message: `Your account role has been updated to ${selectedRole.toUpperCase()}.${accessDetailsText}`,
+          link: "profile.html",
+          created_at: new Date().toISOString()
+        }])
+        .select('id')
+        .single();
+
+      if (notifData && notifData.id) {
+        await window.supabaseClient
+          .from('user_notification_state')
+          .insert([{
+            user_id: activeEditingUserId,
+            notification_id: notifData.id,
+            is_read: false,
+            is_deleted: false,
+            updated_at: new Date().toISOString()
+          }]);
+      }
+
+      alert("Changes saved & user notified successfully!");
       closeModal('permissionsModal');
       loadRegisteredUsers();
     }
@@ -516,12 +552,29 @@
     const msg = document.getElementById("notifyMsgInput").value.trim();
     if (!msg) return alert("Message cannot be empty!");
 
-    await window.supabaseClient.from('notifications').insert({
-      user_id: selectedTargetUserId,
-      message: msg,
-      created_at: new Date().toISOString(),
-      is_read: false
-    });
+    const { data: notifData } = await window.supabaseClient
+      .from('notifications')
+      .insert([{
+        user_id: selectedTargetUserId,
+        title: "📢 Admin Alert",
+        message: msg,
+        link: "profile.html",
+        created_at: new Date().toISOString()
+      }])
+      .select('id')
+      .single();
+
+    if (selectedTargetUserId && notifData && notifData.id) {
+      await window.supabaseClient
+        .from('user_notification_state')
+        .insert([{
+          user_id: selectedTargetUserId,
+          notification_id: notifData.id,
+          is_read: false,
+          is_deleted: false,
+          updated_at: new Date().toISOString()
+        }]);
+    }
 
     alert("📢 Notification sent!");
     closeModal('notifyModal');

@@ -384,7 +384,6 @@
             position: relative;
         }
         
-        /* Prominent Red Close Button */
         .modal-close-btn {
             position: absolute;
             top: 14px;
@@ -530,7 +529,6 @@
     <!-- USER DETAILS MODAL -->
     <div class="modal-overlay" id="userProfileModal" onclick="if(event.target === this) closeProfileModal()">
         <div class="modal-card">
-            <!-- Close Cross Button -->
             <button class="modal-close-btn" onclick="closeProfileModal()"><i class="fa-solid fa-xmark"></i></button>
             <div id="modalContent">
                 <div style="text-align: center; padding: 25px;">
@@ -583,7 +581,20 @@
         async function fetchOrders() {
             const { data, error } = await window.supabaseClient
                 .from('user_orders')
-                .select('*')
+                .select(`
+                    *,
+                    profiles:user_email (
+                        full_name,
+                        phone,
+                        target_class,
+                        stream,
+                        institution,
+                        city,
+                        state,
+                        avatar_url,
+                        email
+                    )
+                `)
                 .order('id', { ascending: false });
 
             if (error) {
@@ -606,7 +617,7 @@
 
             const filtered = cachedOrders.filter(order => {
                 const matchStatus = (currentStatusFilter === 'ALL') || (order.status === currentStatusFilter);
-                const emailStr = (order.user_email || '').toLowerCase();
+                const emailStr = (order.user_email || order.profiles?.email || '').toLowerCase();
                 const utrStr = (order.utr_code || '').toLowerCase();
                 const matchSearch = !searchQuery || emailStr.includes(searchQuery) || utrStr.includes(searchQuery);
 
@@ -631,6 +642,7 @@
             }
 
             orders.forEach(order => {
+                const displayEmail = order.user_email || order.profiles?.email || 'N/A';
                 let statusBadge = '';
                 if (order.status === 'pending') {
                     statusBadge = `<span class="badge-status status-pending"><i class="fa-solid fa-hourglass-half"></i> PENDING</span>`;
@@ -645,10 +657,10 @@
                 if (order.status === 'pending') {
                     actionButtons = `
                         <div class="action-btns">
-                            <button class="btn-info" title="View Profile Info" onclick="viewUserProfile('${order.user_email}')">
+                            <button class="btn-info" title="View Profile Info" onclick='viewUserProfile(${JSON.stringify(order)})'>
                                 <i class="fa-solid fa-info"></i>
                             </button>
-                            <button class="btn-approve" onclick="approveOrder(${order.id}, '${order.user_email}', ${order.note_id})">
+                            <button class="btn-approve" onclick="approveOrder(${order.id}, '${displayEmail}', ${order.note_id})">
                                 <i class="fa-solid fa-check"></i> Approve
                             </button>
                             <button class="btn-reject" onclick="rejectOrder(${order.id})">
@@ -660,7 +672,7 @@
 
                 tbody.innerHTML += `
                     <tr>
-                        <td><strong style="color:#fff;"><i class="fa-regular fa-user" style="color:#8a99ad; margin-right:5px;"></i>${order.user_email}</strong></td>
+                        <td><strong style="color:#fff;"><i class="fa-regular fa-user" style="color:#8a99ad; margin-right:5px;"></i>${displayEmail}</strong></td>
                         <td style="color:#d1d5db;">${order.note_title}</td>
                         <td style="color:#2ed573; font-weight:bold;">₹${order.amount}</td>
                         <td style="font-family:monospace; color:#00d2ff; font-weight:bold; font-size: 0.88rem;">${order.utr_code}</td>
@@ -671,100 +683,65 @@
             });
         }
 
-        // Updated Profile Fetching Logic Priority: Email First, then ID
-        async function viewUserProfile(email) {
-    const modal = document.getElementById('userProfileModal');
-    const content = document.getElementById('modalContent');
-    modal.style.display = 'flex';
-    
-    content.innerHTML = `
-        <div style="text-align: center; padding: 25px;">
-            <i class="fa-solid fa-spinner fa-spin" style="font-size: 1.5rem; color:#00d2ff;"></i>
-            <p style="margin-top: 10px; font-size: 0.85rem; color: #8a99ad;">Fetching profile details...</p>
-        </div>
-    `;
+        function viewUserProfile(order) {
+            const modal = document.getElementById('userProfileModal');
+            const content = document.getElementById('modalContent');
+            modal.style.display = 'flex';
+            
+            const profile = order.profiles || {};
+            const nameToShow = profile.full_name || order.user_name || 'N/A';
+            const emailToShow = profile.email || order.user_email || 'N/A';
+            const phoneToShow = profile.phone || order.user_phone || 'N/A';
+            const classToShow = profile.target_class || order.target_class || 'N/A';
+            const streamToShow = profile.stream || order.stream || 'N/A';
+            const institutionToShow = profile.institution || order.institution || 'N/A';
+            const cityToShow = profile.city || order.city || 'N/A';
+            const stateToShow = profile.state || order.state || 'N/A';
+            const avatarUrl = profile.avatar_url || order.avatar_url || '';
 
-    try {
-        let profileData = null;
+            const initial = nameToShow !== 'N/A' ? nameToShow.charAt(0).toUpperCase() : 'U';
+            const avatarHtml = avatarUrl 
+                ? `<img src="${avatarUrl}" alt="Profile">` 
+                : initial;
 
-        if (email) {
-            const { data, error: orderErr } = await window.supabaseClient
-                .from('user_orders')
-                .select('*')
-                .eq('user_email', email)
-                .order('id', { ascending: false })
-                .limit(1)
-                .maybeSingle();
-
-            if (!orderErr) {
-                profileData = data;
-            }
-        }
-
-        if (!profileData) {
             content.innerHTML = `
-                <div style="text-align:center; padding: 15px;">
-                    <i class="fa-solid fa-user-slash" style="font-size: 2rem; color:#ffa500; margin-bottom: 8px;"></i>
-                    <h3 style="margin: 5px 0; font-size: 1rem;">Profile Data Not Available</h3>
-                    <p style="font-size: 0.78rem; color: #8a99ad;">No order details found for this user.</p>
-                    <p style="font-size: 0.85rem; color:#00d2ff; margin-top:8px;"><strong>Email:</strong> ${email}</p>
+                <div style="text-align:center;">
+                    <div class="user-profile-avatar">${avatarHtml}</div>
+                    <h3 style="margin: 0; font-size: 1.15rem; color:#fff;">${nameToShow}</h3>
+                    <span style="font-size: 0.78rem; color:#8a99ad;"><i class="fa-solid fa-envelope"></i> ${emailToShow}</span>
+                </div>
+
+                <div class="profile-field-grid">
+                    <div class="profile-field">
+                        <label><i class="fa-solid fa-phone"></i> Phone</label>
+                        <span>${phoneToShow}</span>
+                    </div>
+                    <div class="profile-field">
+                        <label><i class="fa-solid fa-graduation-cap"></i> Class</label>
+                        <span>${classToShow}</span>
+                    </div>
+                    <div class="profile-field">
+                        <label><i class="fa-solid fa-book-open"></i> Stream</label>
+                        <span>${streamToShow}</span>
+                    </div>
+                    <div class="profile-field">
+                        <label><i class="fa-solid fa-building-columns"></i> Institution</label>
+                        <span>${institutionToShow}</span>
+                    </div>
+                    <div class="profile-field">
+                        <label><i class="fa-solid fa-city"></i> City</label>
+                        <span>${cityToShow}</span>
+                    </div>
+                    <div class="profile-field">
+                        <label><i class="fa-solid fa-map-location-dot"></i> State</label>
+                        <span>${stateToShow}</span>
+                    </div>
+                </div>
+                <div style="margin-top: 12px; text-align: center;">
+                    <span style="font-size: 0.78rem; color:#00d2ff; font-family:monospace;">UTR: ${order.utr_code || 'N/A'}</span>
                 </div>
             `;
-            return;
         }
-
-        const nameToShow = profileData.user_name || 'N/A';
-        const initial = nameToShow.charAt(0).toUpperCase();
-        const avatarHtml = profileData.avatar_url 
-            ? `<img src="${profileData.avatar_url}" alt="Profile">` 
-            : initial;
-
-        content.innerHTML = `
-            <div style="text-align:center;">
-                <div class="user-profile-avatar">${avatarHtml}</div>
-                <h3 style="margin: 0; font-size: 1.15rem; color:#fff;">${nameToShow}</h3>
-                <span style="font-size: 0.78rem; color:#8a99ad;"><i class="fa-solid fa-envelope"></i> ${profileData.user_email || email}</span>
-            </div>
-
-            <div class="profile-field-grid">
-                <div class="profile-field">
-                    <label><i class="fa-solid fa-phone"></i> Phone</label>
-                    <span>${profileData.user_phone || 'N/A'}</span>
-                </div>
-                <div class="profile-field">
-                    <label><i class="fa-solid fa-graduation-cap"></i> Class</label>
-                    <span>${profileData.target_class || 'N/A'}</span>
-                </div>
-                <div class="profile-field">
-                    <label><i class="fa-solid fa-book-open"></i> Stream</label>
-                    <span>${profileData.stream || 'N/A'}</span>
-                </div>
-                <div class="profile-field">
-                    <label><i class="fa-solid fa-building-columns"></i> Institution</label>
-                    <span>${profileData.institution || 'N/A'}</span>
-                </div>
-                <div class="profile-field">
-                    <label><i class="fa-solid fa-city"></i> City</label>
-                    <span>${profileData.city || 'N/A'}</span>
-                </div>
-                <div class="profile-field">
-                    <label><i class="fa-solid fa-map-location-dot"></i> State</label>
-                    <span>${profileData.state || 'N/A'}</span>
-                </div>
-            </div>
-            <div style="margin-top: 12px; text-align: center;">
-                <span style="font-size: 0.78rem; color:#00d2ff; font-family:monospace;">UTR: ${profileData.utr_code || 'N/A'}</span>
-            </div>
-        `;
-    } catch (err) {
-        content.innerHTML = `
-            <div style="text-align:center; color:#ff4757; padding: 15px;">
-                <i class="fa-solid fa-triangle-exclamation" style="font-size: 1.5rem;"></i>
-                <p style="font-size:0.85rem;">Error: ${err.message}</p>
-            </div>
-        `;
-    }
-}
 
         function closeProfileModal() {
             document.getElementById('userProfileModal').style.display = 'none';
@@ -774,17 +751,30 @@
             if (!confirm(`Confirm payment approval for ${userEmail}?`)) return;
 
             try {
-                const { data: userData } = await window.supabaseClient
-                    .from('profiles')
-                    .select('id')
-                    .eq('email', userEmail)
-                    .maybeSingle();
+                const { data: orderDetails, error: fetchErr } = await window.supabaseClient
+                    .from('user_orders')
+                    .select('*')
+                    .eq('id', orderId)
+                    .single();
 
-                let userId = userData ? userData.id : null;
+                if (fetchErr) throw fetchErr;
+
+                let userId = orderDetails.user_id;
+                if (!userId) {
+                    const { data: userData } = await window.supabaseClient
+                        .from('profiles')
+                        .select('id')
+                        .eq('email', userEmail)
+                        .maybeSingle();
+                    userId = userData ? userData.id : null;
+                }
 
                 const { error: orderErr } = await window.supabaseClient
                     .from('user_orders')
-                    .update({ status: 'approved' })
+                    .update({ 
+                        status: 'approved',
+                        updated_at: new Date().toISOString()
+                    })
                     .eq('id', orderId);
 
                 if (orderErr) throw orderErr;
@@ -799,14 +789,31 @@
                         }]);
                 }
 
-                await window.supabaseClient
+                // 1. Insert into notifications master table and retrieve the ID
+                const { data: notifData } = await window.supabaseClient
                     .from('notifications')
                     .insert([{
                         user_id: userId,
                         title: "🎉 Note Access Granted!",
-                        message: `Your payment for order #${orderId} was verified. Access granted to your premium note!`,
-                        link: "premium-notes.html"
-                    }]);
+                        message: `Your payment for "${orderDetails.note_title}" (UTR: ${orderDetails.utr_code}) has been verified successfully. Enjoy your study material!`,
+                        link: "premium-notes.html",
+                        created_at: new Date().toISOString()
+                    }])
+                    .select('id')
+                    .single();
+
+                // 2. Insert into user_notification_state table to track read/unread status on homepage
+                if (userId && notifData && notifData.id) {
+                    await window.supabaseClient
+                        .from('user_notification_state')
+                        .insert([{
+                            user_id: userId,
+                            notification_id: notifData.id,
+                            is_read: false,
+                            is_deleted: false,
+                            updated_at: new Date().toISOString()
+                        }]);
+                }
 
                 alert("🎉 Order Approved & User Notified!");
                 await fetchOrders();
@@ -820,14 +827,16 @@
             if (!confirm("Are you sure you want to REJECT this payment?")) return;
 
             try {
-                const { data: orderData } = await window.supabaseClient
+                const { data: orderData, error: fetchErr } = await window.supabaseClient
                     .from('user_orders')
-                    .select('user_email')
+                    .select('*')
                     .eq('id', orderId)
                     .single();
 
-                let userId = null;
-                if (orderData?.user_email) {
+                if (fetchErr) throw fetchErr;
+
+                let userId = orderData?.user_id;
+                if (!userId && orderData?.user_email) {
                     const { data: userData } = await window.supabaseClient
                         .from('profiles')
                         .select('id')
@@ -838,19 +847,39 @@
 
                 const { error } = await window.supabaseClient
                     .from('user_orders')
-                    .update({ status: 'rejected' })
+                    .update({ 
+                        status: 'rejected',
+                        updated_at: new Date().toISOString()
+                    })
                     .eq('id', orderId);
 
                 if (error) throw error;
 
-                await window.supabaseClient
+                // 1. Insert into notifications master table and retrieve the ID
+                const { data: notifData } = await window.supabaseClient
                     .from('notifications')
                     .insert([{
                         user_id: userId,
                         title: "❌ Payment Verification Failed",
-                        message: `Payment order #${orderId} was rejected. Please verify your UTR code and resubmit.`,
-                        link: "premium-notes.html"
-                    }]);
+                        message: `Your payment for "${orderData.note_title}" could not be verified (UTR: ${orderData.utr_code}). Please recheck your UTR code and try submitting again.`,
+                        link: "premium-notes.html",
+                        created_at: new Date().toISOString()
+                    }])
+                    .select('id')
+                    .single();
+
+                // 2. Insert into user_notification_state table to track read/unread status on homepage
+                if (userId && notifData && notifData.id) {
+                    await window.supabaseClient
+                        .from('user_notification_state')
+                        .insert([{
+                            user_id: userId,
+                            notification_id: notifData.id,
+                            is_read: false,
+                            is_deleted: false,
+                            updated_at: new Date().toISOString()
+                        }]);
+                }
 
                 alert("Order Rejected & User Notified ❌");
                 await fetchOrders();
@@ -861,4 +890,3 @@
     </script>
 </body>
 </html>
-

@@ -555,6 +555,23 @@ async function setGoogleUserPassword() {
     document.getElementById("newPasswordInput").value = "";
   }
 }
+async function clearAppCache() {
+  try {
+    if ('caches' in window) {
+      const cacheNames = await caches.keys();
+      await Promise.all(
+        cacheNames.map(name => caches.delete(name))
+      );
+    }
+    localStorage.clear();
+    sessionStorage.clear();
+    alert("✅ App cache successfully cleared! Page reload ho raha hai.");
+    window.location.reload();
+  } catch (err) {
+    console.error("Cache clear error:", err);
+    alert("❌ Cache clear karne mein error aaya.");
+  }
+}
 
 async function deleteUserAccount() {
   const emailInput = document.getElementById("deleteConfirmEmailInput").value.trim();
@@ -589,6 +606,12 @@ async function deleteUserAccount() {
       .eq('id', currentUser.id);
 
     if (profileErr) throw profileErr;
+
+    // Service Worker Cache Clean-up addition
+    if ('caches' in window) {
+      const cacheNames = await caches.keys();
+      await Promise.all(cacheNames.map(name => caches.delete(name)));
+    }
 
     localStorage.clear();
     sessionStorage.clear();
