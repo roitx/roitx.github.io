@@ -75,7 +75,7 @@
             padding: 12px 14px;
             border-radius: 8px;
             border: 1px solid var(--border-color);
-            gap: 10px;
+            gap: 12px;
             transition: border-color 0.2s;
         }
 
@@ -120,16 +120,16 @@
             display: block;
             font-size: 11px;
             color: var(--text-secondary);
+            line-height: 1.4;
         }
 
-        /* Right Side Actions & Icons */
         .right-actions {
             display: flex;
             align-items: center;
             gap: 8px;
+            flex-shrink: 0;
         }
 
-        /* Info 'i' Button */
         .info-btn {
             background: rgba(255, 255, 255, 0.08);
             border: 1px solid var(--border-color);
@@ -153,7 +153,6 @@
             border-color: var(--accent-color);
         }
 
-        /* Minimalist SVG Icon Access Tags */
         .access-tag {
             display: inline-flex;
             align-items: center;
@@ -178,21 +177,26 @@
         .access-tag.locked { color: #f59e0b; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); }
         .access-tag.free { color: #3b82f6; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.3); }
 
+        /* Badge Group Alignments Fix */
         .badges-group {
             display: flex;
             flex-direction: column;
             align-items: flex-end;
+            justify-content: center;
             gap: 6px;
             flex-shrink: 0;
+            min-width: 100px;
         }
 
         .badge {
             font-size: 10px;
             font-weight: 600;
-            padding: 3px 8px;
+            padding: 4px 8px;
             border-radius: 12px;
             text-transform: uppercase;
             white-space: nowrap;
+            text-align: center;
+            display: inline-block;
         }
 
         .badge.downloaded { background-color: rgba(16, 185, 129, 0.15); color: var(--success-color); border: 1px solid rgba(16, 185, 129, 0.3); }
@@ -206,6 +210,7 @@
             cursor: pointer;
             text-decoration: underline;
             padding: 0;
+            white-space: nowrap;
         }
 
         .empty {
@@ -215,7 +220,6 @@
             padding: 20px;
         }
 
-        /* Popup Modal Styles */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px);
@@ -258,7 +262,7 @@
         <div class="modal-card" onclick="event.stopPropagation()">
             <div class="modal-header">
                 <span>File Details</span>
-                <button class="modal-close" onclick="closeInfoModal()">&times;</button>
+                <button class="modal-close" onclick="closeInfoModal(event)">&times;</button>
             </div>
             <div class="modal-body" id="modalContent">
                 <!-- Dynamic Content Will Load Here -->

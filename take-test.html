@@ -27,7 +27,6 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', system-ui, -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background: var(--bg-body); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
 
-        /* HEADER FIX FOR QUIZ NAME */
         header { 
             background: rgba(28, 37, 65, 0.95);
             backdrop-filter: blur(12px);
@@ -96,7 +95,6 @@
             cursor: pointer;
         }
 
-        /* LAYOUT */
         .portal-layout { 
             display: grid; 
             grid-template-columns: 1fr 320px; 
@@ -108,7 +106,6 @@
             flex-grow: 1; 
         }
 
-        /* QUESTION BOX */
         .question-box { 
             background: var(--surface); 
             border-radius: var(--radius-lg); 
@@ -132,7 +129,6 @@
         .q-num { font-weight: 800; font-size: 16px; color: var(--primary); }
         .q-text { font-size: 16px; line-height: 1.6; font-weight: 600; margin-bottom: 20px; color: var(--text-main); }
 
-        /* OPTIONS */
         .options-grid { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
         .option-card { 
             border: 1px solid var(--border); 
@@ -170,7 +166,6 @@
         }
         .option-card.selected .opt-prefix { background: var(--primary); color: #000; border-color: var(--primary); }
 
-        /* BOTTOM ACTION BAR */
         .action-bar { 
             display: flex; 
             flex-direction: column; 
@@ -199,7 +194,6 @@
         .btn-primary { background: var(--primary); color: #000; font-weight: 800; }
         .btn-submit-action { background: var(--success) !important; color: #000 !important; font-weight: 900 !important; box-shadow: 0 0 12px rgba(16, 185, 129, 0.4); }
 
-        /* BACKDROP FOR MOBILE OVERLAY */
         .backdrop {
             position: fixed;
             inset: 0;
@@ -212,7 +206,6 @@
         }
         .backdrop.active { display: block; opacity: 1; }
 
-        /* DRAWER PALETTE */
         .palette-box { 
             background: var(--surface); 
             border-radius: var(--radius-lg); 
@@ -282,7 +275,6 @@
             gap: 6px;
         }
 
-        /* EXIT MODAL */
         .modal-overlay {
             position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(6px); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 16px;
         }
@@ -290,11 +282,40 @@
         .modal-actions { display: flex; gap: 10px; margin-top: 18px; }
         .modal-actions button { flex: 1; padding: 10px; border-radius: 8px; font-weight: 700; border: none; cursor: pointer; font-size: 13px; }
 
-        /* RESULTS AREA */
+        /* RESULTS AREA & SHARE SECTION */
         .result-wrapper { max-width: 800px; margin: 30px auto; background: var(--surface); padding: 32px 20px; border-radius: var(--radius-lg); border: 1px solid var(--border); text-align: center; }
         .score-card { display: flex; justify-content: space-around; background: rgba(255,255,255,0.03); padding: 20px; border-radius: var(--radius-md); margin: 24px 0; border: 1px solid var(--border); }
         .stat-item h3 { font-size: 24px; font-weight: 900; color: var(--primary); }
         .stat-item p { font-size: 11px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-top: 4px; }
+
+        .share-box {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px dashed var(--border);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .share-box h4 { font-size: 14px; margin-bottom: 12px; color: var(--text-main); }
+        .share-buttons { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+        .btn-share {
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 12.5px;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: #fff;
+            transition: transform 0.15s ease;
+        }
+        .btn-share:active { transform: scale(0.96); }
+        .btn-wa { background: #25D366; }
+        .btn-tg { background: #0088cc; }
+        .btn-native { background: var(--primary); color: #000; }
+        .btn-copy { background: rgba(255, 255, 255, 0.1); color: var(--text-main); border: 1px solid var(--border); }
 
         .sol-card { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; margin-top: 12px; text-align: left; }
         .badge { font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 20px; display: inline-block; margin-bottom: 8px; }
@@ -302,7 +323,6 @@
         .badge-danger { background: rgba(244, 63, 94, 0.2); color: var(--danger); }
         .badge-warning { background: rgba(251, 191, 36, 0.2); color: var(--warning); }
 
-        /* MOBILE RESPONSIVE STYLES */
         @media (max-width: 850px) {
             .portal-layout { grid-template-columns: 1fr; margin: 8px auto; padding: 0 12px; }
             .sheet-drag-handle, .btn-close-sheet { display: flex; }
@@ -363,7 +383,6 @@
         </div>
     </div>
 
-    <!-- Palette Drawer Panel -->
     <div class="palette-box" id="paletteBox">
         <div>
             <div class="sheet-drag-handle"></div>
@@ -395,7 +414,6 @@
     </div>
 </div>
 
-<!-- EXIT MODAL -->
 <div class="modal-overlay" id="exitModal">
     <div class="modal-card">
         <i class="fa-solid fa-triangle-exclamation" style="font-size: 36px; color: var(--danger); margin-bottom: 10px;"></i>
@@ -408,7 +426,6 @@
     </div>
 </div>
 
-<!-- RESULT VIEW -->
 <div id="resultArea" style="display: none;">
     <div class="result-wrapper">
         <i class="fa-solid fa-circle-check" style="font-size: 50px; color: var(--success);"></i>
@@ -430,8 +447,20 @@
             </div>
         </div>
 
-        <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+        <!-- SHARE RESULT SECTION -->
+        <div class="share-box">
+            <h4><i class="fa-solid fa-share-nodes" style="color: var(--primary);"></i> Share Your Scorecard</h4>
+            <div class="share-buttons">
+                <button class="btn-share btn-wa" onclick="shareOnWhatsApp()"><i class="fa-brands fa-whatsapp"></i> WhatsApp</button>
+                <button class="btn-share btn-tg" onclick="shareOnTelegram()"><i class="fa-brands fa-telegram"></i> Telegram</button>
+                <button class="btn-share btn-native" onclick="shareNative()"><i class="fa-solid fa-arrow-up-from-bracket"></i> Share</button>
+                <button class="btn-share btn-copy" onclick="copyResultLink()"><i class="fa-solid fa-copy"></i> Copy Link</button>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 16px;">
             <button class="btn btn-primary" onclick="toggleSolutions()"><i class="fa-solid fa-eye"></i> View Answer Key</button>
+            <button class="btn btn-warning" onclick="reattemptTest()"><i class="fa-solid fa-rotate-right"></i> Reattempt Test</button>
             <button class="btn btn-outline" onclick="window.location.href='tests.html'"><i class="fa-solid fa-house"></i> Tests Home</button>
         </div>
 
@@ -448,6 +477,7 @@
     let userAnswers = {}, reviewStatus = {};
     let timerInterval = null, timeRemaining = 0, testStartTime = Date.now();
     let currentFilter = 'all';
+    let lastCalculatedScore = "0/0", lastAccuracy = "0%", lastTimeTaken = "0s";
 
     window.onload = function() {
         const urlParams = new URLSearchParams(window.location.search);
@@ -557,7 +587,6 @@
             optionsBox.appendChild(card);
         });
 
-        // DYNAMIC NEXT / SUBMIT BUTTON CONTROL
         const nextBtn = document.getElementById("nextBtn");
         if (currentIndex === questions.length - 1) {
             nextBtn.innerHTML = `Submit Test <i class="fa-solid fa-paper-plane"></i>`;
@@ -651,7 +680,7 @@
         }
     }
 
-        function trackTestActivityLocally(testData, score, totalMarks, timeTakenSec) {
+    function trackTestActivityLocally(testData, score, totalMarks, timeTakenSec) {
         try {
             let recent = JSON.parse(localStorage.getItem("recentFiles") || "[]");
             let mins = Math.floor(timeTakenSec / 60);
@@ -706,26 +735,95 @@
         let timeTakenSec = Math.round((Date.now() - testStartTime) / 1000);
         let accuracy = questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 0;
 
-        // Save activity in local storage
+        lastCalculatedScore = `${totalScore}/${totalMarks}`;
+        lastAccuracy = `${accuracy}%`;
+        lastTimeTaken = `${Math.floor(timeTakenSec / 60)}m ${timeTakenSec % 60}s`;
+
         trackTestActivityLocally(currentTest, totalScore, totalMarks, timeTakenSec);
 
         document.getElementById("testArea").style.display = "none";
         document.getElementById("resultArea").style.display = "block";
 
-        document.getElementById("statScore").innerText = `${totalScore}/${totalMarks}`;
-        document.getElementById("statAccuracy").innerText = `${accuracy}%`;
-        document.getElementById("statTime").innerText = `${Math.floor(timeTakenSec / 60)}m ${timeTakenSec % 60}s`;
+        document.getElementById("statScore").innerText = lastCalculatedScore;
+        document.getElementById("statAccuracy").innerText = lastAccuracy;
+        document.getElementById("statTime").innerText = lastTimeTaken;
 
         try {
             const { data: { user } } = await window.supabaseClient.auth.getUser();
-            if (!user) return;
-            await window.supabaseClient.from('test_results').upsert([{
-                test_id: currentTest.id, user_id: user.id, score: totalScore, total_marks: totalMarks,
-                correct_answers: correctCount, wrong_answers: wrongCount, time_taken_sec: timeTakenSec
-            }], { onConflict: 'user_id, test_id' });
-        } catch (err) { console.error(err); }
+            if (user) {
+                await window.supabaseClient.from('test_results').upsert([{
+                    test_id: currentTest.id, 
+                    user_id: user.id, 
+                    score: totalScore, 
+                    total_marks: totalMarks,
+                    correct_answers: correctCount, 
+                    wrong_answers: wrongCount, 
+                    time_taken_sec: timeTakenSec,
+                    updated_at: new Date()
+                }], { onConflict: 'user_id, test_id' });
+            }
+        } catch (err) { 
+            console.error("Database sync error:", err); 
+        }
     }
 
+    /* SHARE FUNCTIONS */
+    function generateShareText() {
+        const title = currentTest ? currentTest.title : "Exam";
+        return `🎯 *Test Result Scorecard*\n📚 *Test:* ${title}\n📊 *Score:* ${lastCalculatedScore}\n⚡ *Accuracy:* ${lastAccuracy}\n⏱️ *Time:* ${lastTimeTaken}\n\nAap bhi test attempt karein! 👇\n${window.location.href}`;
+    }
+
+    function shareOnWhatsApp() {
+        const text = encodeURIComponent(generateShareText());
+        window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+    }
+
+    function shareOnTelegram() {
+        const text = encodeURIComponent(generateShareText());
+        window.open(`https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${text}`, '_blank');
+    }
+
+    function shareNative() {
+        if (navigator.share) {
+            navigator.share({
+                title: currentTest ? currentTest.title : "Test Scorecard",
+                text: generateShareText(),
+                url: window.location.href
+            }).catch(() => {});
+        } else {
+            copyResultLink();
+        }
+    }
+
+    function copyResultLink() {
+        navigator.clipboard.writeText(generateShareText()).then(() => {
+            alert("Score summary aur link clipboard me copy ho gaya hai!");
+        }).catch(() => {
+            alert("Copy karne me dikkat aayi.");
+        });
+    }
+
+    function reattemptTest() {
+        if (!currentTest) return;
+
+        if (confirm("Kya aap sach me reattempt karna chahte hain? Aapka purana draft clear ho jayega aur naya score calculate hoga.")) {
+            localStorage.removeItem(`test_draft_${currentTest.id}`);
+
+            userAnswers = {};
+            reviewStatus = {};
+            currentIndex = 0;
+            testStartTime = Date.now();
+            timeRemaining = (currentTest.time_limit_mins || 15) * 60;
+
+            document.getElementById("resultArea").style.display = "none";
+            document.getElementById("solutionsContainer").style.display = "none";
+            document.getElementById("testArea").style.display = "grid";
+
+            startTimer();
+            renderPalette();
+            loadQuestion(0);
+        }
+    }
 
     function toggleSolutions() {
         const solContainer = document.getElementById("solutionsContainer");

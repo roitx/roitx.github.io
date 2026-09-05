@@ -2,6 +2,8 @@
    STATE MANAGEMENT & GLOBAL VARIABLES
    ========================================== */
 let studentTests = [];
+let userTestResultsMap = {}; // Stores test_id -> { score, total_marks, percentage }
+let userDraftsMap = {};      // Stores test_id -> draft details
 let isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
 let isExploreOpen = false;
 
@@ -15,6 +17,74 @@ let selectedLbBoard = "ALL";
 let selectedLbClass = "ALL";
 let selectedLbSubject = "ALL";
 let selectedLbTestId = "ALL";
+
+// Dynamic CSS Injection for Skeleton & UI Enhancements
+(function injectCustomStyles() {
+    const style = document.createElement('style');
+    style.innerHTML = `
+        @keyframes skeleton-pulse {
+            0% { background-color: #e2e8f0; }
+            50% { background-color: #edf2f7; }
+            100% { background-color: #e2e8f0; }
+        }
+        .skeleton-card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+        .skeleton-line {
+            height: 14px;
+            background-color: #e2e8f0;
+            border-radius: 4px;
+            animation: skeleton-pulse 1.5s infinite ease-in-out;
+        }
+        .btn-reattempt {
+            background: transparent !important;
+            color: #4b5563 !important;
+            border: 1.5px solid #cbd5e1 !important;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .btn-reattempt:hover {
+            background: #f1f5f9 !important;
+            color: #1e293b !important;
+            border-color: #94a3b8 !important;
+        }
+        .btn-resume {
+            background: #f59e0b !important;
+            color: #ffffff !important;
+            border: none !important;
+            font-weight: 700 !important;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3) !important;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .btn-resume:hover {
+            background: #d97706 !important;
+        }
+        .btn-share {
+            background: #25D366;
+            color: #ffffff;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: opacity 0.2s;
+        }
+        .btn-share:hover { opacity: 0.9; }
+    `;
+    document.head.appendChild(style);
+})();
 
 /* ==========================================
    INITIALIZATION & AUTHENTICATION
@@ -43,6 +113,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         searchInput.addEventListener("input", filterStudentTests);
     }
 
+    scanLocalDrafts();
+    await fetchUserPreviousResults();
     fetchStudentTests();
 });
 
@@ -72,11 +144,103 @@ function initDarkModeSupport() {
 }
 
 /* ==========================================
+   LOCAL DRAFTS DETECTOR (CONTINUE FEATURE)
+   ========================================== */
+function scanLocalDrafts() {
+    userDraftsMap = {};
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith("test_draft_")) {
+            const testId = key.replace("test_draft_", "");
+            try {
+                const draftData = JSON.parse(localStorage.getItem(key));
+                userDraftsMap[testId] = draftData;
+            } catch (e) {
+                console.warn("Invalid draft format for key:", key);
+            }
+        }
+    }
+}
+
+/* ==========================================
+   FETCH USER PREVIOUS TEST RESULTS
+   ========================================== */
+async function fetchUserPreviousResults() {
+    if (!window.supabaseClient) return;
+
+    try {
+        const { data: { user } } = await window.supabaseClient.auth.getUser();
+        if (!user) return;
+
+        const { data, error } = await window.supabaseClient
+            .from('test_results')
+            .select('test_id, score, total_marks, created_at')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        userTestResultsMap = {};
+        if (data && data.length > 0) {
+            data.forEach(result => {
+                if (!userTestResultsMap[result.test_id]) {
+                    const total = result.total_marks || 0;
+                    const score = result.score || 0;
+                    const pct = total > 0 ? Math.round((score / total) * 100) : 0;
+                    
+                    userTestResultsMap[result.test_id] = {
+                        score: score,
+                        total_marks: total,
+                        percentage: pct
+                    };
+                }
+            });
+        }
+    } catch (err) {
+        console.warn("Error fetching user test history:", err.message);
+    }
+}
+
+/* ==========================================
+   LOADING SKELETON RENDERER & SPINNER HIDER
+   ========================================== */
+function hideGlobalSpinner() {
+    const allSpinners = document.querySelectorAll('.fetching-tests-spinner, [class*="spinner"], [id*="loading"]');
+    allSpinners.forEach(el => {
+        if (el.id !== "studentTestsContainer") el.remove();
+    });
+
+    const allElements = document.body.querySelectorAll('*');
+    allElements.forEach(el => {
+        if (el.children.length === 0 && el.textContent.includes('Fetching available tests')) {
+            el.style.display = 'none';
+        }
+    });
+}
+
+function showLoadingSkeletons() {
+    const container = document.getElementById("studentTestsContainer");
+    if (!container) return;
+
+    let skeletonHtml = "";
+    for (let i = 0; i < 4; i++) {
+        skeletonHtml += `
+            <div class="skeleton-card">
+                <div class="skeleton-line" style="width: 70%; height: 20px;"></div>
+                <div class="skeleton-line" style="width: 40%; height: 12px;"></div>
+                <div class="skeleton-line" style="width: 100%; height: 35px; margin-top: 10px;"></div>
+                <div class="skeleton-line" style="width: 100%; height: 40px; border-radius: 8px;"></div>
+            </div>
+        `;
+    }
+    container.innerHTML = skeletonHtml;
+}
+
+/* ==========================================
    DATA FETCHING & RENDERING
    ========================================== */
 async function fetchStudentTests() {
-    const loader = document.getElementById("loaderBox");
-    if (loader) loader.style.display = "block";
+    showLoadingSkeletons();
 
     try {
         const { data, error } = await window.supabaseClient
@@ -88,7 +252,7 @@ async function fetchStudentTests() {
 
         studentTests = data || [];
         populateLeaderboardTestDropdown(studentTests);
-        initLeaderboardStepView(); // Initializes step-by-step filter flow for leaderboard
+        initLeaderboardStepView();
         renderRecentFiveTests();
     } catch (err) {
         const statusMsg = document.getElementById("statusMsg");
@@ -97,7 +261,7 @@ async function fetchStudentTests() {
             statusMsg.innerText = "❌ Error loading tests: " + err.message;
         }
     } finally {
-        if (loader) loader.style.display = "none";
+        hideGlobalSpinner();
     }
 }
 
@@ -134,7 +298,7 @@ function toggleExplorePage() {
     }
 }
 
-// STEP 1: BOARD GENERATION (Tests)
+// STEP 1: BOARD GENERATION
 function renderBoardStep() {
     const grid = document.getElementById("boardOptionsGrid");
     if (!grid) return;
@@ -175,7 +339,7 @@ function selectBoard(board) {
     filterStudentTests();
 }
 
-// STEP 2: CLASS GENERATION (Tests)
+// STEP 2: CLASS GENERATION
 function renderClassStep() {
     const grid = document.getElementById("classOptionsGrid");
     if (!grid) return;
@@ -221,7 +385,7 @@ function selectClass(cls) {
     filterStudentTests();
 }
 
-// STEP 3: SUBJECT GENERATION (Tests)
+// STEP 3: SUBJECT GENERATION
 function renderSubjectStep() {
     const grid = document.getElementById("subjectOptionsGrid");
     if (!grid) return;
@@ -334,8 +498,23 @@ function renderStudentTests(tests) {
     const container = document.getElementById("studentTestsContainer");
     if (!container) return;
 
+    hideGlobalSpinner();
+    scanLocalDrafts();
+
+    // EMPTY STATE WITH GRAPHIC
     if (tests.length === 0) {
-        container.innerHTML = `<p style="text-align: center; color: #777; width: 100%; grid-column: 1 / -1; margin-top: 30px;">Is selection ke mutabiq koi test nahi mila.</p>`;
+        container.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 40px 20px;">
+                <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto 12px auto; display: block;">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    <line x1="11" y1="8" x2="11" y2="14"></line>
+                    <line x1="8" y1="11" x2="14" y2="11"></line>
+                </svg>
+                <h4 style="color: #475569; font-size: 16px; margin-bottom: 4px;">Koi Test Nahi Mila</h4>
+                <p style="color: #94a3b8; font-size: 13px;">Kripya apne filters ya search query badal kar dekhein.</p>
+            </div>
+        `;
         return;
     }
 
@@ -345,17 +524,64 @@ function renderStudentTests(tests) {
         let timeMins = test.time_limit_mins || 15;
         let classBadge = test.class_level ? `<span style="background: #edf2f7; color: #4a5568; padding: 2px 8px; border-radius: 4px; font-size: 11px; margin-left: 6px;">${test.class_level}</span>` : '';
 
-        // NEW BADGE LOGIC
+        // STRICT 7-DAYS NEW BADGE LOGIC
         let isNew = false;
         if (test.created_at) {
             const testDate = new Date(test.created_at);
             const now = new Date();
             const diffDays = (now - testDate) / (1000 * 60 * 60 * 24);
-            if (diffDays <= 7) {
+            if (diffDays >= 0 && diffDays <= 7) {
                 isNew = true;
             }
         }
         let newBadgeHtml = isNew ? `<span class="badge-new">NEW</span>` : '';
+
+        // BUTTON STATE DETERMINATION (RESUME vs REATTEMPT vs START)
+        let statusBlockHtml = '';
+        let buttonText = 'Start Test';
+        let buttonIcon = 'fa-arrow-right';
+        let buttonClass = 'btn-primary';
+        let isReattempt = false;
+        let isResume = false;
+
+        const hasDraft = !!userDraftsMap[test.id];
+        const prevStats = userTestResultsMap[test.id];
+
+        if (hasDraft) {
+            buttonText = 'Resume Test';
+            buttonIcon = 'fa-play';
+            buttonClass = 'btn-resume';
+            isResume = true;
+
+            const draft = userDraftsMap[test.id];
+            const attemptedCount = draft.userAnswers ? Object.keys(draft.userAnswers).length : 0;
+            
+            statusBlockHtml = `
+                <div style="margin-top: 10px; padding: 8px 10px; background: rgba(245, 158, 11, 0.1); border-left: 3px solid #f59e0b; border-radius: 6px; font-size: 11px; font-weight: 700; color: #b45309; display: flex; justify-content: space-between; align-items: center;">
+                    <span><i class="fa-solid fa-pause-circle"></i> In Progress (${attemptedCount}/${qCount} Ans)</span>
+                    <span style="font-size: 10px; background: #f59e0b; color:#fff; padding:2px 6px; border-radius:4px;">Unfinished</span>
+                </div>
+            `;
+        } else if (prevStats) {
+            buttonText = 'Reattempt Test';
+            buttonIcon = 'fa-rotate-right';
+            buttonClass = 'btn-reattempt';
+            isReattempt = true;
+
+            let badgeColor = prevStats.percentage >= 60 ? '#10b981' : (prevStats.percentage >= 40 ? '#f59e0b' : '#ef4444');
+            
+            statusBlockHtml = `
+                <div style="margin-top: 10px; padding: 8px 10px; background: rgba(0,0,0,0.03); border-left: 3px solid ${badgeColor}; border-radius: 6px; font-size: 11px; font-weight: 700; color: #4b5563; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <span><i class="fa-solid fa-chart-line" style="color:${badgeColor}; margin-right: 4px;"></i> Last Attempt:</span>
+                        <span style="color:${badgeColor}; font-weight: 800; margin-left: 4px;">${prevStats.score}/${prevStats.total_marks} (${prevStats.percentage}%)</span>
+                    </div>
+                    <button class="btn-share" onclick="shareTestScore('${test.title.replace(/'/g, "\\'")}', ${prevStats.score}, ${prevStats.total_marks}, ${prevStats.percentage}, '${test.id}')">
+                        <i class="fa-brands fa-whatsapp"></i> Share Link
+                    </button>
+                </div>
+            `;
+        }
 
         html += `
             <div class="test-card">
@@ -368,7 +594,10 @@ function renderStudentTests(tests) {
                     <span><i class="fa-solid fa-clock"></i> ${timeMins} Mins</span> • 
                     <span><i class="fa-solid fa-book"></i> ${test.subject || 'General'}</span>
                 </div>
-                <button onclick="handleStartTest('${test.id}')">Start Test <i class="fa-solid fa-arrow-right"></i></button>
+                ${statusBlockHtml}
+                <button class="${buttonClass}" onclick="handleStartTest('${test.id}', ${isReattempt}, ${isResume})" style="margin-top: 12px; width: 100%;">
+                    ${buttonText} <i class="fa-solid ${buttonIcon}"></i>
+                </button>
             </div>
         `;
     });
@@ -377,9 +606,35 @@ function renderStudentTests(tests) {
 }
 
 /* ==========================================
+   DIRECT WHATSAPP SHARE WITH SCORE & TEST LINK
+   ========================================== */
+function shareTestScore(testTitle, score, totalMarks, percentage, testId) {
+    const baseUrl = window.location.origin + window.location.pathname.replace('tests.html', '');
+    const testLink = `${baseUrl}take-test.html?id=${testId}`;
+
+    const shareText = 
+`🏆 *ROITX TESTHUB SCORE CARD* 🏆
+--------------------------------
+📝 *Test:* ${testTitle}
+🎯 *Score:* ${score} / ${totalMarks}
+📊 *Percentage:* ${percentage}%
+--------------------------------
+👉 *Aap bhi ye test attempt karke apna rank dekhein:*
+${testLink}`;
+
+    openWhatsAppFallback(shareText);
+}
+
+function openWhatsAppFallback(text) {
+    const encodedText = encodeURIComponent(text);
+    const waUrl = `https://api.whatsapp.com/send?text=${encodedText}`;
+    window.open(waUrl, '_blank');
+}
+
+/* ==========================================
    AUTH & MODAL HANDLING
    ========================================== */
-function handleStartTest(testId) {
+function handleStartTest(testId, isReattempt = false, isResume = false) {
     const userLoggedIn = isLoggedIn || localStorage.getItem("isLoggedIn") === "true";
 
     if (!userLoggedIn) {
@@ -387,7 +642,11 @@ function handleStartTest(testId) {
         return;
     }
 
-    window.location.href = `take-test.html?id=${testId}`;
+    let urlParams = `id=${testId}`;
+    if (isReattempt) urlParams += '&reattempt=true';
+    if (isResume) urlParams += '&resume=true';
+
+    window.location.href = `take-test.html?${urlParams}`;
 }
 
 function showAuthModal(customMessage) {
@@ -443,7 +702,7 @@ function switchTab(tab) {
 }
 
 /* ==========================================
-   STEP-BY-STEP LEADERBOARD FILTER SYSTEM (NEW STEP FLOW)
+   STEP-BY-STEP LEADERBOARD FILTER SYSTEM
    ========================================== */
 function toggleLeaderboardFilters() {
     const drawer = document.getElementById('leaderboardFilterDrawer');
@@ -466,18 +725,8 @@ function populateLeaderboardTestDropdown(tests) {
     lbSelect.innerHTML = html;
 }
 
-// Initializing Leaderboard Step Filters
 function initLeaderboardStepView() {
     renderLbBoardStep();
-    
-    // Hide future steps initially
-    const classBlock = document.getElementById("lbClassStepBlock");
-    const subjectBlock = document.getElementById("lbSubjectStepBlock");
-    const testBlock = document.getElementById("lbTestStepBlock");
-
-    if (classBlock) classBlock.style.display = "none";
-    if (subjectBlock) subjectBlock.style.display = "none";
-    if (testBlock) testBlock.style.display = "none";
 }
 
 // STEP 1: LEADERBOARD BOARDS
@@ -500,6 +749,7 @@ function renderLbBoardStep() {
     });
 
     boardBox.innerHTML = html;
+    renderLbClassStep();
 }
 
 function selectLbBoardStep(b) {
@@ -509,16 +759,6 @@ function selectLbBoardStep(b) {
     selectedLbTestId = "ALL";
 
     renderLbBoardStep();
-
-    const classBlock = document.getElementById("lbClassStepBlock");
-    const subjectBlock = document.getElementById("lbSubjectStepBlock");
-    const testBlock = document.getElementById("lbTestStepBlock");
-
-    if (classBlock) classBlock.style.display = "block";
-    if (subjectBlock) subjectBlock.style.display = "none";
-    if (testBlock) testBlock.style.display = "none";
-
-    renderLbClassStep();
     loadLeaderboardData();
 }
 
@@ -550,6 +790,7 @@ function renderLbClassStep() {
     });
 
     classBox.innerHTML = html;
+    renderLbSubjectStep();
 }
 
 function selectLbClassStep(c) {
@@ -558,14 +799,6 @@ function selectLbClassStep(c) {
     selectedLbTestId = "ALL";
 
     renderLbClassStep();
-
-    const subjectBlock = document.getElementById("lbSubjectStepBlock");
-    const testBlock = document.getElementById("lbTestStepBlock");
-
-    if (subjectBlock) subjectBlock.style.display = "block";
-    if (testBlock) testBlock.style.display = "none";
-
-    renderLbSubjectStep();
     loadLeaderboardData();
 }
 
@@ -599,6 +832,7 @@ function renderLbSubjectStep() {
     });
 
     subjectBox.innerHTML = html;
+    renderLbTestStep();
 }
 
 function selectLbSubjectStep(s) {
@@ -606,11 +840,6 @@ function selectLbSubjectStep(s) {
     selectedLbTestId = "ALL";
 
     renderLbSubjectStep();
-
-    const testBlock = document.getElementById("lbTestStepBlock");
-    if (testBlock) testBlock.style.display = "block";
-
-    renderLbTestStep();
     loadLeaderboardData();
 }
 
@@ -670,19 +899,7 @@ function renderPodiumCards(data) {
     const defaultAvatar = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
     const crownSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="#f6e05e"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/></svg>`;
     
-    if (!container) {
-        const lbSection = document.getElementById("leaderboardSection");
-        if (!lbSection) return;
-        container = document.createElement("div");
-        container.id = "podiumContainer";
-        container.className = "podium-container";
-        const tableContainer = lbSection.querySelector(".table-container");
-        if (tableContainer) {
-            lbSection.insertBefore(container, tableContainer);
-        } else {
-            lbSection.appendChild(container);
-        }
-    }
+    if (!container) return;
 
     if (!data || data.length === 0) {
         container.innerHTML = "";
@@ -767,15 +984,12 @@ async function loadLeaderboardData() {
                     .eq('id', user.id);
             } else {
                 if (tbody) {
-                    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#e53e3e; font-weight:bold; padding:20px;">⚠️ Leaderboard dekhne ke liye valid Pincode add karna zaroori hai. Page refresh karke dobara try karein.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#e53e3e; font-weight:bold; padding:20px;">⚠️ Leaderboard dekhne ke liye valid Pincode add karna zaroori hai.</td></tr>`;
                 }
                 renderPodiumCards([]);
                 return;
             }
         }
-
-        const now = new Date();
-        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
         let query = window.supabaseClient
             .from('test_results')
@@ -783,13 +997,11 @@ async function loadLeaderboardData() {
                 score,
                 total_marks,
                 test_id,
-                tests!inner ( title, subject, class_level ),
-                profiles!inner ( full_name, pincode, avatar_url, city )
+                tests ( title, subject, class_level ),
+                profiles ( full_name, pincode, avatar_url, city )
             `)
-            .eq('profiles.pincode', currentPincode)
-            .gte('created_at', firstDayOfMonth)
             .order('score', { ascending: false })
-            .limit(50);
+            .limit(100);
 
         if (selectedLbTestId && selectedLbTestId !== "ALL") {
             query = query.eq('test_id', selectedLbTestId);
@@ -798,8 +1010,10 @@ async function loadLeaderboardData() {
         const { data, error } = await query;
         if (error) throw error;
 
-        // Dynamic Filtering
         let filteredData = (data || []).filter(row => {
+            const rowPincode = row.profiles?.pincode || '';
+            const isPincodeMatch = rowPincode === currentPincode;
+
             const testTitle = (row.tests?.title || '').toLowerCase();
             const testClass = (row.tests?.class_level || '').toLowerCase();
             const testSub = (row.tests?.subject || '').toLowerCase();
@@ -818,7 +1032,7 @@ async function loadLeaderboardData() {
             const matchesSubject = (selectedLbSubject === "ALL") ||
                 testSub.includes(selectedLbSubject.toLowerCase());
 
-            return matchesBoard && matchesClass && matchesSubject;
+            return isPincodeMatch && matchesBoard && matchesClass && matchesSubject;
         });
 
         renderPodiumCards(filteredData);

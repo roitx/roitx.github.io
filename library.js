@@ -4,31 +4,36 @@ document.addEventListener("DOMContentLoaded", () => {
     renderActivityFeed();
 });
 
-// Auto-update UI when navigating BACK to library page
 window.addEventListener("pageshow", (event) => {
     renderActivityFeed();
 });
 
-// Auto-update UI if localStorage changes in another tab
 window.addEventListener("storage", (event) => {
-    if (event.key === "recentFiles" || event.key === "downloadedFiles" || event.key === "userPurchasedNotes") {
+    if (["recentFiles", "downloadedFiles", "userPurchasedNotes"].includes(event.key)) {
         renderActivityFeed();
     }
 });
 
 function getData(key) {
-    return JSON.parse(localStorage.getItem(key) || "[]");
+    try {
+        return JSON.parse(localStorage.getItem(key) || "[]");
+    } catch (e) {
+        console.warn(`Error reading ${key} from LocalStorage:`, e);
+        return [];
+    }
 }
 
 function toggleFilter() {
     showOnlyDownloaded = !showOnlyDownloaded;
     const btn = document.getElementById("filterToggle");
-    if (showOnlyDownloaded) {
-        btn.classList.add("active");
-        btn.innerHTML = "✨ Showing Downloaded";
-    } else {
-        btn.classList.remove("active");
-        btn.innerHTML = "✨ Downloaded Only";
+    if (btn) {
+        if (showOnlyDownloaded) {
+            btn.classList.add("active");
+            btn.innerHTML = "✨ Showing Downloaded";
+        } else {
+            btn.classList.remove("active");
+            btn.innerHTML = "✨ Downloaded Only";
+        }
     }
     renderActivityFeed();
 }
@@ -57,7 +62,6 @@ function trackActivityLocally(fileData, isDownloaded = false) {
         const alreadyDownloaded = downloads.some(f => f.url && f.url.split('?')[0] === cleanBaseUrl) || isDownloaded;
         const isCurrentPremium = fileData.isPremium || cleanBaseUrl.toLowerCase().includes("premium") || cleanBaseUrl.toLowerCase().includes("paid");
 
-        // Check if file already exists in recent to track view count
         let existingIndex = recent.findIndex(f => (f.url && f.url.split('?')[0] === cleanBaseUrl) || f.title === fileData.title);
         let viewCount = 1;
         if (existingIndex !== -1) {
@@ -74,6 +78,10 @@ function trackActivityLocally(fileData, isDownloaded = false) {
             isPurchased: isPurchased,
             isPremium: isCurrentPremium,
             isTest: fileData.isTest || false,
+            inProgress: fileData.inProgress || false,
+            isCompleted: fileData.isCompleted || false,
+            score: fileData.score !== undefined ? fileData.score : null,
+            timeTaken: fileData.timeTaken || null,
             viewCount: viewCount
         });
 
@@ -102,14 +110,14 @@ async function renderActivityFeed() {
     try {
         if (window.supabaseClient && typeof window.getCurrentUser === "function") {
             const user = await window.getCurrentUser();
-            if (user) {
-                const { data: ordersData } = await window.supabaseClient
+            if (user && user.email) {
+                const { data: ordersData, error } = await window.supabaseClient
                     .from('user_orders')
                     .select('note_title, status')
                     .eq('user_email', user.email)
                     .eq('status', 'approved');
 
-                if (ordersData) {
+                if (!error && ordersData) {
                     ordersData.forEach(o => {
                         if (o.note_title) {
                             const cleaned = cleanTitleString(o.note_title);
@@ -125,11 +133,15 @@ async function renderActivityFeed() {
             }
         }
     } catch (err) {
-        console.log("Supabase fetch skip offline:", err);
+        console.log("Supabase fetch skip offline/guest:", err);
     }
 
+    // --- FILTER FIX: Hides Tests when "Downloaded Only" is active ---
     if (showOnlyDownloaded) {
         recent = recent.filter(f => {
+            let isTestItem = f.isTest || (f.url && f.url.includes("take-test.html")) || (f.meta && f.meta.includes("Score:"));
+            if (isTestItem) return false; // Tests do not count as downloaded files
+
             let cleanPath = f.url ? f.url.split('?')[0] : "";
             let cleanedTitle = cleanTitleString(f.title);
             return downloads.some(item => (item.url && item.url.split('?')[0] === cleanPath) || cleanTitleString(item.title) === cleanedTitle) || f.downloaded;
@@ -142,6 +154,7 @@ async function renderActivityFeed() {
     }
 
     recentList.innerHTML = "";
+    window.fileDetailsMap = {}; 
 
     const checkSvg = `<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
     const lockSvg = `<svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>`;
@@ -149,7 +162,7 @@ async function renderActivityFeed() {
 
     recent.forEach((f, index) => {
         let viewTargetUrl = "";
-        let isTestItem = f.isTest || (f.url && f.url.includes("take-test.html"));
+        let isTestItem = f.isTest || (f.url && f.url.includes("take-test.html")) || (f.meta && f.meta.includes("Score:"));
 
         let viewerPage = "notes-viewer.html";
         let rawUrl = f.url || "";
@@ -162,12 +175,18 @@ async function renderActivityFeed() {
                           || supabaseApprovedTitles.some(st => cleanedFileTitle.includes(st) || st.includes(cleanedFileTitle));
 
         let isDownloaded = downloads.some(item => (item.url && item.url.split('?')[0] === cleanPath) || cleanTitleString(item.title) === cleanedFileTitle) || f.downloaded;
-
         let isFilePremium = f.isPremium || cleanPath.toLowerCase().includes("premium") || cleanPath.toLowerCase().includes("paid");
 
+        let isTestCompleted = f.isCompleted || (isTestItem && !f.inProgress);
+        let isTestInProgress = isTestItem && f.inProgress;
+
         if (isTestItem) {
-            viewTargetUrl = f.url;
-        } else if (cleanPath.match(/\.(jpg|jpeg|png|webp|gif)$/i) || f.meta?.includes("Image")) {
+            if (isTestInProgress) {
+                viewTargetUrl = `${f.url}${f.url.includes('?') ? '&' : '?'}resume=true`;
+            } else {
+                viewTargetUrl = `${f.url}${f.url.includes('?') ? '&' : '?'}retake=true`;
+            }
+        } else if (cleanPath.match(/\.(jpg|jpeg|png|webp|gif)$/i) || (f.meta && f.meta.includes("Image"))) {
             viewerPage = "image-viewer.html";
             if (!cleanPath.startsWith("formulas/") && !cleanPath.includes("/")) {
                 cleanPath = `formulas/${cleanPath}`;
@@ -183,14 +202,26 @@ async function renderActivityFeed() {
         }
 
         let downloadBadgeClass = isDownloaded ? "downloaded" : "not-downloaded";
-        let downloadBadgeText = isTestItem ? "Completed" : (isDownloaded ? "Downloaded" : "Not Downloaded");
-        let actionBtnText = isTestItem ? "Re-take Test →" : "View File →";
+        let downloadBadgeText = isDownloaded ? "Downloaded" : "Not Downloaded";
+        let actionBtnText = "View File →";
+
+        if (isTestItem) {
+            if (isTestInProgress) {
+                downloadBadgeClass = "not-downloaded";
+                downloadBadgeText = "In Progress";
+                actionBtnText = "Continue Test →";
+            } else {
+                downloadBadgeClass = "downloaded";
+                downloadBadgeText = "Completed";
+                actionBtnText = "Re-take Test →";
+            }
+        }
 
         let accessTagHtml = "";
         let accessStatusText = "Free";
         if (isTestItem) {
-            accessTagHtml = `<span class="access-tag purchased" title="Attempted">${checkSvg}</span>`;
-            accessStatusText = "Test Completed";
+            accessTagHtml = `<span class="access-tag purchased" title="Test">${checkSvg}</span>`;
+            accessStatusText = isTestInProgress ? "Test In-Progress" : "Test Completed";
         } else if (isPurchased) {
             accessTagHtml = `<span class="access-tag purchased" title="Purchased">${checkSvg}</span>`;
             accessStatusText = "Purchased";
@@ -202,19 +233,18 @@ async function renderActivityFeed() {
             accessStatusText = "Free";
         }
 
-        const div = document.createElement("div");
-        div.className = "activity-item";
-
-        // Store file details safely for modal popup
-        window.fileDetailsMap = window.fileDetailsMap || {};
         window.fileDetailsMap[index] = {
-            title: f.title,
-            time: f.time,
+            title: f.title || "Untitled",
+            time: f.time || "N/A",
             views: f.viewCount || 1,
-            downloaded: isTestItem ? "Yes (Attempted)" : (isDownloaded ? "Yes (Downloaded)" : "No"),
-            access: accessStatusText
+            downloaded: isTestItem ? (isTestInProgress ? "No (In Progress)" : "Yes (Completed)") : (isDownloaded ? "Yes (Downloaded)" : "No"),
+            access: accessStatusText,
+            meta: f.meta || "",
+            isTest: isTestItem
         };
 
+        const div = document.createElement("div");
+        div.className = "activity-item";
         div.innerHTML = `
             <div class="file-info">
                 <div class="title-row">
@@ -224,7 +254,7 @@ async function renderActivityFeed() {
                         <button class="info-btn" onclick="openInfoModal(${index})" title="View Details">i</button>
                     </div>
                 </div>
-                <span>${isTestItem ? 'Attempted' : 'Viewed'} at ${f.time} • ${f.meta}</span>
+                <span>${f.meta ? f.meta : (isTestItem ? 'Completed' : 'Viewed') + ' at ' + (f.time || 'recently')}</span>
             </div>
             <div class="badges-group">
                 <span class="badge ${downloadBadgeClass}">
@@ -239,21 +269,29 @@ async function renderActivityFeed() {
 }
 
 function openInfoModal(index) {
+    if (!window.fileDetailsMap || !window.fileDetailsMap[index]) return;
     const data = window.fileDetailsMap[index];
-    if (!data) return;
 
     const modalContent = document.getElementById("modalContent");
-    modalContent.innerHTML = `
-        <div class="modal-row"><span>File Name:</span> <span>${data.title}</span></div>
-        <div class="modal-row"><span>Last Viewed Time:</span> <span>${data.time}</span></div>
-        <div class="modal-row"><span>Total Opens (Views):</span> <span>${data.views} times</span></div>
-        <div class="modal-row"><span>Download Status:</span> <span>${data.downloaded}</span></div>
-        <div class="modal-row"><span>Access Type:</span> <span>${data.access}</span></div>
-    `;
+    if (modalContent) {
+        let metaRow = data.meta ? `<div class="modal-row"><span>Details/Score:</span> <span>${data.meta}</span></div>` : '';
+        modalContent.innerHTML = `
+            <div class="modal-row"><span>Title:</span> <span>${data.title}</span></div>
+            <div class="modal-row"><span>Last Opened:</span> <span>${data.time}</span></div>
+            <div class="modal-row"><span>Total Opens:</span> <span>${data.views} times</span></div>
+            <div class="modal-row"><span>Status:</span> <span>${data.downloaded}</span></div>
+            <div class="modal-row"><span>Type:</span> <span>${data.access}</span></div>
+            ${metaRow}
+        `;
+    }
 
-    document.getElementById("infoModal").style.display = "flex";
+    const modal = document.getElementById("infoModal");
+    if (modal) modal.style.display = "flex";
 }
 
-function closeInfoModal() {
-    document.getElementById("infoModal").style.display = "none";
+function closeInfoModal(e) {
+    if (!e || e.target.id === "infoModal" || e.target.classList.contains("modal-close")) {
+        const modal = document.getElementById("infoModal");
+        if (modal) modal.style.display = "none";
+    }
 }
