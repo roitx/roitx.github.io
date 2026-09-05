@@ -604,13 +604,13 @@ function renderStudentTests(tests) {
 
     container.innerHTML = html;
 }
-
 /* ==========================================
    DIRECT WHATSAPP SHARE WITH SCORE & TEST LINK
    ========================================== */
 function shareTestScore(testTitle, score, totalMarks, percentage, testId) {
-    const baseUrl = window.location.origin + window.location.pathname.replace('tests.html', '');
-    const testLink = `${baseUrl}take-test.html?id=${testId}`;
+    // Domain ka root origin nikalne ke liye (e.g. https://roitx.qd.je)
+    const baseUrl = window.location.origin;
+    const testLink = `${baseUrl}/take-test.html?id=${encodeURIComponent(testId)}`;
 
     const shareText = 
 `🏆 *ROITX TESTHUB SCORE CARD* 🏆
@@ -630,6 +630,7 @@ function openWhatsAppFallback(text) {
     const waUrl = `https://api.whatsapp.com/send?text=${encodedText}`;
     window.open(waUrl, '_blank');
 }
+
 
 /* ==========================================
    AUTH & MODAL HANDLING
