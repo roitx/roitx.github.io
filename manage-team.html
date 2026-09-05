@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teammates & Permissions Dashboard</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --card-bg: #1e293b;
+      --card-hover: #24334a;
+      --border: #334155;
+      --accent: #6366f1;
+      --accent-hover: #4f46e5;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+    body { background: var(--bg); color: var(--text); padding: 16px; min-height: 100vh; }
+    .container { max-width: 900px; margin: 0 auto; }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .header h2 { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .back-btn {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: rgba(99, 102, 241, 0.1);
+      border-radius: 8px;
+      font-size: 13px;
+    }
+
+    /* Controls Bar */
+    .controls-bar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+    .search-wrapper { position: relative; flex: 1; min-width: 220px; }
+    .search-wrapper i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 13px; }
+    .search-box {
+      width: 100%;
+      padding: 8px 12px 8px 34px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+    }
+
+    /* Tabs */
+    .filter-tabs { display: flex; gap: 6px; }
+    .tab-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .tab-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+    /* Compact Cards Grid */
+    .users-grid { display: flex; flex-direction: column; gap: 8px; }
+    .user-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      transition: background 0.2s;
+    }
+    .user-card:hover { background: var(--card-hover); }
+
+    .user-info { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+    .avatar-img, .avatar-circle {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      object-fit: cover;
+    }
+    .avatar-circle {
+      background: linear-gradient(135deg, var(--accent), #8b5cf6);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 14px; color: white;
+    }
+    
+    .user-details { overflow: hidden; }
+    .user-details h4 { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .user-details p { font-size: 12px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .role-badge {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-weight: 600;
+      text-transform: capitalize;
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-muted);
+    }
+    .role-badge.teammate { background: rgba(99, 102, 241, 0.15); color: #818cf8; }
+    .role-badge.admin { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+
+    /* Action Buttons */
+    .btn-group { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+    .btn-icon {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .btn-notify { color: #f59e0b; background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.2); }
+    .btn-manage { background: var(--accent); color: white; border: none; font-weight: 600; padding: 6px 12px; }
+
+    /* Modals */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(4px);
+      display: none; align-items: center; justify-content: center;
+      z-index: 999; padding: 16px;
+    }
+    .modal-card {
+      background: #1e293b; border: 1px solid var(--border);
+      border-radius: 14px; width: 100%; max-width: 400px; padding: 20px;
+    }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .modal-header h3 { font-size: 16px; font-weight: 700; }
+    .close-btn { background: none; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer; }
+
+    /* Popup Settings Elements */
+    .form-group { margin-bottom: 14px; }
+    .form-group label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; font-weight: 600; }
+    .modal-select {
+      width: 100%; background: var(--bg); color: var(--text);
+      border: 1px solid var(--border); padding: 8px 10px; border-radius: 8px; outline: none; font-size: 13px;
+    }
+
+    .toggles-list { display: flex; flex-direction: column; gap: 10px; margin: 16px 0; }
+    .toggle-item { display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 500; }
+    
+    .switch { position: relative; display: inline-block; width: 34px; height: 20px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #334155; transition: .2s; border-radius: 20px;
+    }
+    .slider:before {
+      position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px;
+      background-color: white; transition: .2s; border-radius: 50%;
+    }
+    input:checked + .slider { background-color: var(--accent); }
+    input:checked + .slider:before { transform: translateX(14px); }
+
+    .btn-save-modal {
+      width: 100%; background: var(--accent); color: white; border: none;
+      padding: 10px; border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 10px;
+    }
+    .modal-textarea {
+      width: 100%; height: 80px; background: #0b0f19; border: 1px solid var(--border);
+      border-radius: 8px; color: white; padding: 10px; font-size: 13px; outline: none; resize: none;
+    }
+    .empty-state { text-align: center; padding: 30px; color: var(--text-muted); font-size: 14px; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h2><i class="fa-solid fa-users-gear" style="color: var(--accent);"></i> Teammates Permission Manager</h2>
+    <a href="profile.html" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Back to Profile</a>
+  </div>
+
+  <div class="controls-bar">
+    <div class="search-wrapper">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input type="text" id="searchInput" class="search-box" placeholder="Search by name or email..." onkeyup="filterUsers()">
+    </div>
+
+    <div class="filter-tabs">
+      <button class="tab-btn active" onclick="setActiveFilter('all', this)">All</button>
+      <button class="tab-btn" onclick="setActiveFilter('teammate', this)">Teammates</button>
+      <button class="tab-btn" onclick="setActiveFilter('student', this)">Students</button>
+      <button class="tab-btn" onclick="setActiveFilter('admin', this)">Admins</button>
+    </div>
+  </div>
+
+  <div id="usersContainer" class="users-grid">
+    <div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i> Loading users...</div>
+  </div>
+</div>
+
+<!-- MANAGE PERMISSIONS MODAL -->
+<div id="permissionsModal" class="modal-overlay">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3 id="modalUserName">Manage Permissions</h3>
+      <button class="close-btn" onclick="closeModal('permissionsModal')">&times;</button>
+    </div>
+
+    <div class="form-group">
+      <label>User Role</label>
+      <select id="modalRoleSelect" class="modal-select" onchange="handleRoleDropdownChange(this.value)">
+        <option value="student">Student</option>
+        <option value="teammate">Teammate</option>
+        <option value="admin">Admin</option>
+      </select>
+    </div>
+
+    <div class="toggles-list">
+      <div class="toggle-item">
+        <span>Admin Panel Access</span>
+        <label class="switch"><input type="checkbox" id="modalAdmin" onchange="handleToggleChange()"><span class="slider"></span></label>
+      </div>
+      <div class="toggle-item">
+        <span>Send Notification Access</span>
+        <label class="switch"><input type="checkbox" id="modalNotif" onchange="handleToggleChange()"><span class="slider"></span></label>
+      </div>
+      <div class="toggle-item">
+        <span>Upload/Manage Tests</span>
+        <label class="switch"><input type="checkbox" id="modalTest" onchange="handleToggleChange()"><span class="slider"></span></label>
+      </div>
+      <div class="toggle-item">
+        <span>AI Test Creator</span>
+        <label class="switch"><input type="checkbox" id="modalAI" onchange="handleToggleChange()"><span class="slider"></span></label>
+      </div>
+    </div>
+
+    <button class="btn-save-modal" onclick="saveModalPermissions()">Save Changes</button>
+  </div>
+</div>
+
+<!-- NOTIFICATION MODAL -->
+<div id="notifyModal" class="modal-overlay">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3><i class="fa-solid fa-bell" style="color: #f59e0b;"></i> Send Notification</h3>
+      <button class="close-btn" onclick="closeModal('notifyModal')">&times;</button>
+    </div>
+    <div>
+      <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;" id="notifyTargetText">Target...</p>
+      <textarea id="notifyMsgInput" class="modal-textarea" placeholder="Type notification message..."></textarea>
+      <button class="btn-save-modal" style="margin-top: 12px;" onclick="sendNotificationSubmit()">Send</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+<script src="auth.js"></script>
+
+<script>
+  let allUsers = [];
+  let currentFilter = 'all';
+  let activeEditingUserId = null;
+  let selectedTargetUserId = null;
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    await verifyAdminAccess();
+  });
+
+  async function verifyAdminAccess() {
+    try {
+      const user = await window.getCurrentUser();
+      if (!user) {
+        window.location.href = "login.html";
+        return;
+      }
+
+      // Check if user is SuperAdmin OR Admin OR Teammate with admin_panel access
+      const userPerms = await window.getUserPermissions();
+      const isOwner = user.email && user.email.toLowerCase().trim() === "rohitrajgoh91@gmail.com";
+      
+      const hasAccess = isOwner || 
+                        userPerms.role === 'superadmin' || 
+                        userPerms.role === 'admin' || 
+                        userPerms.role === 'teammate' || 
+                        userPerms.permissions?.admin_panel;
+
+      if (!hasAccess) {
+        alert("Unauthorized Access!");
+        window.location.href = "profile.html";
+        return;
+      }
+
+      loadRegisteredUsers();
+    } catch (err) {
+      window.location.href = "profile.html";
+    }
+  }
+
+  async function loadRegisteredUsers() {
+    try {
+      const { data, error } = await window.supabaseClient
+        .from('profiles')
+        .select('*')
+        .order('updated_at', { ascending: false });
+
+      if (error) {
+        alert("Error loading users: " + error.message);
+        return;
+      }
+
+      allUsers = data || [];
+      filterUsers();
+    } catch (err) {
+      alert("Database connectivity issue!");
+    }
+  }
+
+  function setActiveFilter(filter, element) {
+    currentFilter = filter;
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    if (element) element.classList.add('active');
+    filterUsers();
+  }
+
+  function filterUsers() {
+    const query = (document.getElementById("searchInput")?.value || "").toLowerCase().trim();
+
+    const filtered = allUsers.filter(u => {
+      if (u.email && u.email.toLowerCase() === "rohitrajgoh91@gmail.com") return false;
+      if (u.role === "superadmin") return false;
+
+      const matchesSearch = 
+        (u.full_name && u.full_name.toLowerCase().includes(query)) || 
+        (u.email && u.email.toLowerCase().includes(query));
+
+      if (!matchesSearch) return false;
+
+      let userRole = (u.role || 'student').toLowerCase();
+      if (userRole === 'user') userRole = 'student';
+
+      if (currentFilter === 'teammate') return userRole === 'teammate';
+      if (currentFilter === 'student') return userRole === 'student';
+      if (currentFilter === 'admin') return userRole === 'admin';
+
+      return true;
+    });
+
+    renderUserCards(filtered);
+  }
+
+  function renderUserCards(users) {
+    const container = document.getElementById("usersContainer");
+    container.innerHTML = "";
+
+    if (users.length === 0) {
+      container.innerHTML = `<div class="empty-state">No matching users found.</div>`;
+      return;
+    }
+
+    users.forEach(user => {
+      let currentRole = (user.role || 'student').toLowerCase();
+      if (currentRole === 'user') currentRole = 'student';
+
+      const initial = (user.full_name || user.email || 'U').charAt(0).toUpperCase();
+
+      const avatarHtml = user.avatar_url 
+        ? `<img src="${user.avatar_url}" class="avatar-img" alt="Photo">`
+        : `<div class="avatar-circle">${initial}</div>`;
+
+      const card = document.createElement("div");
+      card.className = "user-card";
+      card.innerHTML = `
+        <div class="user-info">
+          ${avatarHtml}
+          <div class="user-details">
+            <h4>${user.full_name || 'No Name'}</h4>
+            <p>${user.email}</p>
+          </div>
+        </div>
+
+        <span class="role-badge ${currentRole}">${currentRole}</span>
+
+        <div class="btn-group">
+          <button class="btn-icon btn-notify" onclick="openNotifyModal('${user.id}')" title="Send Notification"><i class="fa-solid fa-bell"></i></button>
+          <button class="btn-icon btn-manage" onclick="openPermissionsModal('${user.id}')"><i class="fa-solid fa-sliders"></i> Edit</button>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  function handleRoleDropdownChange(selectedRole) {
+    const adminToggle = document.getElementById("modalAdmin");
+    const notifToggle = document.getElementById("modalNotif");
+    const testToggle = document.getElementById("modalTest");
+    const aiToggle = document.getElementById("modalAI");
+
+    if (selectedRole === 'admin') {
+      adminToggle.checked = true;
+      notifToggle.checked = true;
+      testToggle.checked = true;
+      aiToggle.checked = true;
+    } else if (selectedRole === 'student') {
+      adminToggle.checked = false;
+      notifToggle.checked = false;
+      testToggle.checked = false;
+      aiToggle.checked = false;
+    }
+  }
+
+  function handleToggleChange() {
+    const adminToggle = document.getElementById("modalAdmin").checked;
+    const notifToggle = document.getElementById("modalNotif").checked;
+    const testToggle = document.getElementById("modalTest").checked;
+    const aiToggle = document.getElementById("modalAI").checked;
+    const roleSelect = document.getElementById("modalRoleSelect");
+
+    const allChecked = adminToggle && notifToggle && testToggle && aiToggle;
+    const anyChecked = adminToggle || notifToggle || testToggle || aiToggle;
+
+    if (allChecked) {
+      roleSelect.value = 'admin';
+    } else if (anyChecked) {
+      roleSelect.value = 'teammate';
+    } else {
+      roleSelect.value = 'student';
+    }
+  }
+
+  function openPermissionsModal(userId) {
+    activeEditingUserId = userId;
+    const user = allUsers.find(u => u.id === userId);
+    if (!user) return;
+
+    let currentRole = (user.role || 'student').toLowerCase();
+    if (currentRole === 'user') currentRole = 'student';
+
+    const perms = user.permissions || {};
+
+    document.getElementById("modalUserName").innerText = user.full_name || user.email;
+    document.getElementById("modalRoleSelect").value = currentRole;
+
+    if (currentRole === 'admin') {
+      document.getElementById("modalAdmin").checked = true;
+      document.getElementById("modalNotif").checked = true;
+      document.getElementById("modalTest").checked = true;
+      document.getElementById("modalAI").checked = true;
+    } else {
+      document.getElementById("modalAdmin").checked = !!perms.admin_panel;
+      document.getElementById("modalNotif").checked = !!perms.send_notif;
+      document.getElementById("modalTest").checked = !!perms.manage_test;
+      document.getElementById("modalAI").checked = !!perms.ai_test;
+    }
+
+    document.getElementById("permissionsModal").style.display = "flex";
+  }
+
+  async function saveModalPermissions() {
+    if (!activeEditingUserId) return;
+
+    const selectedRole = document.getElementById("modalRoleSelect").value;
+    const isAdminRole = (selectedRole === 'admin');
+
+    const adminPanel = document.getElementById("modalAdmin").checked;
+    const sendNotif  = document.getElementById("modalNotif").checked;
+    const manageTest = document.getElementById("modalTest").checked;
+    const aiTest     = document.getElementById("modalAI").checked;
+
+    const canManageTeam = isAdminRole;
+
+    const { error } = await window.supabaseClient
+      .from('profiles')
+      .update({
+        role: selectedRole,
+        permissions: { 
+          admin_panel: adminPanel,
+          manage_team: canManageTeam,
+          send_notif: sendNotif,
+          manage_test: manageTest, 
+          ai_test: aiTest 
+        },
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', activeEditingUserId);
+
+    if (error) {
+      alert("Save Failed: " + error.message);
+    } else {
+      closeModal('permissionsModal');
+      loadRegisteredUsers();
+    }
+  }
+
+  function openNotifyModal(userId) {
+    selectedTargetUserId = userId;
+    const user = allUsers.find(u => u.id === userId);
+    document.getElementById("notifyTargetText").innerText = `Target: ${user?.full_name || user?.email}`;
+    document.getElementById("notifyMsgInput").value = "";
+    document.getElementById("notifyModal").style.display = "flex";
+  }
+
+  async function sendNotificationSubmit() {
+    const msg = document.getElementById("notifyMsgInput").value.trim();
+    if (!msg) return alert("Message cannot be empty!");
+
+    await window.supabaseClient.from('notifications').insert({
+      user_id: selectedTargetUserId,
+      message: msg,
+      created_at: new Date().toISOString(),
+      is_read: false
+    });
+
+    alert("📢 Notification sent!");
+    closeModal('notifyModal');
+  }
+
+  function closeModal(id) { document.getElementById(id).style.display = "none"; }
+</script>
+</body>
+</html>

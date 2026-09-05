@@ -3,7 +3,7 @@ let currentAvatarUrl = null;
 let cropper = null;
 let dangerHideTimer = null;
 
-// High-Quality 3D Realistic Avatars (URL-encoded Clean Data URIs)
+// Preset Avatars Data
 const PRESET_AVATARS = [
   {
     title: "Student Boy",
@@ -26,34 +26,6 @@ const PRESET_AVATARS = [
     src: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'><defs><radialGradient id='bg5' cx='50%' cy='30%' r='70%'><stop offset='0%' stop-color='%23F59E0B'/><stop offset='100%' stop-color='%2378350F'/></radialGradient></defs><circle cx='60' cy='60' r='60' fill='url(%23bg5)'/><circle cx='60' cy='52' r='21' fill='%23FDBA74'/><path d='M20 28 L60 12 L100 28 L60 42 Z' fill='%231E1B4B'/><rect x='57' y='36' width='6' height='24' fill='%23FBBF24'/><circle cx='49' cy='51' r='8' stroke='%23334155' stroke-width='2.5' fill='none'/><circle cx='71' cy='51' r='8' stroke='%23334155' stroke-width='2.5' fill='none'/><line x1='57' y1='51' x2='63' y2='51' stroke='%23334155' stroke-width='2.5'/><path d='M22 110 C22 84 40 74 60 74 C80 74 98 84 98 110 Z' fill='%23312E81'/></svg>"
   }
 ];
-
-// Toggle Eye SVG Password Visibility Function
-function togglePasswordVisibility(inputId, btnEl) {
-  const input = document.getElementById(inputId);
-  if (!input) return;
-
-  const isPassword = input.type === "password";
-  input.type = isPassword ? "text" : "password";
-
-  // Eye and Eye-Slash SVG Paths
-  const eyeOpenSvg = `<svg class="eye-icon" viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>`;
-  const eyeClosedSvg = `<svg class="eye-icon" viewBox="0 0 24 24"><path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.17c0-1.66-1.34-3-3-3l-.17.02z"/></svg>`;
-
-  btnEl.innerHTML = isPassword ? eyeClosedSvg : eyeOpenSvg;
-}
-
-// Reveal Confirm Password Box dynamically when typing starts
-function handleNewPasswordInput() {
-  const newPass = document.getElementById("newPasswordInput").value;
-  const confirmGroup = document.getElementById("confirmPasswordGroup");
-
-  if (newPass.length > 0) {
-    confirmGroup.classList.add("visible");
-  } else {
-    confirmGroup.classList.remove("visible");
-    document.getElementById("confirmPasswordInput").value = "";
-  }
-}
 
 function renderAvatarGrid() {
   const grid = document.getElementById("avatarGrid");
@@ -252,7 +224,67 @@ function validateDeleteEmailInput() {
   }
 }
 
-// Load User Profile Data with Reliable Fallbacks
+// Dynamic Action Buttons Visibility Toggler
+function applyRoleBasedUI(role, permissions = {}) {
+  const normalizedRole = (role || "student").toLowerCase();
+  const userRoleBadge = document.getElementById("userRoleBadge");
+
+  // DOM Elements
+  const adminBtn = document.getElementById("adminBtn");
+  const manageTeamBtn = document.getElementById("manageTeamBtn");
+  const sendNotifBtn = document.getElementById("sendNotifBtn");
+  const uploadTestBtn = document.getElementById("uploadTestBtn");
+  const aiTestBtn = document.getElementById("aiTestBtn");
+
+  // Reset Display
+  if (adminBtn) adminBtn.style.display = "none";
+  if (manageTeamBtn) manageTeamBtn.style.display = "none";
+  if (sendNotifBtn) sendNotifBtn.style.display = "none";
+  if (uploadTestBtn) uploadTestBtn.style.display = "none";
+  if (aiTestBtn) aiTestBtn.style.display = "none";
+
+  const isSuperAdmin = (currentUser && currentUser.email && currentUser.email.toLowerCase() === "rohitrajgoh91@gmail.com") || normalizedRole === "superadmin";
+
+  if (isSuperAdmin) {
+    if (userRoleBadge) userRoleBadge.innerHTML = '<i class="fa-solid fa-crown"></i> Platform Super Admin';
+    
+    // Superadmin has permanent access to Admin Panel & Manage Team
+    if (adminBtn) adminBtn.style.display = "flex";
+    if (manageTeamBtn) manageTeamBtn.style.display = "flex";
+
+    // Other features follow DB permissions (Fallback to true if not specified)
+    if (permissions.send_notif !== false && sendNotifBtn) sendNotifBtn.style.display = "flex";
+    if (permissions.manage_test !== false && uploadTestBtn) uploadTestBtn.style.display = "flex";
+    if (permissions.ai_test !== false && aiTestBtn) aiTestBtn.style.display = "flex";
+
+  } else if (normalizedRole === "admin") {
+    if (userRoleBadge) userRoleBadge.innerHTML = '<i class="fa-solid fa-user-gear"></i> Admin';
+    
+    // Admin gets ALL permissions auto-unlocked/ON by default
+    if (adminBtn) adminBtn.style.display = "flex";
+    if (manageTeamBtn) manageTeamBtn.style.display = "flex";
+    if (sendNotifBtn) sendNotifBtn.style.display = "flex";
+    if (uploadTestBtn) uploadTestBtn.style.display = "flex";
+    if (aiTestBtn) aiTestBtn.style.display = "flex";
+
+  } else if (normalizedRole === "teammate" || normalizedRole === "moderator") {
+    if (userRoleBadge) userRoleBadge.innerHTML = '<i class="fa-solid fa-user-shield"></i> Official Teammate';
+
+    // Strict Rule: Teammate NEVER gets "Manage Teammates"
+    if (manageTeamBtn) manageTeamBtn.style.display = "none";
+
+    // Strictly check DB permissions for Teammates
+    if (permissions.admin_panel && adminBtn) adminBtn.style.display = "flex";
+    if (permissions.send_notif && sendNotifBtn) sendNotifBtn.style.display = "flex";
+    if (permissions.manage_test && uploadTestBtn) uploadTestBtn.style.display = "flex";
+    if (permissions.ai_test && aiTestBtn) aiTestBtn.style.display = "flex";
+
+  } else {
+    if (userRoleBadge) userRoleBadge.innerHTML = '<i class="fa-solid fa-graduation-cap"></i> Active Student';
+  }
+}
+
+// Load User Profile Data with Role Support
 async function loadUserProfile() {
   if (!window.supabaseClient) return;
 
@@ -265,65 +297,53 @@ async function loadUserProfile() {
   currentUser = user;
   document.getElementById("emailInput").value = user.email || "";
 
-  // Dynamic Name Resolution (Meta Google Name > Meta Full Name > Saved DB Name > Fallback)
-  const metaGoogleName = user.user_metadata?.full_name || user.user_metadata?.name || user.user_metadata?.custom_name || "";
-  const metaAvatar = user.user_metadata?.avatar_url || user.user_metadata?.picture || null;
-
-  const isAdmin = await window.checkIsAdmin();
-  if (isAdmin) {
-    document.getElementById("userRoleBadge").innerHTML = '<i class="fa-solid fa-crown"></i> Platform Admin';
-    if (document.getElementById("adminBtn")) document.getElementById("adminBtn").style.display = "flex";
-    if (document.getElementById("sendNotifBtn")) document.getElementById("sendNotifBtn").style.display = "flex";
-    if (document.getElementById("uploadTestBtn")) document.getElementById("uploadTestBtn").style.display = "flex";
-    if (document.getElementById("aiTestBtn")) document.getElementById("aiTestBtn").style.display = "flex";
-  } else {
-    document.getElementById("userRoleBadge").innerHTML = '<i class="fa-solid fa-graduation-cap"></i> Active Student';
-  }
-
   try {
-    const { data } = await window.supabaseClient
+    const { data, error } = await window.supabaseClient
       .from('profiles')
       .select('*')
       .eq('id', user.id)
       .maybeSingle();
 
-    const resolvedName = data?.full_name || metaGoogleName || user.email.split('@')[0];
-    const resolvedAvatar = data?.avatar_url || metaAvatar;
+    if (error) console.error("Profile Fetch Error:", error);
 
-    document.getElementById("fullNameInput").value = data?.full_name || metaGoogleName || "";
-    document.getElementById("countryCodeSelect").value = data?.country_code || "+91";
-    document.getElementById("phoneInput").value = data?.phone || "";
-    document.getElementById("classSelect").value = data?.target_class || "";
-    document.getElementById("streamSelect").value = data?.stream || "";
-    document.getElementById("institutionInput").value = data?.institution || "";
-    document.getElementById("cityInput").value = data?.city || "";
-    document.getElementById("stateInput").value = data?.state || "";
-    if (document.getElementById("pincodeInput")) {
-      document.getElementById("pincodeInput").value = data?.pincode || "";
-    }
+    const userRole = data?.role || "student";
+    const permissions = data?.permissions || {};
+    
+    applyRoleBasedUI(userRole, permissions);
 
-    document.getElementById("userDisplayName").innerText = resolvedName;
+    if (data) {
+      document.getElementById("fullNameInput").value = data.full_name || "";
+      document.getElementById("countryCodeSelect").value = data.country_code || "+91";
+      document.getElementById("phoneInput").value = data.phone || "";
+      document.getElementById("classSelect").value = data.target_class || "";
+      document.getElementById("streamSelect").value = data.stream || "";
+      document.getElementById("institutionInput").value = data.institution || "";
+      document.getElementById("cityInput").value = data.city || "";
+      document.getElementById("stateInput").value = data.state || "";
+      if (document.getElementById("pincodeInput")) {
+        document.getElementById("pincodeInput").value = data.pincode || "";
+      }
 
-    if (resolvedAvatar) {
-      currentAvatarUrl = resolvedAvatar;
-      renderAvatarImage(resolvedAvatar);
+      document.getElementById("userDisplayName").innerText = data.full_name || user.email.split('@')[0];
+
+      if (data.avatar_url) {
+        currentAvatarUrl = data.avatar_url;
+        renderAvatarImage(data.avatar_url);
+      } else {
+        renderInitialAvatar();
+      }
     } else {
+      document.getElementById("userDisplayName").innerText = user.email.split('@')[0];
       renderInitialAvatar();
     }
-
-    // Auto sync back to DB if meta was retrieved
-    if ((!data || !data.full_name || !data.avatar_url) && (metaGoogleName || metaAvatar)) {
-      window.syncUserProfileFromAuth(user);
-    }
-
   } catch (err) {
     console.warn("Could not fetch profile details:", err);
-    document.getElementById("userDisplayName").innerText = metaGoogleName || user.email.split('@')[0];
-    if (metaAvatar) {
-      renderAvatarImage(metaAvatar);
-    } else {
-      renderInitialAvatar();
-    }
+    document.getElementById("userDisplayName").innerText = user.email.split('@')[0];
+    renderInitialAvatar();
+  }
+
+  if (window.applyAccessControl) {
+    await window.applyAccessControl();
   }
 
   updateProfileProgress();
@@ -519,42 +539,23 @@ async function saveProfileDetails() {
   }
 }
 
-// Updated Password Change Execution Function with Confirmation Check
 async function setGoogleUserPassword() {
   const newPassword = document.getElementById("newPasswordInput").value;
-  const confirmPassword = document.getElementById("confirmPasswordInput").value;
-
   if (!newPassword || newPassword.length < 6) {
-    alert("❌ Password kam se kam 6 characters ka hona chahiye!");
+    alert("Password kam se kam 6 characters ka hona chahiye!");
     return;
   }
-
-  if (newPassword !== confirmPassword) {
-    alert("❌ Dono passwords match nahi kar rahe hain! Kripya re-check karein.");
-    return;
-  }
-
-  const msgBox = document.getElementById("statusMsg");
-  msgBox.className = "status-msg";
-  msgBox.innerText = "Updating password...";
-  msgBox.style.display = "block";
 
   const { error } = await window.supabaseClient.auth.updateUser({ password: newPassword });
 
   if (error) {
-    msgBox.className = "status-msg error";
-    msgBox.innerText = "❌ Password update failed: " + error.message;
+    alert("❌ Password update failed: " + error.message);
   } else {
-    msgBox.className = "status-msg success";
-    msgBox.innerText = "✅ Password successfully updated!";
+    alert("✅ Password successfully updated!");
     document.getElementById("newPasswordInput").value = "";
-    document.getElementById("confirmPasswordInput").value = "";
-    document.getElementById("confirmPasswordGroup").classList.remove("visible");
-    setTimeout(() => { msgBox.style.display = "none"; }, 3000);
   }
 }
 
-// Account Deletion Execution Function
 async function deleteUserAccount() {
   const emailInput = document.getElementById("deleteConfirmEmailInput").value.trim();
   
@@ -603,11 +604,30 @@ async function deleteUserAccount() {
   }
 }
 
-function goToAdminPanel() { window.location.href = "admin-panel.html"; }
-function goToSendNotification() { window.location.href = "admin-notifications.html"; }
-function goToUploadTest() { window.location.href = "admin-manage-tests.html"; }
-function goToAiTestCreator() { window.location.href = "admin-ai-test.html"; }
-function goToHome() { window.location.href = "index.html"; }
+// Navigation Helper Functions
+function goToAdminPanel() { 
+  window.location.href = "admin-panel.html"; 
+}
+
+function goToManageTeam() { 
+  window.location.href = "manage-team.html"; 
+}
+
+function goToSendNotification() { 
+  window.location.href = "admin-notification.html"; 
+}
+
+function goToUploadTest() { 
+  window.location.href = "admin-mange-tests.html"; 
+}
+
+function goToAiTestCreator() { 
+  window.location.href = "admin-ai-tests.html"; 
+}
+
+function goToHome() { 
+  window.location.href = "index.html"; 
+}
 
 async function logoutUser() {
   await window.supabaseClient.auth.signOut();

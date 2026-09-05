@@ -8,6 +8,7 @@
   <!-- External Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase.js"></script>
+  <script src="auth.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
@@ -17,52 +18,6 @@
 
   <!-- Custom External CSS -->
   <link rel="stylesheet" href="profile.css">
-
-  <style>
-    /* Dynamic Password UI & SVG Eye Styles */
-    .password-input-wrapper {
-      position: relative;
-      display: flex;
-      align-items: center;
-      margin-bottom: 10px;
-    }
-    .password-input-wrapper .input-box {
-      margin-bottom: 0 !important;
-      padding-right: 42px !important;
-      width: 100%;
-    }
-    .toggle-password-btn {
-      position: absolute;
-      right: 12px;
-      background: none;
-      border: none;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 4px;
-      color: #718096;
-      transition: color 0.2s ease;
-      user-select: none;
-    }
-    .toggle-password-btn:hover {
-      color: #5a2eff;
-    }
-    .toggle-password-btn svg {
-      width: 20px;
-      height: 20px;
-      fill: currentColor;
-    }
-    #confirmPasswordGroup {
-      display: none;
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-    #confirmPasswordGroup.visible {
-      display: block;
-      opacity: 1;
-    }
-  </style>
 </head>
 
 <body>
@@ -183,45 +138,34 @@
 
     <p id="statusMsg" class="status-msg"></p>
 
-    <!-- Password Section with SVG Eye and Dynamic Reveal -->
-    <div id="passwordSection" style="margin: 15px 0; text-align: left; background: #e0e5ec; padding: 16px; border-radius: 14px; box-shadow: inset 4px 4px 8px #b8bec7, inset -4px -4px 8px #ffffff;">
-      <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #4a5568; font-weight: 700; margin-bottom: 10px;">
-        <i class="fa-solid fa-key" style="color:#5a2eff;"></i> Set / Change Password
+    <!-- Password Section -->
+    <div id="passwordSection" style="margin: 10px 0; text-align: left; background: #e0e5ec; padding: 15px; border-radius: 14px; box-shadow: inset 4px 4px 8px #b8bec7, inset -4px -4px 8px #ffffff;">
+      <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #4a5568; font-weight: 600; margin-bottom: 6px;">
+        <i class="fa-solid fa-key"></i> Set / Change Password
       </label>
-
-      <!-- 1st Password Input -->
-      <div class="password-input-wrapper">
-        <input type="password" id="newPasswordInput" class="input-box" placeholder="Enter new password (min 6 chars)" oninput="handleNewPasswordInput()">
-        <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility('newPasswordInput', this)" title="Show/Hide Password">
-          <svg class="eye-icon" viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
-        </button>
-      </div>
-
-      <!-- 2nd Confirm Password Input (Revealed dynamically) -->
-      <div id="confirmPasswordGroup">
-        <div class="password-input-wrapper">
-          <input type="password" id="confirmPasswordInput" class="input-box" placeholder="Confirm new password">
-          <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility('confirmPasswordInput', this)" title="Show/Hide Password">
-            <svg class="eye-icon" viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
-          </button>
-        </div>
-      </div>
-
-      <button class="btn" onclick="setGoogleUserPassword()" style="background: #e0e5ec; color: #5a2eff; font-size: 13px; padding: 12px; margin-top: 5px; box-shadow: 4px 4px 8px #b8bec7, -4px -4px 8px #ffffff; font-weight: 600;">
+      <input type="password" id="newPasswordInput" class="input-box" placeholder="Enter new password (min 6 chars)" style="margin-bottom: 10px;">
+      <button class="btn" onclick="setGoogleUserPassword()" style="background: #e0e5ec; color: #5a2eff; font-size: 13px; padding: 10px;">
         <i class="fa-solid fa-lock"></i> Save New Password
       </button>
     </div>
 
-    <!-- Admin Buttons -->
+    <!-- Admin & Teammate Dynamic Action Buttons -->
     <button class="btn btn-admin" id="adminBtn" style="display: none;" onclick="goToAdminPanel()">
       <i class="fa-solid fa-shield-halved"></i> Open Admin Panel
     </button>
+    
+    <button class="btn btn-admin" id="manageTeamBtn" style="display: none; margin-top: 8px; background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff;" onclick="goToManageTeam()">
+      <i class="fa-solid fa-users-gear"></i> Manage Teammates
+    </button>
+
     <button class="btn btn-admin" id="sendNotifBtn" style="display: none; margin-top: 8px; background: linear-gradient(135deg, #00d2ff, #0072ff); color: #fff;" onclick="goToSendNotification()">
       <i class="fa-solid fa-paper-plane"></i> Send Notification
     </button>
+
     <button class="btn btn-admin" id="uploadTestBtn" style="display: none; margin-top: 8px; background: linear-gradient(135deg, #11998e, #38ef7d); color: #fff;" onclick="goToUploadTest()">
-      <i class="fa-solid fa-file-arrow-up"></i> Upload Manual Test
+      <i class="fa-solid fa-file-arrow-up"></i> Upload / Manage Test
     </button>
+
     <button class="btn btn-admin" id="aiTestBtn" style="display: none; margin-top: 8px; background: linear-gradient(135deg, #8E2DE2, #4A00E0); color: #fff;" onclick="goToAiTestCreator()">
       <i class="fa-solid fa-wand-magic-sparkles"></i> Create AI Test
     </button>
@@ -239,7 +183,7 @@
       </button>
     </div>
 
-    <!-- Danger Zone (Tap to reveal deletion option with 5s timer) -->
+    <!-- Section 3: Danger Zone -->
     <div 
       class="section-title danger-title" 
       onclick="toggleDangerDeleteBtn()" 
@@ -308,7 +252,7 @@
     </div>
   </div>
 
-  <!-- Account Delete Double-Confirmation Modal -->
+  <!-- Account Delete Confirmation Modal -->
   <div class="crop-modal-overlay" id="deleteConfirmModal">
     <div class="crop-modal-card">
       <div style="font-size: 38px; color: #e53e3e; margin-bottom: 8px;">
@@ -345,7 +289,16 @@
     </div>
   </div>
 
-  <script src="auth.js"></script>
   <script src="profile.js"></script>
+
+  <!-- Navigation Helper Functions -->
+  <script>
+    function goToAdminPanel() { window.location.href = "admin-panel.html"; }
+    function goToManageTeam() { window.location.href = "manage-team.html"; }
+    function goToSendNotification() { window.location.href = "admin-notifications.html"; }
+    function goToUploadTest() { window.location.href = "admin-manage-tests.html"; }
+    function goToAiTestCreator() { window.location.href = "admin-ai-test.html"; }
+    function goToHome() { window.location.href = "index.html"; }
+  </script>
 </body>
 </html>

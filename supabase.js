@@ -8,7 +8,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_oKvnfYOw9wNk3IsI04nN7g_KQsTfykS";
 // Global Supabase Client
 window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Helper: GitHub Pages & Dynamic Domain URL Resolver
+// Helper: Dynamic Domain URL Resolver
 function getPageUrl(pageName) {
   const currentPath = window.location.pathname;
   const basePath = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
@@ -27,12 +27,11 @@ async function getCurrentUser() {
   return session ? session.user : null;
 }
 
-// Centralized Profile Data Fetcher (Name, Photo & Role)
+// Centralized Profile Data Fetcher
 async function getUserProfile() {
   const user = await getCurrentUser();
   if (!user) return null;
 
-  // Fallback Name from Email (masumboy141)
   let fallbackName = user.email ? user.email.split('@')[0] : "User";
   let profileData = {
     id: user.id,
@@ -67,30 +66,30 @@ async function getUserProfile() {
   return profileData;
 }
 
-// Precise Admin Check
+// Precise Admin & Permission Check
 async function checkIsAdmin() {
   const user = await getCurrentUser();
   if (!user) return false;
 
-  // 1. App Metadata Check
-  if (user.app_metadata?.role === "admin" || user.user_metadata?.role === "admin") {
-    return true;
-  }
-
-  // 2. Email Whitelist Check
+  // 1. Email Whitelist
   if (user.email && ADMIN_EMAILS.includes(user.email.toLowerCase())) {
     return true;
   }
 
-  // 3. Database Check
+  // 2. Database Check (role & JSON permissions)
   try {
     const { data } = await window.supabaseClient
       .from('profiles')
-      .select('role')
+      .select('role, permissions')
       .eq('id', user.id)
       .single();
 
-    return data?.role === "admin";
+    if (!data) return false;
+
+    const role = (data.role || '').toLowerCase();
+    const perms = data.permissions || {};
+
+    return role === "admin" || role === "superadmin" || role === "teammate" || !!perms.admin_panel;
   } catch (err) {
     console.warn("Profile Role fetch failed, fallback used.", err);
     return false;
@@ -101,7 +100,7 @@ async function checkIsAdmin() {
 async function requireAdminAuth() {
   const isAdmin = await checkIsAdmin();
   if (!isAdmin) {
-    alert("⛔ Access Denied! Sirf Admin is page ko access kar sakta hai.");
+    alert("⛔ Access Denied! Sirf Admin ya Teammate is page ko access kar sakta hai.");
     window.location.href = getPageUrl("login.html");
   }
 }
