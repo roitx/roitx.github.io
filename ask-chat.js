@@ -1,5 +1,5 @@
 // =========================================================
-// ask-chat.js — FULL UPDATED WITH CREATOR & PRIVACY RULES
+// ask-chat.js — FULL UPDATED WITH MATH EVALUATOR & FIXES
 // =========================================================
 (function () {
   // ---- PREVENT DOUBLE INITIALIZATION ----
@@ -164,6 +164,30 @@
     try { const u = new URL(s); return u.protocol === 'http:' || u.protocol === 'https:'; } catch { return false; }
   }
 
+  // --- ADVANCED HARDCODED MATHEMATICAL EVALUATOR ENGINE ---
+  function evaluateMathExpression(expr) {
+    try {
+      let s = expr.trim();
+      // Replacements for user friendly inputs
+      s = s.replace(/×/g, "*").replace(/÷/g, "/").replace(/π/g, "pi").replace(/e/g, "e");
+      s = s.replace(/√\(([^)]+)\)/g, "sqrt($1)").replace(/√(\d+)/g, "sqrt($1)");
+      s = s.replace(/(\d+)²/g, "$1^2").replace(/(\d+)³/g, "$1^3");
+
+      // Math.js evaluation using global library loaded from index/ask-chat
+      if (window.math && typeof window.math.evaluate === 'function') {
+        let res = window.math.evaluate(s);
+        if (typeof res === 'object' && res.entries) res = res.entries[0];
+        return res;
+      }
+
+      // Fallback safe function parser for basic arithmetic if math.js is not loaded
+      const safeEval = new Function(`'use strict'; return (${s.replace(/[^0-9+\-*/().]/g, '')})`);
+      return safeEval();
+    } catch (err) {
+      return null;
+    }
+  }
+
   // ---- SMART COMMAND DISPATCHER ----
   async function handleCommand(raw) {
     const cmd = normalize(raw);
@@ -225,119 +249,87 @@
       return;
     }
 
-           // 4. CALENDAR ACTION & HOLIDAY POPUP INTEGRATION
-if (cmd.includes('calendar') || cmd.includes('date') || cmd.includes('holiday') || cmd.includes('chhutti') || cmd.includes('tyohar')) {
-  const today = new Date();
-  const yyyy = today.getFullYear();
-  const mm = String(today.getMonth() + 1).padStart(2, '0');
-  const dd = String(today.getDate()).padStart(2, '0');
-  const todayKey = `${yyyy}-${mm}-${dd}`;
+    // 4. CALENDAR ACTION & HOLIDAY POPUP INTEGRATION
+    if (cmd.includes('calendar') || cmd.includes('date') || cmd.includes('holiday') || cmd.includes('chhutti') || cmd.includes('tyohar')) {
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const dd = String(today.getDate()).padStart(2, '0');
+      const todayKey = `${yyyy}-${mm}-${dd}`;
 
-  const renderHolidayResponse = () => {
-    const holidayName = window.fetchedHolidays ? window.fetchedHolidays[todayKey] : null;
+      const renderHolidayResponse = () => {
+        const holidayName = window.fetchedHolidays ? window.fetchedHolidays[todayKey] : null;
 
-    if (holidayName) {
-      addBotMsg(`
-        <div style="border: 1px solid #38bdf8; background: rgba(56, 189, 248, 0.1); padding: 12px; border-radius: 10px; margin-top: 5px;">
-          <div style="font-weight: bold; color: #38bdf8; font-size: 14px;">🎉 Aaj Ka Holiday!</div>
-          <div style="font-size: 13px; color: #fff; margin: 6px 0;"><b>${holidayName}</b> (${todayKey})</div>
-          <div style="display: flex; gap: 6px; margin-top: 8px;">
-            <button onclick="showCalendarModalDirect()" style="background: #0284c7; color: #fff; border: none; padding: 6px 10px; border-radius: 5px; font-size: 11px; font-weight: bold; cursor: pointer;">
-              📅 Mini Calendar
-            </button>
-            <a href="calendar.html" style="background: #059669; color: #fff; text-decoration: none; padding: 6px 10px; border-radius: 5px; font-size: 11px; font-weight: bold;">
-              🌐 Full Calendar
-            </a>
-          </div>
-        </div>
-      `);
-    } else {
-      addBotMsg(`
-        <div style="border: 1px solid rgba(255,255,255,0.12); padding: 10px; border-radius: 8px; background: #1e293b; margin-top: 5px;">
-          <div style="font-size: 13px; color: #e2e8f0; margin-bottom: 8px;">📅 Aaj (${todayKey}) koi official holiday nahi hai.</div>
-          <button onclick="showCalendarModalDirect()" style="background: #0284c7; color: #fff; border: none; padding: 6px 10px; border-radius: 5px; font-size: 11px; font-weight: bold; cursor: pointer;">
-            Open Mini Calendar
-          </button>
-        </div>
-      `);
-    }
-  };
+        if (holidayName) {
+          addBotMsg(`
+            <div style="border: 1px solid #38bdf8; background: rgba(56, 189, 248, 0.1); padding: 12px; border-radius: 10px; margin-top: 5px;">
+              <div style="font-weight: bold; color: #38bdf8; font-size: 14px;">🎉 Aaj Ka Holiday!</div>
+              <div style="font-size: 13px; color: #fff; margin: 6px 0;"><b>${holidayName}</b> (${todayKey})</div>
+              <div style="display: flex; gap: 6px; margin-top: 8px;">
+                <button onclick="showCalendarModalDirect()" style="background: #0284c7; color: #fff; border: none; padding: 6px 10px; border-radius: 5px; font-size: 11px; font-weight: bold; cursor: pointer;">
+                  📅 Mini Calendar
+                </button>
+                <a href="calendar.html" style="background: #059669; color: #fff; text-decoration: none; padding: 6px 10px; border-radius: 5px; font-size: 11px; font-weight: bold;">
+                  🌐 Full Calendar
+                </a>
+              </div>
+            </div>
+          `);
+        } else {
+          addBotMsg(`
+            <div style="border: 1px solid rgba(255,255,255,0.12); padding: 10px; border-radius: 8px; background: #1e293b; margin-top: 5px;">
+              <div style="font-size: 13px; color: #e2e8f0; margin-bottom: 8px;">📅 Aaj (${todayKey}) koi official holiday nahi hai.</div>
+              <button onclick="showCalendarModalDirect()" style="background: #0284c7; color: #fff; border: none; padding: 6px 10px; border-radius: 5px; font-size: 11px; font-weight: bold; cursor: pointer;">
+                Open Mini Calendar
+              </button>
+            </div>
+          `);
+        }
+      };
 
-  // Fetch from Google Calendar API if data is not already loaded
-  if (typeof window.fetchHolidays === 'function') {
-    window.fetchHolidays(yyyy).then(() => renderHolidayResponse()).catch(() => renderHolidayResponse());
-  } else {
-    renderHolidayResponse();
-  }
-
-  return;
-}
-
-
-
-
-// --- ADVANCED HARDCODED MATHEMATICAL EVALUATOR ENGINE ---
-function evaluateMathExpression(expr) {
-  try {
-    let s = expr.trim();
-    // Replacements for user friendly inputs
-    s = s.replace(/×/g, "*").replace(/÷/g, "/").replace(/π/g, "pi").replace(/e/g, "e");
-    s = s.replace(/√\(([^)]+)\)/g, "sqrt($1)").replace(/√(\d+)/g, "sqrt($1)");
-    s = s.replace(/(\d+)²/g, "$1^2").replace(/(\d+)³/g, "$1^3");
-
-    // Math.js evaluation using global library loaded from index/ask-chat
-    if (window.math && typeof window.math.evaluate === 'function') {
-      let res = window.math.evaluate(s);
-      if (typeof res === 'object' && res.entries) res = res.entries[0];
-      return res;
+      if (typeof window.fetchHolidays === 'function') {
+        window.fetchHolidays(yyyy).then(() => renderHolidayResponse()).catch(() => renderHolidayResponse());
+      } else {
+        renderHolidayResponse();
+      }
+      return;
     }
 
-    // Fallback safe function parser for basic arithmetic if math.js is not loaded
-    const safeEval = new Function(`'use strict'; return (${s.replace(/[^0-9+\-*/().]/g, '')})`);
-    return safeEval();
-  } catch (err) {
-    return null;
-  }
-}
+    // 5. CALCULATOR ACTION INTEGRATION IN CHAT
+    if (cmd.includes('calc') || cmd.includes('hisab') || cmd.includes('ginti') || /^[\d\s+\-*/().^√πe×÷]+$/.test(cmd)) {
+      let mathExp = cmd.replace(/^(calc|calculator|solve|hisab|ginti|\/calc)\s*/i, '').trim();
 
-// --- 3. CALCULATOR ACTION INTEGRATION IN CHAT ---
-if (cmd.includes('calc') || cmd.includes('hisab') || cmd.includes('ginti') || /^[\d\s+\-*/().^√πe×÷]+$/.test(cmd)) {
-  // Extract math expression from command
-  let mathExp = cmd.replace(/^(calc|calculator|solve|hisab|ginti|\/calc)\s*/i, '').trim();
+      if (mathExp) {
+        let result = evaluateMathExpression(mathExp);
 
-  if (mathExp) {
-    let result = evaluateMathExpression(mathExp);
+        if (result !== null && !isNaN(result)) {
+          addBotMsg(`
+            <div style="border: 1px solid #00ff9c; background: rgba(0, 255, 156, 0.08); padding: 10px 14px; border-radius: 10px; margin-top: 5px;">
+              <div style="font-size: 11px; color: #00ff9c; font-weight: bold; letter-spacing: 0.5px;">🧮 MATH RESULT</div>
+              <div style="font-family: monospace; font-size: 14px; color: #aaa; margin-top: 4px;">Exp: ${mathExp}</div>
+              <div style="font-family: 'Orbitron', monospace; font-size: 18px; font-weight: bold; color: #fff; margin-top: 2px;">= ${result}</div>
+              <div style="margin-top: 8px;">
+                <a href="calculator.html" style="display: inline-block; background: #00ff9c; color: #000; text-decoration: none; padding: 4px 10px; border-radius: 5px; font-size: 11px; font-weight: bold;">
+                  📱 Open Full Scientific Calculator
+                </a>
+              </div>
+            </div>
+          `);
+          return;
+        }
+      }
 
-    if (result !== null && !isNaN(result)) {
       addBotMsg(`
-        <div style="border: 1px solid #00ff9c; background: rgba(0, 255, 156, 0.08); padding: 10px 14px; border-radius: 10px; margin-top: 5px;">
-          <div style="font-size: 11px; color: #00ff9c; font-weight: bold; letter-spacing: 0.5px;">🧮 MATH RESULT</div>
-          <div style="font-family: monospace; font-size: 14px; color: #aaa; margin-top: 4px;">Exp: ${mathExp}</div>
-          <div style="font-family: 'Orbitron', monospace; font-size: 18px; font-weight: bold; color: #fff; margin-top: 2px;">= ${result}</div>
-          <div style="margin-top: 8px;">
-            <a href="calculator.html" style="display: inline-block; background: #00ff9c; color: #000; text-decoration: none; padding: 4px 10px; border-radius: 5px; font-size: 11px; font-weight: bold;">
-              📱 Open Full Scientific Calculator
-            </a>
-          </div>
+        <div style="border: 1px solid rgba(255,255,255,0.15); background: #141414; padding: 12px; border-radius: 12px; margin-top: 5px;">
+          <div style="font-size: 13px; font-weight: bold; color: #00ff9c; margin-bottom: 6px;">🧮 Quick Calculator</div>
+          <div style="font-size: 12px; color: #ccc; margin-bottom: 10px;">Chat me koi bhi math expression likhein (Jaise: <code>25 * 4 + 10</code> ya <code>√(144)</code>) ya Scientific UI kholein:</div>
+          <a href="calculator.html" style="display: inline-block; background: #00ff9c; color: #000; text-decoration: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: bold;">
+            🚀 Open Scientific Calculator Pro
+          </a>
         </div>
       `);
       return;
     }
-  }
-
-  // Default Mini Calculator UI card if no expression provided
-  addBotMsg(`
-    <div style="border: 1px solid rgba(255,255,255,0.15); background: #141414; padding: 12px; border-radius: 12px; margin-top: 5px;">
-      <div style="font-size: 13px; font-weight: bold; color: #00ff9c; margin-bottom: 6px;">🧮 Quick Calculator</div>
-      <div style="font-size: 12px; color: #ccc; margin-bottom: 10px;">Chat me koi bhi math expression likhein (Jaise: <code>25 * 4 + 10</code> ya <code>√(144)</code>) ya Scientific UI kholein:</div>
-      <a href="calculator.html" style="display: inline-block; background: #00ff9c; color: #000; text-decoration: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: bold;">
-        🚀 Open Scientific Calculator Pro
-      </a>
-    </div>
-  `);
-  return;
-}
-
 
     // 6. CLASSES & STREAMS OVERVIEW
     if (cmd === 'classes' || cmd === 'class' || cmd === 'all classes' || cmd.includes('kaun si class') || cmd.includes('select class')) {
