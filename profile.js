@@ -555,16 +555,34 @@ async function setGoogleUserPassword() {
     document.getElementById("newPasswordInput").value = "";
   }
 }
+
 async function clearAppCache() {
   try {
+    // 1. Service Worker Caches ko delete karein
     if ('caches' in window) {
       const cacheNames = await caches.keys();
       await Promise.all(
         cacheNames.map(name => caches.delete(name))
       );
     }
+
+    // 2. Supabase ka session token bachakar baaki LocalStorage saaf karein
+    const supabaseKeys = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (key.startsWith('sb-') || key.includes('auth'))) {
+        supabaseKeys.push({ key, value: localStorage.getItem(key) });
+      }
+    }
+
     localStorage.clear();
     sessionStorage.clear();
+
+    // 3. Bachaya hua Supabase session wapas localStorage mein daal dein
+    supabaseKeys.forEach(item => {
+      localStorage.setItem(item.key, item.value);
+    });
+
     alert("✅ App cache successfully cleared! Page reload ho raha hai.");
     window.location.reload();
   } catch (err) {
