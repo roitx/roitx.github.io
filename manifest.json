@@ -1,7 +1,7 @@
 {
   "id": "/roitx-hub",
-  "name": "Roitx - Smart Study Hub",
-  "short_name": "Roitx",
+  "name": "PM Roitx - Smart Study Hub",
+  "short_name": "PM Roitx",
   "description": "Personal Study Hub for Notes, Tools, and Productivity.",
   "start_url": "/index.html",
   "scope": "/",
