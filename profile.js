@@ -235,6 +235,8 @@ function applyRoleBasedUI(role, permissions = {}) {
   const sendNotifBtn = document.getElementById("sendNotifBtn");
   const uploadTestBtn = document.getElementById("uploadTestBtn");
   const aiTestBtn = document.getElementById("aiTestBtn");
+  const uploadPyqBtn = document.getElementById("uploadPyqBtn");
+  const managePyqBtn = document.getElementById("managePyqBtn");
 
   // Reset Display
   if (adminBtn) adminBtn.style.display = "none";
@@ -242,6 +244,8 @@ function applyRoleBasedUI(role, permissions = {}) {
   if (sendNotifBtn) sendNotifBtn.style.display = "none";
   if (uploadTestBtn) uploadTestBtn.style.display = "none";
   if (aiTestBtn) aiTestBtn.style.display = "none";
+  if (uploadPyqBtn) uploadPyqBtn.style.display = "none";
+  if (managePyqBtn) managePyqBtn.style.display = "none";
 
   const isSuperAdmin = (currentUser && currentUser.email && currentUser.email.toLowerCase() === "rohitrajgoh91@gmail.com") || normalizedRole === "superadmin";
 
@@ -256,6 +260,8 @@ function applyRoleBasedUI(role, permissions = {}) {
     if (permissions.send_notif !== false && sendNotifBtn) sendNotifBtn.style.display = "flex";
     if (permissions.manage_test !== false && uploadTestBtn) uploadTestBtn.style.display = "flex";
     if (permissions.ai_test !== false && aiTestBtn) aiTestBtn.style.display = "flex";
+    if (permissions.upload_pyq !== false && uploadPyqBtn) uploadPyqBtn.style.display = "flex";
+    if (permissions.manage_pyq !== false && managePyqBtn) managePyqBtn.style.display = "flex";
 
   } else if (normalizedRole === "admin") {
     if (userRoleBadge) userRoleBadge.innerHTML = '<i class="fa-solid fa-user-gear"></i> Admin';
@@ -266,6 +272,8 @@ function applyRoleBasedUI(role, permissions = {}) {
     if (sendNotifBtn) sendNotifBtn.style.display = "flex";
     if (uploadTestBtn) uploadTestBtn.style.display = "flex";
     if (aiTestBtn) aiTestBtn.style.display = "flex";
+    if (uploadPyqBtn) uploadPyqBtn.style.display = "flex";
+    if (managePyqBtn) managePyqBtn.style.display = "flex";
 
   } else if (normalizedRole === "teammate" || normalizedRole === "moderator") {
     if (userRoleBadge) userRoleBadge.innerHTML = '<i class="fa-solid fa-user-shield"></i> Official Teammate';
@@ -278,6 +286,8 @@ function applyRoleBasedUI(role, permissions = {}) {
     if (permissions.send_notif && sendNotifBtn) sendNotifBtn.style.display = "flex";
     if (permissions.manage_test && uploadTestBtn) uploadTestBtn.style.display = "flex";
     if (permissions.ai_test && aiTestBtn) aiTestBtn.style.display = "flex";
+    if (permissions.upload_pyq && uploadPyqBtn) uploadPyqBtn.style.display = "flex";
+    if (permissions.manage_pyq && managePyqBtn) managePyqBtn.style.display = "flex";
 
   } else {
     if (userRoleBadge) userRoleBadge.innerHTML = '<i class="fa-solid fa-graduation-cap"></i> Active Student';
@@ -558,7 +568,6 @@ async function setGoogleUserPassword() {
 
 async function clearAppCache() {
   try {
-    // 1. Service Worker Caches ko delete karein
     if ('caches' in window) {
       const cacheNames = await caches.keys();
       await Promise.all(
@@ -566,7 +575,6 @@ async function clearAppCache() {
       );
     }
 
-    // 2. Supabase ka session token bachakar baaki LocalStorage saaf karein
     const supabaseKeys = [];
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
@@ -578,7 +586,6 @@ async function clearAppCache() {
     localStorage.clear();
     sessionStorage.clear();
 
-    // 3. Bachaya hua Supabase session wapas localStorage mein daal dein
     supabaseKeys.forEach(item => {
       localStorage.setItem(item.key, item.value);
     });
@@ -625,7 +632,6 @@ async function deleteUserAccount() {
 
     if (profileErr) throw profileErr;
 
-    // Service Worker Cache Clean-up addition
     if ('caches' in window) {
       const cacheNames = await caches.keys();
       await Promise.all(cacheNames.map(name => caches.delete(name)));
@@ -664,6 +670,14 @@ function goToUploadTest() {
 
 function goToAiTestCreator() { 
   window.location.href = "admin-ai-tests.html"; 
+}
+
+function goToUploadPyq() { 
+  window.location.href = "admin-upload-pyq.html"; 
+}
+
+function goToManagePyq() { 
+  window.location.href = "admin-manage-pyq.html"; 
 }
 
 function goToHome() { 

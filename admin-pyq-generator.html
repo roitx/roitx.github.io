@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BSEB AI PYQ Generator - Admin</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-user-select: none; user-select: none; }
+    input, textarea, select { -webkit-user-select: text !important; user-select: text !important; }
+    body { background: #e6ebf4; color: #334155; padding: 20px 15px; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; visibility: hidden; }
+    body.admin-authenticated { visibility: visible !important; }
+    .app-card { background: #e6ebf4; width: 100%; max-width: 520px; border-radius: 30px; padding: 24px 20px; box-shadow: 12px 12px 24px #c2c9d6, -12px -12px 24px #ffffff; }
+    .badge-top { background: #e6ebf4; padding: 10px 14px; border-radius: 20px; box-shadow: inset 3px 3px 6px #c2c9d6, inset -3px -3px 6px #ffffff; font-size: 11px; font-weight: 700; color: #7c3aed; text-align: center; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .action-bar { display: flex; gap: 12px; margin-bottom: 24px; }
+    .btn-pill { flex: 1; padding: 10px 14px; border-radius: 20px; background: #e6ebf4; border: none; box-shadow: 5px 5px 10px #c2c9d6, -5px -5px 10px #ffffff; font-size: 12px; font-weight: 700; color: #334155; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none; }
+    .btn-pill.purple { color: #7c3aed; }
+    .title-sec { margin-bottom: 20px; }
+    .title-sec h1 { font-size: 22px; font-weight: 800; color: #1e293b; display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .title-sec p { font-size: 12px; color: #64748b; }
+    .section-tag { font-size: 11px; font-weight: 800; color: #64748b; letter-spacing: 0.8px; margin-bottom: 16px; display: flex; align-items: center; gap: 6px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 12px; }
+    .form-group.full { grid-column: span 2; }
+    .form-group label { display: block; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 8px; }
+    .input-field { width: 100%; height: 42px; padding: 0 14px; border: none; outline: none; background: #e6ebf4; border-radius: 20px; box-shadow: inset 3px 3px 6px #c2c9d6, inset -3px -3px 6px #ffffff; font-size: 12px; font-weight: 600; color: #334155; }
+    textarea.input-field { height: 85px; padding: 12px 14px; resize: vertical; }
+    .btn-submit { width: 100%; height: 48px; margin-top: 20px; border: none; border-radius: 24px; background: #e6ebf4; box-shadow: 6px 6px 12px #c2c9d6, -6px -6px 12px #ffffff; font-size: 14px; font-weight: 800; color: #7c3aed; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .btn-submit:active { box-shadow: inset 4px 4px 8px #c2c9d6, inset -4px -4px 8px #ffffff; }
+    .btn-upload { background: #059669 !important; color: #ffffff !important; display: none; }
+    .status-msg { margin-top: 15px; font-size: 12px; font-weight: bold; text-align: center; display: none; padding: 10px; border-radius: 12px; box-shadow: inset 2px 2px 4px #c2c9d6, inset -2px -2px 4px #ffffff; }
+    
+    /* PREVIEW DESIGN */
+    .preview-box { display: none; margin-top: 20px; background: #1e1b4b; border-radius: 20px; padding: 18px; color: #f1f5f9; box-shadow: inset 3px 3px 6px #0f172a, inset -3px -3px 6px #334155; max-height: 480px; overflow-y: auto; line-height: 1.6; }
+    .preview-title { font-size: 13px; font-weight: 800; color: #a7f3d0; margin-bottom: 12px; border-bottom: 1px solid #334155; padding-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+    .summary-card { background: rgba(255, 255, 255, 0.05); border-left: 4px solid #8b5cf6; padding: 12px 15px; border-radius: 8px; margin-bottom: 16px; font-size: 12px; }
+    .summary-card h3 { font-size: 14px; color: #c4b5fd; margin-bottom: 8px; border-bottom: 1px dashed rgba(255,255,255,0.2); padding-bottom: 4px; }
+    .formatted-text h3, .formatted-text h4 { color: #f472b6; font-size: 13px; margin: 10px 0 6px 0; font-weight: bold; }
+    .formatted-text strong { color: #38bdf8; font-weight: 700; }
+    .formatted-text ul { padding-left: 18px; margin-top: 4px; }
+    .formatted-text li { margin-bottom: 6px; }
+    .q-preview-card { background: rgba(255, 255, 255, 0.07); border-radius: 12px; padding: 12px 14px; margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.1); }
+    .q-preview-card .tag { display: inline-block; background: #7c3aed; color: #fff; font-size: 10px; font-weight: bold; padding: 2px 8px; border-radius: 10px; margin-bottom: 6px; }
+    .q-preview-card .year-tag { display: inline-block; background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); font-size: 10px; font-weight: bold; padding: 2px 8px; border-radius: 10px; margin-bottom: 6px; margin-left: 4px; }
+    .q-preview-card .q-title { font-size: 13px; font-weight: 700; color: #38bdf8; margin-bottom: 6px; }
+    .q-preview-card .q-ans { font-size: 12px; color: #e2e8f0; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 6px; margin-top: 6px; }
+    .lang-divider { border-top: 1px dashed #64748b; margin: 10px 0; }
+  </style>
+</head>
+<body>
+
+  <div class="app-card">
+    <div class="badge-top"><i class="fa-solid fa-shield-halved"></i> SECURE ADMIN: BSEB PYQ ENGINE</div>
+
+    <div class="action-bar">
+      <a href="manage-pyqs.html" class="btn-pill"><i class="fa-solid fa-list-check"></i> Manage PYQs</a>
+      <button class="btn-pill purple"><i class="fa-solid fa-bolt"></i> BSEB AI GENERATOR</button>
+    </div>
+
+    <div class="title-sec">
+      <h1><i class="fa-solid fa-wand-magic-sparkles"></i> BSEB PYQ Generator</h1>
+      <p>Bihar Board Exam PYQs (Up to Feb 2026) & Dedicated Topper Notes.</p>
+    </div>
+
+    <div class="section-tag"><i class="fa-solid fa-sliders"></i> TARGET PARAMETERS</div>
+
+    <div class="form-grid">
+      
+      <div class="form-group">
+        <label><i class="fa-solid fa-school"></i> Target Class</label>
+        <select class="input-field" id="targetClass" onchange="handleClassChange()">
+          <option value="10th">Class 10th (Matric)</option>
+          <option value="12th">Class 12th (Inter)</option>
+        </select>
+      </div>
+
+      <div class="form-group" id="streamGroup" style="display: none;">
+        <label><i class="fa-solid fa-layer-group"></i> Select Stream</label>
+        <select class="input-field" id="streamSelect" onchange="updateSubjects()">
+          <option value="Science">Science</option>
+          <option value="Arts">Arts</option>
+          <option value="Commerce">Commerce</option>
+        </select>
+      </div>
+
+      <div class="form-group" id="subjectGroup">
+        <label><i class="fa-solid fa-book"></i> Subject</label>
+        <select class="input-field" id="subjectSelect"></select>
+      </div>
+
+      <div class="form-group">
+        <label><i class="fa-solid fa-language"></i> Content Language</label>
+        <select class="input-field" id="languageSelect">
+          <option value="Bilingual" selected>🌐 Bilingual (English + Hindi)</option>
+          <option value="English">🇬🇧 Pure English</option>
+          <option value="Hindi">🇮🇳 Pure Hindi</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label><i class="fa-solid fa-calendar"></i> PYQ Year Range</label>
+        <select class="input-field" id="yearRange">
+          <option value="2018 - 2026" selected>2018 - 2026 (Latest Up To Feb 2026 Exam)</option>
+          <option value="2015 - 2026">2015 - 2026 (Last 11 Yrs)</option>
+          <option value="2020 - 2026">2020 - 2026 (Recent Yrs)</option>
+        </select>
+      </div>
+
+      <div class="form-group full">
+        <label><i class="fa-solid fa-list-check"></i> Generation Request Mode</label>
+        <select class="input-field" id="qType" onchange="toggleQCountVisibility()">
+          <option value="Mix (Short + Long + Key Concept Points)" selected>🔥 Mix Questions (Short + Long + Key Points)</option>
+          <option value="TOPPER_SUMMARY_12TH">🏆 Topper Style Chapter Summary (Dedicated For 12th)</option>
+          <option value="Short Answer">Short Subjective (2 Marks)</option>
+          <option value="Long Answer">Long Subjective (5 Marks)</option>
+          <option value="MCQ">Objective MCQ (1 Mark)</option>
+        </select>
+      </div>
+
+      <div class="form-group full" id="qCountGroup">
+        <label><i class="fa-solid fa-hashtag"></i> Question Count</label>
+        <select class="input-field" id="qCount">
+          <option value="5">5 Questions</option>
+          <option value="10" selected>10 Questions</option>
+          <option value="15">15 Questions</option>
+          <option value="20">20 Questions</option>
+        </select>
+      </div>
+
+      <div class="form-group full">
+        <label><i class="fa-solid fa-heading"></i> Chapter / Topic Name</label>
+        <input type="text" class="input-field" id="chapterName" placeholder="Type Chapter Name...">
+      </div>
+
+      <div class="form-group full">
+        <label><i class="fa-solid fa-note-sticky"></i> Extra Instructions (Optional)</label>
+        <textarea class="input-field" id="extraInstructions" placeholder="Apne special instructions yahan type karein..."></textarea>
+      </div>
+
+    </div>
+
+    <button class="btn-submit" id="genBtn" onclick="generateBSEBPYQs()">
+      <i class="fa-solid fa-wand-magic-sparkles"></i> Generate Content
+    </button>
+
+    <div id="statusBox" class="status-msg"></div>
+
+    <div id="previewBox" class="preview-box"></div>
+
+    <button class="btn-submit btn-upload" id="uploadBtn" onclick="uploadToDatabase()">
+      <i class="fa-solid fa-cloud-arrow-up"></i> Save to Database
+    </button>
+
+  </div>
+
+<script>
+  let pendingPayload = null;
+
+  const subjectsData = {
+    "10th": ["Science", "Mathematics", "Social Science", "Hindi", "English", "Sanskrit"],
+    "12th": {
+      "Science": ["Physics", "Chemistry", "Mathematics", "Biology", "English", "Hindi"],
+      "Commerce": ["Accountancy", "Business Studies", "Economics", "English", "Hindi", "Entrepreneurship"],
+      "Arts": ["History", "Political Science", "Geography", "Economics", "Sociology", "Psychology", "English", "Hindi"]
+    }
+  };
+
+  // ADVANCED MARKDOWN TO CLEAN HTML PARSER
+  function parseMarkdownToHTML(text) {
+    if (!text) return "";
+    let html = text
+      .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+      .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/^\* (.*$)/gim, '• $1')
+      .replace(/^- (.*$)/gim, '• $1')
+      .replace(/\n\n/g, '<br><br>')
+      .replace(/\n/g, '<br>');
+    return html;
+  }
+
+  window.addEventListener('DOMContentLoaded', async () => {
+    try {
+      if (typeof window.requireAdminAuth === "function") {
+        await window.requireAdminAuth();
+      } else {
+        await verifyAdminStrictly();
+      }
+      document.body.classList.add('admin-authenticated');
+      handleClassChange();
+    } catch (authErr) {
+      console.error("Admin Auth Error:", authErr);
+    }
+  });
+
+  async function verifyAdminStrictly() {
+    if (!window.supabaseClient) return;
+
+    let currentUser = null;
+    const { data: { session } } = await window.supabaseClient.auth.getSession();
+    if (session) currentUser = session.user;
+
+    if (!currentUser) {
+      alert("🔒 Access Denied!");
+      window.location.href = "login.html";
+      return;
+    }
+
+    const { data } = await window.supabaseClient
+      .from('profiles')
+      .select('role')
+      .eq('id', currentUser.id)
+      .single();
+
+    if (!data || data.role !== 'admin') {
+      alert("⛔ Unauthorized!");
+      window.location.href = "profile.html";
+    }
+  }
+
+  function handleClassChange() {
+    const cls = document.getElementById("targetClass").value;
+    const streamGrp = document.getElementById("streamGroup");
+
+    if (cls === "12th") {
+      streamGrp.style.display = "block";
+    } else {
+      streamGrp.style.display = "none";
+      if(document.getElementById("qType").value === "TOPPER_SUMMARY_12TH") {
+        document.getElementById("qType").value = "Mix (Short + Long + Key Concept Points)";
+      }
+    }
+    updateSubjects();
+    toggleQCountVisibility();
+  }
+
+  function toggleQCountVisibility() {
+    const qType = document.getElementById("qType").value;
+    const qCountGrp = document.getElementById("qCountGroup");
+    
+    if (qType === "TOPPER_SUMMARY_12TH") {
+      qCountGrp.style.display = "none";
+      if(document.getElementById("targetClass").value !== "12th") {
+        alert("Topper Summary feature targeted specifically Class 12th ke liye hai!");
+        document.getElementById("targetClass").value = "12th";
+        handleClassChange();
+      }
+    } else {
+      qCountGrp.style.display = "block";
+    }
+  }
+
+  function updateSubjects() {
+    const cls = document.getElementById("targetClass").value;
+    const subjSelect = document.getElementById("subjectSelect");
+    subjSelect.innerHTML = "";
+
+    let options = [];
+    if (cls === "10th") {
+      options = subjectsData["10th"];
+    } else {
+      const stream = document.getElementById("streamSelect").value;
+      options = subjectsData["12th"][stream] || [];
+    }
+
+    options.forEach(sub => {
+      const opt = document.createElement("option");
+      opt.value = sub;
+      opt.textContent = sub;
+      subjSelect.appendChild(opt);
+    });
+  }
+
+  async function generateBSEBPYQs() {
+    const targetClass = document.getElementById("targetClass").value;
+    const stream = targetClass === "12th" ? document.getElementById("streamSelect").value : "General";
+    const subject = document.getElementById("subjectSelect").value;
+    const langMode = document.getElementById("languageSelect").value;
+    const qCount = document.getElementById("qCount").value;
+    const years = document.getElementById("yearRange").value;
+    const qType = document.getElementById("qType").value;
+    const chapter = document.getElementById("chapterName").value.trim();
+    const extra = document.getElementById("extraInstructions").value.trim();
+
+    const statusBox = document.getElementById("statusBox");
+    const btn = document.getElementById("genBtn");
+    const previewBox = document.getElementById("previewBox");
+    const uploadBtn = document.getElementById("uploadBtn");
+
+    if (!chapter) {
+      alert("⚠️ Chapter / Topic Name bharna zaroori hai!");
+      return;
+    }
+
+    btn.disabled = true;
+    previewBox.style.display = "none";
+    uploadBtn.style.display = "none";
+    statusBox.style.display = "block";
+    statusBox.style.color = "#7c3aed";
+    statusBox.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i> AI Generating...";
+
+    let prompt = `Generate BSEB Study Material/PYQs for:
+Class: Class ${targetClass} ${targetClass === "12th" ? `(${stream} Stream)` : ''}
+Subject: ${subject}
+Chapter: ${chapter}
+Years: ${years}
+Type: ${qType}
+Language Preference: ${langMode}
+${extra ? `Extra Instruction: ${extra}` : ''}
+
+STRICT INSTRUCTION FOR YEAR TAGS:
+For EVERY question, you MUST provide an exact year_tag listing ALL the years and shifts in which this question or concept was asked in BSEB exams.
+Format examples for year_tag: "2018, 2021, 2022 I, 2024 II" or "2019, 2023 I" or "2020 II, 2025".
+
+STRICT JSON OUTPUT REQUIREMENT:
+Return ONLY a JSON object.
+Format:
+{
+  "chapter_summary": {
+    "summary_en": "Markdown formatted summary in English...",
+    "summary_hi": "Markdown formatted summary in Hindi..."
+  },
+  "questions": [
+    {
+      "question_en": "Question in English",
+      "question_hi": "Question in Hindi",
+      "year_tag": "2018, 2021, 2022 I, 2024 II",
+      "marks": "2 Marks",
+      "answer_en": "Markdown formatted answer in English",
+      "answer_hi": "Markdown formatted answer in Hindi"
+    }
+  ]
+}`;
+
+    try {
+      const res = await fetch("https://ktastwehnnqicriknewr.supabase.co/functions/v1/smart-task", {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0YXN0d2Vobm5xaWNyaWtuZXdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyNTk5NTEsImV4cCI6MjA4MDgzNTk1MX0.5_UvwaG0X8k_Emj-cMC0KjEqlvU6hgAt5IsHJdgARvk",
+          "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0YXN0d2Vobm5xaWNyaWtuZXdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyNTk5NTEsImV4cCI6MjA4MDgzNTk1MX0.5_UvwaG0X8k_Emj-cMC0KjEqlvU6hgAt5IsHJdgARvk"
+        },
+        body: JSON.stringify({ prompt })
+      });
+
+      const textResponse = await res.text();
+      let parsed = JSON.parse(textResponse);
+      let rawText = parsed.choices?.[0]?.message?.content || parsed.candidates?.[0]?.content?.parts?.[0]?.text || parsed.result || textResponse;
+      rawText = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
+
+      const generatedData = JSON.parse(rawText);
+
+      pendingPayload = {
+        title: qType === "TOPPER_SUMMARY_12TH" ? `Class 12 ${subject}: ${chapter} (Topper Notes)` : `Class ${targetClass} ${subject}: ${chapter}`,
+        exam_target: `BSEB Class ${targetClass}`,
+        subject: subject,
+        topic: chapter,
+        years_range: years,
+        language_mode: langMode,
+        questions: (generatedData.questions || []).map(q => ({
+          ...q,
+          year: q.year_tag || q.year || years, // Year tags like (2018, 2021, 2022 I, 2024 II)
+          answer_en: parseMarkdownToHTML(q.answer_en || ""),
+          answer_hi: parseMarkdownToHTML(q.answer_hi || "")
+        })),
+        summary: generatedData.chapter_summary ? {
+          summary_en: parseMarkdownToHTML(generatedData.chapter_summary.summary_en || ""),
+          summary_hi: parseMarkdownToHTML(generatedData.chapter_summary.summary_hi || "")
+        } : null
+      };
+
+      renderPreview(pendingPayload, langMode);
+
+      statusBox.style.color = "#10b981";
+      statusBox.innerHTML = "✅ Beautifully Formatted Content Ready!";
+      previewBox.style.display = "block";
+      uploadBtn.style.display = "flex";
+
+    } catch (err) {
+      statusBox.style.color = "#ef4444";
+      statusBox.innerHTML = "❌ Error: " + err.message;
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  function renderPreview(payload, langMode) {
+    const previewBox = document.getElementById("previewBox");
+    let html = `<div class="preview-title"><i class="fa-solid fa-eye"></i> PREVIEW GENERATED CONTENT (${langMode.toUpperCase()})</div>`;
+
+    if (payload.summary) {
+      html += `<div class="summary-card formatted-text">
+        <h3><i class="fa-solid fa-book-open"></i> CHAPTER SUMMARY / REVISION NOTES</h3>`;
+      
+      if (langMode === "Bilingual" || langMode === "English") {
+        if (payload.summary.summary_en) {
+          html += `<div style="color: #60a5fa; margin-bottom: 6px;"><b>[ENGLISH VERSION]</b></div><div>${payload.summary.summary_en}</div>`;
+        }
+      }
+      if (langMode === "Bilingual") {
+        html += `<div class="lang-divider"></div>`;
+      }
+      if (langMode === "Bilingual" || langMode === "Hindi") {
+        if (payload.summary.summary_hi) {
+          html += `<div style="color: #f472b6; margin-bottom: 6px;"><b>[HINDI VERSION]</b></div><div>${payload.summary.summary_hi}</div>`;
+        }
+      }
+      html += `</div>`;
+    }
+
+    if (payload.questions && payload.questions.length > 0) {
+      payload.questions.forEach((q, i) => {
+        const yearTagDisplay = q.year_tag || q.year || payload.years_range;
+        
+        html += `<div class="q-preview-card formatted-text">
+          <span class="tag">${q.marks || 'PYQ'}</span>
+          <span class="year-tag"><i class="fa-regular fa-calendar-days"></i> ${yearTagDisplay}</span>`;
+
+        if (langMode === "Bilingual" || langMode === "English") {
+          if (q.question_en) html += `<div class="q-title">Q${i + 1} (EN): ${q.question_en}</div>`;
+          if (q.answer_en) html += `<div class="q-ans"><b>Ans (EN):</b><br>${q.answer_en}</div>`;
+        }
+
+        if (langMode === "Bilingual") {
+          html += `<div class="lang-divider"></div>`;
+        }
+
+        if (langMode === "Bilingual" || langMode === "Hindi") {
+          if (q.question_hi) html += `<div class="q-title" style="color:#f472b6;">Q${i + 1} (HI): ${q.question_hi}</div>`;
+          if (q.answer_hi) html += `<div class="q-ans"><b>Ans (HI):</b><br>${q.answer_hi}</div>`;
+        }
+
+        html += `</div>`;
+      });
+    }
+
+    previewBox.innerHTML = html;
+  }
+
+  async function uploadToDatabase() {
+    if (!pendingPayload) return;
+    const uploadBtn = document.getElementById("uploadBtn");
+    const statusBox = document.getElementById("statusBox");
+
+    uploadBtn.disabled = true;
+
+    const { error } = await window.supabaseClient.from('pyq_database').insert([pendingPayload]);
+
+    if (error) {
+      statusBox.style.color = "#ef4444";
+      statusBox.innerHTML = "❌ Upload Error: " + error.message;
+      uploadBtn.disabled = false;
+    } else {
+      statusBox.style.color = "#10b981";
+      statusBox.innerHTML = "✅ Successfully Saved to Database!";
+      setTimeout(() => location.href = "manage-pyqs.html", 1500);
+    }
+  }
+</script>
+
+</body>
+</html>

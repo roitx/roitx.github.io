@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PYQ Reader Portal</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --bg: #0b132b;
+      --card: #1c2541;
+      --primary: #38bdf8;
+      --text: #f8fafc;
+      --accent: #10b981;
+      --border: rgba(255,255,255,0.1);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+    body { background: var(--bg); color: var(--text); padding: 15px; }
+    header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 15px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+    .pyq-title { font-size: 18px; font-weight: bold; color: var(--primary); }
+    .pyq-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+    .year-tag { background: rgba(56, 189, 248, 0.2); color: var(--primary); font-size: 11px; padding: 3px 8px; border-radius: 4px; font-weight: bold; }
+    .q-text { font-size: 15px; margin: 10px 0; font-weight: 600; line-height: 1.5; }
+    .options-list { display: grid; gap: 8px; margin: 10px 0; }
+    .opt-btn { background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 6px; padding: 10px; color: var(--text); text-align: left; cursor: pointer; }
+    .opt-btn.correct { background: rgba(16, 185, 129, 0.2); border-color: var(--accent); color: var(--accent); font-weight: bold; }
+    .solution-box { display: none; background: rgba(0,0,0,0.2); padding: 12px; border-left: 3px solid var(--primary); border-radius: 4px; font-size: 13px; color: #cbd5e1; margin-top: 10px; }
+    .toggle-sol-btn { background: none; border: none; color: var(--primary); font-size: 13px; font-weight: bold; cursor: pointer; margin-top: 5px; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="pyq-title" id="pyqHeading"><i class="fa-solid fa-book-open"></i> Loading PYQ Set...</div>
+    <button onclick="window.location.href='tests.html'" style="background: none; border: 1px solid var(--border); color: #fff; padding: 6px 12px; border-radius: 6px; cursor: pointer;">Exit</button>
+  </header>
+
+  <div id="pyqContainer" style="max-width: 800px; margin: 0 auto;"></div>
+
+  <script src="supabase.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const pyqId = urlParams.get('id');
+
+      if (!pyqId) {
+        alert("Invalid PYQ ID!");
+        return;
+      }
+
+      const { data, error } = await window.supabaseClient
+        .from('pyq_sets')
+        .select('*')
+        .eq('id', pyqId)
+        .single();
+
+      if (error || !data) {
+        document.getElementById("pyqHeading").innerText = "Error loading PYQs";
+        return;
+      }
+
+      document.getElementById("pyqHeading").innerText = data.title;
+      renderPyqQuestions(data.questions_data || []);
+    });
+
+    function renderPyqQuestions(questions) {
+      const container = document.getElementById("pyqContainer");
+      container.innerHTML = "";
+
+      questions.forEach((q, idx) => {
+        const card = document.createElement("div");
+        card.className = "pyq-card";
+
+        let optionsHtml = "";
+        (q.options || []).forEach((opt, optIdx) => {
+          optionsHtml += `<div class="opt-btn" id="opt_${idx}_${optIdx}">${String.fromCharCode(65 + optIdx)}. ${opt}</div>`;
+        });
+
+        card.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span class="year-tag"><i class="fa-solid fa-clock-rotate-left"></i> ${q.year_tag || 'PYQ'}</span>
+            <span style="font-size: 12px; color: #94a3b8;">Question ${idx + 1}</span>
+          </div>
+          <div class="q-text">${q.question}</div>
+          <div class="options-list">${optionsHtml}</div>
+          <button class="toggle-sol-btn" onclick="toggleSolution(${idx}, ${q.correct})"><i class="fa-solid fa-key"></i> Show Answer & Solution</button>
+          <div class="solution-box" id="sol_${idx}">
+            <strong>Correct Answer:</strong> Option ${String.fromCharCode(65 + q.correct)}<br><br>
+            <strong>Detailed Solution:</strong><br>${q.explanation || 'No explanation provided.'}
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+    }
+
+    function toggleSolution(qIdx, correctIdx) {
+      const solBox = document.getElementById(`sol_${qIdx}`);
+      const correctOpt = document.getElementById(`opt_${qIdx}_${correctIdx}`);
+
+      if (solBox.style.display === "block") {
+        solBox.style.display = "none";
+        if (correctOpt) correctOpt.classList.remove("correct");
+      } else {
+        solBox.style.display = "block";
+        if (correctOpt) correctOpt.classList.add("correct");
+      }
+    }
+  </script>
+</body>
+</html>

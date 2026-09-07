@@ -163,11 +163,20 @@
     </button>
 
     <button class="btn btn-admin" id="uploadTestBtn" style="display: none; margin-top: 8px; background: linear-gradient(135deg, #11998e, #38ef7d); color: #fff;" onclick="goToUploadTest()">
-      <i class="fa-solid fa-file-arrow-up"></i> Upload / Manage Test
+      <i class="fa-solid fa-file-arrow-up"></i>  Manage Test
     </button>
 
     <button class="btn btn-admin" id="aiTestBtn" style="display: none; margin-top: 8px; background: linear-gradient(135deg, #8E2DE2, #4A00E0); color: #fff;" onclick="goToAiTestCreator()">
       <i class="fa-solid fa-wand-magic-sparkles"></i> Create AI Test
+    </button>
+
+    <!-- NEW: PYQ Generator & Management Action Buttons -->
+    <button class="btn btn-admin" id="uploadPyqBtn" style="display: none; margin-top: 8px; background: linear-gradient(135deg, #ff7e5f, #feb47b); color: #fff;" onclick="goToUploadPyq()">
+      <i class="fa-solid fa-file-circle-plus"></i> Upload PYQ 
+    </button>
+
+    <button class="btn btn-admin" id="managePyqBtn" style="display: none; margin-top: 8px; background: linear-gradient(135deg, #ff4e50, #f9d423); color: #fff;" onclick="goToManagePyq()">
+      <i class="fa-solid fa-list-check"></i> Manage PYQ
     </button>
 
     <!-- General Action Buttons -->
@@ -182,10 +191,8 @@
         <i class="fa-solid fa-right-from-bracket"></i> Logout Account
       </button>
       <button class="btn" onclick="clearAppCache()" style="background: #e0e5ec; color: #d97706; margin-top: 10px;">
-  <i class="fa-solid fa-broom"></i> Clear App Cache & Reload
-</button>
-
-
+        <i class="fa-solid fa-broom"></i> Clear App Cache & Reload
+      </button>
     </div>
 
     <!-- Section 3: Danger Zone -->
@@ -303,6 +310,8 @@
     function goToSendNotification() { window.location.href = "admin-notifications.html"; }
     function goToUploadTest() { window.location.href = "admin-manage-tests.html"; }
     function goToAiTestCreator() { window.location.href = "admin-ai-test.html"; }
+    function goToUploadPyq() { window.location.href = "admin-pyq-generator.html"; }
+    function goToManagePyq() { window.location.href = "admin-manage-pyq.html"; }
     function goToHome() { window.location.href = "index.html"; }
   </script>
 </body>

@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage PYQs - Admin Panel</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-user-select: none; user-select: none; }
+    input, textarea, select { -webkit-user-select: text !important; user-select: text !important; }
+    
+    body { background: #e6ebf4; color: #334155; padding: 20px 15px; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; visibility: hidden; }
+    body.admin-authenticated { visibility: visible !important; }
+
+    .app-card { background: #e6ebf4; width: 100%; max-width: 520px; border-radius: 30px; padding: 24px 20px; box-shadow: 12px 12px 24px #c2c9d6, -12px -12px 24px #ffffff; }
+    .badge-top { background: #e6ebf4; padding: 10px 14px; border-radius: 20px; box-shadow: inset 3px 3px 6px #c2c9d6, inset -3px -3px 6px #ffffff; font-size: 11px; font-weight: 700; color: #7c3aed; text-align: center; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+
+    .action-bar { display: flex; gap: 12px; margin-bottom: 24px; }
+    .btn-pill { flex: 1; padding: 10px 14px; border-radius: 20px; background: #e6ebf4; border: none; box-shadow: 5px 5px 10px #c2c9d6, -5px -5px 10px #ffffff; font-size: 12px; font-weight: 700; color: #334155; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none; transition: 0.2s ease; }
+    .btn-pill:active { box-shadow: inset 3px 3px 6px #c2c9d6, inset -3px -3px 6px #ffffff; }
+    .btn-pill.purple { color: #7c3aed; }
+
+    .title-sec { margin-bottom: 16px; }
+    .title-sec h1 { font-size: 22px; font-weight: 800; color: #1e293b; display: flex; align-items: center; gap: 8px; }
+
+    .search-container { position: relative; margin-bottom: 20px; }
+    .search-box { width: 100%; height: 44px; padding: 0 16px 0 42px; border: none; outline: none; background: #e6ebf4; border-radius: 22px; box-shadow: inset 3px 3px 6px #c2c9d6, inset -3px -3px 6px #ffffff; font-size: 13px; font-weight: 600; color: #334155; }
+    .search-icon { position: absolute; left: 16px; top: 14px; color: #64748b; font-size: 14px; }
+
+    .pyq-list { display: flex; flex-direction: column; gap: 16px; }
+    .pyq-item { background: #e6ebf4; border-radius: 24px; padding: 18px; box-shadow: 6px 6px 14px #c2c9d6, -6px -6px 14px #ffffff; display: flex; flex-direction: column; gap: 12px; }
+    .pyq-header { display: flex; justify-content: space-between; align-items: center; }
+    .exam-tag { font-size: 10px; font-weight: 800; color: #7c3aed; padding: 4px 10px; border-radius: 12px; box-shadow: inset 2px 2px 4px #c2c9d6, inset -2px -2px 4px #ffffff; }
+    .year-tag { font-size: 10px; font-weight: 700; color: #059669; padding: 4px 10px; border-radius: 12px; box-shadow: inset 2px 2px 4px #c2c9d6, inset -2px -2px 4px #ffffff; }
+    
+    .pyq-title { font-size: 14px; font-weight: 800; color: #1e293b; line-height: 1.4; }
+    .pyq-meta { font-size: 11px; font-weight: 600; color: #64748b; display: flex; gap: 10px; flex-wrap: wrap; }
+
+    .pyq-actions { display: flex; gap: 8px; margin-top: 4px; }
+    .btn-action { flex: 1; padding: 10px; border-radius: 16px; border: none; background: #e6ebf4; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none; box-shadow: 4px 4px 8px #c2c9d6, -4px -4px 8px #ffffff; transition: 0.2s ease; }
+    .btn-action:active { box-shadow: inset 2px 2px 5px #c2c9d6, inset -2px -2px 5px #ffffff; }
+    .btn-action.view { color: #0284c7; }
+    .btn-action.edit { color: #d97706; }
+    .btn-action.delete { color: #ef4444; }
+
+    /* MODAL METADATA EDIT */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; padding: 15px; z-index: 999; }
+    .modal-card { background: #e6ebf4; width: 100%; max-width: 460px; border-radius: 28px; padding: 22px; box-shadow: 12px 12px 24px #1e293b; max-height: 90vh; overflow-y: auto; }
+    .modal-title { font-size: 16px; font-weight: 800; color: #1e293b; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; border-bottom: 2px dashed #cbd5e1; padding-bottom: 8px; }
+    
+    .form-group { margin-bottom: 12px; }
+    .form-group label { display: block; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 6px; }
+    .input-field { width: 100%; height: 42px; padding: 0 14px; border: none; outline: none; background: #e6ebf4; border-radius: 16px; box-shadow: inset 3px 3px 6px #c2c9d6, inset -3px -3px 6px #ffffff; font-size: 12px; font-weight: 600; color: #334155; }
+    
+    .modal-btns { display: flex; gap: 10px; margin-top: 20px; }
+    .btn-save { flex: 1; padding: 12px; background: #7c3aed !important; color: #ffffff !important; border-radius: 16px; border: none; font-weight: 800; font-size: 12px; cursor: pointer; box-shadow: 4px 4px 8px #c2c9d6, -4px -4px 8px #ffffff; }
+    .btn-cancel { flex: 1; padding: 12px; background: #e6ebf4; color: #ef4444; border-radius: 16px; border: none; font-weight: 800; font-size: 12px; cursor: pointer; box-shadow: 4px 4px 8px #c2c9d6, -4px -4px 8px #ffffff; }
+  </style>
+</head>
+<body>
+
+  <div class="app-card">
+    <div class="badge-top"><i class="fa-solid fa-shield-halved"></i> SECURE ADMIN: BSEB PYQ MANAGEMENT</div>
+
+    <div class="action-bar">
+      <a href="admin-pyq-generator.html" class="btn-pill purple"><i class="fa-solid fa-plus"></i> Create BSEB PYQ</a>
+      <button class="btn-pill" onclick="loadAllPYQs()"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
+    </div>
+
+    <div class="title-sec">
+      <h1><i class="fa-solid fa-list-check"></i> Manage BSEB PYQs</h1>
+    </div>
+
+    <div class="search-container">
+      <i class="fa-solid fa-magnifying-glass search-icon"></i>
+      <input type="text" id="searchInput" class="search-box" placeholder="Search Class, Subject, Topic or Year..." onkeyup="filterPYQs()">
+    </div>
+
+    <div id="pyqContainer" class="pyq-list"></div>
+  </div>
+
+  <!-- EDIT METADATA MODAL -->
+  <div id="editModal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-title"><i class="fa-solid fa-pen-to-square"></i> Edit Paper Parameters</div>
+      <input type="hidden" id="editId">
+      
+      <div class="form-group">
+        <label>Display Title</label>
+        <input type="text" id="editTitle" class="input-field">
+      </div>
+
+      <div class="form-group">
+        <label>Target Class</label>
+        <select id="editTargetClass" class="input-field">
+          <option value="BSEB Class 10th">Class 10th (Matric)</option>
+          <option value="BSEB Class 12th">Class 12th (Inter)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Subject</label>
+        <input type="text" id="editSubject" class="input-field">
+      </div>
+
+      <div class="form-group">
+        <label>Chapter / Topic Name</label>
+        <input type="text" id="editTopic" class="input-field">
+      </div>
+
+      <div class="form-group">
+        <label>Language Mode</label>
+        <select id="editLangMode" class="input-field">
+          <option value="Bilingual">Bilingual (English + Hindi)</option>
+          <option value="English">Pure English</option>
+          <option value="Hindi">Pure Hindi</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Year Range</label>
+        <select id="editYearRange" class="input-field">
+          <option value="2018 - 2026">2018 - 2026 (Up To Feb Exam)</option>
+          <option value="2015 - 2026">2015 - 2026 (Last 11 Yrs)</option>
+          <option value="2020 - 2026">2020 - 2026 (Recent Yrs)</option>
+        </select>
+      </div>
+
+      <div class="modal-btns">
+        <button onclick="saveMetadataUpdate()" class="btn-save"><i class="fa-solid fa-check"></i> Save Changes</button>
+        <button onclick="closeModal()" class="btn-cancel"><i class="fa-solid fa-xmark"></i> Cancel</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  let pyqDataStore = [];
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    try {
+      if (typeof window.requireAdminAuth === "function") {
+        await window.requireAdminAuth();
+      } else {
+        await verifyAdminStrictly();
+      }
+      document.body.classList.add('admin-authenticated');
+      loadAllPYQs();
+    } catch (err) {
+      console.error("Admin Auth Failed:", err);
+    }
+  });
+
+  async function verifyAdminStrictly() {
+    if (!window.supabaseClient) return;
+    let currentUser = null;
+    const { data: { session } } = await window.supabaseClient.auth.getSession();
+    if (session) currentUser = session.user;
+
+    if (!currentUser) {
+      alert("🔒 Access Denied!");
+      window.location.href = "login.html";
+      return;
+    }
+
+    const { data } = await window.supabaseClient
+      .from('profiles')
+      .select('role')
+      .eq('id', currentUser.id)
+      .single();
+
+    if (!data || data.role !== 'admin') {
+      alert("⛔ Unauthorized!");
+      window.location.href = "profile.html";
+    }
+  }
+
+  async function loadAllPYQs() {
+    const container = document.getElementById("pyqContainer");
+    container.innerHTML = `<div style="text-align:center; font-size:12px; font-weight:bold; padding:20px; color:#7c3aed;"><i class="fa-solid fa-spinner fa-spin"></i> Loading BSEB PYQs Database...</div>`;
+
+    const { data, error } = await window.supabaseClient
+      .from('pyq_database')
+      .select('*')
+      .order('id', { ascending: false });
+
+    if (error) {
+      container.innerHTML = `<div style="text-align:center; font-size:12px; color:#ef4444; font-weight:bold;">Error: ${error.message}</div>`;
+      return;
+    }
+
+    pyqDataStore = data || [];
+    renderList(pyqDataStore);
+  }
+
+  function renderList(list) {
+    const container = document.getElementById("pyqContainer");
+    if (list.length === 0) {
+      container.innerHTML = `<div style="text-align:center; font-size:13px; font-weight:bold; color:#64748b; padding:30px;">No papers found in database.</div>`;
+      return;
+    }
+
+    container.innerHTML = list.map(item => `
+      <div class="pyq-item">
+        <div class="pyq-header">
+          <span class="exam-tag">${item.exam_target || 'BSEB'}</span>
+          <span class="year-tag"><i class="fa-solid fa-calendar"></i> ${item.years_range || '2018 - 2026'}</span>
+        </div>
+        <div class="pyq-title">${item.title || 'Untitled Paper'}</div>
+        <div class="pyq-meta">
+          <span><i class="fa-solid fa-book"></i> ${item.subject || 'General'}</span>
+          <span><i class="fa-solid fa-language"></i> ${item.language_mode || 'Bilingual'}</span>
+        </div>
+        <div class="pyq-actions">
+          <a href="pyq-reader.html?id=${item.id}" class="btn-action view"><i class="fa-solid fa-eye"></i> View</a>
+          <button onclick="openEditModal(${item.id})" class="btn-action edit"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
+          <button onclick="deletePYQ(${item.id})" class="btn-action delete"><i class="fa-solid fa-trash"></i> Delete</button>
+        </div>
+      </div>
+    `).join("");
+  }
+
+  function openEditModal(id) {
+    const item = pyqDataStore.find(x => x.id === id);
+    if (!item) return;
+
+    document.getElementById("editId").value = item.id;
+    document.getElementById("editTitle").value = item.title || "";
+    document.getElementById("editTargetClass").value = item.exam_target || "BSEB Class 12th";
+    document.getElementById("editSubject").value = item.subject || "";
+    document.getElementById("editTopic").value = item.topic || "";
+    document.getElementById("editLangMode").value = item.language_mode || "Bilingual";
+    document.getElementById("editYearRange").value = item.years_range || "2018 - 2026";
+
+    document.getElementById("editModal").style.display = "flex";
+  }
+
+  function closeModal() {
+    document.getElementById("editModal").style.display = "none";
+  }
+
+  async function saveMetadataUpdate() {
+    const id = document.getElementById("editId").value;
+    const title = document.getElementById("editTitle").value;
+    const exam_target = document.getElementById("editTargetClass").value;
+    const subject = document.getElementById("editSubject").value;
+    const topic = document.getElementById("editTopic").value;
+    const language_mode = document.getElementById("editLangMode").value;
+    const years_range = document.getElementById("editYearRange").value;
+
+    const { error } = await window.supabaseClient
+      .from('pyq_database')
+      .update({ title, exam_target, subject, topic, language_mode, years_range })
+      .eq('id', id);
+
+    if (error) {
+      alert("❌ Update Failed: " + error.message);
+    } else {
+      closeModal();
+      loadAllPYQs();
+    }
+  }
+
+  async function deletePYQ(id) {
+    if (!confirm("Are you sure you want to permanently delete this paper?")) return;
+    const { error } = await window.supabaseClient.from('pyq_database').delete().eq('id', id);
+    if (!error) {
+      loadAllPYQs();
+    } else {
+      alert("Delete Error: " + error.message);
+    }
+  }
+
+  function filterPYQs() {
+    const q = document.getElementById("searchInput").value.toLowerCase().trim();
+    const filtered = pyqDataStore.filter(x => 
+      (x.title && x.title.toLowerCase().includes(q)) ||
+      (x.subject && x.subject.toLowerCase().includes(q)) ||
+      (x.topic && x.topic.toLowerCase().includes(q)) ||
+      (x.exam_target && x.exam_target.toLowerCase().includes(q)) ||
+      (x.years_range && x.years_range.toLowerCase().includes(q))
+    );
+    renderList(filtered);
+  }
+</script>
+
+</body>
+</html>

@@ -142,7 +142,7 @@
     }
     .modal-card {
       background: #1e293b; border: 1px solid var(--border);
-      border-radius: 14px; width: 100%; max-width: 400px; padding: 20px;
+      border-radius: 14px; width: 100%; max-width: 420px; padding: 20px;
     }
     .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
     .modal-header h3 { font-size: 16px; font-weight: 700; }
@@ -156,7 +156,7 @@
       border: 1px solid var(--border); padding: 8px 10px; border-radius: 8px; outline: none; font-size: 13px;
     }
 
-    .toggles-list { display: flex; flex-direction: column; gap: 10px; margin: 16px 0; }
+    .toggles-list { display: flex; flex-direction: column; gap: 10px; margin: 16px 0; max-height: 300px; overflow-y: auto; padding-right: 4px; }
     .toggle-item { display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 500; }
     
     .switch { position: relative; display: inline-block; width: 34px; height: 20px; }
@@ -243,6 +243,15 @@
       <div class="toggle-item">
         <span>AI Test Creator</span>
         <label class="switch"><input type="checkbox" id="modalAI" onchange="handleToggleChange()"><span class="slider"></span></label>
+      </div>
+      <!-- NEW TOGGLES FOR PYQ MODULES -->
+      <div class="toggle-item">
+        <span>Upload PYQ (Generator)</span>
+        <label class="switch"><input type="checkbox" id="modalUploadPyq" onchange="handleToggleChange()"><span class="slider"></span></label>
+      </div>
+      <div class="toggle-item">
+        <span>Manage PYQ</span>
+        <label class="switch"><input type="checkbox" id="modalManagePyq" onchange="handleToggleChange()"><span class="slider"></span></label>
       </div>
     </div>
 
@@ -402,33 +411,42 @@
   }
 
   function handleRoleDropdownChange(selectedRole) {
-    const adminToggle = document.getElementById("modalAdmin");
-    const notifToggle = document.getElementById("modalNotif");
-    const testToggle = document.getElementById("modalTest");
-    const aiToggle = document.getElementById("modalAI");
+    const adminToggle      = document.getElementById("modalAdmin");
+    const notifToggle      = document.getElementById("modalNotif");
+    const testToggle       = document.getElementById("modalTest");
+    const aiToggle         = document.getElementById("modalAI");
+    const uploadPyqToggle  = document.getElementById("modalUploadPyq");
+    const managePyqToggle  = document.getElementById("modalManagePyq");
 
     if (selectedRole === 'admin') {
-      adminToggle.checked = true;
-      notifToggle.checked = true;
-      testToggle.checked = true;
-      aiToggle.checked = true;
+      adminToggle.checked     = true;
+      notifToggle.checked     = true;
+      testToggle.checked      = true;
+      aiToggle.checked        = true;
+      uploadPyqToggle.checked = true;
+      managePyqToggle.checked = true;
     } else if (selectedRole === 'student') {
-      adminToggle.checked = false;
-      notifToggle.checked = false;
-      testToggle.checked = false;
-      aiToggle.checked = false;
+      adminToggle.checked     = false;
+      notifToggle.checked     = false;
+      testToggle.checked      = false;
+      aiToggle.checked        = false;
+      uploadPyqToggle.checked = false;
+      managePyqToggle.checked = false;
     }
   }
 
   function handleToggleChange() {
-    const adminToggle = document.getElementById("modalAdmin").checked;
-    const notifToggle = document.getElementById("modalNotif").checked;
-    const testToggle = document.getElementById("modalTest").checked;
-    const aiToggle = document.getElementById("modalAI").checked;
+    const adminToggle     = document.getElementById("modalAdmin").checked;
+    const notifToggle     = document.getElementById("modalNotif").checked;
+    const testToggle      = document.getElementById("modalTest").checked;
+    const aiToggle        = document.getElementById("modalAI").checked;
+    const uploadPyqToggle = document.getElementById("modalUploadPyq").checked;
+    const managePyqToggle = document.getElementById("modalManagePyq").checked;
+    
     const roleSelect = document.getElementById("modalRoleSelect");
 
-    const allChecked = adminToggle && notifToggle && testToggle && aiToggle;
-    const anyChecked = adminToggle || notifToggle || testToggle || aiToggle;
+    const allChecked = adminToggle && notifToggle && testToggle && aiToggle && uploadPyqToggle && managePyqToggle;
+    const anyChecked = adminToggle || notifToggle || testToggle || aiToggle || uploadPyqToggle || managePyqToggle;
 
     if (allChecked) {
       roleSelect.value = 'admin';
@@ -457,11 +475,15 @@
       document.getElementById("modalNotif").checked = true;
       document.getElementById("modalTest").checked = true;
       document.getElementById("modalAI").checked = true;
+      document.getElementById("modalUploadPyq").checked = true;
+      document.getElementById("modalManagePyq").checked = true;
     } else {
       document.getElementById("modalAdmin").checked = !!perms.admin_panel;
       document.getElementById("modalNotif").checked = !!perms.send_notif;
       document.getElementById("modalTest").checked = !!perms.manage_test;
       document.getElementById("modalAI").checked = !!perms.ai_test;
+      document.getElementById("modalUploadPyq").checked = !!perms.upload_pyq;
+      document.getElementById("modalManagePyq").checked = !!perms.manage_pyq;
     }
 
     document.getElementById("permissionsModal").style.display = "flex";
@@ -477,15 +499,19 @@
     const sendNotif  = document.getElementById("modalNotif").checked;
     const manageTest = document.getElementById("modalTest").checked;
     const aiTest     = document.getElementById("modalAI").checked;
+    const uploadPyq  = document.getElementById("modalUploadPyq").checked;
+    const managePyq  = document.getElementById("modalManagePyq").checked;
 
     const canManageTeam = isAdminRole;
 
-    // Allowed features list text banane ke liye
+    // Dynamic Permission Badges list for alert
     let allowedList = [];
     if (adminPanel) allowedList.push("Admin Panel");
     if (sendNotif) allowedList.push("Send Notifications");
     if (manageTest) allowedList.push("Upload/Manage Tests");
     if (aiTest) allowedList.push("AI Test Creator");
+    if (uploadPyq) allowedList.push("Upload PYQ");
+    if (managePyq) allowedList.push("Manage PYQ");
 
     let accessDetailsText = allowedList.length > 0 
       ? ` Ab aap ye features/pages access kar payenge: ${allowedList.join(", ")}.`
@@ -500,7 +526,9 @@
           manage_team: canManageTeam,
           send_notif: sendNotif,
           manage_test: manageTest, 
-          ai_test: aiTest 
+          ai_test: aiTest,
+          upload_pyq: uploadPyq,
+          manage_pyq: managePyq
         },
         updated_at: new Date().toISOString()
       })
@@ -509,7 +537,7 @@
     if (error) {
       alert("Save Failed: " + error.message);
     } else {
-      // Notification insert with profile.html link & detailed message
+      // Send dynamic update notification to user
       const { data: notifData } = await window.supabaseClient
         .from('notifications')
         .insert([{

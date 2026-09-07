@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PYQ Bank - Student Portal</title>
+
+  <!-- Google Fonts & FontAwesome -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Supabase & Vanilla Tilt -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.0/vanilla-tilt.min.js"></script>
+  <script src="supabase.js"></script>
+
+  <style>
+    :root {
+      --bg-dark: #030712;
+      --card-bg: rgba(15, 23, 42, 0.65);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --accent-cyan: #06b6d4;
+      --accent-purple: #a855f7;
+      --accent-pink: #ec4899;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --glow-cyan: rgba(6, 182, 212, 0.35);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      background: var(--bg-dark);
+      color: var(--text-main);
+      min-height: 100vh;
+      overflow-x: hidden;
+      padding-bottom: 60px;
+    }
+
+    /* BACKGROUND ANIMATED GLOW ORBS */
+    .bg-orbs {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      pointer-events: none;
+      z-index: -1;
+      overflow: hidden;
+    }
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.45;
+      animation: floatOrb 18s infinite alternate ease-in-out;
+    }
+    .orb-1 { width: 500px; height: 500px; background: #7c3aed; top: -100px; left: -100px; }
+    .orb-2 { width: 450px; height: 450px; background: #0284c7; bottom: -50px; right: -50px; animation-delay: -5s; }
+    .orb-3 { width: 350px; height: 350px; background: #db2777; top: 40%; left: 40%; animation-delay: -10s; }
+
+    @keyframes floatOrb {
+      0% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(60px, -80px) scale(1.15); }
+      100% { transform: translate(-50px, 50px) scale(0.9); }
+    }
+
+    .container { max-width: 1280px; margin: 0 auto; padding: 0 20px; }
+
+    /* HEADER */
+    .hero-sec {
+      text-align: center;
+      padding: 50px 20px 30px;
+      position: relative;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      border-radius: 30px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 18px;
+    }
+    .hero-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 40px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #ffffff 30%, #94a3b8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 12px;
+      line-height: 1.2;
+    }
+    .hero-title span {
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero-sub { color: var(--text-muted); font-size: 15px; max-width: 600px; margin: 0 auto 30px; font-weight: 500; }
+
+    /* CONTROLS */
+    .controls-wrapper {
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      padding: 16px;
+      margin-bottom: 35px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .search-box { position: relative; width: 100%; }
+    .search-box input {
+      width: 100%;
+      height: 52px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 0 20px 0 50px;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 500;
+      outline: none;
+      transition: 0.3s ease;
+    }
+    .search-box input:focus {
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 25px rgba(6, 182, 212, 0.25);
+      background: rgba(255, 255, 255, 0.07);
+    }
+    .search-icon { position: absolute; left: 18px; top: 17px; color: var(--accent-cyan); font-size: 18px; }
+
+    .filter-pills {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      scrollbar-width: none;
+    }
+    .filter-pills::-webkit-scrollbar { display: none; }
+    
+    .pill {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 8px 18px;
+      border-radius: 30px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .pill:hover, .pill.active {
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+      color: #fff;
+      border-color: transparent;
+      box-shadow: 0 8px 20px rgba(168, 85, 247, 0.3);
+    }
+
+    /* 3D CARDS GRID */
+    .pyq-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 24px;
+      perspective: 1000px;
+    }
+
+    .pyq-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+      transform-style: preserve-3d;
+      transition: border-color 0.4s ease, box-shadow 0.4s ease;
+      cursor: pointer;
+    }
+
+    .pyq-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: radial-gradient(800px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 255, 255, 0.06), transparent 40%);
+      border-radius: inherit;
+      pointer-events: none;
+    }
+
+    .pyq-card:hover {
+      border-color: rgba(56, 189, 248, 0.4);
+      box-shadow: 0 20px 40px -15px var(--glow-cyan);
+    }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 16px;
+      transform: translateZ(20px);
+    }
+
+    .subject-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(168, 85, 247, 0.2));
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      color: var(--accent-cyan);
+    }
+
+    .card-badges { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+    
+    .badge-tag {
+      font-size: 10px;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 20px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      background: rgba(168, 85, 247, 0.15);
+      color: var(--accent-purple);
+      border: 1px solid rgba(168, 85, 247, 0.3);
+    }
+    .badge-year {
+      font-size: 10px;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: rgba(6, 182, 212, 0.15);
+      color: var(--accent-cyan);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+    }
+
+    .card-body { margin-bottom: 20px; transform: translateZ(30px); }
+    .card-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.4;
+      margin-bottom: 10px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .card-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .meta-item { display: flex; align-items: center; gap: 8px; }
+    .meta-item i { color: var(--accent-cyan); font-size: 13px; width: 14px; }
+
+    .card-footer {
+      display: flex;
+      gap: 10px;
+      transform: translateZ(25px);
+    }
+    .btn-action-main {
+      flex: 1;
+      height: 44px;
+      background: linear-gradient(135deg, var(--accent-cyan), #0284c7);
+      border: none;
+      border-radius: 14px;
+      color: #0f172a;
+      font-weight: 800;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      text-decoration: none;
+      transition: 0.3s ease;
+      box-shadow: 0 8px 20px rgba(6, 182, 212, 0.3);
+    }
+    .btn-action-main:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 25px rgba(6, 182, 212, 0.5);
+    }
+
+    .btn-icon-quick {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: 0.3s ease;
+    }
+    .btn-icon-quick:hover {
+      background: rgba(255, 255, 255, 0.15);
+      color: var(--accent-pink);
+    }
+
+    /* MODAL */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(3, 7, 18, 0.85);
+      backdrop-filter: blur(12px);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      padding: 20px;
+    }
+    .modal-card {
+      background: #0f172a;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      width: 100%;
+      max-width: 550px;
+      border-radius: 28px;
+      padding: 28px;
+      position: relative;
+    }
+    .modal-close {
+      position: absolute;
+      top: 20px; right: 20px;
+      background: rgba(255, 255, 255, 0.08);
+      border: none;
+      color: #fff;
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    .skeleton-card {
+      height: 240px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    @media (max-width: 640px) {
+      .hero-title { font-size: 30px; }
+      .pyq-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg-orbs">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <div class="container">
+    
+    <!-- HEADER -->
+    <header class="hero-sec">
+      <div class="hero-badge">
+        <i class="fa-solid fa-book-bookmark"></i> PYQ Question Bank
+      </div>
+      <h1 class="hero-title">Previous Years <span>Question Papers</span></h1>
+      <p class="hero-sub">Apne Board aur Competitive Exam ke Past Years Papers online padhein aur practice karein.</p>
+    </header>
+
+    <!-- CONTROLS -->
+    <div class="controls-wrapper">
+      <div class="search-box">
+        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+        <input type="text" id="searchInput" placeholder="Search by Subject, Topic, Class or Year..." onkeyup="filterPYQs()">
+      </div>
+      <div class="filter-pills" id="filterPills">
+        <div class="pill active" onclick="setCategoryFilter('ALL', this)"><i class="fa-solid fa-border-all"></i> All Papers</div>
+        <div class="pill" onclick="setCategoryFilter('Class 10th', this)"><i class="fa-solid fa-graduation-cap"></i> Class 10th</div>
+        <div class="pill" onclick="setCategoryFilter('Class 12th', this)"><i class="fa-solid fa-user-graduate"></i> Class 12th</div>
+        <div class="pill" onclick="setCategoryFilter('Physics', this)"><i class="fa-solid fa-atom"></i> Physics</div>
+        <div class="pill" onclick="setCategoryFilter('Chemistry', this)"><i class="fa-solid fa-flask"></i> Chemistry</div>
+        <div class="pill" onclick="setCategoryFilter('Mathematics', this)"><i class="fa-solid fa-calculator"></i> Maths</div>
+        <div class="pill" onclick="setCategoryFilter('Biology', this)"><i class="fa-solid fa-dna"></i> Biology</div>
+      </div>
+    </div>
+
+    <!-- GRID -->
+    <div id="pyqGrid" class="pyq-grid">
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+    </div>
+
+  </div>
+
+  <!-- MODAL -->
+  <div id="previewModal" class="modal-overlay" onclick="closeModalOnOuter(event)">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+<script>
+  let rawPyqData = [];
+  let activeFilter = 'ALL';
+
+  document.addEventListener("DOMContentLoaded", fetchPyqList);
+
+  async function fetchPyqList() {
+    const grid = document.getElementById("pyqGrid");
+
+    try {
+      const { data, error } = await window.supabaseClient
+        .from('pyq_database')
+        .select('*')
+        .order('id', { ascending: false });
+
+      if (error) throw error;
+
+      rawPyqData = data || [];
+
+      if (rawPyqData.length === 0) {
+        grid.innerHTML = `
+          <div style="grid-column: 1/-1; text-align: center; padding: 60px 20px; color: var(--text-muted);">
+            <i class="fa-solid fa-folder-open" style="font-size: 48px; margin-bottom: 16px;"></i>
+            <h3 style="color:#fff;">Abhi tak koi PYQ upload nahi hua hai</h3>
+          </div>`;
+        return;
+      }
+
+      renderGrid(rawPyqData);
+
+    } catch (err) {
+      grid.innerHTML = `
+        <div style="grid-column: 1/-1; text-align: center; padding: 60px 20px; color:#ef4444;">
+          <i class="fa-solid fa-triangle-exclamation" style="font-size: 48px; margin-bottom: 16px;"></i>
+          <h3>Data load nahi ho paya</h3>
+          <p style="font-size:13px; opacity:0.8; margin-top:6px;">${err.message}</p>
+        </div>`;
+    }
+  }
+
+  function renderGrid(list) {
+    const grid = document.getElementById("pyqGrid");
+    grid.innerHTML = "";
+
+    if (list.length === 0) {
+      grid.innerHTML = `
+        <div style="grid-column: 1/-1; text-align: center; padding: 50px 20px; color:var(--text-muted);">
+          <i class="fa-solid fa-magnifying-glass" style="font-size:36px; margin-bottom:12px;"></i>
+          <p>Koi paper nahi mila.</p>
+        </div>`;
+      return;
+    }
+
+    list.forEach(item => {
+      const card = document.createElement("div");
+      card.className = "pyq-card";
+      card.setAttribute("data-tilt", "");
+      card.setAttribute("data-tilt-max", "12");
+      card.setAttribute("data-tilt-speed", "400");
+
+      const iconClass = getSubjectIcon(item.subject || item.title);
+
+      card.innerHTML = `
+        <div class="card-top">
+          <div class="subject-avatar">
+            <i class="${iconClass}"></i>
+          </div>
+          <div class="card-badges">
+            <span class="badge-tag">${item.exam_target || 'BSEB'}</span>
+            <span class="badge-year"><i class="fa-solid fa-calendar"></i> ${item.years_range || 'Past Years'}</span>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <div class="card-title">${item.title}</div>
+          <div class="card-meta">
+            <div class="meta-item"><i class="fa-solid fa-book-open"></i> Subject: ${item.subject || 'General'}</div>
+            <div class="meta-item"><i class="fa-solid fa-layer-group"></i> Topic: ${item.topic || 'Full Syllabus'}</div>
+          </div>
+        </div>
+
+        <div class="card-footer">
+          <a href="pyq-reader.html?id=${item.id}" class="btn-action-main">
+            <i class="fa-solid fa-eye"></i> View Paper
+          </a>
+          <button class="btn-icon-quick" onclick="openQuickPreview(${item.id})" title="Overview">
+            <i class="fa-solid fa-info"></i>
+          </button>
+        </div>
+      `;
+
+      card.addEventListener("mousemove", (e) => {
+        const rect = card.getBoundingClientRect();
+        card.style.setProperty("--mouse-x", `${e.clientX - rect.left}px`);
+        card.style.setProperty("--mouse-y", `${e.clientY - rect.top}px`);
+      });
+
+      grid.appendChild(card);
+    });
+
+    if (window.VanillaTilt) {
+      VanillaTilt.init(document.querySelectorAll(".pyq-card"));
+    }
+  }
+
+  function getSubjectIcon(str) {
+    const s = str.toLowerCase();
+    if (s.includes("physic")) return "fa-solid fa-atom";
+    if (s.includes("chem")) return "fa-solid fa-flask";
+    if (s.includes("math")) return "fa-solid fa-calculator";
+    if (s.includes("bio")) return "fa-solid fa-dna";
+    if (s.includes("hindi")) return "fa-solid fa-language";
+    if (s.includes("english")) return "fa-solid fa-globe";
+    return "fa-solid fa-book-bookmark";
+  }
+
+  function setCategoryFilter(category, el) {
+    activeFilter = category;
+    document.querySelectorAll('.filter-pills .pill').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+    filterPYQs();
+  }
+
+  function filterPYQs() {
+    const q = document.getElementById("searchInput").value.toLowerCase().trim();
+
+    const filtered = rawPyqData.filter(item => {
+      const matchQuery = 
+        (item.title && item.title.toLowerCase().includes(q)) ||
+        (item.subject && item.subject.toLowerCase().includes(q)) ||
+        (item.topic && item.topic.toLowerCase().includes(q)) ||
+        (item.exam_target && item.exam_target.toLowerCase().includes(q)) ||
+        (item.years_range && item.years_range.toLowerCase().includes(q));
+
+      let matchCategory = true;
+      if (activeFilter !== 'ALL') {
+        const cat = activeFilter.toLowerCase();
+        matchCategory = 
+          (item.exam_target && item.exam_target.toLowerCase().includes(cat)) ||
+          (item.subject && item.subject.toLowerCase().includes(cat));
+      }
+
+      return matchQuery && matchCategory;
+    });
+
+    renderGrid(filtered);
+  }
+
+  function openQuickPreview(id) {
+    const item = rawPyqData.find(x => x.id === id);
+    if (!item) return;
+
+    const content = document.getElementById("modalContent");
+    content.innerHTML = `
+      <div style="text-align:center; margin-bottom:20px;">
+        <span class="badge-tag" style="font-size:12px;">${item.exam_target || 'BSEB'}</span>
+        <h2 style="color:#fff; font-size:20px; margin-top:10px;">${item.title}</h2>
+      </div>
+
+      <div style="background:rgba(255,255,255,0.04); border-radius:18px; padding:16px; margin-bottom:20px; font-size:13px; display:flex; flex-direction:column; gap:10px;">
+        <div><strong style="color:var(--accent-cyan);">Subject:</strong> ${item.subject || 'N/A'}</div>
+        <div><strong style="color:var(--accent-cyan);">Topic:</strong> ${item.topic || 'N/A'}</div>
+        <div><strong style="color:var(--accent-cyan);">Year Range:</strong> ${item.years_range || 'N/A'}</div>
+      </div>
+
+      <a href="pyq-reader.html?id=${item.id}" class="btn-action-main" style="width:100%; text-align:center;">
+        <i class="fa-solid fa-eye"></i> View Paper
+      </a>
+    `;
+
+    document.getElementById("previewModal").style.display = "flex";
+  }
+
+  function closeModal() {
+    document.getElementById("previewModal").style.display = "none";
+  }
+
+  function closeModalOnOuter(e) {
+    if (e.target.id === "previewModal") closeModal();
+  }
+</script>
+
+</body>
+</html>
