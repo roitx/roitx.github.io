@@ -100,18 +100,33 @@
 
       <div class="form-group">
         <label><i class="fa-solid fa-calendar"></i> PYQ Year Range</label>
-        <select class="input-field" id="yearRange">
-          <option value="2018 - 2026" selected>2018 - 2026 (Latest Up To Feb 2026 Exam)</option>
+        <select class="input-field" id="yearRange" onchange="handleYearRangeChange()">
+          <option value="2018 - 2026" selected>2018 - 2026 (Latest Up To Feb 2026)</option>
           <option value="2015 - 2026">2015 - 2026 (Last 11 Yrs)</option>
           <option value="2020 - 2026">2020 - 2026 (Recent Yrs)</option>
+          <option value="custom">📅 Custom Range (From - To)</option>
         </select>
+      </div>
+
+      <!-- Custom Year Range Inputs (Appears when Custom is selected) -->
+      <div class="form-group full" id="customYearGroup" style="display: none;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div>
+            <label><i class="fa-solid fa-calendar-plus"></i> From Year</label>
+            <input type="number" class="input-field" id="customFromYear" placeholder="e.g. 2016" value="2018">
+          </div>
+          <div>
+            <label><i class="fa-solid fa-calendar-check"></i> To Year</label>
+            <input type="number" class="input-field" id="customToYear" placeholder="e.g. 2026" value="2026">
+          </div>
+        </div>
       </div>
 
       <div class="form-group full">
         <label><i class="fa-solid fa-list-check"></i> Generation Request Mode</label>
         <select class="input-field" id="qType" onchange="toggleQCountVisibility()">
           <option value="Mix (Short + Long + Key Concept Points)" selected>🔥 Mix Questions (Short + Long + Key Points)</option>
-          <option value="TOPPER_SUMMARY_12TH">🏆 Topper Style Chapter Summary (Dedicated For 12th)</option>
+          <option value="TOPPER_SUMMARY_12TH">🏆 Topper Style Chapter Summary (Only Summary Notes)</option>
           <option value="Short Answer">Short Subjective (2 Marks)</option>
           <option value="Long Answer">Long Subjective (5 Marks)</option>
           <option value="MCQ">Objective MCQ (1 Mark)</option>
@@ -236,6 +251,16 @@
     toggleQCountVisibility();
   }
 
+  function handleYearRangeChange() {
+    const yearRangeVal = document.getElementById("yearRange").value;
+    const customGroup = document.getElementById("customYearGroup");
+    if (yearRangeVal === "custom") {
+      customGroup.style.display = "block";
+    } else {
+      customGroup.style.display = "none";
+    }
+  }
+
   function toggleQCountVisibility() {
     const qType = document.getElementById("qType").value;
     const qCountGrp = document.getElementById("qCountGroup");
@@ -243,7 +268,7 @@
     if (qType === "TOPPER_SUMMARY_12TH") {
       qCountGrp.style.display = "none";
       if(document.getElementById("targetClass").value !== "12th") {
-        alert("Topper Summary feature targeted specifically Class 12th ke liye hai!");
+        alert("Topper Summary feature is dedicated for Class 12th students!");
         document.getElementById("targetClass").value = "12th";
         handleClassChange();
       }
@@ -279,10 +304,18 @@
     const subject = document.getElementById("subjectSelect").value;
     const langMode = document.getElementById("languageSelect").value;
     const qCount = document.getElementById("qCount").value;
-    const years = document.getElementById("yearRange").value;
     const qType = document.getElementById("qType").value;
     const chapter = document.getElementById("chapterName").value.trim();
     const extra = document.getElementById("extraInstructions").value.trim();
+
+    // Handle Year Selection (Dropdown vs Custom Calendar From-To Inputs)
+    const yearSelectVal = document.getElementById("yearRange").value;
+    let years = yearSelectVal;
+    if (yearSelectVal === "custom") {
+      const fromYr = document.getElementById("customFromYear").value.trim() || "2018";
+      const toYr = document.getElementById("customToYear").value.trim() || "2026";
+      years = `${fromYr} - ${toYr}`;
+    }
 
     const statusBox = document.getElementById("statusBox");
     const btn = document.getElementById("genBtn");
@@ -299,14 +332,38 @@
     uploadBtn.style.display = "none";
     statusBox.style.display = "block";
     statusBox.style.color = "#7c3aed";
-    statusBox.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i> AI Generating...";
+    statusBox.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i> AI Generating Content...";
 
-    let prompt = `Generate BSEB Study Material/PYQs for:
+    const isSummaryOnly = (qType === "TOPPER_SUMMARY_12TH");
+
+    let prompt = "";
+    if (isSummaryOnly) {
+      // Prompt specifically for Summary Notes only
+      prompt = `Generate an elite Topper Style Chapter Summary / Revision Notes for BSEB Class ${targetClass} ${targetClass === "12th" ? `(${stream} Stream)` : ''}.
+Subject: ${subject}
+Chapter: ${chapter}
+Years Range: ${years}
+Language Preference: ${langMode}
+${extra ? `Extra Instruction: ${extra}` : ''}
+
+STRICT JSON OUTPUT REQUIREMENT:
+Return ONLY a JSON object containing ONLY the chapter summary notes (no questions array needed).
+Format:
+{
+  "chapter_summary": {
+    "summary_en": "Detailed markdown formatted topper revision notes in English...",
+    "summary_hi": "Detailed markdown formatted topper revision notes in Hindi..."
+  }
+}`;
+    } else {
+      // Prompt for Mix / Questions
+      prompt = `Generate BSEB Study Material/PYQs for:
 Class: Class ${targetClass} ${targetClass === "12th" ? `(${stream} Stream)` : ''}
 Subject: ${subject}
 Chapter: ${chapter}
 Years: ${years}
 Type: ${qType}
+Question Count: ${qCount}
 Language Preference: ${langMode}
 ${extra ? `Extra Instruction: ${extra}` : ''}
 
@@ -333,6 +390,7 @@ Format:
     }
   ]
 }`;
+    }
 
     try {
       const res = await fetch("https://ktastwehnnqicriknewr.supabase.co/functions/v1/smart-task", {
@@ -353,15 +411,15 @@ Format:
       const generatedData = JSON.parse(rawText);
 
       pendingPayload = {
-        title: qType === "TOPPER_SUMMARY_12TH" ? `Class 12 ${subject}: ${chapter} (Topper Notes)` : `Class ${targetClass} ${subject}: ${chapter}`,
+        title: isSummaryOnly ? `Class 12 ${subject}: ${chapter} (Topper Notes)` : `Class ${targetClass} ${subject}: ${chapter}`,
         exam_target: `BSEB Class ${targetClass}`,
         subject: subject,
         topic: chapter,
         years_range: years,
         language_mode: langMode,
-        questions: (generatedData.questions || []).map(q => ({
+        questions: isSummaryOnly ? [] : (generatedData.questions || []).map(q => ({
           ...q,
-          year: q.year_tag || q.year || years, // Year tags like (2018, 2021, 2022 I, 2024 II)
+          year: q.year_tag || q.year || years,
           answer_en: parseMarkdownToHTML(q.answer_en || ""),
           answer_hi: parseMarkdownToHTML(q.answer_hi || "")
         })),
@@ -371,10 +429,10 @@ Format:
         } : null
       };
 
-      renderPreview(pendingPayload, langMode);
+      renderPreview(pendingPayload, langMode, isSummaryOnly);
 
       statusBox.style.color = "#10b981";
-      statusBox.innerHTML = "✅ Beautifully Formatted Content Ready!";
+      statusBox.innerHTML = "✅ Content Generated Successfully!";
       previewBox.style.display = "block";
       uploadBtn.style.display = "flex";
 
@@ -386,20 +444,20 @@ Format:
     }
   }
 
-  function renderPreview(payload, langMode) {
+  function renderPreview(payload, langMode, isSummaryOnly) {
     const previewBox = document.getElementById("previewBox");
     let html = `<div class="preview-title"><i class="fa-solid fa-eye"></i> PREVIEW GENERATED CONTENT (${langMode.toUpperCase()})</div>`;
 
     if (payload.summary) {
       html += `<div class="summary-card formatted-text">
-        <h3><i class="fa-solid fa-book-open"></i> CHAPTER SUMMARY / REVISION NOTES</h3>`;
+        <h3><i class="fa-solid fa-book-open"></i> ${isSummaryOnly ? 'TOPPER STYLE CHAPTER SUMMARY' : 'CHAPTER SUMMARY / REVISION NOTES'}</h3>`;
       
       if (langMode === "Bilingual" || langMode === "English") {
         if (payload.summary.summary_en) {
           html += `<div style="color: #60a5fa; margin-bottom: 6px;"><b>[ENGLISH VERSION]</b></div><div>${payload.summary.summary_en}</div>`;
         }
       }
-      if (langMode === "Bilingual") {
+      if (langMode === "Bilingual" && payload.summary.summary_en && payload.summary.summary_hi) {
         html += `<div class="lang-divider"></div>`;
       }
       if (langMode === "Bilingual" || langMode === "Hindi") {
@@ -410,7 +468,7 @@ Format:
       html += `</div>`;
     }
 
-    if (payload.questions && payload.questions.length > 0) {
+    if (!isSummaryOnly && payload.questions && payload.questions.length > 0) {
       payload.questions.forEach((q, i) => {
         const yearTagDisplay = q.year_tag || q.year || payload.years_range;
         
@@ -423,7 +481,7 @@ Format:
           if (q.answer_en) html += `<div class="q-ans"><b>Ans (EN):</b><br>${q.answer_en}</div>`;
         }
 
-        if (langMode === "Bilingual") {
+        if (langMode === "Bilingual" && (q.question_en || q.answer_en) && (q.question_hi || q.answer_hi)) {
           html += `<div class="lang-divider"></div>`;
         }
 

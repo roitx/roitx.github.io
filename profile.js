@@ -568,6 +568,7 @@ async function setGoogleUserPassword() {
 
 async function clearAppCache() {
   try {
+    // 1. Clear Service Worker / Cache Storage
     if ('caches' in window) {
       const cacheNames = await caches.keys();
       await Promise.all(
@@ -575,18 +576,26 @@ async function clearAppCache() {
       );
     }
 
-    const supabaseKeys = [];
+    // 2. Preserve Auth Keys AND Notification Read/Delete Statuses
+    const preservedItems = [];
+    const keysToPreserve = ['read_notifs', 'deleted_notifs']; // <-- Notification states preserve karne ke liye
+
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
-      if (key && (key.startsWith('sb-') || key.includes('auth'))) {
-        supabaseKeys.push({ key, value: localStorage.getItem(key) });
+      if (key) {
+        // Keep Supabase Auth & Notifications history intact
+        if (key.startsWith('sb-') || key.includes('auth') || keysToPreserve.includes(key)) {
+          preservedItems.push({ key, value: localStorage.getItem(key) });
+        }
       }
     }
 
+    // 3. Clear storage safely
     localStorage.clear();
     sessionStorage.clear();
 
-    supabaseKeys.forEach(item => {
+    // 4. Restore preserved keys
+    preservedItems.forEach(item => {
       localStorage.setItem(item.key, item.value);
     });
 
@@ -661,7 +670,7 @@ function goToManageTeam() {
 }
 
 function goToSendNotification() { 
-  window.location.href = "admin-notification.html"; 
+  window.location.href = "admin-notifications.html"; 
 }
 
 function goToUploadTest() { 
@@ -673,11 +682,11 @@ function goToAiTestCreator() {
 }
 
 function goToUploadPyq() { 
-  window.location.href = "admin-upload-pyq.html"; 
+  window.location.href = "admin-pyq-generator.html"; 
 }
 
 function goToManagePyq() { 
-  window.location.href = "admin-manage-pyq.html"; 
+  window.location.href = "manage-pyqs.html"; 
 }
 
 function goToHome() { 
