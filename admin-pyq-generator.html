@@ -46,6 +46,7 @@
     .q-preview-card .q-title { font-size: 13px; font-weight: 700; color: #38bdf8; margin-bottom: 6px; }
     .q-preview-card .q-ans { font-size: 12px; color: #e2e8f0; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 6px; margin-top: 6px; }
     .lang-divider { border-top: 1px dashed #64748b; margin: 10px 0; }
+    .file-name-container { display: none; margin-top: 20px; }
   </style>
 </head>
 <body>
@@ -60,7 +61,7 @@
 
     <div class="title-sec">
       <h1><i class="fa-solid fa-wand-magic-sparkles"></i> BSEB PYQ Generator</h1>
-      <p>Bihar Board Exam PYQs (Up to Feb 2026) & Dedicated Topper Notes.</p>
+      <p>Bihar Board Exam PYQs & Chapter Summary Notes Generator.</p>
     </div>
 
     <div class="section-tag"><i class="fa-solid fa-sliders"></i> TARGET PARAMETERS</div>
@@ -108,12 +109,11 @@
         </select>
       </div>
 
-      <!-- Custom Year Range Inputs (Appears when Custom is selected) -->
       <div class="form-group full" id="customYearGroup" style="display: none;">
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
           <div>
             <label><i class="fa-solid fa-calendar-plus"></i> From Year</label>
-            <input type="number" class="input-field" id="customFromYear" placeholder="e.g. 2016" value="2018">
+            <input type="number" class="input-field" id="customFromYear" placeholder="e.g. 2018" value="2018">
           </div>
           <div>
             <label><i class="fa-solid fa-calendar-check"></i> To Year</label>
@@ -125,8 +125,8 @@
       <div class="form-group full">
         <label><i class="fa-solid fa-list-check"></i> Generation Request Mode</label>
         <select class="input-field" id="qType" onchange="toggleQCountVisibility()">
-          <option value="Mix (Short + Long + Key Concept Points)" selected>🔥 Mix Questions (Short + Long + Key Points)</option>
-          <option value="TOPPER_SUMMARY_12TH">🏆 Topper Style Chapter Summary (Only Summary Notes)</option>
+          <option value="Mix" selected>🔥 Mix Questions (Short + Long + Key Points)</option>
+          <option value="Summary">📖 Chapter Summary (Notes Only)</option>
           <option value="Short Answer">Short Subjective (2 Marks)</option>
           <option value="Long Answer">Long Subjective (5 Marks)</option>
           <option value="MCQ">Objective MCQ (1 Mark)</option>
@@ -161,6 +161,13 @@
 
     <div id="statusBox" class="status-msg"></div>
 
+    <div class="file-name-container" id="fileNameGroup">
+      <div class="form-group full">
+        <label style="color: #7c3aed;"><i class="fa-solid fa-file-pen"></i> Generated File Title (Rename before save)</label>
+        <input type="text" class="input-field" id="fileTitleInput" style="border: 2px solid #7c3aed; font-weight: 700;">
+      </div>
+    </div>
+
     <div id="previewBox" class="preview-box"></div>
 
     <button class="btn-submit btn-upload" id="uploadBtn" onclick="uploadToDatabase()">
@@ -181,7 +188,6 @@
     }
   };
 
-  // ADVANCED MARKDOWN TO CLEAN HTML PARSER
   function parseMarkdownToHTML(text) {
     if (!text) return "";
     let html = text
@@ -243,9 +249,6 @@
       streamGrp.style.display = "block";
     } else {
       streamGrp.style.display = "none";
-      if(document.getElementById("qType").value === "TOPPER_SUMMARY_12TH") {
-        document.getElementById("qType").value = "Mix (Short + Long + Key Concept Points)";
-      }
     }
     updateSubjects();
     toggleQCountVisibility();
@@ -265,13 +268,8 @@
     const qType = document.getElementById("qType").value;
     const qCountGrp = document.getElementById("qCountGroup");
     
-    if (qType === "TOPPER_SUMMARY_12TH") {
+    if (qType === "Summary") {
       qCountGrp.style.display = "none";
-      if(document.getElementById("targetClass").value !== "12th") {
-        alert("Topper Summary feature is dedicated for Class 12th students!");
-        document.getElementById("targetClass").value = "12th";
-        handleClassChange();
-      }
     } else {
       qCountGrp.style.display = "block";
     }
@@ -298,6 +296,24 @@
     });
   }
 
+  // Exact Clean Naming Logic as requested (No 'Topper' word)
+  function generateAutoFileTitle(targetClass, subject, chapter, qType) {
+    let cleanClass = targetClass.replace("th", ""); // Converts 12th to 12
+    let typeSuffix = "(PYQ & Notes)";
+
+    if (qType === "Summary") {
+      typeSuffix = "(Chapter Summary)";
+    } else if (qType === "Short Answer") {
+      typeSuffix = "(Short Questions)";
+    } else if (qType === "Long Answer") {
+      typeSuffix = "(Long Questions)";
+    } else if (qType === "MCQ") {
+      typeSuffix = "(Objective MCQs)";
+    }
+
+    return `Class ${cleanClass} ${subject}: ${chapter} ${typeSuffix}`;
+  }
+
   async function generateBSEBPYQs() {
     const targetClass = document.getElementById("targetClass").value;
     const stream = targetClass === "12th" ? document.getElementById("streamSelect").value : "General";
@@ -308,7 +324,6 @@
     const chapter = document.getElementById("chapterName").value.trim();
     const extra = document.getElementById("extraInstructions").value.trim();
 
-    // Handle Year Selection (Dropdown vs Custom Calendar From-To Inputs)
     const yearSelectVal = document.getElementById("yearRange").value;
     let years = yearSelectVal;
     if (yearSelectVal === "custom") {
@@ -321,6 +336,8 @@
     const btn = document.getElementById("genBtn");
     const previewBox = document.getElementById("previewBox");
     const uploadBtn = document.getElementById("uploadBtn");
+    const fileNameGroup = document.getElementById("fileNameGroup");
+    const fileTitleInput = document.getElementById("fileTitleInput");
 
     if (!chapter) {
       alert("⚠️ Chapter / Topic Name bharna zaroori hai!");
@@ -330,16 +347,16 @@
     btn.disabled = true;
     previewBox.style.display = "none";
     uploadBtn.style.display = "none";
+    fileNameGroup.style.display = "none";
     statusBox.style.display = "block";
     statusBox.style.color = "#7c3aed";
     statusBox.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i> AI Generating Content...";
 
-    const isSummaryOnly = (qType === "TOPPER_SUMMARY_12TH");
+    const isSummaryOnly = (qType === "Summary");
 
     let prompt = "";
     if (isSummaryOnly) {
-      // Prompt specifically for Summary Notes only
-      prompt = `Generate an elite Topper Style Chapter Summary / Revision Notes for BSEB Class ${targetClass} ${targetClass === "12th" ? `(${stream} Stream)` : ''}.
+      prompt = `Generate comprehensive Chapter Summary / Revision Notes for BSEB Class ${targetClass} ${targetClass === "12th" ? `(${stream} Stream)` : ''}.
 Subject: ${subject}
 Chapter: ${chapter}
 Years Range: ${years}
@@ -347,16 +364,15 @@ Language Preference: ${langMode}
 ${extra ? `Extra Instruction: ${extra}` : ''}
 
 STRICT JSON OUTPUT REQUIREMENT:
-Return ONLY a JSON object containing ONLY the chapter summary notes (no questions array needed).
+Return ONLY a JSON object containing ONLY the chapter summary notes.
 Format:
 {
   "chapter_summary": {
-    "summary_en": "Detailed markdown formatted topper revision notes in English...",
-    "summary_hi": "Detailed markdown formatted topper revision notes in Hindi..."
+    "summary_en": "Detailed markdown formatted revision notes in English...",
+    "summary_hi": "Detailed markdown formatted revision notes in Hindi..."
   }
 }`;
     } else {
-      // Prompt for Mix / Questions
       prompt = `Generate BSEB Study Material/PYQs for:
 Class: Class ${targetClass} ${targetClass === "12th" ? `(${stream} Stream)` : ''}
 Subject: ${subject}
@@ -409,9 +425,12 @@ Format:
       rawText = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
 
       const generatedData = JSON.parse(rawText);
+      const generatedTitle = generateAutoFileTitle(targetClass, subject, chapter, qType);
+
+      fileTitleInput.value = generatedTitle;
 
       pendingPayload = {
-        title: isSummaryOnly ? `Class 12 ${subject}: ${chapter} (Topper Notes)` : `Class ${targetClass} ${subject}: ${chapter}`,
+        title: generatedTitle,
         exam_target: `BSEB Class ${targetClass}`,
         subject: subject,
         topic: chapter,
@@ -433,6 +452,7 @@ Format:
 
       statusBox.style.color = "#10b981";
       statusBox.innerHTML = "✅ Content Generated Successfully!";
+      fileNameGroup.style.display = "block";
       previewBox.style.display = "block";
       uploadBtn.style.display = "flex";
 
@@ -450,7 +470,7 @@ Format:
 
     if (payload.summary) {
       html += `<div class="summary-card formatted-text">
-        <h3><i class="fa-solid fa-book-open"></i> ${isSummaryOnly ? 'TOPPER STYLE CHAPTER SUMMARY' : 'CHAPTER SUMMARY / REVISION NOTES'}</h3>`;
+        <h3><i class="fa-solid fa-book-open"></i> CHAPTER SUMMARY / REVISION NOTES</h3>`;
       
       if (langMode === "Bilingual" || langMode === "English") {
         if (payload.summary.summary_en) {
@@ -499,6 +519,15 @@ Format:
 
   async function uploadToDatabase() {
     if (!pendingPayload) return;
+
+    const finalTitle = document.getElementById("fileTitleInput").value.trim();
+    if(!finalTitle) {
+      alert("⚠️ File Title khali nahi ho sakta!");
+      return;
+    }
+
+    pendingPayload.title = finalTitle;
+
     const uploadBtn = document.getElementById("uploadBtn");
     const statusBox = document.getElementById("statusBox");
 
@@ -512,7 +541,7 @@ Format:
       uploadBtn.disabled = false;
     } else {
       statusBox.style.color = "#10b981";
-      statusBox.innerHTML = "✅ Successfully Saved to Database!";
+      statusBox.innerHTML = "✅ Successfully Saved to Database as: <b>" + finalTitle + "</b>";
       setTimeout(() => location.href = "manage-pyqs.html", 1500);
     }
   }

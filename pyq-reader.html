@@ -18,7 +18,7 @@
       --border: rgba(255, 255, 255, 0.08);
       --accent: #38bdf8;
       --accent-purple: #a855f7;
-      --text-main: #f8fafc;
+      --text-main: #cbd5e1;
       --text-muted: #94a3b8;
       --reader-font-size: 14px;
     }
@@ -47,7 +47,7 @@
     .btn-tool {
       background: rgba(255, 255, 255, 0.06);
       border: 1px solid var(--border);
-      color: var(--text-main);
+      color: #f8fafc;
       padding: 6px 12px;
       border-radius: 12px;
       font-size: 12px;
@@ -71,7 +71,7 @@
     .paper-tags { display: flex; gap: 8px; flex-wrap: wrap; }
     .tag-pill { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; background: rgba(255, 255, 255, 0.05); color: var(--accent); border: 1px solid rgba(56, 189, 248, 0.2); }
 
-    /* OVERVIEW & SUMMARY STYLING */
+    /* OVERVIEW & SUMMARY CONTAINER */
     .overview-box {
       background: rgba(168, 85, 247, 0.08);
       border: 1px solid rgba(168, 85, 247, 0.3);
@@ -80,12 +80,31 @@
     }
     .overview-title { font-size: 13px; font-weight: 800; color: #c084fc; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
 
-    /* MARKDOWN FORMATTING CLASSES */
-    .md-heading { font-size: 16px; font-weight: 800; color: #f472b6; margin: 16px 0 8px 0; }
-    .md-hr { border: 0; height: 1px; background: rgba(255, 255, 255, 0.1); margin: 16px 0; }
-    .md-list { list-style: none; padding-left: 0; margin-bottom: 10px; }
-    .md-list li { position: relative; padding-left: 20px; margin-bottom: 8px; font-size: 13.5px; line-height: 1.6; color: #cbd5e1; }
-    .md-list li::before { content: "•"; position: absolute; left: 4px; color: var(--accent); font-weight: bold; font-size: 16px; }
+    /* SUMMARY CONTENT STYLING */
+    .summary-content {
+      color: #cbd5e1 !important;
+      font-size: var(--reader-font-size);
+      line-height: 1.6;
+    }
+
+    /* Headings get vibrant sky blue */
+    .summary-content h1, .summary-content h2, .summary-content h3, 
+    .summary-content .md-h1, .summary-content .md-h2, .summary-content .md-h3 {
+      color: #38bdf8 !important;
+      font-weight: 800;
+      margin: 12px 0 8px 0;
+      line-height: 1.4;
+    }
+
+    .summary-content p, .summary-content span, .summary-content div, .summary-content li {
+      color: #cbd5e1 !important;
+    }
+
+    /* COLORFUL BOLD TEXT FIX */
+    .summary-content strong, .summary-content b {
+      color: #fde047 !important; /* Bright Gold / Yellow for high visibility */
+      font-weight: 700;
+    }
 
     /* SEARCH IN READER */
     .reader-search {
@@ -110,14 +129,14 @@
       flex-direction: column;
       gap: 14px;
       transition: 0.2s ease;
+      color: #cbd5e1 !important;
     }
     .ans-card:hover { border-color: rgba(56, 189, 248, 0.3); }
 
     .q-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
     .q-meta-group { display: flex; flex-direction: column; gap: 4px; }
-    .q-text { font-size: calc(var(--reader-font-size) + 1px); font-weight: 700; color: #f8fafc; line-height: 1.5; }
+    .q-text { font-size: calc(var(--reader-font-size) + 1px); font-weight: 700; color: #f8fafc !important; line-height: 1.5; }
     
-    /* YEAR & SHIFT BADGES */
     .meta-badges { display: flex; gap: 6px; align-items: center; margin-top: 4px; }
     .badge-meta {
       font-size: 10px;
@@ -136,14 +155,13 @@
     .btn-icon-action { background: rgba(255,255,255,0.05); border: none; color: var(--text-muted); width: 32px; height: 32px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; }
     .btn-icon-action:hover { color: var(--accent); background: rgba(255,255,255,0.1); }
 
-    .ans-eng { border-left: 3px solid #10b981; background: rgba(16, 185, 129, 0.06); padding: 12px 14px; border-radius: 14px; font-size: var(--reader-font-size); line-height: 1.6; color: #e2e8f0; }
-    .ans-hin { border-left: 3px solid #3b82f6; background: rgba(59, 130, 246, 0.06); padding: 12px 14px; border-radius: 14px; font-size: var(--reader-font-size); line-height: 1.6; color: #cbd5e1; }
+    .ans-eng { border-left: 3px solid #10b981; background: rgba(16, 185, 129, 0.06); padding: 12px 14px; border-radius: 14px; color: #cbd5e1 !important; }
+    .ans-hin { border-left: 3px solid #3b82f6; background: rgba(59, 130, 246, 0.06); padding: 12px 14px; border-radius: 14px; color: #cbd5e1 !important; }
     
     .tag { font-weight: 800; font-size: 11px; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
-    .eng-tag { color: #34d399; }
-    .hin-tag { color: #60a5fa; }
+    .eng-tag { color: #34d399 !important; }
+    .hin-tag { color: #60a5fa !important; }
 
-    /* TOAST */
     .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--accent); color: #0f172a; padding: 8px 18px; border-radius: 30px; font-weight: 800; font-size: 12px; display: none; z-index: 1000; box-shadow: 0 10px 20px rgba(0,0,0,0.4); }
   </style>
 </head>
@@ -160,20 +178,34 @@
   let currentData = null;
   let activeLang = 'BOTH';
 
-  // MARKDOWN PARSER FOR HEADINGS, LISTS, DIVIDERS & BOLDING
-  function parseFullMarkdown(text) {
-    if (!text) return "";
-    let formatted = text
-      .replace(/^### (.*$)/gim, '<div class="md-heading">$1</div>')
-      .replace(/^---\s*$/gim, '<hr class="md-hr">')
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/^\* (.*$)/gim, '<li>$1</li>');
+  function parseContent(rawContent) {
+    if (!rawContent) return "";
+    
+    if (/<[a-z][\s\S]*>/i.test(rawContent)) {
+      return rawContent;
+    }
+    
+    let lines = rawContent.split('\n');
+    let html = [];
 
-    formatted = formatted.replace(/(<li>.*<\/li>)/s, '<ul class="md-list">$1<\/ul>');
-    return formatted;
+    lines.forEach(line => {
+      let trimmed = line.trim();
+      if (/^---$/.test(trimmed)) {
+        html.push('<hr style="border:0; height:1px; background:rgba(255,255,255,0.12); margin:12px 0;">');
+      } else if (trimmed.startsWith('# ')) {
+        html.push(`<div class="md-h1">${trimmed.replace(/^#\s+/, '')}</div>`);
+      } else if (trimmed.startsWith('## ')) {
+        html.push(`<div class="md-h2">${trimmed.replace(/^##\s+/, '')}</div>`);
+      } else if (/^[\*\-]\s+/.test(trimmed)) {
+        html.push(`<div style="padding-left: 14px;">• ${trimmed.replace(/^[\*\-]\s+/, '')}</div>`);
+      } else if (trimmed.length > 0) {
+        html.push(`<p>${trimmed}</p>`);
+      }
+    });
+
+    return html.join('');
   }
 
-  // ACTIVITY TRACKING FUNCTION FOR LIBRARY
   function trackPYQActivityLocally(paperData) {
     try {
       let recent = JSON.parse(localStorage.getItem("recentFiles") || "[]");
@@ -227,11 +259,9 @@
     }
 
     currentData = data;
-    currentQuestions = data.questions || data.content || [];
+    currentQuestions = data.questions || [];
     
-    // Track Activity in Library Dashboard
     trackPYQActivityLocally(data);
-
     renderReader();
   }
 
@@ -272,8 +302,8 @@
       html += `
         <div class="overview-box">
           <div class="overview-title"><i class="fa-solid fa-lightbulb"></i> ${boxTitle}</div>
-          ${(sumEn && (activeLang === 'BOTH' || activeLang === 'EN')) ? `<div>${parseFullMarkdown(sumEn)}</div>` : ''}
-          ${(sumHi && (activeLang === 'BOTH' || activeLang === 'HI')) ? `<div>${parseFullMarkdown(sumHi)}</div>` : ''}
+          ${(sumEn && (activeLang === 'BOTH' || activeLang === 'EN')) ? `<div class="summary-content">${parseContent(sumEn)}</div>` : ''}
+          ${(sumHi && (activeLang === 'BOTH' || activeLang === 'HI')) ? `<div class="summary-content">${parseContent(sumHi)}</div>` : ''}
         </div>
       `;
     }
@@ -302,11 +332,9 @@
       const showEn = (activeLang === 'BOTH' || activeLang === 'EN') && q.answer_en;
       const showHi = (activeLang === 'BOTH' || activeLang === 'HI') && q.answer_hi;
 
-      // Extract Year and Shift values
       const yearVal = q.year || currentData.years_range || '';
       const shiftVal = q.shift || '';
 
-      // Question + Answer combined speech text
       let speechText = `Question ${idx + 1}. ${qText}. `;
       if (showEn) speechText += `Answer: ${q.answer_en}. `;
       if (showHi) speechText += `उत्तर: ${q.answer_hi}. `;
@@ -315,7 +343,7 @@
         <div class="ans-card">
           <div class="q-header">
             <div class="q-meta-group">
-              <div class="q-text">Q${idx + 1}. ${parseFullMarkdown(qText)}</div>
+              <div class="q-text">Q${idx + 1}. ${parseContent(qText)}</div>
               ${(yearVal || shiftVal) ? `
                 <div class="meta-badges">
                   ${yearVal ? `<span class="badge-meta"><i class="fa-regular fa-calendar-days"></i> ${yearVal}</span>` : ''}
@@ -324,7 +352,7 @@
               ` : ''}
             </div>
             <div class="q-actions">
-              <button class="btn-icon-action" onclick="speakText('${escapeQuotes(speechText)}')" title="Read Question & Answer"><i class="fa-solid fa-volume-high"></i></button>
+              <button class="btn-icon-action" onclick="speakText('${escapeQuotes(speechText)}')" title="Read"><i class="fa-solid fa-volume-high"></i></button>
               <button class="btn-icon-action" onclick="copyQuestion('${escapeQuotes(qText)}', '${escapeQuotes(q.answer_en || q.answer_hi || '')}')" title="Copy"><i class="fa-solid fa-copy"></i></button>
             </div>
           </div>
@@ -332,14 +360,14 @@
           ${showEn ? `
             <div class="ans-eng">
               <span class="tag eng-tag"><i class="fa-solid fa-circle-check"></i> ENGLISH ANSWER</span>
-              ${parseFullMarkdown(q.answer_en)}
+              <div class="summary-content">${parseContent(q.answer_en)}</div>
             </div>
           ` : ''}
 
           ${showHi ? `
             <div class="ans-hin">
               <span class="tag hin-tag"><i class="fa-solid fa-language"></i> हिंदी व्याख्या / उत्तर</span>
-              ${parseFullMarkdown(q.answer_hi)}
+              <div class="summary-content">${parseContent(q.answer_hi)}</div>
             </div>
           ` : ''}
         </div>
@@ -373,7 +401,7 @@
   function speakText(text) {
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
-      const cleanText = text.replace(/[*#]/g, ''); // Clean markdown characters for voice
+      const cleanText = text.replace(/<[^>]*>?/gm, '');
       const utterance = new SpeechSynthesisUtterance(cleanText);
       utterance.lang = 'hi-IN';
       window.speechSynthesis.speak(utterance);
@@ -381,7 +409,7 @@
   }
 
   function copyQuestion(q, a) {
-    const fullText = `Q: ${q}\n\nAns: ${a}`;
+    const fullText = `Q: ${q}\n\nAns: ${a}`.replace(/<[^>]*>?/gm, '');
     navigator.clipboard.writeText(fullText).then(() => {
       showToast("Copied to Clipboard!");
     });
