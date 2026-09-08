@@ -4,43 +4,109 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Exam Portal</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
+        /* ==========================================
+           THEME VARIABLES & BASE STYLES
+           ========================================== */
         :root {
             --bg-body: #0b132b;
             --surface: #1c2541;
-            --surface-card: #232ed1;
             --surface-elevated: #2a3459;
             --primary: #38bdf8;
             --primary-glow: rgba(56, 189, 248, 0.25);
             --success: #10b981;
+            --success-bg: rgba(16, 185, 129, 0.18);
             --danger: #f43f5e;
+            --danger-bg: rgba(244, 63, 94, 0.18);
             --warning: #fbbf24;
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
-            --border: rgba(255, 255, 255, 0.1);
+            --border: rgba(255, 255, 255, 0.12);
+            --header-bg: rgba(28, 37, 65, 0.98);
+            --option-bg: rgba(255, 255, 255, 0.03);
+            --option-hover-bg: rgba(56, 189, 248, 0.08);
+            --option-selected-bg: rgba(56, 189, 248, 0.18);
+            --p-btn-bg: rgba(255, 255, 255, 0.04);
+            --unattempted-bg: rgba(255, 255, 255, 0.06);
             --radius-lg: 16px;
             --radius-md: 10px;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', system-ui, -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background: var(--bg-body); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+        [data-theme="light"] {
+            --bg-body: #f8fafc;
+            --surface: #ffffff;
+            --surface-elevated: #f1f5f9;
+            --primary: #0284c7;
+            --primary-glow: rgba(2, 132, 199, 0.15);
+            --success: #059669;
+            --success-bg: #d1fae5;
+            --danger: #e11d48;
+            --danger-bg: #ffe4e6;
+            --warning: #d97706;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #cbd5e1;
+            --header-bg: rgba(255, 255, 255, 0.98);
+            --option-bg: #f8fafc;
+            --option-hover-bg: rgba(2, 132, 199, 0.06);
+            --option-selected-bg: rgba(2, 132, 199, 0.12);
+            --p-btn-bg: #f1f5f9;
+            --unattempted-bg: #e2e8f0;
+        }
 
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            font-family: 'Inter', system-ui, -apple-system, sans-serif; 
+            -webkit-tap-highlight-color: transparent; 
+            transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+        }
+        
+        body { 
+            background: var(--bg-body); 
+            color: var(--text-main); 
+            min-height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            overflow-x: hidden; 
+        }
+
+        /* ==========================================
+           DESKTOP HEADER LAYOUT (SINGLE LINE)
+           ========================================== */
         header { 
-            background: rgba(28, 37, 65, 0.95);
+            background: var(--header-bg);
             backdrop-filter: blur(12px);
             border-bottom: 1px solid var(--border); 
-            padding: 12px 16px; 
+            padding: 10px 20px; 
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
             position: sticky;
             top: 0;
             z-index: 80;
-            gap: 10px;
+            gap: 16px;
+            width: 100%;
         }
-        
+
+        .header-top-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .header-bottom-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
         .brand-title { 
             font-size: 15px; 
             font-weight: 800; 
@@ -48,53 +114,84 @@
             display: flex; 
             align-items: center; 
             gap: 8px; 
-            flex: 1; 
-            line-height: 1.3;
-            word-break: break-word;
+            min-width: 0; 
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
-        .header-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-        
+        .brand-title span {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
         .timer-badge { 
             background: rgba(244, 63, 94, 0.15); 
             color: #fb7185; 
             border: 1px solid rgba(244, 63, 94, 0.3); 
-            padding: 6px 12px; 
-            border-radius: 30px; 
+            padding: 5px 12px; 
+            border-radius: 20px; 
             font-weight: 800; 
             font-size: 13px; 
             display: flex; 
             align-items: center; 
             gap: 6px;
+            white-space: nowrap;
         }
 
-        .btn-qs-toggle {
+        .timer-badge.paused {
+            background: rgba(251, 191, 36, 0.15);
+            color: var(--warning);
+            border-color: rgba(251, 191, 36, 0.3);
+        }
+
+        [data-theme="light"] .timer-badge {
+            background: #ffe4e6;
+            color: #e11d48;
+            border-color: #fecdd3;
+        }
+
+        .mode-select {
+            background: var(--surface-elevated);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 5px 10px;
+            font-size: 12.5px;
+            font-weight: 700;
+            cursor: pointer;
+            outline: none;
+            height: 34px;
+        }
+
+        .header-btn {
             background: var(--surface-elevated);
             color: var(--primary);
             border: 1px solid var(--border);
-            padding: 6px 14px;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 700;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .btn-exit {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border);
-            color: var(--text-muted);
-            width: 32px;
-            height: 32px;
+            height: 34px;
+            padding: 0 12px;
             border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
+            gap: 6px;
             cursor: pointer;
+            font-size: 13px;
+            font-weight: 700;
+            white-space: nowrap;
         }
 
+        .header-btn-icon { width: 34px; padding: 0; }
+        .header-btn:hover { border-color: var(--primary); }
+        .btn-exit-btn { color: var(--text-muted); }
+
+        /* Hide Mobile Specific Trigger on Desktop */
+        .mobile-palette-btn { display: none; }
+
+        /* ==========================================
+           MAIN PORTAL LAYOUT
+           ========================================== */
         .portal-layout { 
             display: grid; 
             grid-template-columns: 1fr 320px; 
@@ -104,6 +201,7 @@
             gap: 16px; 
             padding: 0 16px; 
             flex-grow: 1; 
+            align-items: start;
         }
 
         .question-box { 
@@ -114,8 +212,8 @@
             display: flex; 
             flex-direction: column; 
             justify-content: space-between; 
-            min-height: calc(100vh - 110px); 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            min-height: 520px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
         }
         
         .q-header { 
@@ -126,7 +224,7 @@
             border-bottom: 1px solid var(--border); 
             padding-bottom: 12px; 
         }
-        .q-num { font-weight: 800; font-size: 16px; color: var(--primary); }
+        .q-num { font-weight: 800; font-size: 15px; color: var(--primary); }
         .q-text { font-size: 16px; line-height: 1.6; font-weight: 600; margin-bottom: 20px; color: var(--text-main); }
 
         .options-grid { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
@@ -139,32 +237,60 @@
             display: flex; 
             align-items: center; 
             gap: 12px; 
-            background: rgba(255, 255, 255, 0.02); 
+            background: var(--option-bg); 
             font-size: 14.5px; 
             color: var(--text-main);
         }
-        .option-card:hover { border-color: var(--primary); background: rgba(56, 189, 248, 0.08); }
+        .option-card:hover:not(.locked) { border-color: var(--primary); background: var(--option-hover-bg); }
         .option-card.selected { 
             border-color: var(--primary); 
-            background: rgba(56, 189, 248, 0.15); 
+            background: var(--option-selected-bg); 
             font-weight: 700; 
             box-shadow: 0 0 12px var(--primary-glow);
         }
+
+        /* Practice Mode Correct/Incorrect Styling */
+        .option-card.practice-correct {
+            border-color: var(--success) !important;
+            background: var(--success-bg) !important;
+            color: var(--success) !important;
+            font-weight: 700;
+        }
+        .option-card.practice-incorrect {
+            border-color: var(--danger) !important;
+            background: var(--danger-bg) !important;
+            color: var(--danger) !important;
+            font-weight: 700;
+        }
+
         .opt-prefix { 
-            width: 30px; 
-            height: 30px; 
+            width: 28px; 
+            height: 28px; 
             border-radius: 50%; 
-            border: 1px solid var(--text-muted); 
+            border: 1px solid var(--border); 
             display: flex; 
             align-items: center; 
             justify-content: center; 
             font-size: 12px; 
             font-weight: 800; 
-            background: var(--surface);
+            background: var(--surface-elevated);
             color: var(--text-muted);
             flex-shrink: 0;
         }
-        .option-card.selected .opt-prefix { background: var(--primary); color: #000; border-color: var(--primary); }
+        .option-card.selected .opt-prefix { background: var(--primary); color: #fff; border-color: var(--primary); }
+        .option-card.practice-correct .opt-prefix { background: var(--success); color: #fff; border-color: var(--success); }
+        .option-card.practice-incorrect .opt-prefix { background: var(--danger); color: #fff; border-color: var(--danger); }
+
+        .practice-explanation {
+            background: var(--surface-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 14px 16px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .practice-explanation h5 { font-size: 13.5px; color: var(--primary); margin-bottom: 6px; display: flex; align-items: center; gap: 6px; font-weight: 800; }
+        .practice-explanation p { font-size: 13.5px; color: var(--text-main); line-height: 1.5; }
 
         .action-bar { 
             display: flex; 
@@ -189,11 +315,14 @@
             gap: 8px; 
             flex: 1;
         }
-        .btn-outline { background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border); color: var(--text-main); }
+        .btn-outline { background: var(--surface-elevated); border: 1px solid var(--border); color: var(--text-main); }
         .btn-warning { background: rgba(251, 191, 36, 0.15); color: var(--warning); border: 1px solid rgba(251, 191, 36, 0.3); }
-        .btn-primary { background: var(--primary); color: #000; font-weight: 800; }
-        .btn-submit-action { background: var(--success) !important; color: #000 !important; font-weight: 900 !important; box-shadow: 0 0 12px rgba(16, 185, 129, 0.4); }
+        .btn-primary { background: var(--primary); color: #fff; font-weight: 800; }
+        .btn-submit-action { background: var(--success) !important; color: #fff !important; font-weight: 900 !important; box-shadow: 0 0 12px rgba(16, 185, 129, 0.4); }
 
+        /* ==========================================
+           QUESTION PALETTE & SIDEBAR
+           ========================================== */
         .backdrop {
             position: fixed;
             inset: 0;
@@ -210,26 +339,27 @@
             background: var(--surface); 
             border-radius: var(--radius-lg); 
             border: 1px solid var(--border); 
-            padding: 20px; 
+            padding: 18px; 
             display: flex; 
             flex-direction: column; 
-            justify-content: space-between; 
+            align-self: start;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
         }
         .sheet-drag-handle { display: none; width: 40px; height: 4px; background: var(--border); border-radius: 4px; margin: 0 auto 12px auto; }
         .palette-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-        .palette-title { font-size: 15px; font-weight: 800; }
-        .btn-close-sheet { display: none; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border); color: var(--text-muted); width: 28px; height: 28px; border-radius: 50%; justify-content: center; align-items: center; cursor: pointer; }
+        .palette-title { font-size: 15px; font-weight: 800; display: flex; align-items: center; gap: 6px; }
+        .btn-close-sheet { display: none; background: var(--surface-elevated); border: 1px solid var(--border); color: var(--text-muted); width: 28px; height: 28px; border-radius: 50%; justify-content: center; align-items: center; cursor: pointer; }
 
         .filter-chips { display: flex; gap: 6px; margin-bottom: 14px; }
-        .chip { padding: 5px 12px; font-size: 11.5px; font-weight: 700; border-radius: 20px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); cursor: pointer; color: var(--text-muted); }
-        .chip.active { background: var(--primary); color: #000; border-color: var(--primary); }
+        .chip { padding: 5px 12px; font-size: 11.5px; font-weight: 700; border-radius: 20px; background: var(--surface-elevated); border: 1px solid var(--border); cursor: pointer; color: var(--text-muted); }
+        .chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
 
         .palette-grid { 
             display: grid; 
             grid-template-columns: repeat(5, 1fr); 
             gap: 8px; 
             margin-bottom: 16px; 
-            max-height: 250px; 
+            max-height: 280px; 
             overflow-y: auto; 
             padding-right: 4px;
         }
@@ -239,7 +369,7 @@
             aspect-ratio: 1; 
             border-radius: 8px; 
             border: 1px solid var(--border); 
-            background: rgba(255,255,255,0.03); 
+            background: var(--p-btn-bg); 
             color: var(--text-main);
             font-size: 13px; 
             font-weight: 800; 
@@ -249,9 +379,9 @@
             justify-content: center; 
         }
         .p-btn.active { border: 2px solid var(--primary) !important; box-shadow: 0 0 10px var(--primary-glow); }
-        .p-btn.answered { background: var(--success); color: #000; border-color: var(--success); }
-        .p-btn.review { background: var(--warning); color: #000; border-color: var(--warning); }
-        .p-btn.unanswered { background: rgba(255,255,255,0.05); color: var(--text-muted); }
+        .p-btn.answered { background: var(--success); color: #fff; border-color: var(--success); }
+        .p-btn.review { background: var(--warning); color: #fff; border-color: var(--warning); }
+        .p-btn.unanswered { background: var(--unattempted-bg); color: var(--text-muted); }
 
         .legend { font-size: 11.5px; display: flex; flex-direction: column; gap: 6px; border-top: 1px solid var(--border); padding-top: 12px; margin-bottom: 14px; }
         .legend-item { display: flex; align-items: center; gap: 8px; color: var(--text-muted); font-weight: 600; }
@@ -260,19 +390,19 @@
         .submit-zone { border-top: 1px dashed var(--border); padding-top: 14px; }
         .btn-submit-main {
             width: 100%;
-            padding: 13px;
+            padding: 12px;
             background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
             color: #fff;
             border: none;
             border-radius: var(--radius-md);
-            font-size: 14.5px;
+            font-size: 14px;
             font-weight: 800;
             cursor: pointer;
             box-shadow: 0 4px 15px rgba(244, 63, 94, 0.3);
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 6px;
+            gap: 8px;
         }
 
         .modal-overlay {
@@ -282,14 +412,14 @@
         .modal-actions { display: flex; gap: 10px; margin-top: 18px; }
         .modal-actions button { flex: 1; padding: 10px; border-radius: 8px; font-weight: 700; border: none; cursor: pointer; font-size: 13px; }
 
-        /* RESULTS AREA & SHARE SECTION */
+        /* RESULTS AREA */
         .result-wrapper { max-width: 800px; margin: 30px auto; background: var(--surface); padding: 32px 20px; border-radius: var(--radius-lg); border: 1px solid var(--border); text-align: center; }
-        .score-card { display: flex; justify-content: space-around; background: rgba(255,255,255,0.03); padding: 20px; border-radius: var(--radius-md); margin: 24px 0; border: 1px solid var(--border); }
+        .score-card { display: flex; justify-content: space-around; background: var(--surface-elevated); padding: 20px; border-radius: var(--radius-md); margin: 24px 0; border: 1px solid var(--border); }
         .stat-item h3 { font-size: 24px; font-weight: 900; color: var(--primary); }
         .stat-item p { font-size: 11px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-top: 4px; }
 
         .share-box {
-            background: rgba(255, 255, 255, 0.03);
+            background: var(--surface-elevated);
             border: 1px dashed var(--border);
             border-radius: var(--radius-md);
             padding: 16px;
@@ -309,22 +439,48 @@
             align-items: center;
             gap: 6px;
             color: #fff;
-            transition: transform 0.15s ease;
         }
-        .btn-share:active { transform: scale(0.96); }
         .btn-wa { background: #25D366; }
         .btn-tg { background: #0088cc; }
-        .btn-native { background: var(--primary); color: #000; }
-        .btn-copy { background: rgba(255, 255, 255, 0.1); color: var(--text-main); border: 1px solid var(--border); }
+        .btn-native { background: var(--primary); color: #fff; }
+        .btn-copy { background: var(--surface-elevated); color: var(--text-main); border: 1px solid var(--border); }
 
-        .sol-card { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; margin-top: 12px; text-align: left; }
+        .sol-card { background: var(--surface-elevated); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; margin-top: 12px; text-align: left; }
         .badge { font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 20px; display: inline-block; margin-bottom: 8px; }
         .badge-success { background: rgba(16, 185, 129, 0.2); color: var(--success); }
         .badge-danger { background: rgba(244, 63, 94, 0.2); color: var(--danger); }
         .badge-warning { background: rgba(251, 191, 36, 0.2); color: var(--warning); }
 
-        @media (max-width: 850px) {
-            .portal-layout { grid-template-columns: 1fr; margin: 8px auto; padding: 0 12px; }
+        /* ==========================================
+           MOBILE RESPONSIVE OVERRIDES (MAX-WIDTH 768px)
+           ========================================== */
+        @media (max-width: 768px) {
+            header { 
+                padding: 8px 12px; 
+                flex-direction: column;
+                align-items: stretch;
+                gap: 6px;
+            }
+
+            .header-top-row {
+                justify-content: space-between;
+                width: 100%;
+            }
+
+            .header-bottom-row {
+                justify-content: space-between;
+                width: 100%;
+                border-top: 1px solid var(--border);
+                padding-top: 6px;
+            }
+
+            .brand-title { 
+                font-size: 13.5px; 
+            }
+
+            .mobile-palette-btn { display: flex; }
+
+            .portal-layout { grid-template-columns: 1fr; margin: 8px auto; padding: 0 10px; }
             .sheet-drag-handle, .btn-close-sheet { display: flex; }
             
             .palette-box { 
@@ -334,60 +490,101 @@
                 right: 0; 
                 z-index: 100; 
                 border-radius: 20px 20px 0 0; 
-                box-shadow: 0 -10px 40px rgba(0,0,0,0.8); 
+                box-shadow: 0 -10px 40px rgba(0,0,0,0.35); 
                 transform: translateY(105%); 
                 transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                max-height: 85vh;
+                max-height: 80vh;
             }
             .palette-box.open { transform: translateY(0); }
-            .question-box { min-height: calc(100vh - 90px); padding: 16px; }
+            .question-box { min-height: auto; padding: 14px; }
         }
     </style>
 </head>
 <body>
 
 <header>
-    <div class="brand-title">
-        <i class="fa-solid fa-graduation-cap" style="color: var(--primary); flex-shrink: 0;"></i> 
-        <span id="testHeading">Portal</span>
+    <div class="header-top-row">
+        <div class="brand-title">
+            <i class="fa-solid fa-graduation-cap" style="color: var(--primary); flex-shrink: 0;"></i> 
+            <span id="testHeading">Portal Test</span>
+        </div>
+        <button class="header-btn header-btn-icon btn-exit-btn" onclick="openExitModal()" title="Exit Portal">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
     </div>
-    <div class="header-right">
-        <div class="timer-badge"><i class="fa-regular fa-clock"></i> <span id="timerText">00:00</span></div>
-        <button class="btn-qs-toggle" onclick="toggleMobilePalette()"><i class="fa-solid fa-grid-2"></i> Qs</button>
-        <button class="btn-exit" onclick="openExitModal()"><i class="fa-solid fa-xmark"></i></button>
+
+    <div class="header-bottom-row">
+        <!-- MODE SELECTOR -->
+        <select class="mode-select" id="modeSelector" onchange="onModeChange(this.value)">
+            <option value="quiz">🎯 Quiz Mode</option>
+            <option value="practice">📖 Practice Mode</option>
+        </select>
+
+        <!-- TIMER BADGE -->
+        <div class="timer-badge" id="timerBadge">
+            <i class="fa-regular fa-clock" id="timerIcon"></i> <span id="timerText">00:00</span>
+        </div>
+
+        <!-- THEME TOGGLE -->
+        <button class="header-btn header-btn-icon" id="themeToggleBtn" onclick="toggleTheme()" title="Toggle Theme">
+            <i class="fa-solid fa-moon" id="themeIcon"></i>
+        </button>
+
+        <!-- DRAWER / PALETTE TRIGGER BUTTON (MOBILE ONLY) -->
+        <button class="header-btn mobile-palette-btn" onclick="toggleMobilePalette()">
+            <i class="fa-solid fa-table-cells"></i> <span>Qs Grid</span>
+        </button>
     </div>
 </header>
 
 <div class="backdrop" id="drawerBackdrop" onclick="closeMobilePalette()"></div>
 
 <div id="testArea" class="portal-layout">
+    <!-- LEFT MAIN QUESTION CARD -->
     <div class="question-box">
         <div>
             <div class="q-header">
                 <span class="q-num" id="currentQNum">Question 1</span>
-                <span style="font-size: 12px; color: var(--text-muted); font-weight: 600;"><i class="fa-solid fa-shield-halved"></i> Single Choice</span>
+                <span style="font-size: 12px; color: var(--text-muted); font-weight: 600;" id="modeBadge">
+                    <i class="fa-solid fa-shield-halved"></i> Quiz Mode
+                </span>
             </div>
             <div class="q-text" id="questionText">Loading...</div>
             <div class="options-grid" id="optionsContainer"></div>
+
+            <!-- PRACTICE EXPLANATION BOX -->
+            <div class="practice-explanation" id="practiceExplanation">
+                <h5><i class="fa-solid fa-circle-info"></i> Explanation / Solution</h5>
+                <p id="explanationText">Select an option to view explanation.</p>
+            </div>
         </div>
 
         <div class="action-bar">
             <div class="action-row">
-                <button class="btn btn-outline" onclick="clearResponse()"><i class="fa-solid fa-rotate-left"></i> Clear</button>
-                <button class="btn btn-warning" onclick="markForReview()"><i class="fa-solid fa-bookmark"></i> Review</button>
+                <button class="btn btn-outline" id="clearBtn" onclick="clearResponse()">
+                    <i class="fa-solid fa-arrow-rotate-left"></i> Clear
+                </button>
+                <button class="btn btn-warning" onclick="markForReview()">
+                    <i class="fa-solid fa-bookmark"></i> Review
+                </button>
             </div>
             <div class="action-row">
-                <button class="btn btn-outline" onclick="navigateQuestion(-1)"><i class="fa-solid fa-chevron-left"></i> Prev</button>
-                <button class="btn btn-primary" id="nextBtn" onclick="handleNextOrSubmit()">Next <i class="fa-solid fa-chevron-right"></i></button>
+                <button class="btn btn-outline" onclick="navigateQuestion(-1)">
+                    <i class="fa-solid fa-chevron-left"></i> Prev
+                </button>
+                <button class="btn btn-primary" id="nextBtn" onclick="handleNextOrSubmit()">
+                    Next <i class="fa-solid fa-chevron-right"></i>
+                </button>
             </div>
         </div>
     </div>
 
+    <!-- RIGHT SIDEBAR / MOBILE DRAWER -->
     <div class="palette-box" id="paletteBox">
         <div>
             <div class="sheet-drag-handle"></div>
             <div class="palette-header">
-                <div class="palette-title">Question Navigator</div>
+                <div class="palette-title"><i class="fa-solid fa-list-check" style="color: var(--primary);"></i> Question Navigator</div>
                 <button class="btn-close-sheet" onclick="closeMobilePalette()"><i class="fa-solid fa-xmark"></i></button>
             </div>
             
@@ -402,7 +599,7 @@
             <div class="legend">
                 <div class="legend-item"><div class="dot" style="background: var(--success);"></div> Attempted</div>
                 <div class="legend-item"><div class="dot" style="background: var(--warning);"></div> Review</div>
-                <div class="legend-item"><div class="dot" style="background: rgba(255,255,255,0.05); border:1px solid var(--border);"></div> Unattempted</div>
+                <div class="legend-item"><div class="dot" style="background: var(--unattempted-bg); border:1px solid var(--border);"></div> Unattempted</div>
             </div>
         </div>
 
@@ -414,23 +611,25 @@
     </div>
 </div>
 
+<!-- EXIT CONFIRMATION MODAL -->
 <div class="modal-overlay" id="exitModal">
     <div class="modal-card">
         <i class="fa-solid fa-triangle-exclamation" style="font-size: 36px; color: var(--danger); margin-bottom: 10px;"></i>
         <h3 style="font-size: 17px; margin-bottom: 6px;">Exit Examination?</h3>
-        <p style="font-size: 13px; color: var(--text-muted);">Aapka progress lost ho jayega. Exit karna chahte hain?</p>
+        <p style="font-size: 13px; color: var(--text-muted);">Aapka current test progress lose ho jayega. Exit karna chahte hain?</p>
         <div class="modal-actions">
-            <button style="background: rgba(255,255,255,0.05); color: var(--text-main);" onclick="closeExitModal()">Continue</button>
+            <button style="background: var(--surface-elevated); color: var(--text-main); border: 1px solid var(--border);" onclick="closeExitModal()">Continue</button>
             <button style="background: var(--danger); color: #fff;" onclick="exitExamConfirmed()">Exit</button>
         </div>
     </div>
 </div>
 
+<!-- RESULT DISPLAY AREA -->
 <div id="resultArea" style="display: none;">
     <div class="result-wrapper">
         <i class="fa-solid fa-circle-check" style="font-size: 50px; color: var(--success);"></i>
         <h2 style="margin-top: 14px; font-size: 22px; font-weight: 800;">Test Completed!</h2>
-        <p style="color: var(--text-muted); font-size: 13px; margin-top: 4px;" id="resultStatusMsg">Performance score synced.</p>
+        <p style="color: var(--text-muted); font-size: 13px; margin-top: 4px;" id="resultStatusMsg">Performance score synced successfully.</p>
 
         <div class="score-card">
             <div class="stat-item">
@@ -447,13 +646,12 @@
             </div>
         </div>
 
-        <!-- SHARE RESULT SECTION -->
         <div class="share-box">
             <h4><i class="fa-solid fa-share-nodes" style="color: var(--primary);"></i> Share Your Scorecard</h4>
             <div class="share-buttons">
                 <button class="btn-share btn-wa" onclick="shareOnWhatsApp()"><i class="fa-brands fa-whatsapp"></i> WhatsApp</button>
                 <button class="btn-share btn-tg" onclick="shareOnTelegram()"><i class="fa-brands fa-telegram"></i> Telegram</button>
-                <button class="btn-share btn-native" onclick="shareNative()"><i class="fa-solid fa-arrow-up-from-bracket"></i> Share</button>
+                <button class="btn-share btn-native" onclick="shareNative()"><i class="fa-solid fa-share"></i> Share</button>
                 <button class="btn-share btn-copy" onclick="copyResultLink()"><i class="fa-solid fa-copy"></i> Copy Link</button>
             </div>
         </div>
@@ -475,16 +673,76 @@
 <script>
     let currentTest = null, questions = [], currentIndex = 0;
     let userAnswers = {}, reviewStatus = {};
-    let timerInterval = null, timeRemaining = 0, testStartTime = Date.now();
+    let timerInterval = null, isTimerPaused = false;
+    let totalTimeLimitSec = 0, timeRemaining = 0, totalTimeSpentSec = 0;
     let currentFilter = 'all';
+    let currentMode = 'quiz';
     let lastCalculatedScore = "0/0", lastAccuracy = "0%", lastTimeTaken = "0s";
 
+    function initTheme() {
+        const savedTheme = localStorage.getItem('theme_preference');
+        const icon = document.getElementById('themeIcon');
+        
+        if (savedTheme) {
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            if (icon) icon.className = savedTheme === 'light' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+        } else {
+            const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+            const defaultTheme = prefersLight ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', defaultTheme);
+            if (icon) icon.className = prefersLight ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+        }
+    }
+
+    function toggleTheme() {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        const icon = document.getElementById('themeIcon');
+
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme_preference', newTheme);
+        
+        if (icon) {
+            icon.className = newTheme === 'light' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+        }
+    }
+
     window.onload = function() {
+        initTheme();
         const urlParams = new URLSearchParams(window.location.search);
         const testId = urlParams.get('id');
+        const urlMode = urlParams.get('mode');
+
+        if (urlMode === 'practice' || urlMode === 'quiz') {
+            currentMode = urlMode;
+        }
+        document.getElementById('modeSelector').value = currentMode;
+
         if (testId) { loadTestDetails(testId); } 
         else { alert("Test ID missing!"); window.location.href = "tests.html"; }
     };
+
+    function onModeChange(newMode) {
+        currentMode = newMode;
+        applyModeUI();
+        loadQuestion(currentIndex);
+    }
+
+    function applyModeUI() {
+        const modeBadge = document.getElementById('modeBadge');
+        const clearBtn = document.getElementById('clearBtn');
+
+        if (currentMode === 'practice') {
+            modeBadge.innerHTML = `<i class="fa-solid fa-book-open"></i> Practice Mode`;
+            clearBtn.style.display = 'none';
+        } else {
+            modeBadge.innerHTML = `<i class="fa-solid fa-shield-halved"></i> Quiz Mode`;
+            clearBtn.style.display = 'inline-flex';
+        }
+
+        // Timer runs for both Quiz and Practice Mode
+        startTimer();
+    }
 
     function toggleMobilePalette() {
         const box = document.getElementById("paletteBox");
@@ -509,19 +767,23 @@
                 if (res.error) throw res.error;
                 currentTest = res.data;
                 questions = currentTest.questions_data || [];
-                document.getElementById("testHeading").innerText = currentTest.title || "Exam";
+                document.getElementById("testHeading").innerText = currentTest.title || "Exam Portal";
                 
+                totalTimeLimitSec = (currentTest.time_limit_mins || 15) * 60;
+
                 const savedState = localStorage.getItem(`test_draft_${currentTest.id}`);
                 if (savedState) {
                     const parsed = JSON.parse(savedState);
                     userAnswers = parsed.userAnswers || {};
                     reviewStatus = parsed.reviewStatus || {};
-                    timeRemaining = parsed.timeRemaining;
+                    timeRemaining = parsed.timeRemaining !== undefined ? parsed.timeRemaining : totalTimeLimitSec;
+                    totalTimeSpentSec = parsed.totalTimeSpentSec || (totalTimeLimitSec - timeRemaining);
                 } else {
-                    timeRemaining = (currentTest.time_limit_mins || 15) * 60;
+                    timeRemaining = totalTimeLimitSec;
+                    totalTimeSpentSec = 0;
                 }
 
-                startTimer();
+                applyModeUI();
                 renderPalette();
                 loadQuestion(0);
             })
@@ -530,7 +792,12 @@
 
     function saveCurrentState() {
         if (!currentTest) return;
-        localStorage.setItem(`test_draft_${currentTest.id}`, JSON.stringify({ userAnswers, reviewStatus, timeRemaining }));
+        localStorage.setItem(`test_draft_${currentTest.id}`, JSON.stringify({ 
+            userAnswers, 
+            reviewStatus, 
+            timeRemaining,
+            totalTimeSpentSec
+        }));
     }
 
     function renderPalette() {
@@ -579,13 +846,49 @@
         optionsBox.innerHTML = "";
         const options = q.options || q.opts || [q.option1, q.option2, q.option3, q.option4];
 
+        const userSelected = userAnswers[idx];
+        const correctIdx = parseCorrectOption(q);
+        const explanationBox = document.getElementById("practiceExplanation");
+
+        // Practice Mode Timer Control
+        if (currentMode === 'practice') {
+            if (userSelected !== undefined) {
+                pauseTimer(); // Freeze timer when user has tapped/answered
+            } else {
+                resumeTimer(); // Resume timer if going to unanswered question
+            }
+        } else {
+            resumeTimer();
+        }
+
         options.forEach((opt, oIdx) => {
             const card = document.createElement("div");
-            card.className = `option-card ${userAnswers[idx] === oIdx ? 'selected' : ''}`;
+            let cardClasses = `option-card`;
+
+            if (currentMode === 'practice' && userSelected !== undefined) {
+                cardClasses += ' locked';
+                if (oIdx === correctIdx) {
+                    cardClasses += ' practice-correct';
+                } else if (oIdx === userSelected) {
+                    cardClasses += ' practice-incorrect';
+                }
+            } else {
+                if (userSelected === oIdx) cardClasses += ' selected';
+            }
+
+            card.className = cardClasses;
             card.onclick = () => selectOption(oIdx);
             card.innerHTML = `<div class="opt-prefix">${String.fromCharCode(65 + oIdx)}</div><div>${opt}</div>`;
             optionsBox.appendChild(card);
         });
+
+        if (currentMode === 'practice' && userSelected !== undefined) {
+            explanationBox.style.display = 'block';
+            const expText = q.explanation || q.solution || q.exp || "Correct Answer: Option " + String.fromCharCode(65 + correctIdx);
+            document.getElementById("explanationText").innerText = expText;
+        } else {
+            explanationBox.style.display = 'none';
+        }
 
         const nextBtn = document.getElementById("nextBtn");
         if (currentIndex === questions.length - 1) {
@@ -608,13 +911,21 @@
     }
 
     function selectOption(oIdx) {
+        if (currentMode === 'practice' && userAnswers[currentIndex] !== undefined) return;
+
         userAnswers[currentIndex] = oIdx;
         delete reviewStatus[currentIndex];
+
+        if (currentMode === 'practice') {
+            pauseTimer(); // Freeze timer on tap
+        }
+
         saveCurrentState();
         loadQuestion(currentIndex);
     }
 
     function clearResponse() {
+        if (currentMode === 'practice') return;
         delete userAnswers[currentIndex];
         delete reviewStatus[currentIndex];
         saveCurrentState();
@@ -636,13 +947,38 @@
         if (nextIdx >= 0 && nextIdx < questions.length) loadQuestion(nextIdx);
     }
 
+    function updateTimerUI() {
+        let mins = Math.floor(timeRemaining / 60), secs = timeRemaining % 60;
+        document.getElementById("timerText").innerText = `${mins < 10 ? "0" : ""}${mins}:${secs < 10 ? "0" : ""}${secs}`;
+    }
+
+    function pauseTimer() {
+        isTimerPaused = true;
+        const timerBadge = document.getElementById('timerBadge');
+        const timerIcon = document.getElementById('timerIcon');
+        timerBadge.classList.add('paused');
+        timerIcon.className = "fa-solid fa-pause";
+    }
+
+    function resumeTimer() {
+        isTimerPaused = false;
+        const timerBadge = document.getElementById('timerBadge');
+        const timerIcon = document.getElementById('timerIcon');
+        timerBadge.classList.remove('paused');
+        timerIcon.className = "fa-regular fa-clock";
+    }
+
     function startTimer() {
         if (timerInterval) clearInterval(timerInterval);
+        updateTimerUI();
+
         timerInterval = setInterval(() => {
+            if (isTimerPaused) return; // Do not decrement if paused in practice mode
+
             timeRemaining--;
+            totalTimeSpentSec++;
             saveCurrentState();
-            let mins = Math.floor(timeRemaining / 60), secs = timeRemaining % 60;
-            document.getElementById("timerText").innerText = `${mins < 10 ? "0" : ""}${mins}:${secs < 10 ? "0" : ""}${secs}`;
+            updateTimerUI();
 
             if (timeRemaining <= 0) {
                 clearInterval(timerInterval);
@@ -656,7 +992,7 @@
     function closeExitModal() { document.getElementById("exitModal").style.display = "none"; }
     
     function exitExamConfirmed() {
-        clearInterval(timerInterval);
+        if (timerInterval) clearInterval(timerInterval);
         if (currentTest) localStorage.removeItem(`test_draft_${currentTest.id}`);
         window.location.href = "tests.html";
     }
@@ -715,7 +1051,7 @@
     }
 
     async function submitTest() {
-        clearInterval(timerInterval);
+        if (timerInterval) clearInterval(timerInterval);
         if (currentTest) localStorage.removeItem(`test_draft_${currentTest.id}`);
 
         let correctCount = 0, wrongCount = 0;
@@ -732,14 +1068,13 @@
 
         let totalScore = Math.max(0, (correctCount * marksPerQ) - (wrongCount * negMarking));
         let totalMarks = questions.length * marksPerQ;
-        let timeTakenSec = Math.round((Date.now() - testStartTime) / 1000);
         let accuracy = questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 0;
 
         lastCalculatedScore = `${totalScore}/${totalMarks}`;
         lastAccuracy = `${accuracy}%`;
-        lastTimeTaken = `${Math.floor(timeTakenSec / 60)}m ${timeTakenSec % 60}s`;
+        lastTimeTaken = `${Math.floor(totalTimeSpentSec / 60)}m ${totalTimeSpentSec % 60}s`;
 
-        trackTestActivityLocally(currentTest, totalScore, totalMarks, timeTakenSec);
+        trackTestActivityLocally(currentTest, totalScore, totalMarks, totalTimeSpentSec);
 
         document.getElementById("testArea").style.display = "none";
         document.getElementById("resultArea").style.display = "block";
@@ -758,7 +1093,7 @@
                     total_marks: totalMarks,
                     correct_answers: correctCount, 
                     wrong_answers: wrongCount, 
-                    time_taken_sec: timeTakenSec,
+                    time_taken_sec: totalTimeSpentSec,
                     updated_at: new Date()
                 }], { onConflict: 'user_id, test_id' });
             }
@@ -767,7 +1102,6 @@
         }
     }
 
-    /* SHARE FUNCTIONS */
     function generateShareText() {
         const title = currentTest ? currentTest.title : "Exam";
         return `🎯 *Test Result Scorecard*\n📚 *Test:* ${title}\n📊 *Score:* ${lastCalculatedScore}\n⚡ *Accuracy:* ${lastAccuracy}\n⏱️ *Time:* ${lastTimeTaken}\n\nAap bhi test attempt karein! 👇\n${window.location.href}`;
@@ -797,29 +1131,29 @@
 
     function copyResultLink() {
         navigator.clipboard.writeText(generateShareText()).then(() => {
-            alert("Score summary aur link clipboard me copy ho gaya hai!");
+            alert("Score summary copy ho gaya hai!");
         }).catch(() => {
-            alert("Copy karne me dikkat aayi.");
+            alert("Copy error.");
         });
     }
 
     function reattemptTest() {
         if (!currentTest) return;
 
-        if (confirm("Kya aap sach me reattempt karna chahte hain? Aapka purana draft clear ho jayega aur naya score calculate hoga.")) {
+        if (confirm("Kya aap reattempt karna chahte hain? Purana draft replace ho jayega.")) {
             localStorage.removeItem(`test_draft_${currentTest.id}`);
 
             userAnswers = {};
             reviewStatus = {};
             currentIndex = 0;
-            testStartTime = Date.now();
-            timeRemaining = (currentTest.time_limit_mins || 15) * 60;
+            totalTimeSpentSec = 0;
+            timeRemaining = totalTimeLimitSec;
 
             document.getElementById("resultArea").style.display = "none";
             document.getElementById("solutionsContainer").style.display = "none";
             document.getElementById("testArea").style.display = "grid";
 
-            startTimer();
+            applyModeUI();
             renderPalette();
             loadQuestion(0);
         }
@@ -844,13 +1178,15 @@
             let isCorrect = userAnsIdx === correctIdx;
             let badgeClass = isCorrect ? 'badge-success' : (userAnsIdx === undefined ? 'badge-warning' : 'badge-danger');
             let badgeText = isCorrect ? '✔ Correct' : (userAnsIdx === undefined ? '⚠ Unanswered' : '✖ Incorrect');
+            let exp = q.explanation || q.solution || q.exp;
 
             html += `
                 <div class="sol-card">
                     <span class="badge ${badgeClass}">${badgeText}</span>
-                    <h4 style="margin-bottom: 6px; font-size:14px;">Q${idx + 1}. ${q.question_text || q.question || ''}</h4>
+                    <h4 style="margin-bottom: 6px; font-size:14px; color:var(--text-main);">Q${idx + 1}. ${q.question_text || q.question || ''}</h4>
                     <p style="font-size: 13px; margin-bottom: 2px; color:var(--text-muted);"><b>Your Choice:</b> ${userAnsIdx !== undefined ? (options[userAnsIdx] || 'Option ' + (userAnsIdx + 1)) : 'None'}</p>
                     <p style="font-size: 13px; color: var(--success);"><b>Correct Answer:</b> ${options[correctIdx] || 'Option ' + (correctIdx + 1)}</p>
+                    ${exp ? `<p style="font-size: 12.5px; color: var(--text-muted); margin-top: 6px;"><b>Explanation:</b> ${exp}</p>` : ''}
                 </div>
             `;
         });
