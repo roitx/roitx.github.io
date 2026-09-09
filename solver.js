@@ -682,7 +682,7 @@ function selectField(field) {
             ${SVG_ICONS.refresh} Change Subject
           </button>
           <button class="wa-action-btn" onclick="checkQueueStatus()">
-            ${SVG_ICONS.queue} Check Queue Status
+            ${SVG_ICONS.queue} Check Feedback Status
           </button>
           <button class="wa-action-btn" onclick="renderMainMenu()">
             ${SVG_ICONS.home} Main Menu
@@ -702,20 +702,39 @@ function renderMainMenu() {
 }
 
 async function checkQueueStatus() {
+  // 1. Pehle chat me user ka action dikhayein
+  appendChatMessage("Check Queue Status", "user");
+
   try {
+    const currentSessionId = getSessionId(); 
     const { count, error } = await window.supabaseClient
       .from('doubts')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'pending');
+      .select('*', { count: 'exact' }) 
+      .eq('status', 'pending')
+      .eq('session_id', currentSessionId); 
 
-    if (error) throw error;
+    if (error) {
+      console.error("Error fetching queue status:", error);
+      appendChatMessage("⚠️ Queue status check karne me error aaya.", "ai");
+      return;
+    }
+
+    // 2. Console ki jagah ab sidha Chat me message bhejein
+    let replyText = "";
+    if (count > 0) {
+      replyText = `🕒 Aapke currently <b>${count}</b> requests pending hain admin queue me.`;
+    } else {
+      replyText = `✅ Aapka koi bhi doubt queue me pending nahi hai!`;
+    }
     
-    const waitTime = (count || 0) * 2;
-    appendChatMessage(`📊 <b>Live Queue Status:</b><br>• Pending Requests: <b>${count || 0}</b><br>• Estimated Wait Time: <b>~${waitTime} mins</b>`, "ai");
+    appendChatMessage(replyText, "ai");
+    
   } catch (err) {
-    appendChatMessage("📊 Abhi Queue clear hai. Aapka sawal turant process hoga!", "ai");
+    console.error("Queue check fail ho gaya:", err);
+    appendChatMessage("⚠️ System me kuch technical error aa gaya.", "ai");
   }
 }
+
 
 /* =====================================================
    ADMIN DOUBT MODAL & LOGIN CHECK LOGIC
