@@ -129,48 +129,21 @@ function initDarkModeSupport() {
     const isDarkStored = localStorage.getItem("theme") === "dark";
 
     if (isDarkStored) {
-        document.body.classList.add("dark");
-        document.body.classList.add("dark-mode");
+        document.body.classList.add("dark", "dark-mode");
         if (modeToggle) modeToggle.checked = true;
     }
 
     if (modeToggle) {
         modeToggle.addEventListener("change", function () {
             if (this.checked) {
-                document.body.classList.add("dark");
-                document.body.classList.add("dark-mode");
+                document.body.classList.add("dark", "dark-mode");
                 localStorage.setItem("theme", "dark");
             } else {
-                document.body.classList.remove("dark");
-                document.body.classList.remove("dark-mode");
+                document.body.classList.remove("dark", "dark-mode");
                 localStorage.setItem("theme", "light");
             }
         });
     }
-}
-
-/* ==========================================
-   ROBUST HELPER BOARD & CLASS DETECTORS
-   ========================================== */
-function extractBoardFromTest(test) {
-    if (!test) return null;
-    const combinedText = `${test.title || ''} ${test.subject || ''} ${test.board || ''} ${test.class_level || ''}`.toUpperCase();
-    
-    if (combinedText.includes("BIHAR") || combinedText.includes("BSEB")) return "BSEB";
-    if (combinedText.includes("CBSE") || combinedText.includes("CENTRAL")) return "CBSE";
-    if (combinedText.includes("NEET")) return "NEET";
-    if (combinedText.includes("JEE")) return "JEE";
-    
-    return null;
-}
-
-function cleanClassLevel(classLevelStr, fullText) {
-    const text = (classLevelStr || fullText || '').toUpperCase();
-    if (text.includes("12")) return "Class 12th";
-    if (text.includes("11")) return "Class 11th";
-    if (text.includes("10")) return "Class 10th";
-    if (text.includes("9")) return "Class 9th";
-    return classLevelStr ? classLevelStr.split('(')[0].trim() : "Other";
 }
 
 /* ==========================================
@@ -277,6 +250,7 @@ async function fetchStudentTests() {
         if (error) throw error;
 
         studentTests = data || [];
+        populateLeaderboardTestDropdown(studentTests);
         initLeaderboardStepView();
         renderRecentFiveTests();
     } catch (err) {
@@ -329,8 +303,11 @@ function renderBoardStep() {
 
     const availableBoards = new Set();
     studentTests.forEach(test => {
-        const detected = extractBoardFromTest(test);
-        if (detected) availableBoards.add(detected);
+        const title = (test.title || "").toUpperCase();
+        if (title.includes("BSEB") || title.includes("BIHAR")) availableBoards.add("BSEB");
+        else if (title.includes("CBSE")) availableBoards.add("CBSE");
+        else if (title.includes("NEET")) availableBoards.add("NEET");
+        else if (title.includes("JEE")) availableBoards.add("JEE");
     });
 
     let html = `<button class="chip-btn ${selectedBoard === 'ALL' ? 'active' : ''}" onclick="selectBoard('ALL')">All Boards</button>`;
@@ -367,14 +344,18 @@ function renderClassStep() {
     const availableClasses = new Set();
     
     studentTests.forEach(test => {
-        const fullText = `${test.title || ''} ${test.class_level || ''} ${test.subject || ''}`.toUpperCase();
-        const testBoard = extractBoardFromTest(test);
-
-        let boardMatch = (selectedBoard === "ALL") || (testBoard === selectedBoard);
+        const fullText = `${test.title || ''} ${test.class_level || ''}`.toUpperCase();
+        
+        let boardMatch = (selectedBoard === "ALL") || 
+            (selectedBoard === "BSEB" && (fullText.includes("BSEB") || fullText.includes("BIHAR"))) ||
+            fullText.includes(selectedBoard.toUpperCase());
 
         if (boardMatch) {
-            const cleanedCls = cleanClassLevel(test.class_level, fullText);
-            availableClasses.add(cleanedCls);
+            if (test.class_level && test.class_level.trim() !== "") {
+                availableClasses.add(test.class_level.trim());
+            } else if (fullText.includes("12")) availableClasses.add("Class 12th");
+            else if (fullText.includes("11")) availableClasses.add("Class 11th");
+            else if (fullText.includes("10")) availableClasses.add("Class 10th");
         }
     });
 
@@ -386,9 +367,6 @@ function renderClassStep() {
     });
 
     grid.innerHTML = html;
-
-    const classBlock = document.getElementById("classStepBlock");
-    if (classBlock) classBlock.style.display = "block";
 }
 
 function selectClass(cls) {
@@ -411,13 +389,17 @@ function renderSubjectStep() {
     const availableSubjects = new Set();
 
     studentTests.forEach(test => {
-        const fullText = `${test.title || ''} ${test.class_level || ''} ${test.subject || ''}`.toUpperCase();
-        const testBoard = extractBoardFromTest(test);
-
-        let boardMatch = (selectedBoard === "ALL") || (testBoard === selectedBoard);
+        const fullText = `${test.title || ''} ${test.class_level || ''}`.toUpperCase();
         
-        const testCleanClass = cleanClassLevel(test.class_level, fullText);
-        let classMatch = (selectedClass === "ALL") || (testCleanClass === selectedClass);
+        let boardMatch = (selectedBoard === "ALL") || 
+            (selectedBoard === "BSEB" && (fullText.includes("BSEB") || fullText.includes("BIHAR"))) ||
+            fullText.includes(selectedBoard.toUpperCase());
+
+        let classMatch = (selectedClass === "ALL") ||
+            (test.class_level && test.class_level.trim() === selectedClass) ||
+            (selectedClass.includes("12") && fullText.includes("12")) ||
+            (selectedClass.includes("11") && fullText.includes("11")) ||
+            (selectedClass.includes("10") && fullText.includes("10"));
 
         if (boardMatch && classMatch && test.subject) {
             availableSubjects.add(test.subject.trim());
@@ -478,16 +460,20 @@ function filterStudentTests() {
         var testTitle = (test.title || '').toLowerCase();
         var testClassLevel = (test.class_level || '').toLowerCase();
         var testSubject = (test.subject || '').toLowerCase();
-        var testBoard = (extractBoardFromTest(test) || '').toLowerCase();
 
-        var combinedSearchText = testTitle + " " + testClassLevel + " " + testSubject + " " + testBoard;
+        var combinedSearchText = testTitle + " " + testClassLevel;
 
         var matchesSearch = searchVal === "" || combinedSearchText.indexOf(searchVal) !== -1;
 
-        var matchesBoard = (selectedBoard === "ALL") || (testBoard === selectedBoard.toLowerCase());
+        var matchesBoard = (selectedBoard === "ALL") ||
+                           (selectedBoard === "BSEB" && (combinedSearchText.indexOf("bseb") !== -1 || combinedSearchText.indexOf("bihar") !== -1)) ||
+                           combinedSearchText.indexOf(selectedBoard.toLowerCase()) !== -1;
 
-        var testCleanClass = cleanClassLevel(test.class_level, combinedSearchText);
-        var matchesClass = (selectedClass === "ALL") || (testCleanClass.toLowerCase() === selectedClass.toLowerCase());
+        var matchesClass = (selectedClass === "ALL") ||
+                           (test.class_level && test.class_level === selectedClass) ||
+                           (selectedClass.indexOf("12") !== -1 && combinedSearchText.indexOf("12") !== -1) ||
+                           (selectedClass.indexOf("11") !== -1 && combinedSearchText.indexOf("11") !== -1) ||
+                           (selectedClass.indexOf("10") !== -1 && combinedSearchText.indexOf("10") !== -1);
 
         var matchesSubject = (selectedSubject === "ALL") ||
                              testSubject.indexOf(selectedSubject.toLowerCase()) !== -1;
@@ -531,8 +517,7 @@ function renderStudentTests(tests) {
     tests.forEach(test => {
         let qCount = test.questions_data ? test.questions_data.length : 0;
         let timeMins = test.time_limit_mins || 15;
-        let displayClass = cleanClassLevel(test.class_level, test.title);
-        let classBadge = displayClass ? `<span style="background: #edf2f7; color: #4a5568; padding: 2px 8px; border-radius: 4px; font-size: 11px; margin-left: 6px;">${displayClass}</span>` : '';
+        let classBadge = test.class_level ? `<span style="background: #edf2f7; color: #4a5568; padding: 2px 8px; border-radius: 4px; font-size: 11px; margin-left: 6px;">${test.class_level}</span>` : '';
 
         let isNew = false;
         if (test.created_at) {
@@ -722,8 +707,27 @@ function toggleLeaderboardFilters() {
     if (chevron) chevron.className = isHidden ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down';
 }
 
+function populateLeaderboardTestDropdown(tests) {
+    const lbSelect = document.getElementById("leaderboardFilterTest");
+    if (!lbSelect) return;
+
+    let html = `<option value="ALL">All Tests Combined</option>`;
+    tests.forEach(t => {
+        html += `<option value="${t.id}">${t.title}</option>`;
+    });
+    lbSelect.innerHTML = html;
+}
+
 function initLeaderboardStepView() {
     renderLbBoardStep();
+    
+    const classBlock = document.getElementById("lbClassStepBlock");
+    const subjectBlock = document.getElementById("lbSubjectStepBlock");
+    const testBlock = document.getElementById("lbTestStepBlock");
+
+    if (classBlock) classBlock.style.display = "none";
+    if (subjectBlock) subjectBlock.style.display = "none";
+    if (testBlock) testBlock.style.display = "none";
 }
 
 function renderLbBoardStep() {
@@ -732,8 +736,11 @@ function renderLbBoardStep() {
 
     const boards = new Set();
     studentTests.forEach(t => {
-        const detected = extractBoardFromTest(t);
-        if (detected) boards.add(detected);
+        const titleUpper = (t.title || "").toUpperCase();
+        if (titleUpper.includes("BSEB") || titleUpper.includes("BIHAR")) boards.add("BSEB");
+        else if (titleUpper.includes("CBSE")) boards.add("CBSE");
+        else if (titleUpper.includes("NEET")) boards.add("NEET");
+        else if (titleUpper.includes("JEE")) boards.add("JEE");
     });
 
     let html = `<button class="chip-btn ${selectedLbBoard === 'ALL' ? 'active' : ''}" onclick="selectLbBoardStep('ALL')">All Boards</button>`;
@@ -770,14 +777,18 @@ function renderLbClassStep() {
 
     const classes = new Set();
     studentTests.forEach(t => {
-        const fullText = `${t.title || ''} ${t.class_level || ''} ${t.subject || ''}`.toUpperCase();
-        const testBoard = extractBoardFromTest(t);
+        const fullText = `${t.title || ''} ${t.class_level || ''}`.toUpperCase();
         
-        let boardMatch = (selectedLbBoard === "ALL") || (testBoard === selectedLbBoard);
+        let boardMatch = (selectedLbBoard === "ALL") || 
+            (selectedLbBoard === "BSEB" && (fullText.includes("BSEB") || fullText.includes("BIHAR"))) ||
+            fullText.includes(selectedLbBoard.toUpperCase());
 
         if (boardMatch) {
-            const cleanedCls = cleanClassLevel(t.class_level, fullText);
-            classes.add(cleanedCls);
+            if (t.class_level && t.class_level.trim() !== "") {
+                classes.add(t.class_level.trim());
+            } else if (fullText.includes("12")) classes.add("Class 12th");
+            else if (fullText.includes("11")) classes.add("Class 11th");
+            else if (fullText.includes("10")) classes.add("Class 10th");
         }
     });
 
@@ -787,9 +798,6 @@ function renderLbClassStep() {
     });
 
     classBox.innerHTML = html;
-
-    const classBlock = document.getElementById("lbClassStepBlock");
-    if (classBlock) classBlock.style.display = "block";
 }
 
 function selectLbClassStep(c) {
@@ -815,13 +823,17 @@ function renderLbSubjectStep() {
 
     const subjects = new Set();
     studentTests.forEach(t => {
-        const fullText = `${t.title || ''} ${t.class_level || ''} ${t.subject || ''}`.toUpperCase();
-        const testBoard = extractBoardFromTest(t);
+        const fullText = `${t.title || ''} ${t.class_level || ''}`.toUpperCase();
         
-        let boardMatch = (selectedLbBoard === "ALL") || (testBoard === selectedLbBoard);
+        let boardMatch = (selectedLbBoard === "ALL") || 
+            (selectedLbBoard === "BSEB" && (fullText.includes("BSEB") || fullText.includes("BIHAR"))) ||
+            fullText.includes(selectedLbBoard.toUpperCase());
 
-        const testCleanClass = cleanClassLevel(t.class_level, fullText);
-        let classMatch = (selectedLbClass === "ALL") || (testCleanClass === selectedLbClass);
+        let classMatch = (selectedLbClass === "ALL") ||
+            (t.class_level && t.class_level.trim() === selectedLbClass) ||
+            (selectedLbClass.includes("12") && fullText.includes("12")) ||
+            (selectedLbClass.includes("11") && fullText.includes("11")) ||
+            (selectedLbClass.includes("10") && fullText.includes("10"));
 
         if (boardMatch && classMatch && t.subject) {
             subjects.add(t.subject.trim());
@@ -851,15 +863,20 @@ function selectLbSubjectStep(s) {
 
 function renderLbTestStep() {
     const testBox = document.getElementById("lbTestChips");
+    if (!testBox) return;
 
     const filteredTests = studentTests.filter(t => {
-        const fullText = `${t.title || ''} ${t.class_level || ''} ${t.subject || ''}`.toUpperCase();
-        const testBoard = extractBoardFromTest(t);
+        const fullText = `${t.title || ''} ${t.class_level || ''}`.toUpperCase();
 
-        let boardMatch = (selectedLbBoard === "ALL") || (testBoard === selectedLbBoard);
+        let boardMatch = (selectedLbBoard === "ALL") || 
+            (selectedLbBoard === "BSEB" && (fullText.includes("BSEB") || fullText.includes("BIHAR"))) ||
+            fullText.includes(selectedLbBoard.toUpperCase());
 
-        const testCleanClass = cleanClassLevel(t.class_level, fullText);
-        let classMatch = (selectedLbClass === "ALL") || (testCleanClass === selectedLbClass);
+        let classMatch = (selectedLbClass === "ALL") ||
+            (t.class_level && t.class_level.trim() === selectedLbClass) ||
+            (selectedLbClass.includes("12") && fullText.includes("12")) ||
+            (selectedLbClass.includes("11") && fullText.includes("11")) ||
+            (selectedLbClass.includes("10") && fullText.includes("10"));
 
         let subMatch = (selectedLbSubject === "ALL") || 
             (t.subject && t.subject.trim().toLowerCase().includes(selectedLbSubject.toLowerCase()));
@@ -867,17 +884,12 @@ function renderLbTestStep() {
         return boardMatch && classMatch && subMatch;
     });
 
-    if (!testBox) return;
-
     let html = `<button class="chip-btn ${selectedLbTestId === 'ALL' ? 'active' : ''}" onclick="selectLbTestStep('ALL')">All Tests Combined</button>`;
     filteredTests.forEach(t => {
         html += `<button class="chip-btn ${selectedLbTestId === t.id ? 'active' : ''}" onclick="selectLbTestStep('${t.id}')">${t.title}</button>`;
     });
 
     testBox.innerHTML = html;
-
-    const testBlock = document.getElementById("lbTestStepBlock");
-    if (testBlock) testBlock.style.display = "block";
 }
 
 function selectLbTestStep(testId) {
@@ -892,15 +904,7 @@ function resetLeaderboardFilters() {
     selectedLbSubject = "ALL";
     selectedLbTestId = "ALL";
 
-    const classBlock = document.getElementById("lbClassStepBlock");
-    const subjectBlock = document.getElementById("lbSubjectStepBlock");
-    const testBlock = document.getElementById("lbTestStepBlock");
-
-    if (classBlock) classBlock.style.display = "none";
-    if (subjectBlock) subjectBlock.style.display = "none";
-    if (testBlock) testBlock.style.display = "none";
-
-    renderLbBoardStep();
+    initLeaderboardStepView();
     loadLeaderboardData();
 }
 
@@ -912,7 +916,10 @@ function renderPodiumCards(data) {
     const defaultAvatar = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
     const crownSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="#f6e05e"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/></svg>`;
     
-    if (!container) return;
+    if (!container) {
+        console.warn("Podium container element not found in DOM!");
+        return;
+    }
 
     if (!data || data.length === 0) {
         container.innerHTML = "";
@@ -951,7 +958,7 @@ function renderPodiumCards(data) {
     }
 
     if (top3) {
-        let photo = top3.profiles?.avatar_url || defaultAvatar;
+        let photo = top3.profiles?.avatar_url === "string" ? top3.profiles.avatar_url : (top3.profiles?.avatar_url || defaultAvatar);
         html += `
             <div class="podium-card rank-3">
                 <img src="${photo}" class="podium-avatar" alt="Rank 3" onerror="this.src='${defaultAvatar}'">
@@ -963,7 +970,9 @@ function renderPodiumCards(data) {
     }
 
     container.innerHTML = html;
+    container.style.display = "flex"; // Ensure container is visible
 }
+
 
 async function loadLeaderboardData() {
     const tbody = document.getElementById("leaderboardBody");
@@ -979,6 +988,7 @@ async function loadLeaderboardData() {
             return;
         }
 
+        // Get current user's active pincode from profile
         const { data: userProfile } = await window.supabaseClient
             .from('profiles')
             .select('pincode')
@@ -997,24 +1007,28 @@ async function loadLeaderboardData() {
                     .eq('id', user.id);
             } else {
                 if (tbody) {
-                    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#e53e3e; font-weight:bold; padding:20px;">⚠️ Leaderboard dekhne ke liye valid Pincode add karna zaroori hai.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#e53e3e; font-weight:bold; padding:20px;">⚠️ Leaderboard dekhne ke liye valid Pincode add karna zaroori hai. Page refresh karke dobara try karein.</td></tr>`;
                 }
                 renderPodiumCards([]);
                 return;
             }
         }
 
+        // Fetch test results joined with profiles matching the user's pincode
         let query = window.supabaseClient
             .from('test_results')
             .select(`
+                id,
+                user_id,
                 score,
                 total_marks,
                 test_id,
-                tests ( title, subject, class_level ),
-                profiles ( full_name, pincode, avatar_url, city )
+                created_at,
+                tests!inner ( title, subject, class_level ),
+                profiles!inner ( id, full_name, pincode, avatar_url, city )
             `)
-            .order('score', { ascending: false })
-            .limit(100);
+            .eq('profiles.pincode', currentPincode)
+            .order('score', { ascending: false });
 
         if (selectedLbTestId && selectedLbTestId !== "ALL") {
             query = query.eq('test_id', selectedLbTestId);
@@ -1023,25 +1037,45 @@ async function loadLeaderboardData() {
         const { data, error } = await query;
         if (error) throw error;
 
-        let filteredData = (data || []).filter(row => {
-            const rowPincode = row.profiles?.pincode || '';
-            const isPincodeMatch = rowPincode === currentPincode;
+        // Ensure unique user entries per test (or overall combined) to avoid duplicates
+        // Agar ek hi user ne same test multiple baar diya hai, toh highest score wala record rakhein.
+        let uniqueMap = {};
+        (data || []).forEach(row => {
+            // Agar specific test selected hai, toh key = user_id + test_id
+            // Agar "All Tests Combined" hai, toh user ki highest total ya best entry rakh sakte hain
+            let uniqueKey = `${row.user_id}_${row.test_id}`; 
+            
+            if (!uniqueMap[uniqueKey] || uniqueMap[uniqueKey].score < row.score) {
+                uniqueMap[uniqueKey] = row;
+            }
+        });
 
+        let processedData = Object.values(uniqueMap);
+
+        // Sort descending by score
+        processedData.sort((a, b) => b.score - a.score);
+
+        // Apply UI Step Filters (Board, Class, Subject)
+        let filteredData = processedData.filter(row => {
             const testTitle = (row.tests?.title || '').toLowerCase();
             const testClass = (row.tests?.class_level || '').toLowerCase();
             const testSub = (row.tests?.subject || '').toLowerCase();
-            const testBoard = (extractBoardFromTest(row.tests || {}) || '').toLowerCase();
-            const combinedText = testTitle + " " + testClass + " " + testSub + " " + testBoard;
+            const combinedText = testTitle + " " + testClass;
 
-            const matchesBoard = (selectedLbBoard === "ALL") || (testBoard === selectedLbBoard.toLowerCase());
+            const matchesBoard = (selectedLbBoard === "ALL") ||
+                (selectedLbBoard === "BSEB" && (combinedText.includes("bseb") || combinedText.includes("bihar"))) ||
+                combinedText.includes(selectedLbBoard.toLowerCase());
 
-            const testCleanClass = cleanClassLevel(row.tests?.class_level, combinedText);
-            const matchesClass = (selectedLbClass === "ALL") || (testCleanClass.toLowerCase() === selectedLbClass.toLowerCase());
+            const matchesClass = (selectedLbClass === "ALL") ||
+                (row.tests?.class_level && row.tests.class_level === selectedLbClass) ||
+                (selectedLbClass.includes("12") && combinedText.includes("12")) ||
+                (selectedLbClass.includes("11") && combinedText.includes("11")) ||
+                (selectedLbClass.includes("10") && combinedText.includes("10"));
 
             const matchesSubject = (selectedLbSubject === "ALL") ||
                 testSub.includes(selectedLbSubject.toLowerCase());
 
-            return isPincodeMatch && matchesBoard && matchesClass && matchesSubject;
+            return matchesBoard && matchesClass && matchesSubject;
         });
 
         renderPodiumCards(filteredData);
@@ -1054,7 +1088,7 @@ async function loadLeaderboardData() {
         filteredData.forEach((row, index) => {
             let rankDisplay = index === 0 ? crownSvg : (index === 1 ? '🥈' : (index === 2 ? '🥉' : `#${index + 1}`));
             let userPhoto = row.profiles?.avatar_url || defaultAvatar;
-            let areaName = row.profiles?.city || 'N/A';
+            let areaName = row.profiles?.city || 'Local Area';
             let pincodeText = row.profiles?.pincode ? `<div style="font-size: 11px; color: #718096; margin-top: 2px;">${row.profiles.pincode}</div>` : '';
 
             let percentage = (row.total_marks && row.total_marks > 0) 
@@ -1093,4 +1127,50 @@ async function loadLeaderboardData() {
     } finally {
         if (loader) loader.style.display = "none";
     }
+}
+
+/* ==========================================
+   3D GYROSCOPE & DESKTOP HOVER EFFECT ENGINE
+   ========================================== */
+function initCardTiltEffects() {
+    const cards = document.querySelectorAll(".test-card, .podium-card");
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+    if (isMobile && window.DeviceOrientationEvent) {
+        // Mobile ke liye Gyroscope (Orientation) Effect
+        window.removeEventListener("deviceorientation", handleGyroscope); // Purana listener hatayein taaki duplicate na ho
+        window.addEventListener("deviceorientation", handleGyroscope, true);
+    } else {
+        // Desktop ke liye mouse hover effect
+        cards.forEach(card => {
+            // Purane listeners hata kar naye lagane ke liye clone node ya check kar sakte hain
+            card.addEventListener("mousemove", (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left - rect.width / 2;
+                const y = e.clientY - rect.top - rect.height / 2;
+
+                card.style.transform = `rotateY(${x * 0.05}deg) rotateX(${-y * 0.05}deg) scale(1.02)`;
+            });
+
+            card.addEventListener("mouseleave", () => {
+                card.style.transform = "rotateY(0deg) rotateX(0deg) scale(1)";
+            });
+        });
+    }
+}
+
+// Separate handler for gyroscope to avoid memory leaks
+function handleGyroscope(event) {
+    let tiltX = event.beta;  // Front-to-back tilt (-180 to 180)
+    let tiltY = event.gamma; // Left-to-right tilt (-90 to 90)
+
+    if (tiltX === null || tiltY === null) return;
+
+    tiltX = Math.max(-30, Math.min(30, tiltX));
+    tiltY = Math.max(-30, Math.min(30, tiltY));
+
+    const cards = document.querySelectorAll(".test-card, .podium-card");
+    cards.forEach(card => {
+        card.style.transform = `rotateX(${-tiltX * 0.5}deg) rotateY(${tiltY * 0.5}deg)`;
+    });
 }

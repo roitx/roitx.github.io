@@ -131,12 +131,8 @@ body.dark, body.dark-mode {
     transition: color 0.3s ease;
 }
 
-.theme-switch .icon-sun { 
-    color: #d97706; 
-}
-.theme-switch .icon-moon { 
-    color: #475569; 
-}
+.theme-switch .icon-sun { color: #d97706; }
+.theme-switch .icon-moon { color: #475569; }
 
 .theme-switch .slider:before {
     content: "";
@@ -451,8 +447,7 @@ body.dark .option-chip:hover, body.dark-mode .option-chip:hover {
    6. RESULTS HEADER & COUNT PILL
    ========================================== */
 .results-header {
-    margin: 10px 0 8px 0 !important;
-    padding-bottom: 0 !important;
+    margin: 15px 0 16px 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -480,19 +475,13 @@ body.dark .count-pill, body.dark-mode .count-pill {
     color: #a3b2c7;
 }
 
-#statusMsg, #loaderBox {
-    margin: 0 !important;
-}
-
 /* ==========================================
-   7. TESTS GRID & CARDS
+   7. TESTS GRID & CARDS (3D HOVER)
    ========================================== */
 .tests-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 20px;
-    margin-top: 8px !important;
-    padding-top: 0 !important;
 }
 
 .test-card {
@@ -507,16 +496,13 @@ body.dark .count-pill, body.dark-mode .count-pill {
     justify-content: space-between;
     perspective: 1000px;
     transform-style: preserve-3d;
-    will-change: transform;
-    transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+    transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.4s ease, border-color 0.4s ease;
 }
 
-@media (hover: hover) and (pointer: fine) {
-    .test-card:hover {
-        transform: perspective(1000px) rotateX(4deg) rotateY(-4deg) translateY(-8px) scale(1.02);
-        box-shadow: var(--shadow-hover-3d);
-        border-color: rgba(74, 0, 224, 0.3);
-    }
+.test-card:hover {
+    transform: perspective(1000px) rotateX(4deg) rotateY(-4deg) translateY(-8px) scale(1.02);
+    box-shadow: var(--shadow-hover-3d);
+    border-color: rgba(74, 0, 224, 0.3);
 }
 
 body.dark .test-card, body.dark-mode .test-card {
@@ -599,85 +585,8 @@ body.dark .test-card .test-meta, body.dark-mode .test-card .test-meta {
 /* ==========================================
    8. LEADERBOARD & PODIUM SECTION
    ========================================== */
-.leaderboard-header-card {
-    background: var(--card-light);
-    border-radius: 20px;
-    padding: 20px;
-    border: 1px solid var(--border-light);
-    box-shadow: var(--shadow-soft);
-    margin-bottom: 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 16px;
-}
+...
 
-body.dark .leaderboard-header-card, body.dark-mode .leaderboard-header-card {
-    background: var(--card-dark) !important;
-    border-color: var(--border-dark);
-    box-shadow: var(--shadow-dark);
-}
-
-.lb-title {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.lb-title i {
-    font-size: 26px;
-}
-
-.lb-title h3 {
-    font-size: 16px;
-    font-weight: 800;
-}
-
-.lb-title p {
-    font-size: 12px;
-    color: var(--text-secondary-light);
-}
-
-body.dark .lb-title p, body.dark-mode .lb-title p {
-    color: var(--text-secondary-dark);
-}
-
-.leaderboard-filters {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    margin-bottom: 20px;
-}
-
-.leaderboard-filters select {
-    flex: 1;
-    min-width: 140px;
-    min-height: 42px;
-    padding: 8px 14px;
-    border-radius: 12px;
-    border: 1.5px solid var(--border-light);
-    background: var(--card-light);
-    color: var(--text-primary-light);
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.25s ease;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-}
-
-body.dark .leaderboard-filters select, body.dark-mode .leaderboard-filters select {
-    background: var(--card-dark) !important;
-    color: var(--text-primary-dark) !important;
-    border-color: var(--border-dark) !important;
-}
-
-.leaderboard-filters select:focus {
-    border-color: var(--accent-blue);
-    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15);
-}
-
-/* PODIUM WRAPPER */
 .podium-wrapper {
     display: flex !important;
     flex-direction: row !important;
@@ -687,6 +596,47 @@ body.dark .leaderboard-filters select, body.dark-mode .leaderboard-filters selec
     margin: 20px 0 25px 0;
 }
 
+/* Sirf Podium Cards ke liye 3D Perspective */
+.podium-card {
+    transform-style: preserve-3d;
+    perspective: 1000px;
+    transition: transform 0.1s ease-out;
+    background: var(--card-light);
+    border-radius: 18px;
+    padding: 16px 12px;
+    text-align: center;
+    position: relative;
+    box-shadow: var(--shadow-soft);
+    flex: 1;
+    max-width: 130px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border: 1px solid var(--border-light);
+}
+
+body.dark .podium-card, body.dark-mode .podium-card {
+    background: var(--card-dark) !important;
+    border-color: var(--border-dark);
+    box-shadow: var(--shadow-dark);
+}
+
+
+
+.podium-wrapper {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: center !important;
+    align-items: flex-end !important;
+    gap: 14px;
+    margin: 20px 0 25px 0;
+}
+/* Card Container ke liye 3D Perspective */
+.podium-card {
+    transform-style: preserve-3d;
+    perspective: 1000px;
+    transition: transform 0.1s ease-out;
+}
 .podium-card {
     background: var(--card-light);
     border-radius: 18px;
@@ -775,7 +725,7 @@ body.dark .podium-card.rank-1, body.dark-mode .podium-card.rank-1 {
 }
 
 /* ==========================================
-   9. LEADERBOARD TABLE & FAB Floating Home
+   9. LEADERBOARD TABLE & FAB
    ========================================== */
 .table-card {
     overflow-x: auto;
@@ -1009,9 +959,5 @@ body.dark .btn-secondary, body.dark-mode .btn-secondary {
     .leaderboard-header-card {
         flex-direction: column;
         align-items: stretch;
-    }
-
-    .leaderboard-filters select {
-        width: 100%;
     }
 }

@@ -729,6 +729,7 @@
     let currentMode = 'quiz';
     let currentAnalysisFilter = 'all';
     let lastCalculatedScore = "0/0", lastAccuracy = "0%", lastTimeTaken = "0s";
+    let isSavingProgress = false;
 
     function initTheme() {
         const savedTheme = localStorage.getItem('theme_preference');
@@ -810,44 +811,72 @@
         document.getElementById("drawerBackdrop").classList.remove("active");
     }
 
-    function loadTestDetails(id) {
-        window.supabaseClient
-            .from('tests').select('*').eq('id', id).single()
-            .then(res => {
-                if (res.error) throw res.error;
-                currentTest = res.data;
-                questions = currentTest.questions_data || [];
-                document.getElementById("testHeading").innerText = currentTest.title || "Exam Portal";
+    async function loadTestDetails(id) {
+        try {
+            const { data, error } = await window.supabaseClient.from('tests').select('*').eq('id', id).single();
+            if (error) throw error;
+            currentTest = data;
+            questions = currentTest.questions_data || [];
+            document.getElementById("testHeading").innerText = currentTest.title || "Exam Portal";
+            
+            totalTimeLimitSec = (currentTest.time_limit_mins || 15) * 60;
+
+            const { data: { user } } = await window.supabaseClient.auth.getUser();
+            let savedState = null;
+
+            if (user) {
+                const { data: progressData } = await window.supabaseClient
+                    .from('test_progress')
+                    .select('*')
+                    .eq('test_id', currentTest.id)
+                    .eq('user_id', user.id)
+                    .maybeSingle();
                 
-                totalTimeLimitSec = (currentTest.time_limit_mins || 15) * 60;
+                if (progressData) savedState = progressData;
+            }
 
-                const savedState = localStorage.getItem(`test_draft_${currentTest.id}`);
-                if (savedState) {
-                    const parsed = JSON.parse(savedState);
-                    userAnswers = parsed.userAnswers || {};
-                    reviewStatus = parsed.reviewStatus || {};
-                    timeRemaining = parsed.timeRemaining !== undefined ? parsed.timeRemaining : totalTimeLimitSec;
-                    totalTimeSpentSec = parsed.totalTimeSpentSec || (totalTimeLimitSec - timeRemaining);
-                } else {
-                    timeRemaining = totalTimeLimitSec;
-                    totalTimeSpentSec = 0;
-                }
+            if (savedState) {
+                userAnswers = savedState.user_answers || {};
+                reviewStatus = savedState.review_status || {};
+                timeRemaining = savedState.time_remaining !== undefined ? savedState.time_remaining : totalTimeLimitSec;
+                totalTimeSpentSec = savedState.total_time_spent_sec || (totalTimeLimitSec - timeRemaining);
+            } else {
+                timeRemaining = totalTimeLimitSec;
+                totalTimeSpentSec = 0;
+            }
 
-                applyModeUI();
-                renderPalette();
-                loadQuestion(0);
-            })
-            .catch(err => alert("Error: " + err.message));
+            applyModeUI();
+            renderPalette();
+            loadQuestion(0);
+        } catch (err) { 
+            alert("Error: " + err.message); 
+        }
     }
 
-    function saveCurrentState() {
-        if (!currentTest) return;
-        localStorage.setItem(`test_draft_${currentTest.id}`, JSON.stringify({ 
-            userAnswers, 
-            reviewStatus, 
-            timeRemaining,
-            totalTimeSpentSec
-        }));
+    async function saveCurrentState() {
+        if (!currentTest || isSavingProgress) return;
+        isSavingProgress = true;
+        try {
+            const { data: { user } } = await window.supabaseClient.auth.getUser();
+            if (!user) {
+                isSavingProgress = false;
+                return;
+            }
+
+            await window.supabaseClient.from('test_progress').upsert({
+                test_id: currentTest.id,
+                user_id: user.id,
+                user_answers: userAnswers,
+                review_status: reviewStatus,
+                time_remaining: timeRemaining,
+                total_time_spent_sec: totalTimeSpentSec,
+                updated_at: new Date().toISOString()
+            }, { onConflict: 'test_id,user_id' });
+        } catch (err) {
+            console.error("Error saving progress:", err);
+        } finally {
+            isSavingProgress = false;
+        }
     }
 
     function renderPalette() {
@@ -1026,7 +1055,6 @@
 
             timeRemaining--;
             totalTimeSpentSec++;
-            saveCurrentState();
             updateTimerUI();
 
             if (timeRemaining <= 0) {
@@ -1040,9 +1068,16 @@
     function openExitModal() { document.getElementById("exitModal").style.display = "flex"; }
     function closeExitModal() { document.getElementById("exitModal").style.display = "none"; }
     
-    function exitExamConfirmed() {
+    async function exitExamConfirmed() {
         if (timerInterval) clearInterval(timerInterval);
-        if (currentTest) localStorage.removeItem(`test_draft_${currentTest.id}`);
+        try {
+            const { data: { user } } = await window.supabaseClient.auth.getUser();
+            if (currentTest && user) {
+                await window.supabaseClient.from('test_progress').delete().eq('test_id', currentTest.id).eq('user_id', user.id);
+            }
+        } catch (e) {
+            console.error("Error clearing progress on exit:", e);
+        }
         window.location.href = "tests.html";
     }
 
@@ -1101,7 +1136,6 @@
 
     async function submitTest() {
         if (timerInterval) clearInterval(timerInterval);
-        if (currentTest) localStorage.removeItem(`test_draft_${currentTest.id}`);
 
         let correctCount = 0, wrongCount = 0;
         let marksPerQ = parseFloat(currentTest.marks_per_question) || 1;
@@ -1132,9 +1166,14 @@
         document.getElementById("statAccuracy").innerText = lastAccuracy;
         document.getElementById("statTime").innerText = lastTimeTaken;
 
+        // FAST LEADERBOARD SYNC & PROGRESS CLEANUP
         try {
             const { data: { user } } = await window.supabaseClient.auth.getUser();
             if (user) {
+                // Delete active test progress since test is submitted
+                await window.supabaseClient.from('test_progress').delete().eq('test_id', currentTest.id).eq('user_id', user.id);
+
+                // Upsert test result (using proper conflict target to fix primary key/unique key error)
                 await window.supabaseClient.from('test_results').upsert([{
                     test_id: currentTest.id, 
                     user_id: user.id, 
@@ -1143,8 +1182,8 @@
                     correct_answers: correctCount, 
                     wrong_answers: wrongCount, 
                     time_taken_sec: totalTimeSpentSec,
-                    updated_at: new Date()
-                }], { onConflict: 'user_id, test_id' });
+                    updated_at: new Date().toISOString()
+                }], { onConflict: 'test_id,user_id' });
             }
         } catch (err) { 
             console.error("Database sync error:", err); 
@@ -1186,11 +1225,18 @@
         });
     }
 
-    function reattemptTest() {
+    async function reattemptTest() {
         if (!currentTest) return;
 
-        if (confirm("Kya aap reattempt karna chahte hain? Purana draft replace ho jayega.")) {
-            localStorage.removeItem(`test_draft_${currentTest.id}`);
+        if (confirm("Kya aap reattempt karna chahte hain? Purana progress reset ho jayega.")) {
+            try {
+                const { data: { user } } = await window.supabaseClient.auth.getUser();
+                if (user) {
+                    await window.supabaseClient.from('test_progress').delete().eq('test_id', currentTest.id).eq('user_id', user.id);
+                }
+            } catch (e) {
+                console.error("Error clearing progress on reattempt:", e);
+            }
 
             userAnswers = {};
             reviewStatus = {};
