@@ -10,6 +10,10 @@
       margin: 0;
       padding: 0;
     }
+    /* Hidden links for crawler navigation to prevent Orphan Pages */
+    .seo-site-map-links {
+      display: none;
+    }
   </style>
 
   <meta name="theme-color" content="#0a1b3d" />
@@ -20,8 +24,10 @@
   <link rel="icon" href="favicon.png" type="image/png" />
   <link rel="apple-touch-icon" href="profile.jpg" />
 
-  <meta name="description" content="PM Roitx Study Hub — Class 12 Science (BSEB & CBSE) ke liye ultimate learning platform. Access free & premium topper notes, NCERT solutions, daily practice test MCQs, AI problem solver, formula sheets, aur smart study timer." />
-  <meta name="keywords" content="PM Roitx, PM Roitx notes, PM Roitx study hub, Roitx, roitx.qd.je, PM Roitx class 12, PM Roitx science, PM Roitx premium notes, Class 12 BSEB study material, Bihar Board Class 12 science notes, Class 12 Maths notes BSEB, Class 12 Chemistry solid state notes, Class 12 Haloalkanes notes, Class 12 Biology NCERT notes, Bihar Board 95 percent roadmap, BSEB Class 12 objective test, Bihar Board MCQ practice, Smart study roadmap Class 12, Topper presentation steps BSEB, AI doubt solver for students, AI calculator for study, Online study timer for students, Free Class 12 reference books PDF, Formula sheet Class 12 physics chemistry maths, Best study website for BSEB students, PM Roitx app, PM Roitx study tools, Smart study hub India, Free PDF notes Class 12 science, BSEB previous year question papers, Online test series BSEB 12th, Class 12 revision notes" />
+  <meta name="description" content="PM Roitx Study Hub — Class 9th to 12th Science, Arts & Commerce (BSEB & CBSE) ke liye ultimate learning platform. Access free topper notes, NCERT solutions, daily tests, AI problem solver, and study timer." />
+  
+  <!-- Cleaned Keywords to Avoid Spam/Keyword Stuffing Flags -->
+  <meta name="keywords" content="PM Roitx, PM Roitx study hub, Class 12 Science notes, BSEB Bihar Board notes, Class 12 Chemistry solid state, Class 12 Biology NCERT, AI doubt solver, Class 12 Physics formula sheet, Online study timer, BSEB PYQ question bank" />
 
   <meta name="author" content="PM Roitx" />
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
@@ -43,7 +49,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="PM Roitx" />
-<script defer src="https://analytics.digitalplat.org/static/analytics.js" data-property="dpa_3jDPRMI_D8o4t9AkhveSsfHcTI8TuMU"></script>
+  <script defer src="https://analytics.digitalplat.org/static/analytics.js" data-property="dpa_3jDPRMI_D8o4t9AkhveSsfHcTI8TuMU"></script>
+
+  <!-- Schema Markup -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -182,9 +190,9 @@
   <a href="formulas.html">
     <svg class="menu-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg> Formula
   </a>
-    <a href="pyq-list.html">
+  <a href="pyq-list.html">
     <svg class="menu-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"></path></svg> PYQ Bank
-    </a>
+  </a>
   
   <a href="solver.html">
     <svg class="menu-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg> Ask Doubt
@@ -283,6 +291,20 @@
       </div>
     </div>
   </section>
+
+  <!-- Navigation Links for Google Crawling (Prevents Orphan Page Errors) -->
+  <div class="seo-site-map-links">
+    <a href="subjects-9.html">Class 9</a>
+    <a href="subjects-10.html">Class 10</a>
+    <a href="subjects-11.html">Class 11</a>
+    <a href="11-arts-subjects.html">11 Arts</a>
+    <a href="11-commerce-subjects.html">11 Commerce</a>
+    <a href="11-science-subjects.html">11 Science</a>
+    <a href="subjects-12.html">Class 12</a>
+    <a href="12-arts-subjects.html">12 Arts</a>
+    <a href="12-commerce-subjects.html">12 Commerce</a>
+    <a href="12-science-subjects.html">12 Science</a>
+  </div>
 
   <div class="bottom-wave-section" style="margin-top: auto;">
     <section class="motivation">
@@ -440,7 +462,6 @@ let currentX = 0;
 let isDragging = false;
 
 if (installContainer && installBtn) {
-  // 1. Check localStorage instead of sessionStorage
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
@@ -473,7 +494,6 @@ if (installContainer && installBtn) {
     if (currentX > 150) { 
       installContainer.style.transform = 'translateX(100vw)';
       installContainer.style.opacity = '0';
-      // 2. Save to localStorage for persistence
       localStorage.setItem('installDismissed', 'true');
       setTimeout(() => { installContainer.style.display = 'none'; }, 300);
     } else {
