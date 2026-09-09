@@ -354,17 +354,23 @@
 
     const isSummaryOnly = (qType === "Summary");
 
-    let prompt = "";
+        let prompt = "";
     if (isSummaryOnly) {
-      prompt = `Generate comprehensive Chapter Summary / Revision Notes for BSEB Class ${targetClass} ${targetClass === "12th" ? `(${stream} Stream)` : ''}.
+      prompt = `Generate comprehensive, highly structured, and easy-to-memorize Chapter Summary / Revision Notes for BSEB (Bihar School Examination Board) Class ${targetClass} ${targetClass === "12th" ? `(${stream} Stream)` : ''}.
 Subject: ${subject}
 Chapter: ${chapter}
 Years Range: ${years}
 Language Preference: ${langMode}
 ${extra ? `Extra Instruction: ${extra}` : ''}
 
+CONTENT STYLE & QUALITY GUIDELINES (BSEB PATTERN):
+1. Structure the notes for maximum retention: Use clear headings, short paragraphs, bullet points, and highlight key definitions/formulas using bold text.
+2. Keep it strictly aligned with the BSEB syllabus. Focus heavily on frequently repeated concepts.
+3. Present the content in a high-scoring, expert format (step-by-step, precise, and highly professional).
+4. STRICT RULE: You MUST NOT use the word "topper" or any of its variations anywhere in the output. 
+
 STRICT JSON OUTPUT REQUIREMENT:
-Return ONLY a JSON object containing ONLY the chapter summary notes.
+Return ONLY a valid JSON object containing ONLY the chapter summary notes.
 Format:
 {
   "chapter_summary": {
@@ -373,7 +379,7 @@ Format:
   }
 }`;
     } else {
-      prompt = `Generate BSEB Study Material/PYQs for:
+      prompt = `Generate exact BSEB (Bihar School Examination Board) Study Material/PYQs for:
 Class: Class ${targetClass} ${targetClass === "12th" ? `(${stream} Stream)` : ''}
 Subject: ${subject}
 Chapter: ${chapter}
@@ -383,12 +389,18 @@ Question Count: ${qCount}
 Language Preference: ${langMode}
 ${extra ? `Extra Instruction: ${extra}` : ''}
 
+CONTENT STYLE & QUALITY GUIDELINES (BSEB PATTERN):
+1. Provide highly accurate, perfectly structured answers optimized for securing maximum marks in BSEB board exams.
+2. Format answers professionally: Use step-by-step explanations, bullet points for multi-part answers, and emphasize/bold keywords.
+3. Keep answers concise yet comprehensive, exactly matching the word limit expected for a ${qType} in the Bihar Board.
+4. STRICT RULE: You MUST NOT use the word "topper" or any of its variations anywhere in the output.
+
 STRICT INSTRUCTION FOR YEAR TAGS:
 For EVERY question, you MUST provide an exact year_tag listing ALL the years and shifts in which this question or concept was asked in BSEB exams.
-Format examples for year_tag: "2018, 2021, 2022 I, 2024 II" or "2019, 2023 I" or "2020 II, 2025".
+Format examples for year_tag: "2018, 2021, 2022 I, 2024 II" or "2019, 2023 I".
 
 STRICT JSON OUTPUT REQUIREMENT:
-Return ONLY a JSON object.
+Return ONLY a valid JSON object.
 Format:
 {
   "chapter_summary": {
