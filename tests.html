@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body>
+<body oncontextmenu="return preventGlobalContextMenu(event);">
 
 <!-- APP NAVBAR HEADER -->
 <header class="app-header">
@@ -53,12 +53,12 @@
                 <input type="text" id="searchInput" onkeyup="filterStudentTests()" placeholder="Search by exam, subject, or title..." autocomplete="off">
             </div>
             
-            <button id="exploreBtn" class="explore-toggle-btn no-long-press" onclick="toggleExplorePage()" oncontextmenu="return false;">
+            <button id="exploreBtn" class="explore-toggle-btn" onclick="toggleExplorePage()">
                 <i class="fa-solid fa-sliders"></i> Filters <i class="fa-solid fa-chevron-down" id="exploreChevron"></i>
             </button>
         </div>
 
-        <!-- VISUAL STEPPER EXPANDABLE PANEL -->
+        <!-- STEP-BY-STEP EXPANDABLE PANEL (TESTS FILTER) -->
         <div id="explorePageView" class="explore-drawer" style="display: none;">
             <div class="drawer-header">
                 <span><i class="fa-solid fa-filter"></i> Smart Test Finder</span>
@@ -69,19 +69,19 @@
 
             <!-- STEP 1: BOARD SELECTION -->
             <div class="step-group">
-                <div class="step-label"><span class="step-num">1</span> Board / Exam Category</div>
+                <div class="step-label"><span class="step-num">1</span> BOARD / EXAM CATEGORY</div>
                 <div id="boardOptionsGrid" class="chips-flex"></div>
             </div>
 
             <!-- STEP 2: CLASS SELECTION -->
             <div class="step-group" id="classStepBlock" style="display: none;">
-                <div class="step-label"><span class="step-num">2</span> Target Class</div>
+                <div class="step-label"><span class="step-num">2</span> TARGET CLASS</div>
                 <div id="classOptionsGrid" class="chips-flex"></div>
             </div>
 
             <!-- STEP 3: SUBJECT SELECTION -->
             <div class="step-group" id="subjectStepBlock" style="display: none;">
-                <div class="step-label"><span class="step-num">3</span> Subject</div>
+                <div class="step-label"><span class="step-num">3</span> SUBJECT</div>
                 <div id="subjectOptionsGrid" class="chips-flex"></div>
             </div>
         </div>
@@ -124,7 +124,7 @@
             </button>
         </div>
 
-        <!-- EXPANDABLE LEADERBOARD FILTER DRAWER (EXPLORE STYLE) -->
+        <!-- STEP-BY-STEP LEADERBOARD FILTER DRAWER -->
         <div id="leaderboardFilterDrawer" class="explore-drawer" style="display: none;">
             <div class="drawer-header">
                 <span><i class="fa-solid fa-trophy"></i> Smart Leaderboard Filters</span>
@@ -133,40 +133,29 @@
                 </button>
             </div>
 
+            <!-- STEP 1: BOARD / EXAM -->
             <div class="step-group">
-                <div class="step-label"><i class="fa-solid fa-building-columns"></i> Board / Exam</div>
-                <div id="lbBoardChips" class="chips-flex">
-                    <!-- Dynamic chips generated via JS -->
-                    <button class="chip-btn active" data-value="ALL" onclick="selectLbChip('Board', 'ALL', this)">All Boards</button>
-                </div>
+                <div class="step-label"><span class="step-num">1</span> BOARD / EXAM CATEGORY</div>
+                <div id="lbBoardChips" class="chips-flex"></div>
             </div>
 
-            <div class="step-group">
-                <div class="step-label"><i class="fa-solid fa-graduation-cap"></i> Class</div>
-                <div id="lbClassChips" class="chips-flex">
-                    <button class="chip-btn active" data-value="ALL" onclick="selectLbChip('Class', 'ALL', this)">All Classes</button>
-                </div>
+            <!-- STEP 2: CLASS -->
+            <div class="step-group" id="lbClassStepBlock" style="display: none;">
+                <div class="step-label"><span class="step-num">2</span> TARGET CLASS</div>
+                <div id="lbClassChips" class="chips-flex"></div>
             </div>
 
-            <div class="step-group">
-                <div class="step-label"><i class="fa-solid fa-book"></i> Subject</div>
-                <div id="lbSubjectChips" class="chips-flex">
-                    <button class="chip-btn active" data-value="ALL" onclick="selectLbChip('Subject', 'ALL', this)">All Subjects</button>
-                </div>
+            <!-- STEP 3: SUBJECT -->
+            <div class="step-group" id="lbSubjectStepBlock" style="display: none;">
+                <div class="step-label"><span class="step-num">3</span> SUBJECT</div>
+                <div id="lbSubjectChips" class="chips-flex"></div>
             </div>
 
-            <div class="step-group">
-                <div class="step-label"><i class="fa-solid fa-file-signature"></i> Specific Test</div>
-                <div id="lbTestChips" class="chips-flex">
-                    <button class="chip-btn active" data-value="ALL" onclick="selectLbChip('Test', 'ALL', this)">All Tests Combined</button>
-                </div>
+            <!-- STEP 4: SPECIFIC TEST -->
+            <div class="step-group" id="lbTestStepBlock" style="display: none;">
+                <div class="step-label"><span class="step-num">4</span> SPECIFIC TEST</div>
+                <div id="lbTestChips" class="chips-flex"></div>
             </div>
-
-            <!-- Fallback Select Elements kept hidden for JS backward compatibility -->
-            <select id="leaderboardFilterBoard" onchange="loadLeaderboardData()" style="display:none;"><option value="ALL">ALL</option></select>
-            <select id="leaderboardFilterClass" onchange="loadLeaderboardData()" style="display:none;"><option value="ALL">ALL</option></select>
-            <select id="leaderboardFilterSubject" onchange="loadLeaderboardData()" style="display:none;"><option value="ALL">ALL</option></select>
-            <select id="leaderboardFilterTest" onchange="loadLeaderboardData()" style="display:none;"><option value="ALL">ALL</option></select>
         </div>
 
         <!-- PODIUM CONTAINER -->
@@ -215,6 +204,46 @@
         </div>
     </div>
 </div>
+
+<script>
+function preventGlobalContextMenu(e) {
+    const target = e.target;
+    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+        return true; 
+    }
+    e.preventDefault();
+    return false;
+}
+
+document.addEventListener('mousemove', (e) => {
+    const cards = document.querySelectorAll('.tilt-card, .test-card, .leaderboard-header-card');
+    cards.forEach(card => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        if (x >= 0 && x <= rect.width && y >= 0 && y <= rect.height) {
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            const rotateX = ((y - centerY) / centerY) * -10;
+            const rotateY = ((x - centerX) / centerX) * 10;
+            card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
+        } else {
+            card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+        }
+    });
+});
+
+if (window.DeviceOrientationEvent) {
+    window.addEventListener('deviceorientation', (e) => {
+        const tiltX = Math.min(Math.max(e.beta, -30), 30) / 3; 
+        const tiltY = Math.min(Math.max(e.gamma, -30), 30) / 3;
+        const cards = document.querySelectorAll('.tilt-card, .test-card');
+        cards.forEach(card => {
+            card.style.transform = `perspective(1000px) rotateX(${tiltX}deg) rotateY(${tiltY}deg)`;
+        });
+    });
+}
+</script>
 
 <script src="supabase.js"></script>
 <script src="tests.js"></script>

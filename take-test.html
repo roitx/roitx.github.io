@@ -186,7 +186,6 @@
         .header-btn:hover { border-color: var(--primary); }
         .btn-exit-btn { color: var(--text-muted); }
 
-        /* Hide Mobile Specific Trigger on Desktop */
         .mobile-palette-btn { display: none; }
 
         /* ==========================================
@@ -249,7 +248,6 @@
             box-shadow: 0 0 12px var(--primary-glow);
         }
 
-        /* Practice Mode Correct/Incorrect Styling */
         .option-card.practice-correct {
             border-color: var(--success) !important;
             background: var(--success-bg) !important;
@@ -350,9 +348,12 @@
         .palette-title { font-size: 15px; font-weight: 800; display: flex; align-items: center; gap: 6px; }
         .btn-close-sheet { display: none; background: var(--surface-elevated); border: 1px solid var(--border); color: var(--text-muted); width: 28px; height: 28px; border-radius: 50%; justify-content: center; align-items: center; cursor: pointer; }
 
-        .filter-chips { display: flex; gap: 6px; margin-bottom: 14px; }
+        .filter-chips { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
         .chip { padding: 5px 12px; font-size: 11.5px; font-weight: 700; border-radius: 20px; background: var(--surface-elevated); border: 1px solid var(--border); cursor: pointer; color: var(--text-muted); }
         .chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+        .chip.active-correct { background: var(--success); color: #fff; border-color: var(--success); }
+        .chip.active-incorrect { background: var(--danger); color: #fff; border-color: var(--danger); }
+        .chip.active-review { background: var(--warning); color: #fff; border-color: var(--warning); }
 
         .palette-grid { 
             display: grid; 
@@ -412,7 +413,9 @@
         .modal-actions { display: flex; gap: 10px; margin-top: 18px; }
         .modal-actions button { flex: 1; padding: 10px; border-radius: 8px; font-weight: 700; border: none; cursor: pointer; font-size: 13px; }
 
-        /* RESULTS AREA */
+        /* ==========================================
+           RESULTS AREA & ANSWER ANALYSIS FILTERS
+           ========================================== */
         .result-wrapper { max-width: 800px; margin: 30px auto; background: var(--surface); padding: 32px 20px; border-radius: var(--radius-lg); border: 1px solid var(--border); text-align: center; }
         .score-card { display: flex; justify-content: space-around; background: var(--surface-elevated); padding: 20px; border-radius: var(--radius-md); margin: 24px 0; border: 1px solid var(--border); }
         .stat-item h3 { font-size: 24px; font-weight: 900; color: var(--primary); }
@@ -445,6 +448,33 @@
         .btn-native { background: var(--primary); color: #fff; }
         .btn-copy { background: var(--surface-elevated); color: var(--text-main); border: 1px solid var(--border); }
 
+        .analysis-filter-bar {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin: 16px 0;
+            flex-wrap: wrap;
+        }
+
+        .analysis-chip {
+            padding: 8px 16px;
+            font-size: 12.5px;
+            font-weight: 700;
+            border-radius: 20px;
+            background: var(--surface-elevated);
+            border: 1px solid var(--border);
+            cursor: pointer;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .analysis-chip.active-all { background: var(--primary); color: #fff; border-color: var(--primary); }
+        .analysis-chip.active-correct { background: var(--success); color: #fff; border-color: var(--success); }
+        .analysis-chip.active-incorrect { background: var(--danger); color: #fff; border-color: var(--danger); }
+        .analysis-chip.active-review { background: var(--warning); color: #fff; border-color: var(--warning); }
+
         .sol-card { background: var(--surface-elevated); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; margin-top: 12px; text-align: left; }
         .badge { font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 20px; display: inline-block; margin-bottom: 8px; }
         .badge-success { background: rgba(16, 185, 129, 0.2); color: var(--success); }
@@ -452,7 +482,7 @@
         .badge-warning { background: rgba(251, 191, 36, 0.2); color: var(--warning); }
 
         /* ==========================================
-           MOBILE RESPONSIVE OVERRIDES (MAX-WIDTH 768px)
+           MOBILE RESPONSIVE OVERRIDES
            ========================================== */
         @media (max-width: 768px) {
             header { 
@@ -662,8 +692,28 @@
             <button class="btn btn-outline" onclick="window.location.href='tests.html'"><i class="fa-solid fa-house"></i> Tests Home</button>
         </div>
 
+        <!-- SOLUTIONS AND ANSWER ANALYSIS SECTION -->
         <div id="solutionsContainer" style="display: none; margin-top: 30px;">
-            <h3 style="text-align: left; margin-bottom: 12px; font-size: 16px;">Answer Analysis</h3>
+            <h3 style="text-align: left; margin-bottom: 12px; font-size: 16px;">
+                <i class="fa-solid fa-magnifying-glass-chart" style="color: var(--primary);"></i> Answer Analysis
+            </h3>
+            
+            <!-- ANALYSIS FILTER BUTTONS -->
+            <div class="analysis-filter-bar">
+                <button class="analysis-chip active-all" id="btnFilterAll" onclick="filterSolutions('all')">
+                    <i class="fa-solid fa-list"></i> All (<span id="cntAll">0</span>)
+                </button>
+                <button class="analysis-chip" id="btnFilterCorrect" onclick="filterSolutions('correct')">
+                    <i class="fa-solid fa-circle-check" style="color: var(--success);"></i> Correct (<span id="cntCorrect">0</span>)
+                </button>
+                <button class="analysis-chip" id="btnFilterIncorrect" onclick="filterSolutions('incorrect')">
+                    <i class="fa-solid fa-circle-xmark" style="color: var(--danger);"></i> Incorrect (<span id="cntIncorrect">0</span>)
+                </button>
+                <button class="analysis-chip" id="btnFilterReview" onclick="filterSolutions('review')">
+                    <i class="fa-solid fa-circle-question" style="color: var(--warning);"></i> Unanswered / Review (<span id="cntReview">0</span>)
+                </button>
+            </div>
+
             <div id="solutionsList"></div>
         </div>
     </div>
@@ -677,6 +727,7 @@
     let totalTimeLimitSec = 0, timeRemaining = 0, totalTimeSpentSec = 0;
     let currentFilter = 'all';
     let currentMode = 'quiz';
+    let currentAnalysisFilter = 'all';
     let lastCalculatedScore = "0/0", lastAccuracy = "0%", lastTimeTaken = "0s";
 
     function initTheme() {
@@ -740,7 +791,6 @@
             clearBtn.style.display = 'inline-flex';
         }
 
-        // Timer runs for both Quiz and Practice Mode
         startTimer();
     }
 
@@ -850,12 +900,11 @@
         const correctIdx = parseCorrectOption(q);
         const explanationBox = document.getElementById("practiceExplanation");
 
-        // Practice Mode Timer Control
         if (currentMode === 'practice') {
             if (userSelected !== undefined) {
-                pauseTimer(); // Freeze timer when user has tapped/answered
+                pauseTimer();
             } else {
-                resumeTimer(); // Resume timer if going to unanswered question
+                resumeTimer();
             }
         } else {
             resumeTimer();
@@ -917,7 +966,7 @@
         delete reviewStatus[currentIndex];
 
         if (currentMode === 'practice') {
-            pauseTimer(); // Freeze timer on tap
+            pauseTimer();
         }
 
         saveCurrentState();
@@ -973,7 +1022,7 @@
         updateTimerUI();
 
         timerInterval = setInterval(() => {
-            if (isTimerPaused) return; // Do not decrement if paused in practice mode
+            if (isTimerPaused) return;
 
             timeRemaining--;
             totalTimeSpentSec++;
@@ -1159,6 +1208,9 @@
         }
     }
 
+    /* ==========================================
+       ANSWER ANALYSIS & SOLUTION FILTER LOGIC
+       ========================================== */
     function toggleSolutions() {
         const solContainer = document.getElementById("solutionsContainer");
         if (solContainer.style.display === "none") {
@@ -1169,27 +1221,80 @@
         }
     }
 
+    function filterSolutions(type) {
+        currentAnalysisFilter = type;
+
+        const btnAll = document.getElementById('btnFilterAll');
+        const btnCorrect = document.getElementById('btnFilterCorrect');
+        const btnIncorrect = document.getElementById('btnFilterIncorrect');
+        const btnReview = document.getElementById('btnFilterReview');
+
+        [btnAll, btnCorrect, btnIncorrect, btnReview].forEach(btn => {
+            if (btn) {
+                btn.className = 'analysis-chip';
+            }
+        });
+
+        if (type === 'all') btnAll.classList.add('active-all');
+        if (type === 'correct') btnCorrect.classList.add('active-correct');
+        if (type === 'incorrect') btnIncorrect.classList.add('active-incorrect');
+        if (type === 'review') btnReview.classList.add('active-review');
+
+        renderSolutions();
+    }
+
     function renderSolutions() {
         let html = "";
+        let cntAll = questions.length;
+        let cntCorrect = 0;
+        let cntIncorrect = 0;
+        let cntReview = 0;
+
         questions.forEach((q, idx) => {
             let correctIdx = parseCorrectOption(q);
             let userAnsIdx = userAnswers[idx];
-            let options = q.options || q.opts || [q.option1, q.option2, q.option3, q.option4];
             let isCorrect = userAnsIdx === correctIdx;
-            let badgeClass = isCorrect ? 'badge-success' : (userAnsIdx === undefined ? 'badge-warning' : 'badge-danger');
-            let badgeText = isCorrect ? '✔ Correct' : (userAnsIdx === undefined ? '⚠ Unanswered' : '✖ Incorrect');
+            let isUnanswered = userAnsIdx === undefined;
+
+            if (isCorrect) cntCorrect++;
+            else if (!isUnanswered) cntIncorrect++;
+            else cntReview++;
+
+            // FILTER CHECK
+            if (currentAnalysisFilter === 'correct' && !isCorrect) return;
+            if (currentAnalysisFilter === 'incorrect' && (isCorrect || isUnanswered)) return;
+            if (currentAnalysisFilter === 'review' && !isUnanswered) return;
+
+            let options = q.options || q.opts || [q.option1, q.option2, q.option3, q.option4];
+            let badgeClass = isCorrect ? 'badge-success' : (isUnanswered ? 'badge-warning' : 'badge-danger');
+            let badgeText = isCorrect ? '✔ Correct' : (isUnanswered ? '⚠ Unanswered / Skipped' : '✖ Incorrect');
             let exp = q.explanation || q.solution || q.exp;
 
             html += `
                 <div class="sol-card">
                     <span class="badge ${badgeClass}">${badgeText}</span>
-                    <h4 style="margin-bottom: 6px; font-size:14px; color:var(--text-main);">Q${idx + 1}. ${q.question_text || q.question || ''}</h4>
-                    <p style="font-size: 13px; margin-bottom: 2px; color:var(--text-muted);"><b>Your Choice:</b> ${userAnsIdx !== undefined ? (options[userAnsIdx] || 'Option ' + (userAnsIdx + 1)) : 'None'}</p>
-                    <p style="font-size: 13px; color: var(--success);"><b>Correct Answer:</b> ${options[correctIdx] || 'Option ' + (correctIdx + 1)}</p>
-                    ${exp ? `<p style="font-size: 12.5px; color: var(--text-muted); margin-top: 6px;"><b>Explanation:</b> ${exp}</p>` : ''}
+                    <h4 style="margin-bottom: 8px; font-size:14px; color:var(--text-main);">Q${idx + 1}. ${q.question_text || q.question || ''}</h4>
+                    <p style="font-size: 13px; margin-bottom: 4px; color:var(--text-muted);">
+                        <b>Your Choice:</b> ${userAnsIdx !== undefined ? `<span style="color:${isCorrect ? 'var(--success)' : 'var(--danger)'}">${options[userAnsIdx] || 'Option ' + (userAnsIdx + 1)}</span>` : '<i>None (Unanswered)</i>'}
+                    </p>
+                    <p style="font-size: 13px; color: var(--success);">
+                        <b>Correct Answer:</b> ${options[correctIdx] || 'Option ' + (correctIdx + 1)}
+                    </p>
+                    ${exp ? `<p style="font-size: 12.5px; color: var(--text-muted); margin-top: 8px; border-top: 1px dashed var(--border); padding-top: 6px;"><b>Explanation:</b> ${exp}</p>` : ''}
                 </div>
             `;
         });
+
+        // Update badge counts
+        document.getElementById('cntAll').innerText = cntAll;
+        document.getElementById('cntCorrect').innerText = cntCorrect;
+        document.getElementById('cntIncorrect').innerText = cntIncorrect;
+        document.getElementById('cntReview').innerText = cntReview;
+
+        if (html === "") {
+            html = `<div style="padding: 20px; text-align: center; color: var(--text-muted); font-size: 13px;">Is category me koi question nahi hai.</div>`;
+        }
+
         document.getElementById("solutionsList").innerHTML = html;
     }
 </script>

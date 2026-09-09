@@ -131,7 +131,6 @@ body.dark, body.dark-mode {
     transition: color 0.3s ease;
 }
 
-/* SUN & MOON COLOR FIX FOR LIGHT AND DARK MODES */
 .theme-switch .icon-sun { 
     color: #d97706; 
 }
@@ -391,7 +390,6 @@ body.dark .step-num, body.dark-mode .step-num {
     padding-right: 4px;
 }
 
-/* Custom Scrollbar for chips flex */
 .chips-flex::-webkit-scrollbar {
     width: 5px;
 }
@@ -453,7 +451,8 @@ body.dark .option-chip:hover, body.dark-mode .option-chip:hover {
    6. RESULTS HEADER & COUNT PILL
    ========================================== */
 .results-header {
-    margin: 15px 0 16px 0;
+    margin: 10px 0 8px 0 !important;
+    padding-bottom: 0 !important;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -481,13 +480,19 @@ body.dark .count-pill, body.dark-mode .count-pill {
     color: #a3b2c7;
 }
 
+#statusMsg, #loaderBox {
+    margin: 0 !important;
+}
+
 /* ==========================================
-   7. TESTS GRID & CARDS (3D HOVER)
+   7. TESTS GRID & CARDS
    ========================================== */
 .tests-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 20px;
+    margin-top: 8px !important;
+    padding-top: 0 !important;
 }
 
 .test-card {
@@ -502,13 +507,16 @@ body.dark .count-pill, body.dark-mode .count-pill {
     justify-content: space-between;
     perspective: 1000px;
     transform-style: preserve-3d;
-    transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.4s ease, border-color 0.4s ease;
+    will-change: transform;
+    transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
-.test-card:hover {
-    transform: perspective(1000px) rotateX(4deg) rotateY(-4deg) translateY(-8px) scale(1.02);
-    box-shadow: var(--shadow-hover-3d);
-    border-color: rgba(74, 0, 224, 0.3);
+@media (hover: hover) and (pointer: fine) {
+    .test-card:hover {
+        transform: perspective(1000px) rotateX(4deg) rotateY(-4deg) translateY(-8px) scale(1.02);
+        box-shadow: var(--shadow-hover-3d);
+        border-color: rgba(74, 0, 224, 0.3);
+    }
 }
 
 body.dark .test-card, body.dark-mode .test-card {
@@ -635,6 +643,41 @@ body.dark .lb-title p, body.dark-mode .lb-title p {
     color: var(--text-secondary-dark);
 }
 
+.leaderboard-filters {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.leaderboard-filters select {
+    flex: 1;
+    min-width: 140px;
+    min-height: 42px;
+    padding: 8px 14px;
+    border-radius: 12px;
+    border: 1.5px solid var(--border-light);
+    background: var(--card-light);
+    color: var(--text-primary-light);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+body.dark .leaderboard-filters select, body.dark-mode .leaderboard-filters select {
+    background: var(--card-dark) !important;
+    color: var(--text-primary-dark) !important;
+    border-color: var(--border-dark) !important;
+}
+
+.leaderboard-filters select:focus {
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15);
+}
+
+/* PODIUM WRAPPER */
 .podium-wrapper {
     display: flex !important;
     flex-direction: row !important;
@@ -966,5 +1009,9 @@ body.dark .btn-secondary, body.dark-mode .btn-secondary {
     .leaderboard-header-card {
         flex-direction: column;
         align-items: stretch;
+    }
+
+    .leaderboard-filters select {
+        width: 100%;
     }
 }
