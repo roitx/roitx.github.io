@@ -1047,23 +1047,29 @@
     }
 
     function startTimer() {
-        if (timerInterval) clearInterval(timerInterval);
+    if (timerInterval) clearInterval(timerInterval);
+    updateTimerUI();
+
+    timerInterval = setInterval(() => {
+        if (isTimerPaused) return;
+
+        timeRemaining--;
+        totalTimeSpentSec++;
         updateTimerUI();
 
-        timerInterval = setInterval(() => {
-            if (isTimerPaused) return;
+        // Har 5 sec me Auto-Progress Syncing
+        if (totalTimeSpentSec % 5 === 0) {
+            saveCurrentState();
+        }
 
-            timeRemaining--;
-            totalTimeSpentSec++;
-            updateTimerUI();
+        if (timeRemaining <= 0) {
+            clearInterval(timerInterval);
+            alert("Time limit reached!");
+            submitTest();
+        }
+    }, 1000);
+}
 
-            if (timeRemaining <= 0) {
-                clearInterval(timerInterval);
-                alert("Time limit reached!");
-                submitTest();
-            }
-        }, 1000);
-    }
 
     function openExitModal() { document.getElementById("exitModal").style.display = "flex"; }
     function closeExitModal() { document.getElementById("exitModal").style.display = "none"; }
