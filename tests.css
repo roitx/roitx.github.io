@@ -585,43 +585,49 @@ body.dark .test-card .test-meta, body.dark-mode .test-card .test-meta {
 /* ==========================================
    8. LEADERBOARD & PODIUM SECTION
    ========================================== */
-...
-
-.podium-wrapper {
-    display: flex !important;
-    flex-direction: row !important;
-    justify-content: center !important;
-    align-items: flex-end !important;
-    gap: 14px;
-    margin: 20px 0 25px 0;
-}
-
-/* Sirf Podium Cards ke liye 3D Perspective */
-.podium-card {
-    transform-style: preserve-3d;
-    perspective: 1000px;
-    transition: transform 0.1s ease-out;
+.leaderboard-header-card {
     background: var(--card-light);
-    border-radius: 18px;
-    padding: 16px 12px;
-    text-align: center;
-    position: relative;
-    box-shadow: var(--shadow-soft);
-    flex: 1;
-    max-width: 130px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    border-radius: 20px;
+    padding: 20px;
     border: 1px solid var(--border-light);
+    box-shadow: var(--shadow-soft);
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
 }
 
-body.dark .podium-card, body.dark-mode .podium-card {
+body.dark .leaderboard-header-card, body.dark-mode .leaderboard-header-card {
     background: var(--card-dark) !important;
     border-color: var(--border-dark);
     box-shadow: var(--shadow-dark);
 }
 
+.lb-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
 
+.lb-title i {
+    font-size: 26px;
+}
+
+.lb-title h3 {
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.lb-title p {
+    font-size: 12px;
+    color: var(--text-secondary-light);
+}
+
+body.dark .lb-title p, body.dark-mode .lb-title p {
+    color: var(--text-secondary-dark);
+}
 
 .podium-wrapper {
     display: flex !important;

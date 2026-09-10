@@ -157,12 +157,113 @@ function scanLocalDrafts() {
             const testId = key.replace("test_draft_", "");
             try {
                 const draftData = JSON.parse(localStorage.getItem(key));
-                userDraftsMap[testId] = draftData;
+                if (draftData) {
+                    userDraftsMap[testId] = draftData;
+                }
             } catch (e) {
                 console.warn("Invalid draft format for key:", key);
             }
         }
     }
+}
+
+/* Inside renderStudentTests function - Escape single quotes properly */
+function renderStudentTests(tests) {
+    const container = document.getElementById("studentTestsContainer");
+    if (!container) return;
+
+    hideGlobalSpinner();
+    scanLocalDrafts();
+
+    if (tests.length === 0) {
+        // ... empty UI ...
+        return;
+    }
+
+    let html = "";
+    tests.forEach(test => {
+        let qCount = test.questions_data ? test.questions_data.length : 0;
+        let timeMins = test.time_limit_mins || 15;
+        let classBadge = test.class_level ? `<span style="background: #edf2f7; color: #4a5568; padding: 2px 8px; border-radius: 4px; font-size: 11px; margin-left: 6px;">${test.class_level}</span>` : '';
+
+        let isNew = false;
+        if (test.created_at) {
+            const testDate = new Date(test.created_at);
+            const now = new Date();
+            const diffDays = (now - testDate) / (1000 * 60 * 60 * 24);
+            if (diffDays >= 0 && diffDays <= 7) isNew = true;
+        }
+        let newBadgeHtml = isNew ? `<span class="badge-new">NEW</span>` : '';
+
+        let statusBlockHtml = '';
+        let buttonText = 'Start Test';
+        let buttonIcon = 'fa-arrow-right';
+        let buttonClass = 'btn-primary';
+        let isReattempt = false;
+        let isResume = false;
+
+        const draft = userDraftsMap[test.id];
+        const hasDraft = !!draft;
+        const prevStats = userTestResultsMap[test.id];
+
+        if (hasDraft) {
+            buttonText = 'Resume Test';
+            buttonIcon = 'fa-play';
+            buttonClass = 'btn-resume';
+            isResume = true;
+
+            // Handle both structure formats safely
+            const answers = draft.userAnswers || draft.user_answers || {};
+            const attemptedCount = Object.keys(answers).length;
+            
+            statusBlockHtml = `
+                <div style="margin-top: 10px; padding: 8px 10px; background: rgba(245, 158, 11, 0.1); border-left: 3px solid #f59e0b; border-radius: 6px; font-size: 11px; font-weight: 700; color: #b45309; display: flex; justify-content: space-between; align-items: center;">
+                    <span><i class="fa-solid fa-pause-circle"></i> In Progress (${attemptedCount}/${qCount} Ans)</span>
+                    <span style="font-size: 10px; background: #f59e0b; color:#fff; padding:2px 6px; border-radius:4px;">Unfinished</span>
+                </div>
+            `;
+        } else if (prevStats) {
+            buttonText = 'Reattempt Test';
+            buttonIcon = 'fa-rotate-right';
+            buttonClass = 'btn-reattempt';
+            isReattempt = true;
+
+            let badgeColor = prevStats.percentage >= 60 ? '#10b981' : (prevStats.percentage >= 40 ? '#f59e0b' : '#ef4444');
+            const safeTitle = (test.title || '').replace(/'/g, "\\'").replace(/"/g, "&quot;");
+            
+            statusBlockHtml = `
+                <div style="margin-top: 10px; padding: 8px 10px; background: rgba(0,0,0,0.03); border-left: 3px solid ${badgeColor}; border-radius: 6px; font-size: 11px; font-weight: 700; color: #4b5563; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <span><i class="fa-solid fa-chart-line" style="color:${badgeColor}; margin-right: 4px;"></i> Last Attempt:</span>
+                        <span style="color:${badgeColor}; font-weight: 800; margin-left: 4px;">${prevStats.score}/${prevStats.total_marks} (${prevStats.percentage}%)</span>
+                    </div>
+                    <button class="btn-share" onclick="shareTestScore('${safeTitle}', ${prevStats.score}, ${prevStats.total_marks}, ${prevStats.percentage}, '${test.id}')">
+                        <i class="fa-brands fa-whatsapp"></i> Share Link
+                    </button>
+                </div>
+            `;
+        }
+
+        html += `
+            <div class="test-card">
+                <div class="test-card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3>${test.title} ${classBadge}</h3>
+                    ${newBadgeHtml}
+                </div>
+                <div class="test-meta">
+                    <span><i class="fa-solid fa-file-alt"></i> ${qCount} Qs</span> • 
+                    <span><i class="fa-solid fa-clock"></i> ${timeMins} Mins</span> • 
+                    <span><i class="fa-solid fa-book"></i> ${test.subject || 'General'}</span>
+                </div>
+                ${statusBlockHtml}
+                <button class="${buttonClass}" onclick="handleStartTest('${test.id}', ${isReattempt}, ${isResume})" style="margin-top: 12px; width: 100%;">
+                    ${buttonText} <i class="fa-solid ${buttonIcon}"></i>
+                </button>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
 }
 
 /* ==========================================
@@ -1129,21 +1230,29 @@ async function loadLeaderboardData() {
     }
 }
 
-/* ==========================================
-   3D GYROSCOPE & DESKTOP HOVER EFFECT ENGINE
-   ========================================== */
-function initCardTiltEffects() {
+document.addEventListener("DOMContentLoaded", () => {
     const cards = document.querySelectorAll(".test-card, .podium-card");
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
     if (isMobile && window.DeviceOrientationEvent) {
         // Mobile ke liye Gyroscope (Orientation) Effect
-        window.removeEventListener("deviceorientation", handleGyroscope); // Purana listener hatayein taaki duplicate na ho
-        window.addEventListener("deviceorientation", handleGyroscope, true);
+        window.addEventListener("deviceorientation", (event) => {
+            let tiltX = event.beta;  // Front-to-back tilt (-180 to 180)
+            let tiltY = event.gamma; // Left-to-right tilt (-90 to 90)
+
+            if (tiltX === null || tiltY === null) return;
+
+            // Values ko limit karein taaki card zyada na hile
+            tiltX = Math.max(-30, Math.min(30, tiltX));
+            tiltY = Math.max(-30, Math.min(30, tiltY));
+
+            cards.forEach(card => {
+                card.style.transform = `rotateX(${-tiltX * 0.5}deg) rotateY(${tiltY * 0.5}deg)`;
+            });
+        }, true);
     } else {
-        // Desktop ke liye mouse hover effect
+        // Desktop ke liye aapka purana normal mouse hover/movement effect
         cards.forEach(card => {
-            // Purane listeners hata kar naye lagane ke liye clone node ya check kar sakte hain
             card.addEventListener("mousemove", (e) => {
                 const rect = card.getBoundingClientRect();
                 const x = e.clientX - rect.left - rect.width / 2;
@@ -1157,20 +1266,4 @@ function initCardTiltEffects() {
             });
         });
     }
-}
-
-// Separate handler for gyroscope to avoid memory leaks
-function handleGyroscope(event) {
-    let tiltX = event.beta;  // Front-to-back tilt (-180 to 180)
-    let tiltY = event.gamma; // Left-to-right tilt (-90 to 90)
-
-    if (tiltX === null || tiltY === null) return;
-
-    tiltX = Math.max(-30, Math.min(30, tiltX));
-    tiltY = Math.max(-30, Math.min(30, tiltY));
-
-    const cards = document.querySelectorAll(".test-card, .podium-card");
-    cards.forEach(card => {
-        card.style.transform = `rotateX(${-tiltX * 0.5}deg) rotateY(${tiltY * 0.5}deg)`;
-    });
-}
+});

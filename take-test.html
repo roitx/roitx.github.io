@@ -811,6 +811,7 @@
         document.getElementById("drawerBackdrop").classList.remove("active");
     }
 
+    /* LOAD TEST DETAILS WITH LOCAL DRAFT RESUME CAPABILITY */
     async function loadTestDetails(id) {
         try {
             const { data, error } = await window.supabaseClient.from('tests').select('*').eq('id', id).single();
@@ -821,22 +822,30 @@
             
             totalTimeLimitSec = (currentTest.time_limit_mins || 15) * 60;
 
-            const { data: { user } } = await window.supabaseClient.auth.getUser();
+            // 1. Check LocalStorage First for Resume Draft
+            const localDraftKey = `test_draft_${currentTest.id}`;
             let savedState = null;
+            try {
+                const rawDraft = localStorage.getItem(localDraftKey);
+                if (rawDraft) savedState = JSON.parse(rawDraft);
+            } catch(e) { console.warn("Local storage parse error", e); }
 
-            if (user) {
-                const { data: progressData } = await window.supabaseClient
-                    .from('test_progress')
-                    .select('*')
-                    .eq('test_id', currentTest.id)
-                    .eq('user_id', user.id)
-                    .maybeSingle();
-                
-                if (progressData) savedState = progressData;
+            // 2. Check Supabase User Progress if not found locally
+            if (!savedState && window.supabaseClient) {
+                const { data: { user } } = await window.supabaseClient.auth.getUser();
+                if (user) {
+                    const { data: progressData } = await window.supabaseClient
+                        .from('test_progress')
+                        .select('*')
+                        .eq('test_id', currentTest.id)
+                        .eq('user_id', user.id)
+                        .maybeSingle();
+                    if (progressData) savedState = progressData;
+                }
             }
 
             if (savedState) {
-                userAnswers = savedState.user_answers || {};
+                userAnswers = savedState.userAnswers || savedState.user_answers || {};
                 reviewStatus = savedState.review_status || {};
                 timeRemaining = savedState.time_remaining !== undefined ? savedState.time_remaining : totalTimeLimitSec;
                 totalTimeSpentSec = savedState.total_time_spent_sec || (totalTimeLimitSec - timeRemaining);
@@ -853,25 +862,40 @@
         }
     }
 
+    /* SINGLE UNIFIED STATE SAVER (LOCALSTORAGE + SUPABASE) */
     async function saveCurrentState() {
         if (!currentTest || isSavingProgress) return;
         isSavingProgress = true;
         try {
-            const { data: { user } } = await window.supabaseClient.auth.getUser();
-            if (!user) {
-                isSavingProgress = false;
-                return;
-            }
-
-            await window.supabaseClient.from('test_progress').upsert({
+            const draftKey = `test_draft_${currentTest.id}`;
+            const draftPayload = {
                 test_id: currentTest.id,
-                user_id: user.id,
+                userAnswers: userAnswers,
                 user_answers: userAnswers,
                 review_status: reviewStatus,
                 time_remaining: timeRemaining,
                 total_time_spent_sec: totalTimeSpentSec,
                 updated_at: new Date().toISOString()
-            }, { onConflict: 'test_id,user_id' });
+            };
+
+            // Always save to LocalStorage for instant Resume functionality
+            localStorage.setItem(draftKey, JSON.stringify(draftPayload));
+
+            // Save to Supabase if logged in
+            if (window.supabaseClient) {
+                const { data: { user } } = await window.supabaseClient.auth.getUser();
+                if (user) {
+                    await window.supabaseClient.from('test_progress').upsert({
+                        user_id: user.id,
+                        test_id: currentTest.id,
+                        user_answers: userAnswers,
+                        review_status: reviewStatus,
+                        time_remaining: timeRemaining,
+                        total_time_spent_sec: totalTimeSpentSec,
+                        updated_at: new Date().toISOString()
+                    }, { onConflict: 'test_id,user_id' });
+                }
+            }
         } catch (err) {
             console.error("Error saving progress:", err);
         } finally {
@@ -1047,44 +1071,39 @@
     }
 
     function startTimer() {
-    if (timerInterval) clearInterval(timerInterval);
-    updateTimerUI();
-
-    timerInterval = setInterval(() => {
-        if (isTimerPaused) return;
-
-        timeRemaining--;
-        totalTimeSpentSec++;
+        if (timerInterval) clearInterval(timerInterval);
         updateTimerUI();
 
-        // Har 5 sec me Auto-Progress Syncing
-        if (totalTimeSpentSec % 5 === 0) {
-            saveCurrentState();
-        }
+        timerInterval = setInterval(() => {
+            if (isTimerPaused) return;
 
-        if (timeRemaining <= 0) {
-            clearInterval(timerInterval);
-            alert("Time limit reached!");
-            submitTest();
-        }
-    }, 1000);
-}
+            timeRemaining--;
+            totalTimeSpentSec++;
+            updateTimerUI();
 
+            // Auto-sync progress every 5 seconds
+            if (totalTimeSpentSec % 5 === 0) {
+                saveCurrentState();
+            }
+
+            if (timeRemaining <= 0) {
+                clearInterval(timerInterval);
+                alert("Time limit reached!");
+                submitTest();
+            }
+        }, 1000);
+    }
 
     function openExitModal() { document.getElementById("exitModal").style.display = "flex"; }
     function closeExitModal() { document.getElementById("exitModal").style.display = "none"; }
     
+    /* EXIT CONFIRMED - RETAINS DRAFT FOR RESUME FUNCTIONALITY */
     async function exitExamConfirmed() {
         if (timerInterval) clearInterval(timerInterval);
-        try {
-            const { data: { user } } = await window.supabaseClient.auth.getUser();
-            if (currentTest && user) {
-                await window.supabaseClient.from('test_progress').delete().eq('test_id', currentTest.id).eq('user_id', user.id);
-            }
-        } catch (e) {
-            console.error("Error clearing progress on exit:", e);
-        }
-        window.location.href = "tests.html";
+        await saveCurrentState();
+        setTimeout(() => {
+            window.location.href = "tests.html";
+        }, 100);
     }
 
     function parseCorrectOption(q) {
@@ -1140,6 +1159,7 @@
         }
     }
 
+    /* SUBMIT TEST - CLEARS LOCAL DRAFT & SYNCS RESULT */
     async function submitTest() {
         if (timerInterval) clearInterval(timerInterval);
 
@@ -1163,6 +1183,11 @@
         lastAccuracy = `${accuracy}%`;
         lastTimeTaken = `${Math.floor(totalTimeSpentSec / 60)}m ${totalTimeSpentSec % 60}s`;
 
+        // Clear local draft upon submission
+        if (currentTest) {
+            localStorage.removeItem(`test_draft_${currentTest.id}`);
+        }
+
         trackTestActivityLocally(currentTest, totalScore, totalMarks, totalTimeSpentSec);
 
         document.getElementById("testArea").style.display = "none";
@@ -1172,24 +1197,24 @@
         document.getElementById("statAccuracy").innerText = lastAccuracy;
         document.getElementById("statTime").innerText = lastTimeTaken;
 
-        // FAST LEADERBOARD SYNC & PROGRESS CLEANUP
+        // Sync with Supabase
         try {
-            const { data: { user } } = await window.supabaseClient.auth.getUser();
-            if (user) {
-                // Delete active test progress since test is submitted
-                await window.supabaseClient.from('test_progress').delete().eq('test_id', currentTest.id).eq('user_id', user.id);
+            if (window.supabaseClient) {
+                const { data: { user } } = await window.supabaseClient.auth.getUser();
+                if (user) {
+                    await window.supabaseClient.from('test_progress').delete().eq('test_id', currentTest.id).eq('user_id', user.id);
 
-                // Upsert test result (using proper conflict target to fix primary key/unique key error)
-                await window.supabaseClient.from('test_results').upsert([{
-                    test_id: currentTest.id, 
-                    user_id: user.id, 
-                    score: totalScore, 
-                    total_marks: totalMarks,
-                    correct_answers: correctCount, 
-                    wrong_answers: wrongCount, 
-                    time_taken_sec: totalTimeSpentSec,
-                    updated_at: new Date().toISOString()
-                }], { onConflict: 'test_id,user_id' });
+                    await window.supabaseClient.from('test_results').upsert([{
+                        test_id: currentTest.id, 
+                        user_id: user.id, 
+                        score: totalScore, 
+                        total_marks: totalMarks,
+                        correct_answers: correctCount, 
+                        wrong_answers: wrongCount, 
+                        time_taken_sec: totalTimeSpentSec,
+                        updated_at: new Date().toISOString()
+                    }], { onConflict: 'test_id,user_id' });
+                }
             }
         } catch (err) { 
             console.error("Database sync error:", err); 
@@ -1235,10 +1260,15 @@
         if (!currentTest) return;
 
         if (confirm("Kya aap reattempt karna chahte hain? Purana progress reset ho jayega.")) {
+            // Remove local draft
+            localStorage.removeItem(`test_draft_${currentTest.id}`);
+
             try {
-                const { data: { user } } = await window.supabaseClient.auth.getUser();
-                if (user) {
-                    await window.supabaseClient.from('test_progress').delete().eq('test_id', currentTest.id).eq('user_id', user.id);
+                if (window.supabaseClient) {
+                    const { data: { user } } = await window.supabaseClient.auth.getUser();
+                    if (user) {
+                        await window.supabaseClient.from('test_progress').delete().eq('test_id', currentTest.id).eq('user_id', user.id);
+                    }
                 }
             } catch (e) {
                 console.error("Error clearing progress on reattempt:", e);
@@ -1260,9 +1290,7 @@
         }
     }
 
-    /* ==========================================
-       ANSWER ANALYSIS & SOLUTION FILTER LOGIC
-       ========================================== */
+    /* ANSWER ANALYSIS & SOLUTION FILTER LOGIC */
     function toggleSolutions() {
         const solContainer = document.getElementById("solutionsContainer");
         if (solContainer.style.display === "none") {
@@ -1312,7 +1340,6 @@
             else if (!isUnanswered) cntIncorrect++;
             else cntReview++;
 
-            // FILTER CHECK
             if (currentAnalysisFilter === 'correct' && !isCorrect) return;
             if (currentAnalysisFilter === 'incorrect' && (isCorrect || isUnanswered)) return;
             if (currentAnalysisFilter === 'review' && !isUnanswered) return;
@@ -1337,7 +1364,6 @@
             `;
         });
 
-        // Update badge counts
         document.getElementById('cntAll').innerText = cntAll;
         document.getElementById('cntCorrect').innerText = cntCorrect;
         document.getElementById('cntIncorrect').innerText = cntIncorrect;
@@ -1350,6 +1376,7 @@
         document.getElementById("solutionsList").innerHTML = html;
     }
 </script>
+
 
 </body>
 </html>
