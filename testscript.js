@@ -6,6 +6,7 @@ let currentFilter = 'all';
 let currentMode = 'quiz';
 let currentAnalysisFilter = 'all';
 let currentUserProfile = null;
+let isSubmitted = false; // Guard flag to block any background saving after submit
 
 let chartBrief = null, chartAccuracy = null, chartScore = null;
 
@@ -60,13 +61,13 @@ function getDraftStorageKey() {
     return currentTest ? `test_draft_${currentTest.id}` : 'test_draft_demo';
 }
 
-/* --- SUPABASE SYNC LOGIC --- */
+/* --- DRAFT & SUPABASE SYNC LOGIC --- */
 
 async function saveProgressToSupabase(draftData) {
-    if (!window.supabaseClient || !currentTest || currentTest.id === 'demo_test') return;
+    if (isSubmitted || !window.supabaseClient || !currentTest || currentTest.id === 'demo_test') return;
     try {
         const { data: { user } } = await window.supabaseClient.auth.getUser();
-        if (!user) return;
+        if (!user || isSubmitted) return;
 
         await window.supabaseClient
             .from('test_progress')
@@ -77,6 +78,7 @@ async function saveProgressToSupabase(draftData) {
                 review_status: draftData.reviewStatus,
                 time_remaining: draftData.timeRemaining,
                 total_time_spent_sec: draftData.totalTimeSpentSec,
+                is_completed: false,
                 updated_at: new Date().toISOString()
             }, { onConflict: 'user_id,test_id' });
     } catch (e) {
@@ -85,7 +87,7 @@ async function saveProgressToSupabase(draftData) {
 }
 
 function saveLocalDraft() {
-    if (!currentTest) return;
+    if (isSubmitted || !currentTest) return; // Prevent saving if test is submitted
     const draftData = {
         testId: currentTest.id,
         userAnswers: userAnswers,
@@ -114,6 +116,10 @@ async function loadLocalDraft() {
                     .maybeSingle();
 
                 if (!error && data) {
+                    if (data.is_completed) {
+                        clearLocalDraftStorageOnly();
+                        return false; 
+                    }
                     userAnswers = data.user_answers || {};
                     reviewStatus = data.review_status || {};
                     timeRemaining = data.time_remaining !== undefined ? data.time_remaining : totalTimeLimitSec;
@@ -143,22 +149,23 @@ async function loadLocalDraft() {
     return false;
 }
 
-async function clearLocalDraft() {
+function clearLocalDraftStorageOnly() {
     if (!currentTest) return;
+    const key = getDraftStorageKey();
+    localStorage.removeItem(key);
 
-    // 1. Clear LocalStorage Key
-    localStorage.removeItem(getDraftStorageKey());
-
-    // Safely sweep all draft instances for this test
     for (let i = localStorage.length - 1; i >= 0; i--) {
         const k = localStorage.key(i);
-        if (k && k.includes(currentTest.id) && k.startsWith("test_draft_")) {
+        if (k && k.includes(currentTest.id)) {
             localStorage.removeItem(k);
         }
     }
+}
 
-    // 2. Clear Cloud Draft Sync
-    if (window.supabaseClient && currentTest.id !== 'demo_test') {
+async function clearLocalDraft() {
+    clearLocalDraftStorageOnly();
+
+    if (window.supabaseClient && currentTest && currentTest.id !== 'demo_test') {
         try {
             const { data: { user } } = await window.supabaseClient.auth.getUser();
             if (user) {
@@ -205,6 +212,10 @@ async function loadTestDetails(id) {
 }
 
 async function setupTestInit() {
+    isSubmitted = false;
+    const resArea = document.getElementById("resultArea");
+    if (resArea) resArea.style.display = "none";
+
     questions = currentTest.questions_data || [];
     const headingElem = document.getElementById("testHeading");
     if (headingElem) headingElem.innerText = currentTest.title || "Portal Test";
@@ -222,11 +233,11 @@ async function setupTestInit() {
         totalTimeSpentSec = 0;
     } else {
         const draftLoaded = await loadLocalDraft();
-        if (draftLoaded) {
-            const btnStart = document.getElementById("startBtnText");
-            if (btnStart) btnStart.innerText = "Resume Test";
-        } else {
-            timeRemaining = totalTimeLimitSec;
+        const btnStart = document.getElementById("startBtnText");
+        if (draftLoaded && btnStart) {
+            btnStart.innerText = "Resume Test";
+        } else if (btnStart) {
+            btnStart.innerText = "Start Test";
         }
     }
 
@@ -265,6 +276,10 @@ async function setupTestInit() {
 
 function startTestFromInstructions() {
     document.getElementById("instructionsModal").style.display = "none";
+    
+    const resArea = document.getElementById("resultArea");
+    if (resArea) resArea.style.display = "none";
+
     document.getElementById("testArea").style.display = "grid";
     applyModeUI();
     renderPalette();
@@ -272,7 +287,7 @@ function startTestFromInstructions() {
 }
 
 function exitExam() { 
-    saveLocalDraft();
+    if (!isSubmitted) saveLocalDraft();
     window.location.href = "tests.html"; 
 }
 
@@ -425,7 +440,7 @@ function handleNextOrSubmit() {
 function startTimer() {
     if (timerInterval) clearInterval(timerInterval);
     timerInterval = setInterval(() => {
-        if (isTimerPaused) return;
+        if (isTimerPaused || isSubmitted) return;
         timeRemaining--;
         totalTimeSpentSec++;
 
@@ -462,15 +477,16 @@ function openExitModal() { document.getElementById("exitModal").style.display = 
 function closeExitModal() { document.getElementById("exitModal").style.display = "none"; }
 function exitExamConfirmed() { saveLocalDraft(); window.location.href = "tests.html"; }
 
-/* SUBMIT & GENERATE DETAILED RESULTS */
+/* FULL DESTRUCTION SUBMIT PROCEDURE */
 async function submitTest() {
-    // 1. Stop background timer immediately
+    isSubmitted = true; // Stop all background auto-saves immediately
+    
     if (timerInterval) {
         clearInterval(timerInterval);
         timerInterval = null;
     }
 
-    // 2. Clear local & cloud drafts immediately before DB operations
+    // Force purge both localStorage and Supabase drafts
     await clearLocalDraft();
 
     let correctCount = 0, wrongCount = 0, skippedCount = 0, reviewCount = 0;
@@ -525,7 +541,6 @@ async function submitTest() {
     renderQuestionAnalysisGrid();
     renderCharts(correctCount, wrongCount, skippedCount, accuracyPct, scorePct < 0 ? 0 : scorePct);
 
-    // Save result to Supabase
     await saveResultAndFetchRank(scoreVal, maxPossibleScore);
 }
 
@@ -615,7 +630,6 @@ async function saveResultAndFetchRank(scoreVal, totalMarks) {
             return;
         }
 
-        // Calculate correct and wrong counts
         let correctCount = 0, wrongCount = 0;
         questions.forEach((q, idx) => {
             let correctIdx = parseCorrectOption(q);
@@ -625,7 +639,6 @@ async function saveResultAndFetchRank(scoreVal, totalMarks) {
             }
         });
 
-        // Using UPSERT to handle duplicate keys safely without throwing unique constraint error
         const { error: insertErr } = await window.supabaseClient
             .from('test_results')
             .upsert([{
@@ -740,15 +753,62 @@ function viewLeaderboard() {
     window.location.href = `tests.html?tab=leaderboard&test_id=${testId}`;
 }
 
-function shareOnWhatsApp() {
-    const text = encodeURIComponent(`My Score: ${document.getElementById("resScoreVal").innerText} on ${currentTest ? currentTest.title : "Test"}`);
-    window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+async function shareOnWhatsApp() {
+    const resultElement = document.getElementById("resultArea");
+    if (!resultElement) return;
+
+    try {
+        if (typeof html2canvas === 'undefined') {
+            const fallbackText = encodeURIComponent(`📊 *My Test Result*\n\n📝 Test: ${currentTest?.title || 'Test'}\n⭐ Score: ${document.getElementById("resScoreVal")?.innerText || '0'}\n🏆 Rank: ${document.getElementById("resRankVal")?.innerText || '#1'}`);
+            window.open(`https://api.whatsapp.com/send?text=${fallbackText}`, '_blank');
+            return;
+        }
+
+        // Hide non-shareable elements temporarily (like solution buttons or exit links)
+        const canvas = await html2canvas(resultElement, {
+            scale: 2,
+            useCORS: true,
+            allowTaint: false,
+            logging: false,
+            backgroundColor: '#0f172a'
+        });
+
+        canvas.toBlob(async (blob) => {
+            if (!blob) return;
+
+            const file = new File([blob], `Test_Result_${Date.now()}.png`, { type: 'image/png' });
+
+            // Check if Native Share API with Files is supported (mostly modern Android/iOS Chrome & Safari)
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({
+                        title: 'Test Result',
+                        text: `Maine ${currentTest?.title || 'Test'} me ${document.getElementById("resScoreVal")?.innerText} score kiya hai!`,
+                        files: [file]
+                    });
+                } catch (e) {
+                    console.log("Share canceled:", e);
+                }
+            } else {
+                // Fallback: Auto Download Image + Direct WhatsApp Text Share
+                const link = document.createElement('a');
+                link.download = `Test_ResultCard.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+
+                const textMsg = encodeURIComponent(`Maine *${currentTest?.title || 'Test'}* me *${document.getElementById("resScoreVal")?.innerText}* score kiya hai! Check my image download.`);
+                window.open(`https://api.whatsapp.com/send?text=${textMsg}`, '_blank');
+            }
+        }, 'image/png');
+
+    } catch (err) {
+        console.error("Screenshot error:", err);
+        alert("Screenshot create karte waqt koi problem hui.");
+    }
 }
 
 function shareNative() {
-    if (navigator.share) {
-        navigator.share({ title: 'Test Result', text: `My Score: ${document.getElementById("resScoreVal").innerText}` });
-    }
+    shareOnWhatsApp();
 }
 
 function toggleSolutions() {
