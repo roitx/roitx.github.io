@@ -1,9 +1,29 @@
 var allTests = [];
 var currentPreviewTest = null;
 
-// Page load hote hi Admin check hoga, uske baad hi tests fetch honge
+// Subject Mapping Configuration
+const editSubjectData = {
+  class9_10: [
+    "Mathematics", 
+    "Science (Physics/Chem/Bio)", 
+    "Social Science (SST)", 
+    "Sanskrit", 
+    "Hindi", 
+    "English"
+  ],
+  class11_12: {
+    science_math: ["Mathematics", "Physics", "Chemistry", "English", "Hindi"],
+    science_bio: ["Biology", "Physics", "Chemistry", "English", "Hindi"],
+    arts: ["History", "Political Science", "Geography", "Economics", "Hindi", "English"],
+    commerce: ["Accountancy", "Business Studies", "Economics", "Entrepreneurship", "English"]
+  },
+  jee: ["Mathematics", "Physics", "Chemistry"],
+  neet: ["Biology (Botany & Zoology)", "Physics", "Chemistry"]
+};
+
 window.addEventListener('DOMContentLoaded', async function() {
   await checkAdminAuth();
+  fetchBugReportsCount();
 });
 
 // --- STRICT ADMIN AUTHENTICATION CHECK ---
@@ -18,7 +38,6 @@ async function checkAdminAuth() {
   }
 
   try {
-    // Priority 1: Check via global helper if available
     if (typeof window.requireAdminAuth === "function") {
       try {
         await window.requireAdminAuth();
@@ -29,9 +48,7 @@ async function checkAdminAuth() {
       }
     }
 
-    // Priority 2: Direct Session Check with getUser() Fallback
     let currentUser = null;
-    
     const { data: sessionData } = await window.supabaseClient.auth.getSession();
     if (sessionData && sessionData.session) {
       currentUser = sessionData.session.user;
@@ -48,7 +65,6 @@ async function checkAdminAuth() {
       return;
     }
 
-    // Role verification from database
     let isAdmin = false;
     if (typeof window.checkIsAdmin === 'function') {
       isAdmin = await window.checkIsAdmin();
@@ -70,7 +86,6 @@ async function checkAdminAuth() {
       return;
     }
 
-    // Authorization successful -> Tests fetch karo
     fetchPublishedTests();
 
   } catch (err) {
@@ -99,7 +114,7 @@ function fetchPublishedTests() {
 
       allTests = response.data || [];
       populateDynamicFilters(allTests);
-      filterTests(); // Auto filter & render initial list
+      filterTests();
     })
     .catch(function(err) {
       console.error("Fetch Error:", err);
@@ -112,7 +127,6 @@ function fetchPublishedTests() {
     });
 }
 
-// --- DYNAMICALLY GENERATE FILTER OPTIONS (Like tests.js) ---
 function populateDynamicFilters(tests) {
   var classSelect = document.getElementById("filterClass");
   var subjectSelect = document.getElementById("filterSubject");
@@ -142,7 +156,6 @@ function populateDynamicFilters(tests) {
   }
 }
 
-// --- SMART MULTI-FILTER LOGIC (Search + Class + Subject) ---
 function filterTests() {
   var searchInput = document.getElementById("searchInput");
   var filterClass = document.getElementById("filterClass");
@@ -157,13 +170,8 @@ function filterTests() {
     var testClassLevel = (test.class_level || '').toLowerCase();
     var testSubject = (test.subject || '').toLowerCase();
 
-    // 1. Search Query Match
     var matchesSearch = searchVal === "" || testTitle.indexOf(searchVal) !== -1 || testClassLevel.indexOf(searchVal) !== -1;
-
-    // 2. Class Filter Match
     var matchesClass = (classVal === "all" || classVal === "") || testClassLevel === classVal || testClassLevel.indexOf(classVal) !== -1;
-
-    // 3. Subject Filter Match
     var matchesSubject = (subjectVal === "all" || subjectVal === "") || testSubject === subjectVal;
 
     return matchesSearch && matchesClass && matchesSubject;
@@ -212,14 +220,162 @@ function renderTests(tests) {
   });
 }
 
-// --- Smart Helper Function for Correct Option Key ---
 function getCorrectIndex(q) {
   var val = q.correct !== undefined ? q.correct : (q.correctAnswer ?? q.ans ?? q.correct_option ?? 0);
   var parsed = parseInt(val);
   return isNaN(parsed) ? 0 : parsed;
 }
 
-// --- Preview Functionality ---
+// --- DYNAMIC DROPDOWNS FOR EDIT MODAL ---
+function updateEditSubCategories() {
+  const category = document.getElementById("editCategory").value;
+  const classSelect = document.getElementById("editClass");
+  classSelect.innerHTML = "";
+
+  if (category === "board") {
+    classSelect.innerHTML = `
+      <option value="Class 12th Bihar Board">Class 12th (Bihar Board)</option>
+      <option value="Class 12th CBSE">Class 12th (CBSE)</option>
+      <option value="Class 11th Bihar Board">Class 11th (Bihar Board)</option>
+      <option value="Class 11th CBSE">Class 11th (CBSE)</option>
+      <option value="Class 10th Board">Class 10th (Board)</option>
+      <option value="Class 9th">Class 9th</option>
+    `;
+  } else {
+    classSelect.innerHTML = `
+      <option value="NEET UG">NEET UG (Medical)</option>
+      <option value="JEE Main">JEE Main</option>
+      <option value="JEE Advanced">JEE Advanced</option>
+    `;
+  }
+  updateEditSubjectOptions();
+}
+
+function updateEditSubjectOptions() {
+  const category = document.getElementById("editCategory").value;
+  const targetClass = document.getElementById("editClass").value;
+  const streamGroup = document.getElementById("editStreamGroup");
+  const streamSelect = document.getElementById("editStream");
+  const subjectSelect = document.getElementById("editSubject");
+
+  subjectSelect.innerHTML = "";
+
+  if (category === "board") {
+    if (targetClass.includes("11th") || targetClass.includes("12th")) {
+      streamGroup.style.display = "block";
+      const selectedStream = streamSelect.value;
+      const subjects = editSubjectData.class11_12[selectedStream] || [];
+      subjects.forEach(sub => {
+        const opt = document.createElement("option");
+        opt.value = sub;
+        opt.innerText = sub;
+        subjectSelect.appendChild(opt);
+      });
+    } else {
+      streamGroup.style.display = "none";
+      editSubjectData.class9_10.forEach(sub => {
+        const opt = document.createElement("option");
+        opt.value = sub;
+        opt.innerText = sub;
+        subjectSelect.appendChild(opt);
+      });
+    }
+  } else {
+    streamGroup.style.display = "none";
+    let subjects = targetClass.includes("NEET") ? editSubjectData.neet : editSubjectData.jee;
+    subjects.forEach(sub => {
+      const opt = document.createElement("option");
+      opt.value = sub;
+      opt.innerText = sub;
+      subjectSelect.appendChild(opt);
+    });
+  }
+}
+
+// --- OPEN FULL EDIT MODAL ---
+function openEditModal(testId) {
+  var test = allTests.find(function(t) { return t.id === testId; });
+  if (!test) return;
+
+  document.getElementById("editTestId").value = test.id;
+  document.getElementById("editTitle").value = test.title || '';
+  
+  const isCompetitive = (test.class_level || '').includes("JEE") || (test.class_level || '').includes("NEET");
+  document.getElementById("editCategory").value = isCompetitive ? "competitive" : "board";
+  
+  updateEditSubCategories();
+
+  if (test.class_level) {
+    document.getElementById("editClass").value = test.class_level;
+  }
+  
+  updateEditSubjectOptions();
+
+  if (test.subject) {
+    document.getElementById("editSubject").value = test.subject;
+  }
+
+  if (test.language) {
+    document.getElementById("editLanguage").value = test.language;
+  }
+
+  document.getElementById("editTimeLimit").value = test.time_limit_mins || 15;
+  document.getElementById("editMarks").value = test.marks_per_question || 4;
+  document.getElementById("editNegativeMark").value = test.negative_marking || 0;
+
+  document.getElementById("editQuestionsJson").value = JSON.stringify(test.questions_data || [], null, 2);
+
+  document.getElementById("editModal").style.display = "flex";
+}
+
+function closeEditModal() {
+  document.getElementById("editModal").style.display = "none";
+}
+
+// --- SAVE ALL UPDATED FIELDS TO SUPABASE ---
+function saveTestChanges() {
+  var testId = document.getElementById("editTestId").value;
+  var newTitle = document.getElementById("editTitle").value.trim();
+  var newClass = document.getElementById("editClass").value;
+  var newSubject = document.getElementById("editSubject").value;
+  var newLanguage = document.getElementById("editLanguage").value;
+  var newTime = parseInt(document.getElementById("editTimeLimit").value) || 15;
+  var newMarks = parseFloat(document.getElementById("editMarks").value) || 4;
+  var newNegative = parseFloat(document.getElementById("editNegativeMark").value) || 0;
+
+  var updatedQuestions = null;
+  try {
+    updatedQuestions = JSON.parse(document.getElementById("editQuestionsJson").value);
+  } catch (e) {
+    alert("❌ Invalid JSON format in Questions Payload!");
+    return;
+  }
+
+  window.supabaseClient
+    .from('tests')
+    .update({
+      title: newTitle,
+      class_level: newClass,
+      subject: newSubject,
+      language: newLanguage,
+      time_limit_mins: newTime,
+      marks_per_question: newMarks,
+      negative_marking: newNegative,
+      questions_data: updatedQuestions
+    })
+    .eq('id', testId)
+    .then(function(res) {
+      if (res.error) throw res.error;
+      alert("✅ Test details & Questions updated successfully!");
+      closeEditModal();
+      fetchPublishedTests();
+    })
+    .catch(function(err) {
+      alert("❌ Update error: " + err.message);
+    });
+}
+
+// --- PREVIEW MODAL FUNCTIONS ---
 function openPreviewModal(testId) {
   var test = allTests.find(function(t) { return t.id === testId; });
   if (!test) return;
@@ -292,55 +448,6 @@ function submitTestPreview() {
   alert("🧪 MOCK TEST PREVIEW RESULT\n\nCorrect: " + correctCount + "/" + totalQuestions + "\nScore: " + score + "/" + totalScore + "\n\n(Note: Ye safe preview hai, database me koi record save nahi hua.)");
 }
 
-// --- Edit Modal Controls ---
-function openEditModal(testId) {
-  var test = allTests.find(function(t) { return t.id === testId; });
-  if (!test) return;
-
-  document.getElementById("editTestId").value = test.id;
-  document.getElementById("editTitle").value = test.title || '';
-  document.getElementById("editClass").value = test.class_level || '';
-  document.getElementById("editSubject").value = test.subject || '';
-  document.getElementById("editTimeLimit").value = test.time_limit_mins || 15;
-  document.getElementById("editMarks").value = test.marks_per_question || 4;
-
-  document.getElementById("editModal").style.display = "flex";
-}
-
-function closeEditModal() {
-  document.getElementById("editModal").style.display = "none";
-}
-
-function saveTestChanges() {
-  var testId = document.getElementById("editTestId").value;
-  var newTitle = document.getElementById("editTitle").value.trim();
-  var newClass = document.getElementById("editClass").value.trim();
-  var newSubject = document.getElementById("editSubject").value.trim();
-  var newTime = parseInt(document.getElementById("editTimeLimit").value) || 15;
-  var newMarks = parseFloat(document.getElementById("editMarks").value) || 4;
-
-  window.supabaseClient
-    .from('tests')
-    .update({
-      title: newTitle,
-      class_level: newClass,
-      subject: newSubject,
-      time_limit_mins: newTime,
-      marks_per_question: newMarks
-    })
-    .eq('id', testId)
-    .then(function(res) {
-      if (res.error) throw res.error;
-      alert("✅ Test updated successfully!");
-      closeEditModal();
-      fetchPublishedTests();
-    })
-    .catch(function(err) {
-      alert("❌ Update error: " + err.message);
-    });
-}
-
-// --- Delete Test ---
 function deleteTest(testId) {
   if (!confirm("Kya aap sach me is test ko delete karna chahte hain?")) return;
 
@@ -357,4 +464,82 @@ function deleteTest(testId) {
     .catch(function(err) {
       alert("❌ Delete error: " + err.message);
     });
+}
+
+// --- ADMIN BUG REPORTS MANAGER ---
+async function fetchBugReportsCount() {
+  if (!window.supabaseClient) return;
+  try {
+    const { count, error } = await window.supabaseClient
+      .from('bug_reports')
+      .select('*', { count: 'exact', head: true });
+    
+    if (!error && count > 0) {
+      const badge = document.getElementById('bugBadge');
+      if (badge) {
+        badge.innerText = count;
+        badge.style.display = 'flex';
+      }
+    }
+  } catch(e) {
+    console.warn("Bug reports count error:", e);
+  }
+}
+
+async function openBugReportsModal() {
+  document.getElementById("bugReportsModal").style.display = "flex";
+  const container = document.getElementById("bugReportsContainer");
+  container.innerHTML = `<p style="text-align: center; color: #8E2DE2; font-weight: 600;"><i class="fa-solid fa-spinner fa-spin"></i> Fetching reports...</p>`;
+
+  try {
+    const { data: reports, error } = await window.supabaseClient
+      .from('bug_reports')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    if (!reports || reports.length === 0) {
+      container.innerHTML = `<p style="text-align: center; color: #10b981; font-weight: 600; padding: 20px;">🎉 Koi bug report nahi mili!</p>`;
+      return;
+    }
+
+    let html = "";
+    reports.forEach(r => {
+      html += `
+        <div style="background: #ffffff; border-radius: 12px; padding: 14px; border: 1px solid #cbd5e1; position: relative;">
+          <div style="font-size: 11px; color: #64748b; margin-bottom: 4px; display: flex; justify-content: space-between;">
+            <span>Test ID: <b>${r.test_id || 'N/A'}</b> | Q Index: <b>${(r.question_index ?? 0) + 1}</b></span>
+            <span>${new Date(r.created_at).toLocaleDateString()}</span>
+          </div>
+          <p style="font-size: 13px; font-weight: 700; color: #1e293b; margin-bottom: 6px;">Q: ${r.question_text || 'No Text'}</p>
+          <p style="font-size: 12.5px; color: #dc2626; background: #fef2f2; padding: 8px; border-radius: 6px; margin-bottom: 8px;">
+            <b>Issue:</b> ${r.issue_description}
+          </p>
+          <button onclick="resolveBugReport(${r.id})" style="background: #10b981; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer;">
+            <i class="fa-solid fa-check"></i> Mark Resolved
+          </button>
+        </div>
+      `;
+    });
+    container.innerHTML = html;
+
+  } catch (err) {
+    container.innerHTML = `<p style="color: #ef4444; text-align: center;">Error loading reports: ${err.message}</p>`;
+  }
+}
+
+function closeBugReportsModal() {
+  document.getElementById("bugReportsModal").style.display = "none";
+}
+
+async function resolveBugReport(reportId) {
+  if (!confirm("Is bug report ko resolve karke delete karna chahte hain?")) return;
+  try {
+    await window.supabaseClient.from('bug_reports').delete().eq('id', reportId);
+    openBugReportsModal();
+    fetchBugReportsCount();
+  } catch (err) {
+    alert("Error deleting report: " + err.message);
+  }
 }

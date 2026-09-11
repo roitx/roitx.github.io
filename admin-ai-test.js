@@ -174,12 +174,20 @@ function getCorrectIndex(q) {
   return isNaN(parsed) ? 0 : parsed;
 }
 
+// Helper: Clean option texts (removes any AI bracket traces like "(correct)", "(ans)", etc.)
+function cleanOptionText(text) {
+  if (typeof text !== 'string') return text;
+  return text
+    .replace(/\s*\((?:correct|ans|answer|correct answer|sahi uttar)\)/gi, '')
+    .trim();
+}
+
 // Function to Shuffle Options & Randomize Correct Index
 function shuffleQuizQuestions(questions) {
   if (!Array.isArray(questions)) return [];
 
   return questions.map((q) => {
-    let originalOpts = [...(q.options || q.opts || [])];
+    let originalOpts = (q.options || q.opts || []).map(cleanOptionText);
     let correctIdx = getCorrectIndex(q);
     let correctAnswerValue = originalOpts[correctIdx];
 
@@ -205,7 +213,6 @@ function shuffleQuizQuestions(questions) {
 function renderUiPreview(parsedJson) {
   let previewContainer = document.getElementById("uiQuestionsPreview");
   if (!previewContainer) {
-    // Dynamically inject visual preview container above JSON Box if not present in HTML
     const jsonGroup = document.getElementById("jsonOutput")?.parentElement;
     if (jsonGroup) {
       previewContainer = document.createElement("div");
@@ -293,15 +300,19 @@ async function generateAiQuiz() {
   statusMsg.style.display = "none";
   generateBtn.disabled = true;
 
-  const systemInstruction = `You are an expert exam paper setter for ${targetClass}.
-Generate a high-quality MCQ Quiz with exactly ${count} questions for Subject: "${subject}", Topic: "${topic}".
+  // STRICT HUMAN EXAMINER PROMPT
+  const systemInstruction = `You are a professional human teacher and senior exam paper setter for ${targetClass}.
+Your task is to create a realistic, human-written MCQ test with exactly ${count} questions for Subject: "${subject}", Topic: "${topic}".
 Exam Type: ${targetCategory}.
 Difficulty Level: ${difficulty}.
-Additional Notes: ${customPrompt || "Follow exact official latest exam syllabus pattern"}.
+Additional Notes: ${customPrompt || "Follow standard NCERT / official syllabus pattern"}.
 
-STRICT REQUIREMENTS:
-1. Respond ONLY with pure, valid JSON. No markdown backticks, no markdown codeblock wrapper, and no introductory text.
-2. RANDOMIZE THE CORRECT OPTION INDEX! The "correct" field must be evenly distributed among index values 0, 1, 2, and 3 across questions.
+CRITICAL ANTI-AI / NATURAL EXAM RULES:
+1. DO NOT make the correct option longer or more detailed than the wrong options. All 4 options MUST be of similar length, tone, and complexity.
+2. DO NOT add brackets like "(Correct)", "(Ans)", or extra explanatory text inside option strings. Options must contain ONLY the answer choices.
+3. Make wrong options (distractors) highly plausible and intelligent, as a real examiner would write them.
+4. Distribute correct answer indices completely randomly across 0, 1, 2, and 3.
+5. Respond strictly with pure, valid JSON. No markdown ticks, no commentary.
 
 JSON Format Schema:
 {
@@ -314,8 +325,8 @@ JSON Format Schema:
       "id": 1,
       "question": "Question text here",
       "options": ["Option A", "Option B", "Option C", "Option D"],
-      "correct": 2,
-      "explanation": "Detailed step-by-step solution"
+      "correct": 0,
+      "explanation": "Brief solution"
     }
   ]
 }`;
@@ -352,7 +363,7 @@ JSON Format Schema:
 
     const parsedJson = JSON.parse(rawText);
 
-    // Auto Shuffle Options & Correct Answer Index
+    // Auto Clean Brackets & Shuffle Options
     if (parsedJson.questions && Array.isArray(parsedJson.questions)) {
       parsedJson.questions = shuffleQuizQuestions(parsedJson.questions);
     }
@@ -367,7 +378,7 @@ JSON Format Schema:
 
     document.getElementById("quizPreviewSection").style.display = "block";
     statusMsg.className = "status-msg success";
-    statusMsg.innerText = "🎉 Quiz generated successfully via Gemini Edge AI!";
+    statusMsg.innerText = "🎉 Quiz generated successfully!";
     statusMsg.style.display = "block";
 
     document.getElementById("quizPreviewSection").scrollIntoView({ behavior: 'smooth' });

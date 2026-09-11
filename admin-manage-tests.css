@@ -14,14 +14,14 @@ body {
   padding: 30px 15px;
   position: relative;
   overflow-x: hidden;
-  visibility: visible !important; /* Fully visible by default */
+  visibility: visible !important;
 }
-
 
 body.admin-authenticated {
   visibility: visible !important;
 }
 
+/* Background Glow Effect */
 .bg-glow {
   position: fixed;
   width: 380px;
@@ -39,6 +39,7 @@ body.admin-authenticated {
   to { transform: translateY(-30px) scale(1.05); }
 }
 
+/* Main Card Container */
 .admin-card {
   position: relative;
   z-index: 1;
@@ -55,19 +56,23 @@ body.admin-authenticated {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 18px;
+  gap: 10px;
 }
 
 .back-btn {
   background: #e0e5ec;
   border: none;
-  padding: 8px 14px;
+  padding: 10px 16px;
   border-radius: 12px;
   font-weight: 600;
-  font-size: 12px;
+  font-size: 13px;
   color: #4a5568;
   cursor: pointer;
   box-shadow: 4px 4px 8px #b8bec7, -4px -4px 8px #ffffff;
-  transition: 0.2s ease;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .back-btn:hover { color: #8E2DE2; }
@@ -88,18 +93,38 @@ p.subtitle {
   margin-bottom: 20px;
 }
 
+/* Form Elements & Flexible Grids */
 .grid-2 {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 15px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+  margin-bottom: 14px;
 }
 
-.form-group { text-align: left; }
+.form-group {
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.form-group label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #4a5568;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.form-group label i {
+  color: #8E2DE2;
+}
 
 .input-box {
   width: 100%;
-  padding: 11px 14px;
+  padding: 12px 14px;
   border: none;
   border-radius: 14px;
   background: #e0e5ec;
@@ -107,8 +132,19 @@ p.subtitle {
   outline: none;
   font-size: 13px;
   color: #2d3748;
+  transition: all 0.2s ease;
 }
 
+.input-box:focus {
+  box-shadow: inset 2px 2px 5px #b8bec7, inset -2px -2px 5px #ffffff, 0 0 0 2px rgba(142, 45, 226, 0.3);
+}
+
+select.input-box {
+  cursor: pointer;
+  appearance: auto;
+}
+
+/* Tests List Section */
 .tests-list {
   display: flex;
   flex-direction: column;
@@ -125,6 +161,7 @@ p.subtitle {
   justify-content: space-between;
   align-items: center;
   transition: all 0.2s ease;
+  gap: 12px;
 }
 
 .test-info h3 {
@@ -142,7 +179,7 @@ p.subtitle {
 .badge {
   font-size: 10px;
   font-weight: 700;
-  padding: 3px 8px;
+  padding: 4px 8px;
   border-radius: 10px;
   box-shadow: inset 2px 2px 4px #b8bec7, inset -2px -2px 4px #ffffff;
   color: #8E2DE2;
@@ -161,6 +198,7 @@ p.subtitle {
   align-items: center;
   justify-content: center;
   transition: 0.2s ease;
+  flex-shrink: 0;
 }
 
 .btn-delete:active {
@@ -180,40 +218,47 @@ p.subtitle {
   text-align: center;
   display: none;
 }
-.status-msg.error { color: #e53e3e; display: block; }
-/* Existing styles... */
 
+.status-msg.error { 
+  color: #e53e3e; 
+  display: block; 
+}
+
+/* Fixed Responsive Modal Styles */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(5px);
-  z-index: 99;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(6px);
+  z-index: 999;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 15px;
+  padding: 16px;
 }
 
 .modal-card {
   width: 100%;
-  max-width: 480px;
+  max-width: 680px;
+  max-height: 90vh;
   background: #e0e5ec;
   padding: 24px;
   border-radius: 24px;
-  box-shadow: 12px 12px 24px #b8bec7, -12px -12px 24px #ffffff;
+  box-shadow: 12px 12px 28px #a8aeb7, -12px -12px 28px #ffffff;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
+  overflow-y: auto;
+  box-sizing: border-box;
 }
 
 .modal-card h2 {
   font-size: 18px;
   color: #2d3748;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -222,11 +267,92 @@ p.subtitle {
 .modal-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
-  margin-top: 10px;
+  gap: 12px;
+  margin-top: 15px;
+  padding-top: 10px;
 }
 
 .save-modal-btn {
   background: #8E2DE2 !important;
-  color: #fff !important;
+  color: #ffffff !important;
+  box-shadow: 4px 4px 10px #b8bec7, -4px -4px 10px #ffffff;
+}
+
+.save-modal-btn:hover {
+  background: #7b22cb !important;
+}
+
+/* Mobile Screen Adjustments */
+@media (max-width: 580px) {
+  body {
+    padding: 15px 10px;
+  }
+
+  .admin-card {
+    padding: 20px 14px;
+  }
+
+  .grid-2 {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .modal-card {
+    padding: 18px 14px;
+  }
+
+  .test-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .test-item > div:last-child {
+    align-self: flex-end;
+  }
+}
+
+/* Floating Action Button (FAB) for Bug Reports */
+.fab-bug-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: #f43f5e;
+  color: #ffffff;
+  border: none;
+  box-shadow: 0 8px 20px rgba(244, 63, 94, 0.4), 4px 4px 10px #b8bec7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 999;
+  transition: all 0.25s ease;
+}
+
+.fab-bug-btn:hover {
+  transform: scale(1.08);
+  background: #e11d48;
+}
+
+.fab-bug-btn:active {
+  transform: scale(0.95);
+}
+
+.fab-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #10b981;
+  color: white;
+  font-size: 10px;
+  font-weight: 800;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #ffffff;
 }
