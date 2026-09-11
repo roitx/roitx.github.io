@@ -60,9 +60,8 @@ function getDraftStorageKey() {
     return currentTest ? `test_draft_${currentTest.id}` : 'test_draft_demo';
 }
 
-/* --- SUPABASE SYNC LOGIC ADDED HERE --- */
+/* --- SUPABASE SYNC LOGIC --- */
 
-// Supabase cloud par progress save karne ke liye function
 async function saveProgressToSupabase(draftData) {
     if (!window.supabaseClient || !currentTest || currentTest.id === 'demo_test') return;
     try {
@@ -96,17 +95,13 @@ function saveLocalDraft() {
         lastUpdated: new Date().toISOString()
     };
     
-    // 1. LocalStorage Me Backup
     localStorage.setItem(getDraftStorageKey(), JSON.stringify(draftData));
-    
-    // 2. Cloud DB Sync
     saveProgressToSupabase(draftData);
 }
 
 async function loadLocalDraft() {
     if (!currentTest) return false;
 
-    // 1. Pehle Cloud (Supabase) se Draft fetch karne ki koshish
     if (window.supabaseClient && currentTest.id !== 'demo_test') {
         try {
             const { data: { user } } = await window.supabaseClient.auth.getUser();
@@ -131,7 +126,6 @@ async function loadLocalDraft() {
         }
     }
 
-    // 2. Agar Cloud me na mile toh LocalStorage Check
     const key = getDraftStorageKey();
     const raw = localStorage.getItem(key);
     if (raw) {
@@ -152,10 +146,18 @@ async function loadLocalDraft() {
 async function clearLocalDraft() {
     if (!currentTest) return;
 
-    // 1. Local Storage Clear
+    // 1. Clear LocalStorage Key
     localStorage.removeItem(getDraftStorageKey());
 
-    // 2. Supabase DB Clear
+    // Safely sweep all draft instances for this test
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+        const k = localStorage.key(i);
+        if (k && k.includes(currentTest.id) && k.startsWith("test_draft_")) {
+            localStorage.removeItem(k);
+        }
+    }
+
+    // 2. Clear Cloud Draft Sync
     if (window.supabaseClient && currentTest.id !== 'demo_test') {
         try {
             const { data: { user } } = await window.supabaseClient.auth.getUser();
@@ -171,8 +173,6 @@ async function clearLocalDraft() {
         }
     }
 }
-
-/* -------------------------------------- */
 
 function loadDummyTest() {
     currentTest = {
@@ -271,7 +271,10 @@ function startTestFromInstructions() {
     loadQuestion(0);
 }
 
-function exitExam() { window.location.href = "tests.html"; }
+function exitExam() { 
+    saveLocalDraft();
+    window.location.href = "tests.html"; 
+}
 
 function onModeChange(newMode) {
     currentMode = newMode;
@@ -430,7 +433,11 @@ function startTimer() {
 
         let mins = Math.floor(timeRemaining / 60), secs = timeRemaining % 60;
         document.getElementById("timerText").innerText = `${mins < 10 ? "0" : ""}${mins}:${secs < 10 ? "0" : ""}${secs}`;
-        if (timeRemaining <= 0) { clearInterval(timerInterval); submitTest(); }
+        if (timeRemaining <= 0) { 
+            clearInterval(timerInterval); 
+            timerInterval = null;
+            submitTest(); 
+        }
     }, 1000);
 }
 
@@ -457,7 +464,14 @@ function exitExamConfirmed() { saveLocalDraft(); window.location.href = "tests.h
 
 /* SUBMIT & GENERATE DETAILED RESULTS */
 async function submitTest() {
-    if (timerInterval) clearInterval(timerInterval);
+    // 1. Stop background timer immediately
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+
+    // 2. Clear local & cloud drafts immediately before DB operations
+    await clearLocalDraft();
 
     let correctCount = 0, wrongCount = 0, skippedCount = 0, reviewCount = 0;
 
@@ -481,8 +495,6 @@ async function submitTest() {
     let maxPossibleScore = totalQ * posMarks;
     let scorePct = maxPossibleScore > 0 ? Math.round((scoreVal / maxPossibleScore) * 100) : 0;
     let accuracyPct = (correctCount + wrongCount) > 0 ? Math.round((correctCount / (correctCount + wrongCount)) * 100) : 0;
-
-    await clearLocalDraft();
 
     document.getElementById("testArea").style.display = "none";
     document.getElementById("resultArea").style.display = "block";
@@ -513,6 +525,7 @@ async function submitTest() {
     renderQuestionAnalysisGrid();
     renderCharts(correctCount, wrongCount, skippedCount, accuracyPct, scorePct < 0 ? 0 : scorePct);
 
+    // Save result to Supabase
     await saveResultAndFetchRank(scoreVal, maxPossibleScore);
 }
 
@@ -557,7 +570,7 @@ function openQuestionDetailModal(idx) {
     let detailHtml = `
         <div id="qDetailModal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.75); display:flex; justify-content:center; align-items:center; z-index:9999; padding:15px;">
             <div style="background:var(--bg-card, #1e293b); color:var(--text, #fff); border-radius:12px; padding:20px; max-width:500px; width:100%; max-height:85vh; overflow-y:auto; box-shadow:0 8px 32px rgba(0,0,0,0.5);">
-                <div style="display:flex; justify-space-between; align-items:center; margin-bottom:12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
                     <h3 style="font-size:16px; margin:0;">Question ${idx + 1} Analysis</h3>
                     <button onclick="document.getElementById('qDetailModal').remove()" style="background:none; border:none; color:#fff; font-size:18px; cursor:pointer;">✖</button>
                 </div>
@@ -588,7 +601,7 @@ async function saveResultAndFetchRank(scoreVal, totalMarks) {
     const rankValElem = document.getElementById("resRankVal");
     const rankTotalElem = document.getElementById("resRankTotal");
 
-    if (!window.supabaseClient || !currentTest) {
+    if (!window.supabaseClient || !currentTest || currentTest.id === 'demo_test') {
         if (rankValElem) rankValElem.innerText = "#1";
         if (rankTotalElem) rankTotalElem.innerText = "Out of 1 (Demo)";
         return;
@@ -602,17 +615,36 @@ async function saveResultAndFetchRank(scoreVal, totalMarks) {
             return;
         }
 
-        await window.supabaseClient.from('test_results').insert([{
-            user_id: user.id,
-            test_id: currentTest.id,
-            score: scoreVal,
-            total_marks: totalMarks,
-            time_spent_seconds: totalTimeSpentSec
-        }]);
+        // Calculate correct and wrong counts
+        let correctCount = 0, wrongCount = 0;
+        questions.forEach((q, idx) => {
+            let correctIdx = parseCorrectOption(q);
+            if (userAnswers[idx] !== undefined) {
+                if (userAnswers[idx] === correctIdx) correctCount++;
+                else wrongCount++;
+            }
+        });
+
+        // Using UPSERT to handle duplicate keys safely without throwing unique constraint error
+        const { error: insertErr } = await window.supabaseClient
+            .from('test_results')
+            .upsert([{
+                user_id: user.id,
+                test_id: currentTest.id,
+                score: scoreVal.toString(),
+                total_marks: totalMarks.toString(),
+                correct_answers: correctCount,
+                wrong_answers: wrongCount,
+                time_taken_sec: totalTimeSpentSec
+            }], { onConflict: 'user_id,test_id' });
+
+        if (insertErr) {
+            console.error("Error saving test result:", insertErr.message || JSON.stringify(insertErr));
+        }
 
         const { data: results, error } = await window.supabaseClient
             .from('test_results')
-            .select('user_id, score, time_spent_seconds')
+            .select('user_id, score, time_taken_sec')
             .eq('test_id', currentTest.id);
 
         if (error || !results || results.length === 0) {
@@ -623,14 +655,15 @@ async function saveResultAndFetchRank(scoreVal, totalMarks) {
 
         let userBestMap = {};
         results.forEach(r => {
-            if (!userBestMap[r.user_id] || r.score > userBestMap[r.user_id].score) {
-                userBestMap[r.user_id] = r;
+            const numScore = parseFloat(r.score) || 0;
+            if (!userBestMap[r.user_id] || numScore > userBestMap[r.user_id].score) {
+                userBestMap[r.user_id] = { ...r, score: numScore };
             }
         });
 
         let sortedList = Object.values(userBestMap).sort((a, b) => {
             if (b.score !== a.score) return b.score - a.score;
-            return (a.time_spent_seconds || 0) - (b.time_spent_seconds || 0);
+            return (a.time_taken_sec || 0) - (b.time_taken_sec || 0);
         });
 
         let myRank = sortedList.findIndex(r => r.user_id === user.id) + 1;

@@ -174,105 +174,6 @@ function scanLocalDrafts() {
     }
 }
 
-/* Inside renderStudentTests function - Escape single quotes properly */
-function renderStudentTests(tests) {
-    const container = document.getElementById("studentTestsContainer");
-    if (!container) return;
-
-    hideGlobalSpinner();
-    scanLocalDrafts();
-
-    if (tests.length === 0) {
-        // ... empty UI ...
-        return;
-    }
-
-    let html = "";
-    tests.forEach(test => {
-        let qCount = test.questions_data ? test.questions_data.length : 0;
-        let timeMins = test.time_limit_mins || 15;
-        let classBadge = test.class_level ? `<span style="background: #edf2f7; color: #4a5568; padding: 2px 8px; border-radius: 4px; font-size: 11px; margin-left: 6px;">${test.class_level}</span>` : '';
-
-        let isNew = false;
-        if (test.created_at) {
-            const testDate = new Date(test.created_at);
-            const now = new Date();
-            const diffDays = (now - testDate) / (1000 * 60 * 60 * 24);
-            if (diffDays >= 0 && diffDays <= 7) isNew = true;
-        }
-        let newBadgeHtml = isNew ? `<span class="badge-new">NEW</span>` : '';
-
-        let statusBlockHtml = '';
-        let buttonText = 'Start Test';
-        let buttonIcon = 'fa-arrow-right';
-        let buttonClass = 'btn-primary';
-        let isReattempt = false;
-        let isResume = false;
-
-        const draft = userDraftsMap[test.id];
-        const hasDraft = !!draft;
-        const prevStats = userTestResultsMap[test.id];
-
-        if (hasDraft) {
-            buttonText = 'Resume Test';
-            buttonIcon = 'fa-play';
-            buttonClass = 'btn-resume';
-            isResume = true;
-
-            // Handle both structure formats safely
-            const answers = draft.userAnswers || draft.user_answers || {};
-            const attemptedCount = Object.keys(answers).length;
-            
-            statusBlockHtml = `
-                <div style="margin-top: 10px; padding: 8px 10px; background: rgba(245, 158, 11, 0.1); border-left: 3px solid #f59e0b; border-radius: 6px; font-size: 11px; font-weight: 700; color: #b45309; display: flex; justify-content: space-between; align-items: center;">
-                    <span><i class="fa-solid fa-pause-circle"></i> In Progress (${attemptedCount}/${qCount} Ans)</span>
-                    <span style="font-size: 10px; background: #f59e0b; color:#fff; padding:2px 6px; border-radius:4px;">Unfinished</span>
-                </div>
-            `;
-        } else if (prevStats) {
-            buttonText = 'Reattempt Test';
-            buttonIcon = 'fa-rotate-right';
-            buttonClass = 'btn-reattempt';
-            isReattempt = true;
-
-            let badgeColor = prevStats.percentage >= 60 ? '#10b981' : (prevStats.percentage >= 40 ? '#f59e0b' : '#ef4444');
-            const safeTitle = (test.title || '').replace(/'/g, "\\'").replace(/"/g, "&quot;");
-            
-            statusBlockHtml = `
-                <div style="margin-top: 10px; padding: 8px 10px; background: rgba(0,0,0,0.03); border-left: 3px solid ${badgeColor}; border-radius: 6px; font-size: 11px; font-weight: 700; color: #4b5563; display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <span><i class="fa-solid fa-chart-line" style="color:${badgeColor}; margin-right: 4px;"></i> Last Attempt:</span>
-                        <span style="color:${badgeColor}; font-weight: 800; margin-left: 4px;">${prevStats.score}/${prevStats.total_marks} (${prevStats.percentage}%)</span>
-                    </div>
-                    <button class="btn-share" onclick="shareTestScore('${safeTitle}', ${prevStats.score}, ${prevStats.total_marks}, ${prevStats.percentage}, '${test.id}')">
-                        <i class="fa-brands fa-whatsapp"></i> Share Link
-                    </button>
-                </div>
-            `;
-        }
-
-        html += `
-            <div class="test-card">
-                <div class="test-card-header" style="display: flex; justify-content: space-between; align-items: center;">
-                    <h3>${test.title} ${classBadge}</h3>
-                    ${newBadgeHtml}
-                </div>
-                <div class="test-meta">
-                    <span><i class="fa-solid fa-file-alt"></i> ${qCount} Qs</span> • 
-                    <span><i class="fa-solid fa-clock"></i> ${timeMins} Mins</span> • 
-                    <span><i class="fa-solid fa-book"></i> ${test.subject || 'General'}</span>
-                </div>
-                ${statusBlockHtml}
-                <button class="${buttonClass}" onclick="handleStartTest('${test.id}', ${isReattempt}, ${isResume})" style="margin-top: 12px; width: 100%;">
-                    ${buttonText} <i class="fa-solid ${buttonIcon}"></i>
-                </button>
-            </div>
-        `;
-    });
-
-    container.innerHTML = html;
-}
-
 /* ==========================================
    FETCH USER PREVIOUS TEST RESULTS
    ========================================== */
@@ -503,12 +404,15 @@ function renderSubjectStep() {
             (selectedBoard === "BSEB" && (fullText.includes("BSEB") || fullText.includes("BIHAR"))) ||
             fullText.includes(selectedBoard.toUpperCase());
 
-        // Exact Class Match Logic (Bug Fix)
+        // Strict Class Match
+        let testClassClean = (test.class_level || '').trim().toLowerCase();
+        let selectedClassClean = selectedClass.trim().toLowerCase();
+        
         let classMatch = (selectedClass === "ALL") ||
-            (test.class_level && test.class_level.trim() === selectedClass) ||
-            (selectedClass === "Class 10th" && (fullText.includes("CLASS 10") || fullText.includes("10TH"))) ||
-            (selectedClass === "Class 11th" && (fullText.includes("CLASS 11") || fullText.includes("11TH"))) ||
-            (selectedClass === "Class 12th" && (fullText.includes("CLASS 12") || fullText.includes("12TH")));
+            (test.class_level && testClassClean === selectedClassClean) ||
+            (selectedClassClean.includes("10") && (testClassClean.includes("10") || fullText.includes("10TH") || fullText.includes("CLASS 10")) && !testClassClean.includes("12") && !fullText.includes("12TH")) ||
+            (selectedClassClean.includes("11") && (testClassClean.includes("11") || fullText.includes("11TH") || fullText.includes("CLASS 11"))) ||
+            (selectedClassClean.includes("12") && (testClassClean.includes("12") || fullText.includes("12TH") || fullText.includes("CLASS 12")));
 
         if (boardMatch && classMatch && test.subject) {
             availableSubjects.add(test.subject.trim());
@@ -567,8 +471,8 @@ function filterStudentTests() {
 
     var filtered = studentTests.filter(function(test) {
         var testTitle = (test.title || '').toLowerCase();
-        var testClassLevel = (test.class_level || '').toLowerCase();
-        var testSubject = (test.subject || '').toLowerCase();
+        var testClassLevel = (test.class_level || '').trim().toLowerCase();
+        var testSubject = (test.subject || '').trim().toLowerCase();
 
         var combinedSearchText = testTitle + " " + testClassLevel;
 
@@ -578,11 +482,13 @@ function filterStudentTests() {
                            (selectedBoard === "BSEB" && (combinedSearchText.indexOf("bseb") !== -1 || combinedSearchText.indexOf("bihar") !== -1)) ||
                            combinedSearchText.indexOf(selectedBoard.toLowerCase()) !== -1;
 
+        // Strict Class Matching (Prevents Class 12th from appearing in Class 10th)
+        var selectedClassClean = selectedClass.trim().toLowerCase();
         var matchesClass = (selectedClass === "ALL") ||
-                           (test.class_level && test.class_level === selectedClass) ||
-                           (selectedClass.indexOf("12") !== -1 && combinedSearchText.indexOf("12") !== -1) ||
-                           (selectedClass.indexOf("11") !== -1 && combinedSearchText.indexOf("11") !== -1) ||
-                           (selectedClass.indexOf("10") !== -1 && combinedSearchText.indexOf("10") !== -1);
+                           (test.class_level && testClassLevel === selectedClassClean) ||
+                           (selectedClassClean.includes("10") && (testClassLevel.includes("10") || testTitle.includes("class 10") || testTitle.includes("10th")) && !testClassLevel.includes("12") && !testTitle.includes("12th")) ||
+                           (selectedClassClean.includes("11") && (testClassLevel.includes("11") || testTitle.includes("class 11") || testTitle.includes("11th"))) ||
+                           (selectedClassClean.includes("12") && (testClassLevel.includes("12") || testTitle.includes("class 12") || testTitle.includes("12th")));
 
         var matchesSubject = (selectedSubject === "ALL") ||
                              testSubject.indexOf(selectedSubject.toLowerCase()) !== -1;
@@ -646,7 +552,8 @@ function renderStudentTests(tests) {
         let isReattempt = false;
         let isResume = false;
 
-        const hasDraft = !!userDraftsMap[test.id];
+        const draft = userDraftsMap[test.id];
+        const hasDraft = !!draft;
         const prevStats = userTestResultsMap[test.id];
 
         if (hasDraft) {
@@ -655,8 +562,8 @@ function renderStudentTests(tests) {
             buttonClass = 'btn-resume';
             isResume = true;
 
-            const draft = userDraftsMap[test.id];
-            const attemptedCount = draft.userAnswers ? Object.keys(draft.userAnswers).length : 0;
+            const answers = draft.userAnswers || draft.user_answers || {};
+            const attemptedCount = Object.keys(answers).length;
             
             statusBlockHtml = `
                 <div style="margin-top: 10px; padding: 8px 10px; background: rgba(245, 158, 11, 0.1); border-left: 3px solid #f59e0b; border-radius: 6px; font-size: 11px; font-weight: 700; color: #b45309; display: flex; justify-content: space-between; align-items: center;">
@@ -671,6 +578,7 @@ function renderStudentTests(tests) {
             isReattempt = true;
 
             let badgeColor = prevStats.percentage >= 60 ? '#10b981' : (prevStats.percentage >= 40 ? '#f59e0b' : '#ef4444');
+            const safeTitle = (test.title || '').replace(/'/g, "\\'").replace(/"/g, "&quot;");
             
             statusBlockHtml = `
                 <div style="margin-top: 10px; padding: 8px 10px; background: rgba(0,0,0,0.03); border-left: 3px solid ${badgeColor}; border-radius: 6px; font-size: 11px; font-weight: 700; color: #4b5563; display: flex; justify-content: space-between; align-items: center;">
@@ -678,7 +586,7 @@ function renderStudentTests(tests) {
                         <span><i class="fa-solid fa-chart-line" style="color:${badgeColor}; margin-right: 4px;"></i> Last Attempt:</span>
                         <span style="color:${badgeColor}; font-weight: 800; margin-left: 4px;">${prevStats.score}/${prevStats.total_marks} (${prevStats.percentage}%)</span>
                     </div>
-                    <button class="btn-share" onclick="shareTestScore('${test.title.replace(/'/g, "\\'")}', ${prevStats.score}, ${prevStats.total_marks}, ${prevStats.percentage}, '${test.id}')">
+                    <button class="btn-share" onclick="shareTestScore('${safeTitle}', ${prevStats.score}, ${prevStats.total_marks}, ${prevStats.percentage}, '${test.id}')">
                         <i class="fa-brands fa-whatsapp"></i> Share Link
                     </button>
                 </div>
@@ -938,12 +846,15 @@ function renderLbSubjectStep() {
             (selectedLbBoard === "BSEB" && (fullText.includes("BSEB") || fullText.includes("BIHAR"))) ||
             fullText.includes(selectedLbBoard.toUpperCase());
 
-        // Exact Class Matching Logic (Bug Fix)
+        // Strict Class Matching Logic
+        let tClassClean = (t.class_level || '').trim().toLowerCase();
+        let selectedLbClassClean = selectedLbClass.trim().toLowerCase();
+
         let classMatch = (selectedLbClass === "ALL") ||
-            (t.class_level && t.class_level.trim() === selectedLbClass) ||
-            (selectedLbClass === "Class 10th" && (fullText.includes("CLASS 10") || fullText.includes("10TH"))) ||
-            (selectedLbClass === "Class 11th" && (fullText.includes("CLASS 11") || fullText.includes("11TH"))) ||
-            (selectedLbClass === "Class 12th" && (fullText.includes("CLASS 12") || fullText.includes("12TH")));
+            (t.class_level && tClassClean === selectedLbClassClean) ||
+            (selectedLbClassClean.includes("10") && (tClassClean.includes("10") || fullText.includes("CLASS 10") || fullText.includes("10TH")) && !tClassClean.includes("12") && !fullText.includes("12TH")) ||
+            (selectedLbClassClean.includes("11") && (tClassClean.includes("11") || fullText.includes("CLASS 11") || fullText.includes("11TH"))) ||
+            (selectedLbClassClean.includes("12") && (tClassClean.includes("12") || fullText.includes("CLASS 12") || fullText.includes("12TH")));
 
         if (boardMatch && classMatch && t.subject) {
             subjects.add(t.subject.trim());
@@ -982,11 +893,14 @@ function renderLbTestStep() {
             (selectedLbBoard === "BSEB" && (fullText.includes("BSEB") || fullText.includes("BIHAR"))) ||
             fullText.includes(selectedLbBoard.toUpperCase());
 
+        let tClassClean = (t.class_level || '').trim().toLowerCase();
+        let selectedLbClassClean = selectedLbClass.trim().toLowerCase();
+
         let classMatch = (selectedLbClass === "ALL") ||
-            (t.class_level && t.class_level.trim() === selectedLbClass) ||
-            (selectedLbClass.includes("12") && fullText.includes("12")) ||
-            (selectedLbClass.includes("11") && fullText.includes("11")) ||
-            (selectedLbClass.includes("10") && fullText.includes("10"));
+            (t.class_level && tClassClean === selectedLbClassClean) ||
+            (selectedLbClassClean.includes("10") && (tClassClean.includes("10") || fullText.includes("10")) && !tClassClean.includes("12") && !fullText.includes("12")) ||
+            (selectedLbClassClean.includes("11") && (tClassClean.includes("11") || fullText.includes("11"))) ||
+            (selectedLbClassClean.includes("12") && (tClassClean.includes("12") || fullText.includes("12")));
 
         let subMatch = (selectedLbSubject === "ALL") || 
             (t.subject && t.subject.trim().toLowerCase().includes(selectedLbSubject.toLowerCase()));
@@ -1080,9 +994,8 @@ function renderPodiumCards(data) {
     }
 
     container.innerHTML = html;
-    container.style.display = "flex"; // Ensure container is visible
+    container.style.display = "flex";
 }
-
 
 async function loadLeaderboardData() {
     const tbody = document.getElementById("leaderboardBody");
@@ -1098,7 +1011,6 @@ async function loadLeaderboardData() {
             return;
         }
 
-        // Get current user's active pincode from profile
         const { data: userProfile } = await window.supabaseClient
             .from('profiles')
             .select('pincode')
@@ -1124,7 +1036,6 @@ async function loadLeaderboardData() {
             }
         }
 
-        // Fetch test results joined with profiles matching the user's pincode
         let query = window.supabaseClient
             .from('test_results')
             .select(`
@@ -1147,12 +1058,8 @@ async function loadLeaderboardData() {
         const { data, error } = await query;
         if (error) throw error;
 
-        // Ensure unique user entries per test (or overall combined) to avoid duplicates
-        // Agar ek hi user ne same test multiple baar diya hai, toh highest score wala record rakhein.
         let uniqueMap = {};
         (data || []).forEach(row => {
-            // Agar specific test selected hai, toh key = user_id + test_id
-            // Agar "All Tests Combined" hai, toh user ki highest total ya best entry rakh sakte hain
             let uniqueKey = `${row.user_id}_${row.test_id}`; 
             
             if (!uniqueMap[uniqueKey] || uniqueMap[uniqueKey].score < row.score) {
@@ -1161,26 +1068,25 @@ async function loadLeaderboardData() {
         });
 
         let processedData = Object.values(uniqueMap);
-
-        // Sort descending by score
         processedData.sort((a, b) => b.score - a.score);
 
-        // Apply UI Step Filters (Board, Class, Subject)
+        // Strict Leaderboard Filter Matching Logic
         let filteredData = processedData.filter(row => {
             const testTitle = (row.tests?.title || '').toLowerCase();
-            const testClass = (row.tests?.class_level || '').toLowerCase();
-            const testSub = (row.tests?.subject || '').toLowerCase();
+            const testClass = (row.tests?.class_level || '').trim().toLowerCase();
+            const testSub = (row.tests?.subject || '').trim().toLowerCase();
             const combinedText = testTitle + " " + testClass;
 
             const matchesBoard = (selectedLbBoard === "ALL") ||
                 (selectedLbBoard === "BSEB" && (combinedText.includes("bseb") || combinedText.includes("bihar"))) ||
                 combinedText.includes(selectedLbBoard.toLowerCase());
 
+            const selectedLbClassClean = selectedLbClass.trim().toLowerCase();
             const matchesClass = (selectedLbClass === "ALL") ||
-                (row.tests?.class_level && row.tests.class_level === selectedLbClass) ||
-                (selectedLbClass.includes("12") && combinedText.includes("12")) ||
-                (selectedLbClass.includes("11") && combinedText.includes("11")) ||
-                (selectedLbClass.includes("10") && combinedText.includes("10"));
+                (row.tests?.class_level && row.tests.class_level.trim().toLowerCase() === selectedLbClassClean) ||
+                (selectedLbClassClean.includes("10") && (testClass.includes("10") || testTitle.includes("class 10") || testTitle.includes("10th")) && !testClass.includes("12") && !testTitle.includes("12th")) ||
+                (selectedLbClassClean.includes("11") && (testClass.includes("11") || testTitle.includes("class 11") || testTitle.includes("11th"))) ||
+                (selectedLbClassClean.includes("12") && (testClass.includes("12") || testTitle.includes("class 12") || testTitle.includes("12th")));
 
             const matchesSubject = (selectedLbSubject === "ALL") ||
                 testSub.includes(selectedLbSubject.toLowerCase());
@@ -1244,14 +1150,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
     if (isMobile && window.DeviceOrientationEvent) {
-        // Mobile ke liye Gyroscope (Orientation) Effect
         window.addEventListener("deviceorientation", (event) => {
-            let tiltX = event.beta;  // Front-to-back tilt (-180 to 180)
-            let tiltY = event.gamma; // Left-to-right tilt (-90 to 90)
+            let tiltX = event.beta;
+            let tiltY = event.gamma;
 
             if (tiltX === null || tiltY === null) return;
 
-            // Values ko limit karein taaki card zyada na hile
             tiltX = Math.max(-30, Math.min(30, tiltX));
             tiltY = Math.max(-30, Math.min(30, tiltY));
 
@@ -1260,7 +1164,6 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         }, true);
     } else {
-        // Desktop ke liye aapka purana normal mouse hover/movement effect
         cards.forEach(card => {
             card.addEventListener("mousemove", (e) => {
                 const rect = card.getBoundingClientRect();
