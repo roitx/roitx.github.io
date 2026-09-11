@@ -3,539 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Exam Portal</title>
+    <title>Exam Portal & Test Analysis</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="teststyle.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        /* ==========================================
-           THEME VARIABLES & BASE STYLES
-           ========================================== */
-        :root {
-            --bg-body: #0b132b;
-            --surface: #1c2541;
-            --surface-elevated: #2a3459;
-            --primary: #38bdf8;
-            --primary-glow: rgba(56, 189, 248, 0.25);
-            --success: #10b981;
-            --success-bg: rgba(16, 185, 129, 0.18);
-            --danger: #f43f5e;
-            --danger-bg: rgba(244, 63, 94, 0.18);
-            --warning: #fbbf24;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --border: rgba(255, 255, 255, 0.12);
-            --header-bg: rgba(28, 37, 65, 0.98);
-            --option-bg: rgba(255, 255, 255, 0.03);
-            --option-hover-bg: rgba(56, 189, 248, 0.08);
-            --option-selected-bg: rgba(56, 189, 248, 0.18);
-            --p-btn-bg: rgba(255, 255, 255, 0.04);
-            --unattempted-bg: rgba(255, 255, 255, 0.06);
-            --radius-lg: 16px;
-            --radius-md: 10px;
-        }
-
-        [data-theme="light"] {
-            --bg-body: #f8fafc;
-            --surface: #ffffff;
-            --surface-elevated: #f1f5f9;
-            --primary: #0284c7;
-            --primary-glow: rgba(2, 132, 199, 0.15);
-            --success: #059669;
-            --success-bg: #d1fae5;
-            --danger: #e11d48;
-            --danger-bg: #ffe4e6;
-            --warning: #d97706;
-            --text-main: #0f172a;
-            --text-muted: #64748b;
-            --border: #cbd5e1;
-            --header-bg: rgba(255, 255, 255, 0.98);
-            --option-bg: #f8fafc;
-            --option-hover-bg: rgba(2, 132, 199, 0.06);
-            --option-selected-bg: rgba(2, 132, 199, 0.12);
-            --p-btn-bg: #f1f5f9;
-            --unattempted-bg: #e2e8f0;
-        }
-
-        * { 
-            margin: 0; 
-            padding: 0; 
-            box-sizing: border-box; 
-            font-family: 'Inter', system-ui, -apple-system, sans-serif; 
-            -webkit-tap-highlight-color: transparent; 
-            transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
-        }
-        
-        body { 
-            background: var(--bg-body); 
-            color: var(--text-main); 
-            min-height: 100vh; 
-            display: flex; 
-            flex-direction: column; 
-            overflow-x: hidden; 
-        }
-
-        /* ==========================================
-           DESKTOP HEADER LAYOUT (SINGLE LINE)
-           ========================================== */
-        header { 
-            background: var(--header-bg);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid var(--border); 
-            padding: 10px 20px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            position: sticky;
-            top: 0;
-            z-index: 80;
-            gap: 16px;
-            width: 100%;
-        }
-
-        .header-top-row {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex: 1;
-            min-width: 0;
-        }
-
-        .header-bottom-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-shrink: 0;
-        }
-
-        .brand-title { 
-            font-size: 15px; 
-            font-weight: 800; 
-            color: var(--primary); 
-            display: flex; 
-            align-items: center; 
-            gap: 8px; 
-            min-width: 0; 
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .brand-title span {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .timer-badge { 
-            background: rgba(244, 63, 94, 0.15); 
-            color: #fb7185; 
-            border: 1px solid rgba(244, 63, 94, 0.3); 
-            padding: 5px 12px; 
-            border-radius: 20px; 
-            font-weight: 800; 
-            font-size: 13px; 
-            display: flex; 
-            align-items: center; 
-            gap: 6px;
-            white-space: nowrap;
-        }
-
-        .timer-badge.paused {
-            background: rgba(251, 191, 36, 0.15);
-            color: var(--warning);
-            border-color: rgba(251, 191, 36, 0.3);
-        }
-
-        [data-theme="light"] .timer-badge {
-            background: #ffe4e6;
-            color: #e11d48;
-            border-color: #fecdd3;
-        }
-
-        .mode-select {
-            background: var(--surface-elevated);
-            color: var(--text-main);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 5px 10px;
-            font-size: 12.5px;
-            font-weight: 700;
-            cursor: pointer;
-            outline: none;
-            height: 34px;
-        }
-
-        .header-btn {
-            background: var(--surface-elevated);
-            color: var(--primary);
-            border: 1px solid var(--border);
-            height: 34px;
-            padding: 0 12px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 700;
-            white-space: nowrap;
-        }
-
-        .header-btn-icon { width: 34px; padding: 0; }
-        .header-btn:hover { border-color: var(--primary); }
-        .btn-exit-btn { color: var(--text-muted); }
-
-        .mobile-palette-btn { display: none; }
-
-        /* ==========================================
-           MAIN PORTAL LAYOUT
-           ========================================== */
-        .portal-layout { 
-            display: grid; 
-            grid-template-columns: 1fr 320px; 
-            max-width: 1280px; 
-            width: 100%; 
-            margin: 16px auto; 
-            gap: 16px; 
-            padding: 0 16px; 
-            flex-grow: 1; 
-            align-items: start;
-        }
-
-        .question-box { 
-            background: var(--surface); 
-            border-radius: var(--radius-lg); 
-            border: 1px solid var(--border); 
-            padding: 20px; 
-            display: flex; 
-            flex-direction: column; 
-            justify-content: space-between; 
-            min-height: 520px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-        }
-        
-        .q-header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            margin-bottom: 16px; 
-            border-bottom: 1px solid var(--border); 
-            padding-bottom: 12px; 
-        }
-        .q-num { font-weight: 800; font-size: 15px; color: var(--primary); }
-        .q-text { font-size: 16px; line-height: 1.6; font-weight: 600; margin-bottom: 20px; color: var(--text-main); }
-
-        .options-grid { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
-        .option-card { 
-            border: 1px solid var(--border); 
-            border-radius: var(--radius-md); 
-            padding: 14px 16px; 
-            cursor: pointer; 
-            transition: all 0.2s ease; 
-            display: flex; 
-            align-items: center; 
-            gap: 12px; 
-            background: var(--option-bg); 
-            font-size: 14.5px; 
-            color: var(--text-main);
-        }
-        .option-card:hover:not(.locked) { border-color: var(--primary); background: var(--option-hover-bg); }
-        .option-card.selected { 
-            border-color: var(--primary); 
-            background: var(--option-selected-bg); 
-            font-weight: 700; 
-            box-shadow: 0 0 12px var(--primary-glow);
-        }
-
-        .option-card.practice-correct {
-            border-color: var(--success) !important;
-            background: var(--success-bg) !important;
-            color: var(--success) !important;
-            font-weight: 700;
-        }
-        .option-card.practice-incorrect {
-            border-color: var(--danger) !important;
-            background: var(--danger-bg) !important;
-            color: var(--danger) !important;
-            font-weight: 700;
-        }
-
-        .opt-prefix { 
-            width: 28px; 
-            height: 28px; 
-            border-radius: 50%; 
-            border: 1px solid var(--border); 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            font-size: 12px; 
-            font-weight: 800; 
-            background: var(--surface-elevated);
-            color: var(--text-muted);
-            flex-shrink: 0;
-        }
-        .option-card.selected .opt-prefix { background: var(--primary); color: #fff; border-color: var(--primary); }
-        .option-card.practice-correct .opt-prefix { background: var(--success); color: #fff; border-color: var(--success); }
-        .option-card.practice-incorrect .opt-prefix { background: var(--danger); color: #fff; border-color: var(--danger); }
-
-        .practice-explanation {
-            background: var(--surface-elevated);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            padding: 14px 16px;
-            margin-bottom: 20px;
-            display: none;
-        }
-        .practice-explanation h5 { font-size: 13.5px; color: var(--primary); margin-bottom: 6px; display: flex; align-items: center; gap: 6px; font-weight: 800; }
-        .practice-explanation p { font-size: 13.5px; color: var(--text-main); line-height: 1.5; }
-
-        .action-bar { 
-            display: flex; 
-            flex-direction: column; 
-            border-top: 1px solid var(--border); 
-            padding-top: 14px; 
-            gap: 10px; 
-        }
-        .action-row { display: flex; gap: 10px; width: 100%; }
-        
-        .btn { 
-            padding: 12px 16px; 
-            border-radius: 10px; 
-            font-size: 14px; 
-            font-weight: 700; 
-            cursor: pointer; 
-            border: none; 
-            transition: 0.2s ease; 
-            display: inline-flex; 
-            align-items: center; 
-            justify-content: center;
-            gap: 8px; 
-            flex: 1;
-        }
-        .btn-outline { background: var(--surface-elevated); border: 1px solid var(--border); color: var(--text-main); }
-        .btn-warning { background: rgba(251, 191, 36, 0.15); color: var(--warning); border: 1px solid rgba(251, 191, 36, 0.3); }
-        .btn-primary { background: var(--primary); color: #fff; font-weight: 800; }
-        .btn-submit-action { background: var(--success) !important; color: #fff !important; font-weight: 900 !important; box-shadow: 0 0 12px rgba(16, 185, 129, 0.4); }
-
-        /* ==========================================
-           QUESTION PALETTE & SIDEBAR
-           ========================================== */
-        .backdrop {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.65);
-            backdrop-filter: blur(4px);
-            z-index: 90;
-            display: none;
-            opacity: 0;
-            transition: opacity 0.25s ease;
-        }
-        .backdrop.active { display: block; opacity: 1; }
-
-        .palette-box { 
-            background: var(--surface); 
-            border-radius: var(--radius-lg); 
-            border: 1px solid var(--border); 
-            padding: 18px; 
-            display: flex; 
-            flex-direction: column; 
-            align-self: start;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-        }
-        .sheet-drag-handle { display: none; width: 40px; height: 4px; background: var(--border); border-radius: 4px; margin: 0 auto 12px auto; }
-        .palette-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-        .palette-title { font-size: 15px; font-weight: 800; display: flex; align-items: center; gap: 6px; }
-        .btn-close-sheet { display: none; background: var(--surface-elevated); border: 1px solid var(--border); color: var(--text-muted); width: 28px; height: 28px; border-radius: 50%; justify-content: center; align-items: center; cursor: pointer; }
-
-        .filter-chips { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
-        .chip { padding: 5px 12px; font-size: 11.5px; font-weight: 700; border-radius: 20px; background: var(--surface-elevated); border: 1px solid var(--border); cursor: pointer; color: var(--text-muted); }
-        .chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
-        .chip.active-correct { background: var(--success); color: #fff; border-color: var(--success); }
-        .chip.active-incorrect { background: var(--danger); color: #fff; border-color: var(--danger); }
-        .chip.active-review { background: var(--warning); color: #fff; border-color: var(--warning); }
-
-        .palette-grid { 
-            display: grid; 
-            grid-template-columns: repeat(5, 1fr); 
-            gap: 8px; 
-            margin-bottom: 16px; 
-            max-height: 280px; 
-            overflow-y: auto; 
-            padding-right: 4px;
-        }
-        
-        .p-btn { 
-            width: 100%; 
-            aspect-ratio: 1; 
-            border-radius: 8px; 
-            border: 1px solid var(--border); 
-            background: var(--p-btn-bg); 
-            color: var(--text-main);
-            font-size: 13px; 
-            font-weight: 800; 
-            cursor: pointer; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-        }
-        .p-btn.active { border: 2px solid var(--primary) !important; box-shadow: 0 0 10px var(--primary-glow); }
-        .p-btn.answered { background: var(--success); color: #fff; border-color: var(--success); }
-        .p-btn.review { background: var(--warning); color: #fff; border-color: var(--warning); }
-        .p-btn.unanswered { background: var(--unattempted-bg); color: var(--text-muted); }
-
-        .legend { font-size: 11.5px; display: flex; flex-direction: column; gap: 6px; border-top: 1px solid var(--border); padding-top: 12px; margin-bottom: 14px; }
-        .legend-item { display: flex; align-items: center; gap: 8px; color: var(--text-muted); font-weight: 600; }
-        .dot { width: 10px; height: 10px; border-radius: 3px; }
-
-        .submit-zone { border-top: 1px dashed var(--border); padding-top: 14px; }
-        .btn-submit-main {
-            width: 100%;
-            padding: 12px;
-            background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
-            color: #fff;
-            border: none;
-            border-radius: var(--radius-md);
-            font-size: 14px;
-            font-weight: 800;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(244, 63, 94, 0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .modal-overlay {
-            position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(6px); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 16px;
-        }
-        .modal-card { background: var(--surface); padding: 24px; border-radius: var(--radius-lg); max-width: 360px; width: 100%; text-align: center; border: 1px solid var(--border); }
-        .modal-actions { display: flex; gap: 10px; margin-top: 18px; }
-        .modal-actions button { flex: 1; padding: 10px; border-radius: 8px; font-weight: 700; border: none; cursor: pointer; font-size: 13px; }
-
-        /* ==========================================
-           RESULTS AREA & ANSWER ANALYSIS FILTERS
-           ========================================== */
-        .result-wrapper { max-width: 800px; margin: 30px auto; background: var(--surface); padding: 32px 20px; border-radius: var(--radius-lg); border: 1px solid var(--border); text-align: center; }
-        .score-card { display: flex; justify-content: space-around; background: var(--surface-elevated); padding: 20px; border-radius: var(--radius-md); margin: 24px 0; border: 1px solid var(--border); }
-        .stat-item h3 { font-size: 24px; font-weight: 900; color: var(--primary); }
-        .stat-item p { font-size: 11px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-top: 4px; }
-
-        .share-box {
-            background: var(--surface-elevated);
-            border: 1px dashed var(--border);
-            border-radius: var(--radius-md);
-            padding: 16px;
-            margin: 20px 0;
-            text-align: center;
-        }
-        .share-box h4 { font-size: 14px; margin-bottom: 12px; color: var(--text-main); }
-        .share-buttons { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
-        .btn-share {
-            padding: 8px 14px;
-            border-radius: 8px;
-            font-size: 12.5px;
-            font-weight: 700;
-            border: none;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            color: #fff;
-        }
-        .btn-wa { background: #25D366; }
-        .btn-tg { background: #0088cc; }
-        .btn-native { background: var(--primary); color: #fff; }
-        .btn-copy { background: var(--surface-elevated); color: var(--text-main); border: 1px solid var(--border); }
-
-        .analysis-filter-bar {
-            display: flex;
-            gap: 8px;
-            justify-content: center;
-            margin: 16px 0;
-            flex-wrap: wrap;
-        }
-
-        .analysis-chip {
-            padding: 8px 16px;
-            font-size: 12.5px;
-            font-weight: 700;
-            border-radius: 20px;
-            background: var(--surface-elevated);
-            border: 1px solid var(--border);
-            cursor: pointer;
-            color: var(--text-muted);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        
-        .analysis-chip.active-all { background: var(--primary); color: #fff; border-color: var(--primary); }
-        .analysis-chip.active-correct { background: var(--success); color: #fff; border-color: var(--success); }
-        .analysis-chip.active-incorrect { background: var(--danger); color: #fff; border-color: var(--danger); }
-        .analysis-chip.active-review { background: var(--warning); color: #fff; border-color: var(--warning); }
-
-        .sol-card { background: var(--surface-elevated); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; margin-top: 12px; text-align: left; }
-        .badge { font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 20px; display: inline-block; margin-bottom: 8px; }
-        .badge-success { background: rgba(16, 185, 129, 0.2); color: var(--success); }
-        .badge-danger { background: rgba(244, 63, 94, 0.2); color: var(--danger); }
-        .badge-warning { background: rgba(251, 191, 36, 0.2); color: var(--warning); }
-
-        /* ==========================================
-           MOBILE RESPONSIVE OVERRIDES
-           ========================================== */
-        @media (max-width: 768px) {
-            header { 
-                padding: 8px 12px; 
-                flex-direction: column;
-                align-items: stretch;
-                gap: 6px;
-            }
-
-            .header-top-row {
-                justify-content: space-between;
-                width: 100%;
-            }
-
-            .header-bottom-row {
-                justify-content: space-between;
-                width: 100%;
-                border-top: 1px solid var(--border);
-                padding-top: 6px;
-            }
-
-            .brand-title { 
-                font-size: 13.5px; 
-            }
-
-            .mobile-palette-btn { display: flex; }
-
-            .portal-layout { grid-template-columns: 1fr; margin: 8px auto; padding: 0 10px; }
-            .sheet-drag-handle, .btn-close-sheet { display: flex; }
-            
-            .palette-box { 
-                position: fixed; 
-                bottom: 0; 
-                left: 0; 
-                right: 0; 
-                z-index: 100; 
-                border-radius: 20px 20px 0 0; 
-                box-shadow: 0 -10px 40px rgba(0,0,0,0.35); 
-                transform: translateY(105%); 
-                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                max-height: 80vh;
-            }
-            .palette-box.open { transform: translateY(0); }
-            .question-box { min-height: auto; padding: 14px; }
-        }
-    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
+<!-- INSTRUCTIONS MODAL OVERLAY -->
+<div class="instructions-modal" id="instructionsModal">
+    <div class="instructions-card">
+        <div class="instructions-header">
+            <h2>Instructions & Marking Details</h2>
+            <button class="btn-close-icon" onclick="exitExam()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="meta-pills">
+            <div class="pill">Duration: <span id="instDuration">-- Mins</span></div>
+            <div class="pill">Maximum Marks: <span id="instMarks">--</span></div>
+        </div>
+        <p class="inst-subhead">Please read the examination rules carefully before starting:</p>
+        
+        <ol class="inst-list">
+            <li>The test contains <strong id="instTotalQ">--</strong> total questions.</li>
+            <li>Each question has <strong>4 options</strong>, out of which only one is correct.</li>
+            <li>You have to finish the test in <strong id="instTimeText">-- minutes</strong>.</li>
+            <li><strong>Correct Answer Marking:</strong> You will be awarded <strong id="instPositiveMarkText" style="color: #10b981;">+1 mark</strong> for every correct response.</li>
+            <li><strong>Negative Marking:</strong> <strong id="instNegativeMarkRule">No negative marking</strong></li>
+            <li>You can view your <strong>Score & Rank</strong> immediately after submitting the test.</li>
+            <li>Check detailed <strong>Solutions & Explanations</strong> after submitting.</li>
+        </ol>
 
+        <div class="inst-actions">
+            <button class="btn-inst-cancel" onclick="exitExam()">Cancel</button>
+            <button class="btn-inst-start" id="startBtnText" onclick="startTestFromInstructions()">Start Test</button>
+        </div>
+    </div>
+</div>
+
+<!-- HEADER BAR -->
 <header>
     <div class="header-top-row">
         <div class="brand-title">
-            <i class="fa-solid fa-graduation-cap" style="color: var(--primary); flex-shrink: 0;"></i> 
+            <i class="fa-solid fa-graduation-cap"></i> 
             <span id="testHeading">Portal Test</span>
         </div>
         <button class="header-btn header-btn-icon btn-exit-btn" onclick="openExitModal()" title="Exit Portal">
@@ -544,23 +53,19 @@
     </div>
 
     <div class="header-bottom-row">
-        <!-- MODE SELECTOR -->
         <select class="mode-select" id="modeSelector" onchange="onModeChange(this.value)">
             <option value="quiz">🎯 Quiz Mode</option>
             <option value="practice">📖 Practice Mode</option>
         </select>
 
-        <!-- TIMER BADGE -->
         <div class="timer-badge" id="timerBadge">
             <i class="fa-regular fa-clock" id="timerIcon"></i> <span id="timerText">00:00</span>
         </div>
 
-        <!-- THEME TOGGLE -->
         <button class="header-btn header-btn-icon" id="themeToggleBtn" onclick="toggleTheme()" title="Toggle Theme">
             <i class="fa-solid fa-moon" id="themeIcon"></i>
         </button>
 
-        <!-- DRAWER / PALETTE TRIGGER BUTTON (MOBILE ONLY) -->
         <button class="header-btn mobile-palette-btn" onclick="toggleMobilePalette()">
             <i class="fa-solid fa-table-cells"></i> <span>Qs</span>
         </button>
@@ -569,20 +74,17 @@
 
 <div class="backdrop" id="drawerBackdrop" onclick="closeMobilePalette()"></div>
 
-<div id="testArea" class="portal-layout">
-    <!-- LEFT MAIN QUESTION CARD -->
+<!-- TEST TAKING INTERFACE -->
+<div id="testArea" class="portal-layout" style="display: none;">
     <div class="question-box">
         <div>
             <div class="q-header">
                 <span class="q-num" id="currentQNum">Question 1</span>
-                <span style="font-size: 12px; color: var(--text-muted); font-weight: 600;" id="modeBadge">
-                    <i class="fa-solid fa-shield-halved"></i> Quiz Mode
-                </span>
+                <span id="modeBadge" class="mode-pill"><i class="fa-solid fa-shield-halved"></i> Quiz Mode</span>
             </div>
-            <div class="q-text" id="questionText">Loading...</div>
+            <div class="q-text" id="questionText">Loading question...</div>
             <div class="options-grid" id="optionsContainer"></div>
 
-            <!-- PRACTICE EXPLANATION BOX -->
             <div class="practice-explanation" id="practiceExplanation">
                 <h5><i class="fa-solid fa-circle-info"></i> Explanation / Solution</h5>
                 <p id="explanationText">Select an option to view explanation.</p>
@@ -609,27 +111,28 @@
         </div>
     </div>
 
-    <!-- RIGHT SIDEBAR / MOBILE DRAWER -->
+    <!-- QUESTION PALETTE / DRAWER -->
     <div class="palette-box" id="paletteBox">
         <div>
             <div class="sheet-drag-handle"></div>
             <div class="palette-header">
-                <div class="palette-title"><i class="fa-solid fa-list-check" style="color: var(--primary);"></i> Question Navigator</div>
+                <div class="palette-title"><i class="fa-solid fa-list-check"></i> Question Navigator</div>
                 <button class="btn-close-sheet" onclick="closeMobilePalette()"><i class="fa-solid fa-xmark"></i></button>
             </div>
             
             <div class="filter-chips">
                 <div class="chip active" onclick="filterPalette('all', this)">All</div>
                 <div class="chip" onclick="filterPalette('answered', this)">Attempted</div>
+                <div class="chip" onclick="filterPalette('unanswered', this)">Unanswered</div>
                 <div class="chip" onclick="filterPalette('review', this)">Review</div>
             </div>
 
             <div class="palette-grid" id="paletteGrid"></div>
             
             <div class="legend">
-                <div class="legend-item"><div class="dot" style="background: var(--success);"></div> Attempted</div>
-                <div class="legend-item"><div class="dot" style="background: var(--warning);"></div> Review</div>
-                <div class="legend-item"><div class="dot" style="background: var(--unattempted-bg); border:1px solid var(--border);"></div> Unattempted</div>
+                <div class="legend-item"><div class="dot dot-success"></div> Attempted</div>
+                <div class="legend-item"><div class="dot dot-warning"></div> Review</div>
+                <div class="legend-item"><div class="dot dot-unattempted"></div> Unanswered</div>
             </div>
         </div>
 
@@ -641,742 +144,143 @@
     </div>
 </div>
 
-<!-- EXIT CONFIRMATION MODAL -->
+<!-- EXIT MODAL -->
 <div class="modal-overlay" id="exitModal">
     <div class="modal-card">
-        <i class="fa-solid fa-triangle-exclamation" style="font-size: 36px; color: var(--danger); margin-bottom: 10px;"></i>
-        <h3 style="font-size: 17px; margin-bottom: 6px;">Exit Examination?</h3>
-        <p style="font-size: 13px; color: var(--text-muted);">Aapka current test progress lose ho jayega. Exit karna chahte hain?</p>
+        <i class="fa-solid fa-triangle-exclamation modal-icon-warn"></i>
+        <h3>Exit Examination?</h3>
+        <p>Aapka current test progress local draft me save rahega. Exit karna chahte hain?</p>
         <div class="modal-actions">
-            <button style="background: var(--surface-elevated); color: var(--text-main); border: 1px solid var(--border);" onclick="closeExitModal()">Continue</button>
-            <button style="background: var(--danger); color: #fff;" onclick="exitExamConfirmed()">Exit</button>
+            <button class="btn-cancel" onclick="closeExitModal()">Continue</button>
+            <button class="btn-confirm-exit" onclick="exitExamConfirmed()">Exit</button>
         </div>
     </div>
 </div>
 
-<!-- RESULT DISPLAY AREA -->
+<!-- COMPREHENSIVE RESULT ANALYSIS DASHBOARD -->
 <div id="resultArea" style="display: none;">
-    <div class="result-wrapper">
-        <i class="fa-solid fa-circle-check" style="font-size: 50px; color: var(--success);"></i>
-        <h2 style="margin-top: 14px; font-size: 22px; font-weight: 800;">Test Completed!</h2>
-        <p style="color: var(--text-muted); font-size: 13px; margin-top: 4px;" id="resultStatusMsg">Performance score synced successfully.</p>
-
-        <div class="score-card">
-            <div class="stat-item">
-                <h3 id="statScore">0/0</h3>
-                <p>Score</p>
+    <div class="result-container">
+        
+        <!-- CARD 1: USER RANK & SCORE HEADER -->
+        <div class="user-score-card">
+            <div class="card-header-icons">
+                <button class="btn-circle" onclick="exitExam()"><i class="fa-solid fa-xmark"></i></button>
+                <div class="share-actions">
+                    <button class="btn-circle" onclick="shareOnWhatsApp()"><i class="fa-brands fa-whatsapp"></i></button>
+                    <button class="btn-circle" onclick="shareNative()"><i class="fa-solid fa-share-nodes"></i></button>
+                </div>
             </div>
-            <div class="stat-item">
-                <h3 id="statAccuracy" style="color: var(--success);">0%</h3>
-                <p>Accuracy</p>
-            </div>
-            <div class="stat-item">
-                <h3 id="statTime">0s</h3>
-                <p>Time Taken</p>
-            </div>
-        </div>
-
-        <div class="share-box">
-            <h4><i class="fa-solid fa-share-nodes" style="color: var(--primary);"></i> Share Your Scorecard</h4>
-            <div class="share-buttons">
-                <button class="btn-share btn-wa" onclick="shareOnWhatsApp()"><i class="fa-brands fa-whatsapp"></i> WhatsApp</button>
-                <button class="btn-share btn-tg" onclick="shareOnTelegram()"><i class="fa-brands fa-telegram"></i> Telegram</button>
-                <button class="btn-share btn-native" onclick="shareNative()"><i class="fa-solid fa-share"></i> Share</button>
-                <button class="btn-share btn-copy" onclick="copyResultLink()"><i class="fa-solid fa-copy"></i> Copy Link</button>
-            </div>
-        </div>
-
-        <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 16px;">
-            <button class="btn btn-primary" onclick="toggleSolutions()"><i class="fa-solid fa-eye"></i> View Answer Key</button>
-            <button class="btn btn-warning" onclick="reattemptTest()"><i class="fa-solid fa-rotate-right"></i> Reattempt Test</button>
-            <button class="btn btn-outline" onclick="window.location.href='tests.html'"><i class="fa-solid fa-house"></i> Tests Home</button>
-        </div>
-
-        <!-- SOLUTIONS AND ANSWER ANALYSIS SECTION -->
-        <div id="solutionsContainer" style="display: none; margin-top: 30px;">
-            <h3 style="text-align: left; margin-bottom: 12px; font-size: 16px;">
-                <i class="fa-solid fa-magnifying-glass-chart" style="color: var(--primary);"></i> Answer Analysis
-            </h3>
             
-            <!-- ANALYSIS FILTER BUTTONS -->
-            <div class="analysis-filter-bar">
-                <button class="analysis-chip active-all" id="btnFilterAll" onclick="filterSolutions('all')">
-                    <i class="fa-solid fa-list"></i> All (<span id="cntAll">0</span>)
-                </button>
-                <button class="analysis-chip" id="btnFilterCorrect" onclick="filterSolutions('correct')">
-                    <i class="fa-solid fa-circle-check" style="color: var(--success);"></i> Correct (<span id="cntCorrect">0</span>)
-                </button>
-                <button class="analysis-chip" id="btnFilterIncorrect" onclick="filterSolutions('incorrect')">
-                    <i class="fa-solid fa-circle-xmark" style="color: var(--danger);"></i> Incorrect (<span id="cntIncorrect">0</span>)
-                </button>
-                <button class="analysis-chip" id="btnFilterReview" onclick="filterSolutions('review')">
-                    <i class="fa-solid fa-circle-question" style="color: var(--warning);"></i> Unanswered / Review (<span id="cntReview">0</span>)
-                </button>
+            <div class="user-profile">
+                <div class="avatar-box">
+                    <img id="resUserProfilePic" src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="Profile" style="width: 100%; height: 100%; object-fit: cover;">
+                </div>
+                <h3 id="resUserName">Student Name</h3>
+                <div class="test-sub-title" id="resTestTitle">Portal Test</div>
             </div>
 
+            <div class="score-rank-grid">
+                <div class="stat-box">
+                    <span class="stat-label">Score</span>
+                    <h2 class="stat-value text-green" id="resScoreVal">0.00</h2>
+                    <span class="stat-total" id="resScoreTotal">Out of 10.00</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Rank</span>
+                    <h2 class="stat-value text-blue" id="resRankVal">--</h2>
+                    <span class="stat-total" id="resRankTotal">Calculating...</span>
+                </div>
+            </div>
+
+            <div class="time-taken-bar">
+                <i class="fa-regular fa-clock"></i> Time Taken : <span id="resTimeTaken">00 min, 00 sec</span>
+            </div>
+        </div>
+
+        <!-- LEADERBOARD BUTTON -->
+        <button class="btn-leaderboard" onclick="viewLeaderboard()">
+            <i class="fa-solid fa-trophy"></i> LEADERBOARD
+        </button>
+
+        <!-- CARD 2: BRIEF ANALYSIS WITH DONUT CHART -->
+        <div class="dashboard-card">
+            <h3 class="dash-card-title">Brief Analysis</h3>
+            
+            <div class="metrics-legend">
+                <span class="metric-item"><i class="dot dot-success"></i> Correct - <b id="cntCorrectVal">0</b></span>
+                <span class="divider">|</span>
+                <span class="metric-item"><i class="dot dot-danger"></i> Wrong - <b id="cntWrongVal">0</b></span>
+                <span class="divider">|</span>
+                <span class="metric-item"><i class="dot dot-warning"></i> Skipped - <b id="cntSkippedVal">0</b></span>
+            </div>
+
+            <div class="chart-wrapper">
+                <canvas id="briefAnalysisChart"></canvas>
+                <div class="chart-center-label">Brief</div>
+            </div>
+        </div>
+
+        <!-- CARD 3: ACCURACY & SCORE CHARTS -->
+        <div class="dashboard-card">
+            <h3 class="dash-card-title">Accuracy & Score</h3>
+            <div class="twin-charts-grid">
+                <div class="chart-box">
+                    <div class="mini-chart-wrapper">
+                        <canvas id="accuracyChart"></canvas>
+                        <div class="mini-center-label">
+                            <span>Accuracy</span>
+                            <strong id="accuracyValText">0 %</strong>
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-box">
+                    <div class="mini-chart-wrapper">
+                        <canvas id="scoreChart"></canvas>
+                        <div class="mini-center-label">
+                            <span>Score</span>
+                            <strong id="scoreValText">0 %</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CARD 4: QUESTION ANALYSIS GRID -->
+        <div class="dashboard-card">
+            <h3 class="dash-card-title">Question Analysis</h3>
+            <div class="metrics-legend">
+                <span class="metric-item"><i class="dot dot-success"></i> Correct - <b id="qaCorrect">00</b></span>
+                <span class="divider">|</span>
+                <span class="metric-item"><i class="dot dot-danger"></i> Wrong - <b id="qaWrong">00</b></span>
+                <span class="divider">|</span>
+                <span class="metric-item"><i class="dot dot-warning"></i> Skipped - <b id="qaSkipped">00</b></span>
+            </div>
+
+            <div class="analysis-q-grid" id="analysisQGrid"></div>
+        </div>
+
+        <!-- SOLUTIONS PANEL -->
+        <div id="solutionsContainer" class="dashboard-card" style="display: none; margin-top: 16px;">
+            <h3 class="dash-card-title"><i class="fa-solid fa-magnifying-glass-chart"></i> Detailed Solutions</h3>
+            <div class="analysis-filter-bar" style="display:flex; gap:8px; overflow-x:auto; padding-bottom:8px; margin-bottom:12px;">
+                <button class="analysis-chip active-all" id="btnFilterAll" onclick="filterSolutions('all', this)">All (<span id="cntAll">0</span>)</button>
+                <button class="analysis-chip" id="btnFilterCorrect" onclick="filterSolutions('correct', this)">Correct (<span id="cntCorrect">0</span>)</button>
+                <button class="analysis-chip" id="btnFilterIncorrect" onclick="filterSolutions('incorrect', this)">Wrong (<span id="cntIncorrect">0</span>)</button>
+                <button class="analysis-chip" id="btnFilterSkipped" onclick="filterSolutions('skipped', this)">Skipped (<span id="cntSkipped">0</span>)</button>
+                <button class="analysis-chip" id="btnFilterReview" onclick="filterSolutions('review', this)">Review (<span id="cntReview">0</span>)</button>
+            </div>
             <div id="solutionsList"></div>
+        </div>
+
+        <!-- BOTTOM FIXED ACTION BUTTONS -->
+        <div class="result-footer-actions">
+            <button class="btn-footer btn-reattempt" onclick="reattemptTest()">Re Attempt</button>
+            <button class="btn-footer btn-solution" onclick="toggleSolutions()">Solution</button>
         </div>
     </div>
 </div>
 
 <script src="supabase.js"></script>
-<script>
-    let currentTest = null, questions = [], currentIndex = 0;
-    let userAnswers = {}, reviewStatus = {};
-    let timerInterval = null, isTimerPaused = false;
-    let totalTimeLimitSec = 0, timeRemaining = 0, totalTimeSpentSec = 0;
-    let currentFilter = 'all';
-    let currentMode = 'quiz';
-    let currentAnalysisFilter = 'all';
-    let lastCalculatedScore = "0/0", lastAccuracy = "0%", lastTimeTaken = "0s";
-    let isSavingProgress = false;
-
-    function initTheme() {
-        const savedTheme = localStorage.getItem('theme_preference');
-        const icon = document.getElementById('themeIcon');
-        
-        if (savedTheme) {
-            document.documentElement.setAttribute('data-theme', savedTheme);
-            if (icon) icon.className = savedTheme === 'light' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
-        } else {
-            const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
-            const defaultTheme = prefersLight ? 'light' : 'dark';
-            document.documentElement.setAttribute('data-theme', defaultTheme);
-            if (icon) icon.className = prefersLight ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
-        }
-    }
-
-    function toggleTheme() {
-        const currentTheme = document.documentElement.getAttribute('data-theme');
-        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-        const icon = document.getElementById('themeIcon');
-
-        document.documentElement.setAttribute('data-theme', newTheme);
-        localStorage.setItem('theme_preference', newTheme);
-        
-        if (icon) {
-            icon.className = newTheme === 'light' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
-        }
-    }
-
-    window.onload = function() {
-        initTheme();
-        const urlParams = new URLSearchParams(window.location.search);
-        const testId = urlParams.get('id');
-        const urlMode = urlParams.get('mode');
-
-        if (urlMode === 'practice' || urlMode === 'quiz') {
-            currentMode = urlMode;
-        }
-        document.getElementById('modeSelector').value = currentMode;
-
-        if (testId) { loadTestDetails(testId); } 
-        else { alert("Test ID missing!"); window.location.href = "tests.html"; }
-    };
-
-    function onModeChange(newMode) {
-        currentMode = newMode;
-        applyModeUI();
-        loadQuestion(currentIndex);
-    }
-
-    function applyModeUI() {
-        const modeBadge = document.getElementById('modeBadge');
-        const clearBtn = document.getElementById('clearBtn');
-
-        if (currentMode === 'practice') {
-            modeBadge.innerHTML = `<i class="fa-solid fa-book-open"></i> Practice Mode`;
-            clearBtn.style.display = 'none';
-        } else {
-            modeBadge.innerHTML = `<i class="fa-solid fa-shield-halved"></i> Quiz Mode`;
-            clearBtn.style.display = 'inline-flex';
-        }
-
-        startTimer();
-    }
-
-    function toggleMobilePalette() {
-        const box = document.getElementById("paletteBox");
-        const backdrop = document.getElementById("drawerBackdrop");
-        if (box.classList.contains("open")) {
-            closeMobilePalette();
-        } else {
-            box.classList.add("open");
-            backdrop.classList.add("active");
-        }
-    }
-
-    function closeMobilePalette() {
-        document.getElementById("paletteBox").classList.remove("open");
-        document.getElementById("drawerBackdrop").classList.remove("active");
-    }
-
-    /* LOAD TEST DETAILS WITH LOCAL DRAFT RESUME CAPABILITY */
-    async function loadTestDetails(id) {
-        try {
-            const { data, error } = await window.supabaseClient.from('tests').select('*').eq('id', id).single();
-            if (error) throw error;
-            currentTest = data;
-            questions = currentTest.questions_data || [];
-            document.getElementById("testHeading").innerText = currentTest.title || "Exam Portal";
-            
-            totalTimeLimitSec = (currentTest.time_limit_mins || 15) * 60;
-
-            // 1. Check LocalStorage First for Resume Draft
-            const localDraftKey = `test_draft_${currentTest.id}`;
-            let savedState = null;
-            try {
-                const rawDraft = localStorage.getItem(localDraftKey);
-                if (rawDraft) savedState = JSON.parse(rawDraft);
-            } catch(e) { console.warn("Local storage parse error", e); }
-
-            // 2. Check Supabase User Progress if not found locally
-            if (!savedState && window.supabaseClient) {
-                const { data: { user } } = await window.supabaseClient.auth.getUser();
-                if (user) {
-                    const { data: progressData } = await window.supabaseClient
-                        .from('test_progress')
-                        .select('*')
-                        .eq('test_id', currentTest.id)
-                        .eq('user_id', user.id)
-                        .maybeSingle();
-                    if (progressData) savedState = progressData;
-                }
-            }
-
-            if (savedState) {
-                userAnswers = savedState.userAnswers || savedState.user_answers || {};
-                reviewStatus = savedState.review_status || {};
-                timeRemaining = savedState.time_remaining !== undefined ? savedState.time_remaining : totalTimeLimitSec;
-                totalTimeSpentSec = savedState.total_time_spent_sec || (totalTimeLimitSec - timeRemaining);
-            } else {
-                timeRemaining = totalTimeLimitSec;
-                totalTimeSpentSec = 0;
-            }
-
-            applyModeUI();
-            renderPalette();
-            loadQuestion(0);
-        } catch (err) { 
-            alert("Error: " + err.message); 
-        }
-    }
-
-    /* SINGLE UNIFIED STATE SAVER (LOCALSTORAGE + SUPABASE) */
-    async function saveCurrentState() {
-        if (!currentTest || isSavingProgress) return;
-        isSavingProgress = true;
-        try {
-            const draftKey = `test_draft_${currentTest.id}`;
-            const draftPayload = {
-                test_id: currentTest.id,
-                userAnswers: userAnswers,
-                user_answers: userAnswers,
-                review_status: reviewStatus,
-                time_remaining: timeRemaining,
-                total_time_spent_sec: totalTimeSpentSec,
-                updated_at: new Date().toISOString()
-            };
-
-            // Always save to LocalStorage for instant Resume functionality
-            localStorage.setItem(draftKey, JSON.stringify(draftPayload));
-
-            // Save to Supabase if logged in
-            if (window.supabaseClient) {
-                const { data: { user } } = await window.supabaseClient.auth.getUser();
-                if (user) {
-                    await window.supabaseClient.from('test_progress').upsert({
-                        user_id: user.id,
-                        test_id: currentTest.id,
-                        user_answers: userAnswers,
-                        review_status: reviewStatus,
-                        time_remaining: timeRemaining,
-                        total_time_spent_sec: totalTimeSpentSec,
-                        updated_at: new Date().toISOString()
-                    }, { onConflict: 'test_id,user_id' });
-                }
-            }
-        } catch (err) {
-            console.error("Error saving progress:", err);
-        } finally {
-            isSavingProgress = false;
-        }
-    }
-
-    function renderPalette() {
-        const grid = document.getElementById("paletteGrid");
-        grid.innerHTML = "";
-
-        questions.forEach((_, idx) => {
-            const isAnswered = userAnswers[idx] !== undefined;
-            const isReview = reviewStatus[idx];
-
-            if (currentFilter === 'answered' && !isAnswered) return;
-            if (currentFilter === 'review' && !isReview) return;
-
-            const btn = document.createElement("button");
-            btn.className = `p-btn ${getQuestionClass(idx)}`;
-            btn.innerText = idx + 1;
-            btn.onclick = () => { loadQuestion(idx); closeMobilePalette(); };
-            grid.appendChild(btn);
-        });
-    }
-
-    function filterPalette(filter, el) {
-        currentFilter = filter;
-        document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-        el.classList.add('active');
-        renderPalette();
-    }
-
-    function getQuestionClass(idx) {
-        let cls = "";
-        if (idx === currentIndex) cls += " active";
-        if (reviewStatus[idx]) return cls + " review";
-        if (userAnswers[idx] !== undefined) return cls + " answered";
-        return cls + " unanswered";
-    }
-
-    function loadQuestion(idx) {
-        if (idx < 0 || idx >= questions.length) return;
-        currentIndex = idx;
-        const q = questions[idx];
-
-        document.getElementById("currentQNum").innerText = `Q${idx + 1} of ${questions.length}`;
-        document.getElementById("questionText").innerText = q.question_text || q.question || q.qText || '';
-
-        const optionsBox = document.getElementById("optionsContainer");
-        optionsBox.innerHTML = "";
-        const options = q.options || q.opts || [q.option1, q.option2, q.option3, q.option4];
-
-        const userSelected = userAnswers[idx];
-        const correctIdx = parseCorrectOption(q);
-        const explanationBox = document.getElementById("practiceExplanation");
-
-        if (currentMode === 'practice') {
-            if (userSelected !== undefined) {
-                pauseTimer();
-            } else {
-                resumeTimer();
-            }
-        } else {
-            resumeTimer();
-        }
-
-        options.forEach((opt, oIdx) => {
-            const card = document.createElement("div");
-            let cardClasses = `option-card`;
-
-            if (currentMode === 'practice' && userSelected !== undefined) {
-                cardClasses += ' locked';
-                if (oIdx === correctIdx) {
-                    cardClasses += ' practice-correct';
-                } else if (oIdx === userSelected) {
-                    cardClasses += ' practice-incorrect';
-                }
-            } else {
-                if (userSelected === oIdx) cardClasses += ' selected';
-            }
-
-            card.className = cardClasses;
-            card.onclick = () => selectOption(oIdx);
-            card.innerHTML = `<div class="opt-prefix">${String.fromCharCode(65 + oIdx)}</div><div>${opt}</div>`;
-            optionsBox.appendChild(card);
-        });
-
-        if (currentMode === 'practice' && userSelected !== undefined) {
-            explanationBox.style.display = 'block';
-            const expText = q.explanation || q.solution || q.exp || "Correct Answer: Option " + String.fromCharCode(65 + correctIdx);
-            document.getElementById("explanationText").innerText = expText;
-        } else {
-            explanationBox.style.display = 'none';
-        }
-
-        const nextBtn = document.getElementById("nextBtn");
-        if (currentIndex === questions.length - 1) {
-            nextBtn.innerHTML = `Submit Test <i class="fa-solid fa-paper-plane"></i>`;
-            nextBtn.classList.add("btn-submit-action");
-        } else {
-            nextBtn.innerHTML = `Next <i class="fa-solid fa-chevron-right"></i>`;
-            nextBtn.classList.remove("btn-submit-action");
-        }
-
-        renderPalette();
-    }
-
-    function handleNextOrSubmit() {
-        if (currentIndex === questions.length - 1) {
-            confirmSubmission();
-        } else {
-            navigateQuestion(1);
-        }
-    }
-
-    function selectOption(oIdx) {
-        if (currentMode === 'practice' && userAnswers[currentIndex] !== undefined) return;
-
-        userAnswers[currentIndex] = oIdx;
-        delete reviewStatus[currentIndex];
-
-        if (currentMode === 'practice') {
-            pauseTimer();
-        }
-
-        saveCurrentState();
-        loadQuestion(currentIndex);
-    }
-
-    function clearResponse() {
-        if (currentMode === 'practice') return;
-        delete userAnswers[currentIndex];
-        delete reviewStatus[currentIndex];
-        saveCurrentState();
-        loadQuestion(currentIndex);
-    }
-
-    function markForReview() {
-        reviewStatus[currentIndex] = true;
-        saveCurrentState();
-        if (currentIndex < questions.length - 1) {
-            navigateQuestion(1);
-        } else {
-            loadQuestion(currentIndex);
-        }
-    }
-
-    function navigateQuestion(direction) {
-        const nextIdx = currentIndex + direction;
-        if (nextIdx >= 0 && nextIdx < questions.length) loadQuestion(nextIdx);
-    }
-
-    function updateTimerUI() {
-        let mins = Math.floor(timeRemaining / 60), secs = timeRemaining % 60;
-        document.getElementById("timerText").innerText = `${mins < 10 ? "0" : ""}${mins}:${secs < 10 ? "0" : ""}${secs}`;
-    }
-
-    function pauseTimer() {
-        isTimerPaused = true;
-        const timerBadge = document.getElementById('timerBadge');
-        const timerIcon = document.getElementById('timerIcon');
-        timerBadge.classList.add('paused');
-        timerIcon.className = "fa-solid fa-pause";
-    }
-
-    function resumeTimer() {
-        isTimerPaused = false;
-        const timerBadge = document.getElementById('timerBadge');
-        const timerIcon = document.getElementById('timerIcon');
-        timerBadge.classList.remove('paused');
-        timerIcon.className = "fa-regular fa-clock";
-    }
-
-    function startTimer() {
-        if (timerInterval) clearInterval(timerInterval);
-        updateTimerUI();
-
-        timerInterval = setInterval(() => {
-            if (isTimerPaused) return;
-
-            timeRemaining--;
-            totalTimeSpentSec++;
-            updateTimerUI();
-
-            // Auto-sync progress every 5 seconds
-            if (totalTimeSpentSec % 5 === 0) {
-                saveCurrentState();
-            }
-
-            if (timeRemaining <= 0) {
-                clearInterval(timerInterval);
-                alert("Time limit reached!");
-                submitTest();
-            }
-        }, 1000);
-    }
-
-    function openExitModal() { document.getElementById("exitModal").style.display = "flex"; }
-    function closeExitModal() { document.getElementById("exitModal").style.display = "none"; }
-    
-    /* EXIT CONFIRMED - RETAINS DRAFT FOR RESUME FUNCTIONALITY */
-    async function exitExamConfirmed() {
-        if (timerInterval) clearInterval(timerInterval);
-        await saveCurrentState();
-        setTimeout(() => {
-            window.location.href = "tests.html";
-        }, 100);
-    }
-
-    function parseCorrectOption(q) {
-        if (!q) return 0;
-        let val = q.correct_option !== undefined ? q.correct_option : (q.correct !== undefined ? q.correct : (q.ans !== undefined ? q.ans : 0));
-        if (typeof val === 'number') return val;
-        let str = val.toString().trim().toUpperCase();
-        if (str === 'A' || str === '0') return 0;
-        if (str === 'B' || str === '1') return 1;
-        if (str === 'C' || str === '2') return 2;
-        if (str === 'D' || str === '3') return 3;
-        return parseInt(str, 10) || 0;
-    }
-
-    function confirmSubmission() {
-        let totalAns = Object.keys(userAnswers).length;
-        if (confirm(`Aapne ${totalAns}/${questions.length} questions attempt kiye hain. Submit karna chahte hain?`)) {
-            submitTest();
-        }
-    }
-
-    function trackTestActivityLocally(testData, score, totalMarks, timeTakenSec) {
-        try {
-            let recent = JSON.parse(localStorage.getItem("recentFiles") || "[]");
-            let mins = Math.floor(timeTakenSec / 60);
-            let secs = timeTakenSec % 60;
-            let formattedTime = `${mins}m ${secs}s`;
-            let testUrl = `take-test.html?id=${testData.id}`;
-
-            let existingIndex = recent.findIndex(f => f.testId === testData.id || f.title === testData.title);
-            let viewCount = 1;
-            if (existingIndex !== -1) {
-                viewCount = (recent[existingIndex].viewCount || 1) + 1;
-                recent.splice(existingIndex, 1);
-            }
-
-            recent.unshift({
-                title: testData.title || "Online Test",
-                testId: testData.id,
-                isTest: true,
-                url: testUrl,
-                meta: `Score: ${score}/${totalMarks} • Time: ${formattedTime}`,
-                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                downloaded: true,
-                isPurchased: true,
-                viewCount: viewCount
-            });
-
-            recent = recent.slice(0, 15);
-            localStorage.setItem("recentFiles", JSON.stringify(recent));
-        } catch (e) {
-            console.error("Test Tracking Error: ", e);
-        }
-    }
-
-    /* SUBMIT TEST - CLEARS LOCAL DRAFT & SYNCS RESULT */
-    async function submitTest() {
-        if (timerInterval) clearInterval(timerInterval);
-
-        let correctCount = 0, wrongCount = 0;
-        let marksPerQ = parseFloat(currentTest.marks_per_question) || 1;
-        let negMarking = parseFloat(currentTest.negative_marking) || 0;
-
-        questions.forEach((q, idx) => {
-            let correctIdx = parseCorrectOption(q);
-            if (userAnswers[idx] !== undefined) {
-                if (userAnswers[idx] === correctIdx) correctCount++;
-                else wrongCount++;
-            }
-        });
-
-        let totalScore = Math.max(0, (correctCount * marksPerQ) - (wrongCount * negMarking));
-        let totalMarks = questions.length * marksPerQ;
-        let accuracy = questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 0;
-
-        lastCalculatedScore = `${totalScore}/${totalMarks}`;
-        lastAccuracy = `${accuracy}%`;
-        lastTimeTaken = `${Math.floor(totalTimeSpentSec / 60)}m ${totalTimeSpentSec % 60}s`;
-
-        // Clear local draft upon submission
-        if (currentTest) {
-            localStorage.removeItem(`test_draft_${currentTest.id}`);
-        }
-
-        trackTestActivityLocally(currentTest, totalScore, totalMarks, totalTimeSpentSec);
-
-        document.getElementById("testArea").style.display = "none";
-        document.getElementById("resultArea").style.display = "block";
-
-        document.getElementById("statScore").innerText = lastCalculatedScore;
-        document.getElementById("statAccuracy").innerText = lastAccuracy;
-        document.getElementById("statTime").innerText = lastTimeTaken;
-
-        // Sync with Supabase
-        try {
-            if (window.supabaseClient) {
-                const { data: { user } } = await window.supabaseClient.auth.getUser();
-                if (user) {
-                    await window.supabaseClient.from('test_progress').delete().eq('test_id', currentTest.id).eq('user_id', user.id);
-
-                    await window.supabaseClient.from('test_results').upsert([{
-                        test_id: currentTest.id, 
-                        user_id: user.id, 
-                        score: totalScore, 
-                        total_marks: totalMarks,
-                        correct_answers: correctCount, 
-                        wrong_answers: wrongCount, 
-                        time_taken_sec: totalTimeSpentSec,
-                        updated_at: new Date().toISOString()
-                    }], { onConflict: 'test_id,user_id' });
-                }
-            }
-        } catch (err) { 
-            console.error("Database sync error:", err); 
-        }
-    }
-
-    function generateShareText() {
-        const title = currentTest ? currentTest.title : "Exam";
-        return `🎯 *Test Result Scorecard*\n📚 *Test:* ${title}\n📊 *Score:* ${lastCalculatedScore}\n⚡ *Accuracy:* ${lastAccuracy}\n⏱️ *Time:* ${lastTimeTaken}\n\nAap bhi test attempt karein! 👇\n${window.location.href}`;
-    }
-
-    function shareOnWhatsApp() {
-        const text = encodeURIComponent(generateShareText());
-        window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
-    }
-
-    function shareOnTelegram() {
-        const text = encodeURIComponent(generateShareText());
-        window.open(`https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${text}`, '_blank');
-    }
-
-    function shareNative() {
-        if (navigator.share) {
-            navigator.share({
-                title: currentTest ? currentTest.title : "Test Scorecard",
-                text: generateShareText(),
-                url: window.location.href
-            }).catch(() => {});
-        } else {
-            copyResultLink();
-        }
-    }
-
-    function copyResultLink() {
-        navigator.clipboard.writeText(generateShareText()).then(() => {
-            alert("Score summary copy ho gaya hai!");
-        }).catch(() => {
-            alert("Copy error.");
-        });
-    }
-
-    async function reattemptTest() {
-        if (!currentTest) return;
-
-        if (confirm("Kya aap reattempt karna chahte hain? Purana progress reset ho jayega.")) {
-            // Remove local draft
-            localStorage.removeItem(`test_draft_${currentTest.id}`);
-
-            try {
-                if (window.supabaseClient) {
-                    const { data: { user } } = await window.supabaseClient.auth.getUser();
-                    if (user) {
-                        await window.supabaseClient.from('test_progress').delete().eq('test_id', currentTest.id).eq('user_id', user.id);
-                    }
-                }
-            } catch (e) {
-                console.error("Error clearing progress on reattempt:", e);
-            }
-
-            userAnswers = {};
-            reviewStatus = {};
-            currentIndex = 0;
-            totalTimeSpentSec = 0;
-            timeRemaining = totalTimeLimitSec;
-
-            document.getElementById("resultArea").style.display = "none";
-            document.getElementById("solutionsContainer").style.display = "none";
-            document.getElementById("testArea").style.display = "grid";
-
-            applyModeUI();
-            renderPalette();
-            loadQuestion(0);
-        }
-    }
-
-    /* ANSWER ANALYSIS & SOLUTION FILTER LOGIC */
-    function toggleSolutions() {
-        const solContainer = document.getElementById("solutionsContainer");
-        if (solContainer.style.display === "none") {
-            renderSolutions();
-            solContainer.style.display = "block";
-        } else {
-            solContainer.style.display = "none";
-        }
-    }
-
-    function filterSolutions(type) {
-        currentAnalysisFilter = type;
-
-        const btnAll = document.getElementById('btnFilterAll');
-        const btnCorrect = document.getElementById('btnFilterCorrect');
-        const btnIncorrect = document.getElementById('btnFilterIncorrect');
-        const btnReview = document.getElementById('btnFilterReview');
-
-        [btnAll, btnCorrect, btnIncorrect, btnReview].forEach(btn => {
-            if (btn) {
-                btn.className = 'analysis-chip';
-            }
-        });
-
-        if (type === 'all') btnAll.classList.add('active-all');
-        if (type === 'correct') btnCorrect.classList.add('active-correct');
-        if (type === 'incorrect') btnIncorrect.classList.add('active-incorrect');
-        if (type === 'review') btnReview.classList.add('active-review');
-
-        renderSolutions();
-    }
-
-    function renderSolutions() {
-        let html = "";
-        let cntAll = questions.length;
-        let cntCorrect = 0;
-        let cntIncorrect = 0;
-        let cntReview = 0;
-
-        questions.forEach((q, idx) => {
-            let correctIdx = parseCorrectOption(q);
-            let userAnsIdx = userAnswers[idx];
-            let isCorrect = userAnsIdx === correctIdx;
-            let isUnanswered = userAnsIdx === undefined;
-
-            if (isCorrect) cntCorrect++;
-            else if (!isUnanswered) cntIncorrect++;
-            else cntReview++;
-
-            if (currentAnalysisFilter === 'correct' && !isCorrect) return;
-            if (currentAnalysisFilter === 'incorrect' && (isCorrect || isUnanswered)) return;
-            if (currentAnalysisFilter === 'review' && !isUnanswered) return;
-
-            let options = q.options || q.opts || [q.option1, q.option2, q.option3, q.option4];
-            let badgeClass = isCorrect ? 'badge-success' : (isUnanswered ? 'badge-warning' : 'badge-danger');
-            let badgeText = isCorrect ? '✔ Correct' : (isUnanswered ? '⚠ Unanswered / Skipped' : '✖ Incorrect');
-            let exp = q.explanation || q.solution || q.exp;
-
-            html += `
-                <div class="sol-card">
-                    <span class="badge ${badgeClass}">${badgeText}</span>
-                    <h4 style="margin-bottom: 8px; font-size:14px; color:var(--text-main);">Q${idx + 1}. ${q.question_text || q.question || ''}</h4>
-                    <p style="font-size: 13px; margin-bottom: 4px; color:var(--text-muted);">
-                        <b>Your Choice:</b> ${userAnsIdx !== undefined ? `<span style="color:${isCorrect ? 'var(--success)' : 'var(--danger)'}">${options[userAnsIdx] || 'Option ' + (userAnsIdx + 1)}</span>` : '<i>None (Unanswered)</i>'}
-                    </p>
-                    <p style="font-size: 13px; color: var(--success);">
-                        <b>Correct Answer:</b> ${options[correctIdx] || 'Option ' + (correctIdx + 1)}
-                    </p>
-                    ${exp ? `<p style="font-size: 12.5px; color: var(--text-muted); margin-top: 8px; border-top: 1px dashed var(--border); padding-top: 6px;"><b>Explanation:</b> ${exp}</p>` : ''}
-                </div>
-            `;
-        });
-
-        document.getElementById('cntAll').innerText = cntAll;
-        document.getElementById('cntCorrect').innerText = cntCorrect;
-        document.getElementById('cntIncorrect').innerText = cntIncorrect;
-        document.getElementById('cntReview').innerText = cntReview;
-
-        if (html === "") {
-            html = `<div style="padding: 20px; text-align: center; color: var(--text-muted); font-size: 13px;">Is category me koi question nahi hai.</div>`;
-        }
-
-        document.getElementById("solutionsList").innerHTML = html;
-    }
-</script>
-
-
+<script src="testscript.js"></script>
 </body>
 </html>

@@ -121,7 +121,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     scanLocalDrafts();
     await fetchUserPreviousResults();
-    fetchStudentTests();
+    await fetchStudentTests();
+
+    // Catch Leaderboard Query Parameter from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab');
+    if (tabParam === 'leaderboard') {
+        switchTab('leaderboard');
+    }
 });
 
 function initDarkModeSupport() {
@@ -496,11 +503,12 @@ function renderSubjectStep() {
             (selectedBoard === "BSEB" && (fullText.includes("BSEB") || fullText.includes("BIHAR"))) ||
             fullText.includes(selectedBoard.toUpperCase());
 
+        // Exact Class Match Logic (Bug Fix)
         let classMatch = (selectedClass === "ALL") ||
             (test.class_level && test.class_level.trim() === selectedClass) ||
-            (selectedClass.includes("12") && fullText.includes("12")) ||
-            (selectedClass.includes("11") && fullText.includes("11")) ||
-            (selectedClass.includes("10") && fullText.includes("10"));
+            (selectedClass === "Class 10th" && (fullText.includes("CLASS 10") || fullText.includes("10TH"))) ||
+            (selectedClass === "Class 11th" && (fullText.includes("CLASS 11") || fullText.includes("11TH"))) ||
+            (selectedClass === "Class 12th" && (fullText.includes("CLASS 12") || fullText.includes("12TH")));
 
         if (boardMatch && classMatch && test.subject) {
             availableSubjects.add(test.subject.trim());
@@ -930,11 +938,12 @@ function renderLbSubjectStep() {
             (selectedLbBoard === "BSEB" && (fullText.includes("BSEB") || fullText.includes("BIHAR"))) ||
             fullText.includes(selectedLbBoard.toUpperCase());
 
+        // Exact Class Matching Logic (Bug Fix)
         let classMatch = (selectedLbClass === "ALL") ||
             (t.class_level && t.class_level.trim() === selectedLbClass) ||
-            (selectedLbClass.includes("12") && fullText.includes("12")) ||
-            (selectedLbClass.includes("11") && fullText.includes("11")) ||
-            (selectedLbClass.includes("10") && fullText.includes("10"));
+            (selectedLbClass === "Class 10th" && (fullText.includes("CLASS 10") || fullText.includes("10TH"))) ||
+            (selectedLbClass === "Class 11th" && (fullText.includes("CLASS 11") || fullText.includes("11TH"))) ||
+            (selectedLbClass === "Class 12th" && (fullText.includes("CLASS 12") || fullText.includes("12TH")));
 
         if (boardMatch && classMatch && t.subject) {
             subjects.add(t.subject.trim());
