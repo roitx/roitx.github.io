@@ -85,12 +85,12 @@ async function applyAccessControl() {
   });
 }
 
-// Helper: Auth User Metadata to Profile DB Auto-Sync & Database Permanent Save
+// Helper: Auth User Metadata to Profile DB Auto-Sync & Automatic DB Save
 async function syncUserProfileFromAuth(user, extraMeta = {}) {
   if (!user || !window.supabaseClient) return;
 
   try {
-    // 1. Extract Name & Photo from Google Metadata / Auth Metadata
+    // 1. Extract Name & Photo from Metadata
     const metaName = extraMeta.full_name ||
                      user.user_metadata?.full_name || 
                      user.user_metadata?.name || 
@@ -101,15 +101,15 @@ async function syncUserProfileFromAuth(user, extraMeta = {}) {
 
     const fallbackName = metaName || (user.email ? user.email.split('@')[0] : "User");
 
-    // 2. Fetch current profile fields from Supabase DB
+    // 2. Fetch current profile record
     const { data: profile } = await window.supabaseClient
       .from('profiles')
-      .select('full_name, avatar_url, phone, pincode, role, permissions')
+      .select('*')
       .eq('id', user.id)
       .maybeSingle();
 
-    // 3. Fallback logic: Use Google metadata if DB values are missing/empty
-    const updatedFullName = (profile?.full_name && profile.full_name.trim() !== "")
+    // 3. Fallback logic: Priority given to input metadata when DB values are missing
+    const updatedFullName = (profile?.full_name && profile.full_name.trim() !== "") 
                               ? profile.full_name 
                               : fallbackName;
 
@@ -124,7 +124,7 @@ async function syncUserProfileFromAuth(user, extraMeta = {}) {
     const userRole = profile?.role || (isOwner ? 'superadmin' : 'student');
     const userPerms = profile?.permissions || {};
 
-    // 4. Always Save/Upsert into Supabase Database `profiles` table
+    // 4. Force Upsert directly to `profiles` table in Supabase
     const { error: upsertError } = await window.supabaseClient
       .from('profiles')
       .upsert({
@@ -140,7 +140,7 @@ async function syncUserProfileFromAuth(user, extraMeta = {}) {
       }, { onConflict: 'id' });
 
     if (upsertError) {
-      console.error("Supabase profile save error:", upsertError.message);
+      console.error("Supabase Automatic Profile Save Error:", upsertError.message);
     }
 
     if (updatedAvatarUrl) {
@@ -217,7 +217,7 @@ async function loginUser() {
   }
 }
 
-// 2. User Sign Up Handler
+// 2. User Sign Up Handler (FIXED AUTOMATIC DATABASE SAVE)
 async function signUpUser() {
   const emailInput = document.getElementById("email");
   const passwordInput = document.getElementById("password");
@@ -236,6 +236,7 @@ async function signUpUser() {
     return;
   }
 
+  // Auth User Create
   const { data, error } = await window.supabaseClient.auth.signUp({
     email,
     password,
@@ -255,11 +256,12 @@ async function signUpUser() {
     return;
   }
 
+  // AUTOMATIC DB SAVE FIX FOR SIGNUP
   if (data?.user) {
-    await syncUserProfileFromAuth(data.user, { full_name: fullName, phone, pincode });
+    await syncUserProfileFromAuth(data.user, { full_name: fullName, phone: phone, pincode: pincode });
   }
 
-  alert("Signup successful! Apne account me login karein.");
+  alert("Signup successful! Account create ho gaya hai.");
   if (window.switchMode) window.switchMode("login");
 }
 
@@ -334,7 +336,7 @@ async function signInWithGoogle(forceConsent = false) {
 function initAuthSystem() {
   if (window.supabaseClient && window.supabaseClient.auth) {
     window.supabaseClient.auth.onAuthStateChange(async (event, session) => {
-      if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session?.user) {
+      if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') && session?.user) {
         await syncUserProfileFromAuth(session.user);
       }
       applyAccessControl();
