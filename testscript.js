@@ -764,48 +764,99 @@ async function shareOnWhatsApp() {
             return;
         }
 
-        // Hide non-shareable elements temporarily (like solution buttons or exit links)
-        const canvas = await html2canvas(resultElement, {
+        // 1. Extract values dynamically from UI
+        const userName = document.querySelector("#resultArea h3")?.innerText || "Student";
+        const testTitle = currentTest?.title || "Test Result";
+        const score = document.getElementById("resScoreVal")?.innerText || "0";
+        const rank = document.getElementById("resRankVal")?.innerText || "#1";
+        
+        // Extract accuracy if available
+        const accuracyEl = document.querySelectorAll("#resultArea div");
+        
+        // 2. Create a temporary hidden share-card element
+        const shareCard = document.createElement("div");
+        shareCard.style.position = "absolute";
+        shareCard.style.left = "-9999px";
+        shareCard.style.top = "-9999px";
+        shareCard.style.width = "400px";
+        shareCard.style.padding = "24px";
+        shareCard.style.borderRadius = "16px";
+        shareCard.style.background = "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)";
+        shareCard.style.color = "#ffffff";
+        shareCard.style.fontFamily = "sans-serif";
+        shareCard.style.border = "1px solid #334155";
+        shareCard.style.boxShadow = "0 10px 25px rgba(0,0,0,0.5)";
+
+        shareCard.innerHTML = `
+            <div style="text-align: center; margin-bottom: 16px;">
+                <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(45deg, #ec4899, #8b5cf6); margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; color: white;">
+                    ${userName.charAt(0)}
+                </div>
+                <h3 style="margin: 0; font-size: 18px; color: #f8fafc;">${userName}</h3>
+                <p style="margin: 4px 0 0; font-size: 12px; color: #94a3b8;">${testTitle}</p>
+            </div>
+            
+            <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+                <div style="flex: 1; background: rgba(30, 41, 59, 0.7); border: 1px solid #334155; padding: 12px; border-radius: 12px; text-align: center;">
+                    <span style="font-size: 11px; color: #94a3b8; display: block;">Score</span>
+                    <strong style="font-size: 20px; color: #22c55e;">${score}</strong>
+                </div>
+                <div style="flex: 1; background: rgba(30, 41, 59, 0.7); border: 1px solid #334155; padding: 12px; border-radius: 12px; text-align: center;">
+                    <span style="font-size: 11px; color: #94a3b8; display: block;">Rank</span>
+                    <strong style="font-size: 20px; color: #3b82f6;">${rank}</strong>
+                </div>
+            </div>
+
+            <div style="text-align: center; border-top: 1px solid #334155; padding-top: 12px; font-size: 11px; color: #64748b;">
+                🎯 Perfect Score Achieved | Test Portal
+            </div>
+        `;
+
+        document.body.appendChild(shareCard);
+
+        // 3. Render only the beautiful shareCard to canvas
+        const canvas = await html2canvas(shareCard, {
             scale: 2,
             useCORS: true,
-            allowTaint: false,
-            logging: false,
-            backgroundColor: '#0f172a'
+            backgroundColor: null
         });
 
+        // Clean up temporary DOM element
+        document.body.removeChild(shareCard);
+
+        // 4. Trigger Native Share or Fallback Download
         canvas.toBlob(async (blob) => {
             if (!blob) return;
 
             const file = new File([blob], `Test_Result_${Date.now()}.png`, { type: 'image/png' });
 
-            // Check if Native Share API with Files is supported (mostly modern Android/iOS Chrome & Safari)
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
                 try {
                     await navigator.share({
-                        title: 'Test Result',
-                        text: `Maine ${currentTest?.title || 'Test'} me ${document.getElementById("resScoreVal")?.innerText} score kiya hai!`,
+                        title: 'My Test Result Card',
+                        text: `Check out my score on ${testTitle}!`,
                         files: [file]
                     });
                 } catch (e) {
-                    console.log("Share canceled:", e);
+                    console.log("Share cancelled:", e);
                 }
             } else {
-                // Fallback: Auto Download Image + Direct WhatsApp Text Share
                 const link = document.createElement('a');
                 link.download = `Test_ResultCard.png`;
                 link.href = canvas.toDataURL('image/png');
                 link.click();
 
-                const textMsg = encodeURIComponent(`Maine *${currentTest?.title || 'Test'}* me *${document.getElementById("resScoreVal")?.innerText}* score kiya hai! Check my image download.`);
+                const textMsg = encodeURIComponent(`Maine *${testTitle}* me *${score}* score kiya hai!`);
                 window.open(`https://api.whatsapp.com/send?text=${textMsg}`, '_blank');
             }
         }, 'image/png');
 
     } catch (err) {
-        console.error("Screenshot error:", err);
-        alert("Screenshot create karte waqt koi problem hui.");
+        console.error("Screenshot generation error:", err);
+        alert("Screenshot generate karne me error aaya.");
     }
 }
+
 
 function shareNative() {
     shareOnWhatsApp();
