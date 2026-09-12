@@ -85,7 +85,7 @@ async function applyAccessControl() {
   });
 }
 
-// Helper: Auth User Metadata to Profile DB Auto-Sync (Fix for Google Photo & Name Fetch)
+// Helper: Auth User Metadata to Profile DB Auto-Sync & Database Permanent Save
 async function syncUserProfileFromAuth(user, extraMeta = {}) {
   if (!user || !window.supabaseClient) return;
 
@@ -101,16 +101,22 @@ async function syncUserProfileFromAuth(user, extraMeta = {}) {
 
     const fallbackName = metaName || (user.email ? user.email.split('@')[0] : "User");
 
-    // 2. Fetch current profile fields
+    // 2. Fetch current profile fields from Supabase DB
     const { data: profile } = await window.supabaseClient
       .from('profiles')
       .select('full_name, avatar_url, phone, pincode, role, permissions')
       .eq('id', user.id)
       .maybeSingle();
 
-    // 3. PRIORITY FIX: Favor Google Metadata if profile database has empty/null fields
-    const newFullName = profile?.full_name || fallbackName;
-    const newAvatarUrl = profile?.avatar_url || metaAvatar;
+    // 3. Fallback logic: Use Google metadata if DB values are missing/empty
+    const updatedFullName = (profile?.full_name && profile.full_name.trim() !== "")
+                              ? profile.full_name 
+                              : fallbackName;
+
+    const updatedAvatarUrl = (profile?.avatar_url && profile.avatar_url.trim() !== "")
+                              ? profile.avatar_url 
+                              : metaAvatar;
+
     const phone = profile?.phone || extraMeta.phone || null;
     const pincode = profile?.pincode || extraMeta.pincode || null;
 
@@ -118,27 +124,31 @@ async function syncUserProfileFromAuth(user, extraMeta = {}) {
     const userRole = profile?.role || (isOwner ? 'superadmin' : 'student');
     const userPerms = profile?.permissions || {};
 
-    // 4. Database Upsert
-    await window.supabaseClient
+    // 4. Always Save/Upsert into Supabase Database `profiles` table
+    const { error: upsertError } = await window.supabaseClient
       .from('profiles')
       .upsert({
         id: user.id,
         email: user.email,
-        full_name: newFullName,
-        avatar_url: newAvatarUrl,
+        full_name: updatedFullName,
+        avatar_url: updatedAvatarUrl,
         phone: phone,
         pincode: pincode,
         role: userRole,
         permissions: userPerms,
         updated_at: new Date().toISOString()
-      });
+      }, { onConflict: 'id' });
 
-    if (newAvatarUrl) {
-      localStorage.setItem("userPhoto", newAvatarUrl);
+    if (upsertError) {
+      console.error("Supabase profile save error:", upsertError.message);
+    }
+
+    if (updatedAvatarUrl) {
+      localStorage.setItem("userPhoto", updatedAvatarUrl);
     }
 
   } catch (err) {
-    console.warn("Auto profile sync warning:", err);
+    console.warn("Auto profile sync exception:", err);
   }
 }
 
