@@ -307,6 +307,10 @@ async function loadUserProfile() {
   currentUser = user;
   document.getElementById("emailInput").value = user.email || "";
 
+  // Extract Fallback Google Data directly from auth meta
+  const googleName = user.user_metadata?.full_name || user.user_metadata?.name || "";
+  const googleAvatar = user.user_metadata?.avatar_url || user.user_metadata?.picture || null;
+
   try {
     const { data, error } = await window.supabaseClient
       .from('profiles')
@@ -321,35 +325,39 @@ async function loadUserProfile() {
     
     applyRoleBasedUI(userRole, permissions);
 
-    if (data) {
-      document.getElementById("fullNameInput").value = data.full_name || "";
-      document.getElementById("countryCodeSelect").value = data.country_code || "+91";
-      document.getElementById("phoneInput").value = data.phone || "";
-      document.getElementById("classSelect").value = data.target_class || "";
-      document.getElementById("streamSelect").value = data.stream || "";
-      document.getElementById("institutionInput").value = data.institution || "";
-      document.getElementById("cityInput").value = data.city || "";
-      document.getElementById("stateInput").value = data.state || "";
-      if (document.getElementById("pincodeInput")) {
-        document.getElementById("pincodeInput").value = data.pincode || "";
-      }
+    const displayName = data?.full_name || googleName || user.email.split('@')[0];
+    const finalAvatar = data?.avatar_url || googleAvatar;
 
-      document.getElementById("userDisplayName").innerText = data.full_name || user.email.split('@')[0];
+    document.getElementById("fullNameInput").value = data?.full_name || googleName || "";
+    document.getElementById("countryCodeSelect").value = data?.country_code || "+91";
+    document.getElementById("phoneInput").value = data?.phone || "";
+    document.getElementById("classSelect").value = data?.target_class || "";
+    document.getElementById("streamSelect").value = data?.stream || "";
+    document.getElementById("institutionInput").value = data?.institution || "";
+    document.getElementById("cityInput").value = data?.city || "";
+    document.getElementById("stateInput").value = data?.state || "";
+    if (document.getElementById("pincodeInput")) {
+      document.getElementById("pincodeInput").value = data?.pincode || "";
+    }
 
-      if (data.avatar_url) {
-        currentAvatarUrl = data.avatar_url;
-        renderAvatarImage(data.avatar_url);
-      } else {
-        renderInitialAvatar();
-      }
+    document.getElementById("userDisplayName").innerText = displayName;
+
+    if (finalAvatar) {
+      currentAvatarUrl = finalAvatar;
+      renderAvatarImage(finalAvatar);
     } else {
-      document.getElementById("userDisplayName").innerText = user.email.split('@')[0];
       renderInitialAvatar();
     }
+
   } catch (err) {
     console.warn("Could not fetch profile details:", err);
-    document.getElementById("userDisplayName").innerText = user.email.split('@')[0];
-    renderInitialAvatar();
+    document.getElementById("userDisplayName").innerText = googleName || user.email.split('@')[0];
+    if (googleAvatar) {
+      currentAvatarUrl = googleAvatar;
+      renderAvatarImage(googleAvatar);
+    } else {
+      renderInitialAvatar();
+    }
   }
 
   if (window.applyAccessControl) {

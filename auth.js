@@ -85,27 +85,30 @@ async function applyAccessControl() {
   });
 }
 
-// Helper: Auth User Metadata to Profile DB Auto-Sync (Matching Exact Table Schema)
+// Helper: Auth User Metadata to Profile DB Auto-Sync (Fix for Google Photo & Name Fetch)
 async function syncUserProfileFromAuth(user, extraMeta = {}) {
   if (!user || !window.supabaseClient) return;
 
   try {
+    // 1. Extract Name & Photo from Google Metadata / Auth Metadata
     const metaName = extraMeta.full_name ||
                      user.user_metadata?.full_name || 
-                     user.user_metadata?.name || "";
+                     user.user_metadata?.name || 
+                     user.user_metadata?.custom_claims?.name || "";
     
     const metaAvatar = user.user_metadata?.avatar_url || 
                        user.user_metadata?.picture || null;
 
     const fallbackName = metaName || (user.email ? user.email.split('@')[0] : "User");
 
-    // Fetch current profile fields
+    // 2. Fetch current profile fields
     const { data: profile } = await window.supabaseClient
       .from('profiles')
       .select('full_name, avatar_url, phone, pincode, role, permissions')
       .eq('id', user.id)
       .maybeSingle();
 
+    // 3. PRIORITY FIX: Favor Google Metadata if profile database has empty/null fields
     const newFullName = profile?.full_name || fallbackName;
     const newAvatarUrl = profile?.avatar_url || metaAvatar;
     const phone = profile?.phone || extraMeta.phone || null;
@@ -115,7 +118,7 @@ async function syncUserProfileFromAuth(user, extraMeta = {}) {
     const userRole = profile?.role || (isOwner ? 'superadmin' : 'student');
     const userPerms = profile?.permissions || {};
 
-    // Upsert exact matching fields (No is_admin column included)
+    // 4. Database Upsert
     await window.supabaseClient
       .from('profiles')
       .upsert({
