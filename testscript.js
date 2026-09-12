@@ -759,101 +759,107 @@ async function shareOnWhatsApp() {
 
     try {
         if (typeof html2canvas === 'undefined') {
-            const fallbackText = encodeURIComponent(`📊 *My Test Result*\n\n📝 Test: ${currentTest?.title || 'Test'}\n⭐ Score: ${document.getElementById("resScoreVal")?.innerText || '0'}\n🏆 Rank: ${document.getElementById("resRankVal")?.innerText || '#1'}`);
-            window.open(`https://api.whatsapp.com/send?text=${fallbackText}`, '_blank');
+            alert("html2canvas library missing hai!");
             return;
         }
 
-        // 1. Extract values dynamically from UI
         const userName = document.querySelector("#resultArea h3")?.innerText || "Student";
-        const testTitle = currentTest?.title || "Test Result";
+        const testTitle = typeof currentTest !== 'undefined' && currentTest?.title ? currentTest.title : "Test Result";
         const score = document.getElementById("resScoreVal")?.innerText || "0";
         const rank = document.getElementById("resRankVal")?.innerText || "#1";
-        
-        // Extract accuracy if available
-        const accuracyEl = document.querySelectorAll("#resultArea div");
-        
-        // 2. Create a temporary hidden share-card element
+        const testId = typeof currentTest !== 'undefined' && currentTest?.id ? currentTest.id : "";
+
+        // Dynamic Link Domain + Path
+        const shareUrl = `${window.location.host}/take-test.html${testId ? `?testid=${testId}` : ''}`;
+
+        // Fetch DOM Profile Image
+        const userImgEl = document.querySelector("#resultArea img");
+        let avatarSrc = null;
+
+        if (userImgEl && userImgEl.src) {
+            try {
+                const c = document.createElement("canvas");
+                c.width = userImgEl.naturalWidth || userImgEl.width || 100;
+                c.height = userImgEl.naturalHeight || userImgEl.height || 100;
+                const ctx = c.getContext("2d");
+                ctx.drawImage(userImgEl, 0, 0);
+                avatarSrc = c.toDataURL("image/png");
+            } catch (e) {
+                avatarSrc = userImgEl.src;
+            }
+        }
+
         const shareCard = document.createElement("div");
-        shareCard.style.position = "absolute";
+        shareCard.style.position = "fixed";
         shareCard.style.left = "-9999px";
         shareCard.style.top = "-9999px";
-        shareCard.style.width = "400px";
+        shareCard.style.width = "380px";
         shareCard.style.padding = "24px";
-        shareCard.style.borderRadius = "16px";
-        shareCard.style.background = "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)";
+        shareCard.style.borderRadius = "20px";
+        shareCard.style.background = "linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)";
         shareCard.style.color = "#ffffff";
         shareCard.style.fontFamily = "sans-serif";
-        shareCard.style.border = "1px solid #334155";
-        shareCard.style.boxShadow = "0 10px 25px rgba(0,0,0,0.5)";
+
+        const avatarHtml = avatarSrc 
+            ? `<img src="${avatarSrc}" style="width: 75px; height: 75px; border-radius: 50%; object-fit: cover; margin: 0 auto 10px; display: block; border: 3px solid #a855f7;" />`
+            : `<div style="width: 75px; height: 75px; border-radius: 50%; background: linear-gradient(135deg, #a855f7, #ec4899); margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: bold; color: white;">${userName.charAt(0).toUpperCase()}</div>`;
 
         shareCard.innerHTML = `
-            <div style="text-align: center; margin-bottom: 16px;">
-                <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(45deg, #ec4899, #8b5cf6); margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; color: white;">
-                    ${userName.charAt(0)}
-                </div>
-                <h3 style="margin: 0; font-size: 18px; color: #f8fafc;">${userName}</h3>
-                <p style="margin: 4px 0 0; font-size: 12px; color: #94a3b8;">${testTitle}</p>
+            <div style="text-align: center; margin-bottom: 18px;">
+                ${avatarHtml}
+                <h3 style="margin: 0; font-size: 20px; color: #f8fafc; font-weight: 700;">${userName}</h3>
+                <p style="margin: 4px 0 0; font-size: 13px; color: #c084fc;">${testTitle}</p>
             </div>
             
-            <div style="display: flex; gap: 12px; margin-bottom: 16px;">
-                <div style="flex: 1; background: rgba(30, 41, 59, 0.7); border: 1px solid #334155; padding: 12px; border-radius: 12px; text-align: center;">
-                    <span style="font-size: 11px; color: #94a3b8; display: block;">Score</span>
-                    <strong style="font-size: 20px; color: #22c55e;">${score}</strong>
+            <div style="display: flex; gap: 10px; margin-bottom: 18px;">
+                <div style="flex: 1; background: rgba(30, 41, 59, 0.8); border: 1px solid rgba(255, 255, 255, 0.1); padding: 12px; border-radius: 12px; text-align: center;">
+                    <span style="font-size: 11px; color: #94a3b8; display: block; margin-bottom: 4px;">SCORE</span>
+                    <strong style="font-size: 22px; color: #4ade80;">${score}</strong>
                 </div>
-                <div style="flex: 1; background: rgba(30, 41, 59, 0.7); border: 1px solid #334155; padding: 12px; border-radius: 12px; text-align: center;">
-                    <span style="font-size: 11px; color: #94a3b8; display: block;">Rank</span>
-                    <strong style="font-size: 20px; color: #3b82f6;">${rank}</strong>
+                <div style="flex: 1; background: rgba(30, 41, 59, 0.8); border: 1px solid rgba(255, 255, 255, 0.1); padding: 12px; border-radius: 12px; text-align: center;">
+                    <span style="font-size: 11px; color: #94a3b8; display: block; margin-bottom: 4px;">RANK</span>
+                    <strong style="font-size: 22px; color: #60a5fa;">${rank}</strong>
                 </div>
             </div>
 
-            <div style="text-align: center; border-top: 1px solid #334155; padding-top: 12px; font-size: 11px; color: #64748b;">
-                🎯 Perfect Score Achieved | Test Portal
+            <!-- Embedded Test Link Inside Image -->
+            <div style="text-align: center; border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 12px;">
+                <span style="font-size: 10px; color: #94a3b8; display: block; margin-bottom: 2px;">Take this test at:</span>
+                <strong style="font-size: 12px; color: #a7f3d0; word-break: break-all;">${shareUrl}</strong>
             </div>
         `;
 
         document.body.appendChild(shareCard);
 
-        // 3. Render only the beautiful shareCard to canvas
         const canvas = await html2canvas(shareCard, {
             scale: 2,
             useCORS: true,
+            allowTaint: true,
             backgroundColor: null
         });
 
-        // Clean up temporary DOM element
         document.body.removeChild(shareCard);
 
-        // 4. Trigger Native Share or Fallback Download
         canvas.toBlob(async (blob) => {
             if (!blob) return;
-
-            const file = new File([blob], `Test_Result_${Date.now()}.png`, { type: 'image/png' });
+            const file = new File([blob], `Test_Result.png`, { type: 'image/png' });
 
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
                 try {
-                    await navigator.share({
-                        title: 'My Test Result Card',
-                        text: `Check out my score on ${testTitle}!`,
-                        files: [file]
-                    });
+                    await navigator.share({ files: [file] });
                 } catch (e) {
-                    console.log("Share cancelled:", e);
+                    console.log("Cancelled", e);
                 }
             } else {
                 const link = document.createElement('a');
-                link.download = `Test_ResultCard.png`;
+                link.download = `Test_Result.png`;
                 link.href = canvas.toDataURL('image/png');
                 link.click();
-
-                const textMsg = encodeURIComponent(`Maine *${testTitle}* me *${score}* score kiya hai!`);
-                window.open(`https://api.whatsapp.com/send?text=${textMsg}`, '_blank');
             }
         }, 'image/png');
 
     } catch (err) {
-        console.error("Screenshot generation error:", err);
-        alert("Screenshot generate karne me error aaya.");
+        console.error("Error:", err);
     }
 }
 
