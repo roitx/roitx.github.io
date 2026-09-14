@@ -30,7 +30,12 @@
                 </div>
             </div>
         </div>
-        <div class="nav-right">
+        <div class="nav-right" style="display: flex; gap: 8px;">
+            <!-- Bookmark Button -->
+            <button class="icon-btn" id="btn-bookmark" onclick="toggleCurrentBookmark()" title="Toggle Bookmark">
+                <svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M17,3H7A2,2 0 0,0 5,5V21L12,18L19,21V5C19,3.89 18.1,3 17,3Z"/></svg>
+            </button>
+            <!-- Settings Button -->
             <button class="icon-btn" onclick="toggleSettings(true)" aria-label="Settings">
                 <svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.35 19.43,11.03L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.97 19.05,5.05L16.56,6.05C16.04,5.66 15.47,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.53,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.97 4.46,5.05 4.34,5.27L2.34,8.73C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11.03C4.53,11.35 4.5,11.67 4.5,12C4.5,11.67 4.53,11.35 4.57,11.03L2.46,14.63C2.27,14.78 2.22,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.95C7.96,18.34 8.53,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.47,18.68 16.04,18.34 16.56,17.95L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"/></svg>
             </button>
@@ -52,23 +57,32 @@
         </div>
     </main>
 
-    <!-- FLOATING QUICK TOOLBAR (BOTTOM SCRUBBAR STYLE) -->
+    <!-- FLOATING QUICK TOOLBAR -->
     <div class="scrub-bar" id="scrubBar">
         <div class="scrub-container">
-            <button id="highlightBtn" class="pill-btn" onclick="toggleHighlightMode()">
-                🖍️ Highlight
+            <!-- Highlight Button with SVG -->
+            <button id="highlightBtn" class="pill-btn" onclick="toggleHighlightMode()" style="display:flex; align-items:center; gap:6px;">
+                <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M18.5,1.15C17.97,1.15 17.46,1.36 17.07,1.75L15.13,3.69L19.81,8.37L21.75,6.43C22.53,5.65 22.53,4.38 21.75,3.6L19.9,1.75C19.5,1.36 19,1.15 18.5,1.15M13.71,5.11L3,15.82V20.5H7.68L18.39,9.79L13.71,5.11Z"/></svg>
+                <span>Highlight</span>
             </button>
 
             <div class="color-picker-wrapper">
                 <input type="color" id="penColor" value="#ffeb3b" title="Pick Marker Color">
             </div>
 
-            <button class="scrub-btn" onclick="undoLastStroke()" title="Undo Draw">
-                ↩️
+            <!-- Magnifier Toggle Button -->
+            <button id="magnifierBtn" class="scrub-btn" onclick="toggleMagnifierMode()" title="Magnifier Glass">
+                <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M15.5,14H14.71L14.43,13.73C15.41,12.59 16,11.11 16,9.5A6.5,6.5 0 0,0 9.5,3A6.5,6.5 0 0,0 3,9.5A6.5,6.5 0 0,0 9.5,16C11.11,16 12.59,15.41 13.73,14.43L14,14.71V15.5L19,20.49L20.49,19L15.5,14ZM9.5,14C7.01,14 5,11.99 5,9.5C5,7.01 7.01,5 9.5,5C11.99,5 14,7.01 14,9.5C14,11.99 11.99,14 9.5,14Z"/></svg>
             </button>
 
-            <button class="scrub-btn" onclick="rotateImage()" title="Rotate 90°">
-                ⟳
+            <!-- Undo Button -->
+            <button class="scrub-btn" onclick="undoLastStroke()" title="Undo Draw (Z)">
+                <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M12.5,8C9.85,8 7.45,9 5.6,10.6L2,7V16H11L7.38,12.38C8.77,11.22 10.54,10.5 12.5,10.5C16.04,10.5 19.05,12.81 20.1,16L22.47,15.22C21.08,11.03 17.15,8 12.5,8Z"/></svg>
+            </button>
+
+            <!-- Rotate Button -->
+            <button class="scrub-btn" onclick="rotateImage()" title="Rotate 90° (R)">
+                <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M7.11,8.53L5.7,7.11C4.8,8.27 4.24,9.61 4.07,11H6.09C6.24,10.13 6.58,9.3 7.11,8.53M6.09,13H4.07C4.24,14.39 4.8,15.73 5.7,16.89L7.11,15.47C6.58,14.7 6.24,13.87 6.09,13M9.61,19.93L8.2,21.34C9.36,22.24 10.7,22.8 12.09,22.97V20.95C11.22,20.8 10.39,20.46 9.61,19.93M12,4V1L8,5L12,9V6A6,6 0 0,1 18,12A6,6 0 0,1 12,18C10.6,18 9.35,17.5 8.35,16.7L6.94,18.11C8.32,19.3 10.07,20 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4Z"/></svg>
             </button>
         </div>
     </div>
@@ -79,7 +93,7 @@
         <div class="panel-handle"></div>
         <section class="panel-content">
             <header>
-                <h2>Appearance & Tools</h2>
+                <h2>Appearance & Pro Tools</h2>
                 <button class="close-x" onclick="toggleSettings(false)">✕</button>
             </header>
 
@@ -94,6 +108,20 @@
             </div>
 
             <div class="control-group">
+                <label>Adjustments (Brightness & Contrast)</label>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 13px;">Brightness</span>
+                        <input type="range" id="brightnessSlider" min="50" max="150" value="100" oninput="applyImageFilters()" style="width: 60%;">
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 13px;">Contrast</span>
+                        <input type="range" id="contrastSlider" min="50" max="150" value="100" oninput="applyImageFilters()" style="width: 60%;">
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-group">
                 <label>Zoom Controls</label>
                 <div class="zoom-stepper">
                     <button onclick="adjustZoom(-0.2)">A−</button>
@@ -103,9 +131,16 @@
             </div>
 
             <div class="control-group">
-                <label>Actions</label>
+                <label>Pro Tools & Actions</label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+                    <button class="full-btn" style="margin:0;" onclick="flipImage('h')">⇄ Flip Horiz</button>
+                    <button class="full-btn" style="margin:0;" onclick="flipImage('v')">⇅ Flip Vert</button>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <button class="full-btn" style="margin:0;" onclick="clearCanvasAnnotations()">🧹 Clear Drawings</button>
+                    <button class="full-btn" style="margin:0;" onclick="showSavedBookmarks()">🔖 Bookmarks</button>
+                </div>
                 <button class="full-btn" onclick="resetZoom()">Reset Scale & View</button>
-                <button class="full-btn" onclick="rotateImage()">Rotate Page 90°</button>
                 <button class="full-btn primary" onclick="downloadImage()">Download Annotated Image</button>
             </div>
         </section>

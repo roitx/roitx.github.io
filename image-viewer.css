@@ -151,3 +151,16 @@ body.ui-hidden .scrub-bar { transform: translateY(100%); }
 .loader-ring { display: inline-block; position: relative; width: 80px; height: 80px; }
 .loader-ring div { box-sizing: border-box; display: block; position: absolute; width: 64px; height: 64px; margin: 8px; border: 6px solid var(--accent); border-radius: 50%; animation: loader-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite; border-color: var(--accent) transparent transparent transparent; }
 @keyframes loader-ring { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+/* Modal & Toast Animations */
+@keyframes bookmarkFadeIn {
+    from { opacity: 0; transform: scale(0.96); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+#btn-bookmark {
+    transition: color 0.3s ease, transform 0.2s ease;
+}
+
+#btn-bookmark:active {
+    transform: scale(0.85);
+}

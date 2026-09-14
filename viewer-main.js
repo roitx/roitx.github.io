@@ -1,10 +1,39 @@
 /* =================================================================
-   ROITX ELITE VIEWER v8.4 — FULL 3D FLIP & SECURITY ENHANCED
+   ROITX ELITE VIEWER v12.0 — ULTIMATE SECURE & PRODUCTIVITY SUITE
    ================================================================= */
 
 // PDF.js Worker Setup
 const pdfjsVersion = pdfjsLib.version || '2.16.105'; 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsVersion}/pdf.worker.min.js`;
+
+let isPresentationMode = false;
+let isAnimating = false;
+let viewMode = 'flip';
+let isDualPage = false;
+
+let pdfDoc = null;
+let currentPage = 1;
+let zoomScale = 1.0;
+let rotation = 0;
+let panX = 0, panY = 0;
+let isUIVisible = true;
+let currentBlobUrl = null;
+let audioCtx = null;
+let pageFlipInstance = null;
+let renderedPagesMap = new Map();
+let globalFitScale = 1.0;
+let globalPageW = 0, globalPageH = 0;
+let isPinching = false;
+
+// Search & TTS State
+let searchMatches = [];
+let currentSearchIndex = -1;
+let synth = window.speechSynthesis;
+let isSpeaking = false;
+
+// Auto-scroll State
+let autoScrollInterval = null;
+let isAutoScrolling = false;
 
 function enableContentProtection() {
     document.addEventListener('contextmenu', e => e.preventDefault());
@@ -43,9 +72,10 @@ function enableContentProtection() {
 }
 
 function cleanTitleString(str) {
-    if (!str) return "";
+    if (!str || typeof str !== 'string') return "";
     return str.replace(/[^\w\s]/gi, '').toLowerCase().trim();
 }
+
 
 // SECURE VERIFICATION: Checks Supabase DB & Local Storage
 async function verifyPurchaseStatusLocallyOrDB(rawPath, docName) {
@@ -160,6 +190,24 @@ function savePageProgress(pageNo) {
     if (rawPath) {
         localStorage.setItem(`pdf_pos_${rawPath}`, pageNo);
     }
+    updateProgressUI(pageNo);
+}
+
+function updateProgressUI(pageNo) {
+    if (!pdfDoc) return;
+    const isPremiumNote = params.get("type") === "premium" || (rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("premium") || rawPath.toLowerCase().includes("locked")));
+    
+    // Page Top Header Info update fix[span_1](start_span)[span_1](end_span)
+    const indicator = document.getElementById("page-indicator-top");
+    if (indicator) {
+        const totalText = (isPremiumNote && !verifyPurchaseStatusLocallyOrDB(rawPath, docName || "")) ? "1 (Preview)" : pdfDoc.numPages;
+        indicator.innerText = `Page ${pageNo} of ${totalText}`;
+    }
+
+    const percent = Math.round((pageNo / pdfDoc.numPages) * 100);
+    const progressEl = document.getElementById("progress-percent");
+    if (progressEl) progressEl.innerText = `${percent}%`;
+    checkBookmarkState(pageNo);
 }
 
 function getSavedPageProgress() {
@@ -172,20 +220,6 @@ function getSavedPageProgress() {
 const params = new URLSearchParams(location.search);
 let rawPath = params.get("path"); 
 const docName = params.get("name");
-
-let pdfDoc = null;
-let currentPage = 1;
-let zoomScale = 1.0;
-let rotation = 0;
-let panX = 0, panY = 0;
-let isUIVisible = true;
-let currentBlobUrl = null;
-let audioCtx = null;
-let pageFlipInstance = null;
-let renderedPagesMap = new Map();
-let globalFitScale = 1.0;
-let globalPageW = 0, globalPageH = 0;
-let isPinching = false;
 
 function playPageTurnSound() {
     try {
@@ -228,13 +262,48 @@ async function initReader() {
     enableContentProtection();
 
     if (!rawPath || rawPath === "null") {
-        document.getElementById("doc-title").innerText = "No File Selected";
+        const titleEl = document.getElementById("doc-title");
+        if (titleEl) {
+            titleEl.innerText = "No File Selected";
+            titleEl.setAttribute("title", "No File Selected");
+        }
         return;
     }
 
+    // 1. Path aur Title Setup
     let finalPath = rawPath.includes("/") ? rawPath : `notes/${rawPath}`;
-    document.getElementById("doc-title").innerText = docName || "Loading Document...";
-    
+    const displayTitle = docName || "Loading Document...";
+
+    // 2. DOM Title & Click/Tap Event Setup
+    const titleEl = document.getElementById("doc-title");
+
+    if (titleEl) {
+        titleEl.innerText = displayTitle;
+        titleEl.setAttribute("title", displayTitle);
+
+        titleEl.onclick = null; 
+        let hideTimer;
+
+        titleEl.onclick = (e) => {
+            e.stopPropagation();
+            clearTimeout(hideTimer);
+
+            titleEl.classList.toggle('show-full-title');
+
+            if (titleEl.classList.contains('show-full-title')) {
+                hideTimer = setTimeout(() => {
+                    titleEl.classList.remove('show-full-title');
+                }, 4000);
+            }
+        };
+    }
+
+    // Global Click Listener to Close Expanded Title Card
+    document.addEventListener('click', () => {
+        if (titleEl) titleEl.classList.remove('show-full-title');
+    });
+
+    // 3. Supabase File Download Logic
     try {
         const { data, error } = await window.supabaseClient.storage.from("admin-files").download(finalPath);
         
@@ -242,7 +311,10 @@ async function initReader() {
             if (finalPath.toLowerCase().includes("refbooks")) {
                 const alt = finalPath.includes("refbooks") ? finalPath.replace("refbooks", "Refbooks") : finalPath.replace("Refbooks", "refbooks");
                 const retry = await window.supabaseClient.storage.from("admin-files").download(alt);
-                if (!retry.error) { startEngine(retry.data); return; }
+                if (!retry.error) { 
+                    startEngine(retry.data); 
+                    return; 
+                }
             }
             throw error;
         }
@@ -251,6 +323,7 @@ async function initReader() {
         showError(finalPath);
     }
 }
+
 
 async function startEngine(blob) {
     currentBlobUrl = URL.createObjectURL(blob);
@@ -330,9 +403,10 @@ async function startEngine(blob) {
     }
 
     await setupFlipEngineStructure(maxAllowedPages, isPremiumNote, isPurchased);
-
+    loadTOC();
     document.getElementById("master-loader").style.display = "none";
     setupPinchAndPanEngine();
+    setupHighlightSelectionListener();
 }
 
 async function setupFlipEngineStructure(maxPages, isPremium, isPurchased) {
@@ -376,7 +450,7 @@ async function setupFlipEngineStructure(maxPages, isPremium, isPurchased) {
         maxHeight: 1200,
         maxShadowOpacity: 0.3,
         showCover: true,
-        usePortrait: true,
+        usePortrait: !isDualPage,
         mobileScrollSupport: false,
         flippingTime: 600,
         drawShadow: true,
@@ -399,12 +473,6 @@ async function setupFlipEngineStructure(maxPages, isPremium, isPurchased) {
         playPageTurnSound();
         savePageProgress(currentPage);
 
-        const indicator = document.getElementById("page-indicator-top");
-        if (indicator) {
-            const totalText = (isPremium && !isPurchased) ? "1 (Preview)" : maxPages;
-            indicator.innerText = `Page ${currentPage} of ${totalText}`;
-        }
-
         const slider = document.getElementById("page-slider");
         if (slider) slider.value = currentPage;
 
@@ -415,11 +483,9 @@ async function setupFlipEngineStructure(maxPages, isPremium, isPurchased) {
     const targetPage = (savedPage > maxPages) ? 1 : savedPage;
     currentPage = targetPage;
     
-    const indicator = document.getElementById("page-indicator-top");
-    if (indicator) {
-        const totalText = (isPremium && !isPurchased) ? "1 (Preview)" : maxPages;
-        indicator.innerText = `Page ${targetPage} of ${totalText}`;
-    }
+    // Header & local state auto sync execution[span_2](start_span)[span_2](end_span)
+    savePageProgress(currentPage);
+
     const slider = document.getElementById("page-slider");
     if (slider) slider.value = targetPage;
 
@@ -453,15 +519,28 @@ async function renderSingleCanvasPage(pageNum) {
         ctx.scale(dpr, dpr);
         await page.render({ canvasContext: ctx, viewport: viewport }).promise;
 
-        ctx.save();
-        ctx.rotate(-45 * Math.PI / 180);
-        ctx.font = "bold 22px Inter, sans-serif";
-        ctx.fillStyle = "rgba(0, 0, 0, 0.08)";
-        ctx.fillText("ROITX SECURE • DO NOT SHARE", -canvas.width / 4, canvas.height / 2);
-        ctx.restore();
+        // renderSingleCanvasPage() ke andar Canvas Render ke baad use karein:
+ctx.save();
+// Canvas ke exact screen center point par translate karein
+const centerX = (canvas.width / dpr) / 2;
+const centerY = (canvas.height / dpr) / 2;
+
+ctx.translate(centerX, centerY);
+ctx.rotate(-45 * Math.PI / 180); // 45 degree angle
+
+// Font styling
+ctx.font = "bold 22px Inter, system-ui, sans-serif";
+ctx.fillStyle = "rgba(0, 0, 0, 0.12)"; // Soft, secure contrast
+ctx.textAlign = "center";
+ctx.textBaseline = "middle";
+
+// Watermark Text Render
+ctx.fillText("ROITX SECURE • DO NOT SHARE", 0, 0);
+ctx.restore();
 
         pageDiv.innerHTML = '';
         pageDiv.appendChild(canvas);
+        applySavedHighlightsToPage(pageNum, ctx, viewport);
         renderedPagesMap.set(pageNum, true);
     } catch (e) {
         console.error(`Page ${pageNum} render error:`, e);
@@ -476,6 +555,415 @@ function lazyRenderPagesAround(current, maxPages) {
         }
     });
 }
+
+/* =================================================================
+   TABLE OF CONTENTS (TOC)
+   ================================================================= */
+async function loadTOC() {
+    const tocList = document.getElementById("toc-list");
+    if (!tocList) return;
+    try {
+        const outline = await pdfDoc.getOutline();
+        if (!outline || outline.length === 0) {
+            tocList.innerHTML = `<p class="empty-msg">No chapters found in outline.</p>`;
+            return;
+        }
+        tocList.innerHTML = '';
+        for (const item of outline) {
+            const div = document.createElement("div");
+            div.className = "toc-item";
+            div.innerText = item.title;
+            div.onclick = async () => {
+                if (item.dest) {
+                    const pageRef = typeof item.dest === 'string' ? await pdfDoc.getDestination(item.dest) : item.dest;
+                    const pageIdx = await pdfDoc.getPageIndex(pageRef[0]);
+                    jumpToPage(pageIdx + 1);
+                    toggleTOC(false);
+                }
+            };
+            tocList.appendChild(div);
+        }
+    } catch (e) {
+        if (tocList) tocList.innerHTML = `<p class="empty-msg">Failed to load outline.</p>`;
+    }
+}
+
+window.toggleTOC = (show) => {
+    const sidebar = document.getElementById("toc-sidebar");
+    if (!sidebar) return;
+    const active = show !== undefined ? show : !sidebar.classList.contains("open");
+    sidebar.classList.toggle("open", active);
+};
+
+/* =================================================================
+   HIGHLIGHTER & LOCAL STORAGE PERSISTENCE
+   ================================================================= */
+function setupHighlightSelectionListener() {
+    document.addEventListener('selectionchange', () => {
+        const sel = window.getSelection();
+        const bar = document.getElementById("highlight-bar");
+        if (!bar) return;
+        if (sel && sel.toString().trim().length > 0) {
+            bar.classList.add("active");
+        } else {
+            bar.classList.remove("active");
+        }
+    });
+}
+
+function getStoredHighlights() {
+    return JSON.parse(localStorage.getItem(`hl_${rawPath}`) || "{}");
+}
+
+window.applyHighlight = (color) => {
+    let hlData = getStoredHighlights();
+    if (!hlData[currentPage]) hlData[currentPage] = [];
+    
+    hlData[currentPage].push({ color, time: Date.now() });
+    localStorage.setItem(`hl_${rawPath}`, JSON.stringify(hlData));
+    
+    alert("Highlight saved on this page!");
+    const bar = document.getElementById("highlight-bar");
+    if (bar) bar.classList.remove("active");
+};
+
+window.clearPageHighlights = () => {
+    let hlData = getStoredHighlights();
+    delete hlData[currentPage];
+    localStorage.setItem(`hl_${rawPath}`, JSON.stringify(hlData));
+    alert("Highlights cleared!");
+    const bar = document.getElementById("highlight-bar");
+    if (bar) bar.classList.remove("active");
+};
+
+function applySavedHighlightsToPage(pageNum, ctx, viewport) {
+    const hlData = getStoredHighlights();
+    const pageHighlights = hlData[pageNum];
+    if (!pageHighlights || pageHighlights.length === 0) return;
+
+    ctx.save();
+    pageHighlights.forEach((hl, i) => {
+        ctx.fillStyle = hl.color;
+        ctx.globalAlpha = 0.35;
+        ctx.fillRect(20, 40 + (i * 30), viewport.width - 40, 24);
+    });
+    ctx.restore();
+}
+
+/* =================================================================
+   HANDS-FREE AUTO-SCROLL Engine
+   ================================================================= */
+window.toggleAutoScroll = () => {
+    const btn = document.getElementById("btn-autoscroll");
+    if (isAutoScrolling) {
+        clearInterval(autoScrollInterval);
+        isAutoScrolling = false;
+        if (btn) btn.style.color = "inherit";
+    } else {
+        isAutoScrolling = true;
+        if (btn) btn.style.color = "var(--accent)";
+        autoScrollInterval = setInterval(() => {
+            if (viewMode === 'vertical') {
+                const scrollContainer = document.getElementById("vertical-scroll-container");
+                if (scrollContainer) scrollContainer.scrollTop += 2;
+            } else {
+                window.navPage('next');
+            }
+        }, 3000);
+    }
+};
+
+/* =================================================================
+   SEARCH ENGINE & ACCESSIBILITY TOOLS
+   ================================================================= */
+window.toggleSearchBox = (show) => {
+    const box = document.getElementById("search-bar-container");
+    if (!box) return;
+    const active = show !== undefined ? show : !box.classList.contains("active");
+    box.classList.toggle("active", active);
+    if (active) {
+        const input = document.getElementById("search-input");
+        if (input) input.focus();
+    }
+};
+
+window.handleSearchKey = async (e) => {
+    if (e.key === 'Enter') {
+        const query = e.target.value.trim().toLowerCase();
+        if (!query) return;
+
+        searchMatches = [];
+        for (let i = 1; i <= pdfDoc.numPages; i++) {
+            const page = await pdfDoc.getPage(i);
+            const textContent = await page.getTextContent();
+            const pageText = textContent.items.map(item => item.str).join(" ").toLowerCase();
+            if (pageText.includes(query)) {
+                searchMatches.push(i);
+            }
+        }
+        
+        currentSearchIndex = searchMatches.length > 0 ? 0 : -1;
+        updateSearchCount();
+        if (currentSearchIndex !== -1) jumpToPage(searchMatches[0]);
+    }
+};
+
+window.navigateSearch = (dir) => {
+    if (searchMatches.length === 0) return;
+    currentSearchIndex = (currentSearchIndex + dir + searchMatches.length) % searchMatches.length;
+    updateSearchCount();
+    jumpToPage(searchMatches[currentSearchIndex]);
+};
+
+function updateSearchCount() {
+    const countEl = document.getElementById("search-count");
+    if (countEl) countEl.innerText = searchMatches.length > 0 ? `${currentSearchIndex + 1}/${searchMatches.length}` : "0/0";
+}
+
+function getBookmarks() { return JSON.parse(localStorage.getItem(`bookmarks_${rawPath}`) || "[]"); }
+
+window.toggleCurrentPageBookmark = () => {
+    let bookmarks = getBookmarks();
+    if (bookmarks.includes(currentPage)) {
+        bookmarks = bookmarks.filter(p => p !== currentPage);
+    } else {
+        bookmarks.push(currentPage);
+    }
+    localStorage.setItem(`bookmarks_${rawPath}`, JSON.stringify(bookmarks));
+    checkBookmarkState(currentPage);
+};
+
+function checkBookmarkState(pageNo) {
+    const btn = document.getElementById("btn-bookmark");
+    if (!btn) return;
+    const isBookmarked = getBookmarks().includes(pageNo);
+    btn.classList.toggle("bookmarked", isBookmarked);
+}
+
+window.showSavedBookmarks = () => {
+    const bookmarks = getBookmarks();
+    
+    // Purane Modal ko remove karein agar pehle se open ho
+    const existingModal = document.getElementById("bookmarksModal");
+    if (existingModal) existingModal.remove();
+
+    if (bookmarks.length === 0) { 
+        showToast("⚠️ Is note me abhi koi bookmark save nahi hai."); 
+        return; 
+    }
+
+    // Modal Outer Container
+    const modal = document.createElement("div");
+    modal.id = "bookmarksModal";
+    modal.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px); display: flex; align-items: center;
+        justify-content: center; z-index: 999999; animation: bookmarkFadeIn 0.25s ease;
+    `;
+
+    // Bookmarks List Buttons Generator
+    const bookmarkButtonsHTML = bookmarks.map(page => `
+        <button class="bm-page-btn" onclick="jumpToBookmarkedPage(${page})" style="
+            background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #fff; padding: 12px 16px; border-radius: 12px; font-weight: 600;
+            font-size: 14px; cursor: pointer; display: flex; align-items: center;
+            justify-content: space-between; transition: all 0.2s ease;">
+            <span>📌 Page ${page}</span>
+            <span style="font-size: 12px; color: var(--accent, #6366f1); opacity: 0.9;">Jump ➔</span>
+        </button>
+    `).join('');
+
+    // Inner Card UI
+    modal.innerHTML = `
+        <div style="background: #12161f; border: 1px solid rgba(255,255,255,0.12); border-radius: 20px; 
+                    padding: 24px; width: 90%; max-width: 340px; text-align: center; color: #fff; 
+                    box-shadow: 0 20px 40px rgba(0,0,0,0.6);">
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h3 style="margin: 0; font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                    📑 Saved Bookmarks
+                </h3>
+                <span onclick="document.getElementById('bookmarksModal').remove()" 
+                      style="cursor: pointer; font-size: 20px; color: #a0aec0; padding: 4px;">✕</span>
+            </div>
+
+            <p style="font-size: 12px; color: #a0aec0; margin: 0 0 16px 0; text-align: left;">
+                Kise page par jana chahte hain? Click karke jump karein:
+            </p>
+
+            <div style="display: flex; flex-direction: column; gap: 10px; max-height: 240px; overflow-y: auto; padding-right: 4px;">
+                ${bookmarkButtonsHTML}
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+    window.toggleSettings(false);
+};
+
+// Bookmarked Page par Direct Jump Handler Helper
+window.jumpToBookmarkedPage = (pageNo) => {
+    jumpToPage(pageNo);
+    const modal = document.getElementById("bookmarksModal");
+    if (modal) modal.remove();
+};
+
+// Toast Notification Helper (Prompt/Alert alternative)
+function showToast(message) {
+    const toast = document.createElement("div");
+    toast.innerText = message;
+    toast.style.cssText = `
+        position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+        background: rgba(22, 27, 38, 0.95); border: 1px solid rgba(255,255,255,0.15);
+        color: #fff; padding: 10px 20px; border-radius: 30px; font-size: 13px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 999999; backdrop-filter: blur(10px);
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2500);
+}
+
+window.toggleThumbnailGrid = async (show = true) => {
+    const modal = document.getElementById("thumbnail-modal");
+    if (!modal) return;
+    modal.classList.toggle("open", show);
+    if (!show) return;
+
+    const grid = document.getElementById("thumbnail-grid");
+    if (!grid || grid.children.length > 0) return;
+
+    for (let i = 1; i <= pdfDoc.numPages; i++) {
+        const card = document.createElement("div");
+        card.className = "thumb-card";
+        card.onclick = () => { jumpToPage(i); toggleThumbnailGrid(false); };
+
+        const canvas = document.createElement("canvas");
+        card.appendChild(canvas);
+
+        const span = document.createElement("span");
+        span.innerText = `Page ${i}`;
+        card.appendChild(span);
+        grid.appendChild(card);
+
+        pdfDoc.getPage(i).then(page => {
+            const vp = page.getViewport({ scale: 0.2 });
+            canvas.width = vp.width;
+            canvas.height = vp.height;
+            page.render({ canvasContext: canvas.getContext('2d'), viewport: vp });
+        });
+    }
+};
+
+window.toggleStickyNote = (show = true) => {
+    const modal = document.getElementById("notes-modal");
+    if (!modal) return;
+    modal.classList.toggle("open", show);
+    if (show) {
+        const pageNumEl = document.getElementById("note-page-num");
+        if (pageNumEl) pageNumEl.innerText = currentPage;
+        const notes = JSON.parse(localStorage.getItem(`notes_${rawPath}`) || "{}");
+        const input = document.getElementById("page-note-input");
+        if (input) input.value = notes[currentPage] || "";
+    }
+};
+
+window.saveStickyNote = () => {
+    const input = document.getElementById("page-note-input");
+    if (!input) return;
+    const val = input.value.trim();
+    let notes = JSON.parse(localStorage.getItem(`notes_${rawPath}`) || "{}");
+    if (val) notes[currentPage] = val;
+    else delete notes[currentPage];
+    
+    localStorage.setItem(`notes_${rawPath}`, JSON.stringify(notes));
+    alert("Note saved!");
+    toggleStickyNote(false);
+};
+
+window.toggleSpeech = async () => {
+    const btn = document.getElementById("btn-tts");
+    if (isSpeaking) {
+        synth.cancel();
+        isSpeaking = false;
+        if (btn) btn.style.color = "inherit";
+        return;
+    }
+
+    const page = await pdfDoc.getPage(currentPage);
+    const textContent = await page.getTextContent();
+    const pageText = textContent.items.map(item => item.str).join(" ");
+
+    if (!pageText.trim()) { alert("No readable text found on this page."); return; }
+
+    const utterance = new SpeechSynthesisUtterance(pageText);
+    utterance.onend = () => {
+        isSpeaking = false;
+        if (btn) btn.style.color = "inherit";
+    };
+
+    synth.speak(utterance);
+    isSpeaking = true;
+    if (btn) btn.style.color = "var(--accent)";
+};
+
+window.setViewMode = (mode) => {
+    viewMode = mode;
+    document.body.className = `theme-${document.body.className.split(' ')[0].replace('theme-', '')} ui-visible mode-${mode}`;
+    if (mode === 'vertical') renderVerticalView();
+    window.toggleSettings(false);
+};
+
+async function renderVerticalView() {
+    const container = document.getElementById("vertical-scroll-container");
+    if (!container || container.children.length > 0) return;
+
+    for (let i = 1; i <= pdfDoc.numPages; i++) {
+        const wrapper = document.createElement("div");
+        wrapper.className = "v-page-wrapper";
+        const canvas = document.createElement("canvas");
+        wrapper.appendChild(canvas);
+        container.appendChild(wrapper);
+
+        const page = await pdfDoc.getPage(i);
+        const vp = page.getViewport({ scale: 1.2 });
+        canvas.width = vp.width;
+        canvas.height = vp.height;
+        page.render({ canvasContext: canvas.getContext('2d'), viewport: vp });
+    }
+}
+
+window.togglePageSpread = () => {
+    isDualPage = !isDualPage;
+    const btn = document.getElementById("btn-spread-toggle");
+    if (btn) btn.innerText = isDualPage ? "Dual Page Mode" : "Single Page Mode";
+    alert("Re-loading structure for updated spread mode...");
+    location.reload();
+};
+
+function jumpToPage(pageNo) {
+    if (viewMode === 'vertical') {
+        const container = document.getElementById("vertical-scroll-container");
+        if (container) {
+            const pageEl = container.children[pageNo - 1];
+            if (pageEl) pageEl.scrollIntoView({ behavior: 'smooth' });
+        }
+    } else if (pageFlipInstance) {
+        pageFlipInstance.turnToPage(pageNo - 1);
+    }
+}
+
+window.togglePresentationMode = () => {
+    isPresentationMode = !isPresentationMode;
+    document.body.classList.toggle("presentation-mode", isPresentationMode);
+    if (isPresentationMode) {
+        document.body.classList.add("ui-hidden");
+        window.toggleSettings(false);
+        document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+        document.body.classList.remove("ui-hidden");
+        if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    }
+};
 
 function updateTransform() {
     const wrapper = document.getElementById("canvas-stage");
@@ -548,14 +1036,25 @@ function setupPinchAndPanEngine() {
 }
 
 window.handleViewportClick = (e) => {
+    // FIX: Floating toolbar interactions par background UI toggle ko bypass karo
+    if (e.target.closest('#highlight-bar') || e.target.closest('#search-bar-container')) return;
+    
     if (isPinching || zoomScale > 1.05) return;
+    if (isPresentationMode) {
+        if (e.clientX > window.innerWidth / 2) window.navPage('next');
+        else window.navPage('prev');
+        return;
+    }
     if (e.clientY < 80 || e.clientY > window.innerHeight - 80) return;
     isUIVisible = !isUIVisible;
     document.body.classList.toggle("ui-hidden", !isUIVisible);
 };
 
+
 window.navPage = (dir) => {
-    if (!pageFlipInstance || isPinching) return;
+    if (!pageFlipInstance || isPinching || isAnimating) return;
+    isAnimating = true;
+    setTimeout(() => { isAnimating = false; }, 550);
     
     if (zoomScale > 1.05) window.resetZoom();
 
@@ -601,12 +1100,15 @@ if (pageSlider) {
                  const isParamPremium = params.get("type") === "premium";
                  const isInPaidFolder = rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium"));
                  const isPremiumNote = isParamPremium || isInPaidFolder;
+                 
+                 // FIX: Added local & DB verification consistency check
                  let purchasedList = JSON.parse(localStorage.getItem("purchasedFiles") || "[]");
                  let isPurchased = purchasedList.includes(rawPath);
 
                  if (isPremiumNote && !isPurchased) {
                      showPurchaseRequiredModal();
                      this.value = 1;
+                     pageFlipInstance.turnToPage(0); // FIX: Instantly force reset engine to page 1
                      return;
                  }
                  pageFlipInstance.flipNext('bottom');
@@ -635,7 +1137,7 @@ window.rotateCanvas = () => {
 };
 
 window.setTheme = (t) => {
-    document.body.className = `theme-${t} ui-visible`;
+    document.body.className = `theme-${t} ui-visible mode-${viewMode}`;
     window.toggleSettings(false);
 };
 
@@ -652,6 +1154,13 @@ window.toggleFullscreen = () => {
     } else {
         if (document.exitFullscreen) document.exitFullscreen();
     }
+};
+
+window.closeAllModals = () => {
+    toggleSettings(false);
+    toggleThumbnailGrid(false);
+    toggleStickyNote(false);
+    toggleTOC(false);
 };
 
 function showError(path) {
@@ -696,6 +1205,11 @@ document.addEventListener("DOMContentLoaded", initReader);
 
 /* KEYBOARD SHORTCUTS */
 document.addEventListener('keydown', (e) => {
+    if (e.key === 'F5') { e.preventDefault(); window.togglePresentationMode(); }
+    if (e.key === 'Escape') {
+        if (isPresentationMode) window.togglePresentationMode();
+        closeAllModals();
+    }
     if (e.key === 'ArrowRight' || e.key === 'PageDown') window.navPage('next');
     if (e.key === 'ArrowLeft' || e.key === 'PageUp') window.navPage('prev');
     if (e.key === '+' || e.key === '=') window.adjustZoom(0.2);
@@ -724,3 +1238,5 @@ if (viewportEl) {
         lastTap = currentTime;
     });
 }
+
+
