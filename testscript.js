@@ -1,12 +1,13 @@
 let currentTest = null, questions = [], currentIndex = 0;
 let userAnswers = {}, reviewStatus = {};
+let currentPaletteView = 'grid';
 let timerInterval = null, isTimerPaused = false;
 let totalTimeLimitSec = 0, timeRemaining = 0, totalTimeSpentSec = 0;
 let currentFilter = 'all';
 let currentMode = 'quiz';
 let currentAnalysisFilter = 'all';
 let currentUserProfile = null;
-let isSubmitted = false; // Guard flag to block any background saving after submit
+let isSubmitted = false;
 
 let chartBrief = null, chartAccuracy = null, chartScore = null;
 
@@ -31,7 +32,7 @@ window.addEventListener('DOMContentLoaded', async function() {
     await fetchUserProfile();
 
     const urlParams = new URLSearchParams(window.location.search);
-    const testId = urlParams.get('id');
+    const testId = urlParams.get('id') || urlParams.get('testid');
     const urlMode = urlParams.get('mode');
 
     if (urlMode === 'practice' || urlMode === 'quiz') {
@@ -61,8 +62,6 @@ function getDraftStorageKey() {
     return currentTest ? `test_draft_${currentTest.id}` : 'test_draft_demo';
 }
 
-/* --- DRAFT & SUPABASE SYNC LOGIC --- */
-
 async function saveProgressToSupabase(draftData) {
     if (isSubmitted || !window.supabaseClient || !currentTest || currentTest.id === 'demo_test') return;
     try {
@@ -87,7 +86,7 @@ async function saveProgressToSupabase(draftData) {
 }
 
 function saveLocalDraft() {
-    if (isSubmitted || !currentTest) return; // Prevent saving if test is submitted
+    if (isSubmitted || !currentTest) return;
     const draftData = {
         testId: currentTest.id,
         userAnswers: userAnswers,
@@ -271,18 +270,23 @@ async function setupTestInit() {
         }
     }
 
-    document.getElementById("instructionsModal").style.display = "flex";
+    const instModal = document.getElementById("instructionsModal");
+    if (instModal) instModal.style.display = "flex";
 }
 
 function startTestFromInstructions() {
-    document.getElementById("instructionsModal").style.display = "none";
+    const instModal = document.getElementById("instructionsModal");
+    if (instModal) instModal.style.display = "none";
     
     const resArea = document.getElementById("resultArea");
     if (resArea) resArea.style.display = "none";
 
-    document.getElementById("testArea").style.display = "grid";
+    const tArea = document.getElementById("testArea");
+    if (tArea) tArea.style.display = "grid";
+
     applyModeUI();
     renderPalette();
+    switchPaletteView(currentPaletteView);
     loadQuestion(0);
 }
 
@@ -302,11 +306,11 @@ function applyModeUI() {
     const clearBtn = document.getElementById('clearBtn');
 
     if (currentMode === 'practice') {
-        modeBadge.innerHTML = `<i class="fa-solid fa-book-open"></i> Practice Mode`;
-        clearBtn.style.display = 'none';
+        if (modeBadge) modeBadge.innerHTML = `<i class="fa-solid fa-book-open"></i> Practice Mode`;
+        if (clearBtn) clearBtn.style.display = 'none';
     } else {
-        modeBadge.innerHTML = `<i class="fa-solid fa-shield-halved"></i> Quiz Mode`;
-        clearBtn.style.display = 'inline-flex';
+        if (modeBadge) modeBadge.innerHTML = `<i class="fa-solid fa-shield-halved"></i> Quiz Mode`;
+        if (clearBtn) clearBtn.style.display = 'inline-flex';
     }
     startTimer();
 }
@@ -314,21 +318,49 @@ function applyModeUI() {
 function toggleMobilePalette() {
     const box = document.getElementById("paletteBox");
     const backdrop = document.getElementById("drawerBackdrop");
+    if (!box || !backdrop) return;
     if (box.classList.contains("open")) closeMobilePalette();
     else { box.classList.add("open"); backdrop.classList.add("active"); }
 }
 
 function closeMobilePalette() {
-    document.getElementById("paletteBox").classList.remove("open");
-    document.getElementById("drawerBackdrop").classList.remove("active");
+    const box = document.getElementById("paletteBox");
+    const backdrop = document.getElementById("drawerBackdrop");
+    if (box) box.classList.remove("open");
+    if (backdrop) backdrop.classList.remove("active");
+}
+
+function switchPaletteView(view) {
+    currentPaletteView = view;
+    const gridEl = document.getElementById("paletteGrid");
+    const listEl = document.getElementById("paletteList");
+    const btnGrid = document.getElementById("btnGridView");
+    const btnList = document.getElementById("btnListView");
+
+    if (!gridEl || !listEl) return;
+
+    if (view === 'grid') {
+        gridEl.style.display = "grid";
+        listEl.style.display = "none";
+        if (btnGrid) btnGrid.classList.add("active");
+        if (btnList) btnList.classList.remove("active");
+    } else {
+        gridEl.style.display = "none";
+        listEl.style.display = "flex";
+        if (btnList) btnList.classList.add("active");
+        if (btnGrid) btnGrid.classList.remove("active");
+    }
 }
 
 function renderPalette() {
     const grid = document.getElementById("paletteGrid");
-    if (!grid) return;
-    grid.innerHTML = "";
+    const list = document.getElementById("paletteList");
+    if (!grid || !list) return;
 
-    questions.forEach((_, idx) => {
+    grid.innerHTML = "";
+    list.innerHTML = "";
+
+    questions.forEach((q, idx) => {
         const isAnswered = userAnswers[idx] !== undefined;
         const isReview = reviewStatus[idx];
 
@@ -336,18 +368,30 @@ function renderPalette() {
         if (currentFilter === 'unanswered' && isAnswered) return;
         if (currentFilter === 'review' && !isReview) return;
 
+        const qClass = getQuestionClass(idx);
+        const qText = q.question_text || q.question || `Question ${idx + 1}`;
+
         const btn = document.createElement("button");
-        btn.className = `p-btn ${getQuestionClass(idx)}`;
+        btn.className = `p-btn ${qClass}`;
         btn.innerText = idx + 1;
         btn.onclick = () => { loadQuestion(idx); closeMobilePalette(); };
         grid.appendChild(btn);
+
+        const listCard = document.createElement("div");
+        listCard.className = `p-list-card ${qClass}`;
+        listCard.innerHTML = `
+            <div class="p-list-num">${idx + 1}.</div>
+            <div class="p-list-text">${qText}</div>
+        `;
+        listCard.onclick = () => { loadQuestion(idx); closeMobilePalette(); };
+        list.appendChild(listCard);
     });
 }
 
 function filterPalette(filter, el) {
     currentFilter = filter;
     document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-    el.classList.add('active');
+    if (el) el.classList.add('active');
     renderPalette();
 }
 
@@ -364,44 +408,54 @@ function loadQuestion(idx) {
     currentIndex = idx;
     const q = questions[idx];
 
-    document.getElementById("currentQNum").innerText = `Question ${idx + 1}`;
-    document.getElementById("questionText").innerText = q.question_text || q.question || '';
+    const curNum = document.getElementById("currentQNum");
+    if (curNum) curNum.innerText = `Question ${idx + 1}`;
+    
+    const qTextElem = document.getElementById("questionText");
+    if (qTextElem) qTextElem.innerText = q.question_text || q.question || '';
 
     const optionsBox = document.getElementById("optionsContainer");
-    optionsBox.innerHTML = "";
-    const options = q.options || [q.option1, q.option2, q.option3, q.option4];
+    if (optionsBox) optionsBox.innerHTML = "";
 
+    const options = q.options || [q.option1, q.option2, q.option3, q.option4];
     const userSelected = userAnswers[idx];
     const correctIdx = parseCorrectOption(q);
     const explanationBox = document.getElementById("practiceExplanation");
 
-    options.forEach((opt, oIdx) => {
-        const card = document.createElement("div");
-        let cardClasses = `option-card`;
+    if (optionsBox) {
+        options.forEach((opt, oIdx) => {
+            const card = document.createElement("div");
+            let cardClasses = `option-card`;
 
+            if (currentMode === 'practice' && userSelected !== undefined) {
+                cardClasses += ' locked';
+                if (oIdx === correctIdx) cardClasses += ' practice-correct';
+                else if (oIdx === userSelected) cardClasses += ' practice-incorrect';
+            } else {
+                if (userSelected === oIdx) cardClasses += ' selected';
+            }
+
+            card.className = cardClasses;
+            card.onclick = () => selectOption(oIdx);
+            card.innerHTML = `<div class="opt-prefix">${String.fromCharCode(65 + oIdx)}</div><div>${opt}</div>`;
+            optionsBox.appendChild(card);
+        });
+    }
+
+    if (explanationBox) {
         if (currentMode === 'practice' && userSelected !== undefined) {
-            cardClasses += ' locked';
-            if (oIdx === correctIdx) cardClasses += ' practice-correct';
-            else if (oIdx === userSelected) cardClasses += ' practice-incorrect';
+            explanationBox.style.display = 'block';
+            const expText = document.getElementById("explanationText");
+            if (expText) expText.innerText = q.explanation || "Correct Option: " + String.fromCharCode(65 + correctIdx);
         } else {
-            if (userSelected === oIdx) cardClasses += ' selected';
+            explanationBox.style.display = 'none';
         }
-
-        card.className = cardClasses;
-        card.onclick = () => selectOption(oIdx);
-        card.innerHTML = `<div class="opt-prefix">${String.fromCharCode(65 + oIdx)}</div><div>${opt}</div>`;
-        optionsBox.appendChild(card);
-    });
-
-    if (currentMode === 'practice' && userSelected !== undefined) {
-        explanationBox.style.display = 'block';
-        document.getElementById("explanationText").innerText = q.explanation || "Correct Option: " + String.fromCharCode(65 + correctIdx);
-    } else {
-        explanationBox.style.display = 'none';
     }
 
     const nextBtn = document.getElementById("nextBtn");
-    nextBtn.innerHTML = currentIndex === questions.length - 1 ? `Submit Test <i class="fa-solid fa-paper-plane"></i>` : `Next <i class="fa-solid fa-chevron-right"></i>`;
+    if (nextBtn) {
+        nextBtn.innerHTML = currentIndex === questions.length - 1 ? `Submit Test <i class="fa-solid fa-paper-plane"></i>` : `Next <i class="fa-solid fa-chevron-right"></i>`;
+    }
     renderPalette();
 }
 
@@ -447,7 +501,9 @@ function startTimer() {
         if (totalTimeSpentSec % 5 === 0) saveLocalDraft();
 
         let mins = Math.floor(timeRemaining / 60), secs = timeRemaining % 60;
-        document.getElementById("timerText").innerText = `${mins < 10 ? "0" : ""}${mins}:${secs < 10 ? "0" : ""}${secs}`;
+        const tText = document.getElementById("timerText");
+        if (tText) tText.innerText = `${mins < 10 ? "0" : ""}${mins}:${secs < 10 ? "0" : ""}${secs}`;
+        
         if (timeRemaining <= 0) { 
             clearInterval(timerInterval); 
             timerInterval = null;
@@ -473,20 +529,29 @@ function parseCorrectOption(q) {
     return parseInt(str, 10) || 0;
 }
 
-function openExitModal() { document.getElementById("exitModal").style.display = "flex"; }
-function closeExitModal() { document.getElementById("exitModal").style.display = "none"; }
-function exitExamConfirmed() { saveLocalDraft(); window.location.href = "tests.html"; }
+function openExitModal() { 
+    const m = document.getElementById("exitModal");
+    if (m) m.style.display = "flex"; 
+}
 
-/* FULL DESTRUCTION SUBMIT PROCEDURE */
+function closeExitModal() { 
+    const m = document.getElementById("exitModal");
+    if (m) m.style.display = "none"; 
+}
+
+function exitExamConfirmed() { 
+    saveLocalDraft(); 
+    window.location.href = "tests.html"; 
+}
+
 async function submitTest() {
-    isSubmitted = true; // Stop all background auto-saves immediately
+    isSubmitted = true;
     
     if (timerInterval) {
         clearInterval(timerInterval);
         timerInterval = null;
     }
 
-    // Force purge both localStorage and Supabase drafts
     await clearLocalDraft();
 
     let correctCount = 0, wrongCount = 0, skippedCount = 0, reviewCount = 0;
@@ -512,34 +577,52 @@ async function submitTest() {
     let scorePct = maxPossibleScore > 0 ? Math.round((scoreVal / maxPossibleScore) * 100) : 0;
     let accuracyPct = (correctCount + wrongCount) > 0 ? Math.round((correctCount / (correctCount + wrongCount)) * 100) : 0;
 
-    document.getElementById("testArea").style.display = "none";
-    document.getElementById("resultArea").style.display = "block";
+    const tArea = document.getElementById("testArea");
+    if (tArea) tArea.style.display = "none";
+
+    const header = document.querySelector("header");
+    if (header) header.style.display = "none";
+    
+    const rArea = document.getElementById("resultArea");
+    if (rArea) {
+        rArea.style.display = "block";
+        window.scrollTo(0, 0);
+    }
 
     const defaultAvatar = 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png';
-    document.getElementById("resUserName").innerText = currentUserProfile?.full_name || 'Student';
-    document.getElementById("resUserProfilePic").src = currentUserProfile?.avatar_url || defaultAvatar;
+    const rName = document.getElementById("resUserName");
+    if (rName) rName.innerText = currentUserProfile?.full_name || 'Student';
+    
+    const rPic = document.getElementById("resUserProfilePic");
+    if (rPic) rPic.src = currentUserProfile?.avatar_url || defaultAvatar;
 
-    document.getElementById("resScoreVal").innerText = scoreVal.toFixed(2);
-    document.getElementById("resScoreTotal").innerText = `Out of ${maxPossibleScore.toFixed(2)}`;
-    document.getElementById("resTestTitle").innerText = currentTest.title || "Portal Test";
+    const rScore = document.getElementById("resScoreVal");
+    if (rScore) rScore.innerText = scoreVal.toFixed(2);
+    
+    const rTotal = document.getElementById("resScoreTotal");
+    if (rTotal) rTotal.innerText = `Out of ${maxPossibleScore.toFixed(2)}`;
+    
+    const rTitle = document.getElementById("resTestTitle");
+    if (rTitle) rTitle.innerText = currentTest.title || "Portal Test";
     
     let minsSpent = Math.floor(totalTimeSpentSec / 60);
     let secsSpent = totalTimeSpentSec % 60;
-    document.getElementById("resTimeTaken").innerText = `${minsSpent < 10 ? '0' : ''}${minsSpent} min, ${secsSpent < 10 ? '0' : ''}${secsSpent} sec`;
+    const rTime = document.getElementById("resTimeTaken");
+    if (rTime) rTime.innerText = `${minsSpent < 10 ? '0' : ''}${minsSpent} min, ${secsSpent < 10 ? '0' : ''}${secsSpent} sec`;
 
-    document.getElementById("cntCorrectVal").innerText = correctCount;
-    document.getElementById("cntWrongVal").innerText = wrongCount;
-    document.getElementById("cntSkippedVal").innerText = skippedCount;
+    if (document.getElementById("cntCorrectVal")) document.getElementById("cntCorrectVal").innerText = correctCount;
+    if (document.getElementById("cntWrongVal")) document.getElementById("cntWrongVal").innerText = wrongCount;
+    if (document.getElementById("cntSkippedVal")) document.getElementById("cntSkippedVal").innerText = skippedCount;
 
-    document.getElementById("accuracyValText").innerText = `${accuracyPct} %`;
-    document.getElementById("scoreValText").innerText = `${scorePct < 0 ? 0 : scorePct} %`;
+    if (document.getElementById("accuracyValText")) document.getElementById("accuracyValText").innerText = `${accuracyPct} %`;
+    if (document.getElementById("scoreValText")) document.getElementById("scoreValText").innerText = `${scorePct < 0 ? 0 : scorePct} %`;
 
     if (document.getElementById("qaCorrect")) document.getElementById("qaCorrect").innerText = correctCount < 10 ? `0${correctCount}` : correctCount;
     if (document.getElementById("qaWrong")) document.getElementById("qaWrong").innerText = wrongCount < 10 ? `0${wrongCount}` : wrongCount;
     if (document.getElementById("qaSkipped")) document.getElementById("qaSkipped").innerText = skippedCount < 10 ? `0${skippedCount}` : skippedCount;
 
-    renderQuestionAnalysisGrid();
-    renderCharts(correctCount, wrongCount, skippedCount, accuracyPct, scorePct < 0 ? 0 : scorePct);
+    try { renderQuestionAnalysisGrid(); } catch(e) { console.warn("Question Analysis grid render error:", e); }
+    try { renderCharts(correctCount, wrongCount, skippedCount, accuracyPct, scorePct < 0 ? 0 : scorePct); } catch(e) { console.warn("Chart render error:", e); }
 
     await saveResultAndFetchRank(scoreVal, maxPossibleScore);
 }
@@ -584,10 +667,10 @@ function openQuestionDetailModal(idx) {
 
     let detailHtml = `
         <div id="qDetailModal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.75); display:flex; justify-content:center; align-items:center; z-index:9999; padding:15px;">
-            <div style="background:var(--bg-card, #1e293b); color:var(--text, #fff); border-radius:12px; padding:20px; max-width:500px; width:100%; max-height:85vh; overflow-y:auto; box-shadow:0 8px 32px rgba(0,0,0,0.5);">
+            <div style="background:var(--surface, #1e293b); color:var(--text-main, #fff); border-radius:12px; padding:20px; max-width:500px; width:100%; max-height:85vh; overflow-y:auto; box-shadow:0 8px 32px rgba(0,0,0,0.5);">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
                     <h3 style="font-size:16px; margin:0;">Question ${idx + 1} Analysis</h3>
-                    <button onclick="document.getElementById('qDetailModal').remove()" style="background:none; border:none; color:#fff; font-size:18px; cursor:pointer;">✖</button>
+                    <button onclick="document.getElementById('qDetailModal').remove()" style="background:none; border:none; color:var(--text-main, #fff); font-size:18px; cursor:pointer;">✖</button>
                 </div>
                 <div style="font-size:13px; font-weight:700; margin-bottom:10px; color:${isCorrect ? '#10b981' : (userAnsIdx !== undefined ? '#f43f5e' : '#f59e0b')};">${statusText}</div>
                 <p style="font-size:14px; margin-bottom:12px; font-weight:600; line-height:1.4;">${q.question_text || q.question}</p>
@@ -763,17 +846,15 @@ async function shareOnWhatsApp() {
             return;
         }
 
-        const userName = document.querySelector("#resultArea h3")?.innerText || "Student";
+        const userName = document.querySelector("#resUserName")?.innerText || "Student";
         const testTitle = typeof currentTest !== 'undefined' && currentTest?.title ? currentTest.title : "Test Result";
         const score = document.getElementById("resScoreVal")?.innerText || "0";
         const rank = document.getElementById("resRankVal")?.innerText || "#1";
         const testId = typeof currentTest !== 'undefined' && currentTest?.id ? currentTest.id : "";
 
-        // Dynamic Link Domain + Path
-        const shareUrl = `${window.location.host}/take-test.html${testId ? `?testid=${testId}` : ''}`;
+        const shareUrl = `${window.location.host}/take-test.html${testId ? `?id=${testId}` : ''}`;
 
-        // Fetch DOM Profile Image
-        const userImgEl = document.querySelector("#resultArea img");
+        const userImgEl = document.querySelector("#resUserProfilePic");
         let avatarSrc = null;
 
         if (userImgEl && userImgEl.src) {
@@ -822,7 +903,6 @@ async function shareOnWhatsApp() {
                 </div>
             </div>
 
-            <!-- Embedded Test Link Inside Image -->
             <div style="text-align: center; border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 12px;">
                 <span style="font-size: 10px; color: #94a3b8; display: block; margin-bottom: 2px;">Take this test at:</span>
                 <strong style="font-size: 12px; color: #a7f3d0; word-break: break-all;">${shareUrl}</strong>
@@ -863,13 +943,13 @@ async function shareOnWhatsApp() {
     }
 }
 
-
 function shareNative() {
     shareOnWhatsApp();
 }
 
 function toggleSolutions() {
     const solContainer = document.getElementById("solutionsContainer");
+    if (!solContainer) return;
     if (solContainer.style.display === "none" || solContainer.style.display === "") {
         renderSolutions();
         solContainer.style.display = "block";

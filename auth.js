@@ -169,6 +169,11 @@ async function handlePostLoginRedirect() {
     redirectTarget = urlParams.get("redirect");
   }
 
+  // Fallback to previous page if coming from same domain (excluding login.html itself)
+  if (!redirectTarget && document.referrer && !document.referrer.includes("login.html")) {
+    redirectTarget = document.referrer;
+  }
+
   if (redirectTarget) {
     sessionStorage.removeItem("redirect_after_login");
     window.location.href = redirectTarget;

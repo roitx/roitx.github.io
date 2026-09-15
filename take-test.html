@@ -9,7 +9,6 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    
 </head>
 <body>
 <!-- INSTRUCTIONS MODAL OVERLAY -->
@@ -116,12 +115,20 @@
     <!-- QUESTION PALETTE / DRAWER -->
     <div class="palette-box" id="paletteBox">
         <div>
-            <div class="sheet-drag-handle"></div>
             <div class="palette-header">
                 <div class="palette-title"><i class="fa-solid fa-list-check"></i> Question Navigator</div>
-                <button class="btn-close-sheet" onclick="closeMobilePalette()"><i class="fa-solid fa-xmark"></i></button>
+                <button class="btn-close-icon" onclick="closeMobilePalette()"><i class="fa-solid fa-xmark"></i></button>
             </div>
             
+            <div class="view-toggle-container">
+                <button class="view-toggle-btn active" id="btnGridView" onclick="switchPaletteView('grid')">
+                    <i class="fa-solid fa-border-all"></i> Grid View
+                </button>
+                <button class="view-toggle-btn" id="btnListView" onclick="switchPaletteView('list')">
+                    <i class="fa-solid fa-list-ul"></i> List View
+                </button>
+            </div>
+
             <div class="filter-chips">
                 <div class="chip active" onclick="filterPalette('all', this)">All</div>
                 <div class="chip" onclick="filterPalette('answered', this)">Attempted</div>
@@ -130,6 +137,7 @@
             </div>
 
             <div class="palette-grid" id="paletteGrid"></div>
+            <div class="palette-list" id="paletteList" style="display: none;"></div>
             
             <div class="legend">
                 <div class="legend-item"><div class="dot dot-success"></div> Attempted</div>
@@ -138,7 +146,7 @@
             </div>
         </div>
 
-        <div class="submit-zone">
+        <div class="submit-zone" style="margin-top: 10px;">
             <button class="btn-submit-main" onclick="confirmSubmission()">
                 <i class="fa-solid fa-paper-plane"></i> Submit Test
             </button>
@@ -163,7 +171,6 @@
 <div id="resultArea" style="display: none;">
     <div class="result-container">
         
-        <!-- CARD 1: USER RANK & SCORE HEADER -->
         <div class="user-score-card">
             <div class="card-header-icons">
                 <button class="btn-circle" onclick="exitExam()"><i class="fa-solid fa-xmark"></i></button>
@@ -199,12 +206,10 @@
             </div>
         </div>
 
-        <!-- LEADERBOARD BUTTON -->
         <button class="btn-leaderboard" onclick="viewLeaderboard()">
             <i class="fa-solid fa-trophy"></i> LEADERBOARD
         </button>
 
-        <!-- CARD 2: BRIEF ANALYSIS WITH DONUT CHART -->
         <div class="dashboard-card">
             <h3 class="dash-card-title">Brief Analysis</h3>
             
@@ -222,7 +227,6 @@
             </div>
         </div>
 
-        <!-- CARD 3: ACCURACY & SCORE CHARTS -->
         <div class="dashboard-card">
             <h3 class="dash-card-title">Accuracy & Score</h3>
             <div class="twin-charts-grid">
@@ -247,7 +251,6 @@
             </div>
         </div>
 
-        <!-- CARD 4: QUESTION ANALYSIS GRID -->
         <div class="dashboard-card">
             <h3 class="dash-card-title">Question Analysis</h3>
             <div class="metrics-legend">
@@ -261,7 +264,6 @@
             <div class="analysis-q-grid" id="analysisQGrid"></div>
         </div>
 
-        <!-- SOLUTIONS PANEL -->
         <div id="solutionsContainer" class="dashboard-card" style="display: none; margin-top: 16px;">
             <h3 class="dash-card-title"><i class="fa-solid fa-magnifying-glass-chart"></i> Detailed Solutions</h3>
             <div class="analysis-filter-bar" style="display:flex; gap:8px; overflow-x:auto; padding-bottom:8px; margin-bottom:12px;">
@@ -274,7 +276,6 @@
             <div id="solutionsList"></div>
         </div>
 
-        <!-- BOTTOM FIXED ACTION BUTTONS -->
         <div class="result-footer-actions">
             <button class="btn-footer btn-reattempt" onclick="reattemptTest()">Re Attempt</button>
             <button class="btn-footer btn-solution" onclick="toggleSolutions()">Solution</button>
