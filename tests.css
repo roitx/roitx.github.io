@@ -159,6 +159,50 @@ input:checked + .slider:before {
 
 input:checked + .slider .icon-sun { color: #64748b; }
 input:checked + .slider .icon-moon { color: #f59e0b; }
+/* ==========================================
+   LOAD MORE BUTTON STYLING
+   ========================================== */
+.load-more-wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    padding: 10px 0;
+}
+
+.btn-load-more {
+    background: var(--card-light);
+    color: var(--accent-blue) !important;
+    border: 2px solid var(--accent-blue) !important;
+    padding: 12px 28px !important;
+    border-radius: 30px !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: var(--shadow-soft);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.btn-load-more:hover {
+    background: var(--accent-blue) !important;
+    color: #ffffff !important;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 123, 255, 0.3);
+}
+
+body.dark .btn-load-more, body.dark-mode .btn-load-more {
+    background: var(--card-dark) !important;
+    color: #a855f7 !important;
+    border-color: #a855f7 !important;
+}
+
+body.dark .btn-load-more:hover, body.dark-mode .btn-load-more:hover {
+    background: #a855f7 !important;
+    color: #ffffff !important;
+    box-shadow: 0 8px 20px rgba(168, 85, 247, 0.4);
+}
 
 /* ==========================================
    3. NAVIGATION SEGMENTED TABS

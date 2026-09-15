@@ -9,8 +9,16 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- MathJax for TeX/LaTeX formulas rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" id="MathJax-script" async></script>
 </head>
 <body>
+
+<!-- OFFLINE NETWORK BANNER -->
+<div id="offlineBanner" class="offline-banner">
+    <i class="fa-solid fa-wifi"></i> Internet Disconnected! You are currently working offline.
+</div>
+
 <!-- INSTRUCTIONS MODAL OVERLAY -->
 <div class="instructions-modal" id="instructionsModal">
     <div class="instructions-card">
@@ -251,8 +259,19 @@
             </div>
         </div>
 
+        <!-- QUESTION ANALYSIS WITH DUAL VIEW TOGGLE -->
         <div class="dashboard-card">
             <h3 class="dash-card-title">Question Analysis</h3>
+            
+            <div class="view-toggle-container">
+                <button class="view-toggle-btn active" id="btnResGridView" onclick="switchResultPaletteView('grid')">
+                    <i class="fa-solid fa-border-all"></i> Grid View
+                </button>
+                <button class="view-toggle-btn" id="btnResListView" onclick="switchResultPaletteView('list')">
+                    <i class="fa-solid fa-list-ul"></i> List View
+                </button>
+            </div>
+
             <div class="metrics-legend">
                 <span class="metric-item"><i class="dot dot-success"></i> Correct - <b id="qaCorrect">00</b></span>
                 <span class="divider">|</span>
@@ -262,6 +281,7 @@
             </div>
 
             <div class="analysis-q-grid" id="analysisQGrid"></div>
+            <div class="res-palette-list" id="analysisQList" style="display: none;"></div>
         </div>
 
         <div id="solutionsContainer" class="dashboard-card" style="display: none; margin-top: 16px;">

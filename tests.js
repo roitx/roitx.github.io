@@ -2,10 +2,18 @@
    STATE MANAGEMENT & GLOBAL VARIABLES
    ========================================== */
 let studentTests = [];
-let userTestResultsMap = {}; // Stores test_id -> { score, total_marks, percentage }
-let userDraftsMap = {};      // Stores test_id -> draft details
+let userTestResultsMap = {}; 
+let userDraftsMap = {};      
 let isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
 let isExploreOpen = false;
+
+// Pagination variables
+let visibleTestCount = 5; // Start me sirf 5 dikhenge
+function loadMoreTests() {
+    visibleTestCount += 10; // Batch size increment
+    renderRecentFiveTests();
+}
+
 
 // Selection State Tracker for Explore Section (Student Tests)
 let selectedBoard = "ALL";
@@ -261,6 +269,9 @@ async function fetchStudentTests() {
         studentTests = data || [];
         populateLeaderboardTestDropdown(studentTests);
         initLeaderboardStepView();
+        
+        // Initial state reset to 5
+        visibleTestCount = 5;
         renderRecentFiveTests();
     } catch (err) {
         const statusMsg = document.getElementById("statusMsg");
@@ -278,10 +289,19 @@ function renderRecentFiveTests() {
     const testCountBadge = document.getElementById("testCountBadge");
     
     if (headingTitle) headingTitle.innerHTML = `<i class="fa-solid fa-bolt" style="color: #f6e05e;"></i> Recently Added Tests`;
-    if (testCountBadge) testCountBadge.innerText = "Top 5";
+    
+    // Slice based on visibleTestCount
+    const testsToDisplay = studentTests.slice(0, visibleTestCount);
+    
+    if (testCountBadge) {
+        testCountBadge.innerText = `${testsToDisplay.length} of ${studentTests.length}`;
+    }
 
-    const recentFive = studentTests.slice(0, 5);
-    renderStudentTests(recentFive);
+    // --- YAHAN BADLAAV KIYA GAYA HAI ---
+    const remainingCount = studentTests.length - visibleTestCount;
+    const showLoadMoreBtn = remainingCount > 0;
+
+    renderStudentTests(testsToDisplay, showLoadMoreBtn, remainingCount);
 }
 
 /* ==========================================
@@ -474,7 +494,7 @@ function filterStudentTests() {
         var testClassLevel = (test.class_level || '').trim().toLowerCase();
         var testSubject = (test.subject || '').trim().toLowerCase();
 
-        var combinedSearchText = testTitle + " " + testClassLevel;
+        var combinedSearchText = testTitle + " " + testClassLevel + " " + testSubject;
 
         var matchesSearch = searchVal === "" || combinedSearchText.indexOf(searchVal) !== -1;
 
@@ -482,7 +502,6 @@ function filterStudentTests() {
                            (selectedBoard === "BSEB" && (combinedSearchText.indexOf("bseb") !== -1 || combinedSearchText.indexOf("bihar") !== -1)) ||
                            combinedSearchText.indexOf(selectedBoard.toLowerCase()) !== -1;
 
-        // Strict Class Matching (Prevents Class 12th from appearing in Class 10th)
         var selectedClassClean = selectedClass.trim().toLowerCase();
         var matchesClass = (selectedClass === "ALL") ||
                            (test.class_level && testClassLevel === selectedClassClean) ||
@@ -502,10 +521,13 @@ function filterStudentTests() {
     if (headingTitle) headingTitle.innerHTML = `<i class="fa-solid fa-list-check" style="color: #4A00E0;"></i> Filtered Tests`;
     if (testCountBadge) testCountBadge.innerText = filtered.length + " Found";
 
-    renderStudentTests(filtered);
+    // Search ya Filter mode me direct bina Load More ke render karein (ya paginated render bhi kar sakte hain)
+    renderStudentTests(filtered, false);
 }
 
-function renderStudentTests(tests) {
+
+function renderStudentTests(tests, showLoadMoreBtn = false, remainingCount = 0) {
+
     const container = document.getElementById("studentTestsContainer");
     if (!container) return;
 
@@ -518,8 +540,6 @@ function renderStudentTests(tests) {
                 <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto 12px auto; display: block;">
                     <circle cx="11" cy="11" r="8"></circle>
                     <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                    <line x1="11" y1="8" x2="11" y2="14"></line>
-                    <line x1="8" y1="11" x2="14" y2="11"></line>
                 </svg>
                 <h4 style="color: #475569; font-size: 16px; margin-bottom: 4px;">Koi Test Nahi Mila</h4>
                 <p style="color: #94a3b8; font-size: 13px;">Kripya apne filters ya search query badal kar dekhein.</p>
@@ -539,9 +559,7 @@ function renderStudentTests(tests) {
             const testDate = new Date(test.created_at);
             const now = new Date();
             const diffDays = (now - testDate) / (1000 * 60 * 60 * 24);
-            if (diffDays >= 0 && diffDays <= 7) {
-                isNew = true;
-            }
+            if (diffDays >= 0 && diffDays <= 7) isNew = true;
         }
         let newBadgeHtml = isNew ? `<span class="badge-new">NEW</span>` : '';
 
@@ -561,7 +579,6 @@ function renderStudentTests(tests) {
             buttonIcon = 'fa-play';
             buttonClass = 'btn-resume';
             isResume = true;
-
             const answers = draft.userAnswers || draft.user_answers || {};
             const attemptedCount = Object.keys(answers).length;
             
@@ -611,9 +628,60 @@ function renderStudentTests(tests) {
             </div>
         `;
     });
+    // Render Load More Button container if more items exist
+    if (showLoadMoreBtn) {
+        const nextBatchSize = Math.min(10, remainingCount);
+
+        html += `
+            <div class="load-more-wrapper" style="grid-column: 1 / -1; text-align: center; margin-top: 20px;">
+                <button onclick="loadMoreTests()" class="btn-load-more">
+                    <i class="fa-solid fa-circle-arrow-down"></i> Load More (${nextBatchSize}) — ${remainingCount} Remaining
+                </button>
+            </div>
+        `;
+    }
 
     container.innerHTML = html;
 }
+
+/* ==========================================
+   DEVICE ORIENTATION & TILT EFFECTS
+   ========================================== */
+document.addEventListener("DOMContentLoaded", () => {
+    const cards = document.querySelectorAll(".test-card, .podium-card");
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+    if (isMobile && window.DeviceOrientationEvent) {
+        window.addEventListener("deviceorientation", (event) => {
+            let tiltX = event.beta;
+            let tiltY = event.gamma;
+
+            if (tiltX === null || tiltY === null) return;
+
+            tiltX = Math.max(-30, Math.min(30, tiltX));
+            tiltY = Math.max(-30, Math.min(30, tiltY));
+
+            cards.forEach(card => {
+                card.style.transform = `rotateX(${-tiltX * 0.5}deg) rotateY(${tiltY * 0.5}deg)`;
+            });
+        }, true);
+    } else {
+        cards.forEach(card => {
+            card.addEventListener("mousemove", (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left - rect.width / 2;
+                const y = e.clientY - rect.top - rect.height / 2;
+
+                card.style.transform = `rotateY(${x * 0.05}deg) rotateX(${-y * 0.05}deg) scale(1.02)`;
+            });
+
+            card.addEventListener("mouseleave", () => {
+                card.style.transform = "rotateY(0deg) rotateX(0deg) scale(1)";
+            });
+        });
+    }
+});
+
 
 /* ==========================================
    DIRECT WHATSAPP SHARE WITH SCORE & TEST LINK

@@ -1,6 +1,7 @@
 let currentTest = null, questions = [], currentIndex = 0;
 let userAnswers = {}, reviewStatus = {};
 let currentPaletteView = 'grid';
+let currentResultPaletteView = 'grid';
 let timerInterval = null, isTimerPaused = false;
 let totalTimeLimitSec = 0, timeRemaining = 0, totalTimeSpentSec = 0;
 let currentFilter = 'all';
@@ -27,8 +28,50 @@ function toggleTheme() {
     if (icon) icon.className = newTheme === 'light' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
 }
 
+// LIVE NETWORK MONITORING
+function setupNetworkMonitor() {
+    const banner = document.getElementById('offlineBanner');
+    function updateOnlineStatus() {
+        if (!navigator.onLine) {
+            if (banner) banner.style.display = 'block';
+        } else {
+            if (banner) banner.style.display = 'none';
+        }
+    }
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+    updateOnlineStatus();
+}
+
+// KEYBOARD NAVIGATION SETUP
+function setupKeyboardNavigation() {
+    document.addEventListener('keydown', (e) => {
+        if (isSubmitted || (document.getElementById('testArea') && document.getElementById('testArea').style.display === 'none')) return;
+        
+        // Ignore if user is typing in a prompt or input
+        if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return;
+
+        if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            navigateQuestion(-1);
+        } else if (e.key === 'ArrowRight') {
+            e.preventDefault();
+            handleNextOrSubmit();
+        }
+    });
+}
+
+// DYNAMIC MATHJAX RE-RENDER FUNCTION
+function renderMathJax() {
+    if (window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
+        window.MathJax.typesetPromise().catch((err) => console.warn('MathJax Typeset Error:', err));
+    }
+}
+
 window.addEventListener('DOMContentLoaded', async function() {
     initTheme();
+    setupNetworkMonitor();
+    setupKeyboardNavigation();
     await fetchUserProfile();
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -188,7 +231,7 @@ function loadDummyTest() {
         marks_per_question: 3,
         negative_marks: 1,
         questions_data: Array.from({ length: 15 }, (_, i) => ({
-            question_text: `Sample Question ${i + 1} text goes here...`,
+            question_text: `Sample Question ${i + 1} text goes here with equation \\( E = mc^2 \\)...`,
             options: ["Option A", "Option B", "Option C", "Option D"],
             correct_option: 0,
             explanation: "Explanation for question " + (i + 1)
@@ -352,6 +395,29 @@ function switchPaletteView(view) {
     }
 }
 
+// RESULT AREA DUAL VIEW TOGGLE (Grid vs List)
+function switchResultPaletteView(view) {
+    currentResultPaletteView = view;
+    const gridEl = document.getElementById("analysisQGrid");
+    const listEl = document.getElementById("analysisQList");
+    const btnGrid = document.getElementById("btnResGridView");
+    const btnList = document.getElementById("btnResListView");
+
+    if (!gridEl || !listEl) return;
+
+    if (view === 'grid') {
+        gridEl.style.display = "grid";
+        listEl.style.display = "none";
+        if (btnGrid) btnGrid.classList.add("active");
+        if (btnList) btnList.classList.remove("active");
+    } else {
+        gridEl.style.display = "none";
+        listEl.style.display = "flex";
+        if (btnList) btnList.classList.add("active");
+        if (btnGrid) btnGrid.classList.remove("active");
+    }
+}
+
 function renderPalette() {
     const grid = document.getElementById("paletteGrid");
     const list = document.getElementById("paletteList");
@@ -386,6 +452,8 @@ function renderPalette() {
         listCard.onclick = () => { loadQuestion(idx); closeMobilePalette(); };
         list.appendChild(listCard);
     });
+    
+    renderMathJax();
 }
 
 function filterPalette(filter, el) {
@@ -457,6 +525,7 @@ function loadQuestion(idx) {
         nextBtn.innerHTML = currentIndex === questions.length - 1 ? `Submit Test <i class="fa-solid fa-paper-plane"></i>` : `Next <i class="fa-solid fa-chevron-right"></i>`;
     }
     renderPalette();
+    renderMathJax();
 }
 
 function selectOption(oIdx) {
@@ -625,12 +694,15 @@ async function submitTest() {
     try { renderCharts(correctCount, wrongCount, skippedCount, accuracyPct, scorePct < 0 ? 0 : scorePct); } catch(e) { console.warn("Chart render error:", e); }
 
     await saveResultAndFetchRank(scoreVal, maxPossibleScore);
+    renderMathJax();
 }
 
 function renderQuestionAnalysisGrid() {
     const grid = document.getElementById("analysisQGrid");
+    const list = document.getElementById("analysisQList");
     if (!grid) return;
     grid.innerHTML = "";
+    if (list) list.innerHTML = "";
 
     questions.forEach((q, idx) => {
         let correctIdx = parseCorrectOption(q);
@@ -639,18 +711,48 @@ function renderQuestionAnalysisGrid() {
         btn.className = "q-status-btn";
         btn.innerText = idx + 1;
 
+        let statusClass = "";
+        let statusBadgeText = "";
+
         if (userAns !== undefined) {
-            if (userAns === correctIdx) btn.classList.add("correct");
-            else btn.classList.add("wrong");
+            if (userAns === correctIdx) {
+                btn.classList.add("correct");
+                statusClass = "res-correct";
+                statusBadgeText = "✔ Correct";
+            } else {
+                btn.classList.add("wrong");
+                statusClass = "res-wrong";
+                statusBadgeText = "✖ Wrong";
+            }
         } else if (reviewStatus[idx]) {
             btn.classList.add("review");
+            statusClass = "res-review";
+            statusBadgeText = "📌 Review";
         } else {
             btn.classList.add("skipped");
+            statusClass = "res-skipped";
+            statusBadgeText = "⚠ Skipped";
         }
 
         btn.onclick = () => openQuestionDetailModal(idx);
         grid.appendChild(btn);
+
+        if (list) {
+            const listCard = document.createElement("div");
+            listCard.className = `res-list-card ${statusClass}`;
+            listCard.innerHTML = `
+                <div class="res-list-head">
+                    <span class="res-list-num">Q${idx + 1}.</span>
+                    <span style="font-size: 11px; font-weight: bold;">${statusBadgeText}</span>
+                </div>
+                <div class="res-list-text">${q.question_text || q.question}</div>
+            `;
+            listCard.onclick = () => openQuestionDetailModal(idx);
+            list.appendChild(listCard);
+        }
     });
+
+    switchResultPaletteView(currentResultPaletteView);
 }
 
 function openQuestionDetailModal(idx) {
@@ -693,6 +795,7 @@ function openQuestionDetailModal(idx) {
     const existingModal = document.getElementById("qDetailModal");
     if (existingModal) existingModal.remove();
     document.body.insertAdjacentHTML('beforeend', detailHtml);
+    renderMathJax();
 }
 
 async function saveResultAndFetchRank(scoreVal, totalMarks) {
@@ -1042,6 +1145,7 @@ function renderSolutions() {
     if (solList) {
         solList.innerHTML = html || `<div style="padding: 10px; text-align: center; color: #94a3b8; font-size: 12px;">Is category me koi question nahi hai.</div>`;
     }
+    renderMathJax();
 }
 
 async function reportBug(questionIdx) {
