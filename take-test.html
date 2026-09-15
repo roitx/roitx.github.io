@@ -6,10 +6,25 @@
     <title>Exam Portal & Test Analysis</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="teststyle.css">
+    <style>
+        /* Prevents accidental double-tap and pinch zoom on touch devices */
+        html, body {
+            touch-action: manipulation;
+            -webkit-text-size-adjust: 100%;
+        }
+    </style>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <!-- MathJax for TeX/LaTeX formulas rendering -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            svg: { fontCache: 'global' }
+        };
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" id="MathJax-script" async></script>
 </head>
 <body>
@@ -37,7 +52,7 @@
             <li>Each question has <strong>4 options</strong>, out of which only one is correct.</li>
             <li>You have to finish the test in <strong id="instTimeText">-- minutes</strong>.</li>
             <li><strong>Correct Answer Marking:</strong> You will be awarded <strong id="instPositiveMarkText" style="color: #10b981;">+1 mark</strong> for every correct response.</li>
-            <li><strong>Negative Marking:</strong> <strong id="instNegativeMarkRule">No negative marking</strong></li>
+            <li><strong>Negative Marking:</strong> <strong id="instNegativeMarkingRule">No negative marking</strong></li>
             <li>You can view your <strong>Score & Rank</strong> immediately after submitting the test.</li>
             <li>Check detailed <strong>Solutions & Explanations</strong> after submitting.</li>
         </ol>

@@ -12,6 +12,52 @@ let isSubmitted = false;
 
 let chartBrief = null, chartAccuracy = null, chartScore = null;
 
+// MathJax Config Setup
+// MathJax Configuration Update
+window.MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+    },
+    chtml: {
+        displayAlign: 'left',
+        matchFontHeight: false
+    },
+    options: {
+        enableMenu: false
+    }
+};
+
+function renderMathJax(elements) {
+    if (window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
+        window.MathJax.typesetPromise(elements).catch((err) => console.warn('MathJax Typeset Error:', err));
+    }
+}
+
+
+
+function ensureMathDelimiter(str) {
+    if (!str) return "";
+    let trimmed = str.trim();
+    if (trimmed.includes("\\") && !trimmed.includes("$")) {
+        return `$${trimmed}$`;
+    }
+    return str;
+}
+
+function preventDoubleTapZoom() {
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', function (event) {
+        const now = (new Date()).getTime();
+        if (now - lastTouchEnd <= 300) {
+            if (event.cancelable) {
+                event.preventDefault();
+            }
+        }
+        lastTouchEnd = now;
+    }, { passive: false });
+}
+
 function initTheme() {
     const savedTheme = localStorage.getItem('theme_preference') || 'dark';
     document.documentElement.setAttribute('data-theme', savedTheme);
@@ -28,27 +74,19 @@ function toggleTheme() {
     if (icon) icon.className = newTheme === 'light' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
 }
 
-// LIVE NETWORK MONITORING
 function setupNetworkMonitor() {
     const banner = document.getElementById('offlineBanner');
     function updateOnlineStatus() {
-        if (!navigator.onLine) {
-            if (banner) banner.style.display = 'block';
-        } else {
-            if (banner) banner.style.display = 'none';
-        }
+        if (banner) banner.style.display = navigator.onLine ? 'none' : 'block';
     }
     window.addEventListener('online', updateOnlineStatus);
     window.addEventListener('offline', updateOnlineStatus);
     updateOnlineStatus();
 }
 
-// KEYBOARD NAVIGATION SETUP
 function setupKeyboardNavigation() {
     document.addEventListener('keydown', (e) => {
         if (isSubmitted || (document.getElementById('testArea') && document.getElementById('testArea').style.display === 'none')) return;
-        
-        // Ignore if user is typing in a prompt or input
         if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return;
 
         if (e.key === 'ArrowLeft') {
@@ -61,14 +99,8 @@ function setupKeyboardNavigation() {
     });
 }
 
-// DYNAMIC MATHJAX RE-RENDER FUNCTION
-function renderMathJax() {
-    if (window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
-        window.MathJax.typesetPromise().catch((err) => console.warn('MathJax Typeset Error:', err));
-    }
-}
-
 window.addEventListener('DOMContentLoaded', async function() {
+    preventDoubleTapZoom();
     initTheme();
     setupNetworkMonitor();
     setupKeyboardNavigation();
@@ -226,15 +258,20 @@ async function clearLocalDraft() {
 function loadDummyTest() {
     currentTest = {
         id: "demo_test",
-        title: "Mix Test - 1",
+        title: "Mathematics: Integration Quiz",
         time_limit_mins: 20,
         marks_per_question: 3,
         negative_marks: 1,
         questions_data: Array.from({ length: 15 }, (_, i) => ({
-            question_text: `Sample Question ${i + 1} text goes here with equation \\( E = mc^2 \\)...`,
-            options: ["Option A", "Option B", "Option C", "Option D"],
+            question_text: `खण्डशः समाकलन (Integration by parts) विधि से $\\int x e^x dx$ का मान क्या होगा?`,
+            options: [
+                "$e^x(x-1) + C$", 
+                "$e^x(x+1) + C$", 
+                "$x e^x + C$", 
+                "$e^x(1-x) + C$"
+            ],
             correct_option: 0,
-            explanation: "Explanation for question " + (i + 1)
+            explanation: "ILATE नियम का उपयोग करते हुए:<br>$$\\int x e^x dx - \\int \\left( \\frac{d}{dx}(x) \\int e^x dx \\right) dx = x e^x - e^x + C = e^x(x-1) + C$$"
         }))
     };
     setupTestInit();
@@ -262,7 +299,9 @@ async function setupTestInit() {
     const headingElem = document.getElementById("testHeading");
     if (headingElem) headingElem.innerText = currentTest.title || "Portal Test";
     
-    totalTimeLimitSec = (currentTest.time_limit_mins || 20) * 60;
+    let mins = Number(currentTest.time_limit_mins) || 20;
+    totalTimeLimitSec = mins * 60;
+    timeRemaining = totalTimeLimitSec;
 
     const urlParams = new URLSearchParams(window.location.search);
     const isReattempt = urlParams.get('reattempt') === 'true';
@@ -288,7 +327,7 @@ async function setupTestInit() {
     const totalMaxMarks = questions.length * posMarks;
 
     const instDuration = document.getElementById("instDuration");
-    if (instDuration) instDuration.innerText = `${currentTest.time_limit_mins || 20} Mins`;
+    if (instDuration) instDuration.innerText = `${mins} Mins`;
     
     const instMarks = document.getElementById("instMarks");
     if (instMarks) instMarks.innerText = totalMaxMarks;
@@ -297,7 +336,7 @@ async function setupTestInit() {
     if (instTotalQ) instTotalQ.innerText = questions.length;
     
     const instTimeText = document.getElementById("instTimeText");
-    if (instTimeText) instTimeText.innerText = `${currentTest.time_limit_mins || 20} minutes`;
+    if (instTimeText) instTimeText.innerText = `${mins} minutes`;
 
     const posMarkElem = document.getElementById("instPositiveMarkText");
     if (posMarkElem) posMarkElem.innerText = `+${posMarks} mark${posMarks > 1 ? 's' : ''}`;
@@ -395,7 +434,6 @@ function switchPaletteView(view) {
     }
 }
 
-// RESULT AREA DUAL VIEW TOGGLE (Grid vs List)
 function switchResultPaletteView(view) {
     currentResultPaletteView = view;
     const gridEl = document.getElementById("analysisQGrid");
@@ -480,7 +518,7 @@ function loadQuestion(idx) {
     if (curNum) curNum.innerText = `Question ${idx + 1}`;
     
     const qTextElem = document.getElementById("questionText");
-    if (qTextElem) qTextElem.innerText = q.question_text || q.question || '';
+    if (qTextElem) qTextElem.innerHTML = ensureMathDelimiter(q.question_text || q.question || '');
 
     const optionsBox = document.getElementById("optionsContainer");
     if (optionsBox) optionsBox.innerHTML = "";
@@ -505,7 +543,7 @@ function loadQuestion(idx) {
 
             card.className = cardClasses;
             card.onclick = () => selectOption(oIdx);
-            card.innerHTML = `<div class="opt-prefix">${String.fromCharCode(65 + oIdx)}</div><div>${opt}</div>`;
+            card.innerHTML = `<div class="opt-prefix">${String.fromCharCode(65 + oIdx)}</div><div>${ensureMathDelimiter(opt)}</div>`;
             optionsBox.appendChild(card);
         });
     }
@@ -514,7 +552,7 @@ function loadQuestion(idx) {
         if (currentMode === 'practice' && userSelected !== undefined) {
             explanationBox.style.display = 'block';
             const expText = document.getElementById("explanationText");
-            if (expText) expText.innerText = q.explanation || "Correct Option: " + String.fromCharCode(65 + correctIdx);
+            if (expText) expText.innerHTML = ensureMathDelimiter(q.explanation || "Correct Option: " + String.fromCharCode(65 + correctIdx));
         } else {
             explanationBox.style.display = 'none';
         }
@@ -524,8 +562,11 @@ function loadQuestion(idx) {
     if (nextBtn) {
         nextBtn.innerHTML = currentIndex === questions.length - 1 ? `Submit Test <i class="fa-solid fa-paper-plane"></i>` : `Next <i class="fa-solid fa-chevron-right"></i>`;
     }
+    
     renderPalette();
-    renderMathJax();
+
+    const elementsToTypeset = [qTextElem, optionsBox, explanationBox].filter(Boolean);
+    renderMathJax(elementsToTypeset);
 }
 
 function selectOption(oIdx) {
@@ -745,7 +786,7 @@ function renderQuestionAnalysisGrid() {
                     <span class="res-list-num">Q${idx + 1}.</span>
                     <span style="font-size: 11px; font-weight: bold;">${statusBadgeText}</span>
                 </div>
-                <div class="res-list-text">${q.question_text || q.question}</div>
+                <div class="res-list-text">${ensureMathDelimiter(q.question_text || q.question)}</div>
             `;
             listCard.onclick = () => openQuestionDetailModal(idx);
             list.appendChild(listCard);
@@ -753,6 +794,7 @@ function renderQuestionAnalysisGrid() {
     });
 
     switchResultPaletteView(currentResultPaletteView);
+    renderMathJax();
 }
 
 function openQuestionDetailModal(idx) {
@@ -761,33 +803,42 @@ function openQuestionDetailModal(idx) {
     const correctIdx = parseCorrectOption(q);
     const options = q.options || [q.option1, q.option2, q.option3, q.option4];
 
-    let userAnsText = userAnsIdx !== undefined ? options[userAnsIdx] : "Not Answered";
-    let correctAnsText = options[correctIdx];
+    let userAnsText = userAnsIdx !== undefined ? ensureMathDelimiter(options[userAnsIdx]) : "Not Answered";
+    let correctAnsText = ensureMathDelimiter(options[correctIdx]);
     let isCorrect = userAnsIdx === correctIdx;
 
     let statusText = isCorrect ? "✔ Correct" : (userAnsIdx !== undefined ? "✖ Wrong" : "⚠ Skipped / Not Answered");
 
     let detailHtml = `
-        <div id="qDetailModal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.75); display:flex; justify-content:center; align-items:center; z-index:9999; padding:15px;">
-            <div style="background:var(--surface, #1e293b); color:var(--text-main, #fff); border-radius:12px; padding:20px; max-width:500px; width:100%; max-height:85vh; overflow-y:auto; box-shadow:0 8px 32px rgba(0,0,0,0.5);">
+        <div id="qDetailModal" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.75); display:flex; justify-content:center; align-items:center; z-index:9999; padding:12px; box-sizing:border-box;">
+            <div style="background:var(--surface, #1e293b); color:var(--text-main, #fff); border-radius:12px; padding:16px; width:100%; max-width:450px; max-height:85vh; overflow-y:auto; overflow-x:hidden; box-shadow:0 8px 32px rgba(0,0,0,0.5); box-sizing:border-box;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
                     <h3 style="font-size:16px; margin:0;">Question ${idx + 1} Analysis</h3>
-                    <button onclick="document.getElementById('qDetailModal').remove()" style="background:none; border:none; color:var(--text-main, #fff); font-size:18px; cursor:pointer;">✖</button>
+                    <button onclick="document.getElementById('qDetailModal').remove()" style="background:none; border:none; color:var(--text-main, #fff); font-size:18px; cursor:pointer; padding:4px;">✖</button>
                 </div>
                 <div style="font-size:13px; font-weight:700; margin-bottom:10px; color:${isCorrect ? '#10b981' : (userAnsIdx !== undefined ? '#f43f5e' : '#f59e0b')};">${statusText}</div>
-                <p style="font-size:14px; margin-bottom:12px; font-weight:600; line-height:1.4;">${q.question_text || q.question}</p>
                 
-                <div style="font-size:13px; margin-bottom:8px; padding:8px; background:rgba(255,255,255,0.05); border-radius:6px;">
+                <div style="font-size:14px; margin-bottom:12px; font-weight:600; line-height:1.4; max-width:100%; overflow-x:auto;">
+                    ${ensureMathDelimiter(q.question_text || q.question)}
+                </div>
+                
+                <div style="font-size:13px; margin-bottom:8px; padding:8px; background:rgba(255,255,255,0.05); border-radius:6px; max-width:100%; overflow-x:auto;">
                     <b>Your Choice:</b> <span style="color:${isCorrect ? '#10b981' : '#f43f5e'};">${userAnsText}</span>
                 </div>
                 
-                <div style="font-size:13px; margin-bottom:12px; padding:8px; background:rgba(16,185,129,0.1); border-radius:6px; color:#10b981;">
+                <div style="font-size:13px; margin-bottom:12px; padding:8px; background:rgba(16,185,129,0.1); border-radius:6px; color:#10b981; max-width:100%; overflow-x:auto;">
                     <b>Correct Answer:</b> ${correctAnsText}
                 </div>
                 
-                ${q.explanation || q.solution ? `<div style="font-size:12px; color:#94a3b8; border-top:1px solid #334155; padding-top:8px; margin-top:8px;"><b>Explanation:</b> ${q.explanation || q.solution}</div>` : ''}
+                ${(q.explanation || q.solution) ? `
+                    <div style="font-size:12.5px; color:#cbd5e1; border-top:1px solid #334155; padding-top:10px; margin-top:8px; max-width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch;">
+                        <b style="color:#94a3b8; display:block; margin-bottom:4px;">Explanation:</b> 
+                        <div style="max-width:100%; overflow-x:auto;">
+                            ${ensureMathDelimiter(q.explanation || q.solution)}
+                        </div>
+                    </div>` : ''}
                 
-                <button onclick="document.getElementById('qDetailModal').remove()" style="margin-top:15px; width:100%; padding:10px; background:#007bff; color:#fff; border:none; border-radius:6px; font-weight:700; cursor:pointer;">Close</button>
+                <button onclick="document.getElementById('qDetailModal').remove()" style="margin-top:16px; width:100%; padding:10px; background:#007bff; color:#fff; border:none; border-radius:6px; font-weight:700; cursor:pointer;">Close</button>
             </div>
         </div>
     `;
@@ -795,7 +846,7 @@ function openQuestionDetailModal(idx) {
     const existingModal = document.getElementById("qDetailModal");
     if (existingModal) existingModal.remove();
     document.body.insertAdjacentHTML('beforeend', detailHtml);
-    renderMathJax();
+    renderMathJax([document.getElementById("qDetailModal")]);
 }
 
 async function saveResultAndFetchRank(scoreVal, totalMarks) {
@@ -1061,6 +1112,16 @@ function toggleSolutions() {
         solContainer.style.display = "none";
     }
 }
+function toggleExplanation(selectedOptionElement) {
+    // Baaki sabhi options ke explanations hide karo
+    document.querySelectorAll('.option-explanation').forEach(el => el.style.display = 'none');
+    
+    // Sirf clicked/selected option ka explanation show karo
+    const explanationDiv = selectedOptionElement.querySelector('.option-explanation');
+    if (explanationDiv) {
+        explanationDiv.style.display = 'block';
+    }
+}
 
 function filterSolutions(type, el) {
     currentAnalysisFilter = type;
@@ -1123,14 +1184,14 @@ function renderSolutions() {
                         <i class="fa-solid fa-bug"></i> Report Bug
                     </button>
                 </div>
-                <h4 style="margin-bottom: 6px; font-size:13.5px;">Q${idx + 1}. ${q.question_text || q.question || ''}</h4>
+                <h4 style="margin-bottom: 6px; font-size:13.5px;">Q${idx + 1}. ${ensureMathDelimiter(q.question_text || q.question || '')}</h4>
                 <p style="font-size: 12.5px; margin-bottom: 4px;">
-                    <b>Your Choice:</b> ${userAnsIdx !== undefined ? `<span style="color:${isCorrect ? '#10b981' : '#f43f5e'}">${options[userAnsIdx]}</span>` : '<i>Not Answered</i>'}
+                    <b>Your Choice:</b> ${userAnsIdx !== undefined ? `<span style="color:${isCorrect ? '#10b981' : '#f43f5e'}">${ensureMathDelimiter(options[userAnsIdx])}</span>` : '<i>Not Answered</i>'}
                 </p>
                 <p style="font-size: 12.5px; color: #10b981;">
-                    <b>Correct Answer:</b> ${options[correctIdx]}
+                    <b>Correct Answer:</b> ${ensureMathDelimiter(options[correctIdx])}
                 </p>
-                ${exp ? `<p style="font-size: 12px; color: #94a3b8; margin-top: 6px; border-top: 1px dashed #334155; padding-top: 4px;"><b>Explanation:</b> ${exp}</p>` : ''}
+                ${exp ? `<p style="font-size: 12px; color: #94a3b8; margin-top: 6px; border-top: 1px dashed #334155; padding-top: 4px;"><b>Explanation:</b> ${ensureMathDelimiter(exp)}</p>` : ''}
             </div>
         `;
     });
