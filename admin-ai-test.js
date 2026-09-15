@@ -17,12 +17,17 @@ document.addEventListener('contextmenu', function (e) {
   }
 }, { passive: false });
 
-// Subject Mapping Configuration
+// Subject Mapping Configuration (Updated with separate Class 9 & 10 subjects)
 const subjectData = {
   class9_10: [
+    "Physics", 
+    "Chemistry", 
+    "Biology", 
+    "History", 
+    "Political Science (Civics)", 
+    "Geography", 
+    "Economics", 
     "Mathematics", 
-    "Science (Physics/Chem/Bio)", 
-    "Social Science (SST)", 
     "Sanskrit", 
     "Hindi", 
     "English"
@@ -103,7 +108,7 @@ function updateSubjectOptions() {
         subjectSelect.appendChild(opt);
       });
     } else {
-      // Class 9th & 10th
+      // Class 9th & 10th (Separated Subjects)
       streamGroup.style.display = "none";
       subjectData.class9_10.forEach(sub => {
         const opt = document.createElement("option");
@@ -167,14 +172,14 @@ async function verifyAdminStrictly() {
   }
 }
 
-// Smart Helper Function to Extract Correct Index
+// Helper Function to Extract Correct Index
 function getCorrectIndex(q) {
   var val = q.correct !== undefined ? q.correct : (q.correctAnswer ?? q.ans ?? q.correct_option ?? 0);
   var parsed = parseInt(val);
   return isNaN(parsed) ? 0 : parsed;
 }
 
-// Helper: Clean option texts (removes any AI bracket traces like "(correct)", "(ans)", etc.)
+// Helper: Clean option texts
 function cleanOptionText(text) {
   if (typeof text !== 'string') return text;
   return text
@@ -191,14 +196,12 @@ function shuffleQuizQuestions(questions) {
     let correctIdx = getCorrectIndex(q);
     let correctAnswerValue = originalOpts[correctIdx];
 
-    // Fisher-Yates Random Shuffle
     let shuffledOpts = [...originalOpts];
     for (let i = shuffledOpts.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [shuffledOpts[i], shuffledOpts[j]] = [shuffledOpts[j], shuffledOpts[i]];
     }
 
-    // Find new correct index
     let newCorrectIdx = shuffledOpts.indexOf(correctAnswerValue);
 
     return {
@@ -209,7 +212,7 @@ function shuffleQuizQuestions(questions) {
   });
 }
 
-// Render Visual Preview directly in the UI
+// Render Visual Preview directly in UI (Updated with Image Preview Support)
 function renderUiPreview(parsedJson) {
   let previewContainer = document.getElementById("uiQuestionsPreview");
   if (!previewContainer) {
@@ -251,8 +254,15 @@ function renderUiPreview(parsedJson) {
         </div>`;
     });
 
+    // Image preview block (if figure exists)
+    let imageHtml = "";
+    if (q.image_url && q.image_url !== null) {
+      imageHtml = `<div style="margin: 8px 0;"><img src="${q.image_url}" alt="Question Figure" style="max-width: 100%; max-height: 200px; border-radius: 6px; border: 1px solid #cbd5e0;" onError="this.style.display='none';"></div>`;
+    }
+
     qDiv.innerHTML = `
       <p style="font-weight: 600; font-size: 14px; margin: 0 0 8px 0; color: #1a202c;">Q${idx + 1}: ${q.question || ''}</p>
+      ${imageHtml}
       <div>${optionsHtml}</div>
       ${q.explanation ? `<p style="font-size: 11px; color: #718096; margin-top: 6px; background: #f7fafc; padding: 6px; border-radius: 4px;"><strong>Explanation:</strong> ${q.explanation}</p>` : ''}
     `;
@@ -285,11 +295,22 @@ async function generateAiQuiz() {
   const topic = document.getElementById("topicInput").value.trim();
   const count = document.getElementById("questionsCount").value;
   const difficulty = document.getElementById("difficultySelect").value;
+  const language = document.getElementById("languageSelect").value;
   const customPrompt = document.getElementById("customPrompt").value.trim();
 
   if (!topic) {
     alert("⚠️ Please enter a Chapter or Topic Name first!");
     return;
+  }
+
+  // Dynamic Language Rules
+  let languageInstruction = "";
+  if (language === "Hindi") {
+    languageInstruction = "STRICT LANGUAGE RULE: Write ALL questions, options, and explanations strictly in HINDI using standard Devanagari script (देवनागरी लिपि). Do NOT use Roman script for Hindi words.";
+  } else if (language === "English") {
+    languageInstruction = "STRICT LANGUAGE RULE: Write ALL questions, options, and explanations strictly in standard English.";
+  } else {
+    languageInstruction = "STRICT LANGUAGE RULE: Write in Hinglish (a clean mix of Roman Hindi and standard English technical terms).";
   }
 
   const loaderBox = document.getElementById("loaderBox");
@@ -300,17 +321,23 @@ async function generateAiQuiz() {
   statusMsg.style.display = "none";
   generateBtn.disabled = true;
 
-  // STRICT HUMAN EXAMINER PROMPT
-  const systemInstruction = `You are a professional human teacher and senior exam paper setter for ${targetClass}.
-Your task is to create a realistic, human-written MCQ test with exactly ${count} questions for Subject: "${subject}", Topic: "${topic}".
+  // STRICT SYSTEM INSTRUCTION FOR MATH, SYMBOLS & FIGURES
+  const systemInstruction = `You are a professional senior exam paper setter for ${targetClass}.
+Your task is to create a realistic MCQ test with exactly ${count} questions for Subject: "${subject}", Topic: "${topic}".
 Exam Type: ${targetCategory}.
 Difficulty Level: ${difficulty}.
-Additional Notes: ${customPrompt || "Follow standard NCERT / official syllabus pattern"}.
+${languageInstruction}
+Additional Notes: ${customPrompt || "Follow standard NCERT / official exam pattern"}.
+
+MATHEMATICS, SYMBOLS & FIGURE GUIDELINES:
+1. Use standard LaTeX format for math formulas, integrals, limits, roots, fractions, matrix etc. (e.g. \\int_{0}^{\\pi} \\sin(x) dx, \\frac{d}{dx}, \\sqrt{x^2+a^2}).
+2. Escaped LaTeX strings inside JSON must use double backslashes (\\\\int, \\\\frac).
+3. IF A QUESTION REQUIRES A DIAGRAM/GEOMETRY FIGURE: Add an "image_url" field with a descriptive placeholder URL or set it to null if no image is needed (e.g. "image_url": null or "image_url": "https://via.placeholder.com/400x200?text=Triangle+Diagram").
 
 CRITICAL ANTI-AI / NATURAL EXAM RULES:
-1. DO NOT make the correct option longer or more detailed than the wrong options. All 4 options MUST be of similar length, tone, and complexity.
-2. DO NOT add brackets like "(Correct)", "(Ans)", or extra explanatory text inside option strings. Options must contain ONLY the answer choices.
-3. Make wrong options (distractors) highly plausible and intelligent, as a real examiner would write them.
+1. DO NOT make the correct option longer or more detailed than the wrong options. All 4 options MUST be of similar length and complexity.
+2. DO NOT add extra explanatory text like "(Correct)" or "(Ans)" inside option strings.
+3. Make wrong options (distractors) highly plausible and intelligent.
 4. Distribute correct answer indices completely randomly across 0, 1, 2, and 3.
 5. Respond strictly with pure, valid JSON. No markdown ticks, no commentary.
 
@@ -323,10 +350,11 @@ JSON Format Schema:
   "questions": [
     {
       "id": 1,
-      "question": "Question text here",
+      "question": "Question text with LaTeX if math (e.g. Calculate \\\\int x dx)",
+      "image_url": null,
       "options": ["Option A", "Option B", "Option C", "Option D"],
       "correct": 0,
-      "explanation": "Brief solution"
+      "explanation": "Step-by-step solution"
     }
   ]
 }`;
