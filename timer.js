@@ -285,73 +285,74 @@ class ProductivityEngine {
     } catch (e) {}
   }
 
-  initVisualizer() {
-    if (!this.els.visualizerCanvas) return;
-    
-    const canvas = this.els.visualizerCanvas;
-    const ctx = canvas.getContext('2d');
+  // FIX 1: Visualizer Canvas Auto-Resizing & High DPI Sharpness
+initVisualizer() {
+  if (!this.els.visualizerCanvas) return;
+  
+  const canvas = this.els.visualizerCanvas;
+  const ctx = canvas.getContext('2d');
 
-    const renderFrame = () => {
-      requestAnimationFrame(renderFrame);
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const resizeCanvas = () => {
+    if (canvas.clientWidth !== canvas.width) {
+      canvas.width = canvas.clientWidth;
+      canvas.height = canvas.clientHeight;
+    }
+  };
 
-      let bufferLength = 32;
-      let dataArray = new Uint8Array(bufferLength);
+  const renderFrame = () => {
+    requestAnimationFrame(renderFrame);
+    resizeCanvas();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      if (this.vizAudioCtx && this.vizAudioCtx.state === 'suspended' && this.isPlayingMusic) {
-        this.vizAudioCtx.resume();
-      }
+    let bufferLength = 32;
+    let dataArray = new Uint8Array(bufferLength);
 
-      // Priority 1: Real Local Music Data
-      if (this.vizAnalyser && this.isPlayingMusic) {
-        this.vizAnalyser.getByteFrequencyData(dataArray);
-      } 
-      // Priority 2: Dynamic Wave sync when Brainwave is Active
-      else if (this.activeWaveFreq > 0) {
-        for (let i = 0; i < bufferLength; i++) {
-          const wavePulse = Math.sin(Date.now() * (this.activeWaveFreq * 0.002) + i * 0.4);
-          dataArray[i] = Math.abs(wavePulse) * 160 + 20;
-        }
-      } 
-      // Default / Idle Mode
-      else {
-        for (let i = 0; i < bufferLength; i++) {
-          dataArray[i] = Math.abs(Math.sin(Date.now() * 0.003 + i * 0.2)) * 30 + 5;
-        }
-      }
+    if (this.vizAudioCtx && this.vizAudioCtx.state === 'suspended' && this.isPlayingMusic) {
+      this.vizAudioCtx.resume();
+    }
 
-      const barWidth = (canvas.width / bufferLength) * 1.8;
-      let x = 0;
-
+    if (this.vizAnalyser && this.isPlayingMusic) {
+      this.vizAnalyser.getByteFrequencyData(dataArray);
+    } else if (this.activeWaveFreq > 0) {
       for (let i = 0; i < bufferLength; i++) {
-        const audioIntensity = dataArray[i] / 255;
-        const barHeight = audioIntensity * canvas.height * 0.9 + 4;
-
-        const gradient = ctx.createLinearGradient(0, canvas.height, 0, 0);
-        
-        if (this.isPlayingMusic) {
-          gradient.addColorStop(0, '#ff007f');
-          gradient.addColorStop(0.5, '#7000ff');
-          gradient.addColorStop(1, '#00f6ff');
-        } else if (this.activeWaveFreq > 0) {
-          gradient.addColorStop(0, '#00f6ff');
-          gradient.addColorStop(1, '#10b981');
-        } else {
-          gradient.addColorStop(0, '#38bdf8');
-          gradient.addColorStop(1, '#0284c7');
-        }
-
-        ctx.fillStyle = gradient;
-        ctx.shadowColor = audioIntensity > 0.4 ? '#00f6ff' : 'transparent';
-        ctx.shadowBlur = audioIntensity * 12;
-
-        ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
-        x += barWidth + 3;
+        const wavePulse = Math.sin(Date.now() * (this.activeWaveFreq * 0.002) + i * 0.4);
+        dataArray[i] = Math.abs(wavePulse) * 160 + 20;
       }
-    };
+    } else {
+      for (let i = 0; i < bufferLength; i++) {
+        dataArray[i] = Math.abs(Math.sin(Date.now() * 0.003 + i * 0.2)) * 30 + 5;
+      }
+    }
 
-    renderFrame();
-  }
+    const barWidth = (canvas.width / bufferLength) * 1.5;
+    let x = 0;
+
+    for (let i = 0; i < bufferLength; i++) {
+      const audioIntensity = dataArray[i] / 255;
+      const barHeight = audioIntensity * canvas.height * 0.85 + 4;
+
+      const gradient = ctx.createLinearGradient(0, canvas.height, 0, 0);
+      if (this.isPlayingMusic) {
+        gradient.addColorStop(0, '#ff007f');
+        gradient.addColorStop(0.5, '#7000ff');
+        gradient.addColorStop(1, '#00f6ff');
+      } else if (this.activeWaveFreq > 0) {
+        gradient.addColorStop(0, '#00f6ff');
+        gradient.addColorStop(1, '#10b981');
+      } else {
+        gradient.addColorStop(0, '#38bdf8');
+        gradient.addColorStop(1, '#0284c7');
+      }
+
+      ctx.fillStyle = gradient;
+      ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+      x += barWidth + 3;
+    }
+  };
+
+  renderFrame();
+}
+
 
   toggleSelectionMenu() {
     let menu = document.getElementById('roitxMenu');
@@ -414,98 +415,99 @@ class ProductivityEngine {
     }
   }
 
-  launchWidget(type, isRestoring = false) {
-    let widget = document.getElementById('floatingWidget');
-    const launcher = document.getElementById('roitxLauncher');
+  // FIX 2: Fixed Widget Controls Mapping
+launchWidget(type, isRestoring = false) {
+  let widget = document.getElementById('floatingWidget');
+  const launcher = document.getElementById('roitxLauncher');
 
-    if (!widget) {
-      widget = document.createElement('div');
-      widget.id = 'floatingWidget';
-      widget.className = 'global-roitx-widget';
-      document.body.appendChild(widget);
-    }
+  if (!widget) {
+    widget = document.createElement('div');
+    widget.id = 'floatingWidget';
+    widget.className = 'global-roitx-widget';
+    document.body.appendChild(widget);
+  }
 
-    this.activeWidgetType = type;
-    localStorage.setItem('roitx_widget_type', type);
-    localStorage.setItem('roitx_widget_closed', 'false');
+  this.activeWidgetType = type;
+  localStorage.setItem('roitx_widget_type', type);
+  localStorage.setItem('roitx_widget_closed', 'false');
 
-    if (launcher) launcher.style.display = 'none';
-    widget.style.display = 'block';
+  if (launcher) launcher.style.display = 'none';
+  widget.style.display = 'block';
 
-    const savedPos = JSON.parse(localStorage.getItem('roitx_widget_pos') || '{"top":"80px","left":"20px"}');
-    widget.style.top = savedPos.top;
-    widget.style.left = savedPos.left;
+  const savedPos = JSON.parse(localStorage.getItem('roitx_widget_pos') || '{"top":"80px","left":"20px"}');
+  widget.style.top = savedPos.top;
+  widget.style.left = savedPos.left;
 
-    if (this.widgetClockInterval) clearInterval(this.widgetClockInterval);
+  if (this.widgetClockInterval) clearInterval(this.widgetClockInterval);
 
-    let titleText = type === 'stopwatch' ? 'Stopwatch' : (type === 'clock' ? 'Clock' : 'Timer');
+  let titleText = type === 'stopwatch' ? 'Stopwatch' : (type === 'clock' ? 'Clock' : 'Timer');
 
-    widget.innerHTML = `
-      <div id="widgetDragHandle" style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:8px; margin-bottom:10px; cursor:move;">
-        <span style="font-weight:bold; font-size: 0.85rem; color:#38bdf8; user-select:none;">🚀 Roitx ${titleText}</span>
-        <button id="btnWidgetClose" style="background:transparent; border:none; color:#94a3b8; font-size:16px; cursor:pointer; padding:0 4px;">✕</button>
+  widget.innerHTML = `
+    <div id="widgetDragHandle" style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:8px; margin-bottom:10px; cursor:move;">
+      <span style="font-weight:bold; font-size: 0.85rem; color:#38bdf8; user-select:none;">🚀 Roitx ${titleText}</span>
+      <button id="btnWidgetClose" style="background:transparent; border:none; color:#94a3b8; font-size:16px; cursor:pointer; padding:0 4px;">✕</button>
+    </div>
+    <div id="widgetBody" style="text-align:center;"></div>
+    
+    <div style="margin-top:12px; padding-top:8px; border-top:1px solid #334155; display:flex; align-items:center; justify-content:space-between; font-size:0.75rem; color:#94a3b8;">
+      <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:140px;" id="wTrackName">🎵 ${this.currentTrackName}</div>
+      <div id="wWaveBox" class="${this.isPlayingMusic ? 'wave-active' : ''}" style="display:flex; gap:2px; align-items:flex-end; height:16px;">
+        <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
       </div>
-      <div id="widgetBody" style="text-align:center;"></div>
-      
-      <div style="margin-top:12px; padding-top:8px; border-top:1px solid #334155; display:flex; align-items:center; justify-content:space-between; font-size:0.75rem; color:#94a3b8;">
-        <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:140px;" id="wTrackName">🎵 ${this.currentTrackName}</div>
-        <div id="wWaveBox" class="${this.isPlayingMusic ? 'wave-active' : ''}" style="display:flex; gap:2px; align-items:flex-end; height:16px;">
-          <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
-        </div>
+    </div>
+  `;
+
+  this.makeElementDraggable(widget, widget.querySelector('#widgetDragHandle'));
+
+  const body = widget.querySelector('#widgetBody');
+
+  document.getElementById('btnWidgetClose').onclick = () => {
+    widget.style.display = 'none';
+    if (launcher) launcher.style.display = 'flex';
+    if (this.widgetClockInterval) clearInterval(this.widgetClockInterval);
+    this.activeWidgetType = null;
+    localStorage.setItem('roitx_widget_closed', 'true');
+  };
+
+  if (type === 'timer') {
+    body.innerHTML = `
+      <div id="widgetTimeDisp" style="font-size:2rem; font-weight:bold; margin-bottom:10px; font-family:monospace;">${this.formatTime(this.timerState.remaining)}</div>
+      <div style="display:flex; gap:6px;">
+        <button id="btnWStart" style="flex:1; background:#3b82f6; color:#fff; border:none; padding:6px; border-radius:6px; cursor:pointer;">Start/Pause</button>
+        <button id="btnWReset" style="background:#475569; color:#fff; border:none; padding:6px; border-radius:6px; cursor:pointer;">Reset</button>
       </div>
     `;
-
-    this.makeElementDraggable(widget, widget.querySelector('#widgetDragHandle'));
-
-    const body = widget.querySelector('#widgetBody');
-
-    document.getElementById('btnWidgetClose').addEventListener('click', () => {
-      widget.style.display = 'none';
-      if (launcher) launcher.style.display = 'flex';
-      if (this.widgetClockInterval) clearInterval(this.widgetClockInterval);
-      this.activeWidgetType = null;
-      localStorage.setItem('roitx_widget_closed', 'true');
-    });
-
-    if (type === 'timer') {
-      body.innerHTML = `
-        <div id="widgetTimeDisp" style="font-size:2rem; font-weight:bold; margin-bottom:10px; font-family:monospace;">${this.formatTime(this.timerState.remaining)}</div>
-        <div style="display:flex; gap:6px;">
-          <button id="btnWStart" style="flex:1; background:#3b82f6; color:#fff; border:none; padding:6px; border-radius:6px; cursor:pointer;">Start/Pause</button>
-          <button id="btnWReset" style="background:#475569; color:#fff; border:none; padding:6px; border-radius:6px; cursor:pointer;">Reset</button>
-        </div>
-      `;
-      document.getElementById('btnWStart').onclick = () => {
-        if (this.timerState.intervalId) this.pauseTimer();
-        else this.startTimer();
-      };
-      document.getElementById('btnWReset').onclick = () => this.resetTimer();
-    } 
-    else if (type === 'stopwatch') {
-      body.innerHTML = `
-        <div id="widgetSwDisp" style="font-size:1.8rem; font-weight:bold; margin-bottom:10px; font-family:monospace;">${this.formatStopwatchRaw(this.stopwatchState.elapsed)}</div>
-        <div style="display:flex; gap:6px;">
-          <button id="btnWSwStart" style="flex:1; background:#10b981; color:#fff; border:none; padding:6px; border-radius:6px; cursor:pointer;">Start</button>
-          <button id="btnWSwStop" style="flex:1; background:#ef4444; color:#fff; border:none; padding:6px; border-radius:6px; cursor:pointer;">Stop</button>
-          <button id="btnWSwReset" style="background:#475569; color:#fff; border:none; padding:6px; border-radius:6px; cursor:pointer;">Reset</button>
-        </div>
-      `;
-      document.getElementById('btnWSwStart').onclick = () => this.startStopwatch();
-      document.getElementById('btnWSwStop').onclick = () => this.stopStopwatch();
-      document.getElementById('btnWSwReset').onclick = () => this.resetStopwatch();
-    } 
-    else if (type === 'clock') {
-      body.innerHTML = `
-        <div id="widgetClockDisp" style="font-size:1.8rem; font-weight:bold; color:#f59e0b; font-family:monospace; margin:10px 0;">00:00:00</div>
-      `;
-      const updateClock = () => {
-        const cEl = document.getElementById('widgetClockDisp');
-        if (cEl) cEl.textContent = new Date().toLocaleTimeString();
-      };
-      updateClock();
-      this.widgetClockInterval = setInterval(updateClock, 1000);
-    }
+    document.getElementById('btnWStart').onclick = () => {
+      if (this.timerState.intervalId) this.pauseTimer();
+      else this.startTimer();
+    };
+    document.getElementById('btnWReset').onclick = () => this.resetTimer();
+  } 
+  else if (type === 'stopwatch') {
+    body.innerHTML = `
+      <div id="widgetSwDisp" style="font-size:1.8rem; font-weight:bold; margin-bottom:10px; font-family:monospace;">${this.formatStopwatchRaw(this.stopwatchState.elapsed)}</div>
+      <div style="display:flex; gap:6px;">
+        <button id="btnWSwStart" style="flex:1; background:#10b981; color:#fff; border:none; padding:6px; border-radius:6px; cursor:pointer;">Start</button>
+        <button id="btnWSwStop" style="flex:1; background:#ef4444; color:#fff; border:none; padding:6px; border-radius:6px; cursor:pointer;">Stop</button>
+        <button id="btnWSwReset" style="background:#475569; color:#fff; border:none; padding:6px; border-radius:6px; cursor:pointer;">Reset</button>
+      </div>
+    `;
+    document.getElementById('btnWSwStart').onclick = () => this.startStopwatch();
+    document.getElementById('btnWSwStop').onclick = () => this.stopStopwatch();
+    document.getElementById('btnWSwReset').onclick = () => this.resetStopwatch();
+  } 
+  else if (type === 'clock') {
+    body.innerHTML = `
+      <div id="widgetClockDisp" style="font-size:1.8rem; font-weight:bold; color:#f59e0b; font-family:monospace; margin:10px 0;">00:00:00</div>
+    `;
+    const updateClock = () => {
+      const cEl = document.getElementById('widgetClockDisp');
+      if (cEl) cEl.textContent = new Date().toLocaleTimeString();
+    };
+    updateClock();
+    this.widgetClockInterval = setInterval(updateClock, 1000);
   }
+}
 
   makeElementDraggable(element, handleTarget = null) {
     let isDragging = false;

@@ -911,3 +911,38 @@ input[type="file"]::file-selector-button:hover {
   font-family: system-ui, -apple-system, sans-serif;
   touch-action: none;
 }
+/* ==========================================
+   FIX FOR TOP & BOTTOM WHITE/GLOW BLEED ISSUE
+   ========================================== */
+
+/* 1. Body Fixed Dark Base & Background Glow Cleanup */
+body {
+  background: #040914 !important; /* Solid dark fallback */
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+}
+
+body::before {
+  display: none !important; /* Disables top white/bright radial glow bleed */
+}
+
+/* 2. Fix Glass Panels Overflow & Clean Borders */
+.glass-panel {
+  overflow: hidden !important; /* Prevents white shine bleed at bottom */
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6) !important; /* Clean dark shadow */
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.glass-panel::before {
+  display: none !important; /* Removes inner white gradient overlay animation */
+}
+
+.glass-panel:hover {
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.7) !important; /* Removes white glow on hover */
+}
+
+/* 3. Floating Lightning Button Shadow Cleanup */
+#roitxLauncher {
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5) !important; /* Pure dark drop shadow */
+}
