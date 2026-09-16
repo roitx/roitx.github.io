@@ -375,7 +375,7 @@ function saveTestChanges() {
     });
 }
 
-// --- PREVIEW MODAL FUNCTIONS ---
+// --- UPGRADED PREVIEW MODAL FUNCTIONS WITH MATHJAX & SVG SUPPORT ---
 function openPreviewModal(testId) {
   var test = allTests.find(function(t) { return t.id === testId; });
   if (!test) return;
@@ -405,11 +405,20 @@ function openPreviewModal(testId) {
           '</label>';
       });
 
+      // Diagram / SVG or Image Support
+      var figureHtml = "";
+      if (q.diagram_svg && q.diagram_svg.trim() !== "") {
+        figureHtml = '<div style="margin: 10px 0; text-align: center; background: #fafafa; padding: 8px; border-radius: 6px; border: 1px dashed #cbd5e0; overflow-x: auto;">' + q.diagram_svg + '</div>';
+      } else if (q.image_url && q.image_url !== null) {
+        figureHtml = '<div style="margin: 8px 0;"><img src="' + q.image_url + '" alt="Question Figure" style="max-width: 100%; max-height: 200px; border-radius: 6px; border: 1px solid #cbd5e0;" onError="this.style.display=\'none\';"></div>';
+      }
+
       var correctIdx = getCorrectIndex(q);
       var correctText = opts[correctIdx] ? ' (' + opts[correctIdx] + ')' : '';
 
       qDiv.innerHTML = 
         '<p style="font-weight: 600; font-size: 14px; margin: 0 0 8px 0; color: #1a202c;">Q' + (idx + 1) + ': ' + (q.question || q.qText || q.title || '') + '</p>' +
+        figureHtml +
         '<div>' + optionsHtml + '</div>' +
         '<p style="font-size: 12px; color: #38a169; font-weight: bold; margin-top: 8px;">Correct Answer: Option ' + (correctIdx + 1) + correctText + '</p>';
       
@@ -418,6 +427,11 @@ function openPreviewModal(testId) {
   }
 
   document.getElementById("previewModal").style.display = "flex";
+
+  // Trigger MathJax typeset to render LaTeX correctly in preview modal
+  if (window.MathJax && typeof window.MathJax.typeset === 'function') {
+    window.MathJax.typeset();
+  }
 }
 
 function closePreviewModal() {

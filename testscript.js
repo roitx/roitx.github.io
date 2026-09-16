@@ -12,7 +12,6 @@ let isSubmitted = false;
 
 let chartBrief = null, chartAccuracy = null, chartScore = null;
 
-// MathJax Config Setup
 // MathJax Configuration Update
 window.MathJax = {
     tex: {
@@ -34,15 +33,46 @@ function renderMathJax(elements) {
     }
 }
 
-
-
 function ensureMathDelimiter(str) {
     if (!str) return "";
-    let trimmed = str.trim();
+    let trimmed = String(str).trim();
     if (trimmed.includes("\\") && !trimmed.includes("$")) {
         return `$${trimmed}$`;
     }
     return str;
+}
+
+// Step-by-Step Line Break Formatter Logic
+function formatSolutionText(text) {
+    if (!text) return "";
+    let formatted = String(text);
+    
+    // Line breaks for Roman numerals like I., II., III., IV., V.
+    formatted = formatted.replace(/\s*([I|V|X]+\.\s*)/g, '<br>$1');
+    
+    // Line breaks for standard numbers like 1., 2., 3.
+    formatted = formatted.replace(/\s*(\d+\.\s*)/g, '<br>$1');
+    
+    // Standard newline conversion
+    formatted = formatted.replace(/\n/g, '<br>');
+    
+    // Clean initial trailing breaks
+    if (formatted.startsWith('<br>')) {
+        formatted = formatted.substring(4);
+    }
+    return formatted;
+}
+
+// Diagram (SVG & Image) Render Engine
+function getDiagramHtml(q) {
+    if (!q) return "";
+    let figureHtml = "";
+    if (q.diagram_svg && typeof q.diagram_svg === 'string' && q.diagram_svg.trim() !== "") {
+        figureHtml = `<div style="margin: 10px 0; text-align: center; background: rgba(255,255,255,0.02); padding: 8px; border-radius: 6px; border: 1px dashed rgba(255,255,255,0.2); overflow-x: auto;">${q.diagram_svg}</div>`;
+    } else if (q.image_url && q.image_url !== null) {
+        figureHtml = `<div style="margin: 8px 0; text-align: center;"><img src="${q.image_url}" alt="Question Figure" style="max-width: 100%; max-height: 220px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.15);" onError="this.style.display='none';"></div>`;
+    }
+    return figureHtml;
 }
 
 function preventDoubleTapZoom() {
@@ -264,6 +294,8 @@ function loadDummyTest() {
         negative_marks: 1,
         questions_data: Array.from({ length: 15 }, (_, i) => ({
             question_text: `खण्डशः समाकलन (Integration by parts) विधि से $\\int x e^x dx$ का मान क्या होगा?`,
+            image_url: null,
+            diagram_svg: null,
             options: [
                 "$e^x(x-1) + C$", 
                 "$e^x(x+1) + C$", 
@@ -271,7 +303,7 @@ function loadDummyTest() {
                 "$e^x(1-x) + C$"
             ],
             correct_option: 0,
-            explanation: "ILATE नियम का उपयोग करते हुए:<br>$$\\int x e^x dx - \\int \\left( \\frac{d}{dx}(x) \\int e^x dx \\right) dx = x e^x - e^x + C = e^x(x-1) + C$$"
+            explanation: "I. ILATE नियम का उपयोग करते हुए:\nII. मान रखने पर:\nIII. $\\int x e^x dx = x e^x - \\int e^x dx$\nIV. अतः उत्तर $e^x(x-1) + C$ है।"
         }))
     };
     setupTestInit();
@@ -518,7 +550,11 @@ function loadQuestion(idx) {
     if (curNum) curNum.innerText = `Question ${idx + 1}`;
     
     const qTextElem = document.getElementById("questionText");
-    if (qTextElem) qTextElem.innerHTML = ensureMathDelimiter(q.question_text || q.question || '');
+    if (qTextElem) {
+        let questionContent = ensureMathDelimiter(q.question_text || q.question || '');
+        let diagramContent = getDiagramHtml(q);
+        qTextElem.innerHTML = `${questionContent} ${diagramContent}`;
+    }
 
     const optionsBox = document.getElementById("optionsContainer");
     if (optionsBox) optionsBox.innerHTML = "";
@@ -552,7 +588,10 @@ function loadQuestion(idx) {
         if (currentMode === 'practice' && userSelected !== undefined) {
             explanationBox.style.display = 'block';
             const expText = document.getElementById("explanationText");
-            if (expText) expText.innerHTML = ensureMathDelimiter(q.explanation || "Correct Option: " + String.fromCharCode(65 + correctIdx));
+            if (expText) {
+                let rawExp = q.explanation || q.solution || ("Correct Option: " + String.fromCharCode(65 + correctIdx));
+                expText.innerHTML = formatSolutionText(ensureMathDelimiter(rawExp));
+            }
         } else {
             explanationBox.style.display = 'none';
         }
@@ -629,7 +668,7 @@ function confirmSubmission() {
 }
 
 function parseCorrectOption(q) {
-    let val = q.correct_option !== undefined ? q.correct_option : (q.correct !== undefined ? q.correct : 0);
+    let val = q.correct !== undefined ? q.correct : (q.correct_option ?? q.ans ?? q.correctAnswer ?? 0);
     if (typeof val === 'number') return val;
     let str = val.toString().trim().toUpperCase();
     if (str === 'A' || str === '0') return 0;
@@ -808,6 +847,7 @@ function openQuestionDetailModal(idx) {
     let isCorrect = userAnsIdx === correctIdx;
 
     let statusText = isCorrect ? "✔ Correct" : (userAnsIdx !== undefined ? "✖ Wrong" : "⚠ Skipped / Not Answered");
+    let diagramHtml = getDiagramHtml(q);
 
     let detailHtml = `
         <div id="qDetailModal" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.75); display:flex; justify-content:center; align-items:center; z-index:9999; padding:12px; box-sizing:border-box;">
@@ -820,6 +860,7 @@ function openQuestionDetailModal(idx) {
                 
                 <div style="font-size:14px; margin-bottom:12px; font-weight:600; line-height:1.4; max-width:100%; overflow-x:auto;">
                     ${ensureMathDelimiter(q.question_text || q.question)}
+                    ${diagramHtml}
                 </div>
                 
                 <div style="font-size:13px; margin-bottom:8px; padding:8px; background:rgba(255,255,255,0.05); border-radius:6px; max-width:100%; overflow-x:auto;">
@@ -833,8 +874,8 @@ function openQuestionDetailModal(idx) {
                 ${(q.explanation || q.solution) ? `
                     <div style="font-size:12.5px; color:#cbd5e1; border-top:1px solid #334155; padding-top:10px; margin-top:8px; max-width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch;">
                         <b style="color:#94a3b8; display:block; margin-bottom:4px;">Explanation:</b> 
-                        <div style="max-width:100%; overflow-x:auto;">
-                            ${ensureMathDelimiter(q.explanation || q.solution)}
+                        <div style="max-width:100%; overflow-x:auto; line-height: 1.6;">
+                            ${formatSolutionText(ensureMathDelimiter(q.explanation || q.solution))}
                         </div>
                     </div>` : ''}
                 
@@ -1112,11 +1153,10 @@ function toggleSolutions() {
         solContainer.style.display = "none";
     }
 }
+
 function toggleExplanation(selectedOptionElement) {
-    // Baaki sabhi options ke explanations hide karo
     document.querySelectorAll('.option-explanation').forEach(el => el.style.display = 'none');
     
-    // Sirf clicked/selected option ka explanation show karo
     const explanationDiv = selectedOptionElement.querySelector('.option-explanation');
     if (explanationDiv) {
         explanationDiv.style.display = 'block';
@@ -1175,6 +1215,7 @@ function renderSolutions() {
         }
 
         let exp = q.explanation || q.solution;
+        let diagramHtml = getDiagramHtml(q);
 
         html += `
             <div class="sol-card" style="position: relative; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); padding:12px; border-radius:8px; margin-bottom:12px;">
@@ -1185,13 +1226,14 @@ function renderSolutions() {
                     </button>
                 </div>
                 <h4 style="margin-bottom: 6px; font-size:13.5px;">Q${idx + 1}. ${ensureMathDelimiter(q.question_text || q.question || '')}</h4>
+                ${diagramHtml}
                 <p style="font-size: 12.5px; margin-bottom: 4px;">
                     <b>Your Choice:</b> ${userAnsIdx !== undefined ? `<span style="color:${isCorrect ? '#10b981' : '#f43f5e'}">${ensureMathDelimiter(options[userAnsIdx])}</span>` : '<i>Not Answered</i>'}
                 </p>
                 <p style="font-size: 12.5px; color: #10b981;">
                     <b>Correct Answer:</b> ${ensureMathDelimiter(options[correctIdx])}
                 </p>
-                ${exp ? `<p style="font-size: 12px; color: #94a3b8; margin-top: 6px; border-top: 1px dashed #334155; padding-top: 4px;"><b>Explanation:</b> ${ensureMathDelimiter(exp)}</p>` : ''}
+                ${exp ? `<p style="font-size: 12px; color: #94a3b8; margin-top: 6px; border-top: 1px dashed #334155; padding-top: 6px; line-height: 1.6;"><b>Explanation:</b><br>${formatSolutionText(ensureMathDelimiter(exp))}</p>` : ''}
             </div>
         `;
     });

@@ -108,7 +108,6 @@ function updateSubjectOptions() {
         subjectSelect.appendChild(opt);
       });
     } else {
-      // Class 9th & 10th (Separated Subjects)
       streamGroup.style.display = "none";
       subjectData.class9_10.forEach(sub => {
         const opt = document.createElement("option");
@@ -118,7 +117,6 @@ function updateSubjectOptions() {
       });
     }
   } else {
-    // Competitive Exams (JEE / NEET)
     streamGroup.style.display = "none";
     let subjects = [];
     if (targetClass.includes("NEET")) {
@@ -172,14 +170,12 @@ async function verifyAdminStrictly() {
   }
 }
 
-// Helper Function to Extract Correct Index
 function getCorrectIndex(q) {
   var val = q.correct !== undefined ? q.correct : (q.correctAnswer ?? q.ans ?? q.correct_option ?? 0);
   var parsed = parseInt(val);
   return isNaN(parsed) ? 0 : parsed;
 }
 
-// Helper: Clean option texts
 function cleanOptionText(text) {
   if (typeof text !== 'string') return text;
   return text
@@ -187,7 +183,6 @@ function cleanOptionText(text) {
     .trim();
 }
 
-// Function to Shuffle Options & Randomize Correct Index
 function shuffleQuizQuestions(questions) {
   if (!Array.isArray(questions)) return [];
 
@@ -212,7 +207,7 @@ function shuffleQuizQuestions(questions) {
   });
 }
 
-// Render Visual Preview directly in UI (Updated with Image Preview Support)
+// Render Visual Preview with MathJax LaTeX & Enhanced Diagram Support
 function renderUiPreview(parsedJson) {
   let previewContainer = document.getElementById("uiQuestionsPreview");
   if (!previewContainer) {
@@ -254,21 +249,26 @@ function renderUiPreview(parsedJson) {
         </div>`;
     });
 
-    // Image preview block (if figure exists)
-    let imageHtml = "";
-    if (q.image_url && q.image_url !== null) {
-      imageHtml = `<div style="margin: 8px 0;"><img src="${q.image_url}" alt="Question Figure" style="max-width: 100%; max-height: 200px; border-radius: 6px; border: 1px solid #cbd5e0;" onError="this.style.display='none';"></div>`;
+    let figureHtml = "";
+    if (q.diagram_svg && q.diagram_svg.trim() !== "") {
+      figureHtml = `<div style="margin: 10px 0; text-align: center; background: #fafafa; padding: 8px; border-radius: 6px; border: 1px dashed #cbd5e0; overflow-x: auto;">${q.diagram_svg}</div>`;
+    } else if (q.image_url && q.image_url !== null) {
+      figureHtml = `<div style="margin: 8px 0;"><img src="${q.image_url}" alt="Question Figure" style="max-width: 100%; max-height: 200px; border-radius: 6px; border: 1px solid #cbd5e0;" onError="this.style.display='none';"></div>`;
     }
 
     qDiv.innerHTML = `
       <p style="font-weight: 600; font-size: 14px; margin: 0 0 8px 0; color: #1a202c;">Q${idx + 1}: ${q.question || ''}</p>
-      ${imageHtml}
+      ${figureHtml}
       <div>${optionsHtml}</div>
-      ${q.explanation ? `<p style="font-size: 11px; color: #718096; margin-top: 6px; background: #f7fafc; padding: 6px; border-radius: 4px;"><strong>Explanation:</strong> ${q.explanation}</p>` : ''}
+      ${q.explanation ? `<div style="font-size: 12px; color: #4a5568; margin-top: 8px; background: #f7fafc; padding: 8px; border-radius: 6px; border-left: 3px solid #8E2DE2;"><strong>Explanation:</strong><div style="margin-top: 4px; white-space: pre-line;">${q.explanation}</div></div>` : ''}
     `;
 
     previewContainer.appendChild(qDiv);
   });
+
+  if (window.MathJax && typeof window.MathJax.typeset === 'function') {
+    window.MathJax.typeset();
+  }
 }
 
 // Sync Preview when JSON Textarea is edited manually
@@ -303,10 +303,9 @@ async function generateAiQuiz() {
     return;
   }
 
-  // Dynamic Language Rules
   let languageInstruction = "";
   if (language === "Hindi") {
-    languageInstruction = "STRICT LANGUAGE RULE: Write ALL questions, options, and explanations strictly in HINDI using standard Devanagari script (देवनागरी लिपि). Do NOT use Roman script for Hindi words.";
+    languageInstruction = "STRICT LANGUAGE RULE: Write ALL questions, options, and explanations strictly in clean HINDI using standard Devanagari script (देवनागरी लिपि). Ensure proper matras and conjuncts without any text corruption or broken unicode characters.";
   } else if (language === "English") {
     languageInstruction = "STRICT LANGUAGE RULE: Write ALL questions, options, and explanations strictly in standard English.";
   } else {
@@ -321,7 +320,7 @@ async function generateAiQuiz() {
   statusMsg.style.display = "none";
   generateBtn.disabled = true;
 
-  // STRICT SYSTEM INSTRUCTION FOR MATH, SYMBOLS & FIGURES
+  // SYSTEM INSTRUCTION UPGRADED WITH MULTILINE CHEMISTRY EQUATIONS & ROBUST SVG DIAGRAM RULES
   const systemInstruction = `You are a professional senior exam paper setter for ${targetClass}.
 Your task is to create a realistic MCQ test with exactly ${count} questions for Subject: "${subject}", Topic: "${topic}".
 Exam Type: ${targetCategory}.
@@ -329,17 +328,18 @@ Difficulty Level: ${difficulty}.
 ${languageInstruction}
 Additional Notes: ${customPrompt || "Follow standard NCERT / official exam pattern"}.
 
-MATHEMATICS, SYMBOLS & FIGURE GUIDELINES:
+MATHEMATICS, CHEMISTRY, SYMBOLS & DIAGRAM GUIDELINES:
 1. Use standard LaTeX format for math formulas, integrals, limits, roots, fractions, matrix etc. (e.g. \\int_{0}^{\\pi} \\sin(x) dx, \\frac{d}{dx}, \\sqrt{x^2+a^2}).
 2. Escaped LaTeX strings inside JSON must use double backslashes (\\\\int, \\\\frac).
-3. IF A QUESTION REQUIRES A DIAGRAM/GEOMETRY FIGURE: Add an "image_url" field with a descriptive placeholder URL or set it to null if no image is needed (e.g. "image_url": null or "image_url": "https://via.placeholder.com/400x200?text=Triangle+Diagram").
+3. CHEMISTRY & PHYSICAL EQUATIONS RULE: For long chemical reactions or physical equations, do NOT crowd everything in one single horizontal line. Put reactants on the first part, the reaction arrow (\\rightarrow or \\longrightarrow) clearly, and place products or next terms on a new line using Markdown line breaks (\\\\n) or block display equations so it looks neat and readable.
+4. EXPLANATION FORMATTING RULE: Break down explanations into clear step-by-step paragraphs using Roman numerals (I., II., III., IV.) for steps instead of numbers or step i/ii words.
+5. DIAGRAMS & FIGURES RULE (SVG): If a question involves geometry (like angles e.g. θ, rays/kiran, coordinates x,y,z), organic chemistry (like benzene rings), or physics/biology figures, provide clean, well-scaled SVG code inside the "diagram_svg" field (e.g. "<svg height='120' width='200' viewBox='0 0 200 120'>...</svg>"). Inside SVG text elements, do NOT use raw LaTeX like \\theta; instead, use direct Unicode characters (like θ, α, °) or clean text strings so they render perfectly without clipping or overlapping. If no diagram is needed, set both "diagram_svg": null and "image_url": null.
 
 CRITICAL ANTI-AI / NATURAL EXAM RULES:
-1. DO NOT make the correct option longer or more detailed than the wrong options. All 4 options MUST be of similar length and complexity.
+1. DO NOT make the correct option longer or more detailed than the wrong options. All 4 options MUST be balanced.
 2. DO NOT add extra explanatory text like "(Correct)" or "(Ans)" inside option strings.
-3. Make wrong options (distractors) highly plausible and intelligent.
-4. Distribute correct answer indices completely randomly across 0, 1, 2, and 3.
-5. Respond strictly with pure, valid JSON. No markdown ticks, no commentary.
+3. Distribute correct answer indices completely randomly across 0, 1, 2, and 3.
+4. Respond strictly with pure, valid JSON. No markdown ticks, no commentary.
 
 JSON Format Schema:
 {
@@ -350,11 +350,12 @@ JSON Format Schema:
   "questions": [
     {
       "id": 1,
-      "question": "Question text with LaTeX if math (e.g. Calculate \\\\int x dx)",
+      "question": "Question text with LaTeX if math",
       "image_url": null,
+      "diagram_svg": null,
       "options": ["Option A", "Option B", "Option C", "Option D"],
       "correct": 0,
-      "explanation": "Step-by-step solution"
+      "explanation": "I. First step...\\nII. Second step..."
     }
   ]
 }`;
@@ -391,7 +392,6 @@ JSON Format Schema:
 
     const parsedJson = JSON.parse(rawText);
 
-    // Auto Clean Brackets & Shuffle Options
     if (parsedJson.questions && Array.isArray(parsedJson.questions)) {
       parsedJson.questions = shuffleQuizQuestions(parsedJson.questions);
     }
@@ -401,7 +401,6 @@ JSON Format Schema:
     document.getElementById("finalTestTitle").value = parsedJson.title || `${subject}: ${topic} Quiz`;
     document.getElementById("jsonOutput").value = JSON.stringify(parsedJson, null, 2);
 
-    // Render Live Preview Section inside Generator UI
     renderUiPreview(parsedJson);
 
     document.getElementById("quizPreviewSection").style.display = "block";
@@ -446,7 +445,6 @@ async function saveQuizToSupabase() {
   statusMsg.style.display = "block";
   saveDbBtn.disabled = true;
 
-  // Database Schema Payload
   const dbPayload = {
     title: finalTitle,
     class_level: document.getElementById("targetClass").value,
@@ -470,7 +468,6 @@ async function saveQuizToSupabase() {
     statusMsg.innerText = "🚀 Success! Test published live to Supabase!";
     alert("🎉 Test Database me successfully save ho gaya hai!");
     
-    // Auto reset preview section
     document.getElementById("quizPreviewSection").style.display = "none";
   } catch (err) {
     console.error("Database Save Error:", err);

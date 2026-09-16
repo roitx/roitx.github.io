@@ -79,6 +79,35 @@ body {
 }
 
 /* ==========================================================================
+   IMAGE RESPONSIVENESS & MEDIA ENHANCEMENTS
+   ========================================================================== */
+.question-img, 
+.q-text img, 
+.option-card img, 
+#explanationText img, 
+.sol-card img {
+    max-width: 100% !important;
+    height: auto !important;
+    display: block;
+    margin: 10px auto;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    object-fit: contain;
+}
+
+.opt-content {
+    flex: 1;
+    overflow-x: auto;
+    word-break: break-word;
+}
+
+.opt-content img {
+    max-height: 180px;
+    margin: 6px 0;
+}
+
+/* ==========================================================================
    3. COMPONENTS & MODALS
    ========================================================================== */
 .offline-banner {
@@ -370,12 +399,12 @@ header {
     border-left: 4px solid var(--primary);
     border-radius: 6px;
     font-size: 0.95rem;
-    line-height: 1.5;
+    line-height: 1.6;
     overflow-x: auto; 
     max-width: 100%;
 }
 
-/* Practice Mode Main Explanation Container (FIXED) */
+/* Solution Container Fixes */
 #practiceExplanation, .practice-explanation { 
     background: var(--surface-elevated); 
     border: 1px solid var(--border); 
@@ -384,15 +413,22 @@ header {
     margin-bottom: 20px; 
     display: none;
     height: auto !important;
-    max-height: none !important; /* Height-restricted scrolling completely removed */
+    max-height: none !important;
     overflow-y: visible !important;
-    overflow-x: auto !important; /* Horizontal scroll active for long math formulas */
+    overflow-x: auto !important;
     -webkit-overflow-scrolling: touch;
     word-wrap: break-word;
     word-break: break-word;
     max-width: 100% !important;
     overflow-wrap: anywhere !important;
     box-sizing: border-box !important;
+    line-height: 1.65 !important;
+}
+
+#explanationText {
+    display: block;
+    width: 100%;
+    line-height: 1.65 !important;
 }
 
 .practice-explanation h5, #practiceExplanation h5 { 
@@ -412,7 +448,7 @@ header {
 .btn-primary { background: var(--primary); color: #fff; font-weight: 800; }
 
 /* ==========================================================================
-   6. MATHJAX & KATEX RESPONSIVE OVERRIDES
+   6. MATHJAX & KATEX RESPONSIVE & LAYOUT OVERRIDES
    ========================================================================== */
 mjx-container, .mjx-chtml, .MathJax, .MathJax_SVG, .katex-display, .katex {
     max-width: 100% !important;
