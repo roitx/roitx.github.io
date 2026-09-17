@@ -44,7 +44,7 @@ async function loadFormulas() {
     card.className = "formula-card";
 
     // 1. Top Left Info Format: 10 • CHEM • CH1
-    const classNum = f.class ? `${f.class}` : '';
+    const classNum = f.class ? (isNaN(f.class) ? f.class.toUpperCase() : `Class ${f.class}`) : '';
     const subjectName = f.subject ? f.subject.toUpperCase() : '';
     const chNum = f.chapter ? f.chapter.replace('ch', 'CH ') : '';
     
