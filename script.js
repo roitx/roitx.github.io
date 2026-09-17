@@ -559,28 +559,33 @@ window.addEventListener('DOMContentLoaded', () => {
     window.location.href = 'library.html';
   });
 
+  let hideTimeout;
+
   function updateOnlineStatus() {
+    clearTimeout(hideTimeout); // Pehle se chal rahe timer ko reset karein
+
     if (navigator.onLine) {
       banner.classList.add('online');
       if (bannerText) bannerText.textContent = 'Back online';
       banner.classList.add('show');
 
-      setTimeout(() => {
+      // 3.5 seconds baad hide karein
+      hideTimeout = setTimeout(() => {
         banner.classList.remove('show');
       }, 3500);
     } else {
       banner.classList.remove('online');
       if (bannerText) bannerText.textContent = 'Offline • Tap to view Library';
-      banner.classList.add('show');
+      banner.classList.add('show'); // Instant show, koi timeout nahi (jab tak net na aaye)
     }
   }
 
+  // Live online/offline detection
   window.addEventListener('online', updateOnlineStatus);
   window.addEventListener('offline', updateOnlineStatus);
 
-  if (!navigator.onLine) {
-    updateOnlineStatus();
-  }
+  // FIXED: Page load hote hi status hamesha check karein
+  updateOnlineStatus();
 });
 
 if ('serviceWorker' in navigator) {

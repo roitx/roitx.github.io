@@ -18,10 +18,9 @@ const ASSETS = [
   './notes-viewer.html',
   './viewer-style.css',
   './viewer-main.js',
-  './offline.html' // Custom offline fallback page
+  './offline.html'
 ];
 
-// Cache Cleanup Helper (Max 40 items tak maintain rakhne ke liye)
 async function cleanUpCache() {
   const cache = await caches.open(CACHE_NAME);
   const keys = await cache.keys();
@@ -31,27 +30,28 @@ async function cleanUpCache() {
   }
 }
 
-// INSTALL — Caching all critical static assets offline
+// FIXED: Safe caching taaki ek file miss hone se baki offline load hona na ruke
 self.addEventListener('install', e => {
-  console.log('Service Worker Installed 🛠️');
   self.skipWaiting();
   e.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      console.log('Caching all offline assets...');
-      return cache.addAll(ASSETS);
+    caches.open(CACHE_NAME).then(async cache => {
+      for (const asset of ASSETS) {
+        try {
+          await cache.add(asset);
+        } catch (err) {
+          console.warn(`Failed to cache asset: ${asset}`, err);
+        }
+      }
     })
   );
 });
 
-// ACTIVATE — Clean old caches and take control instantly
 self.addEventListener('activate', e => {
-  console.log('Service Worker Activated 🟢');
   e.waitUntil(
     caches.keys().then(keys =>
       Promise.all(
         keys.map(k => {
           if (k !== CACHE_NAME) {
-            console.log(`Deleting old cache: ${k}`);
             return caches.delete(k);
           }
         })
@@ -61,26 +61,37 @@ self.addEventListener('activate', e => {
   self.clients.claim();
 });
 
-// FETCH — Smart Network-First Strategy with Exclusion Rules & Offline Fallback
+// FIXED: Instant Network Check before Cache Fallback
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
 
   const url = e.request.url;
 
-  // HEAVY / DYNAMIC FILES KO CACHE SE EXCLUDE KAREIN (Supabase, PDFs, Avatars)
   if (
     url.endsWith('.pdf') || 
     url.includes('.supabase.co') || 
     url.includes('googleusercontent.com') ||
     url.includes('/avatars/')
   ) {
-    return; // Direct network fetch, skip caching to avoid clutter
+    return;
+  }
+
+  // Fast offline check
+  if (!navigator.onLine) {
+    e.respondWith(
+      caches.match(e.request).then(cachedResponse => {
+        if (cachedResponse) return cachedResponse;
+        if (e.request.headers.get('accept')?.includes('text/html')) {
+          return caches.match('./offline.html');
+        }
+      })
+    );
+    return;
   }
 
   e.respondWith(
     fetch(e.request)
       .then(networkResponse => {
-        // Safe 200 OK responses ko hi cache karein aur size limit maintain karein
         if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
           const responseClone = networkResponse.clone();
           caches.open(CACHE_NAME).then(cache => {
@@ -91,14 +102,9 @@ self.addEventListener('fetch', e => {
         return networkResponse;
       })
       .catch(() => {
-        // Agar offline hain, toh cache se file do
         return caches.match(e.request).then(cachedResponse => {
-          if (cachedResponse) {
-            return cachedResponse;
-          }
-          
-          // Agar page cache mein bhi nahi hai, toh offline.html dikhao
-          if (e.request.headers.get('accept') && e.request.headers.get('accept').includes('text/html')) {
+          if (cachedResponse) return cachedResponse;
+          if (e.request.headers.get('accept')?.includes('text/html')) {
             return caches.match('./offline.html');
           }
         });
