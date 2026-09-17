@@ -1,4 +1,4 @@
-const CACHE_NAME = 'roitx-study-cache-v3';
+const CACHE_NAME = 'roitx-study-cache-v4';
 const ASSETS = [
   './',
   './index.html',
@@ -26,42 +26,13 @@ async function cleanUpCache() {
   const keys = await cache.keys();
   if (keys.length > 40) {
     await cache.delete(keys[0]);
-    cleanUpCache();
+    await cleanUpCache(); // Add 'await' to ensure sequential deletion
   }
 }
 
+
 // FIXED: Safe caching taaki ek file miss hone se baki offline load hona na ruke
-self.addEventListener('install', e => {
-  self.skipWaiting();
-  e.waitUntil(
-    caches.open(CACHE_NAME).then(async cache => {
-      for (const asset of ASSETS) {
-        try {
-          await cache.add(asset);
-        } catch (err) {
-          console.warn(`Failed to cache asset: ${asset}`, err);
-        }
-      }
-    })
-  );
-});
-
-self.addEventListener('activate', e => {
-  e.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(
-        keys.map(k => {
-          if (k !== CACHE_NAME) {
-            return caches.delete(k);
-          }
-        })
-      )
-    )
-  );
-  self.clients.claim();
-});
-
-// FIXED: Instant Network Check before Cache Fallback
+// FIXED: Robust Offline Network Fallback
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
 
@@ -73,19 +44,6 @@ self.addEventListener('fetch', e => {
     url.includes('googleusercontent.com') ||
     url.includes('/avatars/')
   ) {
-    return;
-  }
-
-  // Fast offline check
-  if (!navigator.onLine) {
-    e.respondWith(
-      caches.match(e.request).then(cachedResponse => {
-        if (cachedResponse) return cachedResponse;
-        if (e.request.headers.get('accept')?.includes('text/html')) {
-          return caches.match('./offline.html');
-        }
-      })
-    );
     return;
   }
 
@@ -111,3 +69,4 @@ self.addEventListener('fetch', e => {
       })
   );
 });
+

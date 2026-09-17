@@ -360,10 +360,12 @@
     </div>
   </div>
 
-  <div id="offlineBanner" style="display:none;">
-    <div class="status-dot"></div>
-    <span id="bannerText">No internet connection • Offline mode</span>
-  </div>
+  <!-- Fixed Offline Banner -->
+<div id="offlineBanner" class="offline-banner-box">
+  <span class="status-dot"></span>
+  <span id="bannerText">No internet connection • Offline mode</span>
+</div>
+
 
   <div id="notifModal" class="notif-modal-overlay" style="display: none;">
     <div class="notif-modal-card">
@@ -410,6 +412,7 @@
   </div>
 
 </main>
+
 
 <script defer src="quotes.js"></script>
 <script defer src="script.js"></script>
@@ -556,9 +559,42 @@
       window.location.href = url;
     }
   </script>
+  <script>
+  // Network status banner listener
+  const banner = document.getElementById('offlineBanner');
+  const bannerText = document.getElementById('bannerText');
+
+  function updateNetworkStatus() {
+    if (!banner) return;
+    
+    if (navigator.onLine) {
+      banner.classList.add('online');
+      banner.classList.add('show');
+      if (bannerText) bannerText.innerText = "Back online • Fast connection";
+      
+      // Auto hide online green banner after 3 seconds
+      setTimeout(() => {
+        banner.classList.remove('show');
+      }, 3000);
+    } else {
+      banner.classList.remove('online');
+      banner.classList.add('show');
+      if (bannerText) bannerText.innerText = "No internet connection • Offline mode";
+    }
+  }
+
+  window.addEventListener('online', updateNetworkStatus);
+  window.addEventListener('offline', updateNetworkStatus);
+
+  // Initial check on page load
+  document.addEventListener('DOMContentLoaded', () => {
+    if (!navigator.onLine) {
+      updateNetworkStatus();
+    }
+  });
+</script>
+
 </body>
 </html>
 
 
-</body>
-</html>
