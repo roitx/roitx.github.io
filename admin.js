@@ -909,14 +909,17 @@ window.openDoubtOverlay = async function(targetDoubtId = null) {
   const filterSelect = document.getElementById("doubtFilter");
   const miniPanel = document.getElementById("doubtPanel");
 
-  // Mini Panel ko chupao jab full overlay khule
-  if (miniPanel) {
-    miniPanel.style.display = "none";
-  }
-
+  if (miniPanel) miniPanel.style.display = "none";
   if (!overlay || !overlayList) return;
 
+  // Always open fixed on top of screen
+  overlay.style.position = "fixed";
+  overlay.style.top = "0";
+  overlay.style.left = "0";
+  overlay.style.width = "100vw";
+  overlay.style.height = "100vh";
   overlay.style.display = "flex";
+
   overlayList.innerHTML = "<div style='color:#b9c9e0; text-align:center; padding:20px;'>⏳ Loading doubts & feedbacks...</div>";
 
   const { data, error } = await window.supabaseClient
@@ -992,7 +995,7 @@ window.openDoubtOverlay = async function(targetDoubtId = null) {
         <strong style="color: #ff4b4b;">❓ Question/Feedback:</strong> ${d.question || d.feedback || "No content"}
       </div>
 
-      ${d.image_url ? `<img src="${d.image_url}" style="max-width:100%; max-height:200px; border-radius:8px; object-fit:contain; margin:8px 0; border:1px solid rgba(255,255,255,0.1);">` : ""}
+      ${d.image_url ? `<img src="${d.image_url}" alt="Doubt Image">` : ""}
 
       <input type="text" id="greet_${d.id}" placeholder="Greeting Message (e.g. Hi Rahul,)" value="${d.greeting || ""}">
       <textarea id="ans_${d.id}" placeholder="Type solution/reply here...">${d.answer || d.solution || ""}</textarea>
@@ -1008,6 +1011,10 @@ window.openDoubtOverlay = async function(targetDoubtId = null) {
     `;
     overlayList.appendChild(card);
   });
+};
+
+window.toggleDoubtFullScreen = function() {
+  window.openDoubtOverlay();
 };
 
 window.toggleDoubtFullScreen = function() {

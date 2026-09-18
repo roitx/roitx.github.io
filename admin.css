@@ -270,15 +270,18 @@ button:hover {
 /* ================= DOUBTS MINI PANEL ================= */
 #doubtPanel {
   display: none;
-  position: absolute;
-  top: 55px;
-  right: 16px;
-  width: 300px;
+  position: fixed !important; /* Page scroll hone par bhi screen par ek jagah rahega */
+  top: 70px !important;       /* Topbar ke thik niche align rahega */
+  right: 16px !important;     /* Right side se fixed distance */
+  width: 310px;
+  max-height: 80vh;           /* Screen se bahar na jaye */
+  overflow-y: auto;           /* Panel ke andar scroll chalega */
   background: #0b1220;
+  border: 1px solid rgba(58, 160, 255, 0.3);
   border-radius: 12px;
-  padding: 10px;
-  box-shadow: 0 0 20px rgba(0,0,0,0.5);
-  z-index: 999;
+  padding: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+  z-index: 9999;              /* Floating buttons aur content ke upar rahega */
 }
 
 /* ================= FULLSCREEN DOUBT OVERLAY — COMPACT & SLEEK UI ================= */
