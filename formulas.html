@@ -13,7 +13,27 @@
 <script defer src="formulas.js"></script>
 
 <style>
-/* 🌟 Uniform Grid Styling for Filters and Search Button */
+/* Search Bar & Dynamic Filter Grid Layout */
+.search-container {
+    margin-bottom: 12px;
+}
+
+.search-input {
+    width: 100%;
+    padding: 12px 15px;
+    background: #111622;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #fff;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    box-sizing: border-box;
+    outline: none;
+}
+
+.search-input:focus {
+    border-color: #00d2ff;
+}
+
 .filters {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -23,12 +43,11 @@
 
 @media (min-width: 600px) {
     .filters {
-        grid-template-columns: repeat(5, 1fr); /* 4 Dropdowns + 1 Search Button */
+        grid-template-columns: repeat(4, 1fr);
     }
 }
 
-.filters select, 
-.filters button {
+.filters select {
     width: 100%;
     padding: 12px;
     background: #111622;
@@ -39,24 +58,12 @@
     box-sizing: border-box;
     outline: none;
     text-align: center;
-}
-
-.filters button {
-    background: linear-gradient(135deg, #00d2ff, #0072ff);
-    font-weight: bold;
     cursor: pointer;
-    grid-column: span 2; /* मोबाइल स्क्रीन पर सर्च बटन पूरी चौड़ाई लेगा */
-    transition: 0.2s ease;
 }
 
-.filters button:active {
-    transform: scale(0.97);
-}
-
-@media (min-width: 600px) {
-    .filters button {
-        grid-column: span 1;
-    }
+.filters select:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 </style>
 </head>
@@ -70,44 +77,28 @@
 
 <main>
 
-<!-- FILTERS -->
+<!-- LIVE SEARCH BAR -->
+<div class="search-container">
+  <input type="text" id="fSearch" class="search-input" placeholder="🔍 Search formula, topic, or chapter name..." oninput="handleSearchInput()">
+</div>
+
+<!-- CASCADING FLOW FILTERS -->
 <section class="filters">
-  <select id="fClass">
-    <option value="">Class</option>
-    <option value="9">Class 9</option>
-    <option value="10">Class 10</option>
-    <option value="11">Class 11</option>
-    <option value="12">Class 12</option>
-    <option value="jee">JEE</option>
-  <option value="neet">NEET</option>
+  <select id="fClass" onchange="onClassChange()">
+    <option value="">All Classes</option>
   </select>
 
-  <select id="fSubject">
-    <option value="">Subject</option>
-    <option value="physics">Physics</option>
-    <option value="chemistry">Chemistry</option>
-    <option value="maths">Maths</option>
-    <option value="biology">Biology</option>
+  <select id="fSubject" onchange="onSubjectChange()" disabled>
+    <option value="">All Subjects</option>
   </select>
 
-  <select id="fChapter">
-    <option value="">Chapter</option>
-    <option value="ch1">Chapter 1</option>
-    <option value="ch2">Chapter 2</option>
-    <option value="ch3">Chapter 3</option>
-    <option value="ch4">Chapter 4</option>
-    <option value="ch5">Chapter 5</option>
+  <select id="fChapter" onchange="onChapterChange()" disabled>
+    <option value="">All Chapters</option>
   </select>
 
-  <!-- 🌟 Updated Category Dropdown ID (Matching with JS: fCategory) -->
-  <select id="fCategory">
-    <option value="">Category</option>
-    <option value="mind_map">Mind Map</option>
-    <option value="short_notes">Short Notes</option>
-    <option value="other">Other</option>
+  <select id="fCategory" onchange="loadFormulas()" disabled>
+    <option value="">All Categories</option>
   </select>
-
-  <button onclick="loadFormulas()">🔍 Search</button>
 </section>
 
 <!-- FORMULA LIST -->
