@@ -786,7 +786,6 @@ window.deleteFormula = async function (id, filePath) {
 /* =====================================================
    PART 5: DOUBTS & OVERLAY SYSTEM (WITH CLOSE BUTTON)
    ===================================================== */
-
 window.updateDoubtBadge = async function() {
   const badge = document.getElementById("pendingCount");
   const miniPanel = document.getElementById("doubtPanel");
@@ -825,31 +824,32 @@ window.updateDoubtBadge = async function() {
           const userName = d.user_name || userEmail.split('@')[0];
           const userInitial = userName.charAt(0).toUpperCase();
 
+          // 1. User Avatar (Profile Photo) Only
           const userPhotoHtml = d.user_photo 
-            ? `<img src="${d.user_photo}" style="width:26px; height:26px; border-radius:50%; object-fit:cover; margin-right:6px; flex-shrink:0;">` 
-            : `<div style="width:26px; height:26px; border-radius:50%; background:#0072ff; color:#fff; display:inline-flex; align-items:center; justify-content:center; margin-right:6px; font-size:10px; font-weight:bold; flex-shrink:0;">${userInitial}</div>`;
+            ? `<img src="${d.user_photo}" class="doubt-user-avatar" style="width:26px; height:26px; border-radius:50%; object-fit:cover; margin-right:8px; flex-shrink:0;">` 
+            : `<div style="width:26px; height:26px; border-radius:50%; background:#0072ff; color:#fff; display:inline-flex; align-items:center; justify-content:center; margin-right:8px; font-size:11px; font-weight:bold; flex-shrink:0;">${userInitial}</div>`;
 
-          const doubtImgHtml = d.image_url 
-            ? `<img src="${d.image_url}" alt="Thumbnail" style="width:36px; height:36px; border-radius:4px; object-fit:cover; margin-left:6px; border:1px solid #38bdf8; flex-shrink:0;">`
-            : ``;
+          // 2. Sirf Text clean tarike se render hoga (Agar question me screenshot HTML tags bhi ho toh unhe saaf kar dega)
+          let rawText = d.question || d.feedback || "No content";
+          
+          // Image tags aur HTML markup ko string se remove karne ke liye
+          let cleanText = rawText.replace(/<img[^>]*>/gi, "").replace(/<[^>]+>/g, "").trim();
+          if (!cleanText) cleanText = "Question topic";
+          
+          const shortText = cleanText.length > 22 ? cleanText.substring(0, 22) + "..." : cleanText;
 
-          const textContent = d.question || d.feedback || (d.image_url ? "📷 Image doubt" : "No content");
-          const shortText = textContent.length > 18 ? textContent.substring(0, 18) + "..." : textContent;
-
+          // Note: Yahan se Screenshot/Image Tag (doubtImgHtml) completely HATA DIYA GAYA HAI
           itemsHtml += `
-            <div onclick="openDoubtOverlay('${d.id}')" style="padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 12px; color: #fff; display:flex; justify-content:space-between; align-items:center; gap:6px; cursor:pointer; transition: background 0.2s; border-radius:6px;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">
-              <div style="display:flex; align-items:center; flex:1; overflow:hidden;">
-                ${userPhotoHtml}
-                <div style="flex:1; overflow:hidden;">
-                  <div style="font-size:11px; font-weight:bold; color:#ffffff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                    ${userName} <span style="font-size:10px; color:#94a3b8; font-weight:normal;">(${userEmail})</span>
-                  </div>
-                  <div style="font-size:11px; color:#cbd5e1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${textContent}">
-                    💬 ${shortText}
-                  </div>
+            <div onclick="openDoubtOverlay('${d.id}')" style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 12px; color: #fff; display:flex; align-items:center; gap:6px; cursor:pointer; transition: background 0.2s; border-radius:6px;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">
+              ${userPhotoHtml}
+              <div style="flex:1; overflow:hidden;">
+                <div style="font-size:11.5px; font-weight:bold; color:#ffffff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                  ${userName} <span style="font-size:10px; color:#94a3b8; font-weight:normal;">(${userEmail})</span>
+                </div>
+                <div style="font-size:11px; color:#cbd5e1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${cleanText}">
+                  💬 ${shortText}
                 </div>
               </div>
-              ${doubtImgHtml}
             </div>
           `;
         });
@@ -877,7 +877,6 @@ window.updateDoubtBadge = async function() {
     console.error("❌ Exception in updateDoubtBadge:", err);
   }
 };
-
 
 window.filterDoubts = function() {
   openDoubtOverlay();
@@ -1044,23 +1043,40 @@ window.toggleCardFullScreen = function(id) {
   const card = document.getElementById(`doubt_card_${id}`);
   if (!card) return;
 
-  if (card.style.position === "fixed") {
+  const isFocused = card.classList.contains("focused-card");
+
+  if (isFocused) {
+    // Restores to Normal Mini-panel Card Size
+    card.classList.remove("focused-card");
     card.style.position = "";
     card.style.top = "";
     card.style.left = "";
-    card.style.width = "";
-    card.style.height = "";
+    card.style.transform = "";
+    card.style.width = "100%";
+    card.style.height = "auto";
+    card.style.maxHeight = "";
     card.style.zIndex = "";
+    card.style.overflowY = "";
+    card.style.background = "";
   } else {
+    // Optimized Fullscreen Mode for Mobile + Desktop
+    card.classList.add("focused-card");
     card.style.position = "fixed";
-    card.style.top = "5%";
-    card.style.left = "5%";
-    card.style.width = "90vw";
-    card.style.height = "90vh";
-    card.style.zIndex = "1000000";
+    card.style.top = "50%";
+    card.style.left = "50%";
+    card.style.transform = "translate(-50%, -50%)";
+    card.style.width = "min(92vw, 650px)";
+    card.style.height = "auto";
+    card.style.maxHeight = "85vh";
+    card.style.zIndex = "100000";
     card.style.overflowY = "auto";
+    card.style.background = "#0f1c2e";
+    card.style.padding = "16px";
+    card.style.borderRadius = "14px";
+    card.style.boxShadow = "0 10px 40px rgba(0,0,0,0.8)";
   }
 };
+
 
 window.closeDoubtOverlay = function() {
   const overlay = document.getElementById("doubtOverlay");

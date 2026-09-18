@@ -266,7 +266,6 @@ button:hover {
   z-index: 10000;
   pointer-events: none;
 }
-
 /* ================= DOUBTS MINI PANEL ================= */
 #doubtPanel {
   display: none;
@@ -283,6 +282,7 @@ button:hover {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
   z-index: 9999;              /* Floating buttons aur content ke upar rahega */
 }
+
 
 /* ================= FULLSCREEN DOUBT OVERLAY — COMPACT & SLEEK UI ================= */
 .doubt-overlay {
@@ -365,13 +365,16 @@ button:hover {
   background: linear-gradient(145deg, rgba(21, 38, 60, 0.95), rgba(12, 23, 40, 0.95));
   border: 1px solid rgba(58, 160, 255, 0.2);
   border-radius: 12px;
-  padding: 10px 14px; /* Reduced vertical padding */
+  padding: 12px 14px;
   display: flex;
   flex-direction: column;
   gap: 6px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-  transition: all 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  width: 100% !important; /* Full container width force karega */
+  box-sizing: border-box;
 }
+
 
 .doubt-card:hover {
   border-color: var(--accent);
