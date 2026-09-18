@@ -425,6 +425,40 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 });
+/// Complete Cookies Management Logic
+document.addEventListener("DOMContentLoaded", () => {
+  const cookieBanner = document.getElementById("cookieBanner");
+  const acceptBtn = document.getElementById("acceptCookies");
+  const declineBtn = document.getElementById("declineCookies");
+
+  if (cookieBanner) {
+    // Check local storage for user choice
+    const userConsent = localStorage.getItem("cookieConsent");
+
+    if (!userConsent) {
+      // Direct CSS style bypass karke visible karein
+      cookieBanner.style.display = "flex";
+    } else {
+      cookieBanner.style.display = "none";
+    }
+
+    // Accept Button Click
+    if (acceptBtn) {
+      acceptBtn.addEventListener("click", () => {
+        localStorage.setItem("cookieConsent", "accepted");
+        cookieBanner.style.display = "none";
+      });
+    }
+
+    // Decline Button Click
+    if (declineBtn) {
+      declineBtn.addEventListener("click", () => {
+        localStorage.setItem("cookieConsent", "declined");
+        cookieBanner.style.display = "none";
+      });
+    }
+  }
+});
 
 async function showMotivation() {
   const popup = document.getElementById("motivationPopup");

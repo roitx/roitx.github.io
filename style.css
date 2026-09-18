@@ -888,7 +888,7 @@ body.light #installApp {
 /* ================= FIXED OFFLINE BANNER STYLING ================= */
 #offlineBanner {
   position: fixed;
-  bottom: -80px; /* Hidden below screen */
+  bottom: -80px;
   left: 50%;
   transform: translateX(-50%);
   background-color: #0f172a;
@@ -899,8 +899,6 @@ body.light #installApp {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
   z-index: 999999;
   transition: bottom 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), background-color 0.3s ease;
-  pointer-events: auto;
-  display: flex;
   align-items: center;
   gap: 10px;
   font-size: 13px;
@@ -908,17 +906,18 @@ body.light #installApp {
   white-space: nowrap;
 }
 
-/* Force banner to pop up */
+/* Tabhi dikhega jab JS class add karegi */
 #offlineBanner.show {
+  display: flex !important;
   bottom: 25px !important;
 }
 
-/* Online status style */
 #offlineBanner.online {
   background-color: #10b981 !important;
   color: #ffffff !important;
   border-color: rgba(255, 255, 255, 0.4);
 }
+
 
 .status-dot {
   width: 9px;
