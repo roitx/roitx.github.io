@@ -544,6 +544,13 @@ function getQuestionClass(idx) {
 function loadQuestion(idx) {
     if (idx < 0 || idx >= questions.length) return;
     currentIndex = idx;
+
+    // UPDATED: Agar current question attempt nahi hua hai, to timer chalne dein
+    if (currentMode === 'practice') {
+        isTimerPaused = (userAnswers[currentIndex] !== undefined);
+    }
+
+
     const q = questions[idx];
 
     const curNum = document.getElementById("currentQNum");
@@ -610,11 +617,19 @@ function loadQuestion(idx) {
 
 function selectOption(oIdx) {
     if (currentMode === 'practice' && userAnswers[currentIndex] !== undefined) return;
+    
     userAnswers[currentIndex] = oIdx;
     delete reviewStatus[currentIndex];
+
+    // UPDATED: Practice mode me attempt karte hi timer ko pause karne ke liye
+    if (currentMode === 'practice') {
+        isTimerPaused = true;
+    }
+
     saveLocalDraft();
     loadQuestion(currentIndex);
 }
+
 
 function clearResponse() {
     delete userAnswers[currentIndex];
