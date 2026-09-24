@@ -1,7 +1,10 @@
 /* =========================================================
-   PM ROITX - MAIN CONTROLLER SCRIPT (FULL NOTIFICATION FIXED)
+   PM ROITX - MAIN CONTROLLER SCRIPT
    ========================================================= */
 
+// ---------------------------------------------------------
+// 1. CONSTANTS & UTILITIES
+// ---------------------------------------------------------
 const GLOBAL_FALLBACK_QUOTES = [
   "Work Hard in Silence Let Success Make Noise",
   "Believe You Can And You Are Halfway There",
@@ -14,6 +17,33 @@ function goto(page) {
   window.location.href = page;
 }
 
+function timeAgo(dateString) {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  const now = new Date();
+  const seconds = Math.floor((now - date) / 1000);
+
+  if (seconds < 60) return 'Just now';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
+
+function getOrCreateFirstVisitTime() {
+  let visitTime = localStorage.getItem("pm_first_visit_time");
+  if (!visitTime) {
+    visitTime = new Date().toISOString();
+    localStorage.setItem("pm_first_visit_time", visitTime);
+  }
+  return visitTime;
+}
+
+// ---------------------------------------------------------
+// 2. WATERMARK & CURSOR SPOTLIGHT & INTERACTIONS
+// ---------------------------------------------------------
 function setupDynamicWatermark() {
   let activeQuotes = GLOBAL_FALLBACK_QUOTES;
   try {
@@ -86,6 +116,9 @@ function initCardTilt() {
   });
 }
 
+// ---------------------------------------------------------
+// 3. NOTIFICATION SYSTEM
+// ---------------------------------------------------------
 let readNotifIds = JSON.parse(localStorage.getItem("read_notifs") || "[]");
 let deletedNotifIds = JSON.parse(localStorage.getItem("deleted_notifs") || "[]");
 
@@ -130,9 +163,6 @@ function toggleNotif() {
 }
 
 function markAllAsRead() {
-  const badge = document.getElementById("notifBadge");
-  const tag = document.getElementById("notifCountTag");
-
   const allItems = document.querySelectorAll(".notif-item");
   allItems.forEach(item => {
     const id = item.getAttribute("data-id");
@@ -143,7 +173,6 @@ function markAllAsRead() {
     if (dot) dot.remove();
   });
   localStorage.setItem("read_notifs", JSON.stringify(readNotifIds));
-  
   updateUnreadCount();
 }
 
@@ -162,7 +191,7 @@ function openNotifModal(id, title, message, link, timestamp) {
 
   if (modalTitle) modalTitle.textContent = title;
   if (modalMsg) modalMsg.textContent = message;
-  if (modalTime) modalTime.textContent = timestamp ? `Received on: ${new Date(timestamp).toLocaleString()}` : "";
+  if (modalTime) modalTime.textContent = timestamp ? `Received: ${timeAgo(timestamp)} (${new Date(timestamp).toLocaleString()})` : "";
 
   if (link && link !== "#" && link !== "null") {
     linkBtn.style.display = "inline-flex";
@@ -191,7 +220,6 @@ function openNotifModal(id, title, message, link, timestamp) {
       const dot = itemElem.querySelector("span[style*='background: #00c6ff']");
       if (dot) dot.remove();
     }
-    
     updateUnreadCount();
   }
 }
@@ -225,38 +253,39 @@ function deleteNotification(e, id) {
   }
 }
 
-function addNotification(id, title, message, link = "#", isNew = false, createdAt = null) {
+function addNotification(id, title, message, link = "#", isNew = false, createdAt = null, type = "info") {
   const notifList = document.getElementById("notifList");
 
   if (!notifList || deletedNotifIds.includes(String(id))) return;
-
   if (document.getElementById(`notif-item-${id}`)) return;
 
   const emptyMsg = notifList.querySelector(".notif-empty");
   if (emptyMsg) notifList.innerHTML = "";
 
   const isRead = readNotifIds.includes(String(id));
-
   const safeTitle = (title || '').replace(/"/g, '&quot;');
   const safeMessage = (message || '').replace(/"/g, '&quot;');
   const safeLink = link || "#";
   const timeStr = createdAt || new Date().toISOString();
+  const formattedTime = timeAgo(timeStr);
 
   const itemHtml = `
-    <div class="notif-item ${isRead ? 'read' : 'unread'}" id="notif-item-${id}" data-id="${id}" onclick="openNotifModal('${id}', '${safeTitle}', '${safeMessage}', '${safeLink}', '${timeStr}')" style="position: relative; padding: 10px 30px 10px 10px; border-bottom: 1px solid rgba(255,255,255,0.08); transition: all 0.2s ease; cursor: pointer;">
+    <div class="notif-item ${isRead ? 'read' : 'unread'}" id="notif-item-${id}" data-id="${id}" 
+         onclick="openNotifModal('${id}', '${safeTitle}', '${safeMessage}', '${safeLink}', '${timeStr}')">
       <div>
+        <span class="notif-type-tag ${type}">${type}</span>
         <div style="font-size: 13px; font-weight: 700; color: var(--text, #fff); display: flex; align-items: center; gap: 6px;">
           ${!isRead ? '<span style="width: 6px; height: 6px; background: #00c6ff; border-radius: 50%; display: inline-block;"></span>' : ''}
           ${title}
         </div>
         <div style="font-size: 12px; color: var(--muted, #8a99ad); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${message}</div>
+        <div class="notif-time-ago">${formattedTime}</div>
       </div>
-      <button onclick="deleteNotification(event, '${id}')" title="Delete" style="position: absolute; right: 5px; top: 10px; background: transparent; border: none; color: #ff4757; cursor: pointer; font-size: 14px; opacity: 0.6;">✕</button>
+      <button class="notif-delete-btn" onclick="deleteNotification(event, '${id}')" title="Delete">✕</button>
     </div>
   `;
   
   notifList.insertAdjacentHTML("afterbegin", itemHtml);
-
   updateUnreadCount();
 
   if (isNew) {
@@ -295,6 +324,8 @@ function showToastNotification(title, message, link) {
 async function loadSupabaseNotifications() {
   if (!window.supabaseClient) return;
 
+  const firstVisitTime = getOrCreateFirstVisitTime();
+
   try {
     let currentUserId = null;
 
@@ -310,18 +341,18 @@ async function loadSupabaseNotifications() {
     let { data: notifications, error } = await window.supabaseClient
       .from('notifications')
       .select('*')
+      .gte('created_at', firstVisitTime)
       .order('created_at', { ascending: true })
       .limit(30);
 
     if (error) throw error;
 
-    if (notifications && notifications.length > 0) {
-      const notifList = document.getElementById("notifList");
-      if (notifList) notifList.innerHTML = "";
-
+    const notifList = document.getElementById("notifList");
+    if (notifList && notifications && notifications.length > 0) {
+      notifList.innerHTML = "";
       notifications.forEach(n => {
         if (!n.user_id || n.user_id === currentUserId) {
-          addNotification(n.id, n.title, n.message, n.link, false, n.created_at);
+          addNotification(n.id, n.title, n.message, n.link, false, n.created_at, n.type || "info");
         }
       });
     }
@@ -331,7 +362,7 @@ async function loadSupabaseNotifications() {
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, payload => {
         const n = payload.new;
         if (!n.user_id || n.user_id === currentUserId) {
-          addNotification(n.id, n.title, n.message, n.link, true, n.created_at);
+          addNotification(n.id, n.title, n.message, n.link, true, n.created_at, n.type || "info");
         }
       })
       .subscribe();
@@ -341,125 +372,9 @@ async function loadSupabaseNotifications() {
   }
 }
 
-document.addEventListener("DOMContentLoaded", async () => {
-  setupDynamicWatermark();
-  initCardTilt();
-  
-  loadSupabaseNotifications();
-
-  document.addEventListener("click", (e) => {
-    const notifWrapper = document.querySelector(".notif-wrapper");
-    const notifBox = document.getElementById("notifBox");
-    if (notifWrapper && notifBox && !notifWrapper.contains(e.target)) {
-      notifBox.classList.remove("show");
-    }
-  });
-
-  const notifModal = document.getElementById("notifModal");
-  if (notifModal) {
-    notifModal.addEventListener("click", (e) => {
-      if (e.target === notifModal) closeNotifModal();
-    });
-  }
-
-  const modeToggle = document.getElementById("modeToggle");
-  if (modeToggle) {
-    const slider = modeToggle.parentElement.querySelector(".slider");
-
-    if (slider && !slider.querySelector(".theme-icon")) {
-      slider.innerHTML = `<span class="theme-icon" style="position: absolute; right: 5px; top: 3px; font-size: 12px; transition: 0.3s;">🌙</span>`;
-    }
-
-    const updateThemeIcon = (isLight) => {
-      const icon = slider ? slider.querySelector(".theme-icon") : null;
-      if (icon) {
-        icon.textContent = isLight ? "☀️" : "🌙";
-        icon.style.left = isLight ? "5px" : "auto";
-        icon.style.right = isLight ? "auto" : "5px";
-      }
-    };
-
-    const savedTheme = localStorage.getItem("theme");
-    if (savedTheme === "light") {
-      document.body.classList.add("light");
-      modeToggle.checked = true;
-      updateThemeIcon(true);
-    }
-
-    modeToggle.addEventListener("change", () => {
-      const isLight = modeToggle.checked;
-      document.body.classList.toggle("light", isLight);
-      localStorage.setItem("theme", isLight ? "light" : "dark");
-      updateThemeIcon(isLight);
-    });
-  }
-
-  const currentPath = window.location.pathname.split("/").pop() || "index.html";
-  document.querySelectorAll(".side-menu a").forEach(link => {
-    if (link.getAttribute("href") === currentPath) {
-      link.classList.add("active");
-      link.style.borderLeft = "4px solid var(--accent, #3aa0ff)";
-      link.style.background = "rgba(58, 160, 255, 0.12)";
-    }
-  });
-
-  const cookieBanner = document.getElementById("cookieBanner");
-  const acceptBtn = document.getElementById("acceptCookies");
-  const declineBtn = document.getElementById("declineCookies");
-
-  if (cookieBanner && !localStorage.getItem("cookieConsent")) {
-    cookieBanner.style.display = "block";
-  }
-
-  if (acceptBtn) {
-    acceptBtn.addEventListener("click", () => {
-      localStorage.setItem("cookieConsent", "accepted");
-      if (cookieBanner) cookieBanner.style.display = "none";
-    });
-  }
-
-  if (declineBtn) {
-    declineBtn.addEventListener("click", () => {
-      localStorage.setItem("cookieConsent", "declined");
-      if (cookieBanner) cookieBanner.style.display = "none";
-    });
-  }
-});
-/// Complete Cookies Management Logic
-document.addEventListener("DOMContentLoaded", () => {
-  const cookieBanner = document.getElementById("cookieBanner");
-  const acceptBtn = document.getElementById("acceptCookies");
-  const declineBtn = document.getElementById("declineCookies");
-
-  if (cookieBanner) {
-    // Check local storage for user choice
-    const userConsent = localStorage.getItem("cookieConsent");
-
-    if (!userConsent) {
-      // Direct CSS style bypass karke visible karein
-      cookieBanner.style.display = "flex";
-    } else {
-      cookieBanner.style.display = "none";
-    }
-
-    // Accept Button Click
-    if (acceptBtn) {
-      acceptBtn.addEventListener("click", () => {
-        localStorage.setItem("cookieConsent", "accepted");
-        cookieBanner.style.display = "none";
-      });
-    }
-
-    // Decline Button Click
-    if (declineBtn) {
-      declineBtn.addEventListener("click", () => {
-        localStorage.setItem("cookieConsent", "declined");
-        cookieBanner.style.display = "none";
-      });
-    }
-  }
-});
-
+// ---------------------------------------------------------
+// 4. MOTIVATION POPUP & FALLBACKS
+// ---------------------------------------------------------
 async function showMotivation() {
   const popup = document.getElementById("motivationPopup");
   const textElem = document.getElementById("motivationText");
@@ -506,6 +421,9 @@ if (motivationPopupElem) {
   });
 }
 
+// ---------------------------------------------------------
+// 5. CANVAS ANIMATION & WAVE GRAPHICS
+// ---------------------------------------------------------
 const c = document.getElementById("bgCanvas");
 if (c) {
   const ctx = c.getContext("2d");
@@ -583,45 +501,148 @@ if (wavePathBottom) {
   animateWave();
 }
 
-window.addEventListener('DOMContentLoaded', () => {
-  const banner = document.getElementById('offlineBanner');
-  const bannerText = document.getElementById('bannerText');
+// ---------------------------------------------------------
+// 6. INITIALIZATION & DOM READY HANDLER
+// ---------------------------------------------------------
+document.addEventListener("DOMContentLoaded", async () => {
+  setupDynamicWatermark();
+  initCardTilt();
+  loadSupabaseNotifications();
 
-  if (!banner) return;
-
-  banner.addEventListener('click', () => {
-    window.location.href = 'library.html';
+  // Close notification box on outside click
+  document.addEventListener("click", (e) => {
+    const notifWrapper = document.querySelector(".notif-wrapper");
+    const notifBox = document.getElementById("notifBox");
+    if (notifWrapper && notifBox && !notifWrapper.contains(e.target)) {
+      notifBox.classList.remove("show");
+    }
   });
 
-  let hideTimeout;
+  const notifModal = document.getElementById("notifModal");
+  if (notifModal) {
+    notifModal.addEventListener("click", (e) => {
+      if (e.target === notifModal) closeNotifModal();
+    });
+  }
 
-  function updateOnlineStatus() {
-    clearTimeout(hideTimeout); // Pehle se chal rahe timer ko reset karein
+  // Theme Toggle Mode
+  const modeToggle = document.getElementById("modeToggle");
+  if (modeToggle) {
+    const slider = modeToggle.parentElement.querySelector(".slider");
 
-    if (navigator.onLine) {
-      banner.classList.add('online');
-      if (bannerText) bannerText.textContent = 'Back online';
-      banner.classList.add('show');
+    if (slider && !slider.querySelector(".theme-icon")) {
+      slider.innerHTML = `<span class="theme-icon" style="position: absolute; right: 5px; top: 3px; font-size: 12px; transition: 0.3s;">🌙</span>`;
+    }
 
-      // 3.5 seconds baad hide karein
-      hideTimeout = setTimeout(() => {
-        banner.classList.remove('show');
-      }, 3500);
+    const updateThemeIcon = (isLight) => {
+      const icon = slider ? slider.querySelector(".theme-icon") : null;
+      if (icon) {
+        icon.textContent = isLight ? "☀️" : "🌙";
+        icon.style.left = isLight ? "5px" : "auto";
+        icon.style.right = isLight ? "auto" : "5px";
+      }
+    };
+
+    const savedTheme = localStorage.getItem("theme");
+    if (savedTheme === "light") {
+      document.body.classList.add("light");
+      modeToggle.checked = true;
+      updateThemeIcon(true);
+    }
+
+    modeToggle.addEventListener("change", () => {
+      const isLight = modeToggle.checked;
+      document.body.classList.toggle("light", isLight);
+      localStorage.setItem("theme", isLight ? "light" : "dark");
+      updateThemeIcon(isLight);
+    });
+  }
+
+  // Active Menu Link Highlight
+  const currentPath = window.location.pathname.split("/").pop() || "index.html";
+  document.querySelectorAll(".side-menu a").forEach(link => {
+    if (link.getAttribute("href") === currentPath) {
+      link.classList.add("active");
+      link.style.borderLeft = "4px solid var(--accent, #3aa0ff)";
+      link.style.background = "rgba(58, 160, 255, 0.12)";
+    }
+  });
+
+  // Cookies Banner Management
+  const cookieBanner = document.getElementById("cookieBanner");
+  const acceptBtn = document.getElementById("acceptCookies");
+  const declineBtn = document.getElementById("declineCookies");
+
+  if (cookieBanner) {
+    const userConsent = localStorage.getItem("cookieConsent");
+    if (!userConsent) {
+      cookieBanner.style.display = "flex";
     } else {
-      banner.classList.remove('online');
-      if (bannerText) bannerText.textContent = 'Offline • Tap to view Library';
-      banner.classList.add('show'); // Instant show, koi timeout nahi (jab tak net na aaye)
+      cookieBanner.style.display = "none";
+    }
+
+    if (acceptBtn) {
+      acceptBtn.addEventListener("click", () => {
+        localStorage.setItem("cookieConsent", "accepted");
+        cookieBanner.style.display = "none";
+      });
+    }
+
+    if (declineBtn) {
+      declineBtn.addEventListener("click", () => {
+        localStorage.setItem("cookieConsent", "declined");
+        cookieBanner.style.display = "none";
+      });
     }
   }
 
-  // Live online/offline detection
-  window.addEventListener('online', updateOnlineStatus);
-  window.addEventListener('offline', updateOnlineStatus);
+  // Offline Banner Management
+  const banner = document.getElementById('offlineBanner');
+  const bannerText = document.getElementById('bannerText');
 
-  // FIXED: Page load hote hi status hamesha check karein
-  updateOnlineStatus();
+  if (banner) {
+    banner.addEventListener('click', () => {
+      window.location.href = 'library.html';
+    });
+
+    let hideTimeout;
+    const updateOnlineStatus = () => {
+      clearTimeout(hideTimeout);
+      if (navigator.onLine) {
+        banner.classList.add('online');
+        if (bannerText) bannerText.textContent = 'Back online';
+        banner.classList.add('show');
+        hideTimeout = setTimeout(() => {
+          banner.classList.remove('show');
+        }, 3500);
+      } else {
+        banner.classList.remove('online');
+        if (bannerText) bannerText.textContent = 'Offline • Tap to view Library';
+        banner.classList.add('show');
+      }
+    };
+
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+    updateOnlineStatus();
+  }
+
+  // Splash Screen Animation Delay
+  const letters = document.querySelectorAll('.splash-text .letter');
+  letters.forEach((letter, idx) => {
+    letter.style.animationDelay = `${0.6 + (idx * 0.08)}s`;
+  });
+
+  setTimeout(() => {
+    const splash = document.getElementById('splashScreen');
+    if (splash) {
+      splash.classList.add('fade-out');
+      setTimeout(() => splash.remove(), 800);
+    }
+  }, 2600);
 });
 
+// Shortcuts & Service Worker Handlers
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     window.location.reload();
@@ -639,19 +660,4 @@ document.addEventListener("keydown", (e) => {
 
 window.addEventListener("load", () => {
   document.body.classList.add("app-loaded");
-});
-
-document.addEventListener("DOMContentLoaded", () => {
-  const letters = document.querySelectorAll('.splash-text .letter');
-  letters.forEach((letter, idx) => {
-    letter.style.animationDelay = `${0.6 + (idx * 0.08)}s`;
-  });
-
-  setTimeout(() => {
-    const splash = document.getElementById('splashScreen');
-    if (splash) {
-      splash.classList.add('fade-out');
-      setTimeout(() => splash.remove(), 800);
-    }
-  }, 2600);
 });
