@@ -102,7 +102,7 @@
       <div class="form-group">
         <label><i class="fa-solid fa-calendar"></i> PYQ Year Range</label>
         <select class="input-field" id="yearRange" onchange="handleYearRangeChange()">
-          <option value="2018 - 2026" selected>2018 - 2026 (Latest Up To Feb 2026)</option>
+          <option value="2018 - 2026" selected>2018 - 2026 (Latest Up To Feb Exam)</option>
           <option value="2015 - 2026">2015 - 2026 (Last 11 Yrs)</option>
           <option value="2020 - 2026">2020 - 2026 (Recent Yrs)</option>
           <option value="custom">📅 Custom Range (From - To)</option>
@@ -188,6 +188,7 @@
     }
   };
 
+  // Improved Markdown Parser
   function parseMarkdownToHTML(text) {
     if (!text) return "";
     let html = text
@@ -296,9 +297,8 @@
     });
   }
 
-  // Exact Clean Naming Logic as requested (No 'Topper' word)
   function generateAutoFileTitle(targetClass, subject, chapter, qType) {
-    let cleanClass = targetClass.replace("th", ""); // Converts 12th to 12
+    let cleanClass = targetClass.replace("th", "");
     let typeSuffix = "(PYQ & Notes)";
 
     if (qType === "Summary") {
@@ -354,24 +354,17 @@
 
     const isSummaryOnly = (qType === "Summary");
 
-        let prompt = "";
+    let prompt = "";
     if (isSummaryOnly) {
-      prompt = `Generate comprehensive, highly structured, and easy-to-memorize Chapter Summary / Revision Notes for BSEB (Bihar School Examination Board) Class ${targetClass} ${targetClass === "12th" ? `(${stream} Stream)` : ''}.
+      prompt = `Generate comprehensive, highly structured, and easy-to-memorize Chapter Summary / Revision Notes for BSEB Class ${targetClass} ${targetClass === "12th" ? `(${stream} Stream)` : ''}.
 Subject: ${subject}
 Chapter: ${chapter}
 Years Range: ${years}
 Language Preference: ${langMode}
 ${extra ? `Extra Instruction: ${extra}` : ''}
 
-CONTENT STYLE & QUALITY GUIDELINES (BSEB PATTERN):
-1. Structure the notes for maximum retention: Use clear headings, short paragraphs, bullet points, and highlight key definitions/formulas using bold text.
-2. Keep it strictly aligned with the BSEB syllabus. Focus heavily on frequently repeated concepts.
-3. Present the content in a high-scoring, expert format (step-by-step, precise, and highly professional).
-4. STRICT RULE: You MUST NOT use the word "topper" or any of its variations anywhere in the output. 
-
 STRICT JSON OUTPUT REQUIREMENT:
-Return ONLY a valid JSON object containing ONLY the chapter summary notes.
-Format:
+Return ONLY a valid JSON object with format:
 {
   "chapter_summary": {
     "summary_en": "Detailed markdown formatted revision notes in English...",
@@ -379,7 +372,7 @@ Format:
   }
 }`;
     } else {
-      prompt = `Generate exact BSEB (Bihar School Examination Board) Study Material/PYQs for:
+      prompt = `Generate exact BSEB Study Material/PYQs for:
 Class: Class ${targetClass} ${targetClass === "12th" ? `(${stream} Stream)` : ''}
 Subject: ${subject}
 Chapter: ${chapter}
@@ -389,19 +382,8 @@ Question Count: ${qCount}
 Language Preference: ${langMode}
 ${extra ? `Extra Instruction: ${extra}` : ''}
 
-CONTENT STYLE & QUALITY GUIDELINES (BSEB PATTERN):
-1. Provide highly accurate, perfectly structured answers optimized for securing maximum marks in BSEB board exams.
-2. Format answers professionally: Use step-by-step explanations, bullet points for multi-part answers, and emphasize/bold keywords.
-3. Keep answers concise yet comprehensive, exactly matching the word limit expected for a ${qType} in the Bihar Board.
-4. STRICT RULE: You MUST NOT use the word "topper" or any of its variations anywhere in the output.
-
-STRICT INSTRUCTION FOR YEAR TAGS:
-For EVERY question, you MUST provide an exact year_tag listing ALL the years and shifts in which this question or concept was asked in BSEB exams.
-Format examples for year_tag: "2018, 2021, 2022 I, 2024 II" or "2019, 2023 I".
-
 STRICT JSON OUTPUT REQUIREMENT:
-Return ONLY a valid JSON object.
-Format:
+Return ONLY a valid JSON object with format:
 {
   "chapter_summary": {
     "summary_en": "Markdown formatted summary in English...",
@@ -411,7 +393,7 @@ Format:
     {
       "question_en": "Question in English",
       "question_hi": "Question in Hindi",
-      "year_tag": "2018, 2021, 2022 I, 2024 II",
+      "year_tag": "2018, 2021, 2024 II",
       "marks": "2 Marks",
       "answer_en": "Markdown formatted answer in English",
       "answer_hi": "Markdown formatted answer in Hindi"
@@ -434,12 +416,20 @@ Format:
       const textResponse = await res.text();
       let parsed = JSON.parse(textResponse);
       let rawText = parsed.choices?.[0]?.message?.content || parsed.candidates?.[0]?.content?.parts?.[0]?.text || parsed.result || textResponse;
-      rawText = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
+
+      // Clean Markdown Block Wrapper Safe Extraction
+      const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+      if (jsonMatch) rawText = jsonMatch[0];
 
       const generatedData = JSON.parse(rawText);
       const generatedTitle = generateAutoFileTitle(targetClass, subject, chapter, qType);
 
       fileTitleInput.value = generatedTitle;
+
+      const summaryData = generatedData.chapter_summary ? {
+        summary_en: parseMarkdownToHTML(generatedData.chapter_summary.summary_en || ""),
+        summary_hi: parseMarkdownToHTML(generatedData.chapter_summary.summary_hi || "")
+      } : null;
 
       pendingPayload = {
         title: generatedTitle,
@@ -454,10 +444,8 @@ Format:
           answer_en: parseMarkdownToHTML(q.answer_en || ""),
           answer_hi: parseMarkdownToHTML(q.answer_hi || "")
         })),
-        summary: generatedData.chapter_summary ? {
-          summary_en: parseMarkdownToHTML(generatedData.chapter_summary.summary_en || ""),
-          summary_hi: parseMarkdownToHTML(generatedData.chapter_summary.summary_hi || "")
-        } : null
+        chapter_summary: summaryData,
+        summary: summaryData // Sync both keys for DB compatibility
       };
 
       renderPreview(pendingPayload, langMode, isSummaryOnly);
@@ -470,7 +458,7 @@ Format:
 
     } catch (err) {
       statusBox.style.color = "#ef4444";
-      statusBox.innerHTML = "❌ Error: " + err.message;
+      statusBox.innerHTML = "❌ Generation Error: " + err.message;
     } finally {
       btn.disabled = false;
     }
@@ -480,21 +468,21 @@ Format:
     const previewBox = document.getElementById("previewBox");
     let html = `<div class="preview-title"><i class="fa-solid fa-eye"></i> PREVIEW GENERATED CONTENT (${langMode.toUpperCase()})</div>`;
 
-    if (payload.summary) {
+    if (payload.chapter_summary) {
       html += `<div class="summary-card formatted-text">
         <h3><i class="fa-solid fa-book-open"></i> CHAPTER SUMMARY / REVISION NOTES</h3>`;
       
       if (langMode === "Bilingual" || langMode === "English") {
-        if (payload.summary.summary_en) {
-          html += `<div style="color: #60a5fa; margin-bottom: 6px;"><b>[ENGLISH VERSION]</b></div><div>${payload.summary.summary_en}</div>`;
+        if (payload.chapter_summary.summary_en) {
+          html += `<div style="color: #60a5fa; margin-bottom: 6px;"><b>[ENGLISH VERSION]</b></div><div>${payload.chapter_summary.summary_en}</div>`;
         }
       }
-      if (langMode === "Bilingual" && payload.summary.summary_en && payload.summary.summary_hi) {
+      if (langMode === "Bilingual" && payload.chapter_summary.summary_en && payload.chapter_summary.summary_hi) {
         html += `<div class="lang-divider"></div>`;
       }
       if (langMode === "Bilingual" || langMode === "Hindi") {
-        if (payload.summary.summary_hi) {
-          html += `<div style="color: #f472b6; margin-bottom: 6px;"><b>[HINDI VERSION]</b></div><div>${payload.summary.summary_hi}</div>`;
+        if (payload.chapter_summary.summary_hi) {
+          html += `<div style="color: #f472b6; margin-bottom: 6px;"><b>[HINDI VERSION]</b></div><div>${payload.chapter_summary.summary_hi}</div>`;
         }
       }
       html += `</div>`;

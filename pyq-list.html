@@ -1,369 +1,389 @@
 <!DOCTYPE html>
 <html lang="hi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PYQ Bank - Student Portal</title>
-
-  <!-- Google Fonts & FontAwesome -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-  <!-- Supabase & Vanilla Tilt -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.0/vanilla-tilt.min.js"></script>
-  <script src="supabase.js"></script>
-
-  <style>
-    :root {
-      --bg-dark: #030712;
-      --card-bg: rgba(15, 23, 42, 0.65);
-      --card-border: rgba(255, 255, 255, 0.08);
-      --accent-cyan: #06b6d4;
-      --accent-purple: #a855f7;
-      --accent-pink: #ec4899;
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-      --glow-cyan: rgba(6, 182, 212, 0.35);
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
-
-    body {
-      background: var(--bg-dark);
-      color: var(--text-main);
-      min-height: 100vh;
-      overflow-x: hidden;
-      padding-bottom: 60px;
-    }
-
-    /* BACKGROUND ANIMATED GLOW ORBS */
-    .bg-orbs {
-      position: fixed;
-      top: 0; left: 0; width: 100vw; height: 100vh;
-      pointer-events: none;
-      z-index: -1;
-      overflow: hidden;
-    }
-    .orb {
-      position: absolute;
-      border-radius: 50%;
-      filter: blur(120px);
-      opacity: 0.45;
-      animation: floatOrb 18s infinite alternate ease-in-out;
-    }
-    .orb-1 { width: 500px; height: 500px; background: #7c3aed; top: -100px; left: -100px; }
-    .orb-2 { width: 450px; height: 450px; background: #0284c7; bottom: -50px; right: -50px; animation-delay: -5s; }
-    .orb-3 { width: 350px; height: 350px; background: #db2777; top: 40%; left: 40%; animation-delay: -10s; }
-
-    @keyframes floatOrb {
-      0% { transform: translate(0, 0) scale(1); }
-      50% { transform: translate(60px, -80px) scale(1.15); }
-      100% { transform: translate(-50px, 50px) scale(0.9); }
-    }
-
-    .container { max-width: 1280px; margin: 0 auto; padding: 0 20px; }
-
-    /* HEADER */
-    .hero-sec {
-      text-align: center;
-      padding: 50px 20px 30px;
-      position: relative;
-    }
-    .hero-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 16px;
-      border-radius: 30px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      backdrop-filter: blur(10px);
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--accent-cyan);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 18px;
-    }
-    .hero-title {
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 40px;
-      font-weight: 800;
-      background: linear-gradient(135deg, #ffffff 30%, #94a3b8 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      margin-bottom: 12px;
-      line-height: 1.2;
-    }
-    .hero-title span {
-      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-    .hero-sub { color: var(--text-muted); font-size: 15px; max-width: 600px; margin: 0 auto 30px; font-weight: 500; }
-
-    /* CONTROLS */
-    .controls-wrapper {
-      background: rgba(15, 23, 42, 0.75);
-      backdrop-filter: blur(20px);
-      border: 1px solid var(--card-border);
-      border-radius: 24px;
-      padding: 16px;
-      margin-bottom: 35px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-    .search-box { position: relative; width: 100%; }
-    .search-box input {
-      width: 100%;
-      height: 52px;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 16px;
-      padding: 0 20px 0 50px;
-      color: #fff;
-      font-size: 15px;
-      font-weight: 500;
-      outline: none;
-      transition: 0.3s ease;
-    }
-    .search-box input:focus {
-      border-color: var(--accent-cyan);
-      box-shadow: 0 0 25px rgba(6, 182, 212, 0.25);
-      background: rgba(255, 255, 255, 0.07);
-    }
-    .search-icon { position: absolute; left: 18px; top: 17px; color: var(--accent-cyan); font-size: 18px; }
-
-    .filter-pills {
-      display: flex;
-      gap: 10px;
-      overflow-x: auto;
-      padding-bottom: 4px;
-      scrollbar-width: none;
-    }
-    .filter-pills::-webkit-scrollbar { display: none; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    .pill {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      padding: 8px 18px;
-      border-radius: 30px;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text-muted);
-      cursor: pointer;
-      white-space: nowrap;
-      transition: 0.3s;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .pill:hover, .pill.active {
-      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
-      color: #fff;
-      border-color: transparent;
-      box-shadow: 0 8px 20px rgba(168, 85, 247, 0.3);
-    }
+    <!-- Primary Meta Tags -->
+    <title>Previous Year Questions (PYQs) & Detailed Study Notes</title>
+    <meta name="title" content="Previous Year Questions (PYQs) & Detailed Study Notes">
+    <meta name="description" content="Access competitive exam Previous Year Question papers with detailed solutions, bilingual explanations (Hindi/English), and AI-generated revision notes.">
+    <meta name="keywords" content="PYQ, Previous Year Questions, Exam Preparation, Model Papers, Chapterwise PYQs, Detailed Notes, Solution PDF">
+    <meta name="robots" content="index, follow">
+    <meta name="author" content="Your Brand Name">
 
-    /* 3D CARDS GRID */
-    .pyq-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-      gap: 24px;
-      perspective: 1000px;
-    }
+    <!-- Open Graph / Facebook / WhatsApp -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://yourwebsite.com/pyq-list.html">
+    <meta property="og:title" content="Previous Year Questions & Study Notes">
+    <meta property="og:description" content="Practice solved PYQs with bilingual explanations and high-yield notes for your exam preparation.">
+    <meta property="og:image" content="https://yourwebsite.com/images/pyq-banner.jpg">
 
-    .pyq-card {
-      background: var(--card-bg);
-      backdrop-filter: blur(16px);
-      border: 1px solid var(--card-border);
-      border-radius: 24px;
-      padding: 22px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      position: relative;
-      overflow: hidden;
-      transform-style: preserve-3d;
-      transition: border-color 0.4s ease, box-shadow 0.4s ease;
-      cursor: pointer;
-    }
+    <!-- Twitter Card -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://yourwebsite.com/pyq-list.html">
+    <meta property="twitter:title" content="Previous Year Questions & Study Notes">
+    <meta property="twitter:description" content="Practice solved PYQs with bilingual explanations and high-yield notes for your exam preparation.">
+    <meta property="twitter:image" content="https://yourwebsite.com/images/pyq-banner.jpg">
 
-    .pyq-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: radial-gradient(800px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 255, 255, 0.06), transparent 40%);
-      border-radius: inherit;
-      pointer-events: none;
-    }
+    <!-- Theme Color & Mobile App Capable -->
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-    .pyq-card:hover {
-      border-color: rgba(56, 189, 248, 0.4);
-      box-shadow: 0 20px 40px -15px var(--glow-cyan);
-    }
+    <!-- Google Fonts & FontAwesome -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    .card-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 16px;
-      transform: translateZ(20px);
-    }
+    <!-- Supabase & Vanilla Tilt -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.0/vanilla-tilt.min.js"></script>
+    <script src="supabase.js"></script>
 
-    .subject-avatar {
-      width: 48px;
-      height: 48px;
-      border-radius: 16px;
-      background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(168, 85, 247, 0.2));
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      color: var(--accent-cyan);
-    }
+    <style>
+      :root {
+        --bg-dark: #030712;
+        --card-bg: rgba(15, 23, 42, 0.7);
+        --card-border: rgba(255, 255, 255, 0.1);
+        --accent-cyan: #06b6d4;
+        --accent-purple: #a855f7;
+        --accent-pink: #ec4899;
+        --text-main: #f8fafc;
+        --text-muted: #94a3b8;
+        --glow-cyan: rgba(6, 182, 212, 0.35);
+      }
 
-    .card-badges { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
-    
-    .badge-tag {
-      font-size: 10px;
-      font-weight: 800;
-      padding: 4px 10px;
-      border-radius: 20px;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-      background: rgba(168, 85, 247, 0.15);
-      color: var(--accent-purple);
-      border: 1px solid rgba(168, 85, 247, 0.3);
-    }
-    .badge-year {
-      font-size: 10px;
-      font-weight: 800;
-      padding: 4px 10px;
-      border-radius: 20px;
-      background: rgba(6, 182, 212, 0.15);
-      color: var(--accent-cyan);
-      border: 1px solid rgba(6, 182, 212, 0.3);
-    }
+      * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
 
-    .card-body { margin-bottom: 20px; transform: translateZ(30px); }
-    .card-title {
-      font-size: 17px;
-      font-weight: 700;
-      color: #fff;
-      line-height: 1.4;
-      margin-bottom: 10px;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-    .card-meta {
-      font-size: 12px;
-      color: var(--text-muted);
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-    .meta-item { display: flex; align-items: center; gap: 8px; }
-    .meta-item i { color: var(--accent-cyan); font-size: 13px; width: 14px; }
+      body {
+        background: var(--bg-dark);
+        color: var(--text-main);
+        min-height: 100vh;
+        overflow-x: hidden;
+        padding-bottom: 60px;
+      }
 
-    .card-footer {
-      display: flex;
-      gap: 10px;
-      transform: translateZ(25px);
-    }
-    .btn-action-main {
-      flex: 1;
-      height: 44px;
-      background: linear-gradient(135deg, var(--accent-cyan), #0284c7);
-      border: none;
-      border-radius: 14px;
-      color: #0f172a;
-      font-weight: 800;
-      font-size: 13px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      text-decoration: none;
-      transition: 0.3s ease;
-      box-shadow: 0 8px 20px rgba(6, 182, 212, 0.3);
-    }
-    .btn-action-main:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 25px rgba(6, 182, 212, 0.5);
-    }
+      /* BACKGROUND ANIMATED GLOW ORBS */
+      .bg-orbs {
+        position: fixed;
+        top: 0; left: 0; width: 100vw; height: 100vh;
+        pointer-events: none;
+        z-index: -1;
+        overflow: hidden;
+      }
+      .orb {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(120px);
+        opacity: 0.45;
+        animation: floatOrb 18s infinite alternate ease-in-out;
+      }
+      .orb-1 { width: 500px; height: 500px; background: #7c3aed; top: -100px; left: -100px; }
+      .orb-2 { width: 450px; height: 450px; background: #0284c7; bottom: -50px; right: -50px; animation-delay: -5s; }
+      .orb-3 { width: 350px; height: 350px; background: #db2777; top: 40%; left: 40%; animation-delay: -10s; }
 
-    .btn-icon-quick {
-      width: 44px;
-      height: 44px;
-      border-radius: 14px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      color: var(--text-main);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: 0.3s ease;
-    }
-    .btn-icon-quick:hover {
-      background: rgba(255, 255, 255, 0.15);
-      color: var(--accent-pink);
-    }
+      @keyframes floatOrb {
+        0% { transform: translate(0, 0) scale(1); }
+        50% { transform: translate(60px, -80px) scale(1.15); }
+        100% { transform: translate(-50px, 50px) scale(0.9); }
+      }
 
-    /* MODAL */
-    .modal-overlay {
-      position: fixed;
-      top: 0; left: 0; width: 100vw; height: 100vh;
-      background: rgba(3, 7, 18, 0.85);
-      backdrop-filter: blur(12px);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 9999;
-      padding: 20px;
-    }
-    .modal-card {
-      background: #0f172a;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      width: 100%;
-      max-width: 550px;
-      border-radius: 28px;
-      padding: 28px;
-      position: relative;
-    }
-    .modal-close {
-      position: absolute;
-      top: 20px; right: 20px;
-      background: rgba(255, 255, 255, 0.08);
-      border: none;
-      color: #fff;
-      width: 36px; height: 36px;
-      border-radius: 50%;
-      cursor: pointer;
-      font-size: 16px;
-    }
+      .container { max-width: 1280px; margin: 0 auto; padding: 0 20px; }
 
-    .skeleton-card {
-      height: 240px;
-      background: rgba(255, 255, 255, 0.03);
-      border-radius: 24px;
-      border: 1px solid rgba(255, 255, 255, 0.05);
-    }
+      /* HEADER */
+      .hero-sec {
+        text-align: center;
+        padding: 60px 15px 35px;
+        position: relative;
+      }
+      .hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 18px;
+        border-radius: 30px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(12px);
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--accent-cyan);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      }
+      .hero-title {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: clamp(32px, 5vw, 54px);
+        font-weight: 800;
+        background: linear-gradient(135deg, #ffffff 30%, #94a3b8 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 16px;
+        line-height: 1.2;
+      }
+      .hero-title span {
+        background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .hero-sub { color: var(--text-muted); font-size: clamp(14px, 2vw, 16px); max-width: 620px; margin: 0 auto; font-weight: 500; line-height: 1.6; }
 
-    @media (max-width: 640px) {
-      .hero-title { font-size: 30px; }
-      .pyq-grid { grid-template-columns: 1fr; }
-    }
-  </style>
+      /* CONTROLS */
+      .controls-wrapper {
+        background: rgba(15, 23, 42, 0.75);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--card-border);
+        border-radius: 24px;
+        padding: 20px;
+        margin-bottom: 35px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .search-box { position: relative; width: 100%; }
+      .search-box input {
+        width: 100%;
+        height: 54px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 16px;
+        padding: 0 20px 0 52px;
+        color: #fff;
+        font-size: 15px;
+        font-weight: 500;
+        outline: none;
+        transition: 0.3s ease;
+      }
+      .search-box input:focus {
+        border-color: var(--accent-cyan);
+        box-shadow: 0 0 25px rgba(6, 182, 212, 0.25);
+        background: rgba(255, 255, 255, 0.07);
+      }
+      .search-icon { position: absolute; left: 20px; top: 18px; color: var(--accent-cyan); font-size: 18px; }
+
+      .filter-pills {
+        display: flex;
+        gap: 10px;
+        overflow-x: auto;
+        padding-bottom: 6px;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+      }
+      
+      .pill {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 10px 20px;
+        border-radius: 30px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-muted);
+        cursor: pointer;
+        white-space: nowrap;
+        transition: 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .pill:hover, .pill.active {
+        background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+        color: #fff;
+        border-color: transparent;
+        box-shadow: 0 8px 20px rgba(168, 85, 247, 0.3);
+      }
+
+      /* GRID RESPONSIVE */
+      .pyq-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 24px;
+      }
+
+      .pyq-card {
+        background: var(--card-bg);
+        backdrop-filter: blur(16px);
+        border: 1px solid var(--card-border);
+        border-radius: 24px;
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .pyq-card:hover {
+        transform: translateY(-5px);
+        border-color: rgba(6, 182, 212, 0.4);
+        box-shadow: 0 20px 35px -10px var(--glow-cyan);
+      }
+
+      .card-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 18px;
+      }
+
+      .subject-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 16px;
+        background: linear-gradient(135deg, rgba(6, 182, 212, 0.15), rgba(168, 85, 247, 0.15));
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        color: var(--accent-cyan);
+      }
+
+      .card-badges { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+      
+      .badge-tag {
+        font-size: 11px;
+        font-weight: 800;
+        padding: 5px 12px;
+        border-radius: 20px;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        background: rgba(168, 85, 247, 0.15);
+        color: var(--accent-purple);
+        border: 1px solid rgba(168, 85, 247, 0.3);
+      }
+      .badge-year {
+        font-size: 11px;
+        font-weight: 800;
+        padding: 5px 12px;
+        border-radius: 20px;
+        background: rgba(6, 182, 212, 0.15);
+        color: var(--accent-cyan);
+        border: 1px solid rgba(6, 182, 212, 0.3);
+      }
+
+      .card-body { margin-bottom: 22px; }
+      .card-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #fff;
+        line-height: 1.4;
+        margin-bottom: 12px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      .card-meta {
+        font-size: 13px;
+        color: var(--text-muted);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .meta-item { display: flex; align-items: center; gap: 10px; }
+      .meta-item i { color: var(--accent-cyan); font-size: 14px; width: 16px; }
+
+      .card-footer {
+        display: flex;
+        gap: 12px;
+      }
+      .btn-action-main {
+        flex: 1;
+        height: 46px;
+        background: linear-gradient(135deg, var(--accent-cyan), #0284c7);
+        border: none;
+        border-radius: 14px;
+        color: #0f172a;
+        font-weight: 800;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        text-decoration: none;
+        transition: 0.3s ease;
+        box-shadow: 0 8px 20px rgba(6, 182, 212, 0.25);
+      }
+      .btn-action-main:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 25px rgba(6, 182, 212, 0.45);
+      }
+
+      .btn-icon-quick {
+        width: 46px;
+        height: 46px;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: var(--text-main);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: 0.3s ease;
+      }
+      .btn-icon-quick:hover {
+        background: rgba(255, 255, 255, 0.15);
+        color: var(--accent-pink);
+      }
+
+      /* MODAL */
+      .modal-overlay {
+        position: fixed;
+        top: 0; left: 0; width: 100vw; height: 100vh;
+        background: rgba(3, 7, 18, 0.85);
+        backdrop-filter: blur(12px);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        padding: 20px;
+      }
+      .modal-card {
+        background: #0f172a;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        width: 100%;
+        max-width: 500px;
+        border-radius: 28px;
+        padding: 28px;
+        position: relative;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+      }
+      .modal-close {
+        position: absolute;
+        top: 20px; right: 20px;
+        background: rgba(255, 255, 255, 0.08);
+        border: none;
+        color: #fff;
+        width: 36px; height: 36px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .skeleton-card {
+        height: 250px;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+      }
+
+      @media (max-width: 640px) {
+        .container { padding: 0 14px; }
+        .controls-wrapper { padding: 14px; border-radius: 18px; }
+        .pyq-grid { grid-template-columns: 1fr; gap: 16px; }
+        .pyq-card { padding: 18px; }
+      }
+    </style>
 </head>
 <body>
 
@@ -474,9 +494,11 @@
     list.forEach(item => {
       const card = document.createElement("div");
       card.className = "pyq-card";
-      card.setAttribute("data-tilt", "");
-      card.setAttribute("data-tilt-max", "12");
-      card.setAttribute("data-tilt-speed", "400");
+      if(window.innerWidth > 768) {
+        card.setAttribute("data-tilt", "");
+        card.setAttribute("data-tilt-max", "8");
+        card.setAttribute("data-tilt-speed", "400");
+      }
 
       const iconClass = getSubjectIcon(item.subject || item.title);
 
@@ -509,16 +531,10 @@
         </div>
       `;
 
-      card.addEventListener("mousemove", (e) => {
-        const rect = card.getBoundingClientRect();
-        card.style.setProperty("--mouse-x", `${e.clientX - rect.left}px`);
-        card.style.setProperty("--mouse-y", `${e.clientY - rect.top}px`);
-      });
-
       grid.appendChild(card);
     });
 
-    if (window.VanillaTilt) {
+    if (window.VanillaTilt && window.innerWidth > 768) {
       VanillaTilt.init(document.querySelectorAll(".pyq-card"));
     }
   }

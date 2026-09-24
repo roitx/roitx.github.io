@@ -8,7 +8,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Supabase & HTML2PDF CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script src="supabase.js"></script>
 
   <style>
@@ -18,6 +21,7 @@
       --border: rgba(255, 255, 255, 0.08);
       --accent: #38bdf8;
       --accent-purple: #a855f7;
+      --accent-pink: #ec4899;
       --text-main: #cbd5e1;
       --text-muted: #94a3b8;
       --reader-font-size: 14px;
@@ -25,6 +29,20 @@
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
     body { background: var(--bg); color: var(--text-main); padding: 15px; display: flex; justify-content: center; min-height: 100vh; }
+
+    /* READING PROGRESS BAR */
+    .progress-container {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 4px;
+      background: rgba(255, 255, 255, 0.05);
+      z-index: 999;
+    }
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-purple));
+      width: 0%;
+      transition: width 0.1s ease;
+    }
 
     .reader-card { width: 100%; max-width: 680px; display: flex; flex-direction: column; gap: 16px; padding-bottom: 50px; }
 
@@ -42,6 +60,8 @@
       justify-content: space-between;
       align-items: center;
       box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      flex-wrap: wrap;
+      gap: 8px;
     }
     .bar-btn-group { display: flex; gap: 8px; align-items: center; }
     .btn-tool {
@@ -59,6 +79,7 @@
       transition: 0.2s;
     }
     .btn-tool:hover, .btn-tool.active { background: var(--accent); color: #0f172a; border-color: transparent; }
+    .btn-tool.active-bm { background: #f59e0b !important; color: #0f172a !important; }
 
     /* PAPER HEADER */
     .paper-header {
@@ -87,7 +108,6 @@
       line-height: 1.6;
     }
 
-    /* Headings get vibrant sky blue */
     .summary-content h1, .summary-content h2, .summary-content h3, 
     .summary-content .md-h1, .summary-content .md-h2, .summary-content .md-h3 {
       color: #38bdf8 !important;
@@ -100,9 +120,8 @@
       color: #cbd5e1 !important;
     }
 
-    /* COLORFUL BOLD TEXT FIX */
     .summary-content strong, .summary-content b {
-      color: #fde047 !important; /* Bright Gold / Yellow for high visibility */
+      color: #fde047 !important;
       font-weight: 700;
     }
 
@@ -134,7 +153,7 @@
     .ans-card:hover { border-color: rgba(56, 189, 248, 0.3); }
 
     .q-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
-    .q-meta-group { display: flex; flex-direction: column; gap: 4px; }
+    .q-meta-group { display: flex; flex-direction: column; gap: 4px; flex: 1; }
     .q-text { font-size: calc(var(--reader-font-size) + 1px); font-weight: 700; color: #f8fafc !important; line-height: 1.5; }
     
     .meta-badges { display: flex; gap: 6px; align-items: center; margin-top: 4px; }
@@ -152,8 +171,9 @@
     }
 
     .q-actions { display: flex; gap: 6px; }
-    .btn-icon-action { background: rgba(255,255,255,0.05); border: none; color: var(--text-muted); width: 32px; height: 32px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+    .btn-icon-action { background: rgba(255,255,255,0.05); border: none; color: var(--text-muted); width: 32px; height: 32px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; transition: 0.2s; }
     .btn-icon-action:hover { color: var(--accent); background: rgba(255,255,255,0.1); }
+    .btn-icon-action.bookmarked { color: #f59e0b; background: rgba(245, 158, 11, 0.15); }
 
     .ans-eng { border-left: 3px solid #10b981; background: rgba(16, 185, 129, 0.06); padding: 12px 14px; border-radius: 14px; color: #cbd5e1 !important; }
     .ans-hin { border-left: 3px solid #3b82f6; background: rgba(59, 130, 246, 0.06); padding: 12px 14px; border-radius: 14px; color: #cbd5e1 !important; }
@@ -167,6 +187,11 @@
 </head>
 <body>
 
+  <!-- SCROLL PROGRESS BAR -->
+  <div class="progress-container">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+
   <div class="reader-card" id="mainContainer">
     <div style="text-align:center; padding: 40px; color:var(--text-muted);"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading Question Set...</div>
   </div>
@@ -177,13 +202,19 @@
   let currentQuestions = [];
   let currentData = null;
   let activeLang = 'BOTH';
+  let showOnlyBookmarks = false;
+
+  // Scroll Bar Tracker
+  window.addEventListener("scroll", () => {
+    const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+    const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+    const scrolled = (winScroll / height) * 100;
+    document.getElementById("progressBar").style.width = (scrolled || 0) + "%";
+  });
 
   function parseContent(rawContent) {
     if (!rawContent) return "";
-    
-    if (/<[a-z][\s\S]*>/i.test(rawContent)) {
-      return rawContent;
-    }
+    if (/<[a-z][\s\S]*>/i.test(rawContent)) return rawContent;
     
     let lines = rawContent.split('\n');
     let html = [];
@@ -278,12 +309,14 @@
           <button class="btn-tool ${activeLang === 'HI' ? 'active' : ''}" onclick="setLanguage('HI')">HIN</button>
         </div>
         <div class="bar-btn-group">
+          <button class="btn-tool ${showOnlyBookmarks ? 'active-bm' : ''}" onclick="toggleBookmarkFilter()" title="Show Bookmarks Only"><i class="fa-solid fa-bookmark"></i></button>
+          <button class="btn-tool" onclick="downloadPDF()" title="Download PDF"><i class="fa-solid fa-file-pdf"></i></button>
           <button class="btn-tool" onclick="adjustFontSize(-1)"><i class="fa-solid fa-minus"></i></button>
           <button class="btn-tool" onclick="adjustFontSize(1)"><i class="fa-solid fa-plus"></i></button>
         </div>
       </div>
 
-      <div class="paper-header">
+      <div class="paper-header" id="pdfContent">
         <div class="paper-title">${data.title}</div>
         <div class="paper-tags">
           <span class="tag-pill"><i class="fa-solid fa-graduation-cap"></i> ${data.exam_target || 'BSEB'}</span>
@@ -315,7 +348,7 @@
     html += `<div id="questionsContainer" style="display:flex; flex-direction:column; gap:16px;"></div>`;
 
     container.innerHTML = html;
-    renderQuestions(currentQuestions);
+    filterQuestions();
   }
 
   function renderQuestions(questions) {
@@ -323,9 +356,11 @@
     if(!qContainer) return;
 
     if(questions.length === 0) {
-      qContainer.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:30px;">No questions found.</div>`;
+      qContainer.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:30px;">${showOnlyBookmarks ? 'Koi Bookmarked question nahi mila.' : 'No questions found.'}</div>`;
       return;
     }
+
+    const bookmarks = getLocalBookmarks();
 
     qContainer.innerHTML = questions.map((q, idx) => {
       const qText = q.question_en || q.question_hi || q.question || "";
@@ -335,12 +370,15 @@
       const yearVal = q.year || currentData.years_range || '';
       const shiftVal = q.shift || '';
 
+      const qUniqueId = `${currentData.id}_${idx}`;
+      const isBookmarked = bookmarks.includes(qUniqueId);
+
       let speechText = `Question ${idx + 1}. ${qText}. `;
       if (showEn) speechText += `Answer: ${q.answer_en}. `;
       if (showHi) speechText += `उत्तर: ${q.answer_hi}. `;
 
       return `
-        <div class="ans-card">
+        <div class="ans-card" id="qcard_${idx}">
           <div class="q-header">
             <div class="q-meta-group">
               <div class="q-text">Q${idx + 1}. ${parseContent(qText)}</div>
@@ -352,6 +390,7 @@
               ` : ''}
             </div>
             <div class="q-actions">
+              <button class="btn-icon-action ${isBookmarked ? 'bookmarked' : ''}" onclick="toggleBookmark('${qUniqueId}')" title="Bookmark"><i class="fa-solid fa-bookmark"></i></button>
               <button class="btn-icon-action" onclick="speakText('${escapeQuotes(speechText)}')" title="Read"><i class="fa-solid fa-volume-high"></i></button>
               <button class="btn-icon-action" onclick="copyQuestion('${escapeQuotes(qText)}', '${escapeQuotes(q.answer_en || q.answer_hi || '')}')" title="Copy"><i class="fa-solid fa-copy"></i></button>
             </div>
@@ -375,6 +414,43 @@
     }).join("");
   }
 
+  /* LOCAL BOOKMARK LOGIC */
+  function getLocalBookmarks() {
+    return JSON.parse(localStorage.getItem("pyq_bookmarks") || "[]");
+  }
+
+  function toggleBookmark(qUniqueId) {
+    let bookmarks = getLocalBookmarks();
+    if(bookmarks.includes(qUniqueId)) {
+      bookmarks = bookmarks.filter(b => b !== qUniqueId);
+      showToast("Bookmark Removed");
+    } else {
+      bookmarks.push(qUniqueId);
+      showToast("Question Bookmarked!");
+    }
+    localStorage.setItem("pyq_bookmarks", JSON.stringify(bookmarks));
+    filterQuestions();
+  }
+
+  function toggleBookmarkFilter() {
+    showOnlyBookmarks = !showOnlyBookmarks;
+    renderReader();
+  }
+
+  /* PDF EXPORT LOGIC */
+  function downloadPDF() {
+    showToast("Generating PDF...");
+    const element = document.getElementById("mainContainer");
+    const opt = {
+      margin:       10,
+      filename:     `${currentData.title || 'PYQ_Notes'}.pdf`,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2, backgroundColor: '#090d16' },
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    html2pdf().set(opt).from(element).save();
+  }
+
   function setLanguage(lang) {
     activeLang = lang;
     renderReader();
@@ -388,13 +464,22 @@
   }
 
   function filterQuestions() {
-    const query = document.getElementById("qSearch").value.toLowerCase();
-    const filtered = currentQuestions.filter(q => {
+    const searchEl = document.getElementById("qSearch");
+    const query = searchEl ? searchEl.value.toLowerCase() : "";
+    const bookmarks = getLocalBookmarks();
+
+    const filtered = currentQuestions.filter((q, idx) => {
+      const qUniqueId = `${currentData.id}_${idx}`;
+      const matchesBookmark = !showOnlyBookmarks || bookmarks.includes(qUniqueId);
+
       const qText = (q.question_en || q.question_hi || q.question || "").toLowerCase();
       const aEn = (q.answer_en || "").toLowerCase();
       const aHi = (q.answer_hi || "").toLowerCase();
-      return qText.includes(query) || aEn.includes(query) || aHi.includes(query);
+      const matchesSearch = qText.includes(query) || aEn.includes(query) || aHi.includes(query);
+
+      return matchesBookmark && matchesSearch;
     });
+
     renderQuestions(filtered);
   }
 

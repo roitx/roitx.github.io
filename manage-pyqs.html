@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Manage PYQs - Admin Panel</title>
+  <title>Manage PYQs - Admin Panel Pro</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase.js"></script>
@@ -14,49 +14,86 @@
     body { background: #e6ebf4; color: #334155; padding: 20px 15px; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; visibility: hidden; }
     body.admin-authenticated { visibility: visible !important; }
 
-    .app-card { background: #e6ebf4; width: 100%; max-width: 520px; border-radius: 30px; padding: 24px 20px; box-shadow: 12px 12px 24px #c2c9d6, -12px -12px 24px #ffffff; }
+    .app-card { background: #e6ebf4; width: 100%; max-width: 620px; border-radius: 30px; padding: 24px 20px; box-shadow: 12px 12px 24px #c2c9d6, -12px -12px 24px #ffffff; }
     .badge-top { background: #e6ebf4; padding: 10px 14px; border-radius: 20px; box-shadow: inset 3px 3px 6px #c2c9d6, inset -3px -3px 6px #ffffff; font-size: 11px; font-weight: 700; color: #7c3aed; text-align: center; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; gap: 8px; }
 
-    .action-bar { display: flex; gap: 12px; margin-bottom: 24px; }
-    .btn-pill { flex: 1; padding: 10px 14px; border-radius: 20px; background: #e6ebf4; border: none; box-shadow: 5px 5px 10px #c2c9d6, -5px -5px 10px #ffffff; font-size: 12px; font-weight: 700; color: #334155; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none; transition: 0.2s ease; }
+    .action-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+    .btn-pill { flex: 1; min-width: 130px; padding: 10px 14px; border-radius: 20px; background: #e6ebf4; border: none; box-shadow: 5px 5px 10px #c2c9d6, -5px -5px 10px #ffffff; font-size: 12px; font-weight: 700; color: #334155; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none; transition: 0.2s ease; }
     .btn-pill:active { box-shadow: inset 3px 3px 6px #c2c9d6, inset -3px -3px 6px #ffffff; }
     .btn-pill.purple { color: #7c3aed; }
+    .btn-pill.danger { color: #ef4444; }
 
-    .title-sec { margin-bottom: 16px; }
-    .title-sec h1 { font-size: 22px; font-weight: 800; color: #1e293b; display: flex; align-items: center; gap: 8px; }
+    .title-sec { margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+    .title-sec h1 { font-size: 20px; font-weight: 800; color: #1e293b; display: flex; align-items: center; gap: 8px; }
+    .counter-badge { font-size: 11px; font-weight: 800; background: #7c3aed; color: #fff; padding: 4px 10px; border-radius: 12px; }
+
+    /* DYNAMIC FILTERS & SEARCH */
+    .filter-grid { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+    .select-box { flex: 1; height: 38px; padding: 0 12px; border: none; outline: none; background: #e6ebf4; border-radius: 16px; box-shadow: inset 3px 3px 6px #c2c9d6, inset -3px -3px 6px #ffffff; font-size: 11px; font-weight: 700; color: #334155; min-width: 120px; }
 
     .search-container { position: relative; margin-bottom: 20px; }
     .search-box { width: 100%; height: 44px; padding: 0 16px 0 42px; border: none; outline: none; background: #e6ebf4; border-radius: 22px; box-shadow: inset 3px 3px 6px #c2c9d6, inset -3px -3px 6px #ffffff; font-size: 13px; font-weight: 600; color: #334155; }
     .search-icon { position: absolute; left: 16px; top: 14px; color: #64748b; font-size: 14px; }
 
+    /* BULK SELECTION BAR */
+    .bulk-bar { display: none; align-items: center; justify-content: space-between; background: #e6ebf4; padding: 10px 16px; border-radius: 18px; margin-bottom: 16px; box-shadow: inset 3px 3px 6px #c2c9d6, inset -3px -3px 6px #ffffff; }
+    .bulk-info { font-size: 12px; font-weight: 800; color: #7c3aed; display: flex; align-items: center; gap: 6px; }
+    .bulk-actions-group { display: flex; gap: 12px; }
+    .bulk-btn-link { background: none; border: none; font-size: 11px; font-weight: 800; cursor: pointer; transition: 0.2s; }
+    .bulk-btn-link.purple { color: #7c3aed; }
+    .bulk-btn-link.danger { color: #ef4444; }
+
+    /* LIST CARDS */
     .pyq-list { display: flex; flex-direction: column; gap: 16px; }
-    .pyq-item { background: #e6ebf4; border-radius: 24px; padding: 18px; box-shadow: 6px 6px 14px #c2c9d6, -6px -6px 14px #ffffff; display: flex; flex-direction: column; gap: 12px; }
-    .pyq-header { display: flex; justify-content: space-between; align-items: center; }
+    .pyq-item { background: #e6ebf4; border-radius: 24px; padding: 18px; box-shadow: 6px 6px 14px #c2c9d6, -6px -6px 14px #ffffff; display: flex; flex-direction: column; gap: 12px; position: relative; border: 2px solid transparent; transition: all 0.2s ease; }
+    .pyq-item.selected { border-color: #7c3aed; box-shadow: inset 2px 2px 5px #c2c9d6, inset -2px -2px 5px #ffffff, 0 0 10px rgba(124, 58, 237, 0.2); }
+    
+    .pyq-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+
+    /* CUSTOM NEUMORPHIC CHECKBOX */
+    .custom-check-wrapper { display: inline-flex; align-items: center; cursor: pointer; position: relative; }
+    .custom-check-wrapper input[type="checkbox"] { display: none; }
+    .custom-checkbox { width: 22px; height: 22px; border-radius: 8px; background: #e6ebf4; box-shadow: 3px 3px 6px #c2c9d6, -3px -3px 6px #ffffff; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; color: transparent; font-size: 11px; }
+    .custom-check-wrapper input[type="checkbox"]:checked + .custom-checkbox { background: #7c3aed; box-shadow: inset 2px 2px 4px rgba(0,0,0,0.2); color: #ffffff; }
+
+    .tags-group { display: flex; gap: 6px; align-items: center; }
     .exam-tag { font-size: 10px; font-weight: 800; color: #7c3aed; padding: 4px 10px; border-radius: 12px; box-shadow: inset 2px 2px 4px #c2c9d6, inset -2px -2px 4px #ffffff; }
     .year-tag { font-size: 10px; font-weight: 700; color: #059669; padding: 4px 10px; border-radius: 12px; box-shadow: inset 2px 2px 4px #c2c9d6, inset -2px -2px 4px #ffffff; }
     
     .pyq-title { font-size: 14px; font-weight: 800; color: #1e293b; line-height: 1.4; }
-    .pyq-meta { font-size: 11px; font-weight: 600; color: #64748b; display: flex; gap: 10px; flex-wrap: wrap; }
+    .pyq-meta { font-size: 11px; font-weight: 600; color: #64748b; display: flex; gap: 12px; flex-wrap: wrap; }
 
-    .pyq-actions { display: flex; gap: 8px; margin-top: 4px; }
-    .btn-action { flex: 1; padding: 10px; border-radius: 16px; border: none; background: #e6ebf4; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none; box-shadow: 4px 4px 8px #c2c9d6, -4px -4px 8px #ffffff; transition: 0.2s ease; }
+    .pyq-actions { display: flex; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
+    .btn-action { flex: 1; min-width: 70px; padding: 10px; border-radius: 16px; border: none; background: #e6ebf4; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none; box-shadow: 4px 4px 8px #c2c9d6, -4px -4px 8px #ffffff; transition: 0.2s ease; }
     .btn-action:active { box-shadow: inset 2px 2px 5px #c2c9d6, inset -2px -2px 5px #ffffff; }
     .btn-action.view { color: #0284c7; }
     .btn-action.edit { color: #d97706; }
+    .btn-action.preview { color: #7c3aed; }
     .btn-action.delete { color: #ef4444; }
 
-    /* MODAL METADATA EDIT */
+    /* MODALS */
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; padding: 15px; z-index: 999; }
-    .modal-card { background: #e6ebf4; width: 100%; max-width: 460px; border-radius: 28px; padding: 22px; box-shadow: 12px 12px 24px #1e293b; max-height: 90vh; overflow-y: auto; }
+    .modal-card { background: #e6ebf4; width: 100%; max-width: 540px; border-radius: 28px; padding: 22px; box-shadow: 12px 12px 24px #1e293b; max-height: 90vh; overflow-y: auto; }
     .modal-title { font-size: 16px; font-weight: 800; color: #1e293b; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; border-bottom: 2px dashed #cbd5e1; padding-bottom: 8px; }
     
     .form-group { margin-bottom: 12px; }
     .form-group label { display: block; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 6px; }
     .input-field { width: 100%; height: 42px; padding: 0 14px; border: none; outline: none; background: #e6ebf4; border-radius: 16px; box-shadow: inset 3px 3px 6px #c2c9d6, inset -3px -3px 6px #ffffff; font-size: 12px; font-weight: 600; color: #334155; }
-    
+    textarea.input-field { height: 90px; padding: 12px; resize: vertical; font-family: monospace; font-size: 11px; }
+
     .modal-btns { display: flex; gap: 10px; margin-top: 20px; }
     .btn-save { flex: 1; padding: 12px; background: #7c3aed !important; color: #ffffff !important; border-radius: 16px; border: none; font-weight: 800; font-size: 12px; cursor: pointer; box-shadow: 4px 4px 8px #c2c9d6, -4px -4px 8px #ffffff; }
     .btn-cancel { flex: 1; padding: 12px; background: #e6ebf4; color: #ef4444; border-radius: 16px; border: none; font-weight: 800; font-size: 12px; cursor: pointer; box-shadow: 4px 4px 8px #c2c9d6, -4px -4px 8px #ffffff; }
+
+    /* SUMMARY & PREVIEW CARDS */
+    .summary-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 14px; margin-bottom: 16px; display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
+    .summary-item { font-size: 11px; font-weight: 600; color: #475569; }
+    .summary-item strong { display: block; font-size: 12px; color: #0f172a; font-weight: 800; }
+    
+    .preview-paper { background: #fff; padding: 18px; border-radius: 16px; box-shadow: inset 2px 2px 5px #c2c9d6; max-height: 45vh; overflow-y: auto; text-align: left; }
+    .preview-q-card { margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px dashed #e2e8f0; }
+    .preview-q-title { font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 6px; }
+    .preview-ans { font-size: 12px; color: #16a34a; font-weight: 600; background: #f0fdf4; padding: 6px 10px; border-radius: 8px; margin-top: 4px; }
   </style>
 </head>
 <body>
@@ -67,24 +104,44 @@
     <div class="action-bar">
       <a href="admin-pyq-generator.html" class="btn-pill purple"><i class="fa-solid fa-plus"></i> Create BSEB PYQ</a>
       <button class="btn-pill" onclick="loadAllPYQs()"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
+      <button class="btn-pill danger" id="btnBulkDelete" style="display:none;" onclick="deleteSelectedPYQs()"><i class="fa-solid fa-trash"></i> Delete Selected</button>
     </div>
 
     <div class="title-sec">
       <h1><i class="fa-solid fa-list-check"></i> Manage BSEB PYQs</h1>
+      <span class="counter-badge" id="paperCounter">0 Papers</span>
+    </div>
+
+    <!-- DYNAMIC FILTERS -->
+    <div class="filter-grid">
+      <select id="filterClass" class="select-box" onchange="filterPYQs()">
+        <option value="">All Classes</option>
+      </select>
+      <select id="filterLang" class="select-box" onchange="filterPYQs()">
+        <option value="">All Languages</option>
+      </select>
     </div>
 
     <div class="search-container">
       <i class="fa-solid fa-magnifying-glass search-icon"></i>
-      <input type="text" id="searchInput" class="search-box" placeholder="Search Class, Subject, Topic or Year..." onkeyup="filterPYQs()">
+      <input type="text" id="searchInput" class="search-box" placeholder="Search Title, Subject, Chapter or Year..." onkeyup="debouncedFilter()">
+    </div>
+
+    <div class="bulk-bar" id="bulkBar">
+      <span class="bulk-info" id="selectedCountText"><i class="fa-solid fa-circle-check"></i> 0 Selected</span>
+      <div class="bulk-actions-group">
+        <button onclick="selectAll()" class="bulk-btn-link purple">Select All</button>
+        <button onclick="clearSelections()" class="bulk-btn-link danger">Deselect All</button>
+      </div>
     </div>
 
     <div id="pyqContainer" class="pyq-list"></div>
   </div>
 
-  <!-- EDIT METADATA MODAL -->
+  <!-- EDIT MODAL -->
   <div id="editModal" class="modal-overlay">
     <div class="modal-card">
-      <div class="modal-title"><i class="fa-solid fa-pen-to-square"></i> Edit Paper Parameters</div>
+      <div class="modal-title"><i class="fa-solid fa-pen-to-square"></i> Edit Paper & Content</div>
       <input type="hidden" id="editId">
       
       <div class="form-group">
@@ -94,10 +151,7 @@
 
       <div class="form-group">
         <label>Target Class</label>
-        <select id="editTargetClass" class="input-field">
-          <option value="BSEB Class 10th">Class 10th (Matric)</option>
-          <option value="BSEB Class 12th">Class 12th (Inter)</option>
-        </select>
+        <input type="text" id="editTargetClass" class="input-field">
       </div>
 
       <div class="form-group">
@@ -112,31 +166,47 @@
 
       <div class="form-group">
         <label>Language Mode</label>
-        <select id="editLangMode" class="input-field">
-          <option value="Bilingual">Bilingual (English + Hindi)</option>
-          <option value="English">Pure English</option>
-          <option value="Hindi">Pure Hindi</option>
-        </select>
+        <input type="text" id="editLangMode" class="input-field">
       </div>
 
       <div class="form-group">
         <label>Year Range</label>
-        <select id="editYearRange" class="input-field">
-          <option value="2018 - 2026">2018 - 2026 (Up To Feb Exam)</option>
-          <option value="2015 - 2026">2015 - 2026 (Last 11 Yrs)</option>
-          <option value="2020 - 2026">2020 - 2026 (Recent Yrs)</option>
-        </select>
+        <input type="text" id="editYearRange" class="input-field">
+      </div>
+
+      <div class="form-group">
+        <label>Questions Data (JSON Format)</label>
+        <textarea id="editQuestionsRaw" class="input-field" placeholder='[{"question_en":"...","answer_en":"..."}]'></textarea>
       </div>
 
       <div class="modal-btns">
         <button onclick="saveMetadataUpdate()" class="btn-save"><i class="fa-solid fa-check"></i> Save Changes</button>
-        <button onclick="closeModal()" class="btn-cancel"><i class="fa-solid fa-xmark"></i> Cancel</button>
+        <button onclick="closeModal('editModal')" class="btn-cancel"><i class="fa-solid fa-xmark"></i> Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PREVIEW MODAL WITH SUMMARY -->
+  <div id="previewModal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-title" id="previewTitle"><i class="fa-solid fa-eye"></i> Paper Preview</div>
+      
+      <!-- KEY POINTS & SUMMARY SECTION -->
+      <div class="summary-box" id="previewSummary"></div>
+
+      <div id="previewContent" class="preview-paper"></div>
+      
+      <div class="modal-btns">
+        <button onclick="closeModal('previewModal')" class="btn-cancel"><i class="fa-solid fa-xmark"></i> Close Preview</button>
       </div>
     </div>
   </div>
 
 <script>
   let pyqDataStore = [];
+  let currentFilteredList = [];
+  let selectedIds = new Set();
+  let searchTimer = null;
 
   document.addEventListener("DOMContentLoaded", async () => {
     try {
@@ -191,53 +261,124 @@
     }
 
     pyqDataStore = data || [];
-    renderList(pyqDataStore);
+    selectedIds.clear();
+    updateBulkUI();
+    populateDynamicFilters();
+    filterPYQs();
+  }
+
+  /* POPULATE DROPDOWNS BASED ON DYNAMICALLY UPLOADED DATA ONLY */
+  function populateDynamicFilters() {
+    const classSelect = document.getElementById("filterClass");
+    const langSelect = document.getElementById("filterLang");
+
+    const availableClasses = [...new Set(pyqDataStore.map(item => item.exam_target).filter(Boolean))];
+    const availableLangs = [...new Set(pyqDataStore.map(item => item.language_mode).filter(Boolean))];
+
+    classSelect.innerHTML = `<option value="">All Classes (${availableClasses.length})</option>` + 
+      availableClasses.map(cls => `<option value="${cls}">${cls}</option>`).join("");
+
+    langSelect.innerHTML = `<option value="">All Languages (${availableLangs.length})</option>` + 
+      availableLangs.map(lng => `<option value="${lng}">${lng}</option>`).join("");
   }
 
   function renderList(list) {
+    currentFilteredList = list;
     const container = document.getElementById("pyqContainer");
+    document.getElementById("paperCounter").innerText = `${list.length} Papers`;
+
     if (list.length === 0) {
-      container.innerHTML = `<div style="text-align:center; font-size:13px; font-weight:bold; color:#64748b; padding:30px;">No papers found in database.</div>`;
+      container.innerHTML = `<div style="text-align:center; font-size:13px; font-weight:bold; color:#64748b; padding:30px;">No papers match your filters.</div>`;
       return;
     }
 
-    container.innerHTML = list.map(item => `
-      <div class="pyq-item">
+    container.innerHTML = list.map(item => {
+      const isSelected = selectedIds.has(item.id);
+      return `
+      <div class="pyq-item ${isSelected ? 'selected' : ''}" id="card-${item.id}">
         <div class="pyq-header">
-          <span class="exam-tag">${item.exam_target || 'BSEB'}</span>
-          <span class="year-tag"><i class="fa-solid fa-calendar"></i> ${item.years_range || '2018 - 2026'}</span>
+          <label class="custom-check-wrapper">
+            <input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleSelect(${item.id})">
+            <span class="custom-checkbox"><i class="fa-solid fa-check"></i></span>
+          </label>
+          <div class="tags-group">
+            <span class="exam-tag">${item.exam_target || 'BSEB'}</span>
+            <span class="year-tag"><i class="fa-solid fa-calendar"></i> ${item.years_range || '2018 - 2026'}</span>
+          </div>
         </div>
         <div class="pyq-title">${item.title || 'Untitled Paper'}</div>
         <div class="pyq-meta">
           <span><i class="fa-solid fa-book"></i> ${item.subject || 'General'}</span>
           <span><i class="fa-solid fa-language"></i> ${item.language_mode || 'Bilingual'}</span>
+          <span><i class="fa-solid fa-circle-question"></i> ${item.questions ? item.questions.length : 0} Qs</span>
         </div>
         <div class="pyq-actions">
           <a href="pyq-reader.html?id=${item.id}" class="btn-action view"><i class="fa-solid fa-eye"></i> View</a>
           <button onclick="openEditModal(${item.id})" class="btn-action edit"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
+          <button onclick="openPreviewModal(${item.id})" class="btn-action preview"><i class="fa-solid fa-magnifying-glass"></i> Preview</button>
           <button onclick="deletePYQ(${item.id})" class="btn-action delete"><i class="fa-solid fa-trash"></i> Delete</button>
         </div>
       </div>
-    `).join("");
+    `}).join("");
   }
 
+  /* PREVIEW MODAL WITH KEY SUMMARY & QUESTIONS */
+  function openPreviewModal(id) {
+    const item = pyqDataStore.find(x => x.id === id);
+    if (!item) return;
+
+    document.getElementById("previewTitle").innerHTML = `<i class="fa-solid fa-eye"></i> ${item.title || 'Paper Preview'}`;
+    
+    // Summary/Key points calculation
+    const summaryBox = document.getElementById("previewSummary");
+    const qCount = item.questions ? item.questions.length : 0;
+    
+    summaryBox.innerHTML = `
+      <div class="summary-item">Target Class<strong>${item.exam_target || 'N/A'}</strong></div>
+      <div class="summary-item">Subject<strong>${item.subject || 'N/A'}</strong></div>
+      <div class="summary-item">Chapter/Topic<strong>${item.topic || 'General'}</strong></div>
+      <div class="summary-item">Language<strong>${item.language_mode || 'N/A'}</strong></div>
+      <div class="summary-item">Years<strong>${item.years_range || 'N/A'}</strong></div>
+      <div class="summary-item">Total Questions<strong>${qCount} Items</strong></div>
+    `;
+
+    const container = document.getElementById("previewContent");
+
+    if (!item.questions || item.questions.length === 0) {
+      container.innerHTML = `<div style="text-align:center; font-weight:bold; color:#64748b; padding:20px;">No questions found in this paper.</div>`;
+    } else {
+      container.innerHTML = item.questions.map((q, idx) => `
+        <div class="preview-q-card">
+          <div class="preview-q-title">Q${idx + 1}. ${q.question_en || q.question || 'N/A'}</div>
+          ${q.question_hi ? `<div class="preview-q-title" style="color:#475569;">${q.question_hi}</div>` : ''}
+          ${q.answer_en || q.answer ? `<div class="preview-ans"><strong>Ans:</strong> ${q.answer_en || q.answer}</div>` : ''}
+          ${q.answer_hi ? `<div class="preview-ans" style="background:#f1f5f9; color:#334155;"><strong>उत्तर:</strong> ${q.answer_hi}</div>` : ''}
+        </div>
+      `).join("");
+    }
+
+    document.getElementById("previewModal").style.display = "flex";
+  }
+
+  /* EDIT MODAL */
   function openEditModal(id) {
     const item = pyqDataStore.find(x => x.id === id);
     if (!item) return;
 
     document.getElementById("editId").value = item.id;
     document.getElementById("editTitle").value = item.title || "";
-    document.getElementById("editTargetClass").value = item.exam_target || "BSEB Class 12th";
+    document.getElementById("editTargetClass").value = item.exam_target || "";
     document.getElementById("editSubject").value = item.subject || "";
     document.getElementById("editTopic").value = item.topic || "";
-    document.getElementById("editLangMode").value = item.language_mode || "Bilingual";
-    document.getElementById("editYearRange").value = item.years_range || "2018 - 2026";
+    document.getElementById("editLangMode").value = item.language_mode || "";
+    document.getElementById("editYearRange").value = item.years_range || "";
+    document.getElementById("editQuestionsRaw").value = item.questions ? JSON.stringify(item.questions, null, 2) : "[]";
 
     document.getElementById("editModal").style.display = "flex";
   }
 
-  function closeModal() {
-    document.getElementById("editModal").style.display = "none";
+  function closeModal(modalId) {
+    document.getElementById(modalId).style.display = "none";
   }
 
   async function saveMetadataUpdate() {
@@ -248,20 +389,29 @@
     const topic = document.getElementById("editTopic").value;
     const language_mode = document.getElementById("editLangMode").value;
     const years_range = document.getElementById("editYearRange").value;
+    
+    let questions = [];
+    try {
+      questions = JSON.parse(document.getElementById("editQuestionsRaw").value || "[]");
+    } catch(e) {
+      alert("❌ Invalid JSON in Questions field!");
+      return;
+    }
 
     const { error } = await window.supabaseClient
       .from('pyq_database')
-      .update({ title, exam_target, subject, topic, language_mode, years_range })
+      .update({ title, exam_target, subject, topic, language_mode, years_range, questions })
       .eq('id', id);
 
     if (error) {
       alert("❌ Update Failed: " + error.message);
     } else {
-      closeModal();
+      closeModal('editModal');
       loadAllPYQs();
     }
   }
 
+  /* DELETE & BULK SELECTION LOGIC */
   async function deletePYQ(id) {
     if (!confirm("Are you sure you want to permanently delete this paper?")) return;
     const { error } = await window.supabaseClient.from('pyq_database').delete().eq('id', id);
@@ -272,15 +422,83 @@
     }
   }
 
+  function toggleSelect(id) {
+    if (selectedIds.has(id)) {
+      selectedIds.delete(id);
+    } else {
+      selectedIds.add(id);
+    }
+    updateBulkUI();
+    
+    const card = document.getElementById(`card-${id}`);
+    if (card) {
+      if (selectedIds.has(id)) card.classList.add('selected');
+      else card.classList.remove('selected');
+    }
+  }
+
+  function selectAll() {
+    currentFilteredList.forEach(item => selectedIds.add(item.id));
+    updateBulkUI();
+    filterPYQs();
+  }
+
+  function clearSelections() {
+    selectedIds.clear();
+    updateBulkUI();
+    filterPYQs();
+  }
+
+  function updateBulkUI() {
+    const bulkBar = document.getElementById("bulkBar");
+    const bulkBtn = document.getElementById("btnBulkDelete");
+    const countText = document.getElementById("selectedCountText");
+
+    if (selectedIds.size > 0) {
+      bulkBar.style.display = "flex";
+      bulkBtn.style.display = "flex";
+      countText.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${selectedIds.size} Selected`;
+    } else {
+      bulkBar.style.display = "none";
+      bulkBtn.style.display = "none";
+    }
+  }
+
+  async function deleteSelectedPYQs() {
+    if (!confirm(`Are you sure you want to delete ${selectedIds.size} selected papers?`)) return;
+    const ids = Array.from(selectedIds);
+    const { error } = await window.supabaseClient.from('pyq_database').delete().in('id', ids);
+
+    if (!error) {
+      loadAllPYQs();
+    } else {
+      alert("Bulk Delete Error: " + error.message);
+    }
+  }
+
+  /* SEARCH & DEBOUNCE FILTER */
+  function debouncedFilter() {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(filterPYQs, 300);
+  }
+
   function filterPYQs() {
     const q = document.getElementById("searchInput").value.toLowerCase().trim();
-    const filtered = pyqDataStore.filter(x => 
-      (x.title && x.title.toLowerCase().includes(q)) ||
-      (x.subject && x.subject.toLowerCase().includes(q)) ||
-      (x.topic && x.topic.toLowerCase().includes(q)) ||
-      (x.exam_target && x.exam_target.toLowerCase().includes(q)) ||
-      (x.years_range && x.years_range.toLowerCase().includes(q))
-    );
+    const classFilter = document.getElementById("filterClass").value;
+    const langFilter = document.getElementById("filterLang").value;
+
+    const filtered = pyqDataStore.filter(x => {
+      const matchSearch = (x.title && x.title.toLowerCase().includes(q)) ||
+                          (x.subject && x.subject.toLowerCase().includes(q)) ||
+                          (x.topic && x.topic.toLowerCase().includes(q)) ||
+                          (x.years_range && x.years_range.toLowerCase().includes(q));
+
+      const matchClass = !classFilter || x.exam_target === classFilter;
+      const matchLang = !langFilter || x.language_mode === langFilter;
+
+      return matchSearch && matchClass && matchLang;
+    });
+
     renderList(filtered);
   }
 </script>
