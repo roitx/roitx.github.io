@@ -2,75 +2,254 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PM-Roit | Premium Notes Hub</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>PM-Roit | Premium Class Notes & Study Material Hub</title>
+    
+    <!-- SEO Meta Tags for Fast Google Crawling -->
+    <meta name="description" content="Access and unlock high-quality PM-Roit Premium Study Notes for Class 9th, 10th, 11th, and 12th (Physics, Chemistry, Maths, Biology). Instant access to PDF study materials.">
+    <meta name="keywords" content="PM-Roit premium notes, Class 12 Physics notes, Bihar Board Class 12 notes, NCERT Chemistry notes, Class 10 science notes PDF">
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+    <link rel="canonical" href="https://roitx.qd.je/premium-notes.html">
+
+    <!-- Open Graph / Social Media Sharing -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="PM-Roit Premium Notes Hub">
+    <meta property="og:description" content="Get premium chapter-wise topper notes and study resources. Fast PDF preview & easy access.">
+    <meta property="og:url" content="https://roitx.qd.je/premium-notes.html">
+    <meta property="og:image" content="https://roitx.qd.je/banner.png">
+
+    <!-- JSON-LD Structured Data Schema for Google Search Engine -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebPage",
+          "@id": "https://roitx.qd.je/premium-notes.html",
+          "url": "https://roitx.qd.je/premium-notes.html",
+          "name": "PM-Roit Premium Notes Hub",
+          "description": "Unlock high quality chapterwise premium study notes."
+        },
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://roitx.qd.je/" },
+            { "@type": "ListItem", "position": 2, "name": "Premium Notes", "item": "https://roitx.qd.je/premium-notes.html" }
+          ]
+        }
+      ]
+    }
+    </script>
+
     <link rel="stylesheet" href="premium.css">
-    <!-- Supabase SDK -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase.js"></script>
+</head>
+
 
     <style>
-        /* Base Container */
-        .notes-container {
-            max-width: 950px;
-            margin: 0 auto;
-            padding: 15px 10px;
+        :root {
+            --bg-dark: #080c14;
+            --card-bg: rgba(17, 24, 39, 0.75);
+            --accent-cyan: #00d2ff;
+            --accent-blue: #0072ff;
+            --accent-purple: #7928ca;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-glow: rgba(0, 210, 255, 0.2);
         }
 
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* Ambient Radial Background Glows */
+        .bg-glow-1 {
+            position: fixed;
+            top: -100px;
+            left: -100px;
+            width: 350px;
+            height: 350px;
+            background: radial-gradient(circle, rgba(0, 210, 255, 0.12) 0%, transparent 70%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .bg-glow-2 {
+            position: fixed;
+            bottom: -100px;
+            right: -100px;
+            width: 350px;
+            height: 350px;
+            background: radial-gradient(circle, rgba(121, 40, 202, 0.15) 0%, transparent 70%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* Base Container */
+        .notes-container {
+            width: 100%;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: clamp(12px, 3vw, 24px);
+        }
+
+        /* Glass Header Box */
         .header-box {
             text-align: center;
             margin-bottom: 20px;
-            padding: 18px 15px;
-            background: rgba(17, 22, 34, 0.75);
-            backdrop-filter: blur(12px);
-            border-radius: 16px;
-            border: 1px solid rgba(0, 210, 255, 0.2);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            padding: clamp(16px, 4vw, 28px) clamp(14px, 3vw, 20px);
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 20px;
+            border: 1px solid var(--border-glow);
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.45);
         }
 
         .header-box h1 {
-            font-size: 1.3rem;
+            font-size: clamp(1.2rem, 4vw, 1.8rem);
+            font-weight: 800;
             margin: 0;
             color: #fff;
-            letter-spacing: 0.5px;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
         }
 
-        .header-box span {
-            color: #00d2ff;
-            text-shadow: 0 0 10px rgba(0, 210, 255, 0.4);
+        .header-box h1 span {
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         .header-box p {
-            font-size: 0.8rem;
-            color: #8a99ad;
-            margin-top: 4px;
+            font-size: clamp(0.78rem, 2.5vw, 0.9rem);
+            color: var(--text-muted);
+            margin: 6px 0 0 0;
+        }
+
+        /* Search & Filter Bar Section */
+        .filter-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 22px;
+        }
+
+        .search-box-container {
+            position: relative;
+            width: 100%;
+        }
+
+        .search-box-container i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--accent-cyan);
+            font-size: 0.9rem;
+        }
+
+        .search-input {
+            width: 100%;
+            background: rgba(13, 18, 29, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #fff;
+            padding: 11px 14px 11px 40px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            outline: none;
+            transition: all 0.25s ease;
+            font-family: inherit;
+        }
+
+        .search-input:focus {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 12px rgba(0, 210, 255, 0.25);
+            background: #0f1624;
+        }
+
+        .filter-pills {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+            scrollbar-width: none;
+        }
+
+        .filter-pills::-webkit-scrollbar {
+            display: none;
+        }
+
+        .pill-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-muted);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+        }
+
+        .pill-btn.active, .pill-btn:hover {
+            background: rgba(0, 210, 255, 0.15);
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
         }
 
         /* Responsive Ultra-Compact Grid */
         .compact-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
+            grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+            gap: clamp(10px, 2vw, 16px);
         }
 
-        @media (min-width: 600px) {
+        @media (min-width: 550px) {
             .compact-grid {
-                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-                gap: 14px;
+                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
             }
         }
 
         .mini-card {
-            background: linear-gradient(145deg, #121826, #1a2333);
+            background: linear-gradient(145deg, rgba(18, 24, 38, 0.9), rgba(26, 35, 51, 0.95));
             border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 14px;
-            padding: 10px 12px;
+            border-radius: 16px;
+            padding: 12px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
             position: relative;
             box-sizing: border-box;
+            transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .mini-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(0, 210, 255, 0.35);
+            box-shadow: 0 10px 25px rgba(0, 210, 255, 0.15);
         }
 
         .card-header-line {
@@ -82,24 +261,31 @@
         }
 
         .badge-tag {
-            font-size: 0.6rem;
+            font-size: 0.62rem;
             font-weight: 700;
             background: rgba(0, 210, 255, 0.1);
-            color: #00d2ff;
-            border: 1px solid rgba(0, 210, 255, 0.2);
-            padding: 2px 6px;
-            border-radius: 5px;
+            color: var(--accent-cyan);
+            border: 1px solid rgba(0, 210, 255, 0.25);
+            padding: 2px 8px;
+            border-radius: 6px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             max-width: 75%;
             text-transform: uppercase;
+            letter-spacing: 0.3px;
         }
 
-        /* Top-Right Eye Only Preview Icon Button */
-        .icon-btn-preview {
-            width: 24px;
-            height: 24px;
+        .card-top-actions {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        /* Top-Right Eye & Share Buttons */
+        .icon-btn-action {
+            width: 26px;
+            height: 26px;
             border-radius: 50%;
             background: rgba(255, 255, 255, 0.06);
             border: 1px solid rgba(255, 255, 255, 0.12);
@@ -110,24 +296,17 @@
             cursor: pointer;
             transition: all 0.2s ease;
             flex-shrink: 0;
+            font-size: 0.72rem;
         }
 
-        .icon-btn-preview:hover {
-            color: #00d2ff;
-            background: rgba(0, 210, 255, 0.15);
-            border-color: rgba(0, 210, 255, 0.3);
-        }
-
-        .icon-btn-preview svg {
-            width: 13px;
-            height: 13px;
-            stroke: currentColor;
-            stroke-width: 2.2;
-            fill: none;
+        .icon-btn-action:hover {
+            color: var(--accent-cyan);
+            background: rgba(0, 210, 255, 0.18);
+            border-color: rgba(0, 210, 255, 0.4);
         }
 
         .card-title {
-            font-size: 0.9rem;
+            font-size: clamp(0.85rem, 2vw, 0.95rem);
             font-weight: 700;
             color: #ffffff;
             margin-bottom: 6px;
@@ -140,56 +319,60 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
         }
 
         .chapter-sub {
             color: #64748b;
-            font-size: 0.7rem;
-            font-weight: 500;
+            font-size: 0.72rem;
+            font-weight: 600;
         }
 
         .price-tag {
-            font-size: 0.92rem;
+            font-size: 0.95rem;
             font-weight: 800;
-            color: #00d2ff;
+            color: var(--accent-cyan);
+            text-shadow: 0 0 8px rgba(0, 210, 255, 0.3);
         }
 
         /* Sleek Button Styles */
         .btn-mini {
             width: 100%;
-            padding: 8px 0;
+            padding: 9px 0;
             font-size: 0.78rem;
-            border-radius: 8px;
+            border-radius: 10px;
             border: none;
             cursor: pointer;
             font-weight: 700;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 5px;
+            gap: 6px;
             box-sizing: border-box;
             transition: all 0.2s ease;
-        }
-
-        .btn-mini svg {
-            width: 14px;
-            height: 14px;
-            fill: none;
-            stroke: currentColor;
-            stroke-width: 2.2;
+            font-family: inherit;
         }
 
         .btn-read { 
             background: linear-gradient(135deg, #00c6ff, #0072ff); 
             color: #fff; 
-            box-shadow: 0 3px 10px rgba(0, 198, 255, 0.25);
+            box-shadow: 0 4px 12px rgba(0, 198, 255, 0.3);
+        }
+
+        .btn-read:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(0, 198, 255, 0.45);
         }
 
         .btn-unlock { 
             background: linear-gradient(135deg, #7928ca, #00d2ff); 
             color: #fff; 
-            box-shadow: 0 3px 10px rgba(121, 40, 202, 0.25);
+            box-shadow: 0 4px 12px rgba(121, 40, 202, 0.35);
+        }
+
+        .btn-unlock:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(121, 40, 202, 0.5);
         }
 
         .btn-pending {
@@ -211,21 +394,29 @@
             width: 100%;
             height: 100%;
             background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(8px);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             align-items: center;
             justify-content: center;
+            padding: 14px;
         }
 
         .modal-content {
             background: #111622;
             border: 1px solid rgba(0, 210, 255, 0.35);
-            border-radius: 18px;
+            border-radius: 20px;
             padding: 22px;
-            width: 90%;
-            max-width: 360px;
+            width: 100%;
+            max-width: 380px;
             text-align: center;
-            box-shadow: 0 12px 40px rgba(0, 210, 255, 0.25);
+            box-shadow: 0 16px 45px rgba(0, 210, 255, 0.25);
             color: #fff;
+            animation: modalPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes modalPop {
+            from { transform: scale(0.85); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
         }
 
         .qr-container {
@@ -233,13 +424,13 @@
             padding: 10px;
             border-radius: 14px;
             display: inline-block;
-            margin: 10px 0;
-            box-shadow: 0 4px 15px rgba(255,255,255,0.1);
+            margin: 12px 0;
+            box-shadow: 0 4px 18px rgba(255,255,255,0.12);
         }
 
         .qr-img {
-            width: 165px;
-            height: 165px;
+            width: 160px;
+            height: 160px;
             display: block;
         }
 
@@ -251,23 +442,18 @@
             background: linear-gradient(135deg, #28a745, #1e7e34);
             color: #ffffff;
             text-decoration: none;
-            font-weight: bold;
+            font-weight: 700;
             font-size: 0.82rem;
-            padding: 10px;
+            padding: 11px;
             border-radius: 10px;
-            margin: 8px 0;
+            margin: 10px 0;
             box-shadow: 0 4px 14px rgba(40, 167, 69, 0.4);
             transition: all 0.2s ease;
         }
 
-        .btn-upi-app svg {
-            width: 16px;
-            height: 16px;
-            fill: none;
-            stroke: currentColor;
-            stroke-width: 2.2;
-            stroke-linecap: round;
-            stroke-linejoin: round;
+        .btn-upi-app:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(40, 167, 69, 0.55);
         }
 
         .copy-box {
@@ -276,90 +462,111 @@
             gap: 6px;
             cursor: pointer;
             color: #fff;
-            background: rgba(255,255,255,0.05);
-            padding: 2px 6px;
-            border-radius: 4px;
-        }
-
-        .copy-box svg {
-            width: 14px;
-            height: 14px;
-            fill: none;
-            stroke: #00d2ff;
-            stroke-width: 2.2;
-            stroke-linecap: round;
-            stroke-linejoin: round;
+            background: rgba(255,255,255,0.08);
+            padding: 3px 8px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .input-utr {
             width: 100%;
-            padding: 11px 12px;
+            padding: 12px;
             margin: 12px 0;
             border-radius: 10px;
-            border: 1px solid rgba(0, 210, 255, 0.3);
+            border: 1px solid rgba(0, 210, 255, 0.35);
             background: #090d16;
-            color: #00d2ff;
+            color: var(--accent-cyan);
             font-size: 0.92rem;
-            font-weight: 600;
+            font-weight: 700;
             text-align: center;
             box-sizing: border-box;
             outline: none;
+            letter-spacing: 1px;
         }
 
         .input-utr::placeholder {
             color: #5fb5ff66;
-            font-size: 0.8rem;
+            font-size: 0.78rem;
             font-weight: normal;
+            letter-spacing: normal;
         }
 
         .modal-actions {
             display: flex;
             gap: 10px;
-            margin-top: 5px;
+            margin-top: 6px;
         }
 
         .btn-cancel {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.08);
             color: #aaa;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .btn-cancel:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
         }
     </style>
 </head>
 <body>
+
+    <div class="bg-glow-1"></div>
+    <div class="bg-glow-2"></div>
+
     <div class="notes-container">
+        <!-- Glass Header -->
         <div class="header-box">
-            <h1>PM-Roit <span>Premium Notes</span></h1>
-            <p>Select your chapter and unlock full study access</p>
+            <h1><i class="fa-solid fa-crown" style="color: #00d2ff;"></i> PM-Roit <span>Premium Notes</span></h1>
+            <p>Select your chapter, search topics & unlock full study access instantly</p>
         </div>
 
+        <!-- Filter & Search Controls -->
+        <div class="filter-wrapper">
+            <div class="search-box-container">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="searchInput" class="search-input" placeholder="Search by title, subject or chapter..." oninput="filterNotesUI()">
+            </div>
+            
+            <div class="filter-pills" id="filterPills">
+                <button class="pill-btn active" onclick="setSubjectFilter('ALL', this)">All Notes</button>
+                <button class="pill-btn" onclick="setSubjectFilter('PHYSICS', this)">Physics</button>
+                <button class="pill-btn" onclick="setSubjectFilter('CHEMISTRY', this)">Chemistry</button>
+                <button class="pill-btn" onclick="setSubjectFilter('BIOLOGY', this)">Biology</button>
+                <button class="pill-btn" onclick="setSubjectFilter('MATHS', this)">Maths</button>
+            </div>
+        </div>
+
+        <!-- Dynamic Grid -->
         <div class="compact-grid" id="notesGrid">
-            <!-- Dynamic Cards -->
+            <!-- Dynamic Cards Inserted Here -->
         </div>
     </div>
 
     <!-- Payment Modal -->
     <div id="paymentModal" class="modal">
         <div class="modal-content">
-            <h3 id="modalTitle" style="margin: 0 0 5px 0; font-size: 1.1rem; color: #fff;">Complete Payment</h3>
-            <p style="font-size: 0.85rem; color: #8a99ad; margin: 0;">Scan or Pay <b id="modalPrice" style="color:#00d2ff;"></b></p>
+            <h3 id="modalTitle" style="margin: 0 0 5px 0; font-size: 1.15rem; color: #fff;">Complete Payment</h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">Scan QR or Pay <b id="modalPrice" style="color: var(--accent-cyan);"></b></p>
             
             <div class="qr-container">
                 <img id="upiQrCode" src="" alt="Payment QR Code" class="qr-img">
             </div>
 
             <a id="payDirectBtn" href="#" class="btn-upi-app">
-                <svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
+                <i class="fa-solid fa-mobile-screen-button"></i>
                 Tap to Open PhonePe / GPay / Paytm
             </a>
 
-            <p style="font-size: 0.75rem; color: #aaa; margin: 6px 0;">
-                UPI ID: <span class="copy-box" onclick="copyUpiId()"><b style="color: #fff;">9199364179-3@ibl</b> <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></span>
+            <p style="font-size: 0.75rem; color: #aaa; margin: 8px 0;">
+                UPI ID: <span class="copy-box" onclick="copyUpiId()"><b style="color: #fff;">9199364179-3@ibl</b> <i class="fa-regular fa-copy" style="color: var(--accent-cyan);"></i></span>
             </p>
 
-            <input type="text" id="utrInput" class="input-utr" placeholder="Enter 12-digit UTR / Trans ID" maxlength="20">
+            <input type="text" id="utrInput" class="input-utr" placeholder="Enter 12-digit UTR / Trans ID" maxlength="12" inputmode="numeric">
 
             <div class="modal-actions">
                 <button class="btn-mini btn-unlock" onclick="submitManualPayment()">
-                    <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg> Confirm
+                    <i class="fa-solid fa-circle-check"></i> Confirm Payment
                 </button>
                 <button class="btn-mini btn-cancel" onclick="document.getElementById('paymentModal').style.display='none'">Cancel</button>
             </div>
@@ -367,258 +574,344 @@
     </div>
 
     <script>
-        const MY_UPI_ID = "9199364179-3@ibl";
-        let currentUser = null;
-        let purchases = [];
-        let orderStatuses = {}; 
-        let selectedNoteForPay = null;
-        const loadedNotesMap = {};
+    const MY_UPI_ID = "9199364179-3@ibl";
+    let currentUser = null;
+    let purchases = [];
+    let orderStatuses = {}; 
+    let selectedNoteForPay = null;
+    const loadedNotesMap = {};
+    let cachedNotesList = [];
+    let activeSubjectFilter = 'ALL';
 
-        window.onload = async () => {
-            if (typeof window.getCurrentUser === "function") {
-                currentUser = await window.getCurrentUser();
+    window.onload = async () => {
+        if (typeof window.getCurrentUser === "function") {
+            currentUser = await window.getCurrentUser();
+        }
+
+        if (currentUser) {
+            const { data: purchaseData } = await window.supabaseClient
+                .from('user_purchases')
+                .select('note_id')
+                .eq('user_id', currentUser.id);
+            
+            purchases = (purchaseData || []).map(p => String(p.note_id));
+
+            const { data: ordersData } = await window.supabaseClient
+                .from('user_orders')
+                .select('note_id, status')
+                .eq('user_email', currentUser.email);
+
+            if (ordersData) {
+                ordersData.forEach(o => {
+                    const nId = String(o.note_id);
+                    orderStatuses[nId] = o.status;
+                    if (o.status === 'approved' && !purchases.includes(nId)) {
+                        purchases.push(nId);
+                    }
+                });
             }
 
-            if (currentUser) {
-                const { data: purchaseData } = await window.supabaseClient
-                    .from('user_purchases')
-                    .select('note_id')
-                    .eq('user_id', currentUser.id);
-                
-                purchases = (purchaseData || []).map(p => String(p.note_id));
+            setupRealtimeOrderListener();
+        }
 
-                const { data: ordersData } = await window.supabaseClient
-                    .from('user_orders')
-                    .select('note_id, status')
-                    .eq('user_email', currentUser.email);
+        loadNotes();
+    };
 
-                if (ordersData) {
-                    ordersData.forEach(o => {
-                        const nId = String(o.note_id);
-                        orderStatuses[nId] = o.status;
-                        if (o.status === 'approved' && !purchases.includes(nId)) {
-                            purchases.push(nId);
+    function setupRealtimeOrderListener() {
+        if (!currentUser || !window.supabaseClient) return;
+
+        window.supabaseClient
+            .channel('public:user_orders')
+            .on('postgres_changes', { 
+                event: 'UPDATE', 
+                schema: 'public', 
+                table: 'user_orders',
+                filter: `user_email=eq.${currentUser.email}`
+            }, payload => {
+                const updatedOrder = payload.new;
+                if (updatedOrder) {
+                    const noteIdStr = String(updatedOrder.note_id);
+                    orderStatuses[noteIdStr] = updatedOrder.status;
+                    
+                    if (updatedOrder.status === 'approved') {
+                        if (!purchases.includes(noteIdStr)) {
+                            purchases.push(noteIdStr);
                         }
-                    });
+                    }
+                    renderNotesGrid(cachedNotesList); 
                 }
+            })
+            .subscribe();
+    }
 
-                setupRealtimeOrderListener();
+    async function loadNotes() {
+        const { data: notes, error } = await window.supabaseClient
+            .from('premium_notes')
+            .select('*')
+            .order('id', { ascending: false });
+
+        if (error) {
+            console.error("Error loading notes:", error);
+            return;
+        }
+
+        cachedNotesList = notes || [];
+        cachedNotesList.forEach(note => {
+            loadedNotesMap[note.id] = note;
+        });
+
+        generateDynamicSubjectPills(cachedNotesList);
+        renderNotesGrid(cachedNotesList);
+    }
+
+    // Dynamic Subject Filter Pill Generator
+    function generateDynamicSubjectPills(notes) {
+        const pillsContainer = document.getElementById('filterPills');
+        if (!pillsContainer) return;
+
+        // Unique subjects extract karein aur format karein
+        const uniqueSubjects = new Set();
+        notes.forEach(n => {
+            if (n.subject && n.subject.trim() !== '') {
+                uniqueSubjects.add(n.subject.trim().toUpperCase());
+            }
+        });
+
+        let html = `<button class="pill-btn ${activeSubjectFilter === 'ALL' ? 'active' : ''}" onclick="setSubjectFilter('ALL', this)">All Notes</button>`;
+
+        uniqueSubjects.forEach(subj => {
+            const isActive = activeSubjectFilter === subj ? 'active' : '';
+            // Capitalize First Letter for display
+            const formattedSubj = subj.charAt(0) + subj.slice(1).toLowerCase();
+            html += `<button class="pill-btn ${isActive}" onclick="setSubjectFilter('${subj}', this)">${formattedSubj}</button>`;
+        });
+
+        pillsContainer.innerHTML = html;
+    }
+
+    function setSubjectFilter(subj, btnElem) {
+        activeSubjectFilter = subj;
+        document.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
+        if (btnElem) btnElem.classList.add('active');
+        filterNotesUI();
+    }
+
+    function filterNotesUI() {
+        const query = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+
+        const filtered = cachedNotesList.filter(note => {
+            const titleStr = (note.title || '').toLowerCase();
+            const subjStr = (note.subject || '').toLowerCase();
+            const chapStr = (note.chapter_no || '').toLowerCase();
+
+            const matchesSearch = !query || titleStr.includes(query) || subjStr.includes(query) || chapStr.includes(query);
+            const matchesSubject = activeSubjectFilter === 'ALL' || subjStr === activeSubjectFilter.toLowerCase();
+
+            return matchesSearch && matchesSubject;
+        });
+
+        renderNotesGrid(filtered);
+    }
+
+    function renderNotesGrid(notes) {
+        const container = document.getElementById('notesGrid');
+        container.innerHTML = "";
+
+        if (!notes || notes.length === 0) {
+            container.innerHTML = `<div style="color:#8a99ad; grid-column:1/-1; text-align:center; padding: 40px 10px; font-size:0.9rem;">
+                <i class="fa-solid fa-folder-open" style="font-size:2rem; display:block; margin-bottom:8px; color:var(--accent-cyan);"></i>
+                No premium notes found matching your criteria.
+            </div>`;
+            return;
+        }
+
+        notes.forEach(note => {
+            const noteIdStr = String(note.id);
+            
+            const isApproved = purchases.includes(noteIdStr) || orderStatuses[noteIdStr] === 'approved';
+            const isPending = orderStatuses[noteIdStr] === 'pending';
+
+            let actionBtnHtml = '';
+            if (isApproved) {
+                actionBtnHtml = `<button class="btn-mini btn-read" onclick="openInViewer(${note.id})"><i class="fa-solid fa-book-open"></i> Read Note</button>`;
+            } else if (isPending) {
+                actionBtnHtml = `<button class="btn-mini btn-pending" disabled><i class="fa-regular fa-clock"></i> Pending Verification</button>`;
+            } else {
+                actionBtnHtml = `<button class="btn-mini btn-unlock" onclick="openPaymentModal(${note.id})"><i class="fa-solid fa-bolt"></i> Unlock Note</button>`;
             }
 
-            loadNotes();
+            let previewIconHtml = !isApproved 
+                ? `<div class="icon-btn-action" title="Preview Note" onclick="openInViewer(${note.id})"><i class="fa-regular fa-eye"></i></div>`
+                : `<div class="icon-btn-action" style="color:#2ed573; border-color:rgba(46,213,115,0.3); background:rgba(46,213,115,0.1); cursor:default;"><i class="fa-solid fa-check"></i></div>`;
+
+            let shareIconHtml = `<div class="icon-btn-action" title="Share Note" onclick="shareNote(${note.id})"><i class="fa-solid fa-share-nodes"></i></div>`;
+
+            container.innerHTML += `
+                <div class="mini-card">
+                    <div class="card-header-line">
+                        <span class="badge-tag">${note.class_no || ''} | ${note.subject || ''}</span>
+                        <div class="card-top-actions">
+                            ${previewIconHtml}
+                            ${shareIconHtml}
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div class="card-title" title="${note.title}">${note.title}</div>
+                        <div class="meta-info-row">
+                            <span class="chapter-sub">${note.chapter_no || 'Chapter'}</span>
+                            <span class="price-tag">₹${note.price}</span>
+                        </div>
+                    </div>
+                    
+                    ${actionBtnHtml}
+                </div>
+            `;
+        });
+    }
+
+    function shareNote(noteId) {
+        const note = loadedNotesMap[noteId];
+        if (!note) return;
+
+        const shareText = `📚 Check out this premium note: *${note.title}* (${note.subject || 'Study Material'}) on PM-Roit!`;
+        if (navigator.share) {
+            navigator.share({
+                title: note.title,
+                text: shareText,
+                url: window.location.href
+            }).catch(() => {});
+        } else {
+            navigator.clipboard.writeText(`${shareText}\n${window.location.href}`);
+            alert("🔗 Note link copied to clipboard!");
+        }
+    }
+
+    function openInViewer(noteId) {
+        const note = loadedNotesMap[noteId];
+        if (!note) return;
+
+        const noteIdStr = String(note.id);
+        const isApproved = purchases.includes(noteIdStr) || orderStatuses[noteIdStr] === 'approved';
+        let targetFilePath = note.file_path || note.full_pdf_url || '';
+
+        let rawClass = note.class_no ? String(note.class_no) : '';
+        let classDigits = rawClass.replace(/\D/g, ''); 
+        const classPart = classDigits ? classDigits : rawClass;
+
+        const subjectPart = note.subject ? note.subject.toUpperCase() : '';
+        const titlePart = note.title || 'Note';
+        const prefixSymbol = "💎";
+        
+        const descriptiveName = [prefixSymbol, classPart, subjectPart, titlePart].filter(Boolean).join(' • ');
+
+        const cleanPath = encodeURIComponent(targetFilePath);
+        const cleanName = encodeURIComponent(descriptiveName);
+
+        if (typeof trackActivityLocally === "function") {
+            trackActivityLocally({
+                title: descriptiveName,
+                url: targetFilePath,
+                meta: "Notes Viewer",
+                isPremium: true,
+                isPurchased: isApproved
+            }, isApproved);
+        }
+        
+        let url = `notes-viewer.html?path=${cleanPath}&name=${cleanName}&type=premium&status=premium`;
+        if (isApproved) {
+            url += `&purchased=true`;
+        }
+
+        window.location.href = url;
+    }
+
+    async function openPaymentModal(noteId) {
+        const note = loadedNotesMap[noteId];
+        if (!note) return;
+
+        if (typeof window.getCurrentUser === "function") {
+            currentUser = await window.getCurrentUser();
+        }
+        
+        if (!currentUser) {
+            alert("🔒 Unlock karne ke liye pehle login karein!");
+            sessionStorage.setItem("redirect_after_login", window.location.href);
+            const loginUrl = typeof window.getPageUrl === "function" ? window.getPageUrl("login.html") : "login.html";
+            window.location.href = loginUrl;
+            return;
+        }
+
+        selectedNoteForPay = note;
+        document.getElementById('modalTitle').innerText = "Pay for " + note.title;
+        document.getElementById('modalPrice').innerText = "₹" + note.price;
+        
+        const upiUri = `upi://pay?pa=${encodeURIComponent(MY_UPI_ID)}&pn=PM-Roit&am=${note.price}&cu=INR&tn=${encodeURIComponent('Note: ' + note.title)}`;
+        
+        document.getElementById('payDirectBtn').href = upiUri;
+
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(upiUri)}`;
+        document.getElementById('upiQrCode').src = qrUrl;
+        
+        document.getElementById('paymentModal').style.display = 'flex';
+    }
+
+    function copyUpiId() {
+        navigator.clipboard.writeText(MY_UPI_ID);
+        alert("📋 UPI ID Copied to Clipboard!");
+    }
+
+    async function submitManualPayment() {
+        const utr = document.getElementById('utrInput').value.trim();
+        if (!/^\d{12}$/.test(utr)) {
+            alert("⚠️ Kripya 12-digit ka valid UTR / Transaction number darj karein!");
+            return;
+        }
+
+        if (!selectedNoteForPay || !currentUser) {
+            alert("Something went wrong. Refresh and try again.");
+            return;
+        }
+
+        const { data: profile } = await window.supabaseClient
+            .from('profiles')
+            .select('*')
+            .eq('id', currentUser.id)
+            .single();
+
+        const orderPayload = {
+            user_id: currentUser.id,
+            user_email: currentUser.email,
+            note_id: selectedNoteForPay.id,
+            note_title: selectedNoteForPay.title,
+            amount: selectedNoteForPay.price,
+            utr_code: utr,
+            status: 'pending',
+            user_name: profile?.full_name || '',
+            user_phone: profile?.phone || '',
+            target_class: profile?.target_class || '',
+            stream: profile?.stream || '',
+            institution: profile?.institution || '',
+            city: profile?.city || '',
+            state: profile?.state || '',
+            avatar_url: profile?.avatar_url || ''
         };
 
-        function setupRealtimeOrderListener() {
-            if (!currentUser || !window.supabaseClient) return;
+        const { error: orderError } = await window.supabaseClient
+            .from('user_orders')
+            .insert([orderPayload]);
 
-            window.supabaseClient
-                .channel('public:user_orders')
-                .on('postgres_changes', { 
-                    event: 'UPDATE', 
-                    schema: 'public', 
-                    table: 'user_orders',
-                    filter: `user_email=eq.${currentUser.email}`
-                }, payload => {
-                    const updatedOrder = payload.new;
-                    if (updatedOrder) {
-                        const noteIdStr = String(updatedOrder.note_id);
-                        orderStatuses[noteIdStr] = updatedOrder.status;
-                        
-                        if (updatedOrder.status === 'approved') {
-                            if (!purchases.includes(noteIdStr)) {
-                                purchases.push(noteIdStr);
-                            }
-                        }
-                        loadNotes(); 
-                    }
-                })
-                .subscribe();
+        if (orderError) {
+            alert("Order submit nahi ho paya: " + orderError.message);
+        } else {
+            alert("🎉 Payment request submit ho gayi hai! Verification ke baad note unlock ho jayega.");
+            orderStatuses[String(selectedNoteForPay.id)] = 'pending';
+            document.getElementById('paymentModal').style.display = 'none';
+            document.getElementById('utrInput').value = '';
+            renderNotesGrid(cachedNotesList);
         }
+    }
+</script>
 
-        async function loadNotes() {
-            const { data: notes, error } = await window.supabaseClient
-                .from('premium_notes')
-                .select('*')
-                .order('id', { ascending: false });
-
-            const container = document.getElementById('notesGrid');
-            container.innerHTML = "";
-
-            if (!notes || notes.length === 0) {
-                container.innerHTML = "<p style='color:#888; grid-column:1/-1; text-align:center;'>No notes uploaded yet.</p>";
-                return;
-            }
-
-            notes.forEach(note => {
-                const noteIdStr = String(note.id);
-                loadedNotesMap[note.id] = note;
-                
-                const isApproved = purchases.includes(noteIdStr) || orderStatuses[noteIdStr] === 'approved';
-                const isPending = orderStatuses[noteIdStr] === 'pending';
-
-                const readIconSvg = `<svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`;
-                const eyeIconSvg = `<svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
-                const unlockIconSvg = `<svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>`;
-                const clockIconSvg = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 16 14"></polyline></svg>`;
-
-                let actionBtnHtml = '';
-                if (isApproved) {
-                    actionBtnHtml = `<button class="btn-mini btn-read" onclick="openInViewer(${note.id})">${readIconSvg} Read Note</button>`;
-                } else if (isPending) {
-                    actionBtnHtml = `<button class="btn-mini btn-pending" disabled>${clockIconSvg} Pending</button>`;
-                } else {
-                    actionBtnHtml = `<button class="btn-mini btn-unlock" onclick="openPaymentModal(${note.id})">${unlockIconSvg} Unlock Note</button>`;
-                }
-
-                let previewIconHtml = !isApproved 
-                    ? `<div class="icon-btn-preview" title="Preview Note" onclick="openInViewer(${note.id})">${eyeIconSvg}</div>`
-                    : `<div class="icon-btn-preview" style="color:#2ed573; border-color:rgba(46,213,115,0.3); background:rgba(46,213,115,0.1); cursor:default;">✓</div>`;
-
-                container.innerHTML += `
-                    <div class="mini-card">
-                        <div class="card-header-line">
-                            <span class="badge-tag">${note.class_no || ''} | ${note.subject || ''}</span>
-                            ${previewIconHtml}
-                        </div>
-                        
-                        <div>
-                            <div class="card-title" title="${note.title}">${note.title}</div>
-                            <div class="meta-info-row">
-                                <span class="chapter-sub">${note.chapter_no || 'Chapter'}</span>
-                                <span class="price-tag">₹${note.price}</span>
-                            </div>
-                        </div>
-                        
-                        ${actionBtnHtml}
-                    </div>
-                `;
-            });
-        }
-
-        function openInViewer(noteId) {
-            const note = loadedNotesMap[noteId];
-            if (!note) return;
-
-            const noteIdStr = String(note.id);
-            const isApproved = purchases.includes(noteIdStr) || orderStatuses[noteIdStr] === 'approved';
-            let targetFilePath = note.file_path || note.full_pdf_url || '';
-
-            let rawClass = note.class_no ? String(note.class_no) : '';
-            let classDigits = rawClass.replace(/\D/g, ''); 
-            const classPart = classDigits ? classDigits : rawClass;
-
-            const subjectPart = note.subject ? note.subject.toUpperCase() : '';
-            const titlePart = note.title || 'Note';
-            const prefixSymbol = "💎";
-            
-            const descriptiveName = [prefixSymbol, classPart, subjectPart, titlePart].filter(Boolean).join(' • ');
-
-            const cleanPath = encodeURIComponent(targetFilePath);
-            const cleanName = encodeURIComponent(descriptiveName);
-
-            if (typeof trackActivityLocally === "function") {
-                trackActivityLocally({
-                    title: descriptiveName,
-                    url: targetFilePath,
-                    meta: "Notes Viewer",
-                    isPremium: true,
-                    isPurchased: isApproved
-                }, isApproved);
-            }
-            
-            let url = `notes-viewer.html?path=${cleanPath}&name=${cleanName}&type=premium&status=premium`;
-            if (isApproved) {
-                url += `&purchased=true`;
-            }
-
-            window.location.href = url;
-        }
-
-        async function openPaymentModal(noteId) {
-            const note = loadedNotesMap[noteId];
-            if (!note) return;
-
-            if (typeof window.getCurrentUser === "function") {
-                currentUser = await window.getCurrentUser();
-            }
-            
-            if (!currentUser) {
-                alert("🔒 Unlock karne ke liye pehle login karein!");
-                sessionStorage.setItem("redirect_after_login", window.location.href);
-                const loginUrl = typeof window.getPageUrl === "function" ? window.getPageUrl("login.html") : "login.html";
-                window.location.href = loginUrl;
-                return;
-            }
-
-            selectedNoteForPay = note;
-            document.getElementById('modalTitle').innerText = "Pay for " + note.title;
-            document.getElementById('modalPrice').innerText = "₹" + note.price;
-            
-            const upiUri = `upi://pay?pa=${encodeURIComponent(MY_UPI_ID)}&pn=PM-Roit&am=${note.price}&cu=INR&tn=${encodeURIComponent('Note: ' + note.title)}`;
-            
-            document.getElementById('payDirectBtn').href = upiUri;
-
-            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(upiUri)}`;
-            document.getElementById('upiQrCode').src = qrUrl;
-            
-            document.getElementById('paymentModal').style.display = 'flex';
-        }
-
-        function copyUpiId() {
-            navigator.clipboard.writeText(MY_UPI_ID);
-            alert("UPI ID Copied to Clipboard!");
-        }
-
-        async function submitManualPayment() {
-            const utr = document.getElementById('utrInput').value.trim();
-            if (utr.length < 8) {
-                alert("Please enter a valid UTR/Transaction number!");
-                return;
-            }
-
-            if (!selectedNoteForPay || !currentUser) {
-                alert("Something went wrong. Refresh and try again.");
-                return;
-            }
-
-            const { data: profile } = await window.supabaseClient
-                .from('profiles')
-                .select('*')
-                .eq('id', currentUser.id)
-                .single();
-
-            const orderPayload = {
-                user_id: currentUser.id,
-                user_email: currentUser.email,
-                note_id: selectedNoteForPay.id,
-                note_title: selectedNoteForPay.title,
-                amount: selectedNoteForPay.price,
-                utr_code: utr,
-                status: 'pending',
-                user_name: profile?.full_name || '',
-                user_phone: profile?.phone || '',
-                target_class: profile?.target_class || '',
-                stream: profile?.stream || '',
-                institution: profile?.institution || '',
-                city: profile?.city || '',
-                state: profile?.state || '',
-                avatar_url: profile?.avatar_url || ''
-            };
-
-            const { error: orderError } = await window.supabaseClient
-                .from('user_orders')
-                .insert([orderPayload]);
-
-            if (orderError) {
-                alert("Order submit nahi ho paya: " + orderError.message);
-            } else {
-                alert("✅ Payment request submit ho gayi hai! Verification ke baad note unlock ho jayega.");
-                orderStatuses[String(selectedNoteForPay.id)] = 'pending';
-                document.getElementById('paymentModal').style.display = 'none';
-                document.getElementById('utrInput').value = '';
-                loadNotes();
-            }
-        }
-    </script>
 </body>
 </html>

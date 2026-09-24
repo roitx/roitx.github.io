@@ -2,19 +2,39 @@
 <html lang="hi">
 <head>
   <meta charset="UTF-8">
-  <title>Smart AI Assistant & Tutor</title>
+  <title>ROITX AI Tutor & Instant Math Doubt Solver</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-  <!-- CSS PATH -->
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="Upload image or type your math, physics, and chemistry equations to get instant step-by-step solutions using ROITX AI Tutor.">
+  <meta name="keywords" content="AI Doubt Solver, Class 12 Math Problem Solver, Crop Question Solver, Roitx AI Tutor, NCERT Doubts Solution">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+  <link rel="canonical" href="https://roitx.qd.je/solver.html">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="ROITX AI Tutor - Instant Doubt Solver">
+  <meta property="og:description" content="Ask study doubts, crop questions, and get step-by-step AI answers.">
+  <meta property="og:url" content="https://roitx.qd.je/solver.html">
+  <meta property="og:image" content="https://roitx.qd.je/banner.png">
+
+  <!-- Schema Markup -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "ROITX AI Tutor",
+    "url": "https://roitx.qd.je/solver.html",
+    "applicationCategory": "EducationalApplication",
+    "operatingSystem": "All"
+  }
+  </script>
+
   <link rel="stylesheet" href="solver.css">
-
-  <!-- MARKDOWN PARSER -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<!-- Cropper.js CSS & JS -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css"/>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 
-  <!-- MATHJAX SETUP -->
   <script>
     window.MathJax = {
       tex: {
@@ -22,22 +42,15 @@
         displayMath: [['$$', '$$'], ['\\[', '\\]']],
         processEscapes: true
       },
-      options: {
-        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
-      },
-      startup: {
-        pageReady: () => {
-          return MathJax.startup.defaultPageReady();
-        }
-      }
+      options: { skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'] },
+      startup: { pageReady: () => MathJax.startup.defaultPageReady() }
     };
   </script>
   <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-
-  <!-- SUPABASE CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase.js"></script>
 </head>
+
 <body>
 
   <div class="box">
