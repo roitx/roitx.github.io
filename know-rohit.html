@@ -185,6 +185,9 @@
         .action-btns { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
         .act-btn { background: rgba(255,255,255,0.15); border: none; padding: 6px 10px; border-radius: 6px; color: #fff; font-size: 0.75rem; font-weight: 500; transition: all 0.3s; backdrop-filter: blur(5px); cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
         .act-btn:hover { background: var(--accent-1); color: #000; }
+        .act-btn.liked { background: #ef4444 !important; color: #fff !important; }
+        .act-btn.liked svg { fill: #fff; stroke: #fff; }
+        .act-btn span { font-size: 0.75rem; font-weight: 600; }
 
         /* CLEAN IMAGE VIEWER MODAL */
         .image-modal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(4, 9, 20, 0.95); backdrop-filter: blur(20px); z-index: 200000; justify-content: center; align-items: center; padding: 20px; }
@@ -318,14 +321,20 @@
                         <div class="gallery-overlay">
                             <h3>Chhatrapati Shivaji Maharaj</h3>
                             <div class="action-btns">
-                                <button class="act-btn" onclick="viewImage('auth/sivaji.jpg', 'Chhatrapati Shivaji Maharaj')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> View
+                                <button class="act-btn like-btn" onclick="toggleLike('sivaji')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> 
+                                    <span class="like-count" id="like-sivaji">0</span>
+                                </button>
+                                <button class="act-btn" onclick="triggerView('sivaji', 'auth/sivaji.jpg', 'Chhatrapati Shivaji Maharaj')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                    <span class="view-count" id="view-sivaji">0</span>
+                                </button>
+                                <button class="act-btn" onclick="triggerShare('sivaji', 'auth/sivaji.jpg', 'Chhatrapati Shivaji Maharaj')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                                    <span class="share-count" id="share-sivaji">0</span>
                                 </button>
                                 <button class="act-btn" onclick="dlImage('auth/sivaji.jpg', 'sivaji_maharaj.jpg')">
                                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> DL
-                                </button>
-                                <button class="act-btn" onclick="shareImage('auth/sivaji.jpg', 'Chhatrapati Shivaji Maharaj')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> Share
                                 </button>
                             </div>
                         </div>
@@ -336,14 +345,20 @@
                         <div class="gallery-overlay">
                             <h3>Maharana Pratap</h3>
                             <div class="action-btns">
-                                <button class="act-btn" onclick="viewImage('auth/maharna.jpg', 'Maharana Pratap')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> View
+                                <button class="act-btn like-btn" onclick="toggleLike('maharna')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> 
+                                    <span class="like-count" id="like-maharna">0</span>
+                                </button>
+                                <button class="act-btn" onclick="triggerView('maharna', 'auth/maharna.jpg', 'Maharana Pratap')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                    <span class="view-count" id="view-maharna">0</span>
+                                </button>
+                                <button class="act-btn" onclick="triggerShare('maharna', 'auth/maharna.jpg', 'Maharana Pratap')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                                    <span class="share-count" id="share-maharna">0</span>
                                 </button>
                                 <button class="act-btn" onclick="dlImage('auth/maharna.jpg', 'maharana_pratap.jpg')">
                                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> DL
-                                </button>
-                                <button class="act-btn" onclick="shareImage('auth/maharna.jpg', 'Maharana Pratap')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> Share
                                 </button>
                             </div>
                         </div>
@@ -354,14 +369,20 @@
                         <div class="gallery-overlay">
                             <h3>Dr. S. Radhakrishnan</h3>
                             <div class="action-btns">
-                                <button class="act-btn" onclick="viewImage('auth/radhakrisnan.jpg', 'Dr. S. Radhakrishnan')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> View
+                                <button class="act-btn like-btn" onclick="toggleLike('radhakrisnan')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> 
+                                    <span class="like-count" id="like-radhakrisnan">0</span>
+                                </button>
+                                <button class="act-btn" onclick="triggerView('radhakrisnan', 'auth/radhakrisnan.jpg', 'Dr. S. Radhakrishnan')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                    <span class="view-count" id="view-radhakrisnan">0</span>
+                                </button>
+                                <button class="act-btn" onclick="triggerShare('radhakrisnan', 'auth/radhakrisnan.jpg', 'Dr. S. Radhakrishnan')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                                    <span class="share-count" id="share-radhakrisnan">0</span>
                                 </button>
                                 <button class="act-btn" onclick="dlImage('auth/radhakrisnan.jpg', 'dr_radhakrishnan.jpg')">
                                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> DL
-                                </button>
-                                <button class="act-btn" onclick="shareImage('auth/radhakrisnan.jpg', 'Dr. S. Radhakrishnan')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> Share
                                 </button>
                             </div>
                         </div>
@@ -372,14 +393,20 @@
                         <div class="gallery-overlay">
                             <h3>Crowned Lion Concept</h3>
                             <div class="action-btns">
-                                <button class="act-btn" onclick="viewImage('auth/image.jpg', 'Crowned Lion Concept')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> View
+                                <button class="act-btn like-btn" onclick="toggleLike('image')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> 
+                                    <span class="like-count" id="like-image">0</span>
+                                </button>
+                                <button class="act-btn" onclick="triggerView('image', 'auth/image.jpg', 'Crowned Lion Concept')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                    <span class="view-count" id="view-image">0</span>
+                                </button>
+                                <button class="act-btn" onclick="triggerShare('image', 'auth/image.jpg', 'Crowned Lion Concept')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                                    <span class="share-count" id="share-image">0</span>
                                 </button>
                                 <button class="act-btn" onclick="dlImage('auth/image.jpg', 'lion_concept.jpg')">
                                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> DL
-                                </button>
-                                <button class="act-btn" onclick="shareImage('auth/image.jpg', 'Crowned Lion Concept')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> Share
                                 </button>
                             </div>
                         </div>
@@ -391,14 +418,20 @@
                         <div class="gallery-overlay">
                             <h3>NAUGHTYBOY | Lvl 67</h3>
                             <div class="action-btns">
-                                <button class="act-btn" onclick="viewImage('auth/game.jpg', 'Esports Profile')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> View
+                                <button class="act-btn like-btn" onclick="toggleLike('game')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> 
+                                    <span class="like-count" id="like-game">0</span>
+                                </button>
+                                <button class="act-btn" onclick="triggerView('game', 'auth/game.jpg', 'Esports Profile')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                    <span class="view-count" id="view-game">0</span>
+                                </button>
+                                <button class="act-btn" onclick="triggerShare('game', 'auth/game.jpg', 'Esports Profile')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                                    <span class="share-count" id="share-game">0</span>
                                 </button>
                                 <button class="act-btn" onclick="dlImage('auth/game.jpg', 'gaming_profile.jpg')">
                                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> DL
-                                </button>
-                                <button class="act-btn" onclick="shareImage('auth/game.jpg', 'Esports Profile')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> Share
                                 </button>
                             </div>
                         </div>
@@ -409,14 +442,20 @@
                         <div class="gallery-overlay">
                             <h3>Discipline & Aesthetics</h3>
                             <div class="action-btns">
-                                <button class="act-btn" onclick="viewImage('auth/physique.jpg', 'Fitness')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> View
+                                <button class="act-btn like-btn" onclick="toggleLike('physique')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> 
+                                    <span class="like-count" id="like-physique">0</span>
+                                </button>
+                                <button class="act-btn" onclick="triggerView('physique', 'auth/physique.jpg', 'Fitness')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                    <span class="view-count" id="view-physique">0</span>
+                                </button>
+                                <button class="act-btn" onclick="triggerShare('physique', 'auth/physique.jpg', 'Fitness')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                                    <span class="share-count" id="share-physique">0</span>
                                 </button>
                                 <button class="act-btn" onclick="dlImage('auth/physique.jpg', 'physique.jpg')">
                                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> DL
-                                </button>
-                                <button class="act-btn" onclick="shareImage('auth/physique.jpg', 'Fitness')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> Share
                                 </button>
                             </div>
                         </div>
@@ -428,14 +467,20 @@
                         <div class="gallery-overlay">
                             <h3>दैनिक भास्कर - सम्मान समारोह</h3>
                             <div class="action-btns">
-                                <button class="act-btn" onclick="viewImage('auth/news1.jpg', 'दैनिक भास्कर - सम्मान समारोह')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> View
+                                <button class="act-btn like-btn" onclick="toggleLike('news1')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> 
+                                    <span class="like-count" id="like-news1">0</span>
+                                </button>
+                                <button class="act-btn" onclick="triggerView('news1', 'auth/news1.jpg', 'दैनिक भास्कर - सम्मान समारोह')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                    <span class="view-count" id="view-news1">0</span>
+                                </button>
+                                <button class="act-btn" onclick="triggerShare('news1', 'auth/news1.jpg', 'दैनिक भास्कर - सम्मान समारोह')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                                    <span class="share-count" id="share-news1">0</span>
                                 </button>
                                 <button class="act-btn" onclick="dlImage('auth/news1.jpg', 'dainik_bhaskar_news1.jpg')">
                                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> DL
-                                </button>
-                                <button class="act-btn" onclick="shareImage('auth/news1.jpg', 'दैनिक भास्कर - सम्मान समारोह')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> Share
                                 </button>
                             </div>
                         </div>
@@ -446,14 +491,20 @@
                         <div class="gallery-overlay">
                             <h3>प्रजापति समन्वय समिति सम्मान</h3>
                             <div class="action-btns">
-                                <button class="act-btn" onclick="viewImage('auth/news2.jpg', 'प्रजापति समन्वय समिति सम्मान')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> View
+                                <button class="act-btn like-btn" onclick="toggleLike('news2')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> 
+                                    <span class="like-count" id="like-news2">0</span>
+                                </button>
+                                <button class="act-btn" onclick="triggerView('news2', 'auth/news2.jpg', 'प्रजापति समन्वय समिति सम्मान')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                    <span class="view-count" id="view-news2">0</span>
+                                </button>
+                                <button class="act-btn" onclick="triggerShare('news2', 'auth/news2.jpg', 'प्रजापति समन्वय समिति सम्मान')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                                    <span class="share-count" id="share-news2">0</span>
                                 </button>
                                 <button class="act-btn" onclick="dlImage('auth/news2.jpg', 'news_coverage_2.jpg')">
                                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> DL
-                                </button>
-                                <button class="act-btn" onclick="shareImage('auth/news2.jpg', 'प्रजापति समन्वय समिति सम्मान')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> Share
                                 </button>
                             </div>
                         </div>
@@ -464,14 +515,20 @@
                         <div class="gallery-overlay">
                             <h3>प्रतिभा सम्मान एवं कार्यालय उद्घाटन</h3>
                             <div class="action-btns">
-                                <button class="act-btn" onclick="viewImage('auth/news3.jpg', 'प्रतिभा सम्मान एवं कार्यालय उद्घाटन')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> View
+                                <button class="act-btn like-btn" onclick="toggleLike('news3')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> 
+                                    <span class="like-count" id="like-news3">0</span>
+                                </button>
+                                <button class="act-btn" onclick="triggerView('news3', 'auth/news3.jpg', 'प्रतिभा सम्मान एवं कार्यालय उद्घाटन')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                    <span class="view-count" id="view-news3">0</span>
+                                </button>
+                                <button class="act-btn" onclick="triggerShare('news3', 'auth/news3.jpg', 'प्रतिभा सम्मान एवं कार्यालय उद्घाटन')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                                    <span class="share-count" id="share-news3">0</span>
                                 </button>
                                 <button class="act-btn" onclick="dlImage('auth/news3.jpg', 'news_coverage_3.jpg')">
                                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> DL
-                                </button>
-                                <button class="act-btn" onclick="shareImage('auth/news3.jpg', 'प्रतिभा सम्मान एवं कार्यालय उद्घाटन')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> Share
                                 </button>
                             </div>
                         </div>
@@ -730,6 +787,120 @@
                 alert("Image link copied to clipboard!");
             }
         }
+
+        // ==============================================
+        // LOCAL DEVICE TRACKER & COUNTER ENGINE
+        // ==============================================
+
+        function getDeviceId() {
+            let devId = localStorage.getItem('mp_device_id');
+            if (!devId) {
+                devId = 'dev_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
+                localStorage.setItem('mp_device_id', devId);
+            }
+            return devId;
+        }
+
+        const DEVICE_ID = getDeviceId();
+
+        const defaultStats = {
+            sivaji:      { likes: 142, views: 1250, shares: 38 },
+            maharna:     { likes: 98,  views: 890,  shares: 19 },
+            radhakrisnan:{ likes: 76,  views: 640,  shares: 12 },
+            image:       { likes: 110, views: 920,  shares: 24 },
+            game:        { likes: 215, views: 1840, shares: 67 },
+            physique:    { likes: 189, views: 1410, shares: 45 },
+            news1:       { likes: 84,  views: 730,  shares: 15 },
+            news2:       { likes: 62,  views: 510,  shares: 9 },
+            news3:       { likes: 91,  views: 680,  shares: 21 }
+        };
+
+        function getUserActivity() {
+            return JSON.parse(localStorage.getItem('mp_user_activity')) || { likes: [], views: [], shares: [] };
+        }
+
+        function saveUserActivity(act) {
+            localStorage.setItem('mp_user_activity', JSON.stringify(act));
+        }
+
+        function getItemStats(id) {
+            const saved = JSON.parse(localStorage.getItem('mp_stats_' + id));
+            if (saved) return saved;
+            return defaultStats[id] || { likes: 10, views: 50, shares: 2 };
+        }
+
+        function saveItemStats(id, stats) {
+            localStorage.setItem('mp_stats_' + id, JSON.stringify(stats));
+        }
+
+        function renderCounters() {
+            const activity = getUserActivity();
+
+            Object.keys(defaultStats).forEach(id => {
+                const stats = getItemStats(id);
+                
+                const vEl = document.getElementById(`view-${id}`);
+                if(vEl) vEl.innerText = stats.views;
+
+                const sEl = document.getElementById(`share-${id}`);
+                if(sEl) sEl.innerText = stats.shares;
+
+                const lEl = document.getElementById(`like-${id}`);
+                if(lEl) {
+                    lEl.innerText = stats.likes;
+                    const btn = lEl.closest('.act-btn');
+                    if (activity.likes.includes(id)) {
+                        btn.classList.add('liked');
+                    } else {
+                        btn.classList.remove('liked');
+                    }
+                }
+            });
+        }
+
+        function toggleLike(id) {
+            const activity = getUserActivity();
+            const stats = getItemStats(id);
+            const hasLiked = activity.likes.includes(id);
+
+            if (hasLiked) {
+                activity.likes = activity.likes.filter(item => item !== id);
+                stats.likes = Math.max(0, stats.likes - 1);
+            } else {
+                activity.likes.push(id);
+                stats.likes += 1;
+            }
+
+            saveUserActivity(activity);
+            saveItemStats(id, stats);
+            renderCounters();
+        }
+
+        function triggerView(id, path, title) {
+            const activity = getUserActivity();
+            const stats = getItemStats(id);
+
+            if (!activity.views.includes(id)) {
+                activity.views.push(id);
+                stats.views += 1;
+                saveUserActivity(activity);
+                saveItemStats(id, stats);
+                renderCounters();
+            }
+
+            viewImage(path, title);
+        }
+
+        async function triggerShare(id, path, title) {
+            const stats = getItemStats(id);
+            stats.shares += 1;
+            saveItemStats(id, stats);
+            renderCounters();
+
+            await shareImage(path, title);
+        }
+
+        document.addEventListener('DOMContentLoaded', renderCounters);
     </script>
 </body>
 </html>
