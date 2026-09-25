@@ -3,96 +3,101 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0a1b3d" />
   
+  <!-- Primary Meta Tags -->
+  <title>PM Roitx — Personal Study Hub | PM Roitx Notes & Study Tools</title>
+  <meta name="title" content="PM Roitx — Personal Study Hub | PM Roitx Notes & Study Tools" />
+  <meta name="description" content="PM Roitx Study Hub — Class 9th to 12th Science, Arts & Commerce (BSEB & CBSE) ke liye ultimate learning platform. Access free topper notes, NCERT solutions, daily tests, AI problem solver, and study timer." />
+  <meta name="keywords" content="PM Roitx, PM Roitx study hub, Class 12 Science notes, BSEB Bihar Board notes, Class 12 Chemistry solid state, Class 12 Biology NCERT, AI doubt solver, Class 12 Physics formula sheet, Online study timer, BSEB PYQ question bank" />
+  <meta name="author" content="PM Roitx" />
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+  <link rel="canonical" href="https://roitx.qd.je/" />
+
+  <!-- Favicon & Icons Fix -->
+  <link rel="icon" href="https://roitx.qd.je/favicon.ico" sizes="any" />
+  <link rel="icon" href="https://roitx.qd.je/favicon.png" type="image/png" />
+  <link rel="apple-touch-icon" href="https://roitx.qd.je/1profile.jpg" />
+
+  <!-- Open Graph / Facebook / WhatsApp -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://roitx.qd.je/" />
+  <meta property="og:site_name" content="PM Roitx" />
+  <meta property="og:title" content="PM Roitx — Personal Study Hub" />
+  <meta property="og:description" content="Get high-quality PM Roitx notes and study tools. Boost your learning with PM Roitx Study Hub." />
+  <meta property="og:image" content="https://roitx.qd.je/banner.png" />
+
+  <!-- Twitter Meta Tags -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:url" content="https://roitx.qd.je/" />
+  <meta name="twitter:title" content="PM Roitx — Personal Study Hub" />
+  <meta name="twitter:description" content="Access free Class 12 Science notes, practice tests, AI calculator, and study timers on PM Roitx." />
+  <meta name="twitter:image" content="https://roitx.qd.je/banner.png" />
+
+  <!-- Web App & PWA Settings -->
+  <meta name="application-name" content="PM Roitx" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="PM Roitx" />
+  <link rel="manifest" href="manifest.json" />
+
+  <!-- CSS & Inline Styles -->
   <style>
     html, body {
       background-color: #0a1b3d !important;
       margin: 0;
       padding: 0;
     }
-    /* Hidden links for crawler navigation to prevent Orphan Pages */
     .seo-site-map-links {
       display: none;
     }
   </style>
+  <link rel="stylesheet" href="style.css" />
 
-  <meta name="theme-color" content="#0a1b3d" />
-  <link rel="canonical" href="https://roitx.qd.je/" />
-  <meta property="og:image" content="https://roitx.qd.je/banner.png" />
-  <title>PM Roitx — Personal Study Hub | PM Roitx Notes & Study Tools</title>
-
-  <link rel="icon" href="favicon.png" type="image/png" />
-  <link rel="apple-touch-icon" href="profile.jpg" />
-
-  <meta name="description" content="PM Roitx Study Hub — Class 9th to 12th Science, Arts & Commerce (BSEB & CBSE) ke liye ultimate learning platform. Access free topper notes, NCERT solutions, daily tests, AI problem solver, and study timer." />
-  
-  <!-- Cleaned Keywords to Avoid Spam/Keyword Stuffing Flags -->
-  <meta name="keywords" content="PM Roitx, PM Roitx study hub, Class 12 Science notes, BSEB Bihar Board notes, Class 12 Chemistry solid state, Class 12 Biology NCERT, AI doubt solver, Class 12 Physics formula sheet, Online study timer, BSEB PYQ question bank" />
-
-  <meta name="author" content="PM Roitx" />
-  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
- 
-
-  <meta name="application-name" content="PM Roitx" />
-  <meta property="og:site_name" content="PM Roitx" />
-  <meta property="og:title" content="PM Roitx — Personal Study Hub" />
-  <meta property="og:description" content="Get high-quality PM Roitx notes and study tools. Boost your learning with PM Roitx Study Hub." />
-  <meta property="og:url" content="https://roitx.qd.je/" />
-  <meta property="og:type" content="website" />
-
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="PM Roitx — Personal Study Hub" />
-  <meta name="twitter:description" content="Access free Class 12 Science notes, practice tests, AI calculator, and study timers on PM Roitx." />
-
-  <link rel="manifest" href="manifest.json" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="PM Roitx" />
+  <!-- Analytics & Scripts -->
   <script defer src="https://analytics.digitalplat.org/static/analytics.js" data-property="dpa_3jDPRMI_D8o4t9AkhveSsfHcTI8TuMU"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
 
-  <!-- Schema Markup -->
+  <!-- Optimized Structured Data (Schema JSON-LD) -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@graph": [
       {
         "@type": "WebSite",
+        "@id": "https://roitx.qd.je/#website",
+        "url": "https://roitx.qd.je/",
         "name": "PM Roitx",
         "alternateName": ["PM Roitx Study Hub", "Roitx Study Hub", "Roitx"],
-        "url": "https://roitx.qd.je/"
+        "publisher": {
+          "@type": "Organization",
+          "name": "PM Roitx",
+          "url": "https://roitx.qd.je/",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://roitx.qd.je/1profile.jpg"
+          }
+        }
       },
       {
-        "@type": "Organization",
-        "name": "PM Roitx",
-        "url": "https://roitx.qd.je/",
-        "logo": "https://roitx.qd.je/profile.jpg"
+        "@type": "ItemList",
+        "itemListElement": [
+          { "@type": "SiteNavigationElement", "position": 1, "name": "Login", "url": "https://roitx.qd.je/login.html" },
+          { "@type": "SiteNavigationElement", "position": 2, "name": "Classes & Notes", "url": "https://roitx.qd.je/classes.html" },
+          { "@type": "SiteNavigationElement", "position": 3, "name": "Premium Notes", "url": "https://roitx.qd.je/premium-notes.html" },
+          { "@type": "SiteNavigationElement", "position": 4, "name": "AI Calculator", "url": "https://roitx.qd.je/calculator.html" },
+          { "@type": "SiteNavigationElement", "position": 5, "name": "Study Timer", "url": "https://roitx.qd.je/study-timer.html" },
+          { "@type": "SiteNavigationElement", "position": 6, "name": "Ask Doubt", "url": "https://roitx.qd.je/solver.html" },
+          { "@type": "SiteNavigationElement", "position": 7, "name": "Ask Chat AI", "url": "https://roitx.qd.je/ask-chat.html" }
+        ]
       }
     ]
   }
   </script>
-
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "ItemList",
-    "itemListElement": [
-      { "@type": "SiteNavigationElement", "position": 1, "name": "login", "url": "https://roitx.qd.je/login.html" },
-      { "@type": "SiteNavigationElement", "position": 2, "name": "Classes & Notes", "url": "https://roitx.qd.je/classes.html" },
-      { "@type": "SiteNavigationElement", "position": 3, "name": "Premium Notes", "url": "https://roitx.qd.je/premium-notes.html" },
-      { "@type": "SiteNavigationElement", "position": 4, "name": "Ai Calculator", "url": "https://roitx.qd.je/calculator.html" },
-      { "@type": "SiteNavigationElement", "position": 5, "name": "Study Timer", "url": "https://roitx.qd.je/study-timer.html" },
-      { "@type": "SiteNavigationElement", "position": 6, "name": "Ask Doubt", "url": "https://roitx.qd.je/solver.html" },
-      { "@type": "SiteNavigationElement", "position": 7, "name": "Ask Chat AI", "url": "https://roitx.qd.je/ask-chat.html" }
-    ]
-  }
-  </script>
-  
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase.js"></script>
-
-  <link rel="stylesheet" href="style.css" />
 </head>
+
 
 <body style="display: flex; flex-direction: column; min-height: 100vh; margin: 0; padding: 0;">
 
