@@ -3,77 +3,267 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-    <title>404 - Page Not Found | Roitx Multiverse</title>
+    <title>404 - Lost in Multiverse | Roitx</title>
 
-    <!-- Essential SEO Meta Tags -->
-    <meta name="description" content="Oops! The page you are looking for has drifted outside the Roitx universe. Navigate back home to explore our AI tools and services.">
-    <meta name="keywords" content="Roitx, 404 error, page not found, Roitx AI, Roitx Multiverse">
-    <meta name="author" content="Roitx">
-    <meta name="robots" content="noindex, follow">
+    <meta name="description" content="Oops! Page not found in Roitx Multiverse. Return back safely.">
+    <meta name="theme-color" content="#030712">
 
-    <!-- Open Graph / Facebook Meta Tags -->
-    <meta property="og:type" content="website">
-    <meta property="og:title" content="404 - Lost in the Roitx Multiverse">
-    <meta property="og:description" content="Looks like you've wandered into deep space. Let's get you back on track.">
-    <meta property="og:url" content="https://roitx.github.io/404">
-    <meta property="og:site_name" content="Roitx">
-
-    <!-- Twitter Card Meta Tags -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="404 - Page Not Found | Roitx">
-    <meta name="twitter:description" content="Looks like you've wandered into deep space. Let's get you back on track.">
-
-    <!-- Theme Color for Mobile Browsers -->
-    <meta name="theme-color" content="#030B20">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
-    <!-- Stylesheets & Fonts -->
-    <link rel="stylesheet" href="404.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <!-- Lottie Web Player Engine -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            background: #030712;
+            color: #FFFFFF;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Dynamic Glowing Background Orbs */
+        .bg-glow-1 {
+            position: absolute;
+            width: 320px;
+            height: 320px;
+            background: radial-gradient(circle, var(--glow-color-1, rgba(0, 210, 255, 0.25)) 0%, transparent 70%);
+            top: 10%;
+            left: 10%;
+            filter: blur(80px);
+            animation: pulseGlow 6s infinite alternate;
+        }
+
+        .bg-glow-2 {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, var(--glow-color-2, rgba(239, 68, 68, 0.2)) 0%, transparent 70%);
+            bottom: 10%;
+            right: 10%;
+            filter: blur(80px);
+            animation: pulseGlow 8s infinite alternate-reverse;
+        }
+
+        @keyframes pulseGlow {
+            0% { transform: scale(1); opacity: 0.5; }
+            100% { transform: scale(1.3); opacity: 0.9; }
+        }
+
+        .multiverse-container {
+            position: relative;
+            z-index: 10;
+            padding: 20px;
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+        }
+
+        .content-wrapper {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 35px 25px;
+            border-radius: 32px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .character-3d {
+            width: 180px;
+            height: 180px;
+            margin: 0 auto 5px auto;
+            filter: drop-shadow(0 15px 25px rgba(0, 0, 0, 0.4));
+        }
+
+        .glitch-text {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(50px, 12vw, 70px);
+            font-weight: 900;
+            background: var(--heading-gradient, linear-gradient(180deg, #FFFFFF 20%, #00D2FF 100%));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1;
+            letter-spacing: 2px;
+        }
+
+        .alert-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85rem;
+            color: #EF4444;
+            margin: 10px 0 12px;
+            letter-spacing: 2px;
+            font-weight: 700;
+        }
+
+        /* Missing Path URL Box */
+        .path-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 6px 14px;
+            border-radius: 12px;
+            font-family: monospace;
+            font-size: 0.78rem;
+            color: #38BDF8;
+            margin-bottom: 16px;
+            word-break: break-all;
+            max-width: 90%;
+        }
+
+        .mission-log {
+            color: #94A3B8;
+            font-size: 0.88rem;
+            line-height: 1.6;
+            margin-bottom: 24px;
+            min-height: 48px;
+        }
+
+        .hearts-bar {
+            font-size: 1.1rem;
+            margin-bottom: 18px;
+            letter-spacing: 4px;
+            animation: floatHearts 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes floatHearts {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-5px); }
+        }
+
+        .control-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .nav-btn {
+            text-decoration: none;
+            padding: 14px 24px;
+            border-radius: 16px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: block;
+            letter-spacing: 0.5px;
+        }
+
+        .primary {
+            background: linear-gradient(135deg, #00D2FF 0%, #0088FF 100%);
+            color: #030712;
+            box-shadow: 0 0 25px rgba(0, 210, 255, 0.4);
+        }
+
+        .primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 35px rgba(0, 210, 255, 0.7);
+        }
+
+        .secondary {
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #FFFFFF;
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .secondary:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.1);
+        }
+    </style>
 </head>
-<body oncontextmenu="return false;">
-    <div class="space-overlay"></div>
-    <div id="starfield"></div>
-    <div class="nebula-cloud"></div>
+<body>
+
+    <div class="bg-glow-1" id="glow1"></div>
+    <div class="bg-glow-2" id="glow2"></div>
 
     <main class="multiverse-container">
-        <section class="content-wrapper" id="scene">
+        <section class="content-wrapper">
             
-            <div class="astronaut-box">
-                <div class="astronaut-shadow"></div>
-                <svg class="astronaut-svg" viewBox="0 0 512 512" aria-hidden="true">
-                    <defs>
-                        <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" style="stop-color:#00d2ff;stop-opacity:1" />
-                            <stop offset="100%" style="stop-color:#743ad5;stop-opacity:1" />
-                        </linearGradient>
-                    </defs>
-                    <path fill="url(#grad1)" d="M376,192c0-66.27-53.73-120-120-120S136,125.73,136,192s53.73,120,120,120S376,258.27,376,192z"></path>
-                    <path fill="#ffffff" d="M256,160c-17.67,0-32,14.33-32,32s14.33,32,32,32s32-14.33,32-32S273.67,160,256,160z"></path>
-                    <path fill="rgba(255,255,255,0.8)" d="M256,336c-88.37,0-160,71.63-160,160h320C416,407.63,344.37,336,256,336z"></path>
-                </svg>
-            </div>
+            <!-- Dynamic 3D Lottie Container -->
+            <div id="lottie-box" class="character-3d"></div>
 
-            <h1 class="glitch-text" data-text="404">404</h1>
-            <h2 class="alert-title">SYSTEM ERROR: PAGE_NOT_FOUND</h2>
+            <h1 class="glitch-text">404</h1>
+            <h2 class="alert-title" id="alert-title">PATH NOT FOUND</h2>
             
-            <p class="mission-log">
-                [LOG]: User has drifted outside the Roitx safety perimeter. <br>
-                [STATUS]: Searching for data fragments... <span class="blink">0% FOUND</span>
+            <!-- Real Dynamic URL Path Display -->
+            <div class="path-badge" id="url-path">/unknown</div>
+
+            <p class="mission-log" id="random-msg">
+                Searching across space...
             </p>
 
+            <div class="hearts-bar" id="random-hearts">
+                ❤️ 💙 💜 💚
+            </div>
+
             <nav class="control-panel">
-                <a href="https://roitx.github.io/" class="nav-btn primary">RE-ESTABLISH CONNECTION</a>
+                <a href="https://roitx.github.io/" class="nav-btn primary">GO TO HOMEPAGE</a>
                 <a href="javascript:history.back()" class="nav-btn secondary">GO BACK</a>
             </nav>
-
-            <footer class="data-stream">
-                <p>COORDS: <span id="x-pos">0</span>, <span id="y-pos">0</span> | V-SHIFT: <span id="v-shift">0.02ms</span></p>
-            </footer>
         </section>
     </main>
 
-    <script src="404.js" defer></script>
+    <script>
+        // 1. Show Actual Missing Path
+        const currentPath = window.location.pathname || "/404.html";
+        document.getElementById('url-path').innerText = `Path: ${currentPath}`;
+
+        // 2. Dynamic Random Messages & Text Variations
+        const messages = [
+            "Looks like you've drifted into deep space.<br>Let's get you safely back home!",
+            "Oops! The page you are looking for morphed into another dimension.",
+            "You found a black hole in Roitx Multiverse!<br>Don't worry, we got your back.",
+            "Lost in cyberspace?<br>Take a breath and head back to safety."
+        ];
+
+        const titles = [
+            "LOST IN SPACE",
+            "DIMENSION MISMATCH",
+            "SIGNAL LOST",
+            "PAGE UNREACHABLE"
+        ];
+
+        // 3. Dynamic Multi-color Heart Combinations
+        const heartSets = [
+            "❤️ 💙 💜 💚 🧡",
+            "🤍 🤎 💙 💜 💖",
+            "💜 💚 💛 💙 ❤️",
+            "🧡 💙 🤍 💜 💚"
+        ];
+
+        // Select Random Variations
+        const randomIndex = Math.floor(Math.random() * messages.length);
+        
+        document.getElementById('alert-title').innerText = titles[randomIndex];
+        document.getElementById('random-msg').innerHTML = messages[randomIndex];
+        document.getElementById('random-hearts').innerText = heartSets[randomIndex];
+
+        // 4. Dynamic Local Lottie JSON Loader (assets/3d/404_1.json, 404_2.json, etc.)
+        const totalAnimations = 2; // Aapke folder me kitni animations hain
+        const randomAnimIndex = Math.floor(Math.random() * totalAnimations) + 1;
+        const jsonPath = `assets/3d/404_${randomAnimIndex}.json`;
+
+        // Load Animation using Local Path
+        lottie.loadAnimation({
+            container: document.getElementById('lottie-box'),
+            renderer: 'svg',
+            loop: true,
+            autoplay: true,
+            path: jsonPath
+        });
+    </script>
 </body>
 </html>

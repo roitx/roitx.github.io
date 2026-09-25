@@ -3,31 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-    <title>Working On It ❤️ | Roitx</title>
+    <title>Working On It | Roitx</title>
 
-    <!-- SEO Meta Tags -->
-    <meta name="description" content="We are crafting something special for you. Stay tuned as Roitx updates this section with new features.">
+    <meta name="description" content="We are crafting something special for you. Stay tuned as Roitx updates this section.">
     <meta name="keywords" content="Roitx, Under Construction, Coming Soon, Roitx AI">
-    <meta name="author" content="Roitx">
     <meta name="robots" content="index, follow">
-
-    <!-- Open Graph & Social -->
-    <meta property="og:type" content="website">
-    <meta property="og:title" content="Working on something awesome! ✨">
-    <meta property="og:description" content="Please give us a little time. Something beautiful is coming for you from Roitx.">
-    <meta property="og:site_name" content="Roitx">
-
-    <meta name="theme-color" content="#0f2027">
+    <meta name="theme-color" content="#0B0F19">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <!-- Reliable Lottie Player Script -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
 
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            user-select: none;
         }
 
         body {
@@ -35,129 +30,181 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-            font-family: 'Poppins', sans-serif;
-            color: #ffffff;
-            padding: 20px;
+            background: #0B0F19;
+            font-family: 'Plus Jakarta Sans', 'Poppins', sans-serif;
+            color: #FFFFFF;
             overflow: hidden;
-            animation: bodyInit 1s ease-in;
+            padding: 20px;
+            position: relative;
         }
 
-        @keyframes bodyInit {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        /* Ambient Animated Light Bulbs */
-        .glow-bg {
+        /* Animated Ambient Mesh Gradients */
+        .glow-1 {
             position: absolute;
             width: 350px;
             height: 350px;
-            background: radial-gradient(circle, rgba(255, 75, 110, 0.25) 0%, transparent 70%);
-            filter: blur(80px);
-            border-radius: 50%;
-            z-index: 1;
-            animation: ambientGlow 8s ease-in-out infinite alternate;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.25) 0%, transparent 70%);
+            top: -50px;
+            left: -50px;
+            filter: blur(90px);
+            animation: moveGlow1 8s infinite alternate ease-in-out;
         }
 
-        @keyframes ambientGlow {
-            0% { transform: translate(-30px, -30px) scale(0.9); opacity: 0.6; }
-            100% { transform: translate(30px, 30px) scale(1.2); opacity: 1; }
+        .glow-2 {
+            position: absolute;
+            width: 350px;
+            height: 350px;
+            background: radial-gradient(circle, rgba(236, 72, 153, 0.2) 0%, transparent 70%);
+            bottom: -50px;
+            right: -50px;
+            filter: blur(90px);
+            animation: moveGlow2 10s infinite alternate ease-in-out;
         }
 
-        /* Glassmorphism Animated Card */
+        @keyframes moveGlow1 { 0% { transform: translate(0, 0); } 100% { transform: translate(60px, 60px); } }
+        @keyframes moveGlow2 { 0% { transform: translate(0, 0); } 100% { transform: translate(-60px, -60px); } }
+
+        /* Modern Glassmorphism Card */
         .card {
             position: relative;
-            z-index: 2;
+            z-index: 10;
             text-align: center;
-            padding: 45px 35px;
+            padding: 42px 30px 32px;
             width: 100%;
             max-width: 420px;
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(18px);
-            -webkit-backdrop-filter: blur(18px);
+            background: rgba(255, 255, 255, 0.035);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
             border: 1px solid rgba(255, 255, 255, 0.12);
-            border-radius: 24px;
-            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.4), inset 0 0 15px rgba(255, 255, 255, 0.04);
-            animation: cardAppear 1s cubic-bezier(0.16, 1, 0.3, 1);
-            transition: transform 0.4s ease, box-shadow 0.4s ease;
+            border-radius: 36px;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+            animation: floatCard 4s ease-in-out infinite alternate;
         }
 
-        @keyframes cardAppear {
-            from { opacity: 0; transform: translateY(30px) scale(0.92); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
+        @keyframes floatCard {
+            0% { transform: translateY(0px); }
+            100% { transform: translateY(-8px); }
         }
 
-        .card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 35px 70px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(255, 255, 255, 0.08);
+        /* Live Status Badge */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(99, 102, 241, 0.12);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #818CF8;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 18px;
         }
 
-        /* Animated Heart Icon */
-        .heart {
-            font-size: 58px;
-            display: inline-block;
-            margin-bottom: 12px;
-            animation: heartPulse 1.6s infinite ease-in-out;
-            filter: drop-shadow(0 0 20px rgba(255, 75, 110, 0.7));
+        .dot {
+            width: 8px;
+            height: 8px;
+            background: #818CF8;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #818CF8;
+            animation: pulseDot 1.5s infinite;
         }
 
-        @keyframes heartPulse {
-            0% { transform: scale(1); }
-            14% { transform: scale(1.2); }
-            28% { transform: scale(1); }
-            42% { transform: scale(1.15); }
-            70% { transform: scale(1); }
+        @keyframes pulseDot { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+        .character-3d {
+            width: 210px;
+            height: 210px;
+            margin: 0 auto 10px auto;
+            filter: drop-shadow(0 15px 25px rgba(0, 0, 0, 0.4));
         }
 
         h1 {
-            margin: 10px 0 12px;
-            font-size: 26px;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-            background: linear-gradient(180deg, #ffffff 40%, #e2e8f0 100%);
+            font-size: 25px;
+            font-weight: 800;
+            margin-bottom: 10px;
+            background: linear-gradient(180deg, #FFFFFF 0%, #CBD5E1 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
         }
 
         p {
-            font-size: 15px;
-            opacity: 0.9;
+            font-size: 0.9rem;
+            color: #94A3B8;
             line-height: 1.6;
-            font-weight: 400;
+            font-weight: 500;
         }
 
         .small {
-            margin-top: 25px;
-            font-size: 13px;
-            opacity: 0.6;
-            font-weight: 600;
-            letter-spacing: 1.5px;
+            margin-top: 24px;
+            font-size: 0.75rem;
+            color: #64748B;
+            letter-spacing: 3px;
             text-transform: uppercase;
-        }
-
-        @media (max-width: 480px) {
-            .card { padding: 35px 20px; }
-            h1 { font-size: 22px; }
-            p { font-size: 14px; }
+            font-weight: 700;
         }
     </style>
 </head>
 <body>
 
-    <div class="glow-bg"></div>
+    <div class="glow-1"></div>
+    <div class="glow-2"></div>
 
     <main class="card">
-        <div class="heart" role="img" aria-label="Heart">❤️</div>
-        <h1>I am working on it</h1>
-        <p>
+        <div class="status-badge">
+            <span class="dot"></span> IN PROGRESS
+        </div>
+
+        <div id="lottie-dev" class="character-3d"></div>
+
+        <h1 id="work-title">I am working on it ❤️</h1>
+        <p id="work-desc">
             Please give me a little time.<br>
             Something beautiful is coming for you ✨
         </p>
-        <div class="small">
-            — Roitx
-        </div>
+
+        <div class="small">— ROITX —</div>
     </main>
 
+    <script>
+        // Random Heart Colors
+        const hearts = ['❤️', '💙', '💚', '💜', '🤎', '🤍'];
+
+        // Dynamic Text Messages
+        const messages = [
+            "Crafting something amazing for you ",
+            "Building next-gen experience ",
+            "Writing fine code with passion ",
+            "Upgrading system core features ",
+            "Almost ready, sit back and relax "
+        ];
+
+        // Total animations in assets/3d/ folder (working_1.json to working_5.json)
+        const totalAnimations = 5; 
+
+        // Random Index Generator (1 to 5)
+        const randomAnimIndex = Math.floor(Math.random() * totalAnimations) + 1;
+        
+        // Random Selection for Hearts & Messages
+        const randomHeart = hearts[Math.floor(Math.random() * hearts.length)];
+        const msgIndex = Math.floor(Math.random() * messages.length);
+        const randomMsg = messages[msgIndex];
+
+        // Update Dynamic Heading & Description
+        document.getElementById('work-title').innerText = "I am working on it " + randomHeart;
+        document.getElementById('work-desc').innerHTML = randomMsg + randomHeart + "<br>Something beautiful is coming for you ✨";
+
+        // Load Local JSON File Dynamically (e.g., assets/3d/working_1.json)
+        lottie.loadAnimation({
+            container: document.getElementById('lottie-dev'),
+            renderer: 'svg',
+            loop: true,
+            autoplay: true,
+            path: `assets/3d/working_${randomAnimIndex}.json`
+        });
+    </script>
 </body>
 </html>
