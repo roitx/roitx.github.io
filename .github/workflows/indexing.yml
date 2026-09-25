@@ -18,31 +18,32 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Create Service Account Key File
+      - name: Create Key File
         run: |
-          echo '${{ secrets.GCP_SA_KEY }}' > service_account.json
+          echo "${{ secrets.GCP_SA_KEY }}" > service_account.json
 
-      - name: Install Google APIs Client
+      - name: Install Google APIs
         run: npm install googleapis
 
       - name: Run Indexing Script
         run: |
           node -e "
           const {google} = require('googleapis');
-          const keys = require('./service_account.json');
+          const path = require('path');
 
-          const client = new google.auth.JWT(
-            keys.client_email,
-            null,
-            keys.private_key,
-            ['https://www.googleapis.com/auth/indexing']
-          );
+          const auth = new google.auth.GoogleAuth({
+            keyFile: path.join(__dirname, 'service_account.json'),
+            scopes: ['https://www.googleapis.com/auth/indexing'],
+          });
 
-          client.authorize((err, tokens) => {
-            if (err) {
+          async function main() {
+            try {
+              const client = await auth.getClient();
+              console.log('Successfully authenticated with GCP Service Account!');
+            } catch (err) {
               console.error('Authentication error:', err);
               process.exit(1);
             }
-            console.log('Successfully authenticated with GCP Service Account!');
-          });
+          }
+          main();
           "
