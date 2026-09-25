@@ -1,80 +1,163 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="hi">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>Working On It ❤️ | Roitx</title>
 
-<title>Working on it ❤️</title>
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="We are crafting something special for you. Stay tuned as Roitx updates this section with new features.">
+    <meta name="keywords" content="Roitx, Under Construction, Coming Soon, Roitx AI">
+    <meta name="author" content="Roitx">
+    <meta name="robots" content="index, follow">
 
-<!-- Google Font -->
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Open Graph & Social -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Working on something awesome! ✨">
+    <meta property="og:description" content="Please give us a little time. Something beautiful is coming for you from Roitx.">
+    <meta property="og:site_name" content="Roitx">
 
-<style>
-body{
-  margin:0;
-  height:100vh;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
-  font-family:'Poppins',sans-serif;
-  color:white;
-}
+    <meta name="theme-color" content="#0f2027">
 
-.card{
-  text-align:center;
-  padding:40px 30px;
-  max-width:420px;
-  background:rgba(255,255,255,0.08);
-  backdrop-filter:blur(10px);
-  border-radius:18px;
-  box-shadow:0 20px 50px rgba(0,0,0,0.4);
-}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 
-.heart{
-  font-size:52px;
-  animation:pulse 1.6s infinite;
-}
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-h1{
-  margin:15px 0 8px;
-  font-size:28px;
-  font-weight:700;
-}
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            font-family: 'Poppins', sans-serif;
+            color: #ffffff;
+            padding: 20px;
+            overflow: hidden;
+            animation: bodyInit 1s ease-in;
+        }
 
-p{
-  font-size:15px;
-  opacity:0.9;
-  line-height:1.6;
-}
+        @keyframes bodyInit {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
 
-.small{
-  margin-top:18px;
-  font-size:13px;
-  opacity:0.7;
-}
+        /* Ambient Animated Light Bulbs */
+        .glow-bg {
+            position: absolute;
+            width: 350px;
+            height: 350px;
+            background: radial-gradient(circle, rgba(255, 75, 110, 0.25) 0%, transparent 70%);
+            filter: blur(80px);
+            border-radius: 50%;
+            z-index: 1;
+            animation: ambientGlow 8s ease-in-out infinite alternate;
+        }
 
-@keyframes pulse{
-  0%{transform:scale(1)}
-  50%{transform:scale(1.15)}
-  100%{transform:scale(1)}
-}
-</style>
+        @keyframes ambientGlow {
+            0% { transform: translate(-30px, -30px) scale(0.9); opacity: 0.6; }
+            100% { transform: translate(30px, 30px) scale(1.2); opacity: 1; }
+        }
+
+        /* Glassmorphism Animated Card */
+        .card {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            padding: 45px 35px;
+            width: 100%;
+            max-width: 420px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 24px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.4), inset 0 0 15px rgba(255, 255, 255, 0.04);
+            animation: cardAppear 1s cubic-bezier(0.16, 1, 0.3, 1);
+            transition: transform 0.4s ease, box-shadow 0.4s ease;
+        }
+
+        @keyframes cardAppear {
+            from { opacity: 0; transform: translateY(30px) scale(0.92); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 35px 70px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(255, 255, 255, 0.08);
+        }
+
+        /* Animated Heart Icon */
+        .heart {
+            font-size: 58px;
+            display: inline-block;
+            margin-bottom: 12px;
+            animation: heartPulse 1.6s infinite ease-in-out;
+            filter: drop-shadow(0 0 20px rgba(255, 75, 110, 0.7));
+        }
+
+        @keyframes heartPulse {
+            0% { transform: scale(1); }
+            14% { transform: scale(1.2); }
+            28% { transform: scale(1); }
+            42% { transform: scale(1.15); }
+            70% { transform: scale(1); }
+        }
+
+        h1 {
+            margin: 10px 0 12px;
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            background: linear-gradient(180deg, #ffffff 40%, #e2e8f0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p {
+            font-size: 15px;
+            opacity: 0.9;
+            line-height: 1.6;
+            font-weight: 400;
+        }
+
+        .small {
+            margin-top: 25px;
+            font-size: 13px;
+            opacity: 0.6;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        @media (max-width: 480px) {
+            .card { padding: 35px 20px; }
+            h1 { font-size: 22px; }
+            p { font-size: 14px; }
+        }
+    </style>
 </head>
-
 <body>
 
-<div class="card">
-  <div class="heart">❤️</div>
-  <h1>I am working on it</h1>
-  <p>
-    Please give me a little time.<br>
-    Something beautiful is coming for you ✨
-  </p>
-  <div class="small">
-    — Roitx
-  </div>
-</div>
+    <div class="glow-bg"></div>
+
+    <main class="card">
+        <div class="heart" role="img" aria-label="Heart">❤️</div>
+        <h1>I am working on it</h1>
+        <p>
+            Please give me a little time.<br>
+            Something beautiful is coming for you ✨
+        </p>
+        <div class="small">
+            — Roitx
+        </div>
+    </main>
 
 </body>
 </html>

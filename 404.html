@@ -1,27 +1,50 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>404 | Lost in the Roitx Multiverse</title>
-    
-    <link rel="stylesheet" href="404.css">
-    
-    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>404 - Page Not Found | Roitx Multiverse</title>
+
+    <!-- Essential SEO Meta Tags -->
+    <meta name="description" content="Oops! The page you are looking for has drifted outside the Roitx universe. Navigate back home to explore our AI tools and services.">
+    <meta name="keywords" content="Roitx, 404 error, page not found, Roitx AI, Roitx Multiverse">
+    <meta name="author" content="Roitx">
+    <meta name="robots" content="noindex, follow">
+
+    <!-- Open Graph / Facebook Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="404 - Lost in the Roitx Multiverse">
+    <meta property="og:description" content="Looks like you've wandered into deep space. Let's get you back on track.">
+    <meta property="og:url" content="https://roitx.github.io/404">
+    <meta property="og:site_name" content="Roitx">
+
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="404 - Page Not Found | Roitx">
+    <meta name="twitter:description" content="Looks like you've wandered into deep space. Let's get you back on track.">
+
+    <!-- Theme Color for Mobile Browsers -->
     <meta name="theme-color" content="#030B20">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <!-- Stylesheets & Fonts -->
+    <link rel="stylesheet" href="404.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 </head>
-<body oncontextmenu="return false;"> <div class="space-overlay"></div>
+<body oncontextmenu="return false;">
+    <div class="space-overlay"></div>
     <div id="starfield"></div>
     <div class="nebula-cloud"></div>
 
-    <div class="multiverse-container">
-        <div class="content-wrapper" id="scene">
+    <main class="multiverse-container">
+        <section class="content-wrapper" id="scene">
             
             <div class="astronaut-box">
                 <div class="astronaut-shadow"></div>
-                <svg class="astronaut-svg" viewBox="0 0 512 512">
+                <svg class="astronaut-svg" viewBox="0 0 512 512" aria-hidden="true">
                     <defs>
-                        <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100 text">
+                        <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
                             <stop offset="0%" style="stop-color:#00d2ff;stop-opacity:1" />
                             <stop offset="100%" style="stop-color:#743ad5;stop-opacity:1" />
                         </linearGradient>
@@ -40,17 +63,17 @@
                 [STATUS]: Searching for data fragments... <span class="blink">0% FOUND</span>
             </p>
 
-            <div class="control-panel">
+            <nav class="control-panel">
                 <a href="https://roitx.github.io/" class="nav-btn primary">RE-ESTABLISH CONNECTION</a>
                 <a href="javascript:history.back()" class="nav-btn secondary">GO BACK</a>
-            </div>
+            </nav>
 
-            <div class="data-stream">
+            <footer class="data-stream">
                 <p>COORDS: <span id="x-pos">0</span>, <span id="y-pos">0</span> | V-SHIFT: <span id="v-shift">0.02ms</span></p>
-            </div>
-        </div>
-    </div>
+            </footer>
+        </section>
+    </main>
 
-    <script src="404.js"></script>
+    <script src="404.js" defer></script>
 </body>
 </html>
