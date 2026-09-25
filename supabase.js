@@ -15,11 +15,6 @@ function getPageUrl(pageName) {
   return window.location.origin + basePath + pageName;
 }
 
-// Primary Admin Emails List
-const ADMIN_EMAILS = [
-  "rohitrajgoh91@gmail.com"
-];
-
 // Active Auth User Fetcher
 async function getCurrentUser() {
   if (!window.supabaseClient) return null;
@@ -66,17 +61,11 @@ async function getUserProfile() {
   return profileData;
 }
 
-// Precise Admin & Permission Check
+// Precise Admin & Permission Check (Pure DB Role Driven)
 async function checkIsAdmin() {
   const user = await getCurrentUser();
   if (!user) return false;
 
-  // 1. Email Whitelist
-  if (user.email && ADMIN_EMAILS.includes(user.email.toLowerCase())) {
-    return true;
-  }
-
-  // 2. Database Check (role & JSON permissions)
   try {
     const { data } = await window.supabaseClient
       .from('profiles')

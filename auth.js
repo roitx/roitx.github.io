@@ -26,15 +26,7 @@ async function getUserPermissions() {
     const user = await window.getCurrentUser();
     if (!user) return { role: 'student', permissions: {} };
 
-    // Super Admin Permanent Access Check
-    if (user.email && user.email.toLowerCase().trim() === "rohitrajgoh91@gmail.com") {
-      return { 
-        role: 'superadmin', 
-        permissions: { admin_panel: true, manage_team: true, send_notif: true, manage_test: true, ai_test: true } 
-      };
-    }
-
-    // Fetch from profiles table using schema fields
+    // Fetch from profiles table using schema fields (No Hardcoded Email)
     const { data: profile, error } = await window.supabaseClient
       .from('profiles')
       .select('role, permissions')
@@ -43,6 +35,14 @@ async function getUserPermissions() {
 
     if (error || !profile) {
       return { role: 'student', permissions: {} };
+    }
+
+    // Role-based Super Admin Rights Assignment
+    if (profile.role === 'superadmin') {
+      return { 
+        role: 'superadmin', 
+        permissions: { admin_panel: true, manage_team: true, send_notif: true, manage_test: true, ai_test: true } 
+      };
     }
 
     return {
@@ -120,8 +120,7 @@ async function syncUserProfileFromAuth(user, extraMeta = {}) {
     const phone = profile?.phone || extraMeta.phone || null;
     const pincode = profile?.pincode || extraMeta.pincode || null;
 
-    const isOwner = user.email && user.email.toLowerCase().trim() === "rohitrajgoh91@gmail.com";
-    const userRole = profile?.role || (isOwner ? 'superadmin' : 'student');
+    const userRole = profile?.role || 'student';
     const userPerms = profile?.permissions || {};
 
     // 4. Force Upsert directly to `profiles` table in Supabase
@@ -152,7 +151,7 @@ async function syncUserProfileFromAuth(user, extraMeta = {}) {
   }
 }
 
-// Helper: Post-Login Redirect Handler
+// Helper: Post-Login Redirect Handler (INDEX SE AANE PAR PROFILE PAR BHEJEGA)
 async function handlePostLoginRedirect() {
   try {
     const user = await window.getCurrentUser();
@@ -169,16 +168,28 @@ async function handlePostLoginRedirect() {
     redirectTarget = urlParams.get("redirect");
   }
 
-  // Fallback to previous page if coming from same domain (excluding login.html itself)
+  // Fallback to previous page (document.referrer)
   if (!redirectTarget && document.referrer && !document.referrer.includes("login.html")) {
     redirectTarget = document.referrer;
   }
 
+  const profileUrl = window.getPageUrl ? window.getPageUrl("profile.html") : "profile.html";
+
+  // LOGIC: Agar previous page index.html ho ya root path ho -> Seedhe profile.html par bheje
   if (redirectTarget) {
+    const isIndexPage = redirectTarget.endsWith("index.html") || 
+                        redirectTarget === window.location.origin + "/" || 
+                        redirectTarget === window.location.origin;
+
     sessionStorage.removeItem("redirect_after_login");
-    window.location.href = redirectTarget;
+
+    if (isIndexPage) {
+      window.location.href = profileUrl;
+    } else {
+      window.location.href = redirectTarget;
+    }
   } else {
-    window.location.href = window.getPageUrl ? window.getPageUrl("profile.html") : "profile.html";
+    window.location.href = profileUrl;
   }
 }
 
@@ -222,7 +233,7 @@ async function loginUser() {
   }
 }
 
-// 2. User Sign Up Handler (FIXED AUTOMATIC DATABASE SAVE)
+// 2. User Sign Up Handler
 async function signUpUser() {
   const emailInput = document.getElementById("email");
   const passwordInput = document.getElementById("password");
@@ -261,7 +272,6 @@ async function signUpUser() {
     return;
   }
 
-  // AUTOMATIC DB SAVE FIX FOR SIGNUP
   if (data?.user) {
     await syncUserProfileFromAuth(data.user, { full_name: fullName, phone: phone, pincode: pincode });
   }
