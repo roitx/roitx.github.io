@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Advanced Performance Hub | Roitx Study Hub</title>
+    <title>Advanced Analytics & Performance Hub | Roitx Study Hub</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -29,40 +29,44 @@
 
     <style>
         :root {
-            --bg-color: #0b0f19;
-            --card-bg: rgba(21, 28, 44, 0.85);
+            --bg-color: #030712;
+            --card-bg: rgba(17, 24, 39, 0.7);
             --card-border: rgba(255, 255, 255, 0.08);
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
+            --card-hover-border: rgba(56, 189, 248, 0.3);
+            --text-main: #f9fafb;
+            --text-muted: #9ca3af;
             --accent-blue: #38bdf8;
+            --accent-cyan: #06b6d4;
             --accent-green: #10b981;
             --accent-red: #f43f5e;
             --accent-yellow: #f59e0b;
             --accent-purple: #a855f7;
             --accent-pink: #ec4899;
-            --glass-glow: 0 4px 20px rgba(0, 0, 0, 0.25);
-            --radius-lg: 16px;
-            --radius-md: 12px;
-            --radius-sm: 8px;
+            --glass-glow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            --radius-lg: 20px;
+            --radius-md: 14px;
+            --radius-sm: 10px;
         }
 
         * { 
             box-sizing: border-box; 
             margin: 0; 
             padding: 0; 
-            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
             touch-action: manipulation;
             -webkit-tap-highlight-color: transparent;
         }
 
         body { 
-            background: #0b0f19;
-            background-image: radial-gradient(at 100% 0%, #1e1b4b 0px, transparent 50%),
-                              radial-gradient(at 0% 100%, #030712 0px, transparent 50%);
+            background: var(--bg-color);
+            background-image: 
+                radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+                radial-gradient(at 0% 100%, rgba(168, 85, 247, 0.15) 0px, transparent 50%),
+                radial-gradient(at 50% 50%, rgba(14, 165, 233, 0.08) 0px, transparent 60%);
             background-attachment: fixed;
             color: var(--text-main); 
             min-height: 100vh; 
-            padding-bottom: 40px; 
+            padding-bottom: 50px; 
             -webkit-font-smoothing: antialiased;
             text-rendering: optimizeLegibility;
         }
@@ -72,32 +76,37 @@
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
-            padding: 12px 16px; 
-            background: rgba(11, 15, 25, 0.85); 
+            padding: 14px 24px; 
+            background: rgba(3, 7, 18, 0.8); 
             border-bottom: 1px solid var(--card-border); 
             position: sticky; 
             top: 0; 
             z-index: 100; 
-            backdrop-filter: blur(10px); 
-            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(16px); 
+            -webkit-backdrop-filter: blur(16px);
         }
 
         .brand { 
-            font-size: 16px; 
+            font-size: 17px; 
             font-weight: 800; 
             display: flex; 
             align-items: center; 
-            gap: 8px; 
-            color: var(--accent-blue); 
+            gap: 10px; 
+            background: linear-gradient(135deg, #38bdf8 0%, #a855f7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.3px;
         }
 
+        .brand i { color: var(--accent-blue); -webkit-text-fill-color: initial; }
+
         .container { 
-            max-width: 1100px; 
-            margin: 16px auto; 
-            padding: 0 12px; 
+            max-width: 1150px; 
+            margin: 20px auto; 
+            padding: 0 16px; 
             display: flex; 
             flex-direction: column; 
-            gap: 16px; 
+            gap: 20px; 
         }
 
         /* CARDS */
@@ -105,47 +114,71 @@
             background: var(--card-bg); 
             border: 1px solid var(--card-border); 
             border-radius: var(--radius-lg); 
-            padding: 16px; 
+            padding: 20px; 
             box-shadow: var(--glass-glow); 
-            will-change: transform;
-            transform: translateZ(0);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .card-title { 
             font-size: 15px; 
             font-weight: 700; 
-            margin-bottom: 14px; 
+            margin-bottom: 16px; 
             display: flex; 
             align-items: center; 
             justify-content: space-between;
             gap: 8px; 
-            border-bottom: 1px dashed var(--card-border); 
-            padding-bottom: 10px; 
+            border-bottom: 1px solid var(--card-border); 
+            padding-bottom: 12px; 
+            letter-spacing: -0.2px;
         }
 
         /* PROFILE HERO */
         .profile-hero { 
-            background: linear-gradient(135deg, rgba(56, 189, 248, 0.1) 0%, rgba(168, 85, 247, 0.05) 100%), var(--card-bg); 
-            border: 1px solid var(--card-border); 
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(168, 85, 247, 0.08) 100%), var(--card-bg); 
+            border: 1px solid rgba(255, 255, 255, 0.12); 
             border-radius: var(--radius-lg); 
-            padding: 16px; 
+            padding: 20px 24px; 
             display: flex;
             align-items: center;
             justify-content: space-between;
             flex-wrap: wrap;
-            gap: 12px;
+            gap: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
         }
 
-        .user-info-box { display: flex; align-items: center; gap: 12px; }
-        .avatar-img { width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--accent-purple); object-fit: cover; }
-        .user-details h2 { font-size: 17px; font-weight: 800; letter-spacing: -0.3px; }
-        .user-details p { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+        .user-info-box { display: flex; align-items: center; gap: 16px; }
+        .avatar-container { position: relative; }
+        .avatar-img { 
+            width: 56px; 
+            height: 56px; 
+            border-radius: 50%; 
+            border: 2px solid var(--accent-blue); 
+            object-fit: cover;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.3);
+        }
+        .user-details h2 { font-size: 19px; font-weight: 800; letter-spacing: -0.4px; }
+        .user-details p { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
+
+        .badge-verified {
+            font-size: 11px; 
+            font-weight: 700;
+            background: rgba(16, 185, 129, 0.12); 
+            color: var(--accent-green);
+            padding: 6px 12px; 
+            border-radius: 20px; 
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
 
         /* STATS GRID */
         .stats-grid { 
             display: grid; 
             grid-template-columns: repeat(2, 1fr); 
-            gap: 10px; 
+            gap: 12px; 
         }
 
         @media (min-width: 640px) {
@@ -156,48 +189,65 @@
             background: rgba(255, 255, 255, 0.02); 
             border: 1px solid var(--card-border); 
             border-radius: var(--radius-md); 
-            padding: 12px 8px; 
+            padding: 14px 10px; 
             text-align: center; 
+            transition: transform 0.2s ease, border-color 0.2s ease;
         }
-        .stat-label { font-size: 10px; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 4px; letter-spacing: 0.5px; }
-        .stat-value { font-size: 18px; font-weight: 800; }
+        .stat-box:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+        .stat-label { font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 6px; letter-spacing: 0.6px; }
+        .stat-value { font-size: 20px; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
 
-        .analytics-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+        .analytics-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
         @media (min-width: 768px) {
             .analytics-grid { grid-template-columns: 1fr 1fr; }
         }
 
-        .chart-box { position: relative; width: 100%; height: 200px; display: flex; justify-content: center; align-items: center; }
+        .chart-box { position: relative; width: 100%; height: 240px; display: flex; justify-content: center; align-items: center; }
 
-        .insight-box { background: rgba(56, 189, 248, 0.08); border-left: 3px solid var(--accent-blue); padding: 10px 12px; border-radius: 6px; margin-bottom: 8px; font-size: 12px; line-height: 1.4; }
+        .insight-box { 
+            background: rgba(56, 189, 248, 0.08); 
+            border-left: 4px solid var(--accent-blue); 
+            padding: 12px 14px; 
+            border-radius: var(--radius-sm); 
+            margin-bottom: 10px; 
+            font-size: 12.5px; 
+            line-height: 1.5; 
+        }
         .insight-box.weak { background: rgba(244, 63, 94, 0.08); border-left-color: var(--accent-red); }
         .insight-box.strong { background: rgba(16, 185, 129, 0.08); border-left-color: var(--accent-green); }
         .insight-box.warning { background: rgba(245, 158, 11, 0.08); border-left-color: var(--accent-yellow); }
 
         /* HISTORY GRID */
-        .history-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 10px; }
+        .history-grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 10px; }
         @media (min-width: 640px) {
-            .history-grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+            .history-grid { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
         }
 
         .history-item { 
             background: rgba(255, 255, 255, 0.02); 
             border: 1px solid var(--card-border); 
             border-radius: var(--radius-md); 
-            padding: 12px 14px; 
+            padding: 14px 16px; 
             display: flex; 
             flex-direction: column; 
-            gap: 8px; 
-            transition: border-color 0.15s ease;
+            gap: 10px; 
+            transition: all 0.2s ease;
         }
-        .history-item:active { border-color: var(--accent-blue); }
-        .history-title { font-size: 13.5px; font-weight: 700; color: var(--text-main); line-height: 1.3; }
-        .history-meta { font-size: 11px; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center; }
-        .history-stats { display: flex; justify-content: space-between; align-items: center; padding-top: 6px; border-top: 1px dashed var(--card-border); }
+        .history-item:hover { 
+            border-color: var(--card-hover-border); 
+            background: rgba(255, 255, 255, 0.035);
+            transform: translateY(-2px);
+        }
+        .history-title { font-size: 14px; font-weight: 700; color: var(--text-main); line-height: 1.35; }
+        .history-meta { font-size: 11.5px; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center; }
+        .history-stats { display: flex; justify-content: space-between; align-items: center; padding-top: 8px; border-top: 1px dashed var(--card-border); }
 
         /* BUTTONS */
         .btn { 
-            padding: 8px 14px; 
+            padding: 9px 16px; 
             border-radius: var(--radius-md); 
             border: none; 
             font-weight: 700; 
@@ -205,108 +255,136 @@
             display: inline-flex; 
             align-items: center; 
             justify-content: center;
-            gap: 6px; 
-            font-size: 12px; 
-            transition: background 0.15s ease, transform 0.1s ease; 
+            gap: 8px; 
+            font-size: 12.5px; 
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
         }
-        .btn-primary { background: var(--accent-blue); color: #0b0f19; }
-        .btn-outline { background: rgba(255,255,255,0.04); border: 1px solid var(--card-border); color: var(--text-main); }
-        .btn:active { transform: scale(0.98); }
+        .btn-primary { 
+            background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%); 
+            color: #030712; 
+            box-shadow: 0 4px 14px rgba(56, 189, 248, 0.3);
+        }
+        .btn-primary:hover { box-shadow: 0 6px 20px rgba(56, 189, 248, 0.45); transform: translateY(-1px); }
+        .btn-outline { 
+            background: rgba(255,255,255,0.04); 
+            border: 1px solid var(--card-border); 
+            color: var(--text-main); 
+        }
+        .btn-outline:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2); }
+        .btn:active { transform: scale(0.97); }
 
         /* SOLUTIONS FILTER */
-        .solutions-header { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+        .solutions-header { display: flex; flex-direction: column; gap: 12px; margin-bottom: 14px; }
         @media (min-width: 480px) {
             .solutions-header { flex-direction: row; justify-content: space-between; align-items: center; }
         }
 
-        .filter-chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
+        .filter-chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
         .filter-chips::-webkit-scrollbar { display: none; }
-        .chip { background: rgba(255,255,255,0.04); border: 1px solid var(--card-border); color: var(--text-muted); padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap; }
-        .chip.active { background: var(--accent-blue); color: #0b0f19; border-color: var(--accent-blue); }
+        .chip { 
+            background: rgba(255,255,255,0.04); 
+            border: 1px solid var(--card-border); 
+            color: var(--text-muted); 
+            padding: 6px 14px; 
+            border-radius: 20px; 
+            font-size: 11.5px; 
+            font-weight: 700; 
+            cursor: pointer; 
+            white-space: nowrap; 
+            transition: all 0.2s ease;
+        }
+        .chip.active { background: var(--accent-blue); color: #030712; border-color: var(--accent-blue); box-shadow: 0 2px 10px rgba(56, 189, 248, 0.3); }
 
         .solution-card { 
             background: rgba(255, 255, 255, 0.02); 
             border: 1px solid var(--card-border); 
             border-radius: var(--radius-md); 
-            padding: 12px; 
-            margin-bottom: 10px; 
+            padding: 14px; 
+            margin-bottom: 12px; 
             cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .solution-card:hover {
+            border-color: var(--card-hover-border);
+            background: rgba(255, 255, 255, 0.03);
         }
         
         .toggle-img-btn {
             background: rgba(56, 189, 248, 0.1);
             color: var(--accent-blue);
             border: 1px solid rgba(56, 189, 248, 0.25);
-            border-radius: 6px;
-            padding: 5px 10px;
+            border-radius: var(--radius-sm);
+            padding: 6px 12px;
             font-size: 11px;
             font-weight: 700;
             cursor: pointer;
-            margin: 6px 0;
+            margin: 8px 0;
             display: inline-flex;
             align-items: center;
-            gap: 5px;
+            gap: 6px;
         }
 
-        .q-image-container { margin: 8px 0; display: none; width: 100%; }
+        .q-image-container { margin: 10px 0; display: none; width: 100%; }
         .q-image-container.show { display: flex; }
-        .q-image-render { max-width: 100%; max-height: 220px; object-fit: contain; border-radius: 6px; border: 1px solid var(--card-border); background: rgba(255, 255, 255, 0.02); padding: 4px; }
+        .q-image-render { max-width: 100%; max-height: 240px; object-fit: contain; border-radius: 8px; border: 1px solid var(--card-border); background: rgba(255, 255, 255, 0.02); padding: 6px; }
 
-        .svg-container { margin: 8px 0; padding: 8px; background: rgba(255, 255, 255, 0.02); border: 1px dashed var(--card-border); border-radius: 6px; overflow-x: auto; display: none; }
+        .svg-container { margin: 10px 0; padding: 10px; background: rgba(255, 255, 255, 0.02); border: 1px dashed var(--card-border); border-radius: 8px; overflow-x: auto; display: none; }
         .svg-container.show { display: flex; justify-content: center; }
 
-        .q-tag { font-size: 9.5px; font-weight: 800; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; margin-bottom: 6px; display: inline-block; }
-        .tag-correct { background: rgba(16, 185, 129, 0.15); color: var(--accent-green); }
-        .tag-wrong { background: rgba(244, 63, 94, 0.15); color: var(--accent-red); }
-        .tag-skipped { background: rgba(245, 158, 11, 0.15); color: var(--accent-yellow); }
+        .q-tag { font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 6px; text-transform: uppercase; margin-bottom: 8px; display: inline-block; letter-spacing: 0.5px; }
+        .tag-correct { background: rgba(16, 185, 129, 0.15); color: var(--accent-green); border: 1px solid rgba(16, 185, 129, 0.3); }
+        .tag-wrong { background: rgba(244, 63, 94, 0.15); color: var(--accent-red); border: 1px solid rgba(244, 63, 94, 0.3); }
+        .tag-skipped { background: rgba(245, 158, 11, 0.15); color: var(--accent-yellow); border: 1px solid rgba(245, 158, 11, 0.3); }
 
         /* MODALS */
         .modal-overlay {
             display: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(3, 7, 18, 0.85);
+            background: rgba(3, 7, 18, 0.88);
             z-index: 1000;
             justify-content: center;
             align-items: center;
-            backdrop-filter: blur(6px);
-            padding: 12px;
+            backdrop-filter: blur(10px);
+            padding: 16px;
         }
         .modal-overlay.active { display: flex; }
         .modal-body {
-            background: #111827;
-            border: 1px solid var(--card-border);
+            background: #0f172a;
+            border: 1px solid rgba(255,255,255,0.12);
             border-radius: var(--radius-lg);
-            max-width: 550px;
+            max-width: 600px;
             width: 100%;
             max-height: 85vh;
             overflow-y: auto;
-            padding: 16px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            padding: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
             position: relative;
         }
         .modal-close-btn {
             position: absolute;
-            top: 12px;
-            right: 12px;
+            top: 14px;
+            right: 14px;
             background: rgba(255,255,255,0.1);
             color: white;
             border: none;
-            width: 28px;
-            height: 28px;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: background 0.2s;
         }
-        .image-modal-content { max-width: 95%; max-height: 80vh; border-radius: 8px; object-fit: contain; }
+        .modal-close-btn:hover { background: rgba(255,255,255,0.2); }
+        .image-modal-content { max-width: 95%; max-height: 80vh; border-radius: 12px; object-fit: contain; }
 
         /* PRINT PDF OPTIMIZATION */
         @media print {
-            body { background: #fff; color: #000; }
+            body { background: #fff !important; color: #000 !important; }
             .navbar, .btn, .filter-chips { display: none !important; }
-            .card { border: 1px solid #ccc; box-shadow: none; background: #fff; color: #000; margin-bottom: 10px; }
+            .card { border: 1px solid #ddd !important; box-shadow: none !important; background: #fff !important; color: #000 !important; margin-bottom: 12px !important; }
             .stat-value, .history-title { color: #000 !important; }
         }
     </style>
@@ -314,47 +392,49 @@
 <body>
 
 <header class="navbar">
-    <div class="brand"><i class="fa-solid fa-chart-line"></i> Performance Analytics</div>
-    <button class="btn btn-outline" onclick="window.location.href='tests.html'"><i class="fa-solid fa-arrow-left"></i> Back</button>
+    <div class="brand"><i class="fa-solid fa-chart-line"></i> Performance Analytics Hub</div>
+    <button class="btn btn-outline" onclick="window.location.href='tests.html'"><i class="fa-solid fa-arrow-left"></i> Dashboard</button>
 </header>
 
 <div class="container" id="mainContainer">
 
     <!-- AUTH LOCK OVERLAY -->
-    <div id="authLockSection" class="card" style="text-align: center; padding: 36px 16px; display: none;">
-        <i class="fa-solid fa-lock" style="font-size: 36px; color: var(--accent-blue); margin-bottom: 12px;"></i>
-        <h2 style="font-size: 18px; font-weight: 800; margin-bottom: 6px;">Login Required</h2>
-        <p style="font-size: 12px; color: var(--text-muted); max-width: 360px; margin: 0 auto 16px auto;">
-            Apna complete performance progress graph aur test analysis dekhne ke liye login karein.
+    <div id="authLockSection" class="card" style="text-align: center; padding: 48px 20px; display: none;">
+        <i class="fa-solid fa-lock" style="font-size: 42px; color: var(--accent-blue); margin-bottom: 16px;"></i>
+        <h2 style="font-size: 20px; font-weight: 800; margin-bottom: 8px;">Authentication Required</h2>
+        <p style="font-size: 13px; color: var(--text-muted); max-width: 400px; margin: 0 auto 20px auto; line-height: 1.5;">
+            Apna complete progress graph, historical analysis aur test solution report dekhne ke liye account login karein.
         </p>
-        <button class="btn btn-primary" onclick="window.location.href='login.html'"><i class="fa-solid fa-right-to-bracket"></i> Login Now</button>
+        <button class="btn btn-primary" onclick="window.location.href='login.html'"><i class="fa-solid fa-right-to-bracket"></i> Account Login</button>
     </div>
 
     <!-- MAIN DASHBOARD -->
-    <div id="dashboardArea" style="display: flex; flex-direction: column; gap: 16px;">
+    <div id="dashboardArea" style="display: flex; flex-direction: column; gap: 20px;">
 
-        <!-- 1. USER PROFILE CARD -->
+        <!-- 1. USER PROFILE HERO CARD -->
         <div class="profile-hero">
             <div class="user-info-box">
-                <img id="userAvatar" src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" class="avatar-img" alt="Avatar">
+                <div class="avatar-container">
+                    <img id="userAvatar" src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" class="avatar-img" alt="Avatar">
+                </div>
                 <div class="user-details">
                     <h2 id="userName">Student Name</h2>
-                    <p id="userSubtext">Roitx Study Hub Analytics Dashboard</p>
+                    <p id="userSubtext">Roitx Study Hub Analytics & Performance Tracking</p>
                 </div>
             </div>
-            <div style="font-size: 11px; background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 12px; border: 1px solid var(--card-border);">
-                <i class="fa-solid fa-shield-halved" style="color: var(--accent-green);"></i> Active Student
+            <div class="badge-verified">
+                <i class="fa-solid fa-shield-halved"></i> Active Aspirant
             </div>
         </div>
 
-        <!-- 2. PROGRESS CHART -->
+        <!-- 2. PROGRESS CHART & OVERALL STATS -->
         <div class="card">
             <div class="card-title">
-                <span><i class="fa-solid fa-square-poll-vertical" style="color: var(--accent-blue);"></i> Top 5 Test Progress</span>
-                <span id="testCountBadge" style="font-size: 10px; background: rgba(56, 189, 248, 0.15); color: var(--accent-blue); padding: 3px 8px; border-radius: 10px;">0 Attempts</span>
+                <span><i class="fa-solid fa-square-poll-vertical" style="color: var(--accent-blue);"></i> Recent Attempt Progress</span>
+                <span id="testCountBadge" style="font-size: 11px; font-weight: 700; background: rgba(56, 189, 248, 0.15); color: var(--accent-blue); padding: 4px 10px; border-radius: 12px; border: 1px solid rgba(56, 189, 248, 0.3);">0 Attempts</span>
             </div>
 
-            <div class="chart-box" style="height: 180px; margin-bottom: 12px;">
+            <div class="chart-box">
                 <canvas id="overallProgressChart"></canvas>
             </div>
 
@@ -364,7 +444,7 @@
                     <div class="stat-value" style="color: var(--accent-green);" id="overallHighest">0%</div>
                 </div>
                 <div class="stat-box">
-                    <span class="stat-label">Average Score</span>
+                    <span class="stat-label">Average Accuracy</span>
                     <div class="stat-value" style="color: var(--accent-blue);" id="overallAvg">0%</div>
                 </div>
                 <div class="stat-box">
@@ -372,7 +452,7 @@
                     <div class="stat-value" style="color: var(--accent-red);" id="overallLowest">0%</div>
                 </div>
                 <div class="stat-box">
-                    <span class="stat-label">Above Average</span>
+                    <span class="stat-label">Consistent Benchmark</span>
                     <div class="stat-value" style="color: var(--accent-purple);" id="overallCrossed">0 Times</div>
                 </div>
             </div>
@@ -386,13 +466,13 @@
             <div id="historyGrid" class="history-grid"></div>
         </div>
 
-        <!-- 4. SELECTED TEST DETAILED ANALYSIS -->
-        <div id="pdfReportArea" style="display: none; flex-direction: column; gap: 16px;">
+        <!-- 4. SELECTED TEST DETAILED ANALYSIS REPORT -->
+        <div id="pdfReportArea" style="display: none; flex-direction: column; gap: 20px;">
 
-            <div class="card" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(56, 189, 248, 0.05) 100%), var(--card-bg);">
+            <div class="card" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(56, 189, 248, 0.08) 100%), var(--card-bg);">
                 <div class="card-title">
-                    <span id="testTitle" style="color: var(--accent-blue); font-size: 14px;"><i class="fa-solid fa-file-signature"></i> Practice Test Report</span>
-                    <span id="testAttemptDate" style="font-size: 11px; color: var(--text-muted); font-weight: normal;">Date: --</span>
+                    <span id="testTitle" style="color: var(--accent-blue); font-size: 15px; font-weight: 800;"><i class="fa-solid fa-file-signature"></i> Practice Test Report</span>
+                    <span id="testAttemptDate" style="font-size: 12px; color: var(--text-muted); font-weight: normal;">Date: --</span>
                 </div>
 
                 <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
@@ -405,22 +485,22 @@
                         <div class="stat-value" style="color: var(--accent-yellow);" id="valAccuracy">0%</div>
                     </div>
                     <div class="stat-box">
-                        <span class="stat-label">Total Time</span>
-                        <div class="stat-value" style="font-size: 15px;" id="valTime">0m 0s</div>
+                        <span class="stat-label">Time Taken</span>
+                        <div class="stat-value" style="font-size: 17px;" id="valTime">0m 0s</div>
                     </div>
                 </div>
             </div>
 
             <div class="analytics-grid">
                 <div class="card">
-                    <div class="card-title"><i class="fa-solid fa-chart-pie" style="color: var(--accent-green);"></i> Breakdown</div>
+                    <div class="card-title"><i class="fa-solid fa-chart-pie" style="color: var(--accent-green);"></i> Question Breakdown</div>
                     <div class="chart-box">
                         <canvas id="attemptChart"></canvas>
                     </div>
                 </div>
 
                 <div class="card">
-                    <div class="card-title"><i class="fa-solid fa-brain" style="color: var(--accent-pink);"></i> Diagnostic Insights</div>
+                    <div class="card-title"><i class="fa-solid fa-brain" style="color: var(--accent-pink);"></i> Performance Insights</div>
                     <div id="aiInsightsContainer"></div>
                 </div>
             </div>
@@ -428,7 +508,7 @@
             <!-- SOLUTIONS LIST -->
             <div class="card">
                 <div class="solutions-header">
-                    <div class="card-title" style="border:none; margin:0; padding:0;"><i class="fa-solid fa-file-lines" style="color: var(--accent-yellow);"></i> Solutions</div>
+                    <div class="card-title" style="border:none; margin:0; padding:0;"><i class="fa-solid fa-file-lines" style="color: var(--accent-yellow);"></i> Question Solutions & Analysis</div>
                     <div class="filter-chips">
                         <button class="chip active" onclick="filterSolutions('all', this)">All</button>
                         <button class="chip" onclick="filterSolutions('correct', this)">Correct</button>
@@ -439,9 +519,8 @@
                 <div id="solutionsList"></div>
             </div>
 
-            <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
-                <button class="btn btn-outline" onclick="downloadPDF()"><i class="fa-solid fa-download"></i> Download Report</button>
-                <button class="btn btn-primary" onclick="shareWhatsApp()"><i class="fa-brands fa-whatsapp"></i> Share Performance</button>
+            <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                <button class="btn btn-primary" onclick="downloadPDF()"><i class="fa-solid fa-download"></i> Download Report (PDF)</button>
             </div>
 
         </div>
@@ -538,8 +617,8 @@
     }
 
     function renderOverallProgressSummary(attempts) {
-        let recentAttempts = attempts.slice(0, 5).reverse();
-        let labels = recentAttempts.map((att, idx) => `T${idx + 1}`);
+        let recentAttempts = attempts.slice(0, 7).reverse();
+        let labels = recentAttempts.map((att, idx) => `Test ${idx + 1}`);
         let percentages = recentAttempts.map(att => att.total_marks > 0 ? Math.round((att.score / att.total_marks) * 100) : 0);
 
         let highest = Math.max(...percentages);
@@ -556,35 +635,78 @@
         const ctx = document.getElementById('overallProgressChart').getContext('2d');
         if (overallChartInstance) overallChartInstance.destroy();
 
-        let gradient = ctx.createLinearGradient(0, 0, 0, 180);
-        gradient.addColorStop(0, 'rgba(56, 189, 248, 0.35)');
+        // Advanced smooth gradient area fill
+        let gradient = ctx.createLinearGradient(0, 0, 0, 220);
+        gradient.addColorStop(0, 'rgba(56, 189, 248, 0.45)');
         gradient.addColorStop(1, 'rgba(56, 189, 248, 0.0)');
+
+        let avgArray = new Array(percentages.length).fill(avg);
 
         overallChartInstance = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: labels,
-                datasets: [{
-                    label: 'Percentage Score',
-                    data: percentages,
-                    borderColor: '#38bdf8',
-                    borderWidth: 2.5,
-                    backgroundColor: gradient,
-                    fill: true,
-                    tension: 0.3,
-                    pointBackgroundColor: '#ffffff',
-                    pointBorderColor: '#38bdf8',
-                    pointRadius: 4
-                }]
+                datasets: [
+                    {
+                        label: 'Percentage Score',
+                        data: percentages,
+                        borderColor: '#38bdf8',
+                        borderWidth: 3,
+                        backgroundColor: gradient,
+                        fill: true,
+                        tension: 0.4, // Advanced smooth spline curve
+                        pointBackgroundColor: '#38bdf8',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 6,
+                        pointHoverRadius: 8
+                    },
+                    {
+                        label: 'Average Baseline',
+                        data: avgArray,
+                        borderColor: 'rgba(245, 158, 11, 0.7)',
+                        borderWidth: 1.5,
+                        borderDash: [5, 5],
+                        fill: false,
+                        pointRadius: 0
+                    }
+                ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                scales: {
-                    y: { min: 0, max: 100, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8', font: { size: 10 } } },
-                    x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 10 } } }
+                interaction: {
+                    mode: 'index',
+                    intersect: false
                 },
-                plugins: { legend: { display: false } }
+                scales: {
+                    y: { 
+                        min: 0, 
+                        max: 100, 
+                        grid: { color: 'rgba(255, 255, 255, 0.06)', borderDash: [4, 4] }, 
+                        ticks: { color: '#9ca3af', font: { size: 10, family: 'Plus Jakarta Sans' }, stepSize: 20 } 
+                    },
+                    x: { 
+                        grid: { display: false }, 
+                        ticks: { color: '#9ca3af', font: { size: 10, family: 'Plus Jakarta Sans' } } 
+                    }
+                },
+                plugins: { 
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#0f172a',
+                        borderColor: 'rgba(255, 255, 255, 0.1)',
+                        borderWidth: 1,
+                        padding: 10,
+                        titleFont: { size: 12, weight: 'bold' },
+                        bodyFont: { size: 11 },
+                        callbacks: {
+                            label: function(context) {
+                                return ` ${context.dataset.label}: ${context.raw}%`;
+                            }
+                        }
+                    }
+                }
             }
         });
     }
@@ -604,15 +726,15 @@
                 <div class="history-item">
                     <div>
                         <div class="history-title">${displayTitle}</div>
-                        <div class="history-meta" style="margin-top: 4px;">
+                        <div class="history-meta" style="margin-top: 6px;">
                             <span><i class="fa-regular fa-clock"></i> ${formattedDate}</span>
                             <span><i class="fa-solid fa-bullseye"></i> ${att.accuracy || 0}% Acc</span>
                         </div>
                     </div>
                     <div class="history-stats">
-                        <span style="font-size: 11.5px; font-weight: 800; color: var(--accent-blue);">Score: ${att.score}/${att.total_marks} (${pct}%)</span>
-                        <button class="btn btn-outline" style="padding: 3px 8px; font-size: 10.5px;" onclick="selectTestFromHistory(${index})">
-                            View Report <i class="fa-solid fa-chevron-right"></i>
+                        <span style="font-size: 12px; font-weight: 800; color: var(--accent-blue);">Score: ${att.score}/${att.total_marks} (${pct}%)</span>
+                        <button class="btn btn-outline" style="padding: 4px 10px; font-size: 11px;" onclick="selectTestFromHistory(${index})">
+                            Inspect <i class="fa-solid fa-chevron-right"></i>
                         </button>
                     </div>
                 </div>
@@ -683,29 +805,29 @@
 
         if (accuracy >= 80) {
             html += `<div class="insight-box strong">
-                <b><i class="fa-solid fa-circle-check"></i> Excellent Accuracy (${accuracy}%):</b> Strong conceptual clarity demonstrated.
+                <b><i class="fa-solid fa-circle-check"></i> High Precision (${accuracy}%):</b> Top level accuracy! Apke strong conceptual clarity ko show karta hai.
             </div>`;
         } else if (accuracy >= 50) {
             html += `<div class="insight-box warning">
-                <b><i class="fa-solid fa-triangle-exclamation"></i> Moderate Accuracy (${accuracy}%):</b> Review incorrect responses to minimize negative marks.
+                <b><i class="fa-solid fa-triangle-exclamation"></i> Moderate Precision (${accuracy}%):</b> Incorrect answers par focus karke negative marks ko control karein.
             </div>`;
         } else {
             html += `<div class="insight-box weak">
-                <b><i class="fa-solid fa-circle-xmark"></i> Low Accuracy (${accuracy}%):</b> Re-visit foundational concepts before re-attempting.
+                <b><i class="fa-solid fa-circle-xmark"></i> Scope for Improvement (${accuracy}%):</b> Concepts aur basics ko fir se revise karne ki zaroorat hai.
             </div>`;
         }
 
         if (totalQ > 0 && (skipped / totalQ) >= 0.3) {
             html += `<div class="insight-box weak">
-                <b><i class="fa-solid fa-clock"></i> Unattempted Warning:</b> You skipped ${skipped} questions. Improve time distribution.
+                <b><i class="fa-solid fa-clock"></i> Time Allocation:</b> Apne ${skipped} questions skip kiye hain. Speed aur time management ko optimize karein.
             </div>`;
         } else if (wrong > correct) {
             html += `<div class="insight-box weak">
-                <b><i class="fa-solid fa-shield-cat"></i> Negative Marking Loss:</b> Wrong answers exceed correct ones. Avoid guessing.
+                <b><i class="fa-solid fa-shield-cat"></i> Negative Marking Loss:</b> Incorrect answers jyada hain. Unsure questions mein guessing avoid karein.
             </div>`;
         } else {
             html += `<div class="insight-box strong">
-                <b><i class="fa-solid fa-bolt"></i> Speed Strategy:</b> Avg speed per question: ${totalQ > 0 ? Math.round(timeSpentSec / totalQ) : 0}s.
+                <b><i class="fa-solid fa-bolt"></i> Speed Index:</b> Average time per question: ${totalQ > 0 ? Math.round(timeSpentSec / totalQ) : 0} seconds.
             </div>`;
         }
 
@@ -723,13 +845,14 @@
                 datasets: [{
                     data: [correct, wrong, skipped],
                     backgroundColor: ['#10b981', '#f43f5e', '#f59e0b'],
-                    borderWidth: 0
+                    borderWidth: 0,
+                    hoverOffset: 6
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 10 } } } }
+                plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af', font: { size: 11, family: 'Plus Jakarta Sans' } } } }
             }
         });
     }
@@ -765,10 +888,10 @@
         
         if (element.classList.contains('show')) {
             element.classList.remove('show');
-            btn.innerHTML = `<i class="fa-regular fa-image"></i> Show Image / Diagram`;
+            btn.innerHTML = `<i class="fa-regular fa-image"></i> View Diagram`;
         } else {
             element.classList.add('show');
-            btn.innerHTML = `<i class="fa-solid fa-eye-slash"></i> Hide Image / Diagram`;
+            btn.innerHTML = `<i class="fa-solid fa-eye-slash"></i> Hide Diagram`;
         }
     }
 
@@ -805,7 +928,7 @@
 
     function triggerMathTypeset() {
         if (window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
-            window.MathJax.typesetPromise().catch(err => console.warn("MathJax Typeset Error:", err));
+            window.MathJax.typesetPromise().catch(err => console.warn("MathJax Error:", err));
         }
     }
 
@@ -828,7 +951,7 @@
         const userAns = parseUserAnswerText(q);
         const corrAns = parseCorrectAnswerText(q);
         const qTitle = q.questionText || q.question_text || q.question || q.qText || q.title || `Question ${idx + 1}`;
-        const rawExp = q.explanation || q.solution || "No detailed explanation available.";
+        const rawExp = q.explanation || q.solution || "Detailed explanation for this question is not available.";
         const exp = formatSolutionText(rawExp);
 
         const imgData = getQuestionImageOrSvg(q);
@@ -844,18 +967,18 @@
         }
 
         let modalHtml = `
-            <h3 style="font-size:15px; margin-bottom:10px; color:var(--accent-blue);">Question ${idx + 1} Analytics</h3>
-            <div style="font-size:13px; font-weight:700; margin-bottom:8px; line-height: 1.4;">${qTitle}</div>
+            <h3 style="font-size:16px; margin-bottom:12px; color:var(--accent-blue);">Question ${idx + 1} Detailed Analysis</h3>
+            <div style="font-size:13.5px; font-weight:700; margin-bottom:10px; line-height: 1.45;">${qTitle}</div>
             
             ${mediaHtml}
 
-            <div style="font-size:12px; color:var(--text-muted); margin: 10px 0;">
-                <p><strong>Your Choice:</strong> <span style="color:${status === 'correct' ? 'var(--accent-green)' : (status === 'skipped' ? 'var(--accent-yellow)' : 'var(--accent-red)')}">${userAns}</span></p>
-                <p style="margin-top:4px;"><strong>Correct Answer:</strong> <span style="color:var(--accent-green); font-weight: bold;">${corrAns}</span></p>
+            <div style="font-size:12.5px; color:var(--text-muted); margin: 12px 0;">
+                <p><strong>Your Selection:</strong> <span style="color:${status === 'correct' ? 'var(--accent-green)' : (status === 'skipped' ? 'var(--accent-yellow)' : 'var(--accent-red)')}">${userAns}</span></p>
+                <p style="margin-top:5px;"><strong>Correct Solution:</strong> <span style="color:var(--accent-green); font-weight: bold;">${corrAns}</span></p>
             </div>
-            <div style="font-size:12px; border-top:1px dashed var(--card-border); padding-top:8px; margin-top: 8px;">
+            <div style="font-size:12.5px; border-top:1px dashed var(--card-border); padding-top:10px; margin-top: 10px;">
                 <b style="color:var(--accent-yellow);">Explanation:</b>
-                <div style="margin-top:4px; line-height:1.5; color: var(--text-main);">${exp}</div>
+                <div style="margin-top:6px; line-height:1.55; color: var(--text-main);">${exp}</div>
             </div>
         `;
 
@@ -874,7 +997,7 @@
         const container = document.getElementById("solutionsList");
         
         if (!Array.isArray(answers) || answers.length === 0) {
-            container.innerHTML = `<div style="padding: 12px; text-align: center; color: var(--text-muted); font-size: 12px;">No detailed questions recorded for this attempt.</div>`;
+            container.innerHTML = `<div style="padding: 16px; text-align: center; color: var(--text-muted); font-size: 13px;">No detailed question records available for this attempt.</div>`;
             return;
         }
 
@@ -906,13 +1029,13 @@
                 if (imgData.type === 'svg') {
                     mediaHtml = `
                         <button class="toggle-img-btn" onclick="toggleImageDisplay(event, '${mediaId}')">
-                            <i class="fa-regular fa-image"></i> Show Image / Diagram
+                            <i class="fa-regular fa-image"></i> View Diagram
                         </button>
                         <div id="${mediaId}" class="svg-container" onclick="event.stopPropagation();">${imgData.value}</div>`;
                 } else if (imgData.type === 'img') {
                     mediaHtml = `
                         <button class="toggle-img-btn" onclick="toggleImageDisplay(event, '${mediaId}')">
-                            <i class="fa-regular fa-image"></i> Show Image / Diagram
+                            <i class="fa-regular fa-image"></i> View Diagram
                         </button>
                         <div id="${mediaId}" class="q-image-container">
                             <img src="${imgData.value}" class="q-image-render" onclick="event.stopPropagation(); openImageModal('${imgData.value}')" onerror="this.style.display='none'" alt="Question Image" />
@@ -922,11 +1045,11 @@
                 html += `
                     <div class="solution-card" onclick="openQuestionModal(${idx})">
                         <span class="q-tag ${tagClass}">${tagText}</span>
-                        <div style="font-weight:700; font-size:13px; margin-bottom:4px;">Q${idx + 1}. ${qTitle}</div>
+                        <div style="font-weight:700; font-size:13.5px; margin-bottom:6px; color: var(--text-main);">Q${idx + 1}. ${qTitle}</div>
                         ${mediaHtml}
-                        <div style="font-size:11.5px; color:var(--text-muted); margin-top: 4px;">
-                            <div><strong>Your Answer:</strong> ${userAns}</div>
-                            <div><strong>Correct Answer:</strong> ${corrAns}</div>
+                        <div style="font-size:12px; color:var(--text-muted); margin-top: 6px; display: flex; flex-direction: column; gap: 2px;">
+                            <div><strong>Your Choice:</strong> ${userAns}</div>
+                            <div><strong>Correct Solution:</strong> ${corrAns}</div>
                         </div>
                     </div>
                 `;
@@ -934,7 +1057,7 @@
             container.innerHTML = html;
             triggerMathTypeset();
         } else {
-            container.innerHTML = `<div style="padding: 12px; text-align: center; color: var(--text-muted); font-size: 12px;">No questions found in this category.</div>`;
+            container.innerHTML = `<div style="padding: 16px; text-align: center; color: var(--text-muted); font-size: 13px;">No questions found in this category.</div>`;
         }
     }
 
@@ -947,11 +1070,6 @@
     function downloadPDF() {
         const element = document.getElementById('pdfReportArea');
         html2pdf().from(element).save('Roitx_Performance_Report.pdf');
-    }
-
-    function shareWhatsApp() {
-        let text = `🏆 *Roitx Test Performance*\nScore: ${document.getElementById("valScore").innerText}\nAccuracy: ${document.getElementById("valAccuracy").innerText}`;
-        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
     }
 </script>
 </body>
