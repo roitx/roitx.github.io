@@ -996,6 +996,7 @@ async function saveResultAndFetchRank(scoreVal, totalMarks) {
                 user_id: user.id,
                 test_id: currentTest.id,
                 test_title: currentTest.title || 'Portal Test',
+                subject: currentTest.subject || currentTest.subject_name || 'General', // Subject dropdown fix ke liye
                 score: scoreVal.toString(),
                 total_marks: totalMarks.toString(),
                 accuracy: accuracyPct,
@@ -1004,8 +1005,10 @@ async function saveResultAndFetchRank(scoreVal, totalMarks) {
                 skipped_answers: skippedCount,
                 time_taken_sec: totalTimeSpentSec,
                 user_answers: formattedUserAnswers,
+                created_at: new Date().toISOString(), // Har reattempt par latest date save hogi
                 updated_at: new Date().toISOString()
             }], { onConflict: 'user_id,test_id' });
+
 
         if (insertErr) {
             console.error("Supabase Save Result Error:", insertErr.message || JSON.stringify(insertErr));

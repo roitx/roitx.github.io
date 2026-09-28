@@ -132,6 +132,7 @@
             border-bottom: 1px solid var(--card-border); 
             padding-bottom: 12px; 
             letter-spacing: -0.2px;
+            flex-wrap: wrap;
         }
 
         /* PROFILE HERO */
@@ -174,11 +175,56 @@
             gap: 6px;
         }
 
+        /* GRAPH CONTROLS BAR */
+        .graph-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .select-input {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--card-border);
+            color: var(--text-main);
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            outline: none;
+            cursor: pointer;
+        }
+        .select-input option {
+            background: #0f172a;
+            color: #fff;
+        }
+        .metric-toggle {
+            display: flex;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 3px;
+            border-radius: 10px;
+            border: 1px solid var(--card-border);
+        }
+        .metric-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 5px 10px;
+            font-size: 11px;
+            font-weight: 700;
+            border-radius: 7px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .metric-btn.active {
+            background: var(--accent-blue);
+            color: #030712;
+        }
+
         /* STATS GRID */
         .stats-grid { 
             display: grid; 
             grid-template-columns: repeat(2, 1fr); 
             gap: 12px; 
+            margin-top: 16px;
         }
 
         @media (min-width: 640px) {
@@ -205,7 +251,8 @@
             .analytics-grid { grid-template-columns: 1fr 1fr; }
         }
 
-        .chart-box { position: relative; width: 100%; height: 240px; display: flex; justify-content: center; align-items: center; }
+        /* GRAPH CONTAINER COMPACT HEIGHT */
+        .chart-box { position: relative; width: 100%; height: 210px; display: flex; justify-content: center; align-items: center; }
 
         .insight-box { 
             background: rgba(56, 189, 248, 0.08); 
@@ -243,7 +290,7 @@
         }
         .history-title { font-size: 14px; font-weight: 700; color: var(--text-main); line-height: 1.35; }
         .history-meta { font-size: 11.5px; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center; }
-        .history-stats { display: flex; justify-content: space-between; align-items: center; padding-top: 8px; border-top: 1px dashed var(--card-border); }
+        .history-stats { display: flex; justify-content: space-between; align-items: center; padding-top: 8px; border-top: 1px dashed var(--card-border); flex-wrap: wrap; gap: 8px; }
 
         /* BUTTONS */
         .btn { 
@@ -265,6 +312,15 @@
             box-shadow: 0 4px 14px rgba(56, 189, 248, 0.3);
         }
         .btn-primary:hover { box-shadow: 0 6px 20px rgba(56, 189, 248, 0.45); transform: translateY(-1px); }
+        .btn-reattempt {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(217, 119, 6, 0.2) 100%);
+            border: 1px solid rgba(245, 158, 11, 0.4);
+            color: var(--accent-yellow);
+        }
+        .btn-reattempt:hover {
+            background: rgba(245, 158, 11, 0.3);
+            color: #fff;
+        }
         .btn-outline { 
             background: rgba(255,255,255,0.04); 
             border: 1px solid var(--card-border); 
@@ -383,7 +439,7 @@
         /* PRINT PDF OPTIMIZATION */
         @media print {
             body { background: #fff !important; color: #000 !important; }
-            .navbar, .btn, .filter-chips { display: none !important; }
+            .navbar, .btn, .filter-chips, .graph-controls { display: none !important; }
             .card { border: 1px solid #ddd !important; box-shadow: none !important; background: #fff !important; color: #000 !important; margin-bottom: 12px !important; }
             .stat-value, .history-title { color: #000 !important; }
         }
@@ -393,7 +449,7 @@
 
 <header class="navbar">
     <div class="brand"><i class="fa-solid fa-chart-line"></i> Performance Analytics Hub</div>
-    <button class="btn btn-outline" onclick="window.location.href='tests.html'"><i class="fa-solid fa-arrow-left"></i> Dashboard</button>
+    <button class="btn btn-outline" onclick="window.location.href='index.html'"><i class="fa-solid fa-arrow-left"></i> Dashboard</button>
 </header>
 
 <div class="container" id="mainContainer">
@@ -427,24 +483,38 @@
             </div>
         </div>
 
-        <!-- 2. PROGRESS CHART & OVERALL STATS -->
+        <!-- 2. ADVANCED PROGRESS CHART & OVERALL STATS -->
         <div class="card">
             <div class="card-title">
-                <span><i class="fa-solid fa-square-poll-vertical" style="color: var(--accent-blue);"></i> Recent Attempt Progress</span>
-                <span id="testCountBadge" style="font-size: 11px; font-weight: 700; background: rgba(56, 189, 248, 0.15); color: var(--accent-blue); padding: 4px 10px; border-radius: 12px; border: 1px solid rgba(56, 189, 248, 0.3);">0 Attempts</span>
+                <span><i class="fa-solid fa-chart-line" style="color: var(--accent-blue);"></i> Date & Test-wise Analytics</span>
+                
+                <!-- ADVANCED GRAPH CONTROLS -->
+                <div class="graph-controls">
+                    <select id="subjectFilter" class="select-input" onchange="filterGraphBySubject()">
+                        <option value="all">All Subjects / Tests</option>
+                    </select>
+
+                    <div class="metric-toggle">
+                        <button class="metric-btn active" id="btnScoreMetric" onclick="switchGraphMetric('score')">Score %</button>
+                        <button class="metric-btn" id="btnAccMetric" onclick="switchGraphMetric('accuracy')">Accuracy %</button>
+                    </div>
+
+                    <span id="testCountBadge" style="font-size: 11px; font-weight: 700; background: rgba(56, 189, 248, 0.15); color: var(--accent-blue); padding: 5px 10px; border-radius: 12px; border: 1px solid rgba(56, 189, 248, 0.3);">0 Attempts</span>
+                </div>
             </div>
 
+            <!-- COMPACT GRAPH CONTAINER HEIGHT -->
             <div class="chart-box">
                 <canvas id="overallProgressChart"></canvas>
             </div>
 
             <div class="stats-grid">
                 <div class="stat-box">
-                    <span class="stat-label">Highest Score</span>
+                    <span class="stat-label" id="labelHighest">Highest Score</span>
                     <div class="stat-value" style="color: var(--accent-green);" id="overallHighest">0%</div>
                 </div>
                 <div class="stat-box">
-                    <span class="stat-label">Average Accuracy</span>
+                    <span class="stat-label">Average Performance</span>
                     <div class="stat-value" style="color: var(--accent-blue);" id="overallAvg">0%</div>
                 </div>
                 <div class="stat-box">
@@ -452,7 +522,7 @@
                     <div class="stat-value" style="color: var(--accent-red);" id="overallLowest">0%</div>
                 </div>
                 <div class="stat-box">
-                    <span class="stat-label">Consistent Benchmark</span>
+                    <span class="stat-label">80%+ Target Cleared</span>
                     <div class="stat-value" style="color: var(--accent-purple);" id="overallCrossed">0 Times</div>
                 </div>
             </div>
@@ -461,7 +531,7 @@
         <!-- 3. PREVIOUS TEST ATTEMPTS LIST -->
         <div id="previousTestsSection" class="card" style="display: none;">
             <div class="card-title">
-                <span><i class="fa-solid fa-clock-rotate-left" style="color: var(--accent-purple);"></i> Select Test Attempt To Inspect</span>
+                <span><i class="fa-solid fa-clock-rotate-left" style="color: var(--accent-purple);"></i> Select Test Attempt To Inspect or Reattempt</span>
             </div>
             <div id="historyGrid" class="history-grid"></div>
         </div>
@@ -494,7 +564,7 @@
             <div class="analytics-grid">
                 <div class="card">
                     <div class="card-title"><i class="fa-solid fa-chart-pie" style="color: var(--accent-green);"></i> Question Breakdown</div>
-                    <div class="chart-box">
+                    <div class="chart-box" style="height: 200px;">
                         <canvas id="attemptChart"></canvas>
                     </div>
                 </div>
@@ -549,6 +619,7 @@
     let attemptChartInstance = null;
     let allUserAnswersData = [];
     let fetchedAttemptsList = [];
+    let currentMetric = 'score';
 
     document.addEventListener("DOMContentLoaded", async function() {
         let currentUser = await checkUserAuthStatus();
@@ -596,7 +667,7 @@
                 .from('test_results')
                 .select('*')
                 .eq('user_id', userId)
-                .order('created_at', { ascending: false });
+                .order('created_at', { ascending: true });
 
             if (error) {
                 console.error("Error fetching test results:", error);
@@ -605,8 +676,11 @@
 
             if (data && data.length > 0) {
                 fetchedAttemptsList = data;
+                populateSubjectDropdown(fetchedAttemptsList);
                 renderOverallProgressSummary(fetchedAttemptsList);
-                renderHistoryGrid(fetchedAttemptsList);
+                
+                let recentFirstAttempts = [...fetchedAttemptsList].reverse();
+                renderHistoryGrid(recentFirstAttempts);
                 document.getElementById("pdfReportArea").style.display = "none";
             } else {
                 document.getElementById("testCountBadge").innerText = "0 Attempts";
@@ -616,31 +690,107 @@
         }
     }
 
-    function renderOverallProgressSummary(attempts) {
-        let recentAttempts = attempts.slice(0, 7).reverse();
-        let labels = recentAttempts.map((att, idx) => `Test ${idx + 1}`);
-        let percentages = recentAttempts.map(att => att.total_marks > 0 ? Math.round((att.score / att.total_marks) * 100) : 0);
+    // FIX 1: Safe fallback check for missing 'subject' column in Supabase schema
+    function populateSubjectDropdown(attempts) {
+        const dropdown = document.getElementById("subjectFilter");
+        dropdown.innerHTML = `<option value="all">All Subjects / Tests</option>`;
+        
+        let subjects = new Set();
+        attempts.forEach(att => {
+            let subName = att.subject_name || att.subject || null;
+            if (!subName && att.test_title) {
+                if (att.test_title.includes(':')) {
+                    subName = att.test_title.split(':')[0].trim();
+                } else if (att.test_title.includes('-')) {
+                    subName = att.test_title.split('-')[0].trim();
+                } else {
+                    subName = att.test_title;
+                }
+            }
+            if (subName) subjects.add(subName);
+        });
 
-        let highest = Math.max(...percentages);
-        let lowest = Math.min(...percentages);
-        let avg = Math.round(percentages.reduce((a, b) => a + b, 0) / percentages.length);
-        let crossedCount = percentages.filter(p => p >= avg).length;
+        subjects.forEach(sub => {
+            let opt = document.createElement("option");
+            opt.value = sub;
+            opt.innerText = sub;
+            dropdown.appendChild(opt);
+        });
+    }
+
+    function filterGraphBySubject() {
+        const selectedSubject = document.getElementById("subjectFilter").value;
+        let filtered = fetchedAttemptsList;
+        
+        if (selectedSubject !== 'all') {
+            filtered = fetchedAttemptsList.filter(a => {
+                let subName = a.subject_name || a.subject || null;
+                if (!subName && a.test_title) {
+                    if (a.test_title.includes(':')) subName = a.test_title.split(':')[0].trim();
+                    else if (a.test_title.includes('-')) subName = a.test_title.split('-')[0].trim();
+                    else subName = a.test_title;
+                }
+                return subName === selectedSubject;
+            });
+        }
+        renderOverallProgressSummary(filtered);
+    }
+
+    function switchGraphMetric(metric) {
+        currentMetric = metric;
+        document.getElementById("btnScoreMetric").classList.toggle("active", metric === 'score');
+        document.getElementById("btnAccMetric").classList.toggle("active", metric === 'accuracy');
+        document.getElementById("labelHighest").innerText = metric === 'score' ? "Highest Score" : "Highest Accuracy";
+        filterGraphBySubject();
+    }
+
+    function renderOverallProgressSummary(attempts) {
+        if (!attempts || attempts.length === 0) {
+            if (overallChartInstance) overallChartInstance.destroy();
+            document.getElementById("overallHighest").innerText = `0%`;
+            document.getElementById("overallAvg").innerText = `0%`;
+            document.getElementById("overallLowest").innerText = `0%`;
+            document.getElementById("overallCrossed").innerText = `0 Times`;
+            document.getElementById("testCountBadge").innerText = `0 Attempts`;
+            return;
+        }
+
+        let labels = attempts.map(att => {
+            let d = att.created_at ? new Date(att.created_at) : new Date();
+            let dateStr = `${d.getDate()}/${d.getMonth()+1}`;
+            let tTitle = att.test_title ? (att.test_title.length > 12 ? att.test_title.substring(0, 10) + '..' : att.test_title) : 'Test';
+            return [`${dateStr}`, `${tTitle}`];
+        });
+
+        let dataValues = attempts.map(att => {
+            if (currentMetric === 'score') {
+                return att.total_marks > 0 ? Math.round((att.score / att.total_marks) * 100) : 0;
+            } else {
+                return Number(att.accuracy) || 0;
+            }
+        });
+
+        let highest = Math.max(...dataValues);
+        let lowest = Math.min(...dataValues);
+        let avg = Math.round(dataValues.reduce((a, b) => a + b, 0) / dataValues.length);
+        let targetCrossed = dataValues.filter(p => p >= 80).length;
 
         document.getElementById("overallHighest").innerText = `${highest}%`;
         document.getElementById("overallAvg").innerText = `${avg}%`;
         document.getElementById("overallLowest").innerText = `${lowest}%`;
-        document.getElementById("overallCrossed").innerText = `${crossedCount} / ${percentages.length}`;
+        document.getElementById("overallCrossed").innerText = `${targetCrossed} Times`;
         document.getElementById("testCountBadge").innerText = `${attempts.length} Total Attempts`;
 
         const ctx = document.getElementById('overallProgressChart').getContext('2d');
         if (overallChartInstance) overallChartInstance.destroy();
 
-        // Advanced smooth gradient area fill
-        let gradient = ctx.createLinearGradient(0, 0, 0, 220);
-        gradient.addColorStop(0, 'rgba(56, 189, 248, 0.45)');
-        gradient.addColorStop(1, 'rgba(56, 189, 248, 0.0)');
+        let primaryColor = currentMetric === 'score' ? '#38bdf8' : '#10b981';
+        let gradient = ctx.createLinearGradient(0, 0, 0, 200);
+        gradient.addColorStop(0, currentMetric === 'score' ? 'rgba(56, 189, 248, 0.45)' : 'rgba(16, 185, 129, 0.45)');
+        gradient.addColorStop(1, 'rgba(0, 0, 0, 0.0)');
 
-        let avgArray = new Array(percentages.length).fill(avg);
+        let avgArray = new Array(dataValues.length).fill(avg);
+        let targetArray = new Array(dataValues.length).fill(80);
 
         overallChartInstance = new Chart(ctx, {
             type: 'line',
@@ -648,25 +798,34 @@
                 labels: labels,
                 datasets: [
                     {
-                        label: 'Percentage Score',
-                        data: percentages,
-                        borderColor: '#38bdf8',
-                        borderWidth: 3,
+                        label: currentMetric === 'score' ? 'Score Percentage' : 'Accuracy Rate',
+                        data: dataValues,
+                        borderColor: primaryColor,
+                        borderWidth: 2.5,
                         backgroundColor: gradient,
                         fill: true,
-                        tension: 0.4, // Advanced smooth spline curve
-                        pointBackgroundColor: '#38bdf8',
+                        tension: 0.35,
+                        pointBackgroundColor: primaryColor,
                         pointBorderColor: '#ffffff',
                         pointBorderWidth: 2,
-                        pointRadius: 6,
+                        pointRadius: 5,
                         pointHoverRadius: 8
                     },
                     {
-                        label: 'Average Baseline',
+                        label: 'Average Line',
                         data: avgArray,
                         borderColor: 'rgba(245, 158, 11, 0.7)',
                         borderWidth: 1.5,
                         borderDash: [5, 5],
+                        fill: false,
+                        pointRadius: 0
+                    },
+                    {
+                        label: '80% Benchmark',
+                        data: targetArray,
+                        borderColor: 'rgba(16, 185, 129, 0.5)',
+                        borderWidth: 1.2,
+                        borderDash: [3, 3],
                         fill: false,
                         pointRadius: 0
                     }
@@ -692,16 +851,37 @@
                     }
                 },
                 plugins: { 
-                    legend: { display: false },
+                    legend: { 
+                        display: true, 
+                        position: 'top', 
+                        align: 'end',
+                        labels: { color: '#9ca3af', boxWidth: 10, font: { size: 10, family: 'Plus Jakarta Sans' } } 
+                    },
                     tooltip: {
                         backgroundColor: '#0f172a',
-                        borderColor: 'rgba(255, 255, 255, 0.1)',
+                        borderColor: 'rgba(255, 255, 255, 0.15)',
                         borderWidth: 1,
                         padding: 10,
                         titleFont: { size: 12, weight: 'bold' },
                         bodyFont: { size: 11 },
                         callbacks: {
+                            title: function(context) {
+                                let idx = context[0].dataIndex;
+                                let att = attempts[idx];
+                                return att.test_title || `Test Attempt #${idx + 1}`;
+                            },
                             label: function(context) {
+                                let idx = context.dataIndex;
+                                let att = attempts[idx];
+                                if (context.datasetIndex === 0) {
+                                    let dateStr = att.created_at ? new Date(att.created_at).toLocaleDateString() : '';
+                                    return [
+                                        ` ${context.dataset.label}: ${context.raw}%`,
+                                        ` Score: ${att.score}/${att.total_marks}`,
+                                        ` Accuracy: ${att.accuracy || 0}%`,
+                                        ` Date: ${dateStr}`
+                                    ];
+                                }
                                 return ` ${context.dataset.label}: ${context.raw}%`;
                             }
                         }
@@ -711,6 +891,7 @@
         });
     }
 
+    // FIX 2: HISTORY GRID WITH REATTEMPT BUTTON & MISSING ID CHECK
     function renderHistoryGrid(attempts) {
         const historyGrid = document.getElementById("historyGrid");
         const historySection = document.getElementById("previousTestsSection");
@@ -721,6 +902,9 @@
             let pct = att.total_marks > 0 ? Math.round((att.score / att.total_marks) * 100) : 0;
             let formattedDate = att.created_at ? new Date(att.created_at).toLocaleDateString() : "Recently";
             let displayTitle = att.test_title || `Test Attempt #${attempts.length - index}`;
+            
+            // Strict ID validation
+            let testId = att.test_id || att.id || null;
 
             html += `
                 <div class="history-item">
@@ -733,9 +917,20 @@
                     </div>
                     <div class="history-stats">
                         <span style="font-size: 12px; font-weight: 800; color: var(--accent-blue);">Score: ${att.score}/${att.total_marks} (${pct}%)</span>
-                        <button class="btn btn-outline" style="padding: 4px 10px; font-size: 11px;" onclick="selectTestFromHistory(${index})">
-                            Inspect <i class="fa-solid fa-chevron-right"></i>
-                        </button>
+                        <div style="display: flex; gap: 6px;">
+                            ${testId ? `
+                                <button class="btn btn-reattempt" style="padding: 4px 10px; font-size: 11px;" onclick="reattemptTest('${testId}')">
+                                    <i class="fa-solid fa-rotate-right"></i> Reattempt
+                                </button>
+                            ` : `
+                                <button class="btn btn-reattempt" style="padding: 4px 10px; font-size: 11px; opacity: 0.5; cursor: not-allowed;" disabled title="Test ID missing">
+                                    <i class="fa-solid fa-ban"></i> N/A
+                                </button>
+                            `}
+                            <button class="btn btn-outline" style="padding: 4px 10px; font-size: 11px;" onclick="selectTestFromHistory(${index})">
+                                Inspect <i class="fa-solid fa-chevron-right"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
             `;
@@ -743,9 +938,18 @@
         historyGrid.innerHTML = html;
     }
 
+    function reattemptTest(testId) {
+        if (!testId || testId === 'null' || testId === 'undefined') {
+            alert("Is test ke liye Reattempt ID missing hai.");
+            return;
+        }
+        window.location.href = `take-test.html?id=${encodeURIComponent(testId)}`;
+    }
+
     function selectTestFromHistory(index) {
-        if (fetchedAttemptsList && fetchedAttemptsList[index]) {
-            loadPerformanceData(fetchedAttemptsList[index]);
+        let recentFirstAttempts = [...fetchedAttemptsList].reverse();
+        if (recentFirstAttempts && recentFirstAttempts[index]) {
+            loadPerformanceData(recentFirstAttempts[index]);
             
             const reportArea = document.getElementById("pdfReportArea");
             reportArea.style.display = "flex";
