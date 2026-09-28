@@ -1109,6 +1109,10 @@ function renderCharts(correct, wrong, skipped, accuracy, score) {
 function reattemptTest() {
     window.location.href = `take-test.html?id=${currentTest?.id || 'demo_test'}&mode=${currentMode}&reattempt=true`;
 }
+function viewPerformance() {
+    const testId = currentTest?.id || 'demo_test';
+    window.location.href = `performance.html?test_id=${testId}`;
+}
 
 function viewLeaderboard() {
     const testId = currentTest?.id || 'demo_test';
