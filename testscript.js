@@ -545,11 +545,9 @@ function loadQuestion(idx) {
     if (idx < 0 || idx >= questions.length) return;
     currentIndex = idx;
 
-    // UPDATED: Agar current question attempt nahi hua hai, to timer chalne dein
     if (currentMode === 'practice') {
         isTimerPaused = (userAnswers[currentIndex] !== undefined);
     }
-
 
     const q = questions[idx];
 
@@ -621,7 +619,6 @@ function selectOption(oIdx) {
     userAnswers[currentIndex] = oIdx;
     delete reviewStatus[currentIndex];
 
-    // UPDATED: Practice mode me attempt karte hi timer ko pause karne ke liye
     if (currentMode === 'practice') {
         isTimerPaused = true;
     }
@@ -629,7 +626,6 @@ function selectOption(oIdx) {
     saveLocalDraft();
     loadQuestion(currentIndex);
 }
-
 
 function clearResponse() {
     delete userAnswers[currentIndex];
@@ -909,6 +905,7 @@ async function saveResultAndFetchRank(scoreVal, totalMarks) {
     const rankValElem = document.getElementById("resRankVal");
     const rankTotalElem = document.getElementById("resRankTotal");
 
+    // Demo Test Fallback
     if (!window.supabaseClient || !currentTest || currentTest.id === 'demo_test') {
         if (rankValElem) rankValElem.innerText = "#1";
         if (rankTotalElem) rankTotalElem.innerText = "Out of 1 (Demo)";
@@ -919,35 +916,102 @@ async function saveResultAndFetchRank(scoreVal, totalMarks) {
         const { data: { user } } = await window.supabaseClient.auth.getUser();
         if (!user) {
             if (rankValElem) rankValElem.innerText = "#1";
-            if (rankTotalElem) rankTotalElem.innerText = "Out of 1";
+            if (rankTotalElem) rankTotalElem.innerText = "Out of 1 (Guest)";
             return;
         }
 
-        let correctCount = 0, wrongCount = 0;
+        // Count calculation
+        let correctCount = 0, wrongCount = 0, skippedCount = 0;
         questions.forEach((q, idx) => {
             let correctIdx = parseCorrectOption(q);
             if (userAnswers[idx] !== undefined) {
                 if (userAnswers[idx] === correctIdx) correctCount++;
                 else wrongCount++;
+            } else {
+                skippedCount++;
             }
         });
 
+        const attempted = correctCount + wrongCount;
+        const accuracyPct = attempted > 0 ? Math.round((correctCount / attempted) * 100) : 0;
+
+        // Structured Answer Payload Formatting
+        const formattedUserAnswers = questions.map((q, idx) => {
+    let correctIdx = parseCorrectOption(q);
+    let userAnsIdx = userAnswers[idx];
+    let options = q.options || [q.option1, q.option2, q.option3, q.option4];
+
+    // Safely extract SVG content
+    let svgContent = q.diagram_svg || q.svg || q.svg_code || null;
+    if (typeof svgContent === 'string') {
+        svgContent = svgContent.trim() !== '' ? svgContent.trim() : null;
+    } else {
+        svgContent = null;
+    }
+
+    // Safely extract Image URL with multiple key fallbacks
+    let rawImg = q.image_url || q.image || q.q_image || q.questionImg || q.imgUrl || q.imageUrl || (q.question_data && q.question_data.image_url) || null;
+    let imgUrl = null;
+    if (rawImg && typeof rawImg === 'string' && rawImg !== 'null' && rawImg !== 'undefined' && rawImg.trim() !== '') {
+        imgUrl = rawImg.trim();
+    }
+
+    return {
+        qIndex: idx,
+        questionText: q.question_text || q.question || q.title || `Question ${idx + 1}`,
+        userAnsIndex: userAnsIdx !== undefined ? userAnsIdx : null,
+        userAnsText: userAnsIdx !== undefined ? (options[userAnsIdx] || "N/A") : "Not Answered",
+        correctAnsIndex: correctIdx,
+        correctAnsText: options[correctIdx] || "N/A",
+        isCorrect: userAnsIdx === correctIdx,
+        isSkipped: userAnsIdx === undefined || userAnsIdx === null,
+        explanation: q.explanation || q.solution || q.exp || "",
+        // Added image and SVG attributes for Database Persistence
+        diagram_svg: svgContent,
+        image_url: imgUrl,
+        options: options
+    };
+});
+
+
+        // 1. Local Storage Backup Write
+        try {
+            const backupKey = `test_result_backup_${currentTest.id}`;
+            localStorage.setItem(backupKey, JSON.stringify({
+                testId: currentTest.id,
+                userId: user.id,
+                score: scoreVal,
+                totalMarks: totalMarks,
+                userAnswers: formattedUserAnswers,
+                rawAnswers: userAnswers
+            }));
+        } catch (e) {
+            console.warn("Local storage result backup failed:", e);
+        }
+
+        // 2. Supabase Upsert
         const { error: insertErr } = await window.supabaseClient
             .from('test_results')
             .upsert([{
                 user_id: user.id,
                 test_id: currentTest.id,
+                test_title: currentTest.title || 'Portal Test',
                 score: scoreVal.toString(),
                 total_marks: totalMarks.toString(),
+                accuracy: accuracyPct,
                 correct_answers: correctCount,
                 wrong_answers: wrongCount,
-                time_taken_sec: totalTimeSpentSec
+                skipped_answers: skippedCount,
+                time_taken_sec: totalTimeSpentSec,
+                user_answers: formattedUserAnswers,
+                updated_at: new Date().toISOString()
             }], { onConflict: 'user_id,test_id' });
 
         if (insertErr) {
-            console.error("Error saving test result:", insertErr.message || JSON.stringify(insertErr));
+            console.error("Supabase Save Result Error:", insertErr.message || JSON.stringify(insertErr));
         }
 
+        // 3. Fetch Leaderboard & Calculate Real-Time Rank
         const { data: results, error } = await window.supabaseClient
             .from('test_results')
             .select('user_id, score, time_taken_sec')
@@ -959,6 +1023,7 @@ async function saveResultAndFetchRank(scoreVal, totalMarks) {
             return;
         }
 
+        // Best Score per User Map
         let userBestMap = {};
         results.forEach(r => {
             const numScore = parseFloat(r.score) || 0;
@@ -967,6 +1032,7 @@ async function saveResultAndFetchRank(scoreVal, totalMarks) {
             }
         });
 
+        // Rank Sorting (Higher score first, lower time taken on tie)
         let sortedList = Object.values(userBestMap).sort((a, b) => {
             if (b.score !== a.score) return b.score - a.score;
             return (a.time_taken_sec || 0) - (b.time_taken_sec || 0);
@@ -979,7 +1045,7 @@ async function saveResultAndFetchRank(scoreVal, totalMarks) {
         if (rankTotalElem) rankTotalElem.innerText = `Out of ${totalParticipants || 1}`;
 
     } catch (err) {
-        console.warn("Ranking calculation error:", err);
+        console.warn("Ranking/Cloud Save Exception:", err);
         if (rankValElem) rankValElem.innerText = "#1";
         if (rankTotalElem) rankTotalElem.innerText = "Out of 1";
     }
