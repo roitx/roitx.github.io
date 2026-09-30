@@ -4,7 +4,7 @@ window.SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5
 
 let generatedQuizData = null;
 
-// --- GLOBAL EVENT LISTENERS: DISABLE DBLCLICK & LONG-PRESS (EXCEPT TEXTAREA/INPUT) ---
+// --- GLOBAL EVENT LISTENERS ---
 document.addEventListener('dblclick', function (e) {
   if (e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'INPUT') {
     e.preventDefault();
@@ -20,17 +20,9 @@ document.addEventListener('contextmenu', function (e) {
 // Subject Mapping Configuration
 const subjectData = {
   class9_10: [
-    "Physics", 
-    "Chemistry", 
-    "Biology", 
-    "History", 
-    "Political Science (Civics)", 
-    "Geography", 
-    "Economics", 
-    "Mathematics", 
-    "Sanskrit", 
-    "Hindi", 
-    "English"
+    "Physics", "Chemistry", "Biology", "History", 
+    "Political Science (Civics)", "Geography", "Economics", 
+    "Mathematics", "Sanskrit", "Hindi", "English"
   ],
   class11_12: {
     science_math: ["Mathematics", "Physics", "Chemistry", "English", "Hindi"],
@@ -51,7 +43,6 @@ window.addEventListener('DOMContentLoaded', async () => {
       await verifyAdminStrictly();
     }
     document.body.classList.add('admin-authenticated');
-    
     updateSubCategories();
   } catch (authErr) {
     console.error("Admin Authentication Guard Error:", authErr);
@@ -117,12 +108,7 @@ function updateSubjectOptions() {
     }
   } else {
     streamGroup.style.display = "none";
-    let subjects = [];
-    if (targetClass.includes("NEET")) {
-      subjects = subjectData.neet;
-    } else {
-      subjects = subjectData.jee;
-    }
+    let subjects = targetClass.includes("NEET") ? subjectData.neet : subjectData.jee;
 
     subjects.forEach(sub => {
       const opt = document.createElement("option");
@@ -206,17 +192,7 @@ function shuffleQuizQuestions(questions) {
   });
 }
 
-// Safe MathJax Formatting Helper
-function formatLatexString(str) {
-  if (typeof str !== 'string') return str;
-  if (!str.includes('\\')) return str;
-
-  return str.replace(/(?<!\$)(?:\\[a-zA-Z]+(?:\{[^{}]*\}\vert{}\[[^\[\]]*\])*|\^[0-9a-zA-Z{}]+|_[0-9a-zA-Z{}]+)+(?!\$)/g, (match) => {
-    return `$${match.trim()}$`;
-  });
-}
-
-// Render Visual Preview with MathJax LaTeX Support
+// Render Preview UI
 function renderUiPreview(parsedJson) {
   let previewContainer = document.getElementById("uiQuestionsPreview");
   if (!previewContainer) {
@@ -249,13 +225,12 @@ function renderUiPreview(parsedJson) {
 
     opts.forEach((opt, optIdx) => {
       const isCorrect = optIdx === correctIdx;
-      const formattedOpt = formatLatexString(opt);
       optionsHtml += `
         <div style="display: flex; align-items: center; margin: 6px 0; font-size: 13px; color: ${isCorrect ? '#276749' : '#2d3748'}; font-weight: ${isCorrect ? 'bold' : 'normal'};">
           <span style="margin-right: 8px; border-radius: 50%; width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; background: ${isCorrect ? '#c6f6d5' : '#edf2f7'}; font-size: 11px;">
             ${String.fromCharCode(65 + optIdx)}
           </span>
-          <span>${formattedOpt} ${isCorrect ? '✓' : ''}</span>
+          <span>${opt} ${isCorrect ? '✓' : ''}</span>
         </div>`;
     });
 
@@ -266,71 +241,65 @@ function renderUiPreview(parsedJson) {
       figureHtml = `<div style="margin: 8px 0;"><img src="${q.image_url}" alt="Question Figure" style="max-width: 100%; max-height: 200px; border-radius: 6px; border: 1px solid #cbd5e0;" onError="this.style.display='none';"></div>`;
     }
 
-    const formattedQuestion = formatLatexString(q.question || '');
-    const formattedExplanation = formatLatexString(q.explanation || '');
-
     qDiv.innerHTML = `
-      <p style="font-weight: 600; font-size: 14px; margin: 0 0 8px 0; color: #1a202c;">Q${idx + 1}: ${formattedQuestion}</p>
+      <p style="font-weight: 600; font-size: 14px; margin: 0 0 8px 0; color: #1a202c;">Q${idx + 1}: ${q.question || ''}</p>
       ${figureHtml}
       <div>${optionsHtml}</div>
-      ${q.explanation ? `<div style="font-size: 12px; color: #4a5568; margin-top: 8px; background: #f7fafc; padding: 8px; border-radius: 6px; border-left: 3px solid #8E2DE2;"><strong>Explanation:</strong><div style="margin-top: 4px; white-space: pre-line;">${formattedExplanation}</div></div>` : ''}
+      ${q.explanation ? `<div style="font-size: 12px; color: #4a5568; margin-top: 8px; background: #f7fafc; padding: 8px; border-radius: 6px; border-left: 3px solid #8E2DE2;"><strong>Explanation:</strong><div style="margin-top: 4px; white-space: pre-line;">${q.explanation}</div></div>` : ''}
     `;
 
     previewContainer.appendChild(qDiv);
   });
 
-  if (window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
-    window.MathJax.typesetPromise([previewContainer]).catch((err) => console.log('MathJax error:', err));
-  } else if (window.MathJax && typeof window.MathJax.typeset === 'function') {
+  if (window.MathJax && typeof window.MathJax.typeset === 'function') {
     window.MathJax.typeset();
   }
 }
 
-// JSON Sanitizer for Robust Parsing
-function safeParseJson(rawString) {
-  let cleaned = rawString.replace(/```json/gi, "").replace(/```/g, "").trim();
-  
-  const firstBrace = cleaned.indexOf('{');
-  const lastBrace = cleaned.lastIndexOf('}');
-  if (firstBrace !== -1 && lastBrace !== -1) {
-    cleaned = cleaned.substring(firstBrace, lastBrace + 1);
+document.addEventListener("DOMContentLoaded", () => {
+  const jsonArea = document.getElementById("jsonOutput");
+  if (jsonArea) {
+    jsonArea.addEventListener("input", () => {
+      try {
+        const parsed = JSON.parse(jsonArea.value);
+        generatedQuizData = parsed;
+        renderUiPreview(parsed);
+      } catch (e) {}
+    });
   }
+});
 
-  try {
-    return JSON.parse(cleaned);
-  } catch (e) {
-    // Attempt auto-repair for broken unescaped control backslashes
-    cleaned = cleaned.replace(/[\u0000-\u001F]+/g, " ");
-    return JSON.parse(cleaned);
-  }
-}
+// Helper Function: Single Batch API Call
+async function fetchBatchQuestions(batchSize, startIdx, config) {
+  const { targetCategory, targetClass, subject, topic, difficulty, languageInstruction, customPrompt } = config;
 
-// Single Batch API Call (5 Questions per call)
-async function fetchBatchQuestions(chunkCount, startIndex, metaParams) {
-  const { targetCategory, targetClass, subject, topic, difficulty, languageInstruction, customPrompt } = metaParams;
-
-  const systemInstruction = `You are a professional senior exam paper setter for ${targetClass}.
-Generate EXACTLY ${chunkCount} questions starting from index ${startIndex + 1} for Subject: "${subject}", Topic: "${topic}".
-Difficulty: ${difficulty}.
+  const prompt = `You are a professional senior exam paper setter for ${targetClass}.
+Task: Generate EXACTLY ${batchSize} UNIQUE multiple choice questions starting from Question Number ${startIdx}.
+Subject: "${subject}", Topic: "${topic}".
+Exam Type: ${targetCategory}.
+Difficulty Level: ${difficulty}.
 ${languageInstruction}
-Additional Notes: ${customPrompt || "Standard pattern"}.
+Additional Notes: ${customPrompt || "Follow standard NCERT / official exam pattern"}.
 
-CRITICAL JSON & LATEX RULES:
-1. Return strictly valid JSON only.
-2. Inside strings, do NOT use raw double quotes. Use single quotes for inner text.
-3. Keep LaTeX backslashes safe and simple (e.g. "\\\\int", "\\\\frac").
+MATHEMATICS, CHEMISTRY, SYMBOLS & DIAGRAM GUIDELINES:
+1. Use standard LaTeX format for math formulas, integrals, limits, roots, fractions, matrix etc.
+2. Escaped LaTeX strings inside JSON must use double backslashes (\\\\int, \\\\frac).
+3. Long chemistry/physics equations must use line breaks (\\\\n) or clear separation.
+4. Explanations must use step-by-step Roman numerals (I., II., III., IV.).
+5. If SVG diagram is required, include valid inline SVG in "diagram_svg", else null.
 
-Schema:
+Output STRICTLY valid JSON with no markdown block ticks.
+JSON Schema format:
 {
   "questions": [
     {
-      "id": ${startIndex + 1},
-      "question": "Question text here",
+      "id": ${startIdx},
+      "question": "Question text...",
       "image_url": null,
       "diagram_svg": null,
       "options": ["Opt A", "Opt B", "Opt C", "Opt D"],
       "correct": 0,
-      "explanation": "I. Explanation step 1"
+      "explanation": "I. Step one...\\nII. Step two..."
     }
   ]
 }`;
@@ -342,22 +311,10 @@ Schema:
       "apikey": window.SUPABASE_ANON_KEY,
       "Authorization": `Bearer ${window.SUPABASE_ANON_KEY}`
     },
-    body: JSON.stringify({ prompt: systemInstruction })
+    body: JSON.stringify({ prompt: prompt })
   });
 
-  const rawHttpResponseText = await response.text();
-
-  if (!response.ok || rawHttpResponseText.trim().startsWith("<") || rawHttpResponseText.toLowerCase().includes("request id")) {
-    throw new Error(`Edge Gateway Timeout / Error (Status ${response.status}). Retrying batch...`);
-  }
-
-  let data;
-  try {
-    data = JSON.parse(rawHttpResponseText);
-  } catch (e) {
-    throw new Error("Invalid response envelope from Server.");
-  }
-
+  const data = await response.json();
   if (data.error) {
     let errMsg = typeof data.error === 'string' ? data.error : (data.error.message || JSON.stringify(data.error));
     throw new Error(errMsg);
@@ -367,19 +324,18 @@ Schema:
                 data.candidates?.[0]?.content?.parts?.[0]?.text || 
                 data.result || data.response || data.output || data.message || "";
 
-  if (!rawText) throw new Error("Empty AI text received.");
-
-  const parsed = safeParseJson(rawText);
+  rawText = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
+  const parsed = JSON.parse(rawText);
   return parsed.questions || parsed.questions_data || [];
 }
 
-// Micro-batching generator (Batch size = 5 questions per API call)
+// Main Batch-Enabled Generator Function
 async function generateAiQuiz() {
   const targetCategory = document.getElementById("targetCategory").value;
   const targetClass = document.getElementById("targetClass").value;
   const subject = document.getElementById("subjectSelect").value;
   const topic = document.getElementById("topicInput").value.trim();
-  const count = parseInt(document.getElementById("questionsCount").value) || 10;
+  const totalCount = parseInt(document.getElementById("questionsCount").value);
   const difficulty = document.getElementById("difficultySelect").value;
   const language = document.getElementById("languageSelect").value;
   const customPrompt = document.getElementById("customPrompt").value.trim();
@@ -391,87 +347,65 @@ async function generateAiQuiz() {
 
   let languageInstruction = "";
   if (language === "Hindi") {
-    languageInstruction = "STRICT LANGUAGE RULE: Write ALL questions in HINDI (Devanagari).";
+    languageInstruction = "STRICT LANGUAGE RULE: Write ALL questions, options, and explanations strictly in clean HINDI (Devanagari).";
   } else if (language === "English") {
-    languageInstruction = "STRICT LANGUAGE RULE: Write ALL questions in English.";
+    languageInstruction = "STRICT LANGUAGE RULE: Write ALL questions, options, and explanations strictly in standard English.";
   } else {
-    languageInstruction = "STRICT LANGUAGE RULE: Write in Hinglish.";
+    languageInstruction = "STRICT LANGUAGE RULE: Write in Hinglish (Roman Hindi + English technical terms).";
   }
 
   const loaderBox = document.getElementById("loaderBox");
+  const loaderText = document.getElementById("loaderText");
   const statusMsg = document.getElementById("statusMsg");
   const generateBtn = document.getElementById("generateBtn");
 
   loaderBox.style.display = "block";
-  statusMsg.style.display = "block";
-  statusMsg.className = "status-msg";
+  statusMsg.style.display = "none";
   generateBtn.disabled = true;
 
-  // Ultra-Safe Micro Batching: 5 Questions per call
-  const BATCH_SIZE = 5;
-  let aggregatedQuestions = [];
-
-  const metaParams = {
-    targetCategory,
-    targetClass,
-    subject,
-    topic,
-    difficulty,
-    languageInstruction,
-    customPrompt
-  };
+  const config = { targetCategory, targetClass, subject, topic, difficulty, languageInstruction, customPrompt };
+  
+  let allQuestions = [];
+  const BATCH_SIZE = 15; // Max per call to avoid timeouts & response truncations
 
   try {
-    const totalBatches = Math.ceil(count / BATCH_SIZE);
+    for (let current = 0; current < totalCount; current += BATCH_SIZE) {
+      const currentBatchSize = Math.min(BATCH_SIZE, totalCount - current);
+      const startIdx = current + 1;
 
-    for (let b = 0; b < totalBatches; b++) {
-      const currentBatchCount = Math.min(BATCH_SIZE, count - (b * BATCH_SIZE));
-      const startIndex = b * BATCH_SIZE;
-
-      statusMsg.innerText = `⏳ Generating Batch ${b + 1} of ${totalBatches} (${aggregatedQuestions.length}/${count} Qs Done)...`;
-
-      let batchQuestions = [];
-      let attempts = 0;
-      const maxAttempts = 3;
-
-      while (attempts < maxAttempts) {
-        try {
-          batchQuestions = await fetchBatchQuestions(currentBatchCount, startIndex, metaParams);
-          if (batchQuestions && batchQuestions.length > 0) break;
-        } catch (batchErr) {
-          attempts++;
-          console.warn(`Batch ${b + 1} attempt ${attempts} failed: ${batchErr.message}`);
-          if (attempts >= maxAttempts) throw new Error(`Batch ${b + 1} failed after ${maxAttempts} retries.`);
-        }
+      if (loaderText) {
+        loaderText.innerText = `Questions ${startIdx} se ${startIdx + currentBatchSize - 1} process ho rahe hain (${totalCount} me se)...`;
       }
 
-      aggregatedQuestions = aggregatedQuestions.concat(batchQuestions);
+      const batchQuestions = await fetchBatchQuestions(currentBatchSize, startIdx, config);
+      allQuestions = allQuestions.concat(batchQuestions);
     }
 
-    // Assign Sequential IDs
-    aggregatedQuestions = aggregatedQuestions.map((q, idx) => ({ ...q, id: idx + 1 }));
+    // Re-index all IDs sequentially
+    allQuestions.forEach((q, index) => {
+      q.id = index + 1;
+    });
 
-    // Shuffle options randomly
-    aggregatedQuestions = shuffleQuizQuestions(aggregatedQuestions);
+    let shuffledQuestions = shuffleQuizQuestions(allQuestions);
 
-    const fullQuizPayload = {
-      title: `${subject}: ${topic} Quiz (${aggregatedQuestions.length} Qs)`,
+    const finalResult = {
+      title: `${subject}: ${topic} Quiz (${shuffledQuestions.length} Qs)`,
       target_class: targetClass,
       subject: subject,
       topic: topic,
-      questions: aggregatedQuestions
+      questions: shuffledQuestions
     };
 
-    generatedQuizData = fullQuizPayload;
+    generatedQuizData = finalResult;
 
-    document.getElementById("finalTestTitle").value = fullQuizPayload.title;
-    document.getElementById("jsonOutput").value = JSON.stringify(fullQuizPayload, null, 2);
+    document.getElementById("finalTestTitle").value = finalResult.title;
+    document.getElementById("jsonOutput").value = JSON.stringify(finalResult, null, 2);
 
-    renderUiPreview(fullQuizPayload);
+    renderUiPreview(finalResult);
 
     document.getElementById("quizPreviewSection").style.display = "block";
     statusMsg.className = "status-msg success";
-    statusMsg.innerText = `🎉 All ${aggregatedQuestions.length} questions generated successfully without errors!`;
+    statusMsg.innerText = `🎉 Successfully generated all ${shuffledQuestions.length} questions without errors!`;
     statusMsg.style.display = "block";
 
     document.getElementById("quizPreviewSection").scrollIntoView({ behavior: 'smooth' });
@@ -487,7 +421,7 @@ async function generateAiQuiz() {
   }
 }
 
-// Save Published Quiz directly to Supabase Table ('tests')
+// Save Published Quiz directly to Supabase
 async function saveQuizToSupabase() {
   if (!generatedQuizData) {
     alert("⚠️ Please generate a quiz first!");
