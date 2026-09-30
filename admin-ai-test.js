@@ -206,7 +206,7 @@ function shuffleQuizQuestions(questions) {
   });
 }
 
-// Helper: Auto-wrap raw LaTeX expressions into MathJax delimiters ($...$)
+// Safe MathJax Formatting Helper
 function formatLatexString(str) {
   if (typeof str !== 'string') return str;
   if (!str.includes('\\')) return str;
@@ -286,52 +286,51 @@ function renderUiPreview(parsedJson) {
   }
 }
 
-// Sync Preview when JSON Textarea is edited manually
-document.addEventListener("DOMContentLoaded", () => {
-  const jsonArea = document.getElementById("jsonOutput");
-  if (jsonArea) {
-    jsonArea.addEventListener("input", () => {
-      try {
-        const parsed = JSON.parse(jsonArea.value);
-        generatedQuizData = parsed;
-        renderUiPreview(parsed);
-      } catch (e) {
-        // Suppress parse errors while typing
-      }
-    });
+// JSON Sanitizer for Robust Parsing
+function safeParseJson(rawString) {
+  let cleaned = rawString.replace(/```json/gi, "").replace(/```/g, "").trim();
+  
+  const firstBrace = cleaned.indexOf('{');
+  const lastBrace = cleaned.lastIndexOf('}');
+  if (firstBrace !== -1 && lastBrace !== -1) {
+    cleaned = cleaned.substring(firstBrace, lastBrace + 1);
   }
-});
 
-// Single Batch API Call with Strict Text/JSON Safety Checks
+  try {
+    return JSON.parse(cleaned);
+  } catch (e) {
+    // Attempt auto-repair for broken unescaped control backslashes
+    cleaned = cleaned.replace(/[\u0000-\u001F]+/g, " ");
+    return JSON.parse(cleaned);
+  }
+}
+
+// Single Batch API Call (5 Questions per call)
 async function fetchBatchQuestions(chunkCount, startIndex, metaParams) {
   const { targetCategory, targetClass, subject, topic, difficulty, languageInstruction, customPrompt } = metaParams;
 
   const systemInstruction = `You are a professional senior exam paper setter for ${targetClass}.
-Your task is to create a realistic MCQ test with EXACTLY ${chunkCount} questions starting from index ${startIndex + 1} for Subject: "${subject}", Topic: "${topic}".
-Exam Type: ${targetCategory}.
-Difficulty Level: ${difficulty}.
+Generate EXACTLY ${chunkCount} questions starting from index ${startIndex + 1} for Subject: "${subject}", Topic: "${topic}".
+Difficulty: ${difficulty}.
 ${languageInstruction}
-Additional Notes: ${customPrompt || "Follow standard NCERT / official exam pattern"}.
+Additional Notes: ${customPrompt || "Standard pattern"}.
 
-MATHEMATICS & LATEX RULES:
-1. ALWAYS wrap LaTeX formulas in single dollar signs $...$ (e.g. "$\\int x^n dx$", "$\\frac{1}{x}$").
-2. Inside JSON string literals, backslashes MUST be escaped with double backslashes (\\\\int, \\\\frac).
-3. EXPLANATION: Step-by-step explanations using Roman numerals (I., II., III.).
-
-CRITICAL OUTPUT RULE:
-Respond ONLY with pure valid JSON containing "questions" array. No markdown, no prose wrapper.
+CRITICAL JSON & LATEX RULES:
+1. Return strictly valid JSON only.
+2. Inside strings, do NOT use raw double quotes. Use single quotes for inner text.
+3. Keep LaTeX backslashes safe and simple (e.g. "\\\\int", "\\\\frac").
 
 Schema:
 {
   "questions": [
     {
       "id": ${startIndex + 1},
-      "question": "$\\int x^n dx$ ka maan kya hai?",
+      "question": "Question text here",
       "image_url": null,
       "diagram_svg": null,
-      "options": ["$\\frac{x^{n-1}}{n-1} + C$", "$\\frac{x^{n+1}}{n+1} + C$", "$\\frac{x^n}{n} + C$", "$n x^{n-1} + C$"],
-      "correct": 1,
-      "explanation": "I. Standard formula.\\nII. $\\int x^n dx = \\frac{x^{n+1}}{n+1} + C$."
+      "options": ["Opt A", "Opt B", "Opt C", "Opt D"],
+      "correct": 0,
+      "explanation": "I. Explanation step 1"
     }
   ]
 }`;
@@ -348,16 +347,15 @@ Schema:
 
   const rawHttpResponseText = await response.text();
 
-  // Guard against HTML or Gateway Error pages
   if (!response.ok || rawHttpResponseText.trim().startsWith("<") || rawHttpResponseText.toLowerCase().includes("request id")) {
-    throw new Error(`Edge Gateway Error (Status ${response.status}). Trying again...`);
+    throw new Error(`Edge Gateway Timeout / Error (Status ${response.status}). Retrying batch...`);
   }
 
   let data;
   try {
     data = JSON.parse(rawHttpResponseText);
   } catch (e) {
-    throw new Error("Invalid response received from Server.");
+    throw new Error("Invalid response envelope from Server.");
   }
 
   if (data.error) {
@@ -369,22 +367,13 @@ Schema:
                 data.candidates?.[0]?.content?.parts?.[0]?.text || 
                 data.result || data.response || data.output || data.message || "";
 
-  if (!rawText) throw new Error("Empty response received from AI.");
+  if (!rawText) throw new Error("Empty AI text received.");
 
-  // Clean raw JSON response
-  rawText = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
-  
-  const firstBrace = rawText.indexOf('{');
-  const lastBrace = rawText.lastIndexOf('}');
-  if (firstBrace !== -1 && lastBrace !== -1) {
-    rawText = rawText.substring(firstBrace, lastBrace + 1);
-  }
-
-  const parsed = JSON.parse(rawText);
+  const parsed = safeParseJson(rawText);
   return parsed.questions || parsed.questions_data || [];
 }
 
-// Micro-batching generator (Batch size = 10 questions per API call)
+// Micro-batching generator (Batch size = 5 questions per API call)
 async function generateAiQuiz() {
   const targetCategory = document.getElementById("targetCategory").value;
   const targetClass = document.getElementById("targetClass").value;
@@ -418,8 +407,8 @@ async function generateAiQuiz() {
   statusMsg.className = "status-msg";
   generateBtn.disabled = true;
 
-  // Ultra-Safe Micro-Batch Size (10 Questions Per API Call)
-  const BATCH_SIZE = 10;
+  // Ultra-Safe Micro Batching: 5 Questions per call
+  const BATCH_SIZE = 5;
   let aggregatedQuestions = [];
 
   const metaParams = {
@@ -439,11 +428,11 @@ async function generateAiQuiz() {
       const currentBatchCount = Math.min(BATCH_SIZE, count - (b * BATCH_SIZE));
       const startIndex = b * BATCH_SIZE;
 
-      statusMsg.innerText = `⏳ Generating Batch ${b + 1} of ${totalBatches} (${aggregatedQuestions.length}/${count} Questions Done)...`;
+      statusMsg.innerText = `⏳ Generating Batch ${b + 1} of ${totalBatches} (${aggregatedQuestions.length}/${count} Qs Done)...`;
 
       let batchQuestions = [];
       let attempts = 0;
-      const maxAttempts = 2; // Auto-retry logic per batch
+      const maxAttempts = 3;
 
       while (attempts < maxAttempts) {
         try {
@@ -451,15 +440,15 @@ async function generateAiQuiz() {
           if (batchQuestions && batchQuestions.length > 0) break;
         } catch (batchErr) {
           attempts++;
-          if (attempts >= maxAttempts) throw batchErr;
-          console.warn(`Batch ${b + 1} failed (Attempt ${attempts}). Retrying...`);
+          console.warn(`Batch ${b + 1} attempt ${attempts} failed: ${batchErr.message}`);
+          if (attempts >= maxAttempts) throw new Error(`Batch ${b + 1} failed after ${maxAttempts} retries.`);
         }
       }
 
       aggregatedQuestions = aggregatedQuestions.concat(batchQuestions);
     }
 
-    // Assign Clean Sequential IDs (1 to N)
+    // Assign Sequential IDs
     aggregatedQuestions = aggregatedQuestions.map((q, idx) => ({ ...q, id: idx + 1 }));
 
     // Shuffle options randomly
@@ -482,7 +471,7 @@ async function generateAiQuiz() {
 
     document.getElementById("quizPreviewSection").style.display = "block";
     statusMsg.className = "status-msg success";
-    statusMsg.innerText = `🎉 Successfully generated all ${aggregatedQuestions.length} questions!`;
+    statusMsg.innerText = `🎉 All ${aggregatedQuestions.length} questions generated successfully without errors!`;
     statusMsg.style.display = "block";
 
     document.getElementById("quizPreviewSection").scrollIntoView({ behavior: 'smooth' });
