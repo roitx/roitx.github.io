@@ -52,7 +52,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
     document.body.classList.add('admin-authenticated');
     
-    // Initial dropdown setup call
     updateSubCategories();
   } catch (authErr) {
     console.error("Admin Authentication Guard Error:", authErr);
@@ -207,7 +206,18 @@ function shuffleQuizQuestions(questions) {
   });
 }
 
-// Render Visual Preview with MathJax LaTeX & Enhanced Diagram Support
+// Helper: Ensure Raw LaTeX Commands Are Wrapped In MathJax Delimiters ($...$)
+function formatLatexString(str) {
+  if (typeof str !== 'string') return str;
+  if (!str.includes('\\')) return str; // Fast pass if no latex command
+
+  // Wrap raw latex commands if not already enclosed in $...$
+  return str.replace(/(?<!\$)(?:\\[a-zA-Z]+(?:\{[^{}]*\}\vert{}\[[^\[\]]*\])*|\^[0-9a-zA-Z{}]+|_[0-9a-zA-Z{}]+)+(?!\$)/g, (match) => {
+    return `$${match.trim()}$`;
+  });
+}
+
+// Render Visual Preview with MathJax LaTeX Rendering Fix
 function renderUiPreview(parsedJson) {
   let previewContainer = document.getElementById("uiQuestionsPreview");
   if (!previewContainer) {
@@ -240,12 +250,13 @@ function renderUiPreview(parsedJson) {
 
     opts.forEach((opt, optIdx) => {
       const isCorrect = optIdx === correctIdx;
+      const formattedOpt = formatLatexString(opt);
       optionsHtml += `
         <div style="display: flex; align-items: center; margin: 6px 0; font-size: 13px; color: ${isCorrect ? '#276749' : '#2d3748'}; font-weight: ${isCorrect ? 'bold' : 'normal'};">
           <span style="margin-right: 8px; border-radius: 50%; width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; background: ${isCorrect ? '#c6f6d5' : '#edf2f7'}; font-size: 11px;">
             ${String.fromCharCode(65 + optIdx)}
           </span>
-          <span>${opt} ${isCorrect ? '✓' : ''}</span>
+          <span>${formattedOpt} ${isCorrect ? '✓' : ''}</span>
         </div>`;
     });
 
@@ -256,17 +267,23 @@ function renderUiPreview(parsedJson) {
       figureHtml = `<div style="margin: 8px 0;"><img src="${q.image_url}" alt="Question Figure" style="max-width: 100%; max-height: 200px; border-radius: 6px; border: 1px solid #cbd5e0;" onError="this.style.display='none';"></div>`;
     }
 
+    const formattedQuestion = formatLatexString(q.question || '');
+    const formattedExplanation = formatLatexString(q.explanation || '');
+
     qDiv.innerHTML = `
-      <p style="font-weight: 600; font-size: 14px; margin: 0 0 8px 0; color: #1a202c;">Q${idx + 1}: ${q.question || ''}</p>
+      <p style="font-weight: 600; font-size: 14px; margin: 0 0 8px 0; color: #1a202c;">Q${idx + 1}: ${formattedQuestion}</p>
       ${figureHtml}
       <div>${optionsHtml}</div>
-      ${q.explanation ? `<div style="font-size: 12px; color: #4a5568; margin-top: 8px; background: #f7fafc; padding: 8px; border-radius: 6px; border-left: 3px solid #8E2DE2;"><strong>Explanation:</strong><div style="margin-top: 4px; white-space: pre-line;">${q.explanation}</div></div>` : ''}
+      ${q.explanation ? `<div style="font-size: 12px; color: #4a5568; margin-top: 8px; background: #f7fafc; padding: 8px; border-radius: 6px; border-left: 3px solid #8E2DE2;"><strong>Explanation:</strong><div style="margin-top: 4px; white-space: pre-line;">${formattedExplanation}</div></div>` : ''}
     `;
 
     previewContainer.appendChild(qDiv);
   });
 
-  if (window.MathJax && typeof window.MathJax.typeset === 'function') {
+  // Re-trigger MathJax to parse $...$ formulas
+  if (window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
+    window.MathJax.typesetPromise([previewContainer]).catch((err) => console.log('MathJax error:', err));
+  } else if (window.MathJax && typeof window.MathJax.typeset === 'function') {
     window.MathJax.typeset();
   }
 }
@@ -292,36 +309,36 @@ async function fetchBatchQuestions(chunkCount, startIndex, metaParams) {
   const { targetCategory, targetClass, subject, topic, difficulty, languageInstruction, customPrompt } = metaParams;
 
   const systemInstruction = `You are a professional senior exam paper setter for ${targetClass}.
-Your task is to create a realistic MCQ test with exactly ${chunkCount} questions starting from question number index ${startIndex + 1} for Subject: "${subject}", Topic: "${topic}".
+Your task is to create a realistic MCQ test with exactly ${chunkCount} questions starting from index ${startIndex + 1} for Subject: "${subject}", Topic: "${topic}".
 Exam Type: ${targetCategory}.
 Difficulty Level: ${difficulty}.
 ${languageInstruction}
 Additional Notes: ${customPrompt || "Follow standard NCERT / official exam pattern"}.
 
 MATHEMATICS, CHEMISTRY, SYMBOLS & DIAGRAM GUIDELINES:
-1. Use standard LaTeX format for math formulas, integrals, limits, roots, fractions, matrix etc. (e.g. \\int_{0}^{\\pi} \\sin(x) dx, \\frac{d}{dx}, \\sqrt{x^2+a^2}).
-2. Escaped LaTeX strings inside JSON must use double backslashes (\\\\int, \\\\frac).
-3. CHEMISTRY & PHYSICAL EQUATIONS RULE: For long chemical reactions, put reactants on first part, reaction arrow (\\rightarrow), and products on a new line using Markdown line breaks (\\\\n) or block equations.
-4. EXPLANATION FORMATTING RULE: Keep explanations precise and step-by-step using Roman numerals (I., II., III.).
-5. DIAGRAMS & FIGURES RULE (SVG): If needed, provide valid SVG inside "diagram_svg". Otherwise set both "diagram_svg": null and "image_url": null.
+1. CRITICAL MATHJAX RULE: ALWAYS enclose ALL LaTeX math formulas, variables, symbols, integrals, and fractions inside single dollar signs like $...$ (e.g. "$\\int x^n dx$", "$\\frac{1}{x}$", "$e^x$", "$x \\neq -1$"). NEVER write raw unescaped LaTeX outside dollar signs.
+2. Inside JSON strings, double backslashes must be used for LaTeX commands (e.g., "\\\\int", "\\\\frac{1}{x}", "\\\\log |x| + C").
+3. CHEMISTRY & PHYSICAL EQUATIONS: Put reactants and products neatly formatted with proper arrow symbols wrapped in $...$.
+4. EXPLANATION FORMATTING: Keep explanations clear using Roman numerals (I., II., III.). Always enclose LaTeX formulas in explanations within $...$.
+5. DIAGRAMS (SVG): Provide clean valid SVG in "diagram_svg" if needed, otherwise set "diagram_svg": null.
 
-CRITICAL ANTI-AI / NATURAL EXAM RULES:
-1. DO NOT make the correct option longer or more detailed than the wrong options. All 4 options MUST be balanced.
-2. DO NOT add extra explanatory text like "(Correct)" inside options.
+CRITICAL ANTI-AI RULES:
+1. Option lengths must be balanced.
+2. DO NOT include "(Correct)" or "(Ans)" in option strings.
 3. Distribute correct answer indices randomly across 0, 1, 2, and 3.
-4. Respond strictly with pure, valid JSON matching the schema below. No markdown ticks, no extra text.
+4. Respond strictly with pure, valid JSON matching the schema below.
 
 JSON Format Schema:
 {
   "questions": [
     {
       "id": ${startIndex + 1},
-      "question": "Question text...",
+      "question": "$\\int x^n dx$ ka maan kya hai?",
       "image_url": null,
       "diagram_svg": null,
-      "options": ["Option A", "Option B", "Option C", "Option D"],
-      "correct": 0,
-      "explanation": "I. First step...\\nII. Second step..."
+      "options": ["$\\frac{x^{n-1}}{n-1} + C$", "$\\frac{x^{n+1}}{n+1} + C$", "$\\frac{x^n}{n} + C$", "$n x^{n-1} + C$"],
+      "correct": 1,
+      "explanation": "I. Yah samakalan ka manak sutra hai.\\nII. $\\int x^n dx = \\frac{x^{n+1}}{n+1} + C$, jahan $n \\neq -1$ hai."
     }
   ]
 }`;
@@ -358,7 +375,7 @@ JSON Format Schema:
   return parsed.questions || parsed.questions_data || [];
 }
 
-// Generate AI Quiz with Automatic Chunking / Batching for Large Question Counts (> 25)
+// Generate AI Quiz with Automatic Chunking / Batching
 async function generateAiQuiz() {
   const targetCategory = document.getElementById("targetCategory").value;
   const targetClass = document.getElementById("targetClass").value;
@@ -392,7 +409,7 @@ async function generateAiQuiz() {
   statusMsg.className = "status-msg";
   generateBtn.disabled = true;
 
-  const BATCH_SIZE = 25; // Safe threshold per API call to avoid token truncation
+  const BATCH_SIZE = 25;
   let aggregatedQuestions = [];
 
   const metaParams = {
@@ -411,7 +428,6 @@ async function generateAiQuiz() {
       const questions = await fetchBatchQuestions(count, 0, metaParams);
       aggregatedQuestions = questions;
     } else {
-      // Chunking process for 50+ questions
       const totalBatches = Math.ceil(count / BATCH_SIZE);
       for (let b = 0; b < totalBatches; b++) {
         const currentBatchCount = Math.min(BATCH_SIZE, count - (b * BATCH_SIZE));
@@ -424,7 +440,7 @@ async function generateAiQuiz() {
       }
     }
 
-    // Re-index IDs to ensure clean sequence 1..N
+    // Clean sequence 1..N
     aggregatedQuestions = aggregatedQuestions.map((q, idx) => ({ ...q, id: idx + 1 }));
 
     // Apply Random Option Shuffling
@@ -466,7 +482,7 @@ async function generateAiQuiz() {
 // Save Published Quiz directly to Supabase Table ('tests')
 async function saveQuizToSupabase() {
   if (!generatedQuizData) {
-    alert("⚠️ Please generate a quiz first!");
+    alert("⚠️️ Please generate a quiz first!");
     return;
   }
 
