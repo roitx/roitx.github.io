@@ -4,7 +4,7 @@ window.SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5
 
 let generatedQuizData = null;
 
-// --- GLOBAL EVENT LISTENERS: DISABLE DBLCLICK & LONG-PRESS (EXCEPT TEXTAREA/INPUT) ---
+// --- GLOBAL EVENT LISTENERS: DISABLE DBLCLICK & LONG-PRESS ---
 document.addEventListener('dblclick', function (e) {
   if (e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'INPUT') {
     e.preventDefault();
@@ -20,17 +20,9 @@ document.addEventListener('contextmenu', function (e) {
 // Subject Mapping Configuration
 const subjectData = {
   class9_10: [
-    "Physics", 
-    "Chemistry", 
-    "Biology", 
-    "History", 
-    "Political Science (Civics)", 
-    "Geography", 
-    "Economics", 
-    "Mathematics", 
-    "Sanskrit", 
-    "Hindi", 
-    "English"
+    "Physics", "Chemistry", "Biology", "History", 
+    "Political Science (Civics)", "Geography", "Economics", 
+    "Mathematics", "Sanskrit", "Hindi", "English"
   ],
   class11_12: {
     science_math: ["Mathematics", "Physics", "Chemistry", "English", "Hindi"],
@@ -51,8 +43,6 @@ window.addEventListener('DOMContentLoaded', async () => {
       await verifyAdminStrictly();
     }
     document.body.classList.add('admin-authenticated');
-    
-    // Initial dropdown setup call
     updateSubCategories();
   } catch (authErr) {
     console.error("Admin Authentication Guard Error:", authErr);
@@ -118,12 +108,7 @@ function updateSubjectOptions() {
     }
   } else {
     streamGroup.style.display = "none";
-    let subjects = [];
-    if (targetClass.includes("NEET")) {
-      subjects = subjectData.neet;
-    } else {
-      subjects = subjectData.jee;
-    }
+    let subjects = targetClass.includes("NEET") ? subjectData.neet : subjectData.jee;
 
     subjects.forEach(sub => {
       const opt = document.createElement("option");
@@ -179,7 +164,7 @@ function getCorrectIndex(q) {
 function cleanOptionText(text) {
   if (typeof text !== 'string') return text;
   return text
-    .replace(/\s*\((?:correct|ans|answer|correct answer|sahi uttar)\)/gi, '')
+    .replace(/\s*\((?:correct\vert{}ans\vert{}answer\vert{}correct answer\vert{}sahi uttar)\)/gi, '')
     .trim();
 }
 
@@ -207,7 +192,7 @@ function shuffleQuizQuestions(questions) {
   });
 }
 
-// Render Visual Preview with MathJax LaTeX & Enhanced Diagram Support
+// Render Preview UI
 function renderUiPreview(parsedJson) {
   let previewContainer = document.getElementById("uiQuestionsPreview");
   if (!previewContainer) {
@@ -245,7 +230,7 @@ function renderUiPreview(parsedJson) {
           <span style="margin-right: 8px; border-radius: 50%; width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; background: ${isCorrect ? '#c6f6d5' : '#edf2f7'}; font-size: 11px;">
             ${String.fromCharCode(65 + optIdx)}
           </span>
-          <span>${opt}${isCorrect ? '✓' : ''}</span>
+          <span>${opt} ${isCorrect ? '✓' : ''}</span>
         </div>`;
     });
 
@@ -257,8 +242,10 @@ function renderUiPreview(parsedJson) {
     }
 
     qDiv.innerHTML = `
-      <p style="font-weight: 600; font-size: 14px; margin: 0 0 8px 0; color: #1a202c;">Q${idx + 1}: ${q.question \vert{}\vert{} ''}</p>${figureHtml}
-      <div>${optionsHtml}</div>${q.explanation ? `<div style="font-size: 12px; color: #4a5568; margin-top: 8px; background: #f7fafc; padding: 8px; border-radius: 6px; border-left: 3px solid #8E2DE2;"><strong>Explanation:</strong><div style="margin-top: 4px; white-space: pre-line;">${q.explanation}</div></div>` : ''}
+      <p style="font-weight: 600; font-size: 14px; margin: 0 0 8px 0; color: #1a202c;">Q${idx + 1}: ${q.question || ''}</p>
+      ${figureHtml}
+      <div>${optionsHtml}</div>
+      ${q.explanation ? `<div style="font-size: 12px; color: #4a5568; margin-top: 8px; background: #f7fafc; padding: 8px; border-radius: 6px; border-left: 3px solid #8E2DE2;"><strong>Explanation:</strong><div style="margin-top: 4px; white-space: pre-line;">${q.explanation}</div></div>` : ''}
     `;
 
     previewContainer.appendChild(qDiv);
@@ -269,7 +256,6 @@ function renderUiPreview(parsedJson) {
   }
 }
 
-// Sync Preview when JSON Textarea is edited manually
 document.addEventListener("DOMContentLoaded", () => {
   const jsonArea = document.getElementById("jsonOutput");
   if (jsonArea) {
@@ -278,45 +264,63 @@ document.addEventListener("DOMContentLoaded", () => {
         const parsed = JSON.parse(jsonArea.value);
         generatedQuizData = parsed;
         renderUiPreview(parsed);
-      } catch (e) {
-        // Suppress parse errors while typing
-      }
+      } catch (e) {}
     });
   }
 });
 
-// Helper Function: Single Batch API Call with Strict JSON Extraction & Cleaning
+// Helper Function: Robust Text Sanitization for LaTeX & Invalid JSON Characters
+function cleanAndParseJson(rawText) {
+  if (!rawText) throw new Error("Empty raw text received.");
+
+  // Remove markdown code fence blocks
+  let cleanStr = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
+
+  // Extract content strictly between first '{' and last '}'
+  const firstBrace = cleanStr.indexOf('{');
+  const lastBrace = cleanStr.lastIndexOf('}');
+
+  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+    cleanStr = cleanStr.substring(firstBrace, lastBrace + 1);
+  }
+
+  // Sanitize invalid backslashes for Math/LaTeX inside string values
+  cleanStr = cleanStr.replace(/\\(?!["\\/bfnrtu])/g, "\\\\");
+
+  try {
+    return JSON.parse(cleanStr);
+  } catch (err) {
+    console.error("JSON Parsing Failed on String:", cleanStr);
+    throw new Error("Unable to parse AI response into valid JSON.");
+  }
+}
+
+// Fetch Batch Questions with Strict Prompting
 async function fetchBatchQuestions(batchSize, startIdx, config) {
   const { targetCategory, targetClass, subject, topic, difficulty, languageInstruction, customPrompt } = config;
 
-  const systemInstruction = `You are a professional senior exam paper setter for ${targetClass}.
-Task: Generate EXACTLY ${batchSize} UNIQUE multiple choice questions starting from Question Number${startIdx}.
-Subject: "${subject}", Topic: "${topic}".
-Exam Type: ${targetCategory}.
-Difficulty Level: ${difficulty}.${languageInstruction}
-Additional Notes: ${customPrompt || "Follow standard NCERT / official exam pattern"}.
+  const systemInstruction = `STRICT SYSTEM ROLE: You are an API endpoint that outputs RAW JSON ONLY.
+Generate EXACTLY ${batchSize} multiple choice questions for ${targetClass}, Subject: "${subject}", Topic: "${topic}".
+Exam Level: ${targetCategory}, Difficulty: ${difficulty}.
+${languageInstruction}
+Custom Request: ${customPrompt || "Standard Exam Pattern"}.
 
-MATHEMATICS, CHEMISTRY, SYMBOLS & DIAGRAM GUIDELINES:
-1. Use standard LaTeX format for math formulas, integrals, limits, roots, fractions, matrix etc. (e.g. \\int_{0}^{\\pi} \\sin(x) dx, \\frac{d}{dx}, \\sqrt{x^2+a^2}).
-2. Escaped LaTeX strings inside JSON must use double backslashes (\\\\int, \\\\frac).
-3. Long chemistry/physics equations must use line breaks (\\\\n) or clear separation.
-4. Explanations must use step-by-step Roman numerals (I., II., III., IV.).
-5. If SVG diagram is required, include valid inline SVG in "diagram_svg", else null.
+FORMAT & ESCAPING RULES:
+1. Return strictly JSON starting with { and ending with }.
+2. NO intro text, NO conversational text like "Here are the questions", NO markdown codeblocks.
+3. Math LaTeX formulas MUST use double backslashes (e.g. "\\\\int f(x) dx", "\\\\frac{a}{b}", "\\\\sqrt{x}"). Do not use unescaped single backslashes.
 
-CRITICAL JSON FORMAT RULE:
-Output MUST be pure, raw JSON only. Do NOT output any preamble, extra conversational text, markdown codeblocks (\`\`\`json), or notes before/after JSON.
-
-JSON Schema format:
+JSON STRUCTURE:
 {
   "questions": [
     {
       "id": ${startIdx},
-      "question": "Question text...",
+      "question": "Question text with double-escaped LaTeX",
       "image_url": null,
       "diagram_svg": null,
-      "options": ["Opt A", "Opt B", "Opt C", "Opt D"],
+      "options": ["Option A", "Option B", "Option C", "Option D"],
       "correct": 0,
-      "explanation": "I. Step one...\\nII. Step two..."
+      "explanation": "Step-by-step solution"
     }
   ]
 }`;
@@ -344,26 +348,11 @@ JSON Schema format:
                 data.candidates?.[0]?.content?.parts?.[0]?.text || 
                 data.result || data.response || data.output || data.message || "";
 
-  if (!rawText) {
-    throw new Error("Empty response received from Edge AI Function.");
-  }
-
-  // Clean Markdown wraps
-  rawText = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
-
-  // Robust JSON Extraction (Extract only text between first '{' and last '}')
-  const firstBrace = rawText.indexOf('{');
-  const lastBrace = rawText.lastIndexOf('}');
-  
-  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-    rawText = rawText.substring(firstBrace, lastBrace + 1);
-  }
-
-  const parsedJson = JSON.parse(rawText);
+  const parsedJson = cleanAndParseJson(rawText);
   return parsedJson.questions || parsedJson.questions_data || [];
 }
 
-// Generate AI Quiz via Supabase Edge Function Engine (Batch-Enabled)
+// Generate AI Quiz in Batches
 async function generateAiQuiz() {
   const targetCategory = document.getElementById("targetCategory").value;
   const targetClass = document.getElementById("targetClass").value;
@@ -381,11 +370,11 @@ async function generateAiQuiz() {
 
   let languageInstruction = "";
   if (language === "Hindi") {
-    languageInstruction = "STRICT LANGUAGE RULE: Write ALL questions, options, and explanations strictly in clean HINDI using standard Devanagari script.";
+    languageInstruction = "STRICT LANGUAGE RULE: Write questions, options, and explanations in clean Devanagari HINDI.";
   } else if (language === "English") {
-    languageInstruction = "STRICT LANGUAGE RULE: Write ALL questions, options, and explanations strictly in standard English.";
+    languageInstruction = "STRICT LANGUAGE RULE: Write in standard English.";
   } else {
-    languageInstruction = "STRICT LANGUAGE RULE: Write in Hinglish (a clean mix of Roman Hindi and standard English technical terms).";
+    languageInstruction = "STRICT LANGUAGE RULE: Write in Hinglish (Roman Hindi + English technical terms).";
   }
 
   const loaderBox = document.getElementById("loaderBox");
@@ -400,7 +389,7 @@ async function generateAiQuiz() {
   const config = { targetCategory, targetClass, subject, topic, difficulty, languageInstruction, customPrompt };
   
   let allQuestions = [];
-  const BATCH_SIZE = 10; // Safe batch size to avoid AI truncation/timeouts
+  const BATCH_SIZE = 10; // Batch size of 10 keeps LaTeX generation safe from context truncation
 
   try {
     for (let current = 0; current < totalCount; current += BATCH_SIZE) {
@@ -408,14 +397,18 @@ async function generateAiQuiz() {
       const startIdx = current + 1;
 
       if (loaderText) {
-        loaderText.innerText = `Gemini AI: Questions ${startIdx} se ${startIdx + currentBatchSize - 1} process ho rahe hain (${totalCount} me se)...`;
+        loaderText.innerText = `Processing questions ${startIdx} to ${startIdx + currentBatchSize - 1} of ${totalCount}...`;
       }
 
       const batchQuestions = await fetchBatchQuestions(currentBatchSize, startIdx, config);
-      allQuestions = allQuestions.concat(batchQuestions);
+      if (Array.isArray(batchQuestions) && batchQuestions.length > 0) {
+        allQuestions = allQuestions.concat(batchQuestions);
+      } else {
+        throw new Error(`Batch starting at index ${startIdx} returned empty or invalid question structure.`);
+      }
     }
 
-    // Sequentially assign clean question IDs
+    // Assign sequential IDs
     allQuestions.forEach((q, index) => {
       q.id = index + 1;
     });
@@ -439,7 +432,7 @@ async function generateAiQuiz() {
 
     document.getElementById("quizPreviewSection").style.display = "block";
     statusMsg.className = "status-msg success";
-    statusMsg.innerText = `🎉 Successfully generated all ${shuffledQuestions.length} questions!`;
+    statusMsg.innerText = `🎉 Successfully generated all ${shuffledQuestions.length} questions without errors!`;
     statusMsg.style.display = "block";
 
     document.getElementById("quizPreviewSection").scrollIntoView({ behavior: 'smooth' });
@@ -455,7 +448,7 @@ async function generateAiQuiz() {
   }
 }
 
-// Save Published Quiz directly to Supabase Table ('tests')
+// Save Published Quiz directly to Supabase
 async function saveQuizToSupabase() {
   if (!generatedQuizData) {
     alert("⚠️ Please generate a quiz first!");
