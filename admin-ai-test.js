@@ -209,9 +209,8 @@ function shuffleQuizQuestions(questions) {
 // Helper: Ensure Raw LaTeX Commands Are Wrapped In MathJax Delimiters ($...$)
 function formatLatexString(str) {
   if (typeof str !== 'string') return str;
-  if (!str.includes('\\')) return str; // Fast pass if no latex command
+  if (!str.includes('\\')) return str;
 
-  // Wrap raw latex commands if not already enclosed in $...$
   return str.replace(/(?<!\$)(?:\\[a-zA-Z]+(?:\{[^{}]*\}\vert{}\[[^\[\]]*\])*|\^[0-9a-zA-Z{}]+|_[0-9a-zA-Z{}]+)+(?!\$)/g, (match) => {
     return `$${match.trim()}$`;
   });
@@ -280,7 +279,6 @@ function renderUiPreview(parsedJson) {
     previewContainer.appendChild(qDiv);
   });
 
-  // Re-trigger MathJax to parse $...$ formulas
   if (window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
     window.MathJax.typesetPromise([previewContainer]).catch((err) => console.log('MathJax error:', err));
   } else if (window.MathJax && typeof window.MathJax.typeset === 'function') {
@@ -304,31 +302,26 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-// Helper Function: Single Batch API Call
+// Safe Batch API Call with Strict Response Validation
 async function fetchBatchQuestions(chunkCount, startIndex, metaParams) {
   const { targetCategory, targetClass, subject, topic, difficulty, languageInstruction, customPrompt } = metaParams;
 
   const systemInstruction = `You are a professional senior exam paper setter for ${targetClass}.
-Your task is to create a realistic MCQ test with exactly ${chunkCount} questions starting from index ${startIndex + 1} for Subject: "${subject}", Topic: "${topic}".
+Your task is to create a realistic MCQ test with EXACTLY ${chunkCount} questions starting from question number ${startIndex + 1} for Subject: "${subject}", Topic: "${topic}".
 Exam Type: ${targetCategory}.
 Difficulty Level: ${difficulty}.
 ${languageInstruction}
 Additional Notes: ${customPrompt || "Follow standard NCERT / official exam pattern"}.
 
-MATHEMATICS, CHEMISTRY, SYMBOLS & DIAGRAM GUIDELINES:
-1. CRITICAL MATHJAX RULE: ALWAYS enclose ALL LaTeX math formulas, variables, symbols, integrals, and fractions inside single dollar signs like $...$ (e.g. "$\\int x^n dx$", "$\\frac{1}{x}$", "$e^x$", "$x \\neq -1$"). NEVER write raw unescaped LaTeX outside dollar signs.
-2. Inside JSON strings, double backslashes must be used for LaTeX commands (e.g., "\\\\int", "\\\\frac{1}{x}", "\\\\log |x| + C").
-3. CHEMISTRY & PHYSICAL EQUATIONS: Put reactants and products neatly formatted with proper arrow symbols wrapped in $...$.
-4. EXPLANATION FORMATTING: Keep explanations clear using Roman numerals (I., II., III.). Always enclose LaTeX formulas in explanations within $...$.
-5. DIAGRAMS (SVG): Provide clean valid SVG in "diagram_svg" if needed, otherwise set "diagram_svg": null.
+MATHEMATICS & LATEX RULES:
+1. ALWAYS wrap LaTeX formulas in single dollar signs $...$ (e.g. "$\\int x^n dx$", "$\\frac{1}{x}$").
+2. Escaped LaTeX strings inside JSON MUST use double backslashes (\\\\int, \\\\frac).
+3. EXPLANATION: Concise step-by-step explanations using Roman numerals (I., II., III.).
 
-CRITICAL ANTI-AI RULES:
-1. Option lengths must be balanced.
-2. DO NOT include "(Correct)" or "(Ans)" in option strings.
-3. Distribute correct answer indices randomly across 0, 1, 2, and 3.
-4. Respond strictly with pure, valid JSON matching the schema below.
+CRITICAL OUTPUT RULE:
+Respond ONLY with raw JSON object containing "questions" array. No markdown code blocks, no text before or after JSON.
 
-JSON Format Schema:
+JSON Schema:
 {
   "questions": [
     {
@@ -338,7 +331,7 @@ JSON Format Schema:
       "diagram_svg": null,
       "options": ["$\\frac{x^{n-1}}{n-1} + C$", "$\\frac{x^{n+1}}{n+1} + C$", "$\\frac{x^n}{n} + C$", "$n x^{n-1} + C$"],
       "correct": 1,
-      "explanation": "I. Yah samakalan ka manak sutra hai.\\nII. $\\int x^n dx = \\frac{x^{n+1}}{n+1} + C$, jahan $n \\neq -1$ hai."
+      "explanation": "I. Standard formula.\\nII. $\\int x^n dx = \\frac{x^{n+1}}{n+1} + C$."
     }
   ]
 }`;
@@ -350,12 +343,22 @@ JSON Format Schema:
       "apikey": window.SUPABASE_ANON_KEY,
       "Authorization": `Bearer ${window.SUPABASE_ANON_KEY}`
     },
-    body: JSON.stringify({
-      prompt: systemInstruction
-    })
+    body: JSON.stringify({ prompt: systemInstruction })
   });
 
-  const data = await response.json();
+  const responseText = await response.text();
+
+  // Edge Function HTML / Plaintext Error Guard
+  if (!response.ok || responseText.startsWith("Function") || responseText.includes("Error")) {
+    throw new Error(`Edge Function Error: ${responseText.slice(0, 100)}`);
+  }
+
+  let data;
+  try {
+    data = JSON.parse(responseText);
+  } catch (e) {
+    throw new Error("Invalid response format from Edge Function.");
+  }
 
   if (data.error) {
     let errMsg = typeof data.error === 'string' ? data.error : (data.error.message || JSON.stringify(data.error));
@@ -366,16 +369,23 @@ JSON Format Schema:
                 data.candidates?.[0]?.content?.parts?.[0]?.text || 
                 data.result || data.response || data.output || data.message || "";
 
-  if (!rawText) {
-    throw new Error("Empty response received from Edge AI Function.");
+  if (!rawText) throw new Error("Empty response from AI.");
+
+  // Clean JSON
+  rawText = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
+  
+  // Extract pure JSON if surrounded by text
+  const firstBrace = rawText.indexOf('{');
+  const lastBrace = rawText.lastIndexOf('}');
+  if (firstBrace !== -1 && lastBrace !== -1) {
+    rawText = rawText.substring(firstBrace, lastBrace + 1);
   }
 
-  rawText = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
   const parsed = JSON.parse(rawText);
   return parsed.questions || parsed.questions_data || [];
 }
 
-// Generate AI Quiz with Automatic Chunking / Batching
+// Main Batching Generator (Batch size = 15 questions per call)
 async function generateAiQuiz() {
   const targetCategory = document.getElementById("targetCategory").value;
   const targetClass = document.getElementById("targetClass").value;
@@ -393,11 +403,11 @@ async function generateAiQuiz() {
 
   let languageInstruction = "";
   if (language === "Hindi") {
-    languageInstruction = "STRICT LANGUAGE RULE: Write ALL questions, options, and explanations strictly in clean HINDI using standard Devanagari script.";
+    languageInstruction = "STRICT LANGUAGE RULE: Write ALL questions in HINDI (Devanagari).";
   } else if (language === "English") {
-    languageInstruction = "STRICT LANGUAGE RULE: Write ALL questions, options, and explanations strictly in standard English.";
+    languageInstruction = "STRICT LANGUAGE RULE: Write ALL questions in English.";
   } else {
-    languageInstruction = "STRICT LANGUAGE RULE: Write in Hinglish (a clean mix of Roman Hindi and standard English technical terms).";
+    languageInstruction = "STRICT LANGUAGE RULE: Write in Hinglish.";
   }
 
   const loaderBox = document.getElementById("loaderBox");
@@ -409,7 +419,8 @@ async function generateAiQuiz() {
   statusMsg.className = "status-msg";
   generateBtn.disabled = true;
 
-  const BATCH_SIZE = 25;
+  // Reduced SAFE batch size to 15 questions per request
+  const BATCH_SIZE = 15;
   let aggregatedQuestions = [];
 
   const metaParams = {
@@ -423,27 +434,23 @@ async function generateAiQuiz() {
   };
 
   try {
-    if (count <= BATCH_SIZE) {
-      statusMsg.innerText = `⏳ Generating ${count} questions... Please wait.`;
-      const questions = await fetchBatchQuestions(count, 0, metaParams);
-      aggregatedQuestions = questions;
-    } else {
-      const totalBatches = Math.ceil(count / BATCH_SIZE);
-      for (let b = 0; b < totalBatches; b++) {
-        const currentBatchCount = Math.min(BATCH_SIZE, count - (b * BATCH_SIZE));
-        const startIndex = b * BATCH_SIZE;
+    const totalBatches = Math.ceil(count / BATCH_SIZE);
 
-        statusMsg.innerText = `⏳ Generating batch ${b + 1} of ${totalBatches} (${aggregatedQuestions.length}/${count} Qs)...`;
+    for (let b = 0; b < totalBatches; b++) {
+      const currentBatchCount = Math.min(BATCH_SIZE, count - (b * BATCH_SIZE));
+      const startIndex = b * BATCH_SIZE;
 
-        const batchQuestions = await fetchBatchQuestions(currentBatchCount, startIndex, metaParams);
-        aggregatedQuestions = aggregatedQuestions.concat(batchQuestions);
-      }
+      statusMsg.innerText = `⏳ Generating Batch ${b + 1} of ${totalBatches} (${aggregatedQuestions.length}/${count} Questions Done)...`;
+
+      // Single Batch Fetch
+      const batchQuestions = await fetchBatchQuestions(currentBatchCount, startIndex, metaParams);
+      aggregatedQuestions = aggregatedQuestions.concat(batchQuestions);
     }
 
-    // Clean sequence 1..N
+    // Assign Clean IDs
     aggregatedQuestions = aggregatedQuestions.map((q, idx) => ({ ...q, id: idx + 1 }));
 
-    // Apply Random Option Shuffling
+    // Shuffle options
     aggregatedQuestions = shuffleQuizQuestions(aggregatedQuestions);
 
     const fullQuizPayload = {
@@ -482,7 +489,7 @@ async function generateAiQuiz() {
 // Save Published Quiz directly to Supabase Table ('tests')
 async function saveQuizToSupabase() {
   if (!generatedQuizData) {
-    alert("⚠️️ Please generate a quiz first!");
+    alert("⚠️ Please generate a quiz first!");
     return;
   }
 
