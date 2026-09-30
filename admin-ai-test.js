@@ -4,7 +4,7 @@ window.SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5
 
 let generatedQuizData = null;
 
-// --- GLOBAL EVENT LISTENERS: DISABLE DBLCLICK & LONG-PRESS ---
+// --- GLOBAL EVENT LISTENERS: DISABLE DBLCLICK & LONG-PRESS (EXCEPT TEXTAREA/INPUT) ---
 document.addEventListener('dblclick', function (e) {
   if (e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'INPUT') {
     e.preventDefault();
@@ -192,7 +192,7 @@ function shuffleQuizQuestions(questions) {
   });
 }
 
-// Render Preview UI
+// Render Visual Preview with MathJax LaTeX & Enhanced Diagram Support
 function renderUiPreview(parsedJson) {
   let previewContainer = document.getElementById("uiQuestionsPreview");
   if (!previewContainer) {
@@ -256,6 +256,7 @@ function renderUiPreview(parsedJson) {
   }
 }
 
+// Sync Preview when JSON Textarea is edited manually
 document.addEventListener("DOMContentLoaded", () => {
   const jsonArea = document.getElementById("jsonOutput");
   if (jsonArea) {
@@ -269,127 +270,108 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-// Helper Function: Robust Text Sanitization for LaTeX & Invalid JSON Characters
-function cleanAndParseJson(rawText) {
+// Robust JSON Sanitizer and Parser Function
+function parseAndCleanJson(rawText) {
   if (!rawText || typeof rawText !== 'string') {
-    throw new Error("Invalid or non-string response from Edge Function.");
+    throw new Error("Empty response received from AI.");
   }
 
-  // Remove markdown code fence blocks
   let cleanStr = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
 
-  // Extract content strictly between first '{' and last '}'
   const firstBrace = cleanStr.indexOf('{');
   const lastBrace = cleanStr.lastIndexOf('}');
 
   if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
     cleanStr = cleanStr.substring(firstBrace, lastBrace + 1);
   } else {
-    throw new Error("Response does not contain valid JSON brackets {}. Raw: " + cleanStr.slice(0, 50));
+    throw new Error("Invalid JSON structure returned by AI.");
   }
 
-  // Sanitize invalid backslashes for Math/LaTeX inside string values
+  // Handle unescaped backslashes in LaTeX
   cleanStr = cleanStr.replace(/\\(?!["\\/bfnrtu])/g, "\\\\");
 
-  return JSON.parse(cleanStr);
+  try {
+    return JSON.parse(cleanStr);
+  } catch (err) {
+    // Retry with line breaks stripped
+    cleanStr = cleanStr.replace(/[\r\n]+/g, " ");
+    return JSON.parse(cleanStr);
+  }
 }
 
-// Helper: Delay execution for retries
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
-// Fetch Single Batch Questions with Automatic Retries
-async function fetchBatchQuestionsWithRetry(batchSize, startIdx, config, maxRetries = 3) {
+// Helper Function: Fetch Single Batch of Questions (Max 5 per call)
+async function fetchSingleBatch(batchCount, startId, config) {
   const { targetCategory, targetClass, subject, topic, difficulty, languageInstruction, customPrompt } = config;
 
-  const systemInstruction = `STRICT SYSTEM ROLE: You are an API endpoint that outputs RAW JSON ONLY.
-Generate EXACTLY ${batchSize} multiple choice questions for ${targetClass}, Subject: "${subject}", Topic: "${topic}".
-Exam Level: ${targetCategory}, Difficulty: ${difficulty}.
+  const systemInstruction = `You are a professional senior exam paper setter for ${targetClass}.
+Your task is to create exactly ${batchCount} questions starting from ID ${startId} for Subject: "${subject}", Topic: "${topic}".
+Exam Type: ${targetCategory}.
+Difficulty Level: ${difficulty}.
 ${languageInstruction}
-Custom Request: ${customPrompt || "Standard Exam Pattern"}.
+Additional Notes: ${customPrompt || "Follow standard NCERT / official exam pattern"}.
 
-FORMAT RULES:
-1. Return strictly JSON starting with { and ending with }.
-2. NO intro text, NO conversational text, NO markdown codeblocks.
-3. Math LaTeX formulas MUST use double backslashes (e.g. "\\\\int f(x) dx", "\\\\frac{a}{b}", "\\\\sqrt{x}").
+MATHEMATICS, CHEMISTRY, SYMBOLS & DIAGRAM GUIDELINES:
+1. Use standard LaTeX format for math formulas, integrals, limits, roots, fractions, matrix etc. (e.g. \\int_{0}^{\\pi} \\sin(x) dx, \\frac{d}{dx}, \\sqrt{x^2+a^2}).
+2. Escaped LaTeX strings inside JSON must use double backslashes (\\\\int, \\\\frac).
+3. CHEMISTRY & PHYSICAL EQUATIONS RULE: For long chemical reactions or physical equations, do NOT crowd everything in one single horizontal line. Put reactants on the first part, the reaction arrow (\\rightarrow or \\longrightarrow) clearly, and place products or next terms on a new line using Markdown line breaks (\\\\n) or block display equations so it looks neat and readable.
+4. EXPLANATION FORMATTING RULE: Break down explanations into clear step-by-step paragraphs using Roman numerals (I., II., III., IV.) for steps instead of numbers or step i/ii words.
+5. DIAGRAMS & FIGURES RULE (SVG): If a question involves geometry (like angles e.g. θ, rays/kiran, coordinates x,y,z), organic chemistry (like benzene rings), or physics/biology figures, provide clean, well-scaled SVG code inside the "diagram_svg" field. If no diagram is needed, set both "diagram_svg": null and "image_url": null.
 
-JSON STRUCTURE:
+CRITICAL ANTI-AI / NATURAL EXAM RULES:
+1. DO NOT make the correct option longer or more detailed than the wrong options. All 4 options MUST be balanced.
+2. DO NOT add extra explanatory text like "(Correct)" or "(Ans)" inside option strings.
+3. Distribute correct answer indices completely randomly across 0, 1, 2, and 3.
+4. Respond strictly with pure, valid JSON. No markdown ticks, no commentary.
+
+JSON Format Schema:
 {
   "questions": [
     {
-      "id": ${startIdx},
-      "question": "Question text with double-escaped LaTeX",
+      "id": ${startId},
+      "question": "Question text with LaTeX if math",
       "image_url": null,
       "diagram_svg": null,
       "options": ["Option A", "Option B", "Option C", "Option D"],
       "correct": 0,
-      "explanation": "Step-by-step solution"
+      "explanation": "I. First step...\\\\nII. Second step..."
     }
   ]
 }`;
 
-  let lastError = null;
+  const response = await fetch(window.SUPABASE_FUNCTION_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "apikey": window.SUPABASE_ANON_KEY,
+      "Authorization": `Bearer ${window.SUPABASE_ANON_KEY}`
+    },
+    body: JSON.stringify({ prompt: systemInstruction })
+  });
 
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      const response = await fetch(window.SUPABASE_FUNCTION_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "apikey": window.SUPABASE_ANON_KEY,
-          "Authorization": `Bearer ${window.SUPABASE_ANON_KEY}`
-        },
-        body: JSON.stringify({
-          prompt: systemInstruction
-        })
-      });
+  const data = await response.json();
 
-      // Get raw text first to safely inspect HTTP or Edge Function error messages
-      const rawResponseText = await response.text();
-
-      let data;
-      try {
-        data = JSON.parse(rawResponseText);
-      } catch (e) {
-        throw new Error("Edge Function returned non-JSON text: " + rawResponseText.substring(0, 100));
-      }
-
-      if (data.error) {
-        let errMsg = typeof data.error === 'string' ? data.error : (data.error.message || JSON.stringify(data.error));
-        throw new Error(errMsg);
-      }
-
-      let rawText = data.choices?.[0]?.message?.content || 
-                    data.candidates?.[0]?.content?.parts?.[0]?.text || 
-                    data.result || data.response || data.output || data.message || "";
-
-      const parsedJson = cleanAndParseJson(rawText);
-      const questions = parsedJson.questions || parsedJson.questions_data || [];
-      
-      if (Array.isArray(questions) && questions.length > 0) {
-        return questions;
-      } else {
-        throw new Error("Empty questions array returned.");
-      }
-
-    } catch (err) {
-      console.warn(`Attempt ${attempt} failed for batch starting at index ${startIdx}:`, err.message);
-      lastError = err;
-      if (attempt < maxRetries) {
-        await delay(1500 * attempt); // Wait 1.5s, 3s before retry
-      }
-    }
+  if (data.error) {
+    let errMsg = typeof data.error === 'string' ? data.error : (data.error.message || JSON.stringify(data.error));
+    throw new Error(errMsg);
   }
 
-  throw lastError;
+  let rawText = data.choices?.[0]?.message?.content || 
+                data.candidates?.[0]?.content?.parts?.[0]?.text || 
+                data.result || data.response || data.output || data.message || "";
+
+  const parsed = parseAndCleanJson(rawText);
+  return parsed.questions || parsed.questions_data || [];
 }
 
-// Generate AI Quiz in Safe Small Batches (Batch size = 5)
+// Main Quiz Generation Function with Smart Batching (Fixes Token Errors)
 async function generateAiQuiz() {
   const targetCategory = document.getElementById("targetCategory").value;
   const targetClass = document.getElementById("targetClass").value;
   const subject = document.getElementById("subjectSelect").value;
   const topic = document.getElementById("topicInput").value.trim();
-  const totalCount = parseInt(document.getElementById("questionsCount").value);
+  const totalCount = parseInt(document.getElementById("questionsCount").value) || 10;
   const difficulty = document.getElementById("difficultySelect").value;
   const language = document.getElementById("languageSelect").value;
   const customPrompt = document.getElementById("customPrompt").value.trim();
@@ -401,15 +383,14 @@ async function generateAiQuiz() {
 
   let languageInstruction = "";
   if (language === "Hindi") {
-    languageInstruction = "STRICT LANGUAGE RULE: Write questions, options, and explanations in clean Devanagari HINDI.";
+    languageInstruction = "STRICT LANGUAGE RULE: Write ALL questions, options, and explanations strictly in clean HINDI using standard Devanagari script (देवनागरी लिपि). Ensure proper matras and conjuncts without any text corruption or broken unicode characters.";
   } else if (language === "English") {
-    languageInstruction = "STRICT LANGUAGE RULE: Write in standard English.";
+    languageInstruction = "STRICT LANGUAGE RULE: Write ALL questions, options, and explanations strictly in standard English.";
   } else {
-    languageInstruction = "STRICT LANGUAGE RULE: Write in Hinglish (Roman Hindi + English technical terms).";
+    languageInstruction = "STRICT LANGUAGE RULE: Write in Hinglish (a clean mix of Roman Hindi and standard English technical terms).";
   }
 
   const loaderBox = document.getElementById("loaderBox");
-  const loaderText = document.getElementById("loaderText");
   const statusMsg = document.getElementById("statusMsg");
   const generateBtn = document.getElementById("generateBtn");
 
@@ -418,36 +399,37 @@ async function generateAiQuiz() {
   generateBtn.disabled = true;
 
   const config = { targetCategory, targetClass, subject, topic, difficulty, languageInstruction, customPrompt };
-  
-  let allQuestions = [];
-  const BATCH_SIZE = 5; // Reduced to 5 for fast processing and zero rate limit timeouts
+
+  let aggregatedQuestions = [];
+  const BATCH_SIZE = 5; // Fetches 5 questions per call to keep token size optimal
 
   try {
-    for (let current = 0; current < totalCount; current += BATCH_SIZE) {
-      const currentBatchSize = Math.min(BATCH_SIZE, totalCount - current);
-      const startIdx = current + 1;
+    for (let i = 0; i < totalCount; i += BATCH_SIZE) {
+      const currentBatchCount = Math.min(BATCH_SIZE, totalCount - i);
+      const startId = i + 1;
 
+      // Update loader indicator for live progress feedback
+      const loaderText = document.getElementById("loaderText");
       if (loaderText) {
-        loaderText.innerText = `Gemini AI: Questions ${startIdx} to ${startIdx + currentBatchSize - 1} process ho rahe hain (${totalCount} me se)...`;
+        loaderText.innerText = `Generating Questions ${startId} to ${startId + currentBatchCount - 1} of ${totalCount}... Please wait.`;
       }
 
-      const batchQuestions = await fetchBatchQuestionsWithRetry(currentBatchSize, startIdx, config, 3);
-      allQuestions = allQuestions.concat(batchQuestions);
+      const batchResult = await fetchSingleBatch(currentBatchCount, startId, config);
+      aggregatedQuestions = aggregatedQuestions.concat(batchResult);
 
-      // Delay between batches to prevent rate limiting
-      if (current + BATCH_SIZE < totalCount) {
-        await delay(800);
+      if (i + BATCH_SIZE < totalCount) {
+        await delay(500); // Prevent hit rate throttling
       }
     }
 
-    // Assign clean sequential IDs
-    allQuestions.forEach((q, index) => {
-      q.id = index + 1;
+    // Assign clean incremental IDs
+    aggregatedQuestions.forEach((q, idx) => {
+      q.id = idx + 1;
     });
 
-    let shuffledQuestions = shuffleQuizQuestions(allQuestions);
+    let shuffledQuestions = shuffleQuizQuestions(aggregatedQuestions);
 
-    const finalResult = {
+    const finalResultData = {
       title: `${subject}: ${topic} Quiz (${shuffledQuestions.length} Qs)`,
       target_class: targetClass,
       subject: subject,
@@ -455,16 +437,16 @@ async function generateAiQuiz() {
       questions: shuffledQuestions
     };
 
-    generatedQuizData = finalResult;
+    generatedQuizData = finalResultData;
 
-    document.getElementById("finalTestTitle").value = finalResult.title;
-    document.getElementById("jsonOutput").value = JSON.stringify(finalResult, null, 2);
+    document.getElementById("finalTestTitle").value = finalResultData.title;
+    document.getElementById("jsonOutput").value = JSON.stringify(finalResultData, null, 2);
 
-    renderUiPreview(finalResult);
+    renderUiPreview(finalResultData);
 
     document.getElementById("quizPreviewSection").style.display = "block";
     statusMsg.className = "status-msg success";
-    statusMsg.innerText = `🎉 Successfully generated all ${shuffledQuestions.length} questions without errors!`;
+    statusMsg.innerText = `🎉 Total ${shuffledQuestions.length} questions generated successfully without any Token error!`;
     statusMsg.style.display = "block";
 
     document.getElementById("quizPreviewSection").scrollIntoView({ behavior: 'smooth' });
@@ -480,7 +462,7 @@ async function generateAiQuiz() {
   }
 }
 
-// Save Published Quiz directly to Supabase
+// Save Published Quiz directly to Supabase Table ('tests')
 async function saveQuizToSupabase() {
   if (!generatedQuizData) {
     alert("⚠️ Please generate a quiz first!");
