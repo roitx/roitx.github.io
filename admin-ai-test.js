@@ -17,12 +17,20 @@ document.addEventListener('contextmenu', function (e) {
   }
 }, { passive: false });
 
-// Subject Mapping Configuration
+// Subject Mapping Configuration (Updated with separate Class 9 & 10 subjects)
 const subjectData = {
   class9_10: [
-    "Physics", "Chemistry", "Biology", "History", 
-    "Political Science (Civics)", "Geography", "Economics", 
-    "Mathematics", "Sanskrit", "Hindi", "English"
+    "Physics", 
+    "Chemistry", 
+    "Biology", 
+    "History", 
+    "Political Science (Civics)", 
+    "Geography", 
+    "Economics", 
+    "Mathematics", 
+    "Sanskrit", 
+    "Hindi", 
+    "English"
   ],
   class11_12: {
     science_math: ["Mathematics", "Physics", "Chemistry", "English", "Hindi"],
@@ -43,6 +51,8 @@ window.addEventListener('DOMContentLoaded', async () => {
       await verifyAdminStrictly();
     }
     document.body.classList.add('admin-authenticated');
+    
+    // Initial dropdown setup call
     updateSubCategories();
   } catch (authErr) {
     console.error("Admin Authentication Guard Error:", authErr);
@@ -108,7 +118,12 @@ function updateSubjectOptions() {
     }
   } else {
     streamGroup.style.display = "none";
-    let subjects = targetClass.includes("NEET") ? subjectData.neet : subjectData.jee;
+    let subjects = [];
+    if (targetClass.includes("NEET")) {
+      subjects = subjectData.neet;
+    } else {
+      subjects = subjectData.jee;
+    }
 
     subjects.forEach(sub => {
       const opt = document.createElement("option");
@@ -164,7 +179,7 @@ function getCorrectIndex(q) {
 function cleanOptionText(text) {
   if (typeof text !== 'string') return text;
   return text
-    .replace(/\s*\((?:correct\vert{}ans\vert{}answer\vert{}correct answer\vert{}sahi uttar)\)/gi, '')
+    .replace(/\s*\((?:correct|ans|answer|correct answer|sahi uttar)\)/gi, '')
     .trim();
 }
 
@@ -265,113 +280,20 @@ document.addEventListener("DOMContentLoaded", () => {
         const parsed = JSON.parse(jsonArea.value);
         generatedQuizData = parsed;
         renderUiPreview(parsed);
-      } catch (e) {}
+      } catch (e) {
+        // Suppress parse errors while typing
+      }
     });
   }
 });
 
-// Robust JSON Sanitizer and Parser Function
-function parseAndCleanJson(rawText) {
-  if (!rawText || typeof rawText !== 'string') {
-    throw new Error("Empty response received from AI.");
-  }
-
-  let cleanStr = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
-
-  const firstBrace = cleanStr.indexOf('{');
-  const lastBrace = cleanStr.lastIndexOf('}');
-
-  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-    cleanStr = cleanStr.substring(firstBrace, lastBrace + 1);
-  } else {
-    throw new Error("Invalid JSON structure returned by AI.");
-  }
-
-  // Handle unescaped backslashes in LaTeX
-  cleanStr = cleanStr.replace(/\\(?!["\\/bfnrtu])/g, "\\\\");
-
-  try {
-    return JSON.parse(cleanStr);
-  } catch (err) {
-    // Retry with line breaks stripped
-    cleanStr = cleanStr.replace(/[\r\n]+/g, " ");
-    return JSON.parse(cleanStr);
-  }
-}
-
-const delay = ms => new Promise(res => setTimeout(res, ms));
-
-// Helper Function: Fetch Single Batch of Questions (Max 5 per call)
-async function fetchSingleBatch(batchCount, startId, config) {
-  const { targetCategory, targetClass, subject, topic, difficulty, languageInstruction, customPrompt } = config;
-
-  const systemInstruction = `You are a professional senior exam paper setter for ${targetClass}.
-Your task is to create exactly ${batchCount} questions starting from ID ${startId} for Subject: "${subject}", Topic: "${topic}".
-Exam Type: ${targetCategory}.
-Difficulty Level: ${difficulty}.
-${languageInstruction}
-Additional Notes: ${customPrompt || "Follow standard NCERT / official exam pattern"}.
-
-MATHEMATICS, CHEMISTRY, SYMBOLS & DIAGRAM GUIDELINES:
-1. Use standard LaTeX format for math formulas, integrals, limits, roots, fractions, matrix etc. (e.g. \\int_{0}^{\\pi} \\sin(x) dx, \\frac{d}{dx}, \\sqrt{x^2+a^2}).
-2. Escaped LaTeX strings inside JSON must use double backslashes (\\\\int, \\\\frac).
-3. CHEMISTRY & PHYSICAL EQUATIONS RULE: For long chemical reactions or physical equations, do NOT crowd everything in one single horizontal line. Put reactants on the first part, the reaction arrow (\\rightarrow or \\longrightarrow) clearly, and place products or next terms on a new line using Markdown line breaks (\\\\n) or block display equations so it looks neat and readable.
-4. EXPLANATION FORMATTING RULE: Break down explanations into clear step-by-step paragraphs using Roman numerals (I., II., III., IV.) for steps instead of numbers or step i/ii words.
-5. DIAGRAMS & FIGURES RULE (SVG): If a question involves geometry (like angles e.g. θ, rays/kiran, coordinates x,y,z), organic chemistry (like benzene rings), or physics/biology figures, provide clean, well-scaled SVG code inside the "diagram_svg" field. If no diagram is needed, set both "diagram_svg": null and "image_url": null.
-
-CRITICAL ANTI-AI / NATURAL EXAM RULES:
-1. DO NOT make the correct option longer or more detailed than the wrong options. All 4 options MUST be balanced.
-2. DO NOT add extra explanatory text like "(Correct)" or "(Ans)" inside option strings.
-3. Distribute correct answer indices completely randomly across 0, 1, 2, and 3.
-4. Respond strictly with pure, valid JSON. No markdown ticks, no commentary.
-
-JSON Format Schema:
-{
-  "questions": [
-    {
-      "id": ${startId},
-      "question": "Question text with LaTeX if math",
-      "image_url": null,
-      "diagram_svg": null,
-      "options": ["Option A", "Option B", "Option C", "Option D"],
-      "correct": 0,
-      "explanation": "I. First step...\\\\nII. Second step..."
-    }
-  ]
-}`;
-
-  const response = await fetch(window.SUPABASE_FUNCTION_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "apikey": window.SUPABASE_ANON_KEY,
-      "Authorization": `Bearer ${window.SUPABASE_ANON_KEY}`
-    },
-    body: JSON.stringify({ prompt: systemInstruction })
-  });
-
-  const data = await response.json();
-
-  if (data.error) {
-    let errMsg = typeof data.error === 'string' ? data.error : (data.error.message || JSON.stringify(data.error));
-    throw new Error(errMsg);
-  }
-
-  let rawText = data.choices?.[0]?.message?.content || 
-                data.candidates?.[0]?.content?.parts?.[0]?.text || 
-                data.result || data.response || data.output || data.message || "";
-
-  const parsed = parseAndCleanJson(rawText);
-  return parsed.questions || parsed.questions_data || [];
-}
-
-// Main Quiz Generation Function with Smart Batching (Fixes Token Errors)
+// Generate AI Quiz via Supabase Edge Function Engine
 async function generateAiQuiz() {
   const targetCategory = document.getElementById("targetCategory").value;
   const targetClass = document.getElementById("targetClass").value;
   const subject = document.getElementById("subjectSelect").value;
   const topic = document.getElementById("topicInput").value.trim();
-  const totalCount = parseInt(document.getElementById("questionsCount").value) || 10;
+  const count = document.getElementById("questionsCount").value;
   const difficulty = document.getElementById("difficultySelect").value;
   const language = document.getElementById("languageSelect").value;
   const customPrompt = document.getElementById("customPrompt").value.trim();
@@ -398,55 +320,92 @@ async function generateAiQuiz() {
   statusMsg.style.display = "none";
   generateBtn.disabled = true;
 
-  const config = { targetCategory, targetClass, subject, topic, difficulty, languageInstruction, customPrompt };
+  // SYSTEM INSTRUCTION UPGRADED WITH MULTILINE CHEMISTRY EQUATIONS & ROBUST SVG DIAGRAM RULES
+  const systemInstruction = `You are a professional senior exam paper setter for ${targetClass}.
+Your task is to create a realistic MCQ test with exactly ${count} questions for Subject: "${subject}", Topic: "${topic}".
+Exam Type: ${targetCategory}.
+Difficulty Level: ${difficulty}.
+${languageInstruction}
+Additional Notes: ${customPrompt || "Follow standard NCERT / official exam pattern"}.
 
-  let aggregatedQuestions = [];
-  const BATCH_SIZE = 5; // Fetches 5 questions per call to keep token size optimal
+MATHEMATICS, CHEMISTRY, SYMBOLS & DIAGRAM GUIDELINES:
+1. Use standard LaTeX format for math formulas, integrals, limits, roots, fractions, matrix etc. (e.g. \\int_{0}^{\\pi} \\sin(x) dx, \\frac{d}{dx}, \\sqrt{x^2+a^2}).
+2. Escaped LaTeX strings inside JSON must use double backslashes (\\\\int, \\\\frac).
+3. CHEMISTRY & PHYSICAL EQUATIONS RULE: For long chemical reactions or physical equations, do NOT crowd everything in one single horizontal line. Put reactants on the first part, the reaction arrow (\\rightarrow or \\longrightarrow) clearly, and place products or next terms on a new line using Markdown line breaks (\\\\n) or block display equations so it looks neat and readable.
+4. EXPLANATION FORMATTING RULE: Break down explanations into clear step-by-step paragraphs using Roman numerals (I., II., III., IV.) for steps instead of numbers or step i/ii words.
+5. DIAGRAMS & FIGURES RULE (SVG): If a question involves geometry (like angles e.g. θ, rays/kiran, coordinates x,y,z), organic chemistry (like benzene rings), or physics/biology figures, provide clean, well-scaled SVG code inside the "diagram_svg" field (e.g. "<svg height='120' width='200' viewBox='0 0 200 120'>...</svg>"). Inside SVG text elements, do NOT use raw LaTeX like \\theta; instead, use direct Unicode characters (like θ, α, °) or clean text strings so they render perfectly without clipping or overlapping. If no diagram is needed, set both "diagram_svg": null and "image_url": null.
+
+CRITICAL ANTI-AI / NATURAL EXAM RULES:
+1. DO NOT make the correct option longer or more detailed than the wrong options. All 4 options MUST be balanced.
+2. DO NOT add extra explanatory text like "(Correct)" or "(Ans)" inside option strings.
+3. Distribute correct answer indices completely randomly across 0, 1, 2, and 3.
+4. Respond strictly with pure, valid JSON. No markdown ticks, no commentary.
+
+JSON Format Schema:
+{
+  "title": "${subject}: ${topic} Quiz (${count} Qs)",
+  "target_class": "${targetClass}",
+  "subject": "${subject}",
+  "topic": "${topic}",
+  "questions": [
+    {
+      "id": 1,
+      "question": "Question text with LaTeX if math",
+      "image_url": null,
+      "diagram_svg": null,
+      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "correct": 0,
+      "explanation": "I. First step...\\nII. Second step..."
+    }
+  ]
+}`;
 
   try {
-    for (let i = 0; i < totalCount; i += BATCH_SIZE) {
-      const currentBatchCount = Math.min(BATCH_SIZE, totalCount - i);
-      const startId = i + 1;
-
-      // Update loader indicator for live progress feedback
-      const loaderText = document.getElementById("loaderText");
-      if (loaderText) {
-        loaderText.innerText = `Generating Questions ${startId} to ${startId + currentBatchCount - 1} of ${totalCount}... Please wait.`;
-      }
-
-      const batchResult = await fetchSingleBatch(currentBatchCount, startId, config);
-      aggregatedQuestions = aggregatedQuestions.concat(batchResult);
-
-      if (i + BATCH_SIZE < totalCount) {
-        await delay(500); // Prevent hit rate throttling
-      }
-    }
-
-    // Assign clean incremental IDs
-    aggregatedQuestions.forEach((q, idx) => {
-      q.id = idx + 1;
+    const response = await fetch(window.SUPABASE_FUNCTION_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": window.SUPABASE_ANON_KEY,
+        "Authorization": `Bearer ${window.SUPABASE_ANON_KEY}`
+      },
+      body: JSON.stringify({
+        prompt: systemInstruction
+      })
     });
 
-    let shuffledQuestions = shuffleQuizQuestions(aggregatedQuestions);
+    const data = await response.json();
 
-    const finalResultData = {
-      title: `${subject}: ${topic} Quiz (${shuffledQuestions.length} Qs)`,
-      target_class: targetClass,
-      subject: subject,
-      topic: topic,
-      questions: shuffledQuestions
-    };
+    if (data.error) {
+      let errMsg = typeof data.error === 'string' ? data.error : (data.error.message || JSON.stringify(data.error));
+      throw new Error(errMsg);
+    }
 
-    generatedQuizData = finalResultData;
+    let rawText = data.choices?.[0]?.message?.content || 
+                  data.candidates?.[0]?.content?.parts?.[0]?.text || 
+                  data.result || data.response || data.output || data.message || "";
 
-    document.getElementById("finalTestTitle").value = finalResultData.title;
-    document.getElementById("jsonOutput").value = JSON.stringify(finalResultData, null, 2);
+    if (!rawText) {
+      throw new Error("Empty response received from Edge AI Function.");
+    }
 
-    renderUiPreview(finalResultData);
+    rawText = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
+
+    const parsedJson = JSON.parse(rawText);
+
+    if (parsedJson.questions && Array.isArray(parsedJson.questions)) {
+      parsedJson.questions = shuffleQuizQuestions(parsedJson.questions);
+    }
+
+    generatedQuizData = parsedJson;
+
+    document.getElementById("finalTestTitle").value = parsedJson.title || `${subject}: ${topic} Quiz`;
+    document.getElementById("jsonOutput").value = JSON.stringify(parsedJson, null, 2);
+
+    renderUiPreview(parsedJson);
 
     document.getElementById("quizPreviewSection").style.display = "block";
     statusMsg.className = "status-msg success";
-    statusMsg.innerText = `🎉 Total ${shuffledQuestions.length} questions generated successfully without any Token error!`;
+    statusMsg.innerText = "🎉 Quiz generated successfully!";
     statusMsg.style.display = "block";
 
     document.getElementById("quizPreviewSection").scrollIntoView({ behavior: 'smooth' });
