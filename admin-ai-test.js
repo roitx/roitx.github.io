@@ -17,7 +17,7 @@ document.addEventListener('contextmenu', function (e) {
   }
 }, { passive: false });
 
-// Subject Mapping Configuration (Updated with separate Class 9 & 10 subjects)
+// Subject Mapping Configuration
 const subjectData = {
   class9_10: [
     "Physics", 
@@ -179,7 +179,7 @@ function getCorrectIndex(q) {
 function cleanOptionText(text) {
   if (typeof text !== 'string') return text;
   return text
-    .replace(/\s*\((?:correct|ans|answer|correct answer|sahi uttar)\)/gi, '')
+    .replace(/\s*\((?:correct\vert{}ans\vert{}answer\vert{}correct answer\vert{}sahi uttar)\)/gi, '')
     .trim();
 }
 
@@ -287,13 +287,84 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-// Generate AI Quiz via Supabase Edge Function Engine
+// Helper Function: Single Batch API Call
+async function fetchBatchQuestions(chunkCount, startIndex, metaParams) {
+  const { targetCategory, targetClass, subject, topic, difficulty, languageInstruction, customPrompt } = metaParams;
+
+  const systemInstruction = `You are a professional senior exam paper setter for ${targetClass}.
+Your task is to create a realistic MCQ test with exactly ${chunkCount} questions starting from question number index ${startIndex + 1} for Subject: "${subject}", Topic: "${topic}".
+Exam Type: ${targetCategory}.
+Difficulty Level: ${difficulty}.
+${languageInstruction}
+Additional Notes: ${customPrompt || "Follow standard NCERT / official exam pattern"}.
+
+MATHEMATICS, CHEMISTRY, SYMBOLS & DIAGRAM GUIDELINES:
+1. Use standard LaTeX format for math formulas, integrals, limits, roots, fractions, matrix etc. (e.g. \\int_{0}^{\\pi} \\sin(x) dx, \\frac{d}{dx}, \\sqrt{x^2+a^2}).
+2. Escaped LaTeX strings inside JSON must use double backslashes (\\\\int, \\\\frac).
+3. CHEMISTRY & PHYSICAL EQUATIONS RULE: For long chemical reactions, put reactants on first part, reaction arrow (\\rightarrow), and products on a new line using Markdown line breaks (\\\\n) or block equations.
+4. EXPLANATION FORMATTING RULE: Keep explanations precise and step-by-step using Roman numerals (I., II., III.).
+5. DIAGRAMS & FIGURES RULE (SVG): If needed, provide valid SVG inside "diagram_svg". Otherwise set both "diagram_svg": null and "image_url": null.
+
+CRITICAL ANTI-AI / NATURAL EXAM RULES:
+1. DO NOT make the correct option longer or more detailed than the wrong options. All 4 options MUST be balanced.
+2. DO NOT add extra explanatory text like "(Correct)" inside options.
+3. Distribute correct answer indices randomly across 0, 1, 2, and 3.
+4. Respond strictly with pure, valid JSON matching the schema below. No markdown ticks, no extra text.
+
+JSON Format Schema:
+{
+  "questions": [
+    {
+      "id": ${startIndex + 1},
+      "question": "Question text...",
+      "image_url": null,
+      "diagram_svg": null,
+      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "correct": 0,
+      "explanation": "I. First step...\\nII. Second step..."
+    }
+  ]
+}`;
+
+  const response = await fetch(window.SUPABASE_FUNCTION_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "apikey": window.SUPABASE_ANON_KEY,
+      "Authorization": `Bearer ${window.SUPABASE_ANON_KEY}`
+    },
+    body: JSON.stringify({
+      prompt: systemInstruction
+    })
+  });
+
+  const data = await response.json();
+
+  if (data.error) {
+    let errMsg = typeof data.error === 'string' ? data.error : (data.error.message || JSON.stringify(data.error));
+    throw new Error(errMsg);
+  }
+
+  let rawText = data.choices?.[0]?.message?.content || 
+                data.candidates?.[0]?.content?.parts?.[0]?.text || 
+                data.result || data.response || data.output || data.message || "";
+
+  if (!rawText) {
+    throw new Error("Empty response received from Edge AI Function.");
+  }
+
+  rawText = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
+  const parsed = JSON.parse(rawText);
+  return parsed.questions || parsed.questions_data || [];
+}
+
+// Generate AI Quiz with Automatic Chunking / Batching for Large Question Counts (> 25)
 async function generateAiQuiz() {
   const targetCategory = document.getElementById("targetCategory").value;
   const targetClass = document.getElementById("targetClass").value;
   const subject = document.getElementById("subjectSelect").value;
   const topic = document.getElementById("topicInput").value.trim();
-  const count = document.getElementById("questionsCount").value;
+  const count = parseInt(document.getElementById("questionsCount").value) || 10;
   const difficulty = document.getElementById("difficultySelect").value;
   const language = document.getElementById("languageSelect").value;
   const customPrompt = document.getElementById("customPrompt").value.trim();
@@ -305,7 +376,7 @@ async function generateAiQuiz() {
 
   let languageInstruction = "";
   if (language === "Hindi") {
-    languageInstruction = "STRICT LANGUAGE RULE: Write ALL questions, options, and explanations strictly in clean HINDI using standard Devanagari script (देवनागरी लिपि). Ensure proper matras and conjuncts without any text corruption or broken unicode characters.";
+    languageInstruction = "STRICT LANGUAGE RULE: Write ALL questions, options, and explanations strictly in clean HINDI using standard Devanagari script.";
   } else if (language === "English") {
     languageInstruction = "STRICT LANGUAGE RULE: Write ALL questions, options, and explanations strictly in standard English.";
   } else {
@@ -317,95 +388,66 @@ async function generateAiQuiz() {
   const generateBtn = document.getElementById("generateBtn");
 
   loaderBox.style.display = "block";
-  statusMsg.style.display = "none";
+  statusMsg.style.display = "block";
+  statusMsg.className = "status-msg";
   generateBtn.disabled = true;
 
-  // SYSTEM INSTRUCTION UPGRADED WITH MULTILINE CHEMISTRY EQUATIONS & ROBUST SVG DIAGRAM RULES
-  const systemInstruction = `You are a professional senior exam paper setter for ${targetClass}.
-Your task is to create a realistic MCQ test with exactly ${count} questions for Subject: "${subject}", Topic: "${topic}".
-Exam Type: ${targetCategory}.
-Difficulty Level: ${difficulty}.
-${languageInstruction}
-Additional Notes: ${customPrompt || "Follow standard NCERT / official exam pattern"}.
+  const BATCH_SIZE = 25; // Safe threshold per API call to avoid token truncation
+  let aggregatedQuestions = [];
 
-MATHEMATICS, CHEMISTRY, SYMBOLS & DIAGRAM GUIDELINES:
-1. Use standard LaTeX format for math formulas, integrals, limits, roots, fractions, matrix etc. (e.g. \\int_{0}^{\\pi} \\sin(x) dx, \\frac{d}{dx}, \\sqrt{x^2+a^2}).
-2. Escaped LaTeX strings inside JSON must use double backslashes (\\\\int, \\\\frac).
-3. CHEMISTRY & PHYSICAL EQUATIONS RULE: For long chemical reactions or physical equations, do NOT crowd everything in one single horizontal line. Put reactants on the first part, the reaction arrow (\\rightarrow or \\longrightarrow) clearly, and place products or next terms on a new line using Markdown line breaks (\\\\n) or block display equations so it looks neat and readable.
-4. EXPLANATION FORMATTING RULE: Break down explanations into clear step-by-step paragraphs using Roman numerals (I., II., III., IV.) for steps instead of numbers or step i/ii words.
-5. DIAGRAMS & FIGURES RULE (SVG): If a question involves geometry (like angles e.g. θ, rays/kiran, coordinates x,y,z), organic chemistry (like benzene rings), or physics/biology figures, provide clean, well-scaled SVG code inside the "diagram_svg" field (e.g. "<svg height='120' width='200' viewBox='0 0 200 120'>...</svg>"). Inside SVG text elements, do NOT use raw LaTeX like \\theta; instead, use direct Unicode characters (like θ, α, °) or clean text strings so they render perfectly without clipping or overlapping. If no diagram is needed, set both "diagram_svg": null and "image_url": null.
-
-CRITICAL ANTI-AI / NATURAL EXAM RULES:
-1. DO NOT make the correct option longer or more detailed than the wrong options. All 4 options MUST be balanced.
-2. DO NOT add extra explanatory text like "(Correct)" or "(Ans)" inside option strings.
-3. Distribute correct answer indices completely randomly across 0, 1, 2, and 3.
-4. Respond strictly with pure, valid JSON. No markdown ticks, no commentary.
-
-JSON Format Schema:
-{
-  "title": "${subject}: ${topic} Quiz (${count} Qs)",
-  "target_class": "${targetClass}",
-  "subject": "${subject}",
-  "topic": "${topic}",
-  "questions": [
-    {
-      "id": 1,
-      "question": "Question text with LaTeX if math",
-      "image_url": null,
-      "diagram_svg": null,
-      "options": ["Option A", "Option B", "Option C", "Option D"],
-      "correct": 0,
-      "explanation": "I. First step...\\nII. Second step..."
-    }
-  ]
-}`;
+  const metaParams = {
+    targetCategory,
+    targetClass,
+    subject,
+    topic,
+    difficulty,
+    languageInstruction,
+    customPrompt
+  };
 
   try {
-    const response = await fetch(window.SUPABASE_FUNCTION_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "apikey": window.SUPABASE_ANON_KEY,
-        "Authorization": `Bearer ${window.SUPABASE_ANON_KEY}`
-      },
-      body: JSON.stringify({
-        prompt: systemInstruction
-      })
-    });
+    if (count <= BATCH_SIZE) {
+      statusMsg.innerText = `⏳ Generating ${count} questions... Please wait.`;
+      const questions = await fetchBatchQuestions(count, 0, metaParams);
+      aggregatedQuestions = questions;
+    } else {
+      // Chunking process for 50+ questions
+      const totalBatches = Math.ceil(count / BATCH_SIZE);
+      for (let b = 0; b < totalBatches; b++) {
+        const currentBatchCount = Math.min(BATCH_SIZE, count - (b * BATCH_SIZE));
+        const startIndex = b * BATCH_SIZE;
 
-    const data = await response.json();
+        statusMsg.innerText = `⏳ Generating batch ${b + 1} of ${totalBatches} (${aggregatedQuestions.length}/${count} Qs)...`;
 
-    if (data.error) {
-      let errMsg = typeof data.error === 'string' ? data.error : (data.error.message || JSON.stringify(data.error));
-      throw new Error(errMsg);
+        const batchQuestions = await fetchBatchQuestions(currentBatchCount, startIndex, metaParams);
+        aggregatedQuestions = aggregatedQuestions.concat(batchQuestions);
+      }
     }
 
-    let rawText = data.choices?.[0]?.message?.content || 
-                  data.candidates?.[0]?.content?.parts?.[0]?.text || 
-                  data.result || data.response || data.output || data.message || "";
+    // Re-index IDs to ensure clean sequence 1..N
+    aggregatedQuestions = aggregatedQuestions.map((q, idx) => ({ ...q, id: idx + 1 }));
 
-    if (!rawText) {
-      throw new Error("Empty response received from Edge AI Function.");
-    }
+    // Apply Random Option Shuffling
+    aggregatedQuestions = shuffleQuizQuestions(aggregatedQuestions);
 
-    rawText = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
+    const fullQuizPayload = {
+      title: `${subject}: ${topic} Quiz (${aggregatedQuestions.length} Qs)`,
+      target_class: targetClass,
+      subject: subject,
+      topic: topic,
+      questions: aggregatedQuestions
+    };
 
-    const parsedJson = JSON.parse(rawText);
+    generatedQuizData = fullQuizPayload;
 
-    if (parsedJson.questions && Array.isArray(parsedJson.questions)) {
-      parsedJson.questions = shuffleQuizQuestions(parsedJson.questions);
-    }
+    document.getElementById("finalTestTitle").value = fullQuizPayload.title;
+    document.getElementById("jsonOutput").value = JSON.stringify(fullQuizPayload, null, 2);
 
-    generatedQuizData = parsedJson;
-
-    document.getElementById("finalTestTitle").value = parsedJson.title || `${subject}: ${topic} Quiz`;
-    document.getElementById("jsonOutput").value = JSON.stringify(parsedJson, null, 2);
-
-    renderUiPreview(parsedJson);
+    renderUiPreview(fullQuizPayload);
 
     document.getElementById("quizPreviewSection").style.display = "block";
     statusMsg.className = "status-msg success";
-    statusMsg.innerText = "🎉 Quiz generated successfully!";
+    statusMsg.innerText = `🎉 Successfully generated all ${aggregatedQuestions.length} questions!`;
     statusMsg.style.display = "block";
 
     document.getElementById("quizPreviewSection").scrollIntoView({ behavior: 'smooth' });
