@@ -271,7 +271,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // Helper Function: Robust Text Sanitization for LaTeX & Invalid JSON Characters
 function cleanAndParseJson(rawText) {
-  if (!rawText) throw new Error("Empty raw text received.");
+  if (!rawText || typeof rawText !== 'string') {
+    throw new Error("Invalid or non-string response from Edge Function.");
+  }
 
   // Remove markdown code fence blocks
   let cleanStr = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
@@ -282,21 +284,21 @@ function cleanAndParseJson(rawText) {
 
   if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
     cleanStr = cleanStr.substring(firstBrace, lastBrace + 1);
+  } else {
+    throw new Error("Response does not contain valid JSON brackets {}. Raw: " + cleanStr.slice(0, 50));
   }
 
   // Sanitize invalid backslashes for Math/LaTeX inside string values
   cleanStr = cleanStr.replace(/\\(?!["\\/bfnrtu])/g, "\\\\");
 
-  try {
-    return JSON.parse(cleanStr);
-  } catch (err) {
-    console.error("JSON Parsing Failed on String:", cleanStr);
-    throw new Error("Unable to parse AI response into valid JSON.");
-  }
+  return JSON.parse(cleanStr);
 }
 
-// Fetch Batch Questions with Strict Prompting
-async function fetchBatchQuestions(batchSize, startIdx, config) {
+// Helper: Delay execution for retries
+const delay = ms => new Promise(res => setTimeout(res, ms));
+
+// Fetch Single Batch Questions with Automatic Retries
+async function fetchBatchQuestionsWithRetry(batchSize, startIdx, config, maxRetries = 3) {
   const { targetCategory, targetClass, subject, topic, difficulty, languageInstruction, customPrompt } = config;
 
   const systemInstruction = `STRICT SYSTEM ROLE: You are an API endpoint that outputs RAW JSON ONLY.
@@ -305,10 +307,10 @@ Exam Level: ${targetCategory}, Difficulty: ${difficulty}.
 ${languageInstruction}
 Custom Request: ${customPrompt || "Standard Exam Pattern"}.
 
-FORMAT & ESCAPING RULES:
+FORMAT RULES:
 1. Return strictly JSON starting with { and ending with }.
-2. NO intro text, NO conversational text like "Here are the questions", NO markdown codeblocks.
-3. Math LaTeX formulas MUST use double backslashes (e.g. "\\\\int f(x) dx", "\\\\frac{a}{b}", "\\\\sqrt{x}"). Do not use unescaped single backslashes.
+2. NO intro text, NO conversational text, NO markdown codeblocks.
+3. Math LaTeX formulas MUST use double backslashes (e.g. "\\\\int f(x) dx", "\\\\frac{a}{b}", "\\\\sqrt{x}").
 
 JSON STRUCTURE:
 {
@@ -325,34 +327,63 @@ JSON STRUCTURE:
   ]
 }`;
 
-  const response = await fetch(window.SUPABASE_FUNCTION_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "apikey": window.SUPABASE_ANON_KEY,
-      "Authorization": `Bearer ${window.SUPABASE_ANON_KEY}`
-    },
-    body: JSON.stringify({
-      prompt: systemInstruction
-    })
-  });
+  let lastError = null;
 
-  const data = await response.json();
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await fetch(window.SUPABASE_FUNCTION_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": window.SUPABASE_ANON_KEY,
+          "Authorization": `Bearer ${window.SUPABASE_ANON_KEY}`
+        },
+        body: JSON.stringify({
+          prompt: systemInstruction
+        })
+      });
 
-  if (data.error) {
-    let errMsg = typeof data.error === 'string' ? data.error : (data.error.message || JSON.stringify(data.error));
-    throw new Error(errMsg);
+      // Get raw text first to safely inspect HTTP or Edge Function error messages
+      const rawResponseText = await response.text();
+
+      let data;
+      try {
+        data = JSON.parse(rawResponseText);
+      } catch (e) {
+        throw new Error("Edge Function returned non-JSON text: " + rawResponseText.substring(0, 100));
+      }
+
+      if (data.error) {
+        let errMsg = typeof data.error === 'string' ? data.error : (data.error.message || JSON.stringify(data.error));
+        throw new Error(errMsg);
+      }
+
+      let rawText = data.choices?.[0]?.message?.content || 
+                    data.candidates?.[0]?.content?.parts?.[0]?.text || 
+                    data.result || data.response || data.output || data.message || "";
+
+      const parsedJson = cleanAndParseJson(rawText);
+      const questions = parsedJson.questions || parsedJson.questions_data || [];
+      
+      if (Array.isArray(questions) && questions.length > 0) {
+        return questions;
+      } else {
+        throw new Error("Empty questions array returned.");
+      }
+
+    } catch (err) {
+      console.warn(`Attempt ${attempt} failed for batch starting at index ${startIdx}:`, err.message);
+      lastError = err;
+      if (attempt < maxRetries) {
+        await delay(1500 * attempt); // Wait 1.5s, 3s before retry
+      }
+    }
   }
 
-  let rawText = data.choices?.[0]?.message?.content || 
-                data.candidates?.[0]?.content?.parts?.[0]?.text || 
-                data.result || data.response || data.output || data.message || "";
-
-  const parsedJson = cleanAndParseJson(rawText);
-  return parsedJson.questions || parsedJson.questions_data || [];
+  throw lastError;
 }
 
-// Generate AI Quiz in Batches
+// Generate AI Quiz in Safe Small Batches (Batch size = 5)
 async function generateAiQuiz() {
   const targetCategory = document.getElementById("targetCategory").value;
   const targetClass = document.getElementById("targetClass").value;
@@ -389,7 +420,7 @@ async function generateAiQuiz() {
   const config = { targetCategory, targetClass, subject, topic, difficulty, languageInstruction, customPrompt };
   
   let allQuestions = [];
-  const BATCH_SIZE = 10; // Batch size of 10 keeps LaTeX generation safe from context truncation
+  const BATCH_SIZE = 5; // Reduced to 5 for fast processing and zero rate limit timeouts
 
   try {
     for (let current = 0; current < totalCount; current += BATCH_SIZE) {
@@ -397,18 +428,19 @@ async function generateAiQuiz() {
       const startIdx = current + 1;
 
       if (loaderText) {
-        loaderText.innerText = `Processing questions ${startIdx} to ${startIdx + currentBatchSize - 1} of ${totalCount}...`;
+        loaderText.innerText = `Gemini AI: Questions ${startIdx} to ${startIdx + currentBatchSize - 1} process ho rahe hain (${totalCount} me se)...`;
       }
 
-      const batchQuestions = await fetchBatchQuestions(currentBatchSize, startIdx, config);
-      if (Array.isArray(batchQuestions) && batchQuestions.length > 0) {
-        allQuestions = allQuestions.concat(batchQuestions);
-      } else {
-        throw new Error(`Batch starting at index ${startIdx} returned empty or invalid question structure.`);
+      const batchQuestions = await fetchBatchQuestionsWithRetry(currentBatchSize, startIdx, config, 3);
+      allQuestions = allQuestions.concat(batchQuestions);
+
+      // Delay between batches to prevent rate limiting
+      if (current + BATCH_SIZE < totalCount) {
+        await delay(800);
       }
     }
 
-    // Assign sequential IDs
+    // Assign clean sequential IDs
     allQuestions.forEach((q, index) => {
       q.id = index + 1;
     });
