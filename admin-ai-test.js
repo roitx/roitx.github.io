@@ -206,7 +206,7 @@ function shuffleQuizQuestions(questions) {
   });
 }
 
-// Helper: Ensure Raw LaTeX Commands Are Wrapped In MathJax Delimiters ($...$)
+// Helper: Auto-wrap raw LaTeX expressions into MathJax delimiters ($...$)
 function formatLatexString(str) {
   if (typeof str !== 'string') return str;
   if (!str.includes('\\')) return str;
@@ -216,7 +216,7 @@ function formatLatexString(str) {
   });
 }
 
-// Render Visual Preview with MathJax LaTeX Rendering Fix
+// Render Visual Preview with MathJax LaTeX Support
 function renderUiPreview(parsedJson) {
   let previewContainer = document.getElementById("uiQuestionsPreview");
   if (!previewContainer) {
@@ -302,12 +302,12 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-// Safe Batch API Call with Strict Response Validation
+// Single Batch API Call with Strict Text/JSON Safety Checks
 async function fetchBatchQuestions(chunkCount, startIndex, metaParams) {
   const { targetCategory, targetClass, subject, topic, difficulty, languageInstruction, customPrompt } = metaParams;
 
   const systemInstruction = `You are a professional senior exam paper setter for ${targetClass}.
-Your task is to create a realistic MCQ test with EXACTLY ${chunkCount} questions starting from question number ${startIndex + 1} for Subject: "${subject}", Topic: "${topic}".
+Your task is to create a realistic MCQ test with EXACTLY ${chunkCount} questions starting from index ${startIndex + 1} for Subject: "${subject}", Topic: "${topic}".
 Exam Type: ${targetCategory}.
 Difficulty Level: ${difficulty}.
 ${languageInstruction}
@@ -315,13 +315,13 @@ Additional Notes: ${customPrompt || "Follow standard NCERT / official exam patte
 
 MATHEMATICS & LATEX RULES:
 1. ALWAYS wrap LaTeX formulas in single dollar signs $...$ (e.g. "$\\int x^n dx$", "$\\frac{1}{x}$").
-2. Escaped LaTeX strings inside JSON MUST use double backslashes (\\\\int, \\\\frac).
-3. EXPLANATION: Concise step-by-step explanations using Roman numerals (I., II., III.).
+2. Inside JSON string literals, backslashes MUST be escaped with double backslashes (\\\\int, \\\\frac).
+3. EXPLANATION: Step-by-step explanations using Roman numerals (I., II., III.).
 
 CRITICAL OUTPUT RULE:
-Respond ONLY with raw JSON object containing "questions" array. No markdown code blocks, no text before or after JSON.
+Respond ONLY with pure valid JSON containing "questions" array. No markdown, no prose wrapper.
 
-JSON Schema:
+Schema:
 {
   "questions": [
     {
@@ -346,18 +346,18 @@ JSON Schema:
     body: JSON.stringify({ prompt: systemInstruction })
   });
 
-  const responseText = await response.text();
+  const rawHttpResponseText = await response.text();
 
-  // Edge Function HTML / Plaintext Error Guard
-  if (!response.ok || responseText.startsWith("Function") || responseText.includes("Error")) {
-    throw new Error(`Edge Function Error: ${responseText.slice(0, 100)}`);
+  // Guard against HTML or Gateway Error pages
+  if (!response.ok || rawHttpResponseText.trim().startsWith("<") || rawHttpResponseText.toLowerCase().includes("request id")) {
+    throw new Error(`Edge Gateway Error (Status ${response.status}). Trying again...`);
   }
 
   let data;
   try {
-    data = JSON.parse(responseText);
+    data = JSON.parse(rawHttpResponseText);
   } catch (e) {
-    throw new Error("Invalid response format from Edge Function.");
+    throw new Error("Invalid response received from Server.");
   }
 
   if (data.error) {
@@ -369,12 +369,11 @@ JSON Schema:
                 data.candidates?.[0]?.content?.parts?.[0]?.text || 
                 data.result || data.response || data.output || data.message || "";
 
-  if (!rawText) throw new Error("Empty response from AI.");
+  if (!rawText) throw new Error("Empty response received from AI.");
 
-  // Clean JSON
+  // Clean raw JSON response
   rawText = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
   
-  // Extract pure JSON if surrounded by text
   const firstBrace = rawText.indexOf('{');
   const lastBrace = rawText.lastIndexOf('}');
   if (firstBrace !== -1 && lastBrace !== -1) {
@@ -385,7 +384,7 @@ JSON Schema:
   return parsed.questions || parsed.questions_data || [];
 }
 
-// Main Batching Generator (Batch size = 15 questions per call)
+// Micro-batching generator (Batch size = 10 questions per API call)
 async function generateAiQuiz() {
   const targetCategory = document.getElementById("targetCategory").value;
   const targetClass = document.getElementById("targetClass").value;
@@ -419,8 +418,8 @@ async function generateAiQuiz() {
   statusMsg.className = "status-msg";
   generateBtn.disabled = true;
 
-  // Reduced SAFE batch size to 15 questions per request
-  const BATCH_SIZE = 15;
+  // Ultra-Safe Micro-Batch Size (10 Questions Per API Call)
+  const BATCH_SIZE = 10;
   let aggregatedQuestions = [];
 
   const metaParams = {
@@ -442,15 +441,28 @@ async function generateAiQuiz() {
 
       statusMsg.innerText = `⏳ Generating Batch ${b + 1} of ${totalBatches} (${aggregatedQuestions.length}/${count} Questions Done)...`;
 
-      // Single Batch Fetch
-      const batchQuestions = await fetchBatchQuestions(currentBatchCount, startIndex, metaParams);
+      let batchQuestions = [];
+      let attempts = 0;
+      const maxAttempts = 2; // Auto-retry logic per batch
+
+      while (attempts < maxAttempts) {
+        try {
+          batchQuestions = await fetchBatchQuestions(currentBatchCount, startIndex, metaParams);
+          if (batchQuestions && batchQuestions.length > 0) break;
+        } catch (batchErr) {
+          attempts++;
+          if (attempts >= maxAttempts) throw batchErr;
+          console.warn(`Batch ${b + 1} failed (Attempt ${attempts}). Retrying...`);
+        }
+      }
+
       aggregatedQuestions = aggregatedQuestions.concat(batchQuestions);
     }
 
-    // Assign Clean IDs
+    // Assign Clean Sequential IDs (1 to N)
     aggregatedQuestions = aggregatedQuestions.map((q, idx) => ({ ...q, id: idx + 1 }));
 
-    // Shuffle options
+    // Shuffle options randomly
     aggregatedQuestions = shuffleQuizQuestions(aggregatedQuestions);
 
     const fullQuizPayload = {
