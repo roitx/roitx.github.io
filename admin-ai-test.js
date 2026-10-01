@@ -17,7 +17,7 @@ document.addEventListener('contextmenu', function (e) {
   }
 }, { passive: false });
 
-// Subject Mapping Configuration (Updated with separate Class 9 & 10 subjects)
+// Subject Mapping Configuration
 const subjectData = {
   class9_10: [
     "Physics", 
@@ -287,33 +287,16 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-// Helper: Calculate question chunks for multi-API batching
-function getQuestionBatches(totalCount) {
-  const maxPerBatch = 15; // Max 15 questions per API call to ensure robust JSON response
-  if (totalCount <= maxPerBatch) {
-    return [totalCount];
-  }
-  const numBatches = Math.ceil(totalCount / maxPerBatch);
-  const baseCount = Math.floor(totalCount / numBatches);
-  let remainder = totalCount % numBatches;
+// Helper Function: Single Batch API Call
+async function fetchBatchQuestions(chunkCount, startIndex, metaParams) {
+  const { targetCategory, targetClass, subject, topic, difficulty, languageInstruction, customPrompt } = metaParams;
 
-  const batches = [];
-  for (let i = 0; i < numBatches; i++) {
-    let currentBatch = baseCount + (remainder > 0 ? 1 : 0);
-    if (remainder > 0) remainder--;
-    batches.push(currentBatch);
-  }
-  return batches;
-}
-
-// Single Batch Fetcher Function
-async function fetchBatchQuestions(batchCount, batchIndex, totalBatches, targetClass, subject, topic, targetCategory, difficulty, languageInstruction, customPrompt) {
   const systemInstruction = `You are a professional senior exam paper setter for ${targetClass}.
-Your task is to create a realistic MCQ test with exactly ${batchCount} unique questions for Subject: "${subject}", Topic: "${topic}".
+Your task is to create a realistic MCQ test with exactly ${chunkCount} unique questions starting from question number index ${startIndex + 1} for Subject: "${subject}", Topic: "${topic}".
 Exam Type: ${targetCategory}.
 Difficulty Level: ${difficulty}.
 ${languageInstruction}
-Additional Notes: ${customPrompt || "Follow standard NCERT / official exam pattern"}. (Note: This is batch ${batchIndex + 1} of ${totalBatches}. Ensure unique questions across batches).
+Additional Notes: ${customPrompt || "Follow standard NCERT / official exam pattern"}.
 
 MATHEMATICS, CHEMISTRY, SYMBOLS & DIAGRAM GUIDELINES:
 1. Use standard LaTeX format for math formulas, integrals, limits, roots, fractions, matrix etc. (e.g. \\int_{0}^{\\pi} \\sin(x) dx, \\frac{d}{dx}, \\sqrt{x^2+a^2}).
@@ -326,17 +309,13 @@ CRITICAL ANTI-AI / NATURAL EXAM RULES:
 1. DO NOT make the correct option longer or more detailed than the wrong options. All 4 options MUST be balanced.
 2. DO NOT add extra explanatory text like "(Correct)" or "(Ans)" inside option strings.
 3. Distribute correct answer indices completely randomly across 0, 1, 2, and 3.
-4. Respond strictly with pure, valid JSON. No markdown ticks, no commentary.
+4. Respond strictly with pure, valid JSON matching the schema below. No markdown ticks, no commentary.
 
 JSON Format Schema:
 {
-  "title": "${subject}: ${topic} Quiz (${batchCount} Qs)",
-  "target_class": "${targetClass}",
-  "subject": "${subject}",
-  "topic": "${topic}",
   "questions": [
     {
-      "id": 1,
+      "id": ${startIndex + 1},
       "question": "Question text with LaTeX if math",
       "image_url": null,
       "diagram_svg": null,
@@ -363,7 +342,7 @@ JSON Format Schema:
 
   if (data.error) {
     let errMsg = typeof data.error === 'string' ? data.error : (data.error.message || JSON.stringify(data.error));
-    throw new Error(`Batch ${batchIndex + 1} Error: ${errMsg}`);
+    throw new Error(errMsg);
   }
 
   let rawText = data.choices?.[0]?.message?.content || 
@@ -371,23 +350,21 @@ JSON Format Schema:
                 data.result || data.response || data.output || data.message || "";
 
   if (!rawText) {
-    throw new Error(`Batch ${batchIndex + 1} returned empty response.`);
+    throw new Error("Empty response received from Edge AI Function.");
   }
 
   rawText = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
-
-  const parsedJson = JSON.parse(rawText);
-  return parsedJson.questions || parsedJson.questions_data || [];
+  const parsed = JSON.parse(rawText);
+  return parsed.questions || parsed.questions_data || [];
 }
 
-// Generate AI Quiz via Supabase Edge Function Engine (Multi-batch parallel requests)
+// Generate AI Quiz with Automatic Chunking / Batching for Large Question Counts (> 15)
 async function generateAiQuiz() {
   const targetCategory = document.getElementById("targetCategory").value;
   const targetClass = document.getElementById("targetClass").value;
   const subject = document.getElementById("subjectSelect").value;
   const topic = document.getElementById("topicInput").value.trim();
-  const rawCount = document.getElementById("questionsCount").value;
-  const totalCount = parseInt(rawCount, 10) || 10;
+  const count = parseInt(document.getElementById("questionsCount").value) || 10;
   const difficulty = document.getElementById("difficultySelect").value;
   const language = document.getElementById("languageSelect").value;
   const customPrompt = document.getElementById("customPrompt").value.trim();
@@ -407,81 +384,70 @@ async function generateAiQuiz() {
   }
 
   const loaderBox = document.getElementById("loaderBox");
-  const loaderText = document.getElementById("loaderText");
   const statusMsg = document.getElementById("statusMsg");
   const generateBtn = document.getElementById("generateBtn");
 
   loaderBox.style.display = "block";
-  statusMsg.style.display = "none";
+  statusMsg.style.display = "block";
+  statusMsg.className = "status-msg";
   generateBtn.disabled = true;
 
-  const batches = getQuestionBatches(totalCount);
-  if (loaderText) {
-    if (batches.length > 1) {
-      loaderText.innerText = `Gemini AI se ${batches.length} parallel requests process ho rahe hain (${totalCount} questions)...`;
-    } else {
-      loaderText.innerText = "Gemini AI se questions process ho rahe hain...";
-    }
-  }
+  const BATCH_SIZE = 12; // 12-15 questions threshold for batching
+  let aggregatedQuestions = [];
+
+  const metaParams = {
+    targetCategory,
+    targetClass,
+    subject,
+    topic,
+    difficulty,
+    languageInstruction,
+    customPrompt
+  };
 
   try {
-    // Dispatch parallel API calls for all batches
-    const batchPromises = batches.map((batchCount, index) => 
-      fetchBatchQuestions(
-        batchCount,
-        index,
-        batches.length,
-        targetClass,
-        subject,
-        topic,
-        targetCategory,
-        difficulty,
-        languageInstruction,
-        customPrompt
-      )
-    );
+    if (count <= BATCH_SIZE) {
+      statusMsg.innerText = `⏳ Generating ${count} questions... Please wait.`;
+      const questions = await fetchBatchQuestions(count, 0, metaParams);
+      aggregatedQuestions = questions;
+    } else {
+      // Chunking process for 20+ questions
+      const totalBatches = Math.ceil(count / BATCH_SIZE);
+      for (let b = 0; b < totalBatches; b++) {
+        const currentBatchCount = Math.min(BATCH_SIZE, count - (b * BATCH_SIZE));
+        const startIndex = b * BATCH_SIZE;
 
-    const batchResults = await Promise.all(batchPromises);
+        statusMsg.innerText = `⏳ Generating batch ${b + 1} of ${totalBatches} (${aggregatedQuestions.length}/${count} Qs)...`;
 
-    // Merge questions from all batches
-    let combinedQuestions = [];
-    batchResults.forEach((qArray) => {
-      if (Array.isArray(qArray)) {
-        combinedQuestions.push(...qArray);
+        const batchQuestions = await fetchBatchQuestions(currentBatchCount, startIndex, metaParams);
+        aggregatedQuestions = aggregatedQuestions.concat(batchQuestions);
       }
-    });
-
-    if (combinedQuestions.length === 0) {
-      throw new Error("No questions were generated from AI.");
     }
 
-    // Re-index questions 1..N
-    combinedQuestions = combinedQuestions.map((q, idx) => ({
-      ...q,
-      id: idx + 1
-    }));
+    // Re-index IDs to ensure clean sequence 1..N
+    aggregatedQuestions = aggregatedQuestions.map((q, idx) => ({ ...q, id: idx + 1 }));
 
-    // Shuffle options across questions
-    combinedQuestions = shuffleQuizQuestions(combinedQuestions);
+    // Apply Random Option Shuffling
+    aggregatedQuestions = shuffleQuizQuestions(aggregatedQuestions);
 
-    const mergedQuizData = {
-      title: `${subject}: ${topic} Quiz (${combinedQuestions.length} Qs)`,
+    const fullQuizPayload = {
+      title: `${subject}: ${topic} Quiz (${aggregatedQuestions.length} Qs)`,
       target_class: targetClass,
       subject: subject,
       topic: topic,
-      questions: combinedQuestions
+      questions: aggregatedQuestions
     };
 
-    generatedQuizData = mergedQuizData;
+    generatedQuizData = fullQuizPayload;
 
-    document.getElementById("finalTestTitle").value = mergedQuizData.title;
-    document.getElementById("jsonOutput").value = JSON.stringify(mergedQuizData, null, 2);
+    document.getElementById("finalTestTitle").value = fullQuizPayload.title;
+    document.getElementById("jsonOutput").value = JSON.stringify(fullQuizPayload, null, 2);
 
-    renderUiPreview(mergedQuizData);
+    renderUiPreview(fullQuizPayload);
 
     document.getElementById("quizPreviewSection").style.display = "block";
     statusMsg.className = "status-msg success";
-    statusMsg.innerText = `🎉 Quiz successfully generated (${combinedQuestions.length} questions merged from ${batches.length} API calls)!`;
+    statusMsg.innerText = `🎉 Successfully generated all ${aggregatedQuestions.length} questions!`;
     statusMsg.style.display = "block";
 
     document.getElementById("quizPreviewSection").scrollIntoView({ behavior: 'smooth' });
