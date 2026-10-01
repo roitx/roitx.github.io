@@ -179,7 +179,7 @@ function getCorrectIndex(q) {
 function cleanOptionText(text) {
   if (typeof text !== 'string') return text;
   return text
-    .replace(/\s*\((?:correct|ans|answer|correct answer|sahi uttar)\)/gi, '')
+    .replace(/\s*\((?:correct\vert{}ans\vert{}answer\vert{}correct answer\vert{}sahi uttar)\)/gi, '')
     .trim();
 }
 
@@ -287,13 +287,107 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-// Generate AI Quiz via Supabase Edge Function Engine
+// Helper: Calculate question chunks for multi-API batching
+function getQuestionBatches(totalCount) {
+  const maxPerBatch = 15; // Max 15 questions per API call to ensure robust JSON response
+  if (totalCount <= maxPerBatch) {
+    return [totalCount];
+  }
+  const numBatches = Math.ceil(totalCount / maxPerBatch);
+  const baseCount = Math.floor(totalCount / numBatches);
+  let remainder = totalCount % numBatches;
+
+  const batches = [];
+  for (let i = 0; i < numBatches; i++) {
+    let currentBatch = baseCount + (remainder > 0 ? 1 : 0);
+    if (remainder > 0) remainder--;
+    batches.push(currentBatch);
+  }
+  return batches;
+}
+
+// Single Batch Fetcher Function
+async function fetchBatchQuestions(batchCount, batchIndex, totalBatches, targetClass, subject, topic, targetCategory, difficulty, languageInstruction, customPrompt) {
+  const systemInstruction = `You are a professional senior exam paper setter for ${targetClass}.
+Your task is to create a realistic MCQ test with exactly ${batchCount} unique questions for Subject: "${subject}", Topic: "${topic}".
+Exam Type: ${targetCategory}.
+Difficulty Level: ${difficulty}.
+${languageInstruction}
+Additional Notes: ${customPrompt || "Follow standard NCERT / official exam pattern"}. (Note: This is batch ${batchIndex + 1} of ${totalBatches}. Ensure unique questions across batches).
+
+MATHEMATICS, CHEMISTRY, SYMBOLS & DIAGRAM GUIDELINES:
+1. Use standard LaTeX format for math formulas, integrals, limits, roots, fractions, matrix etc. (e.g. \\int_{0}^{\\pi} \\sin(x) dx, \\frac{d}{dx}, \\sqrt{x^2+a^2}).
+2. Escaped LaTeX strings inside JSON must use double backslashes (\\\\int, \\\\frac).
+3. CHEMISTRY & PHYSICAL EQUATIONS RULE: For long chemical reactions or physical equations, do NOT crowd everything in one single horizontal line. Put reactants on the first part, the reaction arrow (\\rightarrow or \\longrightarrow) clearly, and place products or next terms on a new line using Markdown line breaks (\\\\n) or block display equations so it looks neat and readable.
+4. EXPLANATION FORMATTING RULE: Break down explanations into clear step-by-step paragraphs using Roman numerals (I., II., III., IV.) for steps instead of numbers or step i/ii words.
+5. DIAGRAMS & FIGURES RULE (SVG): If a question involves geometry (like angles e.g. θ, rays/kiran, coordinates x,y,z), organic chemistry (like benzene rings), or physics/biology figures, provide clean, well-scaled SVG code inside the "diagram_svg" field (e.g. "<svg height='120' width='200' viewBox='0 0 200 120'>...</svg>"). Inside SVG text elements, do NOT use raw LaTeX like \\theta; instead, use direct Unicode characters (like θ, α, °) or clean text strings so they render perfectly without clipping or overlapping. If no diagram is needed, set both "diagram_svg": null and "image_url": null.
+
+CRITICAL ANTI-AI / NATURAL EXAM RULES:
+1. DO NOT make the correct option longer or more detailed than the wrong options. All 4 options MUST be balanced.
+2. DO NOT add extra explanatory text like "(Correct)" or "(Ans)" inside option strings.
+3. Distribute correct answer indices completely randomly across 0, 1, 2, and 3.
+4. Respond strictly with pure, valid JSON. No markdown ticks, no commentary.
+
+JSON Format Schema:
+{
+  "title": "${subject}: ${topic} Quiz (${batchCount} Qs)",
+  "target_class": "${targetClass}",
+  "subject": "${subject}",
+  "topic": "${topic}",
+  "questions": [
+    {
+      "id": 1,
+      "question": "Question text with LaTeX if math",
+      "image_url": null,
+      "diagram_svg": null,
+      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "correct": 0,
+      "explanation": "I. First step...\\nII. Second step..."
+    }
+  ]
+}`;
+
+  const response = await fetch(window.SUPABASE_FUNCTION_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "apikey": window.SUPABASE_ANON_KEY,
+      "Authorization": `Bearer ${window.SUPABASE_ANON_KEY}`
+    },
+    body: JSON.stringify({
+      prompt: systemInstruction
+    })
+  });
+
+  const data = await response.json();
+
+  if (data.error) {
+    let errMsg = typeof data.error === 'string' ? data.error : (data.error.message || JSON.stringify(data.error));
+    throw new Error(`Batch ${batchIndex + 1} Error: ${errMsg}`);
+  }
+
+  let rawText = data.choices?.[0]?.message?.content || 
+                data.candidates?.[0]?.content?.parts?.[0]?.text || 
+                data.result || data.response || data.output || data.message || "";
+
+  if (!rawText) {
+    throw new Error(`Batch ${batchIndex + 1} returned empty response.`);
+  }
+
+  rawText = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
+
+  const parsedJson = JSON.parse(rawText);
+  return parsedJson.questions || parsedJson.questions_data || [];
+}
+
+// Generate AI Quiz via Supabase Edge Function Engine (Multi-batch parallel requests)
 async function generateAiQuiz() {
   const targetCategory = document.getElementById("targetCategory").value;
   const targetClass = document.getElementById("targetClass").value;
   const subject = document.getElementById("subjectSelect").value;
   const topic = document.getElementById("topicInput").value.trim();
-  const count = document.getElementById("questionsCount").value;
+  const rawCount = document.getElementById("questionsCount").value;
+  const totalCount = parseInt(rawCount, 10) || 10;
   const difficulty = document.getElementById("difficultySelect").value;
   const language = document.getElementById("languageSelect").value;
   const customPrompt = document.getElementById("customPrompt").value.trim();
@@ -313,6 +407,7 @@ async function generateAiQuiz() {
   }
 
   const loaderBox = document.getElementById("loaderBox");
+  const loaderText = document.getElementById("loaderText");
   const statusMsg = document.getElementById("statusMsg");
   const generateBtn = document.getElementById("generateBtn");
 
@@ -320,92 +415,73 @@ async function generateAiQuiz() {
   statusMsg.style.display = "none";
   generateBtn.disabled = true;
 
-  // SYSTEM INSTRUCTION UPGRADED WITH MULTILINE CHEMISTRY EQUATIONS & ROBUST SVG DIAGRAM RULES
-  const systemInstruction = `You are a professional senior exam paper setter for ${targetClass}.
-Your task is to create a realistic MCQ test with exactly ${count} questions for Subject: "${subject}", Topic: "${topic}".
-Exam Type: ${targetCategory}.
-Difficulty Level: ${difficulty}.
-${languageInstruction}
-Additional Notes: ${customPrompt || "Follow standard NCERT / official exam pattern"}.
-
-MATHEMATICS, CHEMISTRY, SYMBOLS & DIAGRAM GUIDELINES:
-1. Use standard LaTeX format for math formulas, integrals, limits, roots, fractions, matrix etc. (e.g. \\int_{0}^{\\pi} \\sin(x) dx, \\frac{d}{dx}, \\sqrt{x^2+a^2}).
-2. Escaped LaTeX strings inside JSON must use double backslashes (\\\\int, \\\\frac).
-3. CHEMISTRY & PHYSICAL EQUATIONS RULE: For long chemical reactions or physical equations, do NOT crowd everything in one single horizontal line. Put reactants on the first part, the reaction arrow (\\rightarrow or \\longrightarrow) clearly, and place products or next terms on a new line using Markdown line breaks (\\\\n) or block display equations so it looks neat and readable.
-4. EXPLANATION FORMATTING RULE: Break down explanations into clear step-by-step paragraphs using Roman numerals (I., II., III., IV.) for steps instead of numbers or step i/ii words.
-5. DIAGRAMS & FIGURES RULE (SVG): If a question involves geometry (like angles e.g. θ, rays/kiran, coordinates x,y,z), organic chemistry (like benzene rings), or physics/biology figures, provide clean, well-scaled SVG code inside the "diagram_svg" field (e.g. "<svg height='120' width='200' viewBox='0 0 200 120'>...</svg>"). Inside SVG text elements, do NOT use raw LaTeX like \\theta; instead, use direct Unicode characters (like θ, α, °) or clean text strings so they render perfectly without clipping or overlapping. If no diagram is needed, set both "diagram_svg": null and "image_url": null.
-
-CRITICAL ANTI-AI / NATURAL EXAM RULES:
-1. DO NOT make the correct option longer or more detailed than the wrong options. All 4 options MUST be balanced.
-2. DO NOT add extra explanatory text like "(Correct)" or "(Ans)" inside option strings.
-3. Distribute correct answer indices completely randomly across 0, 1, 2, and 3.
-4. Respond strictly with pure, valid JSON. No markdown ticks, no commentary.
-
-JSON Format Schema:
-{
-  "title": "${subject}: ${topic} Quiz (${count} Qs)",
-  "target_class": "${targetClass}",
-  "subject": "${subject}",
-  "topic": "${topic}",
-  "questions": [
-    {
-      "id": 1,
-      "question": "Question text with LaTeX if math",
-      "image_url": null,
-      "diagram_svg": null,
-      "options": ["Option A", "Option B", "Option C", "Option D"],
-      "correct": 0,
-      "explanation": "I. First step...\\nII. Second step..."
+  const batches = getQuestionBatches(totalCount);
+  if (loaderText) {
+    if (batches.length > 1) {
+      loaderText.innerText = `Gemini AI se ${batches.length} parallel requests process ho rahe hain (${totalCount} questions)...`;
+    } else {
+      loaderText.innerText = "Gemini AI se questions process ho rahe hain...";
     }
-  ]
-}`;
+  }
 
   try {
-    const response = await fetch(window.SUPABASE_FUNCTION_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "apikey": window.SUPABASE_ANON_KEY,
-        "Authorization": `Bearer ${window.SUPABASE_ANON_KEY}`
-      },
-      body: JSON.stringify({
-        prompt: systemInstruction
-      })
+    // Dispatch parallel API calls for all batches
+    const batchPromises = batches.map((batchCount, index) => 
+      fetchBatchQuestions(
+        batchCount,
+        index,
+        batches.length,
+        targetClass,
+        subject,
+        topic,
+        targetCategory,
+        difficulty,
+        languageInstruction,
+        customPrompt
+      )
+    );
+
+    const batchResults = await Promise.all(batchPromises);
+
+    // Merge questions from all batches
+    let combinedQuestions = [];
+    batchResults.forEach((qArray) => {
+      if (Array.isArray(qArray)) {
+        combinedQuestions.push(...qArray);
+      }
     });
 
-    const data = await response.json();
-
-    if (data.error) {
-      let errMsg = typeof data.error === 'string' ? data.error : (data.error.message || JSON.stringify(data.error));
-      throw new Error(errMsg);
+    if (combinedQuestions.length === 0) {
+      throw new Error("No questions were generated from AI.");
     }
 
-    let rawText = data.choices?.[0]?.message?.content || 
-                  data.candidates?.[0]?.content?.parts?.[0]?.text || 
-                  data.result || data.response || data.output || data.message || "";
+    // Re-index questions 1..N
+    combinedQuestions = combinedQuestions.map((q, idx) => ({
+      ...q,
+      id: idx + 1
+    }));
 
-    if (!rawText) {
-      throw new Error("Empty response received from Edge AI Function.");
-    }
+    // Shuffle options across questions
+    combinedQuestions = shuffleQuizQuestions(combinedQuestions);
 
-    rawText = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
+    const mergedQuizData = {
+      title: `${subject}: ${topic} Quiz (${combinedQuestions.length} Qs)`,
+      target_class: targetClass,
+      subject: subject,
+      topic: topic,
+      questions: combinedQuestions
+    };
 
-    const parsedJson = JSON.parse(rawText);
+    generatedQuizData = mergedQuizData;
 
-    if (parsedJson.questions && Array.isArray(parsedJson.questions)) {
-      parsedJson.questions = shuffleQuizQuestions(parsedJson.questions);
-    }
+    document.getElementById("finalTestTitle").value = mergedQuizData.title;
+    document.getElementById("jsonOutput").value = JSON.stringify(mergedQuizData, null, 2);
 
-    generatedQuizData = parsedJson;
-
-    document.getElementById("finalTestTitle").value = parsedJson.title || `${subject}: ${topic} Quiz`;
-    document.getElementById("jsonOutput").value = JSON.stringify(parsedJson, null, 2);
-
-    renderUiPreview(parsedJson);
+    renderUiPreview(mergedQuizData);
 
     document.getElementById("quizPreviewSection").style.display = "block";
     statusMsg.className = "status-msg success";
-    statusMsg.innerText = "🎉 Quiz generated successfully!";
+    statusMsg.innerText = `🎉 Quiz successfully generated (${combinedQuestions.length} questions merged from ${batches.length} API calls)!`;
     statusMsg.style.display = "block";
 
     document.getElementById("quizPreviewSection").scrollIntoView({ behavior: 'smooth' });
