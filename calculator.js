@@ -121,11 +121,10 @@ function showAuthModal(customMessage) {
   }
 }
 
-// FAST AI SOLVER WITH GUEST 1-FREE LIMIT & ERROR HANDLING
+// FAST AI SOLVER WITH STRICT CLEAN OUTPUT RULES & AUTO-CLEANUP
 async function submitAISolver(lang) {
   const userLoggedIn = isLoggedIn || localStorage.getItem("isLoggedIn") === "true";
   
-  // GUEST USER 1-FREE LIMIT CHECK FOR TEXT MODE
   if (!userLoggedIn) {
     let usageCount = parseInt(localStorage.getItem("guestTextUsage") || "0", 10);
     if (usageCount >= 1) {
@@ -140,12 +139,8 @@ async function submitAISolver(lang) {
   if (loader) loader.style.display = "block";
   if (resBox) resBox.innerHTML = "Thinking...";
 
-  const systemInstruction = `You are a pure math engine.
-Write ONLY the direct mathematical derivation and answer in ${lang === 'hi' ? 'Hindi' : 'English'}.
-RULES:
-1. Absolutely NO thinking process, rules analysis, or extra chatter.
-2. Start DIRECTLY with Step 1 or the main equation.
-3. Use MathJax/LaTeX ($...$ for inline, $$...$$ for display).`;
+  // Direct and clean system instruction
+  const systemInstruction = `Provide ONLY the direct step-by-step mathematical solution in ${lang === 'hi' ? 'Hindi' : 'English'}. Do NOT include task descriptions, constraints, rules, intro, or system messages.`;
 
   let userText = document.getElementById("aiPrompt")?.value.trim() || "Solve equation";
   let base64Img = null;
@@ -166,7 +161,7 @@ RULES:
         'Authorization': `Bearer ${apiKey}` 
       },
       body: JSON.stringify({ 
-        prompt: systemInstruction + "\n\nTask: " + userText,
+        prompt: systemInstruction + "\n\nSolve: " + userText,
         language: lang, 
         image: base64Img,
         generationConfig: { max_output_tokens: 500, temperature: 0.1 }
@@ -180,13 +175,23 @@ RULES:
 
     if (rawContent) {
       if (typeof rawContent === 'object') rawContent = JSON.stringify(rawContent);
+
+      // --- AUTOMATIC CLEANUP LOGIC ---
+      // Step 1: Remove Task & Constraint lines
+      rawContent = rawContent.replace(/^\s*\*?\s*(Task|Constraint\s*\d+|Rule\s*\d+|Instruction):.*$/gim, '');
+      
+      // Step 2: Remove duplicated prompt headers if generated
+      rawContent = rawContent.replace(/Provide ONLY the direct.*$/gim, '');
+      
+      // Step 3: Trim multiple empty lines
+      rawContent = rawContent.replace(/\n\s*\n+/g, '\n').trim();
+
       if (resBox) resBox.innerHTML = rawContent.replace(/\n/g, "<br>");
       
       if (window.MathJax) {
         MathJax.typesetPromise([resBox]);
       }
 
-      // Increment Guest Usage
       if (!userLoggedIn && currentAIMode === 'text') {
         let currentCount = parseInt(localStorage.getItem("guestTextUsage") || "0", 10);
         localStorage.setItem("guestTextUsage", (currentCount + 1).toString());
@@ -200,7 +205,7 @@ RULES:
   }
 }
 
-// FAST SYNCHRONOUS MODE SWITCHING WITH LIVE AUTH CHECK
+
 function switchAIMode(mode) {
   const userLoggedIn = isLoggedIn || localStorage.getItem("isLoggedIn") === "true";
 
@@ -315,6 +320,13 @@ function preprocess(raw) {
 function btnPress(key) {
   if (isShift) { handleShift(key); return; }
   if (isAlpha) { handleAlpha(key); return; }
+
+  // Agar calculation ke turant baad operator (+, -, *, /) press kiya jaye, toh Ans se start ho
+  const operators = ['+', '-', '*', '/'];
+  if (operators.includes(key) && exp === "" && lastAnswer !== "0") {
+    exp = "Ans";
+    cursorPos = 0;
+  }
 
   const map = {
     'SIN': isHyp ? 'sinh(' : 'sin(',
