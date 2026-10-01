@@ -22,7 +22,6 @@
   <script src="supabase.js"></script>
 </head>
 
-
 <body oncontextmenu="return false;">
 
   <div class="bg-glow top-left"></div>
@@ -73,8 +72,11 @@
 
   <!-- Advanced Edit Test Modal -->
   <div id="editModal" class="modal-overlay" style="display: none;">
-    <div class="modal-card" style="max-width: 700px; width: 95%; max-height: 90vh; overflow-y: auto;">
-      <h2><i class="fa-solid fa-pen-to-square"></i> Full Test Editor</h2>
+    <div class="modal-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #cbd5e1; padding-bottom: 10px; margin-bottom: 15px;">
+        <h2><i class="fa-solid fa-pen-to-square" style="color: #8E2DE2;"></i> Full Test Editor</h2>
+        <button type="button" onclick="closeEditModal()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #64748b;">✕</button>
+      </div>
       <input type="hidden" id="editTestId">
 
       <!-- Test Title -->
@@ -151,16 +153,36 @@
 
       <!-- Questions Payload JSON Editor Area -->
       <div class="form-group">
-        <label><i class="fa-solid fa-code"></i> Questions Payload (JSON Format)</label>
-        <textarea id="editQuestionsJson" class="input-box" rows="8" style="font-family: monospace; font-size: 12px;"></textarea>
+        <div class="json-header">
+          <label style="margin: 0;"><i class="fa-solid fa-code"></i> Questions Payload (JSON Format)</label>
+          <div class="json-btn-group">
+            <button type="button" class="json-action-btn" onclick="copyJsonText()">
+              <i class="fa-solid fa-copy"></i> Copy
+            </button>
+            <button type="button" class="json-action-btn" onclick="pasteJsonText()">
+              <i class="fa-solid fa-paste"></i> Paste
+            </button>
+            <button type="button" class="json-action-btn format-btn" onclick="formatJsonText()">
+              <i class="fa-solid fa-wand-magic-sparkles"></i> Format JSON
+            </button>
+            <button type="button" class="json-action-btn clear-btn" onclick="clearJsonText()">
+              <i class="fa-solid fa-trash"></i> Clear
+            </button>
+          </div>
+        </div>
+        <textarea id="editQuestionsJson" class="input-box" rows="12" style="font-family: monospace; font-size: 12px; white-space: pre; tab-size: 2;"></textarea>
       </div>
 
+      <!-- Modal Footer Action Buttons (Update Test & Cancel) -->
       <div class="modal-actions">
-        <button class="back-btn" onclick="closeEditModal()">Cancel</button>
-        <button class="back-btn save-modal-btn" onclick="saveTestChanges()">
-          <i class="fa-solid fa-floppy-disk"></i> Update Full Test
+        <button type="button" class="back-btn" onclick="closeEditModal()">
+          <i class="fa-solid fa-xmark"></i> Cancel
+        </button>
+        <button type="button" id="saveTestBtn" class="btn-primary" onclick="saveTestChanges()">
+          <i class="fa-solid fa-cloud-arrow-up"></i> Update Test Changes
         </button>
       </div>
+
     </div>
   </div>
 

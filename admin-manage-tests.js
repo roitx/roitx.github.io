@@ -26,6 +26,51 @@ window.addEventListener('DOMContentLoaded', async function() {
   fetchBugReportsCount();
 });
 
+// --- JSON COPY/PASTE/FORMAT HELPERS ---
+function copyJsonText() {
+  const jsonArea = document.getElementById("editQuestionsJson");
+  if (!jsonArea || !jsonArea.value.trim()) {
+    alert("⚠️ Copy karne ke liye koi JSON content nahi hai!");
+    return;
+  }
+  navigator.clipboard.writeText(jsonArea.value).then(() => {
+    alert("📋 JSON clipboard me copy ho gaya hai!");
+  }).catch(err => {
+    jsonArea.select();
+    document.execCommand("copy");
+    alert("📋 JSON copy ho gaya hai!");
+  });
+}
+
+async function pasteJsonText() {
+  const jsonArea = document.getElementById("editQuestionsJson");
+  try {
+    const text = await navigator.clipboard.readText();
+    if (text) {
+      jsonArea.value = text;
+      formatJsonText(); // Auto-format on paste
+    }
+  } catch (err) {
+    alert("⚠️ Paste karne ke liye JSON box me long press karke paste chunen.");
+  }
+}
+
+function formatJsonText() {
+  const jsonArea = document.getElementById("editQuestionsJson");
+  try {
+    const parsed = JSON.parse(jsonArea.value);
+    jsonArea.value = JSON.stringify(parsed, null, 2);
+  } catch (e) {
+    alert("❌ Invalid JSON format! Syntax check karein:\n" + e.message);
+  }
+}
+
+function clearJsonText() {
+  if (confirm("Kya aap pura JSON clear karna chahte hain?")) {
+    document.getElementById("editQuestionsJson").value = "[]";
+  }
+}
+
 // --- STRICT ADMIN AUTHENTICATION CHECK ---
 async function checkAdminAuth() {
   var loaderBox = document.getElementById("loaderBox");
@@ -333,7 +378,7 @@ function closeEditModal() {
 }
 
 // --- SAVE ALL UPDATED FIELDS TO SUPABASE ---
-function saveTestChanges() {
+async function saveTestChanges() {
   var testId = document.getElementById("editTestId").value;
   var newTitle = document.getElementById("editTitle").value.trim();
   var newClass = document.getElementById("editClass").value;
@@ -343,39 +388,58 @@ function saveTestChanges() {
   var newMarks = parseFloat(document.getElementById("editMarks").value) || 4;
   var newNegative = parseFloat(document.getElementById("editNegativeMark").value) || 0;
 
+  var saveBtn = document.getElementById("saveTestBtn");
+
+  if (!newTitle) {
+    alert("⚠️ Please title fill karein!");
+    return;
+  }
+
   var updatedQuestions = null;
   try {
     updatedQuestions = JSON.parse(document.getElementById("editQuestionsJson").value);
   } catch (e) {
-    alert("❌ Invalid JSON format in Questions Payload!");
+    alert("❌ Questions JSON me syntax error hai! Copy/Paste check karein:\n" + e.message);
     return;
   }
 
-  window.supabaseClient
-    .from('tests')
-    .update({
-      title: newTitle,
-      class_level: newClass,
-      subject: newSubject,
-      language: newLanguage,
-      time_limit_mins: newTime,
-      marks_per_question: newMarks,
-      negative_marking: newNegative,
-      questions_data: updatedQuestions
-    })
-    .eq('id', testId)
-    .then(function(res) {
-      if (res.error) throw res.error;
-      alert("✅ Test details & Questions updated successfully!");
-      closeEditModal();
-      fetchPublishedTests();
-    })
-    .catch(function(err) {
-      alert("❌ Update error: " + err.message);
-    });
+  if (saveBtn) {
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+  }
+
+  try {
+    const { error } = await window.supabaseClient
+      .from('tests')
+      .update({
+        title: newTitle,
+        class_level: newClass,
+        subject: newSubject,
+        language: newLanguage,
+        time_limit_mins: newTime,
+        marks_per_question: newMarks,
+        negative_marking: newNegative,
+        questions_data: updatedQuestions
+      })
+      .eq('id', testId);
+
+    if (error) throw error;
+
+    alert("✅ Test details & Questions update ho gaye hain!");
+    closeEditModal();
+    fetchPublishedTests();
+
+  } catch (err) {
+    alert("❌ Update Error: " + err.message);
+  } finally {
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Update Test Changes';
+    }
+  }
 }
 
-// --- UPGRADED PREVIEW MODAL FUNCTIONS WITH MATHJAX & SVG SUPPORT ---
+// --- PREVIEW MODAL FUNCTIONS ---
 function openPreviewModal(testId) {
   var test = allTests.find(function(t) { return t.id === testId; });
   if (!test) return;
@@ -405,7 +469,6 @@ function openPreviewModal(testId) {
           '</label>';
       });
 
-      // Diagram / SVG or Image Support
       var figureHtml = "";
       if (q.diagram_svg && q.diagram_svg.trim() !== "") {
         figureHtml = '<div style="margin: 10px 0; text-align: center; background: #fafafa; padding: 8px; border-radius: 6px; border: 1px dashed #cbd5e0; overflow-x: auto;">' + q.diagram_svg + '</div>';
@@ -428,7 +491,6 @@ function openPreviewModal(testId) {
 
   document.getElementById("previewModal").style.display = "flex";
 
-  // Trigger MathJax typeset to render LaTeX correctly in preview modal
   if (window.MathJax && typeof window.MathJax.typeset === 'function') {
     window.MathJax.typeset();
   }
@@ -459,7 +521,7 @@ function submitTestPreview() {
   var score = correctCount * marksPerQ;
   var totalScore = totalQuestions * marksPerQ;
 
-  alert("🧪 MOCK TEST PREVIEW RESULT\n\nCorrect: " + correctCount + "/" + totalQuestions + "\nScore: " + score + "/" + totalScore + "\n\n(Note: Ye safe preview hai, database me koi record save nahi hua.)");
+  alert("🧪 MOCK TEST PREVIEW RESULT\n\nCorrect: " + correctCount + "/" + totalQuestions + "\nScore: " + score + "/" + totalScore);
 }
 
 function deleteTest(testId) {
@@ -480,7 +542,7 @@ function deleteTest(testId) {
     });
 }
 
-// --- ADMIN BUG REPORTS MANAGER ---
+// --- BUG REPORTS MANAGER ---
 async function fetchBugReportsCount() {
   if (!window.supabaseClient) return;
   try {

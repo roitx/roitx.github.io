@@ -78,6 +78,40 @@ body.admin-authenticated {
 .back-btn:hover { color: #8E2DE2; }
 .back-btn:active { box-shadow: inset 3px 3px 6px #b8bec7, inset -3px -3px 6px #ffffff; }
 
+/* Primary Action Button (Update / Save Test) */
+.btn-primary {
+  background: linear-gradient(135deg, #8E2DE2, #4A00E0);
+  color: #ffffff;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 14px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  box-shadow: 6px 6px 14px #b8bec7, -6px -6px 14px #ffffff;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+  opacity: 0.95;
+  transform: translateY(-1px);
+}
+
+.btn-primary:active {
+  transform: translateY(1px);
+  box-shadow: inset 2px 2px 5px rgba(0,0,0,0.3);
+}
+
+.btn-primary:disabled {
+  background: #cbd5e1;
+  color: #94a3b8;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
 h1 {
   font-size: 22px;
   color: #2d3748;
@@ -143,6 +177,49 @@ select.input-box {
   cursor: pointer;
   appearance: auto;
 }
+
+/* JSON Action Button Group */
+.json-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.json-btn-group {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.json-action-btn {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: none;
+  background: #e0e5ec;
+  color: #4a5568;
+  cursor: pointer;
+  box-shadow: 3px 3px 6px #b8bec7, -3px -3px 6px #ffffff;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.2s ease;
+}
+
+.json-action-btn:hover {
+  color: #8E2DE2;
+}
+
+.json-action-btn:active {
+  box-shadow: inset 2px 2px 4px #b8bec7, inset -2px -2px 4px #ffffff;
+}
+
+.json-action-btn.format-btn { color: #2563eb; }
+.json-action-btn.clear-btn { color: #dc2626; }
 
 /* Tests List Section */
 .tests-list {
@@ -258,7 +335,7 @@ select.input-box {
 .modal-card h2 {
   font-size: 18px;
   color: #2d3748;
-  margin-bottom: 10px;
+  margin: 0;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -269,17 +346,8 @@ select.input-box {
   justify-content: flex-end;
   gap: 12px;
   margin-top: 15px;
-  padding-top: 10px;
-}
-
-.save-modal-btn {
-  background: #8E2DE2 !important;
-  color: #ffffff !important;
-  box-shadow: 4px 4px 10px #b8bec7, -4px -4px 10px #ffffff;
-}
-
-.save-modal-btn:hover {
-  background: #7b22cb !important;
+  padding-top: 12px;
+  border-top: 1px solid #cbd5e1;
 }
 
 /* Mobile Screen Adjustments */
@@ -299,6 +367,15 @@ select.input-box {
 
   .modal-card {
     padding: 18px 14px;
+  }
+
+  .modal-actions {
+    flex-direction: column-reverse;
+  }
+
+  .modal-actions button {
+    width: 100%;
+    justify-content: center;
   }
 
   .test-item {
