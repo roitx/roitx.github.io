@@ -652,13 +652,26 @@ function toggleFormat() {
 
 function toggleFullscreen() {
   if (!document.fullscreenElement) {
-    document.documentElement.requestFullscreen();
-    document.body.classList.add('clean-fullscreen');
+    document.documentElement.requestFullscreen().then(() => {
+      document.body.classList.add('clean-fullscreen');
+    }).catch(err => {
+      console.error("Fullscreen error:", err);
+    });
   } else {
-    if (document.exitFullscreen) document.exitFullscreen();
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    }
     document.body.classList.remove('clean-fullscreen');
   }
 }
+
+// Fullscreen exit hone par UI elements ko wapas laane ke liye listener
+document.addEventListener('fullscreenchange', () => {
+  if (!document.fullscreenElement) {
+    document.body.classList.remove('clean-fullscreen');
+  }
+});
+
 
 function handleGlobalClick(e) {
   if (document.fullscreenElement && e.target.tagName !== 'BUTTON' && e.target.tagName !== 'INPUT') {

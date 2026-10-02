@@ -834,3 +834,21 @@ footer {
   .results-drawer { width: 100%; right: -100%; top: 60px; height: calc(100vh - 130px); border-radius: 0; }
   .volume-bar { display: none; }
 }
+/* Clean Fullscreen Mode */
+body.clean-fullscreen header,
+body.clean-fullscreen footer,
+body.clean-fullscreen .bottom-player,
+body.clean-fullscreen .laps-container,
+body.clean-fullscreen .presets-bar,
+body.clean-fullscreen .action-bar,
+body.clean-fullscreen .tasks-waves-container,
+body.clean-fullscreen .yt-search-bar-wrap {
+  display: none !important;
+}
+
+body.clean-fullscreen .stage {
+  max-height: 100vh;
+  height: 100vh;
+  justify-content: center;
+  margin: 0;
+}
