@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  
+  <title>Study Timer & Neural Focus Suite — Roitx Pro</title>
+  <meta name="title" content="Study Timer & Neural Focus Suite — Roitx Pro">
+  <meta name="description" content="Advanced Study Timer, Binaural Beats Generator, Stopwatch, Task Manager, and Smart Music Player for ultimate study focus and productivity on Roitx Pro.">
+  <meta name="robots" content="index, follow">
+  <meta name="author" content="PM Roitx">
+  <link rel="canonical" href="https://roitx.qd.je/study-timer.html">
+
+  <link rel="icon" href="study.png" type="image/png">
+  <link rel="stylesheet" href="timer.css">
+</head>
+<body oncontextmenu="return false;">
+
+  <!-- Floating Settings SVG Button -->
+  <button id="btnSettingsToggle" class="floating-settings-btn" title="Appearance & Themes">
+    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="3"></circle>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+    </svg>
+  </button>
+
+  <!-- Settings Theme Drawer Modal -->
+  <div id="themeMenuModal" class="theme-drawer" style="display: none;">
+    <div class="drawer-header">
+      <span>🎨 Appearance & Controls</span>
+      <button id="btnCloseThemeDrawer" class="close-btn">&times;</button>
+    </div>
+    
+    <div style="margin-bottom: 12px;">
+      <span class="drawer-label">Themes:</span>
+      <div class="theme-grid">
+        <button class="btnTheme" data-theme="dark">Dark Obsidian</button>
+        <button class="btnTheme" data-theme="cyberpunk">Cyber Neon</button>
+        <button class="btnTheme" data-theme="emerald">Emerald Mind</button>
+        <button class="btnTheme" data-theme="amber">Warm Amber</button>
+      </div>
+    </div>
+
+    <!-- Live Clock Animation Switcher -->
+    <div style="margin-bottom: 12px;">
+      <span class="drawer-label" style="font-weight:bold; display:block; margin-bottom:6px;">🕒 Clock Animations:</span>
+      <div class="theme-grid">
+        <button class="btnTheme btnAnimChoice" data-anim="pulse">Neon Pulse</button>
+        <button class="btnTheme btnAnimChoice" data-anim="ring">Glow Ring</button>
+        <button class="btnTheme btnAnimChoice" data-anim="breathe">Breathe Soft</button>
+        <button class="btnTheme btnAnimChoice" data-anim="flip">Cyber Flip</button>
+      </div>
+    </div>
+
+    <button id="btnOpenAOD" class="btn primary" style="width: 100%; margin-top: 8px;">✨ Launch Polished AOD Mode</button>
+  </div>
+
+  <!-- AOD Screen -->
+  <div id="aodOverlay" class="aod-screen" style="display: none;">
+    <div class="aod-controls">
+      <button class="aod-tab active" data-aod="clock">Live Clock</button>
+      <button class="aod-tab" data-aod="timer">Timer</button>
+      <button class="aod-tab" data-aod="stopwatch">Stopwatch</button>
+      <button id="btnAodFullscreen" class="aod-tab highlight">⛶ Fullscreen</button>
+      <button id="btnCloseAOD" class="aod-close">&times; Exit</button>
+    </div>
+
+    <div class="aod-display-wrapper">
+      <!-- Live Flip Clock Container -->
+      <div id="aodClockView" class="aod-view active">
+        <div class="flip-clock-wrapper">
+          <div class="flip-card-container">
+            <span class="ampm-indicator" id="aodAmPm">AM</span>
+            <div class="flip-card" id="flipHours">
+              <div class="top">00</div>
+              <div class="bottom">00</div>
+            </div>
+          </div>
+          <div class="flip-card-container">
+            <div class="flip-card" id="flipMinutes">
+              <div class="top">00</div>
+              <div class="bottom">00</div>
+            </div>
+          </div>
+        </div>
+        <div id="aodDateText" class="aod-sub-text">-- -- ----</div>
+      </div>
+
+      <div id="aodTimerView" class="aod-view">
+        <div id="aodTimerText" class="aod-main-text">40:00</div>
+        <div class="aod-sub-text">FOCUS SESSION</div>
+        <div class="aod-action-bar">
+          <button class="aod-action-btn" id="btnAodTimerToggle">Start / Pause</button>
+          <button class="aod-action-btn danger" id="btnAodTimerReset">Reset</button>
+        </div>
+      </div>
+
+      <div id="aodStopwatchView" class="aod-view">
+        <div id="aodSwText" class="aod-main-text">00:00.00</div>
+        <div class="aod-sub-text">STOPWATCH RUNNING</div>
+        <div class="aod-action-bar">
+          <button class="aod-action-btn" id="btnAodSwToggle">Start / Pause</button>
+          <button class="aod-action-btn danger" id="btnAodSwReset">Reset</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Zen Overlay Screen -->
+  <div id="zenOverlay" class="zen-screen" style="display: none;">
+    <div class="zen-display" id="zenDisplayText">40:00</div>
+    <div class="zen-sub-text" id="zenSubText">FOCUS MODE (TAP ANYWHERE TO EXIT)</div>
+  </div>
+
+  <!-- Header Section -->
+  <header class="glass-panel">
+    <div class="brand">
+      <img src="study.png" alt="Roitx Logo" class="logo-img" onerror="this.src='https://via.placeholder.com/50'">
+      <div>
+        <h1>Roitx Suite <span>PRO</span></h1>
+        <span id="dailyStats" style="color: var(--text-muted); text-transform: none;">0 mins focused today</span>
+      </div>
+    </div>
+    <div class="status-bar">
+      <div class="status-badge">
+        <svg viewBox="0 0 24 24"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.73 0 1.33-.6 1.33-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+        <span id="batteryLvl">Checking...</span>
+      </div>
+      <div class="status-badge">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+        <span id="netStatus">Online</span>
+      </div>
+      <div class="status-badge" id="liveClock">--:--</div>
+    </div>
+  </header>
+
+  <!-- Main Grid Layout -->
+  <main>
+    <div class="left-col">
+      <section class="glass-panel" style="text-align: center;">
+        <div class="time-display" id="timerDisplay">40:00</div>
+
+        <div class="input-group" style="margin-bottom: 15px;">
+          <input type="number" id="customMinInput" placeholder="Custom mins (e.g. 25)" min="1" max="180">
+          <button class="btn primary" id="btnSetCustomMin">Set Time</button>
+        </div>
+
+        <div class="controls" style="margin-bottom: 20px;">
+          <button class="btn" id="btnPomodoro">80-20 Strike (40m)</button>
+          <button class="btn" id="btnShortBreak">Short Rest (5m)</button>
+          <button class="btn" id="btnCubeBreak">CFOP Break (3m)</button>
+        </div>
+
+        <hr class="divider">
+
+        <div class="controls">
+          <button class="btn primary" id="btnStartTimer">Start Session</button>
+          <button class="btn danger" id="btnResetTimer">Reset</button>
+        </div>
+      </section>
+
+      <!-- Neural Focus & Ambient Panel -->
+      <section class="glass-panel">
+        <h2>Neural Focus & Ambient</h2>
+        <div class="controls" style="margin-bottom: 16px;">
+          <button class="btn wave-btn" data-wave="alpha" data-freq="10">Alpha (10Hz)</button>
+          <button class="btn wave-btn" data-wave="theta" data-freq="6">Theta (6Hz)</button>
+          <button class="btn wave-btn" data-wave="beta" data-freq="20">Beta (20Hz)</button>
+          <button class="btn danger" id="btnStopWave">Stop Beats</button>
+        </div>
+        <div class="controls">
+          <button class="btn" id="btnAmbient">White Noise (Rain/Static)</button>
+          <button class="btn" id="btnFocus">Fullscreen Mode</button>
+          <button class="btn primary" id="btnZenMode">✨ Full Mode (Hide UI)</button>
+        </div>
+        <div class="wave-info" id="waveDesc">Select a frequency to generate Binaural Beats.</div>
+
+        <div class="wave-benefits-card" id="waveBenefitsCard" style="display: none;">
+          <h4 id="activeWaveTitle">💡 Active Brainwave Benefits</h4>
+          <p id="activeWaveDesc">Details will be dynamically updated when waves start playing.</p>
+        </div>
+      </section>
+    </div>
+
+    <!-- Right Column -->
+    <div class="right-col">
+      <section class="glass-panel">
+        <h2>Study Tasks / To-Do</h2>
+        <div class="input-group">
+          <input type="text" id="taskInput" placeholder="Add a new task...">
+          <button class="btn primary" id="btnTaskAdd">Add</button>
+        </div>
+        <ul class="task-list" id="taskList"></ul>
+      </section>
+
+      <section class="glass-panel">
+        <h2>Stopwatch & Laps</h2>
+        <div class="time-display" id="stopwatchDisplay" style="font-size: 3rem;">00:00:00<span class="ms-display">.00</span></div>
+        <div class="controls" style="margin-top: 10px;">
+          <button class="btn primary" id="btnSwStart">Start</button>
+          <button class="btn" id="btnSwLap">Lap</button>
+          <button class="btn danger" id="btnSwReset">Reset</button>
+        </div>
+        
+        <div id="lapsList" class="laps-card-container"></div>
+      </section>
+
+      <section class="glass-panel">
+        <h2>Smart Pro Audio Player</h2>
+        
+        <canvas id="visualizer" class="visualizer-canvas" width="300" height="60"></canvas>
+
+        <div style="margin-bottom: 14px;">
+          <label style="font-size: 0.82rem; color: var(--text-muted); display: block; margin-bottom: 6px;">1. Upload Local Audio File:</label>
+          <input type="file" id="audioFileInput" accept="audio/*">
+        </div>
+
+        <div style="margin-bottom: 14px;">
+          <label style="font-size: 0.82rem; color: var(--text-muted); display: block; margin-bottom: 6px;">2. Stream Direct Audio URL (MP3 / Stream Link):</label>
+          <div class="input-group">
+            <input type="text" id="directAudioUrlInput" placeholder="https://example.com/song.mp3">
+            <button class="btn primary" id="btnLoadDirectAudio">Load Audio</button>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 12px; position: relative;">
+          <label style="font-size: 0.82rem; color: var(--text-muted); display: block; margin-bottom: 6px;">3. YouTube Audio Streamer:</label>
+          <div class="input-group">
+            <input type="text" id="audioUrlInput" placeholder="Type Song Name or YouTube Link..." autocomplete="off">
+            <button class="btn primary" id="btnLoadAudio">Play YT</button>
+          </div>
+          <ul id="ytSuggestions" class="yt-suggestions-list" style="display: none;"></ul>
+        </div>
+
+        <audio id="customAudio" controls style="width: 100%; margin-top: 10px; border-radius: 8px;" crossorigin="anonymous"></audio>
+
+        <div class="music-player-card" style="margin-top: 12px;">
+          <div class="track-info" id="trackTitle">No Music Loaded</div>
+          <div class="controls" style="margin-top: 10px;">
+            <button class="btn primary" id="btnPlayPauseMusic">Play / Pause</button>
+            <button class="btn danger" id="btnStopMusic">Stop Audio</button>
+          </div>
+        </div>
+
+<!-- Replace line 198 in study.html -->
+<div id="ytHiddenPlayerContainer" style="position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; left: -9999px;"></div>
+
+
+      </section>
+    </div>
+  </main>
+
+  <div class="modal-overlay" id="sessionModal" style="display: none;">
+    <div class="glass-panel modal-content">
+      <h2>Session Complete! 🎉</h2>
+      <p>Bohot badiya! Tumne apna focus session poora kar liya hai.</p>
+      <button class="btn primary" id="btnCloseModal" style="margin-top: 15px;">Awesome!</button>
+    </div>
+  </div>
+
+  <script src="https://www.youtube.com/iframe_api"></script>
+  <script src="animination.js"></script>
+  <script src="timer.js"></script>
+</body>
+</html>

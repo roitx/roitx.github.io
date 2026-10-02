@@ -281,6 +281,45 @@ class ProductivityEngine {
     document.getElementById('btnCloseModal')?.addEventListener('click', () => this.closeModal());
   }
 
+  toggleMusicPlayPause() {
+    if (this.audioSourceType === 'yt' && this.ytPlayer && this.isYtReady) {
+      const state = this.ytPlayer.getPlayerState();
+      if (state === YT.PlayerState.PLAYING) {
+        this.ytPlayer.pauseVideo();
+        this.isPlayingMusic = false;
+      } else {
+        this.ytPlayer.playVideo();
+        this.isPlayingMusic = true;
+      }
+    } else if (this.els.customAudio && this.els.customAudio.src) {
+      if (this.els.customAudio.paused) {
+        this.els.customAudio.play().catch(() => {});
+        this.isPlayingMusic = true;
+      } else {
+        this.els.customAudio.pause();
+        this.isPlayingMusic = false;
+      }
+    }
+  }
+
+  stopAllMusic() {
+    if (this.ytPlayer && this.isYtReady) {
+      this.ytPlayer.stopVideo();
+    }
+    if (this.els.customAudio) {
+      this.els.customAudio.pause();
+      this.els.customAudio.currentTime = 0;
+    }
+    this.isPlayingMusic = false;
+    if (this.els.trackTitle) this.els.trackTitle.textContent = "No Music Loaded";
+  }
+
+  stopYtMusic() {
+    if (this.ytPlayer && this.isYtReady) {
+      this.ytPlayer.stopVideo();
+    }
+  }
+
   toggleTimerState() {
     if (!this.timerState.isRunning) {
       this.startTimer();
@@ -291,112 +330,123 @@ class ProductivityEngine {
     }
   }
 
-/* YOUTUBE EMBED API INTEGRATION - FIXED */
-setupYouTubeAPI() {
-  window.onYouTubeIframeAPIReady = () => {
-    this.ytPlayer = new YT.Player('ytHiddenPlayerContainer', {
-      height: '0',
-      width: '0',
-      // Standard host domain for seamless postMessage iframe communication
-      host: 'https://www.youtube.com',
-      playerVars: {
-        'autoplay': 1,
-        'controls': 0,
-        'enablejsapi': 1,
-        'origin': window.location.origin
-      },
-      events: {
-        'onReady': (event) => { 
-          this.isYtReady = true; 
+  /* YOUTUBE EMBED API INTEGRATION - FIXED FOR ERROR 2 & ORIGIN */
+  setupYouTubeAPI() {
+    window.onYouTubeIframeAPIReady = () => {
+      this.ytPlayer = new YT.Player('ytHiddenPlayerContainer', {
+        height: '1',
+        width: '1',
+        host: 'https://www.youtube.com',
+        playerVars: {
+          'autoplay': 1,
+          'controls': 0,
+          'enablejsapi': 1,
+          'origin': window.location.origin
         },
-        'onStateChange': (e) => {
-          if (e.data === YT.PlayerState.PLAYING) {
-            this.isPlayingMusic = true;
-          } else if (e.data === YT.PlayerState.PAUSED || e.data === YT.PlayerState.ENDED) {
-            this.isPlayingMusic = false;
+        events: {
+          'onReady': () => { 
+            this.isYtReady = true; 
+          },
+          'onStateChange': (e) => {
+            if (e.data === YT.PlayerState.PLAYING) {
+              this.isPlayingMusic = true;
+            } else if (e.data === YT.PlayerState.PAUSED || e.data === YT.PlayerState.ENDED) {
+              this.isPlayingMusic = false;
+            }
+          },
+          'onError': (e) => {
+            console.warn('YouTube Player Error:', e.data);
+            // Error Code 2: Invalid Video ID
+            // Error Code 100/101/150: Video restricted / Not embeddable
+            if (e.data === 2) {
+              alert('Invalid Video Link/ID. Kripya valid YouTube video link ya suggestions se select karein.');
+            } else if (e.data === 101 || e.data === 150) {
+              alert('Ye video third-party apps me play hona restricted hai. Dusra track try karein.');
+            } else {
+              alert('Is track ko play nahi kiya ja saka. Dusra name/link try karein.');
+            }
           }
-        },
-        'onError': (e) => {
-          console.warn('YouTube Player Error:', e.data);
         }
-      }
-    });
-  };
-}
-
-loadYtAudioOnly(inputVal) {
-  if (this.els.ytSuggestions) this.els.ytSuggestions.style.display = 'none';
-  if (this.els.customAudio) this.els.customAudio.pause();
-
-  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-  const match = inputVal.match(regExp);
-  const videoId = (match && match[2].length === 11) ? match[2] : null;
-
-  this.audioSourceType = 'yt';
-
-  if (!this.ytPlayer || !this.isYtReady) {
-    alert("YouTube Player abhi load ho raha hai. 2 second baad dobara try karein.");
-    return;
+      });
+    };
   }
 
-  if (videoId) {
-    this.ytPlayer.loadVideoById(videoId);
-    if (this.els.trackTitle) this.els.trackTitle.textContent = `▶️ YT Track ID: ${videoId}`;
-  } else {
-    // Search & Play single video query instead of playlist listType search error
-    this.ytPlayer.loadPlaylist({
-      listType: 'search',
-      list: inputVal,
-      index: 0
-    });
-    if (this.els.trackTitle) this.els.trackTitle.textContent = `🔍 YT Playing: ${inputVal}`;
-  }
-  this.isPlayingMusic = true;
-}
-
-/* YOUTUBE SUGGESTIONS SEARCH - FIXED & ENHANCED */
-/* YOUTUBE SUGGESTIONS SEARCH - SAFE & FIXED */
-fetchYTSuggestions(query) {
-  const oldScript = document.getElementById('yt-suggestion-script');
-  if (oldScript) oldScript.remove();
-
-  window.handleYTSugg = (data) => {
-    // Safety check added using optional chaining
-    if (!data?.[1] || !this.els?.ytSuggestions) return;
+  loadYtAudioOnly(inputVal) {
+    if (this.els.ytSuggestions) this.els.ytSuggestions.style.display = 'none';
     
-    const suggestions = data[1].slice(0, 5);
-    this.els.ytSuggestions.innerHTML = '';
-    
-    if (suggestions.length === 0) {
-      this.els.ytSuggestions.style.display = 'none';
+    // Pause local audio if playing
+    if (this.els.customAudio) {
+      this.els.customAudio.pause();
+      this.els.customAudio.currentTime = 0;
+    }
+
+    // Extract Video ID using regex
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = inputVal.match(regExp);
+    const videoId = (match && match[2].length === 11) ? match[2] : (inputVal.length === 11 && !inputVal.includes(' ') ? inputVal : null);
+
+    this.audioSourceType = 'yt';
+
+    if (!this.ytPlayer || !this.isYtReady) {
+      alert("YouTube Player abhi ready ho raha hai. 2 second baad dobara try karein.");
       return;
     }
 
-    suggestions.forEach(item => {
-      const li = document.createElement('li');
-      li.textContent = item[0];
-      li.onmousedown = (e) => {
-        e.preventDefault();
-        if (this.els.audioUrlInput) this.els.audioUrlInput.value = item[0];
-        if (this.els.ytSuggestions) this.els.ytSuggestions.style.display = 'none';
-        this.loadYtAudioOnly(item[0]);
-      };
-      this.els.ytSuggestions.appendChild(li);
-    });
-    this.els.ytSuggestions.style.display = 'block';
-  };
+    if (videoId) {
+      // Direct Valid Video ID Playback
+      this.ytPlayer.loadVideoById(videoId);
+      if (this.els.trackTitle) this.els.trackTitle.textContent = `▶️ Playing Track ID: ${videoId}`;
+    } else {
+      // If full text query, search via YouTube search API format
+      this.ytPlayer.loadPlaylist({
+        listType: 'search',
+        list: inputVal,
+        index: 0,
+        startSeconds: 0
+      });
+      if (this.els.trackTitle) this.els.trackTitle.textContent = `🔍 Searching & Playing: ${inputVal}`;
+    }
+    this.isPlayingMusic = true;
+  }
 
-  const script = document.createElement('script');
-  script.id = 'yt-suggestion-script';
-  script.src = `https://suggestqueries.google.com/complete/search?client=youtube&ds=yt&q=${encodeURIComponent(query)}&jsonp=handleYTSugg`;
-  script.onerror = () => {
-    // If script is blocked by AdBlocker/Extension
-    if (this.els?.ytSuggestions) this.els.ytSuggestions.style.display = 'none';
-  };
-  document.body.appendChild(script);
-}
+  /* YOUTUBE SUGGESTIONS SEARCH - SAFE & FIXED */
+  fetchYTSuggestions(query) {
+    const oldScript = document.getElementById('yt-suggestion-script');
+    if (oldScript) oldScript.remove();
 
+    window.handleYTSugg = (data) => {
+      if (!data?.[1] || !this.els?.ytSuggestions) return;
+      
+      const suggestions = data[1].slice(0, 5);
+      this.els.ytSuggestions.innerHTML = '';
+      
+      if (suggestions.length === 0) {
+        this.els.ytSuggestions.style.display = 'none';
+        return;
+      }
 
+      suggestions.forEach(item => {
+        const li = document.createElement('li');
+        li.textContent = item[0];
+        li.onmousedown = (e) => {
+          e.preventDefault();
+          if (this.els.audioUrlInput) this.els.audioUrlInput.value = item[0];
+          if (this.els.ytSuggestions) this.els.ytSuggestions.style.display = 'none';
+          this.loadYtAudioOnly(item[0]);
+        };
+        this.els.ytSuggestions.appendChild(li);
+      });
+      this.els.ytSuggestions.style.display = 'block';
+    };
+
+    const script = document.createElement('script');
+    script.id = 'yt-suggestion-script';
+    script.src = `https://suggestqueries.google.com/complete/search?client=youtube&ds=yt&q=${encodeURIComponent(query)}&jsonp=handleYTSugg`;
+    script.onerror = () => {
+      if (this.els?.ytSuggestions) this.els.ytSuggestions.style.display = 'none';
+    };
+    document.body.appendChild(script);
+  }
 
   setupAudioContextForVisualizer() {
     if (this.vizSource || !this.els.customAudio) return;
@@ -802,10 +852,9 @@ fetchYTSuggestions(query) {
       const ampm = hours >= 12 ? 'PM' : 'AM';
 
       hours = hours % 12;
-      hours = hours ? hours : 12; // 02 format
+      hours = hours ? hours : 12;
       const hrsStr = String(hours);
 
-      // Update Flip Clock Cards
       if (this.els.flipHours) {
         const top = this.els.flipHours.querySelector('.top');
         const bottom = this.els.flipHours.querySelector('.bottom');
@@ -880,6 +929,7 @@ fetchYTSuggestions(query) {
     );
   }
 }
+
 // Clean & Safe Click Event Handler
 document.addEventListener('click', (e) => {
   const suggestionsEl = document.getElementById('ytSuggestions');
