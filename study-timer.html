@@ -4,196 +4,699 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   
-  <!-- SEO & Meta Tags -->
-  <title>Study Timer, Focus Studio & YouTube Music - Roitx</title>
-  <meta name="description" content="Boost your study productivity with Roitx Study Timer, Brain Waves focus sound, Task Manager, and YouTube Music player.">
-  <meta name="keywords" content="study timer, focus studio, brain waves, task manager, youtube music, roitx tools">
-  <meta name="robots" content="index, follow">
-  <link rel="canonical" href="https://roitx.qd.je/study-timer.html">
+  <title>Study Timer & Neural Focus Suite — Roitx Pro</title>
+  
+  <!-- Primary Meta Tags -->
+  <meta name="title" content="Study Timer & Neural Focus Suite — Roitx Pro">
+  <meta name="description" content="Advanced Study Timer, Binaural Beats Generator, Stopwatch, Task Manager, and Smart Music Player for ultimate study focus and productivity.">
+  <meta name="author" content="PM Roitx">
 
-  <!-- Open Graph Meta Tags (Image set to root) -->
-  <meta property="og:title" content="Study Timer & Focus Studio - Roitx">
-  <meta property="og:description" content="Manage your tasks, listen to focus brain waves, play YouTube music, and track your study time seamlessly.">
-  <meta property="og:image" content="https://roitx.qd.je/study.png">
-  <meta property="og:url" content="https://roitx.qd.je/study-timer.html">
+  <!-- Open Graph / Facebook / WhatsApp Preview Meta Tags -->
   <meta property="og:type" content="website">
+  <meta property="og:url" content="https://roitx-pro.app/">
+  <meta property="og:title" content="Study Timer & Neural Focus Suite — Roitx Pro">
+  <meta property="og:description" content="Advanced Study Timer, Binaural Beats Generator, Stopwatch, Task Manager, and Smart Music Player for ultimate study focus and productivity.">
+  <meta property="og:image" content="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=1200&auto=format&fit=crop">
 
-  <!-- FontAwesome & Stylesheet -->
+  <!-- Twitter Card Meta Tags -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://roitx-pro.app/">
+  <meta property="twitter:title" content="Study Timer & Neural Focus Suite — Roitx Pro">
+  <meta property="twitter:description" content="Advanced Study Timer, Binaural Beats Generator, Stopwatch, Task Manager, and Smart Music Player for ultimate study focus and productivity.">
+  <meta property="twitter:image" content="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=1200&auto=format&fit=crop">
+
+  <!-- Font Awesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="timer.css">
+
+  <style>
+    /* DYNAMIC THEMES VARIABLE SETUP */
+    :root {
+      --bg: #09090b;
+      --card-bg: rgba(24, 24, 27, 0.7);
+      --card-bg-solid: #121214;
+      --border: #27272a;
+      --accent: #ff3b30;
+      --accent-glow: rgba(255, 59, 48, 0.25);
+      --text: #f4f4f5;
+      --muted: #a1a1aa;
+      --btn-gray: #1c1c1e;
+      --btn-red: #311315;
+      --btn-red-text: #ff453a;
+    }
+
+    [data-theme="cyber-blue"] {
+      --accent: #007aff;
+      --accent-glow: rgba(0, 122, 255, 0.25);
+      --btn-red: #0a2540;
+      --btn-red-text: #64d2ff;
+    }
+
+    [data-theme="neon-emerald"] {
+      --accent: #30d158;
+      --accent-glow: rgba(48, 209, 88, 0.25);
+      --btn-red: #0c2f18;
+      --btn-red-text: #30d158;
+    }
+
+    [data-theme="deep-violet"] {
+      --accent: #bf5af2;
+      --accent-glow: rgba(191, 90, 242, 0.25);
+      --btn-red: #2a1236;
+      --btn-red-text: #da8fff;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-bottom: 90px;
+      overflow-x: hidden;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    /* RESPONSIVE APP HEADER */
+    header.app-header {
+      width: 100%;
+      background: rgba(15, 15, 15, 0.9);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      gap: 10px;
+      flex-wrap: wrap;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-logo {
+      height: 28px;
+      width: auto;
+      object-fit: contain;
+    }
+
+    .brand h1 {
+      font-size: 16px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    .brand h1 span {
+      color: var(--accent);
+      font-size: 10px;
+      background: var(--accent-glow);
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid var(--accent);
+    }
+
+    .status-bar {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      font-size: 11px;
+      color: var(--muted);
+      flex-wrap: wrap;
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: #18181b;
+      padding: 4px 8px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    .theme-select {
+      background: #18181b;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 4px 6px;
+      font-size: 11px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    /* MAIN TAB NAVIGATION */
+    .app-nav {
+      display: flex;
+      gap: 6px;
+      background: #121214;
+      padding: 6px;
+      border-radius: 30px;
+      border: 1px solid var(--border);
+      margin: 12px 0;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      max-width: 95%;
+      overflow-x: auto;
+    }
+
+    .nav-tab-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      padding: 8px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    .nav-tab-btn.active {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 0 12px var(--accent-glow);
+    }
+
+    /* TAB CONTENT PANELS */
+    .tab-content {
+      display: none;
+      width: 100%;
+      max-width: 900px;
+      padding: 0 12px;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .tab-content.active {
+      display: flex;
+    }
+
+    /* ========================================================= */
+    /* 1. CLOCK & AOD SECTION                                    */
+    /* ========================================================= */
+    .aod-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      width: 100%;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    .aod-nav-bar { display: flex; gap: 20px; }
+    .aod-nav-item {
+      background: none;
+      border: none;
+      color: #8e8e93;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      padding-bottom: 4px;
+      position: relative;
+    }
+    .aod-nav-item.active { color: #fff; font-weight: 600; }
+    .aod-nav-item.active::after {
+      content: ''; position: absolute; bottom: -2px; left: 0;
+      width: 100%; height: 2px; background: var(--accent); border-radius: 2px;
+    }
+
+    .style-selector {
+      display: flex; background: #1c1c1e; padding: 3px; border-radius: 12px; border: 1px solid var(--border);
+    }
+    .style-btn {
+      background: none; border: none; color: #8e8e93; padding: 5px 14px; font-size: 12px; font-weight: 600; border-radius: 9px; cursor: pointer;
+    }
+    .style-btn.active { background: #2c2c2e; color: #fff; }
+
+    .stage {
+      width: 100%; max-width: 450px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; min-height: 280px;
+    }
+
+    .flip-container { display: flex; align-items: center; justify-content: center; gap: clamp(6px, 1.8vw, 12px); }
+    .flip-card {
+      position: relative; width: clamp(75px, 22vw, 110px); height: clamp(105px, 28vw, 150px);
+      background: var(--card-bg-solid); border-radius: 16px; border: 1px solid var(--border); overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+    }
+    .ampm-badge { position: absolute; top: 8px; left: 10px; font-size: 11px; font-weight: 800; color: #666; z-index: 15; }
+    .half { position: absolute; left: 0; width: 100%; height: 50%; overflow: hidden; background: #141416; display: flex; justify-content: center; }
+    .half.top { top: 0; align-items: flex-end; border-bottom: 1px solid rgba(0,0,0,0.9); }
+    .half.bottom { bottom: 0; align-items: flex-start; }
+    .half span { font-size: clamp(52px, 14vw, 80px); font-weight: 700; color: #e5e5ea; line-height: 0; }
+    .half.top span { transform: translateY(50%); }
+    .half.bottom span { transform: translateY(-50%); }
+    .card-divider { position: absolute; top: 50%; left: 0; width: 100%; height: 2px; background: #000; z-index: 20; transform: translateY(-50%); }
+    .leaf {
+      position: absolute; left: 0; top: 0; width: 100%; height: 50%; background: #141416;
+      transform-origin: bottom center; transform-style: preserve-3d; z-index: 10; display: flex; justify-content: center; align-items: flex-end; overflow: hidden; backface-visibility: hidden;
+    }
+    .leaf span { font-size: clamp(52px, 14vw, 80px); font-weight: 700; color: #e5e5ea; line-height: 0; transform: translateY(50%); }
+    .leaf.animate { animation: flip3D 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+    @keyframes flip3D { 0% { transform: rotateX(0deg); } 100% { transform: rotateX(-180deg); opacity: 0.1; } }
+    .flip-colon { font-size: 32px; color: #444; margin-top: -10px; }
+
+    .wall-clock {
+      display: none; position: relative; width: clamp(230px, 60vw, 280px); height: clamp(230px, 60vw, 280px);
+      border-radius: 50%; background: radial-gradient(circle, #151518 0%, #09090b 100%); border: 8px solid #1c1c1e; box-shadow: inset 0 0 20px #000, 0 15px 40px rgba(0,0,0,0.8); align-items: center; justify-content: center;
+    }
+    .clock-num { position: absolute; font-size: 18px; font-weight: 700; color: #8e8e93; }
+    .cn-12 { top: 15px; } .cn-3 { right: 20px; } .cn-6 { bottom: 15px; } .cn-9 { left: 20px; }
+    .center-dot { position: absolute; width: 12px; height: 12px; background: var(--accent); border: 2px solid #fff; border-radius: 50%; z-index: 30; }
+    .w-hand { position: absolute; bottom: 50%; left: 50%; transform-origin: bottom center; border-radius: 4px; }
+    .w-hand.hour { width: 6px; height: 28%; background: #fff; margin-left: -3px; z-index: 10; }
+    .w-hand.minute { width: 4px; height: 38%; background: #aaa; margin-left: -2px; z-index: 10; }
+    .w-hand.second { width: 2px; height: 44%; background: var(--accent); margin-left: -1px; z-index: 20; }
+
+    .stopwatch-dial { display: none; position: relative; width: clamp(230px, 60vw, 270px); height: clamp(230px, 60vw, 270px); border-radius: 50%; align-items: center; justify-content: center; }
+    .sw-ticks { position: absolute; width: 100%; height: 100%; border-radius: 50%; }
+    .sw-time-display { font-size: clamp(26px, 6.5vw, 34px); font-weight: 300; color: #ffffff; z-index: 10; }
+    .sw-red-dot { position: absolute; width: 8px; height: 8px; background: var(--accent); border-radius: 50%; transform-origin: center calc(clamp(230px, 60vw, 270px) / 2); top: 0; box-shadow: 0 0 8px var(--accent); }
+
+    .timer-ring-box { display: none; position: relative; width: clamp(230px, 60vw, 270px); height: clamp(230px, 60vw, 270px); flex-direction: column; align-items: center; justify-content: center; }
+    .timer-svg { position: absolute; width: 100%; height: 100%; transform: rotate(-90deg); }
+    .timer-bg-circle { fill: none; stroke: #1c1c1e; stroke-width: 4; }
+    .timer-progress-circle { fill: none; stroke: var(--accent); stroke-width: 4; stroke-dasharray: 880; stroke-dashoffset: 0; transition: stroke-dashoffset 0.2s linear; }
+    .timer-display { font-size: clamp(34px, 8vw, 42px); font-weight: 300; z-index: 10; }
+    .sec-highlight { color: var(--accent); }
+
+    .laps-container { width: 100%; max-height: 120px; overflow-y: auto; margin-top: 15px; padding: 8px 12px; background: rgba(28, 28, 30, 0.4); border: 1px solid var(--border); border-radius: 16px; }
+    .lap-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 4px; border-bottom: 1px solid #1c1c1e; font-size: 13px; }
+    .lap-item:last-child { border-bottom: none; }
+    .lap-no { color: var(--accent); font-weight: 600; }
+    .lap-split { color: #8e8e93; font-size: 11px; }
+    .lap-time { color: #ffffff; font-weight: 500; font-family: monospace; }
+
+    .presets-bar { display: flex; gap: 8px; margin-top: 15px; flex-wrap: wrap; justify-content: center; transition: opacity 0.3s ease; }
+    .preset-chip { background: #1c1c1e; border: 1px solid var(--border); color: #8e8e93; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .preset-chip:hover, .preset-chip.active { background: #2c2c2e; color: #fff; border-color: var(--accent); }
+
+    .action-bar { width: 100%; max-width: 400px; display: flex; gap: 12px; margin-top: 20px; transition: opacity 0.3s ease; }
+    .action-btn-native { flex: 1; padding: 12px; border-radius: 24px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; text-align: center; }
+    .btn-gray { background: var(--btn-gray); color: #8e8e93; }
+    .btn-cancel { background: var(--btn-red); color: var(--btn-red-text); }
+    .btn-main { background: var(--accent); color: #ffffff; }
+
+    .aod-footer { display: flex; gap: 24px; align-items: center; margin-top: 15px; transition: opacity 0.3s ease; }
+    .icon-btn { background: none; border: none; color: #666; font-size: 18px; cursor: pointer; }
+    .icon-btn:hover { color: #fff; }
+
+    /* CLEAN FULLSCREEN MODE - PLAYER BAR & UI AUTO HIDE */
+    body.clean-fullscreen header.app-header,
+    body.clean-fullscreen .app-nav,
+    body.clean-fullscreen .aod-header,
+    body.clean-fullscreen .action-bar,
+    body.clean-fullscreen .aod-footer,
+    body.clean-fullscreen .presets-bar,
+    body.clean-fullscreen .bottom-player { opacity: 0 !important; pointer-events: none !important; transform: translateY(-20px); }
+
+    /* ========================================================= */
+    /* 2. FOCUS & TASK STUDIO SECTION                            */
+    /* ========================================================= */
+    .section-card {
+      width: 100%;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 20px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      margin-bottom: 20px;
+    }
+
+    .card-title {
+      font-size: 14px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
+    }
+
+    .wave-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px; }
+    .wave-btn {
+      background: #18181b; border: 1px solid var(--border); border-radius: 14px; padding: 14px; color: var(--text); display: flex; flex-direction: column; align-items: flex-start; gap: 4px; cursor: pointer; transition: all 0.2s ease;
+    }
+    .wave-btn .w-title { font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 6px; }
+    .wave-btn .w-freq { font-size: 11px; color: var(--muted); }
+    .wave-btn.active { background: #27272a; border-color: var(--accent); box-shadow: 0 0 15px var(--accent-glow); }
+    .wave-btn.active .w-title { color: var(--accent); }
+
+    .player-controls { display: flex; align-items: center; justify-content: space-between; background: #141416; border-radius: 12px; padding: 10px 16px; }
+    .play-toggle-btn {
+      background: var(--accent); border: none; color: #fff; width: 40px; height: 40px; border-radius: 50%; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 10px var(--accent-glow);
+    }
+    .vol-slider { width: 120px; accent-color: var(--accent); }
+
+    .benefit-box { background: #141416; border-radius: 14px; padding: 14px; margin-top: 12px; border-left: 3px solid var(--accent); }
+    .benefit-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+    .benefit-desc { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+    .task-input-box { display: flex; gap: 10px; margin-bottom: 16px; }
+    .task-input { flex: 1; background: #18181b; border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; color: var(--text); font-size: 14px; outline: none; }
+    .task-input:focus { border-color: var(--accent); }
+    .add-btn { background: var(--accent); border: none; color: #fff; padding: 0 20px; border-radius: 12px; font-weight: 600; font-size: 14px; cursor: pointer; }
+    .task-filters { display: flex; gap: 12px; margin-bottom: 14px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+    .filter-btn { background: none; border: none; color: var(--muted); font-size: 13px; font-weight: 500; cursor: pointer; }
+    .filter-btn.active { color: var(--accent); font-weight: 600; }
+    .task-list { display: flex; flex-direction: column; gap: 10px; max-height: 250px; overflow-y: auto; }
+    .task-item { display: flex; align-items: center; justify-content: space-between; background: #18181b; border: 1px solid var(--border); padding: 12px 16px; border-radius: 12px; }
+    .task-item.completed span { text-decoration: line-through; color: var(--muted); }
+    .task-left { display: flex; align-items: center; gap: 12px; font-size: 14px; }
+    .check-circle { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .task-item.completed .check-circle { background: var(--accent); border-color: var(--accent); }
+    .check-circle i { font-size: 10px; color: #fff; display: none; }
+    .task-item.completed .check-circle i { display: block; }
+    .del-btn { background: none; border: none; color: #52525b; cursor: pointer; }
+    .del-btn:hover { color: var(--accent); }
+
+    /* ========================================================= */
+    /* 3. YOUTUBE MUSIC PLAYER SECTION                           */
+    /* ========================================================= */
+    .yt-search-bar { width: 100%; display: flex; gap: 10px; align-items: center; margin-bottom: 16px; position: relative; }
+    .search-container { position: relative; flex: 1; }
+    .search-box { display: flex; background: #121212; border: 1px solid #303030; border-radius: 40px; overflow: hidden; }
+    .search-box input { width: 100%; padding: 10px 18px; background: transparent; border: none; outline: none; color: #fff; font-size: 14px; }
+    .search-box button { background: #222; border: none; padding: 10px 18px; color: #fff; cursor: pointer; border-left: 1px solid #303030; }
+
+    .autoplay-toggle-btn {
+      background: #212121; border: 1px solid #3a3a3a; color: #aaa; padding: 8px 12px; border-radius: 30px; cursor: pointer; font-size: 12px; display: flex; align-items: center; gap: 6px; white-space: nowrap;
+    }
+    .autoplay-toggle-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+    .suggestions {
+      position: absolute; top: 105%; left: 0; width: 100%; background: #212121; border-radius: 12px; list-style: none; box-shadow: 0 10px 25px rgba(0,0,0,0.8); overflow: hidden; display: none; z-index: 1001; max-height: 250px; overflow-y: auto;
+    }
+    .suggestions li { padding: 10px 16px; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 13px; border-bottom: 1px solid #2a2a2a; }
+    .suggestions li:hover { background: #383838; }
+
+    .video-section { width: 100%; background: #181818; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+    .player-wrapper { position: relative; width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 12px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+    #yt-player { width: 100%; height: 100%; display: none; }
+    .placeholder-msg { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; color: #888; text-align: center; padding: 20px; }
+    .placeholder-msg i { font-size: 40px; color: var(--accent); }
+    .placeholder-msg h2 { font-size: 16px; color: #fff; font-weight: 500; }
+    .now-playing-title { font-size: 15px; font-weight: 600; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* BOTTOM PLAYER CONTROLLER BAR */
+    .bottom-player {
+      position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(18, 18, 18, 0.96); backdrop-filter: blur(12px); border-top: 1px solid #282828; padding: 10px 20px; display: flex; flex-direction: column; gap: 6px; z-index: 2000;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .progress-container { display: flex; align-items: center; gap: 10px; width: 100%; }
+    .time { font-size: 11px; color: #aaa; width: 40px; text-align: center; }
+    .progress-bar { flex: 1; -webkit-appearance: none; height: 4px; background: #4a4a4a; border-radius: 3px; outline: none; cursor: pointer; }
+    .progress-bar::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); cursor: pointer; }
+
+    .controls-container { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+    .track-details { display: flex; align-items: center; gap: 10px; width: 30%; min-width: 100px; }
+    .track-art { width: 38px; height: 38px; border-radius: 6px; object-fit: cover; background: #222; display: none; }
+    .track-info-text { overflow: hidden; }
+    .track-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .track-artist { font-size: 11px; color: #aaa; }
+
+    .main-controls { display: flex; align-items: center; gap: 16px; }
+    .control-btn { background: none; border: none; color: #fff; font-size: 16px; cursor: pointer; }
+    .control-btn.active { color: var(--accent); }
+    .play-btn { width: 38px; height: 38px; border-radius: 50%; background: #ffffff; color: #000000; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+
+    .right-controls { display: flex; align-items: center; justify-content: flex-end; gap: 14px; width: 30%; min-width: 100px; }
+    .volume-container { display: flex; align-items: center; gap: 8px; }
+    .volume-bar { width: 70px; -webkit-appearance: none; height: 4px; background: #4a4a4a; border-radius: 2px; outline: none; cursor: pointer; }
+    .volume-bar::-webkit-slider-thumb { -webkit-appearance: none; width: 10px; height: 10px; border-radius: 50%; background: #fff; }
+
+    /* DRAWER & MODALS */
+    .results-drawer {
+      position: fixed; right: -380px; top: 65px; width: 350px; height: calc(100vh - 165px); background: #181818; border-left: 1px solid #282828; border-radius: 16px 0 0 16px; z-index: 1500; padding: 16px; display: flex; flex-direction: column; gap: 12px; box-shadow: -5px 0 25px rgba(0,0,0,0.7); transition: right 0.3s ease; overflow-y: auto;
+    }
+    .results-drawer.open { right: 0; }
+    .drawer-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #282828; padding-bottom: 10px; }
+    .drawer-title { font-size: 15px; font-weight: 600; color: #aaa; }
+    .close-drawer { background: none; border: none; color: #fff; font-size: 18px; cursor: pointer; }
+    .song-item { display: flex; align-items: center; gap: 12px; padding: 8px; background: #212121; border-radius: 8px; cursor: pointer; margin-bottom: 8px; }
+    .song-item img { width: 55px; height: 40px; border-radius: 6px; object-fit: cover; }
+    .song-info { overflow: hidden; }
+    .song-info .title { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .song-info .artist { font-size: 11px; color: #aaa; }
+
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: none; align-items: center; justify-content: center; z-index: 3000; padding: 20px; }
+    .modal-card { background: #212121; border: 1px solid #333; border-radius: 16px; padding: 24px; max-width: 400px; width: 100%; text-align: center; display: flex; flex-direction: column; gap: 16px; }
+    .modal-card i { font-size: 36px; color: var(--accent); }
+    .modal-actions { display: flex; gap: 10px; justify-content: center; }
+    .modal-btn { flex: 1; padding: 10px 16px; border-radius: 25px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; }
+    .modal-btn.primary { background: var(--accent); color: #fff; }
+    .modal-btn.secondary { background: #333; color: #ccc; }
+
+    /* MOBILE EXTRA OPTIMIZATIONS */
+    @media (max-width: 650px) {
+      header.app-header { padding: 8px 12px; }
+      .brand h1 { font-size: 14px; }
+      .brand-logo { height: 24px; }
+      .status-bar { font-size: 10px; gap: 4px; }
+      .status-badge { padding: 3px 6px; }
+      .volume-bar { display: none; }
+      .results-drawer { width: 100%; right: -100%; top: 60px; height: calc(100vh - 150px); border-radius: 0; }
+    }
+  </style>
 </head>
 <body onclick="handleGlobalClick(event)">
 
-  <!-- Header & Navigation -->
-  <header id="header-el">
-    <div class="nav-bar">
-      <button class="nav-item active" id="nav-clock" onclick="setMode('clock')" title="Digital & Wall Clock">Clock</button>
-      <button class="nav-item" id="nav-stopwatch" onclick="setMode('stopwatch')" title="Stopwatch with Laps">Stopwatch</button>
-      <button class="nav-item" id="nav-timer" onclick="setMode('timer')" title="Countdown Study Timer">Timer</button>
-      <button class="nav-item" id="nav-tasks" onclick="setMode('tasks')" title="Task Manager & Brain Waves">Tasks & Waves</button>
-      <button class="nav-item" id="nav-youtube" onclick="setMode('youtube')" title="Integrated YouTube Music Player">YouTube Music</button>
+  <!-- Header -->
+  <header class="app-header">
+    <div class="brand">
+      <!-- Image Logo with fallback -->
+      <img src="study.png" alt="Study Logo" class="brand-logo" onerror="this.style.display='none'; document.getElementById('fallback-icon').style.display='inline-block';">
+      <i class="fa-solid fa-brain" id="fallback-icon" style="color: var(--accent); display: none; font-size: 18px;"></i>
+      <h1>Roitx Suite <span>PRO</span></h1>
     </div>
-
-    <div class="style-selector" id="style-box">
-      <button class="style-btn active" id="btn-flip" onclick="setStyle('flip')" title="Flip Clock Style">Flip</button>
-      <button class="style-btn" id="btn-wall" onclick="setStyle('minimal')" title="Minimalist Dial Style">Minimal</button>
+    <div class="status-bar">
+      <!-- THEME CHANGING DROPDOWN -->
+      <select class="theme-select" id="themePicker" onchange="changeTheme(this.value)">
+        <option value="crimson">🔴 Crimson</option>
+        <option value="cyber-blue">🔵 Cyber Blue</option>
+        <option value="neon-emerald">🟢 Neon Emerald</option>
+        <option value="deep-violet">🟣 Deep Violet</option>
+      </select>
+      <div class="status-badge"><i class="fa-solid fa-battery-three-quarters"></i> <span id="batteryLvl">100%</span></div>
+      <div class="status-badge"><i class="fa-solid fa-wifi"></i> <span id="netStatus">Online</span></div>
+      <div class="status-badge" id="liveClock">--:--</div>
     </div>
   </header>
 
-  <!-- Center Stage Area -->
-  <div class="stage">
-
-    <!-- 1. UNIVERSAL FLIP VIEW -->
-    <div class="flip-container" id="flip-view">
-      <div class="flip-card">
-        <span class="ampm-badge" id="ampm-text">AM</span>
-        <div class="card-divider"></div>
-        <div class="half top"><span id="fh-top">00</span></div>
-        <div class="half bottom"><span id="fh-bot">00</span></div>
-        <div class="leaf" id="fh-leaf"><span id="fh-leaf-num">00</span></div>
-      </div>
-      <div class="flip-colon">:</div>
-      <div class="flip-card">
-        <div class="card-divider"></div>
-        <div class="half top"><span id="fm-top">00</span></div>
-        <div class="half bottom"><span id="fm-bot">00</span></div>
-        <div class="leaf" id="fm-leaf"><span id="fm-leaf-num">00</span></div>
-      </div>
-      <div class="flip-colon">:</div>
-      <div class="flip-card">
-        <div class="card-divider"></div>
-        <div class="half top"><span id="fs-top">00</span></div>
-        <div class="half bottom"><span id="fs-bot">00</span></div>
-        <div class="leaf" id="fs-leaf"><span id="fs-leaf-num">00</span></div>
-      </div>
-    </div>
-
-    <!-- 2. WALL CLOCK -->
-    <div class="wall-clock" id="wall-view">
-      <div class="clock-num cn-12">12</div>
-      <div class="clock-num cn-3">3</div>
-      <div class="clock-num cn-6">6</div>
-      <div class="clock-num cn-9">9</div>
-      <div class="center-dot"></div>
-      <div class="w-hand hour" id="wh-hour"></div>
-      <div class="w-hand minute" id="wh-minute"></div>
-      <div class="w-hand second" id="wh-second"></div>
-    </div>
-
-    <!-- 3. STOPWATCH MINIMAL DIAL -->
-    <div class="stopwatch-dial" id="sw-minimal-view">
-      <svg class="sw-ticks" viewBox="0 0 300 300">
-        <circle cx="150" cy="150" r="140" stroke="#222" stroke-width="2" stroke-dasharray="2 6" fill="none"/>
-      </svg>
-      <div class="sw-red-dot" id="sw-dot"></div>
-      <div class="sw-time-display" id="sw-display">00:00:00</div>
-    </div>
-
-    <!-- 4. TIMER RING -->
-    <div class="timer-ring-box" id="tm-minimal-view">
-      <svg class="timer-svg" viewBox="0 0 300 300">
-        <circle class="timer-bg-circle" cx="150" cy="150" r="135"/>
-        <circle class="timer-progress-circle" id="timer-progress" cx="150" cy="150" r="135"/>
-      </svg>
-      <div class="timer-display" id="tm-display">00:25:<span class="sec-highlight">00</span></div>
-    </div>
-
-    <!-- 5. TASKS & BRAIN WAVES SECTION -->
-    <div class="tasks-waves-container" id="tasks-waves-view" style="display:none;">
-      <div class="section-card">
-        <div class="card-title"><i class="fa-solid fa-wave-square"></i> Brain Wave Frequency</div>
-        <div class="wave-grid">
-          <button class="wave-btn active" onclick="selectWave('gamma', 40, this)" title="40Hz Gamma: Deep Focus">
-            <div class="w-title"><i class="fa-solid fa-bolt"></i> Gamma</div>
-            <div class="w-freq">40 Hz • Deep Focus</div>
-          </button>
-          <button class="wave-btn" onclick="selectWave('beta', 20, this)" title="20Hz Beta: Active Problem Solving">
-            <div class="w-title"><i class="fa-solid fa-fire"></i> Beta</div>
-            <div class="w-freq">20 Hz • Active Problem Solving</div>
-          </button>
-          <button class="wave-btn" onclick="selectWave('alpha', 10, this)" title="10Hz Alpha: Relaxed Flow State">
-            <div class="w-title"><i class="fa-solid fa-feather"></i> Alpha</div>
-            <div class="w-freq">10 Hz • Relaxed Flow State</div>
-          </button>
-          <button class="wave-btn" onclick="selectWave('theta', 6, this)" title="6Hz Theta: Creativity">
-            <div class="w-title"><i class="fa-solid fa-moon"></i> Theta</div>
-            <div class="w-freq">6 Hz • Creativity</div>
-          </button>
-        </div>
-        <div class="player-controls">
-          <button class="play-toggle-btn" id="wave-play-btn" onclick="toggleAudio()" title="Play/Pause Wave Audio">
-            <i class="fa-solid fa-play" id="wave-play-icon"></i>
-          </button>
-          <div style="font-size: 12px; color: var(--muted);" id="wave-status">Audio Idle</div>
-          <input type="range" class="vol-slider" min="0" max="1" step="0.05" value="0.3" oninput="setVolume(this.value)" title="Wave Volume Control">
-        </div>
-      </div>
-
-      <div class="section-card" style="margin-top: 15px;">
-        <div class="card-title"><i class="fa-solid fa-list-check"></i> Study Tasks Dashboard</div>
-        <div class="task-input-box">
-          <input type="text" class="task-input" id="task-in" placeholder="Add study goal..." onkeypress="if(event.key==='Enter') addTask()">
-          <button class="add-btn" onclick="addTask()" title="Add Task Button">Add</button>
-        </div>
-        <div class="task-filters">
-          <button class="filter-btn active" onclick="filterTasks('all', this)" title="Show All Tasks">All</button>
-          <button class="filter-btn" onclick="filterTasks('active', this)" title="Show Active Tasks">Active</button>
-          <button class="filter-btn" onclick="filterTasks('completed', this)" title="Show Completed Tasks">Completed</button>
-        </div>
-        <div class="task-list" id="tasks-container"></div>
-      </div>
-    </div>
-
-    <!-- 6. YOUTUBE MUSIC INTEGRATED TAB -->
-    <div class="youtube-tab-container" id="youtube-tab-view" style="display:none;">
-      <div class="yt-search-bar-wrap">
-        <div class="search-box">
-          <input type="text" id="yt-search-input" placeholder="Gana search karein..." autocomplete="off">
-          <button id="yt-search-btn" title="Search Song"><i class="fa-solid fa-magnifying-glass"></i></button>
-        </div>
-        <ul class="suggestions" id="yt-suggestions-list"></ul>
-      </div>
-
-      <div class="video-section">
-        <div class="player-wrapper">
-          <div id="placeholder" class="placeholder-msg">
-            <i class="fa-solid fa-music"></i>
-            <h2>Apna pasandida gana search karein aur play karein</h2>
-          </div>
-          <div id="yt-player"></div>
-        </div>
-        <div class="now-playing-title" id="now-playing-title">Koi gana selected nahi hai</div>
-      </div>
-    </div>
-
-    <!-- LAPS CONTAINER -->
-    <div class="laps-container" id="laps-box" style="display:none;">
-      <div id="laps-list"></div>
-    </div>
-
-    <!-- TIMER PRESETS -->
-    <div class="presets-bar" id="presets-box" style="display:none;">
-      <button class="preset-chip" onclick="setPreset(300)" title="5 Minutes">5m</button>
-      <button class="preset-chip" onclick="setPreset(900)" title="15 Minutes">15m</button>
-      <button class="preset-chip active" onclick="setPreset(1500)" title="25 Minutes Pomodoro">25m</button>
-      <button class="preset-chip" onclick="setPreset(2700)" title="45 Minutes">45m</button>
-      <button class="preset-chip" onclick="setPreset(3600)" title="60 Minutes">60m</button>
-    </div>
-
-    <!-- ACTION BUTTONS -->
-    <div class="action-bar" id="action-bar-el" style="display: none;">
-      <button class="action-btn-native btn-gray" id="reset-btn" onclick="handleResetBtn()" style="display:none;" title="Reset Button">Reset</button>
-      <button class="action-btn-native btn-cancel" id="left-btn" onclick="handleLeftBtn()" title="Lap / Cancel Button">Lap</button>
-      <button class="action-btn-native btn-main" id="right-btn" onclick="handleRightBtn()" title="Start / Pause Button">Start</button>
-    </div>
-
+  <!-- Navigation Tabs -->
+  <div class="app-nav">
+    <button class="nav-tab-btn active" onclick="switchTab('clock-tab', this)"><i class="fa-solid fa-clock"></i> Clock & AOD</button>
+    <button class="nav-tab-btn" onclick="switchTab('tasks-tab', this)"><i class="fa-solid fa-list-check"></i> Brain Waves & Tasks</button>
+    <button class="nav-tab-btn" onclick="switchTab('yt-tab', this)"><i class="fa-solid fa-music"></i> YouTube Player</button>
   </div>
 
-  <!-- Related Search Results Drawer for YouTube -->
+  <!-- ========================================================= -->
+  <!-- TAB 1: CLOCK, STOPWATCH & TIMER                           -->
+  <!-- ========================================================= -->
+  <div class="tab-content active" id="clock-tab">
+    <div class="aod-header">
+      <div class="aod-nav-bar">
+        <button class="aod-nav-item active" id="nav-clock" onclick="setMode('clock')">Clock</button>
+        <button class="aod-nav-item" id="nav-stopwatch" onclick="setMode('stopwatch')">Stopwatch</button>
+        <button class="aod-nav-item" id="nav-timer" onclick="setMode('timer')">Timer</button>
+      </div>
+      <div class="style-selector" id="style-box">
+        <button class="style-btn active" id="btn-flip" onclick="setStyle('flip')">Flip Design</button>
+        <button class="style-btn" id="btn-wall" onclick="setStyle('minimal')">Minimal Wall</button>
+      </div>
+    </div>
+
+    <div class="stage">
+      <!-- 1. FLIP VIEW -->
+      <div class="flip-container" id="flip-view">
+        <div class="flip-card">
+          <span class="ampm-badge" id="ampm-text">AM</span>
+          <div class="card-divider"></div>
+          <div class="half top"><span id="fh-top">00</span></div>
+          <div class="half bottom"><span id="fh-bot">00</span></div>
+          <div class="leaf" id="fh-leaf"><span id="fh-leaf-num">00</span></div>
+        </div>
+        <div class="flip-colon">:</div>
+        <div class="flip-card">
+          <div class="card-divider"></div>
+          <div class="half top"><span id="fm-top">00</span></div>
+          <div class="half bottom"><span id="fm-bot">00</span></div>
+          <div class="leaf" id="fm-leaf"><span id="fm-leaf-num">00</span></div>
+        </div>
+        <div class="flip-colon">:</div>
+        <div class="flip-card">
+          <div class="card-divider"></div>
+          <div class="half top"><span id="fs-top">00</span></div>
+          <div class="half bottom"><span id="fs-bot">00</span></div>
+          <div class="leaf" id="fs-leaf"><span id="fs-leaf-num">00</span></div>
+        </div>
+      </div>
+
+      <!-- 2. WALL CLOCK -->
+      <div class="wall-clock" id="wall-view">
+        <div class="clock-num cn-12">12</div>
+        <div class="clock-num cn-3">3</div>
+        <div class="clock-num cn-6">6</div>
+        <div class="clock-num cn-9">9</div>
+        <div class="center-dot"></div>
+        <div class="w-hand hour" id="wh-hour"></div>
+        <div class="w-hand minute" id="wh-minute"></div>
+        <div class="w-hand second" id="wh-second"></div>
+      </div>
+
+      <!-- 3. STOPWATCH DISPLAY -->
+      <div class="stopwatch-dial" id="sw-minimal-view">
+        <svg class="sw-ticks" viewBox="0 0 300 300">
+          <circle cx="150" cy="150" r="140" stroke="#222" stroke-width="2" stroke-dasharray="2 6" fill="none"/>
+        </svg>
+        <div class="sw-red-dot" id="sw-dot"></div>
+        <div class="sw-time-display" id="sw-display">00:00:00</div>
+      </div>
+
+      <!-- 4. TIMER RING -->
+      <div class="timer-ring-box" id="tm-minimal-view">
+        <svg class="timer-svg" viewBox="0 0 300 300">
+          <circle class="timer-bg-circle" cx="150" cy="150" r="135"/>
+          <circle class="timer-progress-circle" id="timer-progress" cx="150" cy="150" r="135"/>
+        </svg>
+        <div class="timer-display" id="tm-display">00:25:<span class="sec-highlight">00</span></div>
+      </div>
+
+      <div class="laps-container" id="laps-box" style="display:none;">
+        <div id="laps-list"></div>
+      </div>
+
+      <div class="presets-bar" id="presets-box" style="display:none;">
+        <button class="preset-chip" onclick="setPreset(300)">5m</button>
+        <button class="preset-chip" onclick="setPreset(900)">15m</button>
+        <button class="preset-chip active" onclick="setPreset(1500)">25m</button>
+        <button class="preset-chip" onclick="setPreset(2700)">45m</button>
+        <button class="preset-chip" onclick="setPreset(3600)">60m</button>
+      </div>
+
+      <div class="action-bar" id="action-bar-el" style="display: none;">
+        <button class="action-btn-native btn-gray" id="reset-btn" onclick="handleResetBtn()" style="display:none;">Reset</button>
+        <button class="action-btn-native btn-cancel" id="left-btn" onclick="handleLeftBtn()">Lap</button>
+        <button class="action-btn-native btn-main" id="right-btn" onclick="handleRightBtn()">Start</button>
+      </div>
+    </div>
+
+    <div class="aod-footer">
+      <button class="icon-btn" onclick="toggleFormat()"><span id="fmt-lbl" style="font-size:12px; font-weight:800;">12H</span></button>
+      <button class="icon-btn" onclick="toggleFullscreen()"><i class="fa-solid fa-expand"></i></button>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- TAB 2: BRAIN WAVES & TASKS STUDIO                         -->
+  <!-- ========================================================= -->
+  <div class="tab-content" id="tasks-tab">
+    <!-- BRAIN WAVES -->
+    <div class="section-card">
+      <div class="card-title"><i class="fa-solid fa-wave-square"></i> Brain Wave Frequency</div>
+      <div class="wave-grid">
+        <button class="wave-btn active" onclick="selectWave('gamma', 40, this)">
+          <div class="w-title"><i class="fa-solid fa-bolt"></i> Gamma</div>
+          <div class="w-freq">40 Hz • Deep Focus</div>
+        </button>
+        <button class="wave-btn" onclick="selectWave('beta', 20, this)">
+          <div class="w-title"><i class="fa-solid fa-fire"></i> Beta</div>
+          <div class="w-freq">20 Hz • Active Problem Solving</div>
+        </button>
+        <button class="wave-btn" onclick="selectWave('alpha', 10, this)">
+          <div class="w-title"><i class="fa-solid fa-feather"></i> Alpha</div>
+          <div class="w-freq">10 Hz • Relaxed Flow State</div>
+        </button>
+        <button class="wave-btn" onclick="selectWave('theta', 6, this)">
+          <div class="w-title"><i class="fa-solid fa-moon"></i> Theta</div>
+          <div class="w-freq">6 Hz • Creativity & Insight</div>
+        </button>
+      </div>
+
+      <div class="player-controls">
+        <button class="play-toggle-btn" id="wave-play-btn" onclick="toggleAudio()">
+          <i class="fa-solid fa-play" id="wave-play-icon"></i>
+        </button>
+        <div style="font-size: 12px; color: var(--muted);" id="wave-status">Audio Idle</div>
+        <input type="range" class="vol-slider" min="0" max="1" step="0.05" value="0.3" oninput="setWaveVolume(this.value)">
+      </div>
+
+      <div class="benefit-box">
+        <div class="benefit-title" id="ben-title">Gamma Waves (40 Hz) Ka Fayda</div>
+        <div class="benefit-desc" id="ben-desc">High concentration, complex memory tasks aur intense study sessions ke liye sabse best.</div>
+      </div>
+    </div>
+
+    <!-- TASK MANAGER -->
+    <div class="section-card">
+      <div class="card-title"><i class="fa-solid fa-list-check"></i> Tasks Dashboard</div>
+      <div class="task-input-box">
+        <input type="text" class="task-input" id="task-in" placeholder="Add a new goal or task..." onkeypress="if(event.key==='Enter') addTask()">
+        <button class="add-btn" onclick="addTask()">Add</button>
+      </div>
+
+      <div class="task-filters">
+        <button class="filter-btn active" onclick="filterTasks('all', this)">All</button>
+        <button class="filter-btn" onclick="filterTasks('active', this)">Active</button>
+        <button class="filter-btn" onclick="filterTasks('completed', this)">Completed</button>
+      </div>
+
+      <div class="task-list" id="tasks-container"></div>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- TAB 3: YOUTUBE MUSIC PLAYER                               -->
+  <!-- ========================================================= -->
+  <div class="tab-content" id="yt-tab">
+    <div class="yt-search-bar">
+      <div class="search-container">
+        <div class="search-box">
+          <input type="text" id="search-input" placeholder="Apna pasandida gana search karein..." autocomplete="off">
+          <button id="search-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
+        </div>
+        <ul class="suggestions" id="suggestions-list"></ul>
+      </div>
+      <button class="autoplay-toggle-btn active" id="autoplay-toggle-btn">
+        <i class="fa-solid fa-bolt"></i> <span>Auto-Play</span>
+      </button>
+    </div>
+
+    <div class="video-section">
+      <div class="player-wrapper">
+        <div id="placeholder" class="placeholder-msg">
+          <i class="fa-solid fa-music"></i>
+          <h2>Apna pasandida gana search karein aur play karein</h2>
+        </div>
+        <div id="yt-player"></div>
+      </div>
+      <div class="now-playing-title" id="now-playing-title">Koi gana selected nahi hai</div>
+    </div>
+  </div>
+
+  <!-- YOUTUBE PLAYER FLOATING DRAWER & MODAL -->
   <div class="results-drawer" id="results-drawer">
     <div class="drawer-header">
       <div class="drawer-title">Search Results</div>
-      <button class="close-drawer" id="close-drawer-btn" title="Close Drawer"><i class="fa-solid fa-xmark"></i></button>
+      <button class="close-drawer" id="close-drawer-btn"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div id="results-container">
       <div style="color: #888; font-size: 13px; text-align: center; margin-top: 20px;">
@@ -202,17 +705,29 @@
     </div>
   </div>
 
-  <!-- YouTube Controller Bar -->
-  <div class="bottom-player" id="yt-bottom-player" style="display:none;">
+  <div class="modal-overlay" id="autoplay-modal">
+    <div class="modal-card">
+      <i class="fa-solid fa-circle-play"></i>
+      <h3>Auto-Play Preference</h3>
+      <p>Kya aap search karte hi gana <b>Auto-Play</b> karna chahte hain ya manually play karenge?</p>
+      <div class="modal-actions">
+        <button class="modal-btn primary" id="modal-yes-btn">Haan, Auto-Play</button>
+        <button class="modal-btn secondary" id="modal-no-btn">Nahi, Manual</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM PLAYER CONTROLLER BAR -->
+  <div class="bottom-player">
     <div class="progress-container">
       <span id="current-time" class="time">0:00</span>
-      <input type="range" id="progress-bar" class="progress-bar" value="0" min="0" max="100" title="Track Seek Bar">
+      <input type="range" id="progress-bar" class="progress-bar" value="0" min="0" max="100">
       <span id="duration" class="time">0:00</span>
     </div>
 
     <div class="controls-container">
       <div class="track-details">
-        <img id="current-art" src="" class="track-art" style="display:none;">
+        <img id="current-art" src="" class="track-art">
         <div class="track-info-text">
           <div id="current-title" class="track-name">No Track</div>
           <div id="current-artist" class="track-artist">Search & Play</div>
@@ -220,31 +735,735 @@
       </div>
 
       <div class="main-controls">
-        <button class="control-btn" id="repeat-btn" title="Repeat Song Toggle"><i class="fa-solid fa-repeat"></i></button>
-        <button class="control-btn" id="rewind-btn" title="Rewind 10 Seconds"><i class="fa-solid fa-rotate-left"></i></button>
-        <button class="control-btn play-btn" id="yt-play-btn" title="Play / Pause Song"><i class="fa-solid fa-play"></i></button>
-        <button class="control-btn" id="forward-btn" title="Forward 10 Seconds"><i class="fa-solid fa-rotate-right"></i></button>
+        <button class="control-btn" id="repeat-btn"><i class="fa-solid fa-repeat"></i></button>
+        <button class="control-btn" id="rewind-btn"><i class="fa-solid fa-rotate-left"></i></button>
+        <button class="control-btn play-btn" id="yt-play-btn"><i class="fa-solid fa-play"></i></button>
+        <button class="control-btn" id="forward-btn"><i class="fa-solid fa-rotate-right"></i></button>
       </div>
 
       <div class="right-controls">
         <div class="volume-container">
-          <button class="control-btn" id="mute-btn" title="Mute / Unmute"><i class="fa-solid fa-volume-high"></i></button>
-          <input type="range" id="volume-bar" class="volume-bar" value="100" min="0" max="100" title="Volume Slider">
+          <button class="control-btn" id="mute-btn"><i class="fa-solid fa-volume-high"></i></button>
+          <input type="range" id="volume-bar" class="volume-bar" value="100" min="0" max="100">
         </div>
-        <button class="control-btn" id="list-btn" title="Open Related Search Videos Drawer"><i class="fa-solid fa-list"></i></button>
-        <button class="control-btn" id="fullscreen-btn" title="Toggle Fullscreen Video"><i class="fa-solid fa-expand"></i></button>
+        <button class="control-btn" id="list-btn"><i class="fa-solid fa-list"></i></button>
+        <button class="control-btn" id="yt-fullscreen-btn"><i class="fa-solid fa-expand"></i></button>
       </div>
     </div>
   </div>
 
-  <!-- Footer Tools -->
-  <footer id="footer-el">
-    <button class="icon-btn" onclick="toggleFormat()" title="Toggle 12H / 24H Format"><span id="fmt-lbl" style="font-size:12px; font-weight:800;">12H</span></button>
-    <a href="https://roitx.qd.je/index.html" class="icon-btn" title="Main Home" style="color:#666; text-decoration:none;"><i class="fa-solid fa-house"></i></a>
-    <button class="icon-btn" onclick="toggleFullscreen()" title="Toggle Fullscreen Mode"><i class="fa-solid fa-expand"></i></button>
-  </footer>
-
   <script src="https://www.youtube.com/iframe_api"></script>
-  <script src="timer.js"></script>
+
+  <script>
+    /* ========================================================= */
+    /* THEME SYSTEM ENGINE                                       */
+    /* ========================================================= */
+    function changeTheme(themeName) {
+      if (themeName === 'crimson') {
+        document.documentElement.removeAttribute('data-theme');
+      } else {
+        document.documentElement.setAttribute('data-theme', themeName);
+      }
+      localStorage.setItem('selected_theme', themeName);
+    }
+
+    // Saved Theme restore
+    const savedTheme = localStorage.getItem('selected_theme') || 'crimson';
+    document.getElementById('themePicker').value = savedTheme;
+    changeTheme(savedTheme);
+
+    /* ========================================================= */
+    /* GLOBAL TAB & SYSTEM ENGINE                                */
+    /* ========================================================= */
+    function switchTab(tabId, btn) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.nav-tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      btn.classList.add('active');
+    }
+
+    function updateLiveClockAndStatus() {
+      const now = new Date();
+      const h = String(now.getHours()).padStart(2, '0');
+      const m = String(now.getMinutes()).padStart(2, '0');
+      document.getElementById('liveClock').textContent = `${h}:${m}`;
+
+      if (navigator.getBattery) {
+        navigator.getBattery().then(b => {
+          document.getElementById('batteryLvl').textContent = `${Math.round(b.level * 100)}%`;
+        });
+      }
+      document.getElementById('netStatus').textContent = navigator.onLine ? "Online" : "Offline";
+    }
+    setInterval(updateLiveClockAndStatus, 1000);
+    updateLiveClockAndStatus();
+
+    /* ========================================================= */
+    /* 1. CLOCK, AOD, STOPWATCH & TIMER ENGINE                   */
+    /* ========================================================= */
+    let mode = 'clock', style = 'flip', is24 = false;
+    let swRunning = false, swStartTime = 0, swElapsedTime = 0, swInterval = null, lapCount = 0, lastLapTime = 0;
+    let tmRunning = false, tmTotalSec = 1500, tmRemSec = 1500, tmInterval = null;
+    let prev = { h: '', m: '', s: '' };
+
+    function initClock() { requestAnimationFrame(mainRenderLoop); }
+
+    function mainRenderLoop() {
+      if (mode === 'clock') {
+        const now = new Date();
+        if (style === 'minimal') {
+          const ms = now.getMilliseconds();
+          const s = now.getSeconds() + ms / 1000;
+          const m = now.getMinutes() + s / 60;
+          const h = (now.getHours() % 12) + m / 60;
+
+          document.getElementById('wh-hour').style.transform = `rotate(${h * 30}deg)`;
+          document.getElementById('wh-minute').style.transform = `rotate(${m * 6}deg)`;
+          document.getElementById('wh-second').style.transform = `rotate(${s * 6}deg)`;
+        } else {
+          let h = now.getHours();
+          const m = String(now.getMinutes()).padStart(2, '0');
+          const s = String(now.getSeconds()).padStart(2, '0');
+          let ampm = '';
+          if (!is24) { ampm = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; }
+          const hStr = String(h).padStart(2, '0');
+
+          document.getElementById('ampm-text').textContent = ampm;
+          flip('fh', hStr); flip('fm', m); flip('fs', s);
+        }
+      }
+      requestAnimationFrame(mainRenderLoop);
+    }
+
+    function flip(prefix, val) {
+      if (prev[prefix] === val) return;
+      const top = document.getElementById(`${prefix}-top`);
+      const bot = document.getElementById(`${prefix}-bot`);
+      const leaf = document.getElementById(`${prefix}-leaf`);
+      const leafNum = document.getElementById(`${prefix}-leaf-num`);
+
+      if (leafNum) leafNum.textContent = prev[prefix] || val;
+      if (top) top.textContent = val;
+
+      if (leaf) {
+        leaf.classList.remove('animate');
+        void leaf.offsetWidth;
+        leaf.classList.add('animate');
+      }
+
+      setTimeout(() => { if (bot) bot.textContent = val; }, 200);
+      prev[prefix] = val;
+    }
+
+    function setMode(m) {
+      mode = m;
+      document.querySelectorAll('.aod-nav-item').forEach(b => b.classList.remove('active'));
+      document.getElementById(`nav-${m}`).classList.add('active');
+      updateViewDisplay();
+    }
+
+    function setStyle(s) {
+      style = s;
+      document.querySelectorAll('.style-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(s === 'flip' ? 'btn-flip' : 'btn-wall').classList.add('active');
+      updateViewDisplay();
+    }
+
+    function updateViewDisplay() {
+      document.getElementById('flip-view').style.display = 'none';
+      document.getElementById('wall-view').style.display = 'none';
+      document.getElementById('sw-minimal-view').style.display = 'none';
+      document.getElementById('tm-minimal-view').style.display = 'none';
+      document.getElementById('laps-box').style.display = 'none';
+      document.getElementById('presets-box').style.display = 'none';
+      document.getElementById('action-bar-el').style.display = 'none';
+      document.getElementById('ampm-text').style.display = 'none';
+
+      if (mode === 'clock') {
+        if (style === 'flip') {
+          document.getElementById('flip-view').style.display = 'flex';
+          document.getElementById('ampm-text').style.display = 'block';
+        } else {
+          document.getElementById('wall-view').style.display = 'flex';
+        }
+      } else if (mode === 'stopwatch') {
+        document.getElementById('action-bar-el').style.display = 'flex';
+        document.getElementById('laps-box').style.display = 'block';
+        if (style === 'flip') {
+          document.getElementById('flip-view').style.display = 'flex';
+          renderFlipStopwatch();
+        } else {
+          document.getElementById('sw-minimal-view').style.display = 'flex';
+          renderMinimalStopwatch();
+        }
+      } else if (mode === 'timer') {
+        document.getElementById('action-bar-el').style.display = 'flex';
+        document.getElementById('presets-box').style.display = 'flex';
+        if (style === 'flip') {
+          document.getElementById('flip-view').style.display = 'flex';
+          renderFlipTimer();
+        } else {
+          document.getElementById('tm-minimal-view').style.display = 'flex';
+          renderTimerDisplay();
+        }
+      }
+      updateButtonsUI();
+    }
+
+    function updateStopwatch() {
+      swElapsedTime = Date.now() - swStartTime;
+      const s = Math.floor((swElapsedTime / 1000) % 60);
+      const m = Math.floor((swElapsedTime / (1000 * 60)) % 60);
+      const h = Math.floor(swElapsedTime / (1000 * 60 * 60));
+
+      const hStr = String(h).padStart(2,'0');
+      const mStr = String(m).padStart(2,'0');
+      const sStr = String(s).padStart(2,'0');
+
+      if (style === 'flip' && mode === 'stopwatch') {
+        flip('fh', hStr); flip('fm', mStr); flip('fs', sStr);
+      } else {
+        document.getElementById('sw-display').textContent = `${hStr}:${mStr}:${sStr}`;
+        const ms = Math.floor((swElapsedTime % 1000) / 10);
+        document.getElementById('sw-dot').style.transform = `rotate(${(s + ms/100) * 6}deg)`;
+      }
+    }
+
+    function renderMinimalStopwatch() {
+      const s = Math.floor((swElapsedTime / 1000) % 60);
+      const m = Math.floor((swElapsedTime / (1000 * 60)) % 60);
+      const h = Math.floor(swElapsedTime / (1000 * 60 * 60));
+      const hStr = String(h).padStart(2,'0');
+      const mStr = String(m).padStart(2,'0');
+      const sStr = String(s).padStart(2,'0');
+      document.getElementById('sw-display').textContent = `${hStr}:${mStr}:${sStr}`;
+      const ms = Math.floor((swElapsedTime % 1000) / 10);
+      document.getElementById('sw-dot').style.transform = `rotate(${(s + ms/100) * 6}deg)`;
+    }
+
+    function renderFlipStopwatch() {
+      const s = Math.floor((swElapsedTime / 1000) % 60);
+      const m = Math.floor((swElapsedTime / (1000 * 60)) % 60);
+      const h = Math.floor(swElapsedTime / (1000 * 60 * 60));
+      flip('fh', String(h).padStart(2,'0')); flip('fm', String(m).padStart(2,'0')); flip('fs', String(s).padStart(2,'0'));
+    }
+
+    function renderTimerDisplay() {
+      const h = Math.floor(tmRemSec / 3600);
+      const m = Math.floor((tmRemSec % 3600) / 60);
+      const s = tmRemSec % 60;
+
+      const hStr = String(h).padStart(2, '0');
+      const mStr = String(m).padStart(2, '0');
+      const sStr = String(s).padStart(2, '0');
+
+      if (style === 'flip' && mode === 'timer') {
+        flip('fh', hStr); flip('fm', mStr); flip('fs', sStr);
+      } else {
+        document.getElementById('tm-display').innerHTML = `${hStr}:${mStr}:<span class="sec-highlight">${sStr}</span>`;
+        const offset = 880 - (tmRemSec / tmTotalSec) * 880;
+        document.getElementById('timer-progress').style.strokeDashoffset = offset;
+      }
+    }
+
+    function renderFlipTimer() { renderTimerDisplay(); }
+
+    function setPreset(sec) {
+      tmTotalSec = sec; tmRemSec = sec;
+      tmRunning = false; clearInterval(tmInterval);
+      renderTimerDisplay(); updateButtonsUI();
+      document.querySelectorAll('.preset-chip').forEach(c => c.classList.remove('active'));
+      if(event) event.target.classList.add('active');
+    }
+
+    function updateButtonsUI() {
+      const resetBtn = document.getElementById('reset-btn');
+      const leftBtn = document.getElementById('left-btn');
+      const rightBtn = document.getElementById('right-btn');
+
+      if (mode === 'stopwatch') {
+        resetBtn.style.display = 'block'; leftBtn.textContent = 'Lap';
+        rightBtn.textContent = swRunning ? 'Pause' : 'Start';
+      } else if (mode === 'timer') {
+        resetBtn.style.display = 'none'; leftBtn.textContent = 'Cancel';
+        rightBtn.textContent = tmRunning ? 'Pause' : 'Start';
+      }
+    }
+
+    function handleLeftBtn() {
+      if (mode === 'stopwatch' && swRunning) {
+        lapCount++;
+        const currentLapTime = swElapsedTime;
+        const splitTime = currentLapTime - lastLapTime;
+        lastLapTime = currentLapTime;
+
+        const list = document.getElementById('laps-list');
+        const item = document.createElement('div');
+        item.className = 'lap-item';
+        item.innerHTML = `
+          <span class="lap-no">Lap ${String(lapCount).padStart(2, '0')}</span>
+          <span class="lap-split">+${formatTimeMs(splitTime)}</span>
+          <span class="lap-time">${formatTimeMs(currentLapTime)}</span>
+        `;
+        list.prepend(item);
+      } else if (mode === 'timer') {
+        tmRunning = false; clearInterval(tmInterval); tmRemSec = tmTotalSec; renderTimerDisplay(); updateButtonsUI();
+      }
+    }
+
+    function handleRightBtn() {
+      if (mode === 'stopwatch') {
+        swRunning = !swRunning;
+        if (swRunning) {
+          swStartTime = Date.now() - swElapsedTime;
+          swInterval = setInterval(updateStopwatch, 10);
+        } else { clearInterval(swInterval); }
+      } else if (mode === 'timer') {
+        tmRunning = !tmRunning;
+        if (tmRunning) {
+          tmInterval = setInterval(() => {
+            if (tmRemSec > 0) { tmRemSec--; renderTimerDisplay(); }
+            else { clearInterval(tmInterval); tmRunning = false; alert("Timer Completed!"); }
+          }, 1000);
+        } else { clearInterval(tmInterval); }
+      }
+      updateButtonsUI();
+    }
+
+    /* FULLY FIXED STOPWATCH RESET ENGINE */
+    function handleResetBtn() {
+      if (mode === 'stopwatch') {
+        swRunning = false;
+        clearInterval(swInterval);
+        swInterval = null;
+        swElapsedTime = 0;
+        swStartTime = 0;
+        lapCount = 0;
+        lastLapTime = 0;
+        document.getElementById('laps-list').innerHTML = '';
+        
+        if (style === 'flip') {
+          renderFlipStopwatch();
+        } else {
+          renderMinimalStopwatch();
+        }
+        updateButtonsUI();
+      }
+    }
+
+    function formatTimeMs(ms) {
+      const s = Math.floor((ms / 1000) % 60);
+      const m = Math.floor((ms / (1000 * 60)) % 60);
+      const h = Math.floor(ms / (1000 * 60 * 60));
+      return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    }
+
+    function toggleFormat() {
+      is24 = !is24;
+      document.getElementById('fmt-lbl').textContent = is24 ? '24H' : '12H';
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+        document.body.classList.add('clean-fullscreen');
+      } else {
+        if (document.exitFullscreen) document.exitFullscreen();
+        document.body.classList.remove('clean-fullscreen');
+      }
+    }
+
+    /* FULLSCREEN TOGGLE LISTENER */
+    document.addEventListener('fullscreenchange', () => {
+      if (!document.fullscreenElement) {
+        document.body.classList.remove('clean-fullscreen');
+      }
+    });
+
+    function handleGlobalClick(e) {
+      if (document.fullscreenElement && e.target.tagName !== 'BUTTON') {
+        document.body.classList.toggle('clean-fullscreen');
+      }
+    }
+
+    initClock();
+
+    /* ========================================================= */
+    /* 2. TASK & BINAURAL BRAIN WAVES ENGINE                     */
+    /* ========================================================= */
+    let tasks = JSON.parse(localStorage.getItem('studio_tasks')) || [];
+    let currentFilter = 'all';
+
+    function saveTasks() {
+      localStorage.setItem('studio_tasks', JSON.stringify(tasks));
+      renderTasks();
+    }
+
+    function addTask() {
+      const input = document.getElementById('task-in');
+      const text = input.value.trim();
+      if (!text) return;
+      tasks.push({ id: Date.now(), text, completed: false });
+      input.value = '';
+      saveTasks();
+    }
+
+    function toggleTask(id) {
+      tasks = tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t);
+      saveTasks();
+    }
+
+    function deleteTask(id) {
+      tasks = tasks.filter(t => t.id !== id);
+      saveTasks();
+    }
+
+    function filterTasks(filter, btn) {
+      currentFilter = filter;
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderTasks();
+    }
+
+    function renderTasks() {
+      const container = document.getElementById('tasks-container');
+      container.innerHTML = '';
+      const filtered = tasks.filter(t => {
+        if (currentFilter === 'active') return !t.completed;
+        if (currentFilter === 'completed') return t.completed;
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div style="text-align:center; color: var(--muted); font-size:13px; padding:20px;">No tasks found</div>`;
+        return;
+      }
+
+      filtered.forEach(t => {
+        const item = document.createElement('div');
+        item.className = `task-item ${t.completed ? 'completed' : ''}`;
+        item.innerHTML = `
+          <div class="task-left">
+            <div class="check-circle" onclick="toggleTask(${t.id})"><i class="fa-solid fa-check"></i></div>
+            <span>${t.text}</span>
+          </div>
+          <button class="del-btn" onclick="deleteTask(${t.id})"><i class="fa-solid fa-trash"></i></button>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    let audioCtx = null, oscLeft = null, oscRight = null, waveGainNode = null;
+    let isWavePlaying = false, currentBeatFreq = 40, baseFreq = 200, waveVolumeVal = 0.3;
+
+    const waveBenefits = {
+      gamma: { title: "Gamma Waves (40 Hz) Ka Fayda", desc: "High concentration, complex problem solving aur intense study sessions ke liye sabse powerful wave." },
+      beta: { title: "Beta Waves (20 Hz) Ka Fayda", desc: "Active thinking, decision making aur high-energy tasks ke liye perfect." },
+      alpha: { title: "Alpha Waves (10 Hz) Ka Fayda", desc: "Relaxed Focus ya 'Flow State' lane ke liye best. Anxiety ko kam karti hai." },
+      theta: { title: "Theta Waves (6 Hz) Ka Fayda", desc: "Deep creativity, out-of-the-box thinking aur intuition ko boost karti hai." }
+    };
+
+    function selectWave(type, freq, btn) {
+      currentBeatFreq = freq;
+      document.querySelectorAll('.wave-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('ben-title').textContent = waveBenefits[type].title;
+      document.getElementById('ben-desc').textContent = waveBenefits[type].desc;
+
+      if (isWavePlaying) { stopWave(); startWave(); }
+    }
+
+    function toggleAudio() {
+      if (!audioCtx) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+      if (isWavePlaying) stopWave(); else startWave();
+    }
+
+    function startWave() {
+      if (!audioCtx) return;
+      waveGainNode = audioCtx.createGain();
+      waveGainNode.gain.setValueAtTime(waveVolumeVal, audioCtx.currentTime);
+
+      const merger = audioCtx.createChannelMerger(2);
+      oscLeft = audioCtx.createOscillator();
+      oscRight = audioCtx.createOscillator();
+
+      oscLeft.frequency.setValueAtTime(baseFreq, audioCtx.currentTime);
+      oscRight.frequency.setValueAtTime(baseFreq + currentBeatFreq, audioCtx.currentTime);
+
+      oscLeft.connect(merger, 0, 0);
+      oscRight.connect(merger, 0, 1);
+      merger.connect(waveGainNode);
+      waveGainNode.connect(audioCtx.destination);
+
+      oscLeft.start(); oscRight.start();
+      isWavePlaying = true;
+      document.getElementById('wave-play-icon').className = "fa-solid fa-pause";
+      document.getElementById('wave-status').textContent = `Playing ${currentBeatFreq} Hz Beat`;
+    }
+
+    function stopWave() {
+      if (oscLeft) { oscLeft.stop(); oscLeft.disconnect(); }
+      if (oscRight) { oscRight.stop(); oscRight.disconnect(); }
+      isWavePlaying = false;
+      document.getElementById('wave-play-icon').className = "fa-solid fa-play";
+      document.getElementById('wave-status').textContent = "Audio Idle";
+    }
+
+    function setWaveVolume(val) {
+      waveVolumeVal = val;
+      if (waveGainNode && audioCtx) { waveGainNode.gain.setValueAtTime(val, audioCtx.currentTime); }
+    }
+
+    renderTasks();
+
+    /* ========================================================= */
+    /* 3. YOUTUBE MUSIC PLAYER ENGINE                            */
+    /* ========================================================= */
+    const YOUTUBE_API_KEY = 'AIzaSyDWIrD-DAAnwHx9VOPdBJ06QsDTEnBuAow';
+    let player, isYtPlaying = false, isYtLooping = false, ytTimerInterval, searchResults = [], autoPlayOnSearch = true;
+
+    const savedAutoPlay = localStorage.getItem('autoPlayOnSearch');
+    if (savedAutoPlay !== null) { autoPlayOnSearch = savedAutoPlay === 'true'; }
+
+    const autoplayToggleBtn = document.getElementById('autoplay-toggle-btn');
+    function updateAutoPlayUI() {
+      autoplayToggleBtn.classList.toggle('active', autoPlayOnSearch);
+    }
+    updateAutoPlayUI();
+
+    autoplayToggleBtn.addEventListener('click', () => {
+      autoPlayOnSearch = !autoPlayOnSearch;
+      localStorage.setItem('autoPlayOnSearch', autoPlayOnSearch);
+      updateAutoPlayUI();
+    });
+
+    function onYouTubeIframeAPIReady() {
+      player = new YT.Player('yt-player', {
+        playerVars: { 'autoplay': 1, 'controls': 1, 'modestbranding': 1, 'rel': 0 },
+        events: { 'onStateChange': onPlayerStateChange }
+      });
+    }
+
+    function onPlayerStateChange(event) {
+      if (event.data === YT.PlayerState.PLAYING) {
+        isYtPlaying = true;
+        document.getElementById('yt-play-btn').innerHTML = '<i class="fa-solid fa-pause"></i>';
+        startTimer();
+      } else if (event.data === YT.PlayerState.PAUSED) {
+        isYtPlaying = false;
+        document.getElementById('yt-play-btn').innerHTML = '<i class="fa-solid fa-play"></i>';
+        stopTimer();
+      } else if (event.data === YT.PlayerState.ENDED) {
+        if (isYtLooping && player) {
+          player.seekTo(0); player.playVideo();
+        } else {
+          isYtPlaying = false;
+          document.getElementById('yt-play-btn').innerHTML = '<i class="fa-solid fa-play"></i>';
+          stopTimer();
+        }
+      }
+    }
+
+    function loadVideoDetails(videoId, title, artist, shouldPlay = true) {
+      document.getElementById('placeholder').style.display = 'none';
+      document.getElementById('yt-player').style.display = 'block';
+
+      document.getElementById('current-title').textContent = title;
+      document.getElementById('now-playing-title').textContent = (shouldPlay ? "Playing: " : "Loaded: ") + title;
+      document.getElementById('current-artist').textContent = artist;
+      
+      const artImg = document.getElementById('current-art');
+      artImg.src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+      artImg.style.display = 'block';
+
+      if (player && player.loadVideoById) {
+        if (shouldPlay) player.loadVideoById(videoId);
+        else player.cueVideoById(videoId);
+      }
+    }
+
+    const searchInput = document.getElementById('search-input');
+    const searchBtn = document.getElementById('search-btn');
+    const suggestionsList = document.getElementById('suggestions-list');
+
+    searchInput.addEventListener('input', () => {
+      const query = searchInput.value.trim();
+      if (!query) { suggestionsList.style.display = 'none'; return; }
+
+      const script = document.createElement('script');
+      window.handleSuggestions = (data) => {
+        const suggestions = data[1] || [];
+        renderSuggestions(suggestions);
+        if (script.parentNode) script.parentNode.removeChild(script);
+      };
+      script.src = `https://suggestqueries.google.com/complete/search?client=youtube&ds=yt&q=${encodeURIComponent(query)}&jsonp=handleSuggestions`;
+      document.body.appendChild(script);
+    });
+
+    function renderSuggestions(suggestions) {
+      if (!suggestions.length) { suggestionsList.style.display = 'none'; return; }
+      suggestionsList.innerHTML = suggestions.map(item => `<li><i class="fa-solid fa-magnifying-glass" style="color:#aaa;"></i> ${item[0]}</li>`).join('');
+      suggestionsList.style.display = 'block';
+
+      Array.from(suggestionsList.children).forEach((li, index) => {
+        li.addEventListener('click', () => {
+          searchInput.value = suggestions[index][0];
+          suggestionsList.style.display = 'none';
+          handleSearchTrigger();
+        });
+      });
+    }
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.search-container')) { suggestionsList.style.display = 'none'; }
+    });
+
+    searchBtn.addEventListener('click', handleSearchTrigger);
+    searchInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleSearchTrigger(); });
+
+    function handleSearchTrigger() {
+      const query = searchInput.value.trim();
+      if (!query) return;
+      const hasAskedPreference = localStorage.getItem('hasAskedAutoPlay');
+      if (hasAskedPreference === null) {
+        document.getElementById('autoplay-modal').style.display = 'flex';
+      } else { performSearch(); }
+    }
+
+    document.getElementById('modal-yes-btn').addEventListener('click', () => {
+      autoPlayOnSearch = true;
+      localStorage.setItem('autoPlayOnSearch', 'true');
+      localStorage.setItem('hasAskedAutoPlay', 'true');
+      updateAutoPlayUI();
+      document.getElementById('autoplay-modal').style.display = 'none';
+      performSearch();
+    });
+
+    document.getElementById('modal-no-btn').addEventListener('click', () => {
+      autoPlayOnSearch = false;
+      localStorage.setItem('autoPlayOnSearch', 'false');
+      localStorage.setItem('hasAskedAutoPlay', 'true');
+      updateAutoPlayUI();
+      document.getElementById('autoplay-modal').style.display = 'none';
+      performSearch();
+    });
+
+    async function performSearch() {
+      const query = searchInput.value.trim();
+      if (!query) return;
+      suggestionsList.style.display = 'none';
+
+      try {
+        const response = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=8&q=${encodeURIComponent(query)}&type=video&key=${YOUTUBE_API_KEY}`);
+        const data = await response.json();
+
+        if (data.items && data.items.length > 0) {
+          searchResults = data.items.map(item => ({
+            id: item.id.videoId, title: item.snippet.title, artist: item.snippet.channelTitle
+          }));
+          renderSearchResults();
+          const firstTrack = searchResults[0];
+          loadVideoDetails(firstTrack.id, firstTrack.title, firstTrack.artist, autoPlayOnSearch);
+        } else { alert('Koi result nahi mila.'); }
+      } catch (error) { console.error('Search Error:', error); }
+    }
+
+    function renderSearchResults() {
+      const container = document.getElementById('results-container');
+      container.innerHTML = '';
+      searchResults.forEach((song) => {
+        const item = document.createElement('div');
+        item.className = 'song-item';
+        item.innerHTML = `
+          <img src="https://img.youtube.com/vi/${song.id}/hqdefault.jpg" alt="${song.title}">
+          <div class="song-info">
+            <div class="title">${song.title}</div>
+            <div class="artist">${song.artist}</div>
+          </div>
+        `;
+        item.addEventListener('click', () => {
+          loadVideoDetails(song.id, song.title, song.artist, true);
+          document.getElementById('results-drawer').classList.remove('open');
+        });
+        container.appendChild(item);
+      });
+    }
+
+    const resultsDrawer = document.getElementById('results-drawer');
+    document.getElementById('list-btn').addEventListener('click', () => { resultsDrawer.classList.toggle('open'); });
+    document.getElementById('close-drawer-btn').addEventListener('click', () => { resultsDrawer.classList.remove('open'); });
+
+    const ytPlayBtn = document.getElementById('yt-play-btn');
+    const progressBar = document.getElementById('progress-bar');
+    const currentTimeEl = document.getElementById('current-time');
+    const durationEl = document.getElementById('duration');
+    const volumeBar = document.getElementById('volume-bar');
+    const muteBtn = document.getElementById('mute-btn');
+    const repeatBtn = document.getElementById('repeat-btn');
+
+    ytPlayBtn.addEventListener('click', () => {
+      if (!player) return;
+      if (isYtPlaying) player.pauseVideo(); else player.playVideo();
+    });
+
+    document.getElementById('rewind-btn').addEventListener('click', () => {
+      if (player && player.getCurrentTime) player.seekTo(Math.max(0, player.getCurrentTime() - 10), true);
+    });
+
+    document.getElementById('forward-btn').addEventListener('click', () => {
+      if (player && player.getCurrentTime) player.seekTo(player.getCurrentTime() + 10, true);
+    });
+
+    repeatBtn.addEventListener('click', () => {
+      isYtLooping = !isYtLooping;
+      repeatBtn.classList.toggle('active', isYtLooping);
+    });
+
+    document.getElementById('yt-fullscreen-btn').addEventListener('click', () => {
+      const iframe = document.getElementById('yt-player');
+      if (iframe.requestFullscreen) iframe.requestFullscreen();
+      else if (iframe.webkitRequestFullscreen) iframe.webkitRequestFullscreen();
+    });
+
+    function startTimer() {
+      stopTimer();
+      ytTimerInterval = setInterval(() => {
+        if (player && player.getCurrentTime) {
+          const curr = player.getCurrentTime();
+          const dur = player.getDuration();
+          if (dur > 0) {
+            progressBar.value = (curr / dur) * 100;
+            currentTimeEl.textContent = formatYtTime(curr);
+            durationEl.textContent = formatYtTime(dur);
+          }
+        }
+      }, 500);
+    }
+
+    function stopTimer() { clearInterval(ytTimerInterval); }
+
+    progressBar.addEventListener('input', (e) => {
+      if (player && player.getDuration) {
+        const seekTo = (e.target.value / 100) * player.getDuration();
+        player.seekTo(seekTo, true);
+      }
+    });
+
+    volumeBar.addEventListener('input', (e) => {
+      if (player && player.setVolume) player.setVolume(e.target.value);
+    });
+
+    muteBtn.addEventListener('click', () => {
+      if (!player) return;
+      if (player.isMuted()) { player.unMute(); muteBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>'; }
+      else { player.mute(); muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>'; }
+    });
+
+    function formatYtTime(sec) {
+      const m = Math.floor(sec / 60);
+      const s = Math.floor(sec % 60);
+      return `${m}:${s < 10 ? '0' : ''}${s}`;
+    }
+  </script>
 </body>
 </html>
