@@ -1,12 +1,5 @@
 User-agent: *
 Allow: /
 
-# Fast Indexing Directives for Major Search Engines
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
 # Sitemap Location
 Sitemap: https://roitx.qd.je/sitemap.xml
