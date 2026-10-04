@@ -33,58 +33,68 @@
             background-color: var(--bg-color); 
             color: var(--text-main); 
             margin: 0; 
-            padding: 16px;
+            padding: 12px;
+          }
+          @media (min-width: 640px) {
+            body { padding: 24px; }
           }
           .container { 
             max-width: 1000px; 
             margin: 0 auto; 
             background: var(--card-bg); 
-            padding: 24px; 
+            padding: 16px; 
             border-radius: 16px; 
             border: 1px solid var(--border-color);
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); 
           }
+          @media (min-width: 640px) {
+            .container { padding: 24px; }
+          }
           .header {
             border-bottom: 1px solid var(--border-color);
             padding-bottom: 16px;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
           }
           h1 { 
-            font-size: 24px; 
-            margin: 0 0 6px 0; 
+            font-size: 20px; 
+            margin: 0 0 4px 0; 
             background: linear-gradient(135deg, #38bdf8, #818cf8);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             font-weight: 700;
           }
+          @media (min-width: 640px) {
+            h1 { font-size: 24px; }
+          }
           p { 
             color: var(--text-sub); 
-            font-size: 14px; 
+            font-size: 13px; 
             margin: 0; 
           }
           .table-wrapper {
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
+            border-radius: 8px;
           }
           table { 
             width: 100%; 
             border-collapse: collapse; 
             text-align: left;
-            min-width: 500px;
+            min-width: 550px;
           }
           th { 
             background-color: var(--hover-bg); 
             color: var(--text-sub); 
-            padding: 12px 16px; 
-            font-size: 12px; 
+            padding: 10px 12px; 
+            font-size: 11px; 
             text-transform: uppercase;
             letter-spacing: 0.05em;
             font-weight: 600; 
             border-bottom: 2px solid var(--border-color); 
           }
           td { 
-            padding: 14px 16px; 
-            font-size: 14px; 
+            padding: 12px; 
+            font-size: 13px; 
             border-bottom: 1px solid var(--border-color); 
           }
           tr:hover td { 
@@ -94,7 +104,7 @@
             color: var(--accent-color); 
             text-decoration: none; 
             font-weight: 600; 
-            font-size: 15px;
+            font-size: 14px;
             display: block;
           }
           a.page-title:hover { 
@@ -102,16 +112,16 @@
           }
           .url-sub {
             color: var(--text-sub);
-            font-size: 12px;
+            font-size: 11px;
             margin-top: 2px;
             word-break: break-all;
           }
           .badge { 
             background: rgba(56, 189, 248, 0.15); 
             color: var(--accent-color); 
-            padding: 4px 10px; 
-            border-radius: 20px; 
-            font-size: 12px; 
+            padding: 3px 8px; 
+            border-radius: 12px; 
+            font-size: 11px; 
             font-weight: 600; 
             display: inline-block;
           }
@@ -127,7 +137,7 @@
             <table>
               <thead>
                 <tr>
-                  <th>Page Name &amp; Link</th>
+                  <th>Page Title &amp; URL</th>
                   <th>Priority</th>
                   <th>Frequency</th>
                   <th>Last Modified</th>
@@ -137,13 +147,32 @@
                 <xsl:for-each select="sitemap:urlset/sitemap:url">
                   <tr>
                     <td>
-                      <!-- Display Page Name dynamically -->
+                      <!-- Display Clean Titles for All Pages -->
                       <a class="page-title" href="{sitemap:loc}">
                         <xsl:choose>
-                          <xsl:when test="sitemap:loc = 'https://roitx.qd.je/'">Homepage</xsl:when>
-                          <xsl:otherwise>
-                            <xsl:value-of select="sitemap:loc"/>
-                          </xsl:otherwise>
+                          <xsl:when test="sitemap:loc = 'https://roitx.qd.je/'">Home</xsl:when>
+                          <xsl:when test="contains(sitemap:loc, 'classes.html')">Classes &amp; Courses</xsl:when>
+                          <xsl:when test="contains(sitemap:loc, 'premium-notes.html')">Premium Notes</xsl:when>
+                          <xsl:when test="contains(sitemap:loc, 'formulas.html')">Important Formulas</xsl:when>
+                          <xsl:when test="contains(sitemap:loc, 'subjects-9.html')">Class 9 Subjects</xsl:when>
+                          <xsl:when test="contains(sitemap:loc, 'subjects-10.html')">Class 10 Subjects</xsl:when>
+                          <xsl:when test="contains(sitemap:loc, 'subjects-11.html')">Class 11 Subjects</xsl:when>
+                          <xsl:when test="contains(sitemap:loc, '11-arts-subjects.html')">Class 11 Arts</xsl:when>
+                          <xsl:when test="contains(sitemap:loc, '11-commerce-subjects.html')">Class 11 Commerce</xsl:when>
+                          <xsl:when test="contains(sitemap:loc, '11-science-subjects.html')">Class 11 Science</xsl:when>
+                          <xsl:when test="contains(sitemap:loc, 'subjects-12.html')">Class 12 Subjects</xsl:when>
+                          <xsl:when test="contains(sitemap:loc, '12-arts-subjects.html')">Class 12 Arts</xsl:when>
+                          <xsl:when test="contains(sitemap:loc, '12-commerce-subjects.html')">Class 12 Commerce</xsl:when>
+                          <xsl:when test="contains(sitemap:loc, '12-science-subjects.html')">Class 12 Science</xsl:when>
+                          <xsl:when test="contains(sitemap:loc, 'ask-chat.html')">Ask AI Chat</xsl:when>
+                          <xsl:when test="contains(sitemap:loc, 'solver.html')">Doubt Solver</xsl:when>
+                          <xsl:when test="contains(sitemap:loc, 'study-timer.html')">Study Timer</xsl:when>
+                          <xsl:when test="contains(sitemap:loc, 'calculator.html')">Scientific AI Calculator</xsl:when>
+                          <xsl:when test="contains(sitemap:loc, 'calendar.html')">Calendar</xsl:when>
+                          <xsl:when test="contains(sitemap:loc, 'view.html')">Notes Viewer</xsl:when>
+                          <xsl:when test="contains(sitemap:loc, 'aboutus.html')">About Us &amp; Privacy</xsl:when>
+                          <xsl:when test="contains(sitemap:loc, 'fun.html')">Fun Zone</xsl:when>
+                          <xsl:otherwise><xsl:value-of select="sitemap:loc"/></xsl:otherwise>
                         </xsl:choose>
                       </a>
                       <div class="url-sub"><xsl:value-of select="sitemap:loc"/></div>
