@@ -53,7 +53,7 @@
   };
 </script>
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-  
+
 <link rel="icon" href="profile.png" type="image/png">
 <link rel="stylesheet" href="ask-chat.css" />
 
@@ -131,6 +131,18 @@
     stroke-linejoin: round;
     filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.6));
   }
+  .msg.bot {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+/* MathJax equations ko auto-wrap aur scrollable banane ke liye */
+.MathJax_Display, mjx-container {
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+}
+
 </style>
 </head>
 <body>
