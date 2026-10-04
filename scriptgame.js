@@ -1,3 +1,44 @@
+// ==========================================
+// 1. GLOBAL VARIABLES & CONFIGURATION
+// ==========================================
+let isMathMode = false;
+let currentMathQuestion = null;
+let mathDrones = [];
+
+// REALISTIC QUESTIONS JSON BANK
+const mathQuestions = [
+    {
+        question: "18 km/h ko m/s mein badalne par kitna hoga?",
+        options: ["5 m/s", "10 m/s", "18 m/s", "2.5 m/s"],
+        correctIndex: 0
+    },
+    {
+        question: "Vritt (Circle) ki sabse badi jeeva (chord) kya hoti hai?",
+        options: ["Trijya (Radius)", "Vyas (Diameter)", "Sparsh Rekha", "Chaap"],
+        correctIndex: 1
+    },
+    {
+        question: "Samkon tribhuj mein sin(90°) ka maan kya hota hai?",
+        options: ["0", "0.5", "1", "Anant"],
+        correctIndex: 2
+    },
+    {
+        question: "Prakash ki chaal (Speed of Light) vacuum me kitni hoti hai?",
+        options: ["3 x 10^8 m/s", "3 x 10^6 m/s", "3000 km/s", "10^8 m/s"],
+        correctIndex: 0
+    },
+    {
+        question: "Samikaran x² - 16 = 0 ke mool (roots) kya honge?",
+        options: ["4", "-4", "+4 ya -4", "16"],
+        correctIndex: 2
+    },
+    {
+        question: "Samroop (Similar) Tribhuj ki bhujayein hoti hain:",
+        options: ["Barabar", "Samanupati", "Lambvat", "Zero"],
+        correctIndex: 1
+    }
+];
+
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas ? canvas.getContext("2d") : null;
 
@@ -28,7 +69,7 @@ const leaderboardList = document.getElementById("leaderboard-list");
 const startBtn = document.getElementById("startBtn");
 const restartBtn = document.getElementById("restartBtn");
 
-// Core Game Variables
+// Core Game State Variables
 let game = false, paused = false, score = 0, coins = 0, lives = 12, level = 1;
 let bullets = [], missiles = [], enemies = [], asteroids = [], particles = [], stars = [], enemyBullets = [], powerups = [], floatingTexts = [], coinDrops = [], shockwaves = [], trails = [];
 let controlMode = "buttons", screenShake = 0, combo = 1, comboTimer = 0;
@@ -36,7 +77,9 @@ let timeFreeze = false, monsterActive = false, monster = null;
 let scenarioEvent = null, scenarioTimer = 0, gridOffset = 0;
 let currentUser = null;
 
-// Audio Synthesizer
+// ==========================================
+// 2. AUDIO SYNTHESIZER & ASSETS
+// ==========================================
 let audioEnabled = true;
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
@@ -67,7 +110,6 @@ function playSynthSound(type) {
     }
 }
 
-// SVG Icons Dictionary
 const svgIcons = {
     rocket: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle; display:inline-block;"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.71 1.1-1.35 1.32-1.92L14.4 12.1a12.98 12.98 0 0 0 5.1-6.1c.36-.91-.32-1.59-1.23-1.23a12.98 12.98 0 0 0-6.1 5.1l-5.48 5.58c-.57.22-1.21.61-1.92 1.32z"/><path d="m12 15 4 4"/><path d="m15 12 4 4"/></svg>`,
     calendar: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle; display:inline-block;"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>`,
@@ -83,6 +125,7 @@ if (audioBtn) {
     };
 }
 
+// Player Ship Types & Background Setup
 const shipTypes = {
     pulse: { speed: 10, hp: 12, fireRate: 5, color: "#10b981", coreColor: "#6ee7b7" },
     titan: { speed: 6.5, hp: 22, fireRate: 10, color: "#f97316", coreColor: "#fdba74" },
@@ -90,12 +133,10 @@ const shipTypes = {
 };
 let selectedShip = "pulse";
 
-// Init Stars Background
 for(let i = 0; i < 60; i++) {
     stars.push({ x: Math.random() * window.innerWidth, y: Math.random() * window.innerHeight, s: Math.random() * 2 + 1, speed: Math.random() * 2 + 0.5, opacity: Math.random() });
 }
 
-// Dynamic Character/Mode Switching
 shipCards.forEach(card => {
     card.addEventListener("click", () => {
         shipCards.forEach(c => c.classList.remove("active"));
@@ -118,7 +159,9 @@ const player = {
 };
 const keys = {};
 
-// Desktop Controls
+// ==========================================
+// 3. CONTROLS & AUTH SYSTEM
+// ==========================================
 window.addEventListener("keydown", e => {
     keys[e.key] = true;
     if (e.key === "e" || e.key === "E") triggerUltimate();
@@ -126,7 +169,6 @@ window.addEventListener("keydown", e => {
 });
 window.addEventListener("keyup", e => keys[e.key] = false);
 
-// Auth Check System
 async function checkAuthStatus() {
     if (!window.supabaseClient) return false;
     try {
@@ -143,19 +185,14 @@ async function checkAuthStatus() {
     return false;
 }
 
-// Leaderboard Modal Event Listeners
 if (openLeaderboardBtn) {
     openLeaderboardBtn.onclick = async () => {
         if (!currentUser) {
             const loginModal = document.getElementById("login-modal");
-            if (loginModal) {
-                loginModal.classList.add("show");
-            } else {
-                alert("Leaderboard dekhne ke liye pehle login karein!");
-            }
+            if (loginModal) loginModal.classList.add("show");
+            else alert("Leaderboard dekhne ke liye pehle login karein!");
             return;
         }
-        
         if (startScreen) startScreen.classList.remove("show");
         if (leaderboardScreen) leaderboardScreen.classList.add("show");
         await fetchLeaderboard(selectedShip);
@@ -169,7 +206,6 @@ if (closeLeaderboardBtn) {
     };
 }
 
-// Fetch Leaderboard Function (Fixed Zero-Data Filter & SVG Icons)
 async function fetchLeaderboard(shipMode) {
     if (!leaderboardList) return;
     if (!window.supabaseClient) {
@@ -184,7 +220,6 @@ async function fetchLeaderboard(shipMode) {
         oneMonthAgo.setDate(oneMonthAgo.getDate() - 30);
         const isoOneMonthAgo = oneMonthAgo.toISOString();
 
-        // `.gt('score', 0)` add kar diya hai jisse zero score wale hide ho jayein
         const { data: gameData, error: gameErr } = await window.supabaseClient
             .from('game_profiles')
             .select('id, score, coins, selected_ship, name, avatar_url, updated_at')
@@ -252,7 +287,7 @@ async function fetchLeaderboard(shipMode) {
     }
 }
 
-// Mobile Touch Controls
+// Mobile & On-Screen Controls
 const leftBtn = document.getElementById("leftBtn");
 const rightBtn = document.getElementById("rightBtn");
 
@@ -358,6 +393,9 @@ if (pauseBtn) {
     };
 }
 
+// ==========================================
+// 4. GAME MECHANICS & SPAWN LOGIC
+// ==========================================
 function updateHUD() {
     if (scoreEl) scoreEl.textContent = score;
     if (coinsEl) coinsEl.textContent = coins;
@@ -475,15 +513,49 @@ function spawnPowerup(x, y) {
     }
 }
 
+// 4 Floating Option Drones Setup Function
+function setupMathDrones() {
+    mathDrones = [];
+    if (!currentMathQuestion || !canvas) return;
+
+    const droneWidth = 100;
+    const spacing = (canvas.width - (4 * droneWidth)) / 5;
+
+    currentMathQuestion.options.forEach((optText, index) => {
+        mathDrones.push({
+            index: index,
+            text: optText,
+            x: spacing + index * (droneWidth + spacing),
+            y: 180,
+            w: droneWidth,
+            h: 40,
+            baseY: 180,
+            floatOffset: index * 0.8
+        });
+    });
+}
+
 function spawnMonster() {
     if (!canvas) return;
     monsterActive = true;
+    
     if(monsterAlert) {
         monsterAlert.style.display = "block";
         setTimeout(() => { monsterAlert.style.display = "none"; }, 3000);
     }
+    
     const maxHp = 90 + (level * 45);
     monster = { x: canvas.width / 2 - 80, y: -150, w: 160, h: 100, hp: maxHp, maxHp: maxHp, speed: 3.5, dir: 1, angle: 0, phase: 1 };
+
+    // Math Mode Setup
+    if (isMathMode && mathQuestions.length > 0) {
+        const randomIndex = Math.floor(Math.random() * mathQuestions.length);
+        currentMathQuestion = mathQuestions[randomIndex];
+        setupMathDrones();
+    } else {
+        currentMathQuestion = null;
+        mathDrones = [];
+    }
 }
 
 function explode(x, y, color, count = 18) {
@@ -527,6 +599,9 @@ async function gameOver() {
 }
 
 async function startGame() {
+    const mathCheckbox = document.getElementById("mathModeCheckbox");
+    isMathMode = mathCheckbox ? mathCheckbox.checked : false;
+
     resize();
     game = true;
     paused = false;
@@ -534,7 +609,7 @@ async function startGame() {
     level = 1;
     lives = shipTypes[selectedShip].hp;
     bullets = []; missiles = []; enemies = []; asteroids = [];
-    particles = []; enemyBullets = []; powerups = []; coinDrops = [];
+    particles = []; enemyBullets = []; powerups = []; coinDrops = []; mathDrones = [];
     monsterActive = false; monster = null;
     
     if (canvas) {
@@ -552,7 +627,7 @@ async function startGame() {
 if(startBtn) startBtn.onclick = startGame;
 if(restartBtn) restartBtn.onclick = startGame;
 
-// Database Load & Save Logic
+// Database Sync Logic
 async function loadUserData() {
     try {
         if (!window.supabaseClient || !currentUser) return;
@@ -647,7 +722,6 @@ function setActiveShipCard(shipName) {
     });
 }
 
-// Auto Load Init
 window.addEventListener('DOMContentLoaded', async () => {
     resize();
     setTimeout(async () => {
@@ -655,7 +729,9 @@ window.addEventListener('DOMContentLoaded', async () => {
     }, 400);
 });
 
-// Main Game Loop
+// ==========================================
+// 5. MAIN GAME LOOP (RENDER & UPDATE)
+// ==========================================
 function update() {
     if (!game || paused || !ctx) return;
 
@@ -885,15 +961,89 @@ function update() {
             }
         }
 
-        // Draw Boss
-        ctx.fillStyle = "#ef4444";
-        ctx.fillRect(monster.x, monster.y, monster.w, monster.h);
+        // Draw Boss Monster Renderer
+        if (typeof drawMonster === "function") {
+            drawMonster(ctx, monster);
+        } else {
+            ctx.fillStyle = "#ef4444";
+            ctx.fillRect(monster.x, monster.y, monster.w, monster.h);
+        }
         
         // Health bar
         ctx.fillStyle = "rgba(255,255,255,0.3)";
         ctx.fillRect(monster.x, monster.y - 12, monster.w, 6);
         ctx.fillStyle = "#22c55e";
         ctx.fillRect(monster.x, monster.y - 12, (monster.hp / monster.maxHp) * monster.w, 6);
+
+        // MATH OVERDRIVE QUESTION OVERLAY
+        if (isMathMode && currentMathQuestion) {
+            ctx.fillStyle = "rgba(15, 23, 42, 0.9)";
+            ctx.strokeStyle = "#38bdf8";
+            ctx.lineWidth = 2;
+            
+            let qBoxWidth = Math.min(canvas.width - 40, 500);
+            let qBoxX = (canvas.width - qBoxWidth) / 2;
+            let qBoxY = 100;
+
+            ctx.beginPath();
+            ctx.roundRect(qBoxX, qBoxY, qBoxWidth, 50, 10);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "bold 15px sans-serif";
+            ctx.textAlign = "center";
+            ctx.fillText("❓ " + currentMathQuestion.question, canvas.width / 2, qBoxY + 30);
+            ctx.textAlign = "left";
+        }
+
+        // --- TARGET DRONES RENDER & COLLISION LOGIC ---
+        if (isMathMode && currentMathQuestion && mathDrones.length > 0) {
+            mathDrones.forEach((drone) => {
+                drone.floatOffset += 0.05;
+                drone.y = drone.baseY + Math.sin(drone.floatOffset) * 10;
+
+                ctx.fillStyle = "rgba(30, 41, 59, 0.9)";
+                ctx.strokeStyle = drone.index === currentMathQuestion.correctIndex ? "rgba(56, 189, 248, 0.6)" : "rgba(239, 68, 68, 0.5)";
+                ctx.lineWidth = 2;
+
+                ctx.beginPath();
+                ctx.roundRect(drone.x, drone.y, drone.w, drone.h, 8);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.fillStyle = "#ffffff";
+                ctx.font = "bold 12px sans-serif";
+                ctx.textAlign = "center";
+                ctx.fillText(drone.text, drone.x + drone.w / 2, drone.y + 24);
+                ctx.textAlign = "left";
+
+                for (let j = bullets.length - 1; j >= 0; j--) {
+                    let b = bullets[j];
+                    if (b.x > drone.x && b.x < drone.x + drone.w && b.y > drone.y && b.y < drone.y + drone.h) {
+                        bullets.splice(j, 1);
+
+                        if (drone.index === currentMathQuestion.correctIndex) {
+                            explode(drone.x + drone.w / 2, drone.y + drone.h / 2, "#22c55e", 20);
+                            addFloatingText(drone.x, drone.y, "CORRECT! OVERDRIVE DAMAGE! ⚡", "#22c55e");
+                            
+                            monster.hp -= 35;
+                            score += 100;
+                            updateHUD();
+
+                            const nextIndex = Math.floor(Math.random() * mathQuestions.length);
+                            currentMathQuestion = mathQuestions[nextIndex];
+                            setupMathDrones();
+                        } else {
+                            explode(drone.x + drone.w / 2, drone.y + drone.h / 2, "#ef4444", 15);
+                            addFloatingText(drone.x, drone.y, "WRONG ANSWER! ❌", "#ef4444");
+                            screenShake = 12;
+                        }
+                        break;
+                    }
+                }
+            });
+        }
 
         // Player bullets vs Boss
         for (let j = bullets.length - 1; j >= 0; j--) {
@@ -907,6 +1057,7 @@ function update() {
                     score += 200;
                     monsterActive = false;
                     monster = null;
+                    mathDrones = [];
                     updateHUD();
                     break;
                 }

@@ -321,6 +321,113 @@ body, html {
     animation: blink 0.4s infinite alternate;
     z-index: 50;
 }
+/* Math Overdrive Card & Switch Styling */
+.math-card-container {
+  width: 100%;
+  max-width: 420px;
+  margin: 15px auto 20px auto;
+  padding: 0 10px;
+  box-sizing: border-box;
+}
+
+.math-toggle-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  backdrop-filter: blur(8px);
+  padding: 12px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.math-toggle-card:hover {
+  border-color: #38bdf8;
+  box-shadow: 0 0 15px rgba(56, 189, 248, 0.3);
+  transform: translateY(-2px);
+}
+
+.math-card-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+}
+
+.math-icon-badge {
+  font-size: 1.4rem;
+  background: rgba(56, 189, 248, 0.15);
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+.math-card-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.math-title {
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.5px;
+}
+
+.math-desc {
+  color: #94a3b8;
+  font-size: 0.75rem;
+  margin-top: 2px;
+}
+
+/* Custom Cyber Switch Toggle */
+.switch-wrapper {
+  position: relative;
+  width: 48px;
+  height: 26px;
+  flex-shrink: 0;
+}
+
+.switch-wrapper input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.switch-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #334155;
+  transition: 0.3s;
+  border-radius: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.switch-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: #94a3b8;
+  transition: 0.3s;
+  border-radius: 50%;
+}
+
+input:checked + .switch-slider {
+  background-color: #0284c7;
+  box-shadow: 0 0 12px #38bdf8;
+}
+
+input:checked + .switch-slider:before {
+  transform: translateX(22px);
+  background-color: #fff;
+}
 
 .pulse-btn {
     animation: pulseGlow 1.5s infinite alternate;
