@@ -6,10 +6,15 @@
   
   <title>Study Timer & Neural Focus Suite — Roitx Pro</title>
 
-  <!-- Primary Meta Tags -->
+  <!-- Primary & Fast Recrawl Meta Tags -->
   <meta name="title" content="Study Timer & Neural Focus Suite — Roitx Pro">
   <meta name="description" content="Advanced Study Timer, Binaural Beats Generator, Stopwatch, Task Manager, and Smart Music Player for ultimate study focus and productivity.">
   <meta name="author" content="PM Roitx">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+  <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+  <meta name="bingbot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+  <meta name="revisit-after" content="1 days">
+  <link rel="canonical" href="https://roitx.qd.je">
 
   <!-- Font Awesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -287,7 +292,7 @@
       width: 100%; max-width: 450px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; min-height: 280px;
     }
 
-    .flip-container { display: flex; align-items: center; justify-content: center; gap: clamp(6px, 1.8vw, 12px); }
+    .flip-container { display: flex; align-items: center; justify-content: center; gap: clamp(6px, 1.8vw, 12px); cursor: pointer; }
     .flip-card {
       position: relative; width: clamp(75px, 22vw, 110px); height: clamp(105px, 28vw, 150px);
       background: var(--card-bg-solid); border-radius: 16px; border: 1px solid var(--border); overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.8);
@@ -351,7 +356,7 @@
     .btn-main { background: var(--accent); color: #ffffff; }
 
     .aod-footer { display: flex; gap: 24px; align-items: center; margin-top: 20px; transition: opacity 0.3s ease; }
-    .icon-btn { background: none; border: none; color: #8e8e93; font-size: 18px; cursor: pointer; transition: color 0.2s; }
+    .icon-btn { background: none; border: none; color: #8e8e93; font-size: 18px; cursor: pointer; transition: color 0.2s; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
     .icon-btn:hover { color: #fff; }
 
     /* CLEAN FULLSCREEN MODE - PLAYER BAR & UI AUTO HIDE */
@@ -576,7 +581,7 @@
 
     <div class="stage">
       <!-- 1. FLIP VIEW -->
-      <div class="flip-container" id="flip-view">
+      <div class="flip-container" id="flip-view" onclick="toggleClock24hMode()">
         <div class="flip-card">
           <span class="ampm-badge" id="ampm-text">AM</span>
           <div class="card-divider"></div>
@@ -649,9 +654,10 @@
       </div>
     </div>
 
-    <!-- CLOCK / TIMER FOOTER WITH SHIFTED ROTATE SCREEN BUTTON -->
+    <!-- CLOCK / TIMER FOOTER WITH ROTATE & HOME BUTTONS -->
     <div class="aod-footer">
       <button class="icon-btn" id="rotate-screen-btn" title="Rotate Screen" onclick="handleScreenRotate()"><i class="fa-solid fa-rotate"></i></button>
+      <a href="https://roitx.qd.je" class="icon-btn" title="Main Page" target="_self"><i class="fa-solid fa-house"></i></a>
       <button class="icon-btn" title="Fullscreen View" onclick="toggleFullscreen()"><i class="fa-solid fa-expand"></i></button>
     </div>
   </div>
@@ -684,7 +690,7 @@
 
       <div class="player-controls">
         <button class="play-toggle-btn" id="wave-play-btn" onclick="toggleAudio()">
-          <i class="fa-solid fa-play" id="wave-play-icon"></i>
+          <i class="fa-solid fa-pause" id="wave-play-icon"></i>
         </button>
         <div style="font-size: 12px; color: var(--muted);" id="wave-status">Audio Idle</div>
         <input type="range" class="vol-slider" min="0" max="1" step="0.05" value="0.3" oninput="setWaveVolume(this.value)">
@@ -857,6 +863,14 @@
     let prev = { h: '', m: '', s: '' };
 
     function initClock() { requestAnimationFrame(mainRenderLoop); }
+
+    function toggleClock24hMode() {
+      if (mode === 'clock') {
+        is24 = !is24;
+        prev = { h: '', m: '', s: '' };
+        document.getElementById('ampm-text').style.display = (!is24 && style === 'flip') ? 'block' : 'none';
+      }
+    }
 
     function mainRenderLoop() {
       if (mode === 'clock') {
@@ -1110,14 +1124,29 @@
     /* SCREEN ROTATION ENGINE FOR CLOCK/TIMER SECTION */
     async function handleScreenRotate() {
       try {
-        if (screen.orientation && screen.orientation.lock) {
-          if (screen.orientation.type.startsWith('portrait')) {
-            await screen.orientation.lock('landscape');
+        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+          if (document.documentElement.requestFullscreen) {
+            await document.documentElement.requestFullscreen();
+          } else if (document.documentElement.webkitRequestFullscreen) {
+            await document.documentElement.webkitRequestFullscreen();
+          }
+        }
+        
+        const orientation = screen.orientation || screen.mozOrientation || screen.msOrientation;
+        if (orientation && orientation.lock) {
+          if (orientation.type.startsWith('portrait')) {
+            await orientation.lock('landscape');
           } else {
-            await screen.orientation.lock('portrait');
+            await orientation.lock('portrait');
+          }
+        } else if (screen.lockOrientation) {
+          if (window.innerHeight > window.innerWidth) {
+            screen.lockOrientation('landscape');
+          } else {
+            screen.lockOrientation('portrait');
           }
         } else {
-          alert("Screen orientation lock is not supported on this device/browser.");
+          alert("Screen orientation lock fully supported only in responsive browser environments.");
         }
       } catch (err) {
         console.log("Rotation error:", err);
@@ -1141,7 +1170,7 @@
     });
 
     function handleGlobalClick(e) {
-      if (document.fullscreenElement && e.target.tagName !== 'BUTTON') {
+      if (document.fullscreenElement && e.target.tagName !== 'BUTTON' && !e.target.closest('.flip-container')) {
         document.body.classList.toggle('clean-fullscreen');
       }
     }
