@@ -1,0 +1,57 @@
+[
+  {
+    "id": "student_boy",
+    "title": "Student Boy",
+    "src": "https://api.dicebear.com/9.x/avataaars/svg?seed=StudentBoy&top=shortFlat"
+  },
+  {
+    "id": "student_girl",
+    "title": "Student Girl",
+    "src": "https://api.dicebear.com/9.x/avataaars/svg?seed=StudentGirl&top=straight02"
+  },
+  {
+    "id": "gamer",
+    "title": "Gamer",
+    "src": "https://api.dicebear.com/9.x/avataaars/svg?seed=GamerBoyPro"
+  },
+  {
+    "id": "topper",
+    "title": "Topper",
+    "src": "https://api.dicebear.com/9.x/avataaars/svg?seed=TopRanker&accessories=prescription02&clothing=blazerAndShirt&eyes=happy"
+  },
+  {
+    "id": "master",
+    "title": "Master",
+    "src": "https://api.dicebear.com/9.x/avataaars/svg?seed=OldTeacher"
+  },
+  {
+    "id": "cool_guy",
+    "title": "Cool Guy",
+    "src": "https://api.dicebear.com/9.x/avataaars/svg?seed=CoolGuy&accessories=sunglasses"
+  },
+  {
+    "id": "bright_student",
+    "title": "Bright Student",
+    "src": "https://api.dicebear.com/9.x/avataaars/svg?seed=BrightStudent&mouth=smile"
+  },
+  {
+    "id": "creative_girl",
+    "title": "Creative Girl",
+    "src": "https://api.dicebear.com/9.x/avataaars/svg?seed=CreativeGirl&top=curly"
+  },
+  {
+    "id": "scholar",
+    "title": "Scholar",
+    "src": "https://api.dicebear.com/9.x/avataaars/svg?seed=ScholarMasterMind&accessories=prescription02&clothing=blazerAndShirt"
+  },
+  {
+    "id": "deep_thinker",
+    "title": "Deep Thinker",
+    "src": "https://api.dicebear.com/9.x/avataaars/svg?seed=DeepThinkerPro&accessories=prescription01&clothing=collarAndSweater"
+  },
+  {
+    "id": "innovator",
+    "title": "Innovator",
+    "src": "https://api.dicebear.com/9.x/avataaars/svg?seed=InnovatorX&top=dreads01&clothing=blazerAndShirt"
+  }
+]
