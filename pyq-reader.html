@@ -447,33 +447,63 @@
     renderReader();
   }
 
-  /* CLEAN PDF EXPORT LOGIC */
-  function downloadPDF() {
-    showToast("Preparing Clean PDF...");
-    
-    // Main container ka clone banayein taaki UI kharab na ho
-    const clone = document.getElementById("mainContainer").cloneNode(true);
-    
-    // Unnecessary interactive UI items ko clean karein
-    const stickyBar = clone.querySelector('.sticky-bar');
-    const searchInput = clone.querySelector('#qSearch');
-    if (stickyBar) stickyBar.remove();
-    if (searchInput) searchInput.remove();
+  /* ULTRA-LIGHTWEIGHT & FAST PYQ PDF EXPORT LOGIC */
+async function downloadPDF() {
+  showToast("Preparing PDF...");
 
-    // Clean white print styling
-    clone.style.background = "#ffffff";
-    clone.style.color = "#000000";
+  // Give UI a moment to show toast message properly
+  await new Promise(resolve => setTimeout(resolve, 100));
 
-    const opt = {
-      margin:       [10, 10, 10, 10],
-      filename:     `${(currentData && currentData.title) ? currentData.title : 'PYQ_Notes'}.pdf`,
-      image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2, backgroundColor: '#ffffff', useCORS: true },
-      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
+  // Clone main container
+  const clone = document.getElementById("mainContainer").cloneNode(true);
 
-    html2pdf().set(opt).from(clone).save();
+  // Remove non-printable / interactive controls from clone
+  const removeSelectors = ['.sticky-bar', '#qSearch', '.q-actions', 'button'];
+  removeSelectors.forEach(selector => {
+    clone.querySelectorAll(selector).forEach(el => el.remove());
+  });
+
+  // Apply clean uniform dark styling on clone
+  clone.style.width = "100%";
+  clone.style.padding = "10px";
+  clone.style.background = "#090d16";
+  clone.style.color = "#cbd5e1";
+
+  // Prevent cards breaking across page margins
+  const cards = clone.querySelectorAll('.ans-card, .overview-box, .paper-header');
+  cards.forEach(card => {
+    card.style.pageBreakInside = "avoid";
+    card.style.breakInside = "avoid";
+    card.style.marginBottom = "12px";
+    card.style.background = "#111827";
+    card.style.border = "1px solid rgba(255, 255, 255, 0.08)";
+  });
+
+  // Compressed & High-Efficiency PDF Options
+  const opt = {
+    margin:       [8, 8, 8, 8],
+    filename:     `${(currentData && currentData.title) ? currentData.title.replace(/[^a-zA-Z0-9]/g, '_') : 'PYQ_Notes'}.pdf`,
+    image:        { type: 'jpeg', quality: 0.75 }, // Compressed JPEG for smaller file size
+    html2canvas:  { 
+      scale: 1.5, // Optimized rendering scale
+      logging: false,
+      backgroundColor: '#090d16', 
+      useCORS: true,
+      allowTaint: true 
+    },
+    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true },
+    pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
+  };
+
+  try {
+    await html2pdf().set(opt).from(clone).save();
+    showToast("PDF Downloaded!");
+  } catch (err) {
+    console.error("PYQ PDF Export Error:", err);
+    alert("PDF export me error aaya. Please re-try karein.");
   }
+}
+
 
   function setLanguage(lang) {
     activeLang = lang;

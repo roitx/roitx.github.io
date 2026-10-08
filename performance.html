@@ -780,7 +780,8 @@
         document.getElementById("overallCrossed").innerText = `${targetCrossed} Times`;
         document.getElementById("testCountBadge").innerText = `${attempts.length} Total Attempts`;
 
-        const ctx = document.getElementById('overallProgressChart').getContext('2d');
+        const canvas = document.getElementById('overallProgressChart');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
         if (overallChartInstance) overallChartInstance.destroy();
 
         let primaryColor = currentMetric === 'score' ? '#38bdf8' : '#10b981';
@@ -1036,7 +1037,8 @@
     }
 
     function renderAttemptChart(correct, wrong, skipped) {
-        const ctx = document.getElementById('attemptChart').getContext('2d');
+        const canvas = document.getElementById('attemptChart');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
         if (attemptChartInstance) attemptChartInstance.destroy();
 
         attemptChartInstance = new Chart(ctx, {
@@ -1268,39 +1270,133 @@
         renderSolutions(allUserAnswersData, type);
     }
 
-    /* OPTIMIZED PERFORMANCE PDF GENERATOR */
-    async function downloadPDF() {
-        const element = document.getElementById('pdfReportArea');
+/* LIGHTWEIGHT & HIGH-QUALITY PERFORMANCE PDF GENERATOR */
+async function downloadPDF() {
+    const element = document.getElementById('pdfReportArea');
+    
+    if (!element || getComputedStyle(element).display === 'none') {
+        alert("Pehle kisi test ke 'Inspect' button par click karke detailed report open karein.");
+        return;
+    }
+
+    // Smooth UI Toast Alert
+    const btn = event ? event.currentTarget : null;
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Generating PDF...`;
+    }
+
+    window.scrollTo(0, 0);
+
+    // Give UI a moment to breathe (Fixes UI Freezing / Glass-Touch issue)
+    await new Promise(resolve => setTimeout(resolve, 150));
+
+    // 1. Clone the report container
+    const clone = element.cloneNode(true);
+
+    // 2. Pre-process Profile Header (Name & Avatar Injection)
+    const profileHero = document.querySelector('.profile-hero');
+    if (profileHero) {
+        const heroClone = profileHero.cloneNode(true);
+        // Clean unwanted badges from PDF header clone
+        const badge = heroClone.querySelector('.badge-verified');
+        if (badge) badge.remove();
         
-        if (!element || getComputedStyle(element).display === 'none') {
-            alert("Pehle kisi test ke 'Inspect' button par click karke detailed report open karein.");
-            return;
+        // Convert avatar image to canvas snapshot if CORS/External to avoid crashes
+        const avatarImg = heroClone.querySelector('#userAvatar');
+        if (avatarImg) {
+            try {
+                const cvs = document.createElement('canvas');
+                cvs.width = avatarImg.naturalWidth || 64;
+                cvs.height = avatarImg.naturalHeight || 64;
+                const ctx = cvs.getContext('2d');
+                ctx.drawImage(avatarImg, 0, 0, cvs.width, cvs.height);
+                avatarImg.src = cvs.toDataURL('image/png');
+            } catch(e) {
+                // Fallback: If external image is strictly blocked, fallback gracefully
+                console.warn("Avatar conversion fallback triggered");
+            }
+            avatarImg.style.width = "45px";
+            avatarImg.style.height = "45px";
+            avatarImg.style.borderRadius = "50%";
         }
 
-        window.scrollTo(0, 0);
+        heroClone.style.marginBottom = "15px";
+        heroClone.style.padding = "12px 16px";
+        clone.insertBefore(heroClone, clone.firstChild);
+    }
 
-        const opt = {
-            margin:       [8, 8, 8, 8],
-            filename:     `Performance_Report_${Date.now()}.pdf`,
-            image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { 
-                scale: 2, 
-                logging: false,
-                useCORS: true,
-                allowTaint: true,
-                backgroundColor: '#030712'
-            },
-            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
-            pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
-        };
+    // 3. Remove interactive control buttons from clone
+    const removeSelectors = ['.btn', 'button', '.toggle-img-btn', '.q-image-container'];
+    removeSelectors.forEach(selector => {
+        clone.querySelectorAll(selector).forEach(el => el.remove());
+    });
 
+    // 4. Convert Chart Canvases into pure PNG Data URLs safely
+    const originalCanvases = element.querySelectorAll('canvas');
+    const cloneCanvases = clone.querySelectorAll('canvas');
+    
+    originalCanvases.forEach((origCanvas, index) => {
         try {
-            await html2pdf().set(opt).from(element).save();
-        } catch (err) {
-            console.error("PDF Export Error:", err);
-            alert("PDF generate karne me dikkat aayi. Please page refresh karke dobara try karein.");
+            const dataUrl = origCanvas.toDataURL('image/png');
+            const img = document.createElement('img');
+            img.src = dataUrl;
+            img.style.width = '100%';
+            img.style.height = 'auto';
+            img.style.maxHeight = '160px';
+            img.style.display = 'block';
+            img.style.margin = '0 auto';
+
+            if (cloneCanvases[index] && cloneCanvases[index].parentNode) {
+                cloneCanvases[index].parentNode.replaceChild(img, cloneCanvases[index]);
+            }
+        } catch (e) {
+            console.warn("Chart conversion skipped:", e);
+        }
+    });
+
+    // 5. Clean layout & Pagebreak rules
+    clone.style.background = "#030712";
+    clone.style.padding = "10px";
+
+    const reportCards = clone.querySelectorAll('.card, .solution-card, .stat-box, .profile-hero');
+    reportCards.forEach(c => {
+        c.style.pageBreakInside = "avoid";
+        c.style.breakInside = "avoid";
+        c.style.marginBottom = "10px";
+        c.style.background = "#0f172a";
+        c.style.border = "1px solid rgba(255,255,255,0.1)";
+    });
+
+    // 6. Optimized & Compressed PDF Export Options
+    const opt = {
+        margin:       [6, 6, 6, 6],
+        filename:     `Performance_Report_${Date.now()}.pdf`,
+        image:        { type: 'jpeg', quality: 0.75 }, // Compressed JPEG for smaller file size
+        html2canvas:  { 
+            scale: 1.5, // Balanced Scale (Keeps HD Quality with lower file size)
+            logging: false,
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: '#030712'
+        },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true },
+        pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
+    };
+
+    try {
+        await html2pdf().set(opt).from(clone).save();
+    } catch (err) {
+        console.error("PDF Export Error:", err);
+        alert("PDF export me issue aaya. Please refresh karke dobara try karein.");
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = `<i class="fa-solid fa-download"></i> Download Report (PDF)`;
         }
     }
+}
+
 </script>
 </body>
 </html>
