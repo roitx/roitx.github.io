@@ -690,7 +690,6 @@
         }
     }
 
-    // FIX 1: Safe fallback check for missing 'subject' column in Supabase schema
     function populateSubjectDropdown(attempts) {
         const dropdown = document.getElementById("subjectFilter");
         dropdown.innerHTML = `<option value="all">All Subjects / Tests</option>`;
@@ -891,7 +890,6 @@
         });
     }
 
-    // FIX 2: HISTORY GRID WITH REATTEMPT BUTTON & MISSING ID CHECK
     function renderHistoryGrid(attempts) {
         const historyGrid = document.getElementById("historyGrid");
         const historySection = document.getElementById("previousTestsSection");
@@ -903,7 +901,6 @@
             let formattedDate = att.created_at ? new Date(att.created_at).toLocaleDateString() : "Recently";
             let displayTitle = att.test_title || `Test Attempt #${attempts.length - index}`;
             
-            // Strict ID validation
             let testId = att.test_id || att.id || null;
 
             html += `
@@ -1271,9 +1268,38 @@
         renderSolutions(allUserAnswersData, type);
     }
 
-    function downloadPDF() {
+    /* OPTIMIZED PERFORMANCE PDF GENERATOR */
+    async function downloadPDF() {
         const element = document.getElementById('pdfReportArea');
-        html2pdf().from(element).save('Roitx_Performance_Report.pdf');
+        
+        if (!element || getComputedStyle(element).display === 'none') {
+            alert("Pehle kisi test ke 'Inspect' button par click karke detailed report open karein.");
+            return;
+        }
+
+        window.scrollTo(0, 0);
+
+        const opt = {
+            margin:       [8, 8, 8, 8],
+            filename:     `Performance_Report_${Date.now()}.pdf`,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { 
+                scale: 2, 
+                logging: false,
+                useCORS: true,
+                allowTaint: true,
+                backgroundColor: '#030712'
+            },
+            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+            pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
+        };
+
+        try {
+            await html2pdf().set(opt).from(element).save();
+        } catch (err) {
+            console.error("PDF Export Error:", err);
+            alert("PDF generate karne me dikkat aayi. Please page refresh karke dobara try karein.");
+        }
     }
 </script>
 </body>

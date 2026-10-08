@@ -296,6 +296,12 @@
     renderReader();
   }
 
+  function updateBookmarkBadge() {
+    const bookmarks = getLocalBookmarks();
+    const bmCountEl = document.getElementById("bmCount");
+    if (bmCountEl) bmCountEl.innerText = bookmarks.length;
+  }
+
   function renderReader() {
     const container = document.getElementById("mainContainer");
     const data = currentData;
@@ -309,8 +315,10 @@
           <button class="btn-tool ${activeLang === 'HI' ? 'active' : ''}" onclick="setLanguage('HI')">HIN</button>
         </div>
         <div class="bar-btn-group">
-          <button class="btn-tool ${showOnlyBookmarks ? 'active-bm' : ''}" onclick="toggleBookmarkFilter()" title="Show Bookmarks Only"><i class="fa-solid fa-bookmark"></i></button>
-          <button class="btn-tool" onclick="downloadPDF()" title="Download PDF"><i class="fa-solid fa-file-pdf"></i></button>
+          <button class="btn-tool ${showOnlyBookmarks ? 'active-bm' : ''}" onclick="toggleBookmarkFilter()" id="bmFilterBtn">
+            <i class="fa-solid fa-bookmark"></i> (<span id="bmCount">0</span>)
+          </button>
+          <button class="btn-tool" onclick="downloadPDF()" title="Download Clean PDF"><i class="fa-solid fa-file-pdf"></i> PDF</button>
           <button class="btn-tool" onclick="adjustFontSize(-1)"><i class="fa-solid fa-minus"></i></button>
           <button class="btn-tool" onclick="adjustFontSize(1)"><i class="fa-solid fa-plus"></i></button>
         </div>
@@ -348,6 +356,7 @@
     html += `<div id="questionsContainer" style="display:flex; flex-direction:column; gap:16px;"></div>`;
 
     container.innerHTML = html;
+    updateBookmarkBadge();
     filterQuestions();
   }
 
@@ -429,6 +438,7 @@
       showToast("Question Bookmarked!");
     }
     localStorage.setItem("pyq_bookmarks", JSON.stringify(bookmarks));
+    updateBookmarkBadge();
     filterQuestions();
   }
 
@@ -437,18 +447,32 @@
     renderReader();
   }
 
-  /* PDF EXPORT LOGIC */
+  /* CLEAN PDF EXPORT LOGIC */
   function downloadPDF() {
-    showToast("Generating PDF...");
-    const element = document.getElementById("mainContainer");
+    showToast("Preparing Clean PDF...");
+    
+    // Main container ka clone banayein taaki UI kharab na ho
+    const clone = document.getElementById("mainContainer").cloneNode(true);
+    
+    // Unnecessary interactive UI items ko clean karein
+    const stickyBar = clone.querySelector('.sticky-bar');
+    const searchInput = clone.querySelector('#qSearch');
+    if (stickyBar) stickyBar.remove();
+    if (searchInput) searchInput.remove();
+
+    // Clean white print styling
+    clone.style.background = "#ffffff";
+    clone.style.color = "#000000";
+
     const opt = {
-      margin:       10,
-      filename:     `${currentData.title || 'PYQ_Notes'}.pdf`,
+      margin:       [10, 10, 10, 10],
+      filename:     `${(currentData && currentData.title) ? currentData.title : 'PYQ_Notes'}.pdf`,
       image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2, backgroundColor: '#090d16' },
+      html2canvas:  { scale: 2, backgroundColor: '#ffffff', useCORS: true },
       jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
-    html2pdf().set(opt).from(element).save();
+
+    html2pdf().set(opt).from(clone).save();
   }
 
   function setLanguage(lang) {
