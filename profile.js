@@ -2,30 +2,24 @@ let currentUser = null;
 let currentAvatarUrl = null;
 let cropper = null;
 let dangerHideTimer = null;
+let PRESET_AVATARS = [];
 
-// Preset Avatars Data
-const PRESET_AVATARS = [
-  {
-    title: "Student Boy",
-    src: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'><defs><radialGradient id='bg1' cx='50%' cy='30%' r='70%'><stop offset='0%' stop-color='%236366F1'/><stop offset='100%' stop-color='%23312E81'/></radialGradient><filter id='shadow' x='-20%' y='-20%' width='140%' height='140%'><feDropShadow dx='0' dy='4' stdDeviation='4' flood-opacity='0.3'/></filter></defs><circle cx='60' cy='60' r='60' fill='url(%23bg1)'/><g filter='url(%23shadow)'><circle cx='60' cy='48' r='22' fill='%23FDBA74'/><path d='M38 42 C38 25 82 25 82 42 C75 32 45 30 38 42 Z' fill='%231E1B4B'/><ellipse cx='52' cy='48' rx='2.5' ry='3.5' fill='%23334155'/><ellipse cx='68' cy='48' rx='2.5' ry='3.5' fill='%23334155'/><path d='M54 58 Q60 63 66 58' stroke='%23EA580C' stroke-width='2.5' stroke-linecap='round' fill='none'/><path d='M24 110 C24 82 40 70 60 70 C80 70 96 82 96 110 Z' fill='%236366F1'/><path d='M48 70 L72 70 L66 95 L54 95 Z' fill='%23FFFFFF' opacity='0.9'/></g></svg>"
-  },
-  {
-    title: "Student Girl",
-    src: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'><defs><radialGradient id='bg2' cx='50%' cy='30%' r='70%'><stop offset='0%' stop-color='%23EC4899'/><stop offset='100%' stop-color='%23831843'/></radialGradient></defs><circle cx='60' cy='60' r='60' fill='url(%23bg2)'/><path d='M28 58 C22 28 98 28 92 58 C92 80 82 85 82 85 L38 85 C38 85 28 80 28 58 Z' fill='%23271510'/><circle cx='60' cy='50' r='20' fill='%23FED7AA'/><ellipse cx='52' cy='49' rx='2.5' ry='3.5' fill='%231F2937'/><ellipse cx='68' cy='49' rx='2.5' ry='3.5' fill='%231F2937'/><path d='M54 58 Q60 63 66 58' stroke='%23BE123C' stroke-width='2.5' stroke-linecap='round' fill='none'/><path d='M26 110 C26 84 42 72 60 72 C78 72 94 84 94 110 Z' fill='%23F472B6'/></svg>"
-  },
-  {
-    title: "Gamer",
-    src: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'><defs><radialGradient id='bg3' cx='50%' cy='30%' r='70%'><stop offset='0%' stop-color='%238B5CF6'/><stop offset='100%' stop-color='%234C1D95'/></radialGradient></defs><circle cx='60' cy='60' r='60' fill='url(%23bg3)'/><circle cx='60' cy='50' r='21' fill='%23FDBA74'/><rect x='28' y='40' width='14' height='26' rx='7' fill='%2306B6D4'/><rect x='78' y='40' width='14' height='26' rx='7' fill='%2306B6D4'/><path d='M40 38 Q60 28 80 38' stroke='%2306B6D4' stroke-width='5' stroke-linecap='round' fill='none'/><ellipse cx='51' cy='50' rx='2.5' ry='3' fill='%231E293B'/><ellipse cx='69' cy='50' rx='2.5' ry='3' fill='%231E293B'/><path d='M55 60 Q60 63 65 60' stroke='%231E293B' stroke-width='2' fill='none'/><path d='M24 110 C24 82 40 72 60 72 C80 72 96 82 96 110 Z' fill='%230F172A'/><path d='M50 82 L70 82 L60 98 Z' fill='%23A855F7'/></svg>"
-  },
-  {
-    title: "Topper",
-    src: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'><defs><radialGradient id='bg4' cx='50%' cy='30%' r='70%'><stop offset='0%' stop-color='%2310B981'/><stop offset='100%' stop-color='%23064E3B'/></radialGradient></defs><circle cx='60' cy='60' r='60' fill='url(%23bg4)'/><circle cx='60' cy='50' r='22' fill='%231E293B'/><rect x='38' y='42' width='44' height='15' rx='7.5' fill='%23FED7AA'/><circle cx='51' cy='49.5' r='3.5' fill='%230F172A'/><circle cx='69' cy='49.5' r='3.5' fill='%230F172A'/><path d='M34 40 L86 40 L80 28 L40 28 Z' fill='%230F172A'/><rect x='74' y='26' width='20' height='7' rx='3.5' fill='%23EF4444'/><path d='M22 110 C22 82 40 70 60 70 C80 70 98 82 98 110 Z' fill='%230F172A'/></svg>"
-  },
-  {
-    title: "Master",
-    src: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'><defs><radialGradient id='bg5' cx='50%' cy='30%' r='70%'><stop offset='0%' stop-color='%23F59E0B'/><stop offset='100%' stop-color='%2378350F'/></radialGradient></defs><circle cx='60' cy='60' r='60' fill='url(%23bg5)'/><circle cx='60' cy='52' r='21' fill='%23FDBA74'/><path d='M20 28 L60 12 L100 28 L60 42 Z' fill='%231E1B4B'/><rect x='57' y='36' width='6' height='24' fill='%23FBBF24'/><circle cx='49' cy='51' r='8' stroke='%23334155' stroke-width='2.5' fill='none'/><circle cx='71' cy='51' r='8' stroke='%23334155' stroke-width='2.5' fill='none'/><line x1='57' y1='51' x2='63' y2='51' stroke='%23334155' stroke-width='2.5'/><path d='M22 110 C22 84 40 74 60 74 C80 74 98 84 98 110 Z' fill='%23312E81'/></svg>"
+// JSON File load karne ka function
+async function loadAvatarsFromJSON() {
+  try {
+    const response = await fetch('assets/3d/avatars.json');
+    if (!response.ok) throw new Error("Avatars JSON load failed");
+    PRESET_AVATARS = await response.json();
+    renderAvatarGrid();
+  } catch (error) {
+    console.error("Avatar load error:", error);
   }
-];
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  loadUserProfile();
+  loadAvatarsFromJSON(); // Static array call ki jagah JSON fetch karo
+});
 
 function renderAvatarGrid() {
   const grid = document.getElementById("avatarGrid");
