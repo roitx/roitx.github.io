@@ -375,8 +375,17 @@ function renderInitialAvatar() {
 }
 
 function renderAvatarImage(url) {
-  const cacheBustUrl = url.startsWith("data:") ? url : `${url}?t=${Date.now()}`;
-  document.getElementById("avatarContainer").innerHTML = `<img src="${cacheBustUrl}" alt="Profile" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+  if (!url) {
+    renderInitialAvatar();
+    return;
+  }
+  
+  const cacheBustUrl = url.startsWith("data:") ? url : `${url}&t=${Date.now()}`;
+  
+  // Agar DiceBear ka SVG URL hai, toh direct image tag me daalne par kabhi-kabhi load nahi hota
+  document.getElementById("avatarContainer").innerHTML = `
+    <img src="${cacheBustUrl}" alt="Profile" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" onerror="this.onerror=null; this.src='${url}';">
+  `;
   updateProfileProgress();
 }
 
