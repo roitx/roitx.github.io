@@ -1,30 +1,27 @@
+/* Updated testscript.js with Strict Palette Color Matching, Skipped Filter & Card Layout Sync */
+
 let currentTest = null, questions = [], currentIndex = 0;
-let userAnswers = {}, reviewStatus = {};
+let userAnswers = {}, reviewStatus = {}, skippedQuestions = {};
 let currentPaletteView = 'grid';
 let currentResultPaletteView = 'grid';
 let timerInterval = null, isTimerPaused = false;
 let totalTimeLimitSec = 0, timeRemaining = 0, totalTimeSpentSec = 0;
 let currentFilter = 'all';
-let currentMode = 'quiz';
+let currentMode = 'quiz'; 
 let currentAnalysisFilter = 'all';
 let currentUserProfile = null;
 let isSubmitted = false;
 
+let selectedPracticeOptions = {}; 
+let practiceRevealed = {}; 
+
 let chartBrief = null, chartAccuracy = null, chartScore = null;
 
-// MathJax Configuration Update
+// MathJax Configuration
 window.MathJax = {
-    tex: {
-        inlineMath: [['$', '$'], ['\\(', '\\)']],
-        displayMath: [['$$', '$$'], ['\\[', '\\]']]
-    },
-    chtml: {
-        displayAlign: 'left',
-        matchFontHeight: false
-    },
-    options: {
-        enableMenu: false
-    }
+    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+    chtml: { displayAlign: 'left', matchFontHeight: false },
+    options: { enableMenu: false }
 };
 
 function renderMathJax(elements) {
@@ -36,34 +33,20 @@ function renderMathJax(elements) {
 function ensureMathDelimiter(str) {
     if (!str) return "";
     let trimmed = String(str).trim();
-    if (trimmed.includes("\\") && !trimmed.includes("$")) {
-        return `$${trimmed}$`;
-    }
+    if (trimmed.includes("\\") && !trimmed.includes("$")) return `$${trimmed}$`;
     return str;
 }
 
-// Step-by-Step Line Break Formatter Logic
 function formatSolutionText(text) {
     if (!text) return "";
     let formatted = String(text);
-    
-    // Line breaks for Roman numerals like I., II., III., IV., V.
     formatted = formatted.replace(/\s*([I|V|X]+\.\s*)/g, '<br>$1');
-    
-    // Line breaks for standard numbers like 1., 2., 3.
     formatted = formatted.replace(/\s*(\d+\.\s*)/g, '<br>$1');
-    
-    // Standard newline conversion
     formatted = formatted.replace(/\n/g, '<br>');
-    
-    // Clean initial trailing breaks
-    if (formatted.startsWith('<br>')) {
-        formatted = formatted.substring(4);
-    }
+    if (formatted.startsWith('<br>')) formatted = formatted.substring(4);
     return formatted;
 }
 
-// Diagram (SVG & Image) Render Engine
 function getDiagramHtml(q) {
     if (!q) return "";
     let figureHtml = "";
@@ -80,9 +63,7 @@ function preventDoubleTapZoom() {
     document.addEventListener('touchend', function (event) {
         const now = (new Date()).getTime();
         if (now - lastTouchEnd <= 300) {
-            if (event.cancelable) {
-                event.preventDefault();
-            }
+            if (event.cancelable) event.preventDefault();
         }
         lastTouchEnd = now;
     }, { passive: false });
@@ -143,8 +124,6 @@ window.addEventListener('DOMContentLoaded', async function() {
     if (urlMode === 'practice' || urlMode === 'quiz') {
         currentMode = urlMode;
     }
-    const modeSelector = document.getElementById('modeSelector');
-    if (modeSelector) modeSelector.value = currentMode;
 
     if (testId) { await loadTestDetails(testId); } 
     else { loadDummyTest(); }
@@ -178,8 +157,10 @@ async function saveProgressToSupabase(draftData) {
             .upsert({
                 user_id: user.id,
                 test_id: currentTest.id,
+                mode: currentMode,
                 user_answers: draftData.userAnswers,
                 review_status: draftData.reviewStatus,
+                skipped_status: draftData.skippedQuestions,
                 time_remaining: draftData.timeRemaining,
                 total_time_spent_sec: draftData.totalTimeSpentSec,
                 is_completed: false,
@@ -194,8 +175,11 @@ function saveLocalDraft() {
     if (isSubmitted || !currentTest) return;
     const draftData = {
         testId: currentTest.id,
+        mode: currentMode,
+        currentIndex: currentIndex, // <-- Bas ye line add karni hai
         userAnswers: userAnswers,
         reviewStatus: reviewStatus,
+        skippedQuestions: skippedQuestions,
         timeRemaining: timeRemaining,
         totalTimeSpentSec: totalTimeSpentSec,
         lastUpdated: new Date().toISOString()
@@ -208,6 +192,7 @@ function saveLocalDraft() {
 async function loadLocalDraft() {
     if (!currentTest) return false;
 
+    // 1. Supabase Cloud Sync
     if (window.supabaseClient && currentTest.id !== 'demo_test') {
         try {
             const { data: { user } } = await window.supabaseClient.auth.getUser();
@@ -224,10 +209,21 @@ async function loadLocalDraft() {
                         clearLocalDraftStorageOnly();
                         return false; 
                     }
+                    if (data.mode) currentMode = data.mode;
                     userAnswers = data.user_answers || {};
                     reviewStatus = data.review_status || {};
+                    skippedQuestions = data.skipped_status || {};
+                    
+                    if (data.current_index !== undefined && data.current_index !== null) {
+                        currentIndex = parseInt(data.current_index, 10);
+                    }
+                    
                     timeRemaining = data.time_remaining !== undefined ? data.time_remaining : totalTimeLimitSec;
                     totalTimeSpentSec = data.total_time_spent_sec || 0;
+                    
+                    Object.keys(userAnswers).forEach(idx => {
+                        practiceRevealed[idx] = true;
+                    });
                     return true;
                 }
             }
@@ -236,15 +232,27 @@ async function loadLocalDraft() {
         }
     }
 
+    // 2. LocalStorage Sync
     const key = getDraftStorageKey();
     const raw = localStorage.getItem(key);
     if (raw) {
         try {
             const draft = JSON.parse(raw);
+            if (draft.mode) currentMode = draft.mode;
             userAnswers = draft.userAnswers || {};
             reviewStatus = draft.reviewStatus || {};
+            skippedQuestions = draft.skippedQuestions || {};
+            
+            if (draft.currentIndex !== undefined && draft.currentIndex !== null) {
+                currentIndex = parseInt(draft.currentIndex, 10);
+            }
+            
             timeRemaining = draft.timeRemaining !== undefined ? draft.timeRemaining : totalTimeLimitSec;
             totalTimeSpentSec = draft.totalTimeSpentSec || 0;
+            
+            Object.keys(userAnswers).forEach(idx => {
+                practiceRevealed[idx] = true;
+            });
             return true;
         } catch (e) {
             console.warn("Invalid draft format:", e);
@@ -292,6 +300,7 @@ function loadDummyTest() {
         time_limit_mins: 20,
         marks_per_question: 3,
         negative_marks: 1,
+        mode: "quiz",
         questions_data: Array.from({ length: 15 }, (_, i) => ({
             question_text: `खण्डशः समाकलन (Integration by parts) विधि से $\\int x e^x dx$ का मान क्या होगा?`,
             image_url: null,
@@ -322,10 +331,96 @@ async function loadTestDetails(id) {
     }
 }
 
+function setupInstructionAgreementUI(isResume) {
+    const startBtn = document.getElementById("startTestBtn");
+    let agreementBox = document.getElementById("instructionAgreementBox");
+    const container = document.getElementById("instructionAgreementBoxContainer");
+    
+    if (!agreementBox && container) {
+        agreementBox = document.createElement("div");
+        agreementBox.id = "instructionAgreementBox";
+        agreementBox.className = "inst-agreement-box";
+
+        agreementBox.innerHTML = `
+          <div class="agree-box">
+            <label class="cb">
+              <input type="checkbox" id="agreeInstructions">
+              <span class="box">
+                <svg viewBox="0 0 12 10" class="tick"><path d="M1 5 L4.5 8.5 L11 1" /></svg>
+              </span>
+            </label>
+            <label for="agreeInstructions" class="txt">Maine sabhi instructions dhyaan se padh liye hain aur main test start karne ke liye tayar hoon.</label>
+          </div>
+        `;
+
+        container.appendChild(agreementBox);
+
+        const checkbox = document.getElementById("agreeInstructions");
+        checkbox.addEventListener("change", function() {
+            if (startBtn && !startBtn.getAttribute('data-loading')) {
+                startBtn.disabled = !this.checked;
+            }
+            if (this.checked) {
+                agreementBox.classList.add("checked");
+            } else {
+                agreementBox.classList.remove("checked");
+            }
+        });
+    }
+
+    const checkbox = document.getElementById("agreeInstructions");
+    if (isResume) {
+        if (agreementBox) agreementBox.style.display = "none";
+        if (checkbox) checkbox.checked = true;
+        if (startBtn) startBtn.disabled = false;
+    } else {
+        if (agreementBox) agreementBox.style.display = "flex";
+        if (checkbox) checkbox.checked = false;
+        if (startBtn) startBtn.disabled = true; // Button disabled & feeka dikhega
+        if (agreementBox) agreementBox.classList.remove("checked");
+   }
+  }
+  
 async function setupTestInit() {
     isSubmitted = false;
     const resArea = document.getElementById("resultArea");
     if (resArea) resArea.style.display = "none";
+
+    const btnStart = document.getElementById("startTestBtn");
+    if (btnStart) {
+        btnStart.disabled = true;
+        btnStart.setAttribute('data-loading', 'true');
+        btnStart.innerText = "Loading details...";
+    }
+
+    const instDuration = document.getElementById("instDuration");
+    if (instDuration) instDuration.innerText = "-- Mins";
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlMode = urlParams.get('mode');
+    const isReattempt = urlParams.get('reattempt') === 'true';
+    const isResumeParam = urlParams.get('resume') === 'true';
+    let isResumeMode = false;
+
+    if (isReattempt) {
+        await clearLocalDraft();
+        userAnswers = {};
+        reviewStatus = {};
+        skippedQuestions = {};
+        selectedPracticeOptions = {};
+        practiceRevealed = {};
+        currentIndex = 0;
+        if (urlMode) currentMode = urlMode;
+        timeRemaining = totalTimeLimitSec;
+        totalTimeSpentSec = 0;
+    } else {
+        const draftLoaded = await loadLocalDraft();
+        if (draftLoaded) {
+            isResumeMode = true;
+        } else if (urlMode) {
+            currentMode = urlMode;
+        }
+    }
 
     questions = currentTest.questions_data || [];
     const headingElem = document.getElementById("testHeading");
@@ -333,32 +428,24 @@ async function setupTestInit() {
     
     let mins = Number(currentTest.time_limit_mins) || 20;
     totalTimeLimitSec = mins * 60;
-    timeRemaining = totalTimeLimitSec;
+    if (!isResumeMode) timeRemaining = totalTimeLimitSec;
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const isReattempt = urlParams.get('reattempt') === 'true';
+    const modeSelector = document.getElementById('modeSelector');
+    if (modeSelector) modeSelector.value = currentMode;
 
-    if (isReattempt) {
-        await clearLocalDraft();
-        userAnswers = {};
-        reviewStatus = {};
-        timeRemaining = totalTimeLimitSec;
-        totalTimeSpentSec = 0;
-    } else {
-        const draftLoaded = await loadLocalDraft();
-        const btnStart = document.getElementById("startBtnText");
-        if (draftLoaded && btnStart) {
-            btnStart.innerText = "Resume Test";
-        } else if (btnStart) {
-            btnStart.innerText = "Start Test";
-        }
+    // Resume flow: Instruction modal bypass & Jump to saved question index
+    if (isResumeMode || isResumeParam) {
+        const instModal = document.getElementById("instructionsModal");
+        if (instModal) instModal.style.display = "none";
+        startTestFromInstructions();
+        return;
     }
 
-    const posMarks = currentTest.marks_per_question !== undefined ? currentTest.marks_per_question : 1;
-    const negMarks = currentTest.negative_marks !== undefined ? currentTest.negative_marks : (currentTest.negative_marking || 0);
+    // Modal UI Updates (Positive/Negative Marks & Duration)
+    const posMarks = currentTest.marks_per_question !== undefined ? Number(currentTest.marks_per_question) : 1;
+    const negMarks = currentTest.negative_marks !== undefined ? Number(currentTest.negative_marks) : (Number(currentTest.negative_marking) || 0);
     const totalMaxMarks = questions.length * posMarks;
 
-    const instDuration = document.getElementById("instDuration");
     if (instDuration) instDuration.innerText = `${mins} Mins`;
     
     const instMarks = document.getElementById("instMarks");
@@ -371,17 +458,28 @@ async function setupTestInit() {
     if (instTimeText) instTimeText.innerText = `${mins} minutes`;
 
     const posMarkElem = document.getElementById("instPositiveMarkText");
-    if (posMarkElem) posMarkElem.innerText = `+${posMarks} mark${posMarks > 1 ? 's' : ''}`;
+    if (posMarkElem) {
+        posMarkElem.innerText = `+${posMarks} mark${posMarks > 1 ? 's' : ''}`;
+    }
 
-    const negRuleElem = document.getElementById("instNegativeMarkRule") || document.getElementById("instNegativeMarkingRule");
+    const negRuleElem = document.getElementById("instNegativeMarkingRule") || document.getElementById("instNegativeMarkRule");
     if (negRuleElem) {
         if (negMarks > 0) {
-            negRuleElem.innerText = `Negative marking of -${negMarks} marks for each incorrect answer.`;
+            negRuleElem.innerText = `-${negMarks} mark${negMarks > 1 ? 's' : ''}`;
             negRuleElem.style.color = "#f43f5e";
         } else {
-            negRuleElem.innerText = "There is No Negative marking for incorrect answers.";
+            negRuleElem.innerText = "No negative marking";
             negRuleElem.style.color = "#10b981";
         }
+    }
+
+    setupInstructionAgreementUI(false);
+
+    if (btnStart) {
+        btnStart.removeAttribute('data-loading');
+        btnStart.innerText = "Start Test";
+        const checkbox = document.getElementById("agreeInstructions");
+        btnStart.disabled = !(checkbox && checkbox.checked);
     }
 
     const instModal = document.getElementById("instructionsModal");
@@ -401,7 +499,10 @@ function startTestFromInstructions() {
     applyModeUI();
     renderPalette();
     switchPaletteView(currentPaletteView);
-    loadQuestion(0);
+    
+    // 👇 Ensure stored currentIndex is loaded directly (e.g. Question 5)
+    let resumeQIndex = (typeof currentIndex === 'number' && currentIndex < questions.length) ? currentIndex : 0;
+    loadQuestion(resumeQIndex);
 }
 
 function exitExam() { 
@@ -412,6 +513,7 @@ function exitExam() {
 function onModeChange(newMode) {
     currentMode = newMode;
     applyModeUI();
+    saveLocalDraft();
     loadQuestion(currentIndex);
 }
 
@@ -488,6 +590,29 @@ function switchResultPaletteView(view) {
     }
 }
 
+function getQuestionClass(idx) {
+    let cls = "";
+    if (idx === currentIndex) cls += " active";
+    
+    const isAnswered = userAnswers[idx] !== undefined;
+    const isReview = !!reviewStatus[idx];
+    const isSkippedExplicitly = !!skippedQuestions[idx];
+
+    if (isAnswered && isReview) {
+        return cls + " attempted-review";
+    } else if (!isAnswered && isReview) {
+        return cls + " skipped-review";
+    } else if (isReview) {
+        return cls + " review-only";
+    } else if (isAnswered) {
+        return cls + " answered";
+    } else if (isSkippedExplicitly) {
+        return cls + " explicit-skipped";
+    }
+    return cls + " unanswered";
+}
+
+/* RENDER PALETTE IN GRID AND LIST VIEWS WITH COMPLETE COLOR SYNC */
 function renderPalette() {
     const grid = document.getElementById("paletteGrid");
     const list = document.getElementById("paletteList");
@@ -498,25 +623,39 @@ function renderPalette() {
 
     questions.forEach((q, idx) => {
         const isAnswered = userAnswers[idx] !== undefined;
-        const isReview = reviewStatus[idx];
+        const isReview = !!reviewStatus[idx];
+        const isExplicitSkipped = !!skippedQuestions[idx];
 
         if (currentFilter === 'answered' && !isAnswered) return;
-        if (currentFilter === 'unanswered' && isAnswered) return;
+        if (currentFilter === 'skipped' && !isExplicitSkipped) return;
         if (currentFilter === 'review' && !isReview) return;
 
         const qClass = getQuestionClass(idx);
         const qText = q.question_text || q.question || `Question ${idx + 1}`;
 
+        // Grid View Item
         const btn = document.createElement("button");
         btn.className = `p-btn ${qClass}`;
         btn.innerText = idx + 1;
         btn.onclick = () => { loadQuestion(idx); closeMobilePalette(); };
         grid.appendChild(btn);
 
+        // List View Item
         const listCard = document.createElement("div");
         listCard.className = `p-list-card ${qClass}`;
+        
+        let statusBadge = `<span class="p-list-badge unans">Unanswered</span>`;
+        if (isAnswered && isReview) statusBadge = `<span class="p-list-badge rev">Ans & Review</span>`;
+        else if (!isAnswered && isReview) statusBadge = `<span class="p-list-badge rev">Skip & Review</span>`;
+        else if (isAnswered) statusBadge = `<span class="p-list-badge ans">Answered</span>`;
+        else if (isReview) statusBadge = `<span class="p-list-badge rev">Review</span>`;
+        else if (isExplicitSkipped) statusBadge = `<span class="p-list-badge skp">Skipped</span>`;
+
         listCard.innerHTML = `
-            <div class="p-list-num">${idx + 1}.</div>
+            <div class="p-list-head">
+                <span class="p-list-num">Q${idx + 1}.</span>
+                ${statusBadge}
+            </div>
             <div class="p-list-text">${qText}</div>
         `;
         listCard.onclick = () => { loadQuestion(idx); closeMobilePalette(); };
@@ -533,14 +672,6 @@ function filterPalette(filter, el) {
     renderPalette();
 }
 
-function getQuestionClass(idx) {
-    let cls = "";
-    if (idx === currentIndex) cls += " active";
-    if (reviewStatus[idx]) return cls + " review";
-    if (userAnswers[idx] !== undefined) return cls + " answered";
-    return cls + " unanswered";
-}
-
 function loadQuestion(idx) {
     if (idx < 0 || idx >= questions.length) return;
     currentIndex = idx;
@@ -553,7 +684,7 @@ function loadQuestion(idx) {
 
     const curNum = document.getElementById("currentQNum");
     if (curNum) curNum.innerText = `Question ${idx + 1}`;
-    
+
     const qTextElem = document.getElementById("questionText");
     if (qTextElem) {
         let questionContent = ensureMathDelimiter(q.question_text || q.question || '');
@@ -566,6 +697,8 @@ function loadQuestion(idx) {
 
     const options = q.options || [q.option1, q.option2, q.option3, q.option4];
     const userSelected = userAnswers[idx];
+    const tempSelected = selectedPracticeOptions[idx];
+    const isRevealed = practiceRevealed[idx];
     const correctIdx = parseCorrectOption(q);
     const explanationBox = document.getElementById("practiceExplanation");
 
@@ -574,10 +707,14 @@ function loadQuestion(idx) {
             const card = document.createElement("div");
             let cardClasses = `option-card`;
 
-            if (currentMode === 'practice' && userSelected !== undefined) {
-                cardClasses += ' locked';
-                if (oIdx === correctIdx) cardClasses += ' practice-correct';
-                else if (oIdx === userSelected) cardClasses += ' practice-incorrect';
+            if (currentMode === 'practice') {
+                if (isRevealed) {
+                    cardClasses += ' locked';
+                    if (oIdx === correctIdx) cardClasses += ' practice-correct';
+                    else if (oIdx === userSelected) cardClasses += ' practice-incorrect';
+                } else if (tempSelected === oIdx) {
+                    cardClasses += ' selected';
+                }
             } else {
                 if (userSelected === oIdx) cardClasses += ' selected';
             }
@@ -587,10 +724,29 @@ function loadQuestion(idx) {
             card.innerHTML = `<div class="opt-prefix">${String.fromCharCode(65 + oIdx)}</div><div>${ensureMathDelimiter(opt)}</div>`;
             optionsBox.appendChild(card);
         });
+
+        if (currentMode === 'practice' && !isRevealed) {
+            const checkBtnContainer = document.createElement("div");
+            checkBtnContainer.style.marginTop = "12px";
+            checkBtnContainer.style.textAlign = "right";
+
+            const checkBtn = document.createElement("button");
+            checkBtn.className = "btn btn-primary";
+            checkBtn.style.padding = "8px 16px";
+            checkBtn.style.fontSize = "13px";
+            checkBtn.innerHTML = `<i class="fa-solid fa-circle-check"></i> Check Answer`;
+            checkBtn.disabled = tempSelected === undefined;
+            checkBtn.style.opacity = tempSelected === undefined ? "0.5" : "1";
+            checkBtn.style.cursor = tempSelected === undefined ? "not-allowed" : "pointer";
+
+            checkBtn.onclick = () => revealPracticeAnswer();
+            checkBtnContainer.appendChild(checkBtn);
+            optionsBox.appendChild(checkBtnContainer);
+        }
     }
 
     if (explanationBox) {
-        if (currentMode === 'practice' && userSelected !== undefined) {
+        if (currentMode === 'practice' && isRevealed) {
             explanationBox.style.display = 'block';
             const expText = document.getElementById("explanationText");
             if (expText) {
@@ -602,11 +758,39 @@ function loadQuestion(idx) {
         }
     }
 
+    const reviewBtn = document.getElementById("reviewBtn");
+    if (reviewBtn) {
+        if (reviewStatus[idx]) {
+            reviewBtn.innerHTML = `<i class="fa-solid fa-bookmark"></i> Unmark`;
+            reviewBtn.className = "btn btn-warning active";
+        } else {
+            reviewBtn.innerHTML = `<i class="fa-regular fa-bookmark"></i> Review`;
+            reviewBtn.className = "btn btn-outline";
+        }
+    }
+
     const nextBtn = document.getElementById("nextBtn");
     if (nextBtn) {
-        nextBtn.innerHTML = currentIndex === questions.length - 1 ? `Submit Test <i class="fa-solid fa-paper-plane"></i>` : `Next <i class="fa-solid fa-chevron-right"></i>`;
+        const isOptionSelected = userAnswers[currentIndex] !== undefined;
+        const isLastQuestion = currentIndex === questions.length - 1;
+
+        if (isLastQuestion) {
+            if (isOptionSelected) {
+                nextBtn.innerHTML = `Submit Test <i class="fa-solid fa-paper-plane"></i>`;
+                nextBtn.className = "btn btn-primary";
+            } else {
+                nextBtn.innerHTML = `Skip & Submit <i class="fa-solid fa-paper-plane"></i>`;
+                nextBtn.className = "btn btn-outline";
+            }
+        } else if (isOptionSelected) {
+            nextBtn.innerHTML = `Next <i class="fa-solid fa-chevron-right"></i>`;
+            nextBtn.className = "btn btn-primary";
+        } else {
+            nextBtn.innerHTML = `Skip <i class="fa-solid fa-forward"></i>`;
+            nextBtn.className = "btn btn-outline";
+        }
     }
-    
+
     renderPalette();
 
     const elementsToTypeset = [qTextElem, optionsBox, explanationBox].filter(Boolean);
@@ -614,14 +798,25 @@ function loadQuestion(idx) {
 }
 
 function selectOption(oIdx) {
-    if (currentMode === 'practice' && userAnswers[currentIndex] !== undefined) return;
-    
-    userAnswers[currentIndex] = oIdx;
-    delete reviewStatus[currentIndex];
-
+    delete skippedQuestions[currentIndex];
     if (currentMode === 'practice') {
-        isTimerPaused = true;
+        if (practiceRevealed[currentIndex]) return;
+        selectedPracticeOptions[currentIndex] = oIdx;
+        loadQuestion(currentIndex);
+    } else {
+        userAnswers[currentIndex] = oIdx;
+        saveLocalDraft();
+        loadQuestion(currentIndex);
     }
+}
+
+function revealPracticeAnswer() {
+    if (selectedPracticeOptions[currentIndex] === undefined) return;
+    
+    delete skippedQuestions[currentIndex];
+    userAnswers[currentIndex] = selectedPracticeOptions[currentIndex];
+    practiceRevealed[currentIndex] = true;
+    isTimerPaused = true;
 
     saveLocalDraft();
     loadQuestion(currentIndex);
@@ -630,12 +825,19 @@ function selectOption(oIdx) {
 function clearResponse() {
     delete userAnswers[currentIndex];
     delete reviewStatus[currentIndex];
+    delete skippedQuestions[currentIndex];
+    delete selectedPracticeOptions[currentIndex];
+    delete practiceRevealed[currentIndex];
     saveLocalDraft();
     loadQuestion(currentIndex);
 }
 
 function markForReview() {
-    reviewStatus[currentIndex] = true;
+    if (reviewStatus[currentIndex]) {
+        delete reviewStatus[currentIndex];
+    } else {
+        reviewStatus[currentIndex] = true;
+    }
     saveLocalDraft();
     if (currentIndex < questions.length - 1) navigateQuestion(1);
     else loadQuestion(currentIndex);
@@ -647,8 +849,17 @@ function navigateQuestion(dir) {
 }
 
 function handleNextOrSubmit() {
-    if (currentIndex === questions.length - 1) confirmSubmission();
-    else navigateQuestion(1);
+    const isLastQuestion = currentIndex === questions.length - 1;
+    if (userAnswers[currentIndex] === undefined) {
+        skippedQuestions[currentIndex] = true;
+        saveLocalDraft();
+    }
+
+    if (isLastQuestion) {
+        confirmSubmission();
+    } else {
+        navigateQuestion(1);
+    }
 }
 
 function startTimer() {
@@ -905,7 +1116,6 @@ async function saveResultAndFetchRank(scoreVal, totalMarks) {
     const rankValElem = document.getElementById("resRankVal");
     const rankTotalElem = document.getElementById("resRankTotal");
 
-    // Demo Test Fallback
     if (!window.supabaseClient || !currentTest || currentTest.id === 'demo_test') {
         if (rankValElem) rankValElem.innerText = "#1";
         if (rankTotalElem) rankTotalElem.innerText = "Out of 1 (Demo)";
@@ -920,7 +1130,6 @@ async function saveResultAndFetchRank(scoreVal, totalMarks) {
             return;
         }
 
-        // Count calculation
         let correctCount = 0, wrongCount = 0, skippedCount = 0;
         questions.forEach((q, idx) => {
             let correctIdx = parseCorrectOption(q);
@@ -935,68 +1144,47 @@ async function saveResultAndFetchRank(scoreVal, totalMarks) {
         const attempted = correctCount + wrongCount;
         const accuracyPct = attempted > 0 ? Math.round((correctCount / attempted) * 100) : 0;
 
-        // Structured Answer Payload Formatting
         const formattedUserAnswers = questions.map((q, idx) => {
-    let correctIdx = parseCorrectOption(q);
-    let userAnsIdx = userAnswers[idx];
-    let options = q.options || [q.option1, q.option2, q.option3, q.option4];
+            let correctIdx = parseCorrectOption(q);
+            let userAnsIdx = userAnswers[idx];
+            let options = q.options || [q.option1, q.option2, q.option3, q.option4];
 
-    // Safely extract SVG content
-    let svgContent = q.diagram_svg || q.svg || q.svg_code || null;
-    if (typeof svgContent === 'string') {
-        svgContent = svgContent.trim() !== '' ? svgContent.trim() : null;
-    } else {
-        svgContent = null;
-    }
+            let svgContent = q.diagram_svg || q.svg || q.svg_code || null;
+            if (typeof svgContent === 'string') {
+                svgContent = svgContent.trim() !== '' ? svgContent.trim() : null;
+            } else {
+                svgContent = null;
+            }
 
-    // Safely extract Image URL with multiple key fallbacks
-    let rawImg = q.image_url || q.image || q.q_image || q.questionImg || q.imgUrl || q.imageUrl || (q.question_data && q.question_data.image_url) || null;
-    let imgUrl = null;
-    if (rawImg && typeof rawImg === 'string' && rawImg !== 'null' && rawImg !== 'undefined' && rawImg.trim() !== '') {
-        imgUrl = rawImg.trim();
-    }
+            let rawImg = q.image_url || q.image || q.q_image || q.questionImg || q.imgUrl || q.imageUrl || (q.question_data && q.question_data.image_url) || null;
+            let imgUrl = null;
+            if (rawImg && typeof rawImg === 'string' && rawImg !== 'null' && rawImg !== 'undefined' && rawImg.trim() !== '') {
+                imgUrl = rawImg.trim();
+            }
 
-    return {
-        qIndex: idx,
-        questionText: q.question_text || q.question || q.title || `Question ${idx + 1}`,
-        userAnsIndex: userAnsIdx !== undefined ? userAnsIdx : null,
-        userAnsText: userAnsIdx !== undefined ? (options[userAnsIdx] || "N/A") : "Not Answered",
-        correctAnsIndex: correctIdx,
-        correctAnsText: options[correctIdx] || "N/A",
-        isCorrect: userAnsIdx === correctIdx,
-        isSkipped: userAnsIdx === undefined || userAnsIdx === null,
-        explanation: q.explanation || q.solution || q.exp || "",
-        // Added image and SVG attributes for Database Persistence
-        diagram_svg: svgContent,
-        image_url: imgUrl,
-        options: options
-    };
-});
+            return {
+                qIndex: idx,
+                questionText: q.question_text || q.question || q.title || `Question ${idx + 1}`,
+                userAnsIndex: userAnsIdx !== undefined ? userAnsIdx : null,
+                userAnsText: userAnsIdx !== undefined ? (options[userAnsIdx] || "N/A") : "Not Answered",
+                correctAnsIndex: correctIdx,
+                correctAnsText: options[correctIdx] || "N/A",
+                isCorrect: userAnsIdx === correctIdx,
+                isSkipped: userAnsIdx === undefined || userAnsIdx === null,
+                explanation: q.explanation || q.solution || q.exp || "",
+                diagram_svg: svgContent,
+                image_url: imgUrl,
+                options: options
+            };
+        });
 
-
-        // 1. Local Storage Backup Write
-        try {
-            const backupKey = `test_result_backup_${currentTest.id}`;
-            localStorage.setItem(backupKey, JSON.stringify({
-                testId: currentTest.id,
-                userId: user.id,
-                score: scoreVal,
-                totalMarks: totalMarks,
-                userAnswers: formattedUserAnswers,
-                rawAnswers: userAnswers
-            }));
-        } catch (e) {
-            console.warn("Local storage result backup failed:", e);
-        }
-
-        // 2. Supabase Upsert
         const { error: insertErr } = await window.supabaseClient
             .from('test_results')
             .upsert([{
                 user_id: user.id,
                 test_id: currentTest.id,
                 test_title: currentTest.title || 'Portal Test',
-                subject: currentTest.subject || currentTest.subject_name || 'General', // Subject dropdown fix ke liye
+                subject: currentTest.subject || currentTest.subject_name || 'General',
                 score: scoreVal.toString(),
                 total_marks: totalMarks.toString(),
                 accuracy: accuracyPct,
@@ -1005,16 +1193,14 @@ async function saveResultAndFetchRank(scoreVal, totalMarks) {
                 skipped_answers: skippedCount,
                 time_taken_sec: totalTimeSpentSec,
                 user_answers: formattedUserAnswers,
-                created_at: new Date().toISOString(), // Har reattempt par latest date save hogi
+                created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString()
             }], { onConflict: 'user_id,test_id' });
-
 
         if (insertErr) {
             console.error("Supabase Save Result Error:", insertErr.message || JSON.stringify(insertErr));
         }
 
-        // 3. Fetch Leaderboard & Calculate Real-Time Rank
         const { data: results, error } = await window.supabaseClient
             .from('test_results')
             .select('user_id, score, time_taken_sec')
@@ -1026,7 +1212,6 @@ async function saveResultAndFetchRank(scoreVal, totalMarks) {
             return;
         }
 
-        // Best Score per User Map
         let userBestMap = {};
         results.forEach(r => {
             const numScore = parseFloat(r.score) || 0;
@@ -1035,7 +1220,6 @@ async function saveResultAndFetchRank(scoreVal, totalMarks) {
             }
         });
 
-        // Rank Sorting (Higher score first, lower time taken on tie)
         let sortedList = Object.values(userBestMap).sort((a, b) => {
             if (b.score !== a.score) return b.score - a.score;
             return (a.time_taken_sec || 0) - (b.time_taken_sec || 0);
@@ -1067,7 +1251,7 @@ function renderCharts(correct, wrong, skipped, accuracy, score) {
                 labels: ['Correct', 'Wrong', 'Skipped'],
                 datasets: [{
                     data: [correct, wrong, skipped],
-                    backgroundColor: ['#10b981', '#f43f5e', '#f59e0b'],
+                    backgroundColor: ['#10b981', '#f43f5e', '#ea580c'],
                     borderWidth: 0
                 }]
             },
@@ -1109,6 +1293,7 @@ function renderCharts(correct, wrong, skipped, accuracy, score) {
 function reattemptTest() {
     window.location.href = `take-test.html?id=${currentTest?.id || 'demo_test'}&mode=${currentMode}&reattempt=true`;
 }
+
 function viewPerformance() {
     const testId = currentTest?.id || 'demo_test';
     window.location.href = `performance.html?test_id=${testId}`;
@@ -1242,15 +1427,6 @@ function toggleSolutions() {
     }
 }
 
-function toggleExplanation(selectedOptionElement) {
-    document.querySelectorAll('.option-explanation').forEach(el => el.style.display = 'none');
-    
-    const explanationDiv = selectedOptionElement.querySelector('.option-explanation');
-    if (explanationDiv) {
-        explanationDiv.style.display = 'block';
-    }
-}
-
 function filterSolutions(type, el) {
     currentAnalysisFilter = type;
     if (el) {
@@ -1337,6 +1513,19 @@ function renderSolutions() {
         solList.innerHTML = html || `<div style="padding: 10px; text-align: center; color: #94a3b8; font-size: 12px;">Is category me koi question nahi hai.</div>`;
     }
     renderMathJax();
+}
+
+function switchInstTab(tabName) {
+    document.querySelectorAll('.inst-tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.inst-tab-content').forEach(content => content.classList.remove('active'));
+
+    if (tabName === 'test') {
+        document.getElementById('btnTabTest')?.classList.add('active');
+        document.getElementById('tabContentTest')?.classList.add('active');
+    } else {
+        document.getElementById('btnTabGeneral')?.classList.add('active');
+        document.getElementById('tabContentGeneral')?.classList.add('active');
+    }
 }
 
 async function reportBug(questionIdx) {

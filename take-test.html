@@ -34,35 +34,94 @@
     <i class="fa-solid fa-wifi"></i> Internet Disconnected! You are currently working offline.
 </div>
 
-<!-- INSTRUCTIONS MODAL OVERLAY -->
+<!-- INSTRUCTIONS MODAL OVERLAY WITH TABS -->
 <div class="instructions-modal" id="instructionsModal">
     <div class="instructions-card">
         <div class="instructions-header">
-            <h2>Instructions & Marking Details</h2>
+            <h2><i class="fa-solid fa-clipboard-list"></i> Important Instructions</h2>
             <button class="btn-close-icon" onclick="exitExam()"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <div class="meta-pills">
-            <div class="pill">Duration: <span id="instDuration">-- Mins</span></div>
-            <div class="pill">Maximum Marks: <span id="instMarks">--</span></div>
-        </div>
-        <p class="inst-subhead">Please read the examination rules carefully before starting:</p>
-        
-        <ol class="inst-list">
-            <li>The test contains <strong id="instTotalQ">--</strong> total questions.</li>
-            <li>Each question has <strong>4 options</strong>, out of which only one is correct.</li>
-            <li>You have to finish the test in <strong id="instTimeText">-- minutes</strong>.</li>
-            <li><strong>Correct Answer Marking:</strong> You will be awarded <strong id="instPositiveMarkText" style="color: #10b981;">+1 mark</strong> for every correct response.</li>
-            <li><strong>Negative Marking:</strong> <strong id="instNegativeMarkingRule">No negative marking</strong></li>
-            <li>You can view your <strong>Score & Rank</strong> immediately after submitting the test.</li>
-            <li>Check detailed <strong>Solutions & Explanations</strong> after submitting.</li>
-        </ol>
 
-        <div class="inst-actions">
-            <button class="btn-inst-cancel" onclick="exitExam()">Cancel</button>
-            <button class="btn-inst-start" id="startBtnText" onclick="startTestFromInstructions()">Start Test</button>
+        <!-- Navigation Tabs -->
+        <div class="inst-tabs">
+            <button class="inst-tab-btn active" id="btnTabTest" onclick="switchInstTab('test')">
+                <i class="fa-solid fa-file-lines"></i> Test Details
+            </button>
+            <button class="inst-tab-btn" id="btnTabGeneral" onclick="switchInstTab('general')">
+                <i class="fa-solid fa-sliders"></i> Portal Features
+            </button>
+        </div>
+
+        <!-- TAB 1: SPECIFIC TEST DETAILS -->
+        <div class="inst-tab-content active" id="tabContentTest">
+            <div class="meta-pills">
+                <div class="pill"><i class="fa-regular fa-clock"></i> Duration: <span id="instDuration">-- Mins</span></div>
+                <div class="pill"><i class="fa-solid fa-award"></i> Max Marks: <span id="instMarks">--</span></div>
+            </div>
+            
+            <ul class="inst-feature-list">
+                <li>
+                    <i class="fa-solid fa-circle-question list-icon"></i>
+                    <div><b>Total Questions:</b> Iss test me kul <strong id="instTotalQ">--</strong> questions hain.</div>
+                </li>
+                <li>
+                    <i class="fa-solid fa-stopwatch list-icon"></i>
+                    <div><b>Time Limit:</b> Test poora karne ke liye <strong id="instTimeText">-- minutes</strong> milenge. Timer automatic start ho jayega.</div>
+                </li>
+                <li>
+                    <i class="fa-solid fa-circle-check list-icon text-success"></i>
+                    <div><b>Correct Marking:</b> Sahi jawab dene par <strong id="instPositiveMarkText" style="color: #10b981;">+1 mark</strong> milega.</div>
+                </li>
+                <li>
+                    <i class="fa-solid fa-circle-minus list-icon text-danger"></i>
+                    <div><b>Negative Marking:</b> <strong id="instNegativeMarkingRule">No negative marking</strong></div>
+                </li>
+                <li>
+                    <i class="fa-solid fa-floppy-disk list-icon"></i>
+                    <div><b>Auto Save Progress:</b> Agar aap bich me app close kar dete hain, to aapka progress auto-save ho jayega aur aap wahi se resume kar sakte hain.</div>
+                </li>
+            </ul>
+        </div>
+
+        <!-- TAB 2: GENERAL TEST PORTAL GUIDE -->
+        <div class="inst-tab-content" id="tabContentGeneral">
+            <ul class="inst-feature-list">
+                <li>
+                    <i class="fa-solid fa-toggle-on list-icon"></i>
+                    <div><b>Mode Switcher:</b> Header se <b>Quiz Mode</b> (Real Exam with negative marking) aur <b>Practice Mode</b> (Instant explanation) me switch kar sakte hain.</div>
+                </li>
+                <li>
+                    <i class="fa-solid fa-palette list-icon"></i>
+                    <div>
+                        <b>Color Indicators (Question Palette):</b>
+                        <div class="color-guide-grid">
+                            <div class="guide-item"><span class="color-dot dot-answered"></span> <b>Green:</b> Answered (Attempted)</div>
+                            <div class="guide-item"><span class="color-dot dot-skipped"></span> <b>Orange:</b> Skipped</div>
+                            <div class="guide-item"><span class="color-dot dot-review"></span> <b>Purple:</b> Marked for Review</div>
+                            <div class="guide-item"><span class="color-dot dot-att-rev"></span> <b>Green + Purple:</b> Answered & Review</div>
+                            <div class="guide-item"><span class="color-dot dot-skip-rev"></span> <b>Red + Purple:</b> Skipped & Review</div>
+                        </div>
+                    </div>
+                </li>
+                <li>
+                    <i class="fa-solid fa-table-cells list-icon"></i>
+                    <div><b>Grid & List View:</b> Palette menu me Grid Matrix aur Detailed List View ke beech toggle karke questions jump kar sakte hain.</div>
+                </li>
+            </ul>
+        </div>
+
+        <!-- FOOTER ACTIONS & AGREEMENT CHECKBOX -->
+        <div class="inst-footer">
+            <div id="instructionAgreementBoxContainer"></div>
+            <div class="inst-actions">
+                <button class="btn-inst-cancel" onclick="exitExam()">Cancel</button>
+                <button class="btn-inst-start" id="startTestBtn" onclick="startTestFromInstructions()">Start Test</button>
+            </div>
         </div>
     </div>
 </div>
+
+
 
 <!-- HEADER BAR -->
 <header>
@@ -120,7 +179,7 @@
                 <button class="btn btn-outline" id="clearBtn" onclick="clearResponse()">
                     <i class="fa-solid fa-arrow-rotate-left"></i> Clear
                 </button>
-                <button class="btn btn-warning" onclick="markForReview()">
+                <button class="btn btn-warning" id="reviewBtn" onclick="markForReview()">
                     <i class="fa-solid fa-bookmark"></i> Review
                 </button>
             </div>
@@ -152,10 +211,11 @@
                 </button>
             </div>
 
+            <!-- Updated Filter Chips with 'Skipped' -->
             <div class="filter-chips">
                 <div class="chip active" onclick="filterPalette('all', this)">All</div>
                 <div class="chip" onclick="filterPalette('answered', this)">Attempted</div>
-                <div class="chip" onclick="filterPalette('unanswered', this)">Unanswered</div>
+                <div class="chip" onclick="filterPalette('skipped', this)">Skipped</div>
                 <div class="chip" onclick="filterPalette('review', this)">Review</div>
             </div>
 
@@ -164,8 +224,10 @@
             
             <div class="legend">
                 <div class="legend-item"><div class="dot dot-success"></div> Attempted</div>
-                <div class="legend-item"><div class="dot dot-warning"></div> Review</div>
-                <div class="legend-item"><div class="dot dot-unattempted"></div> Unanswered</div>
+                <div class="legend-item"><div class="dot dot-orange"></div> Skipped</div>
+                <div class="legend-item"><div class="dot dot-purple"></div> Review</div>
+                <div class="legend-item"><div class="dot dot-att-rev"></div> Attempted + Review</div>
+                <div class="legend-item"><div class="dot dot-skip-rev"></div> Skipped + Review</div>
             </div>
         </div>
 
@@ -233,10 +295,9 @@
             <i class="fa-solid fa-trophy"></i> LEADERBOARD
         </button>
         
-<button class="btn-performance" onclick="viewPerformance()">
-    <i class="fa-solid fa-chart-line"></i> PERFORMANCE
-</button>
-
+        <button class="btn-performance" onclick="viewPerformance()">
+            <i class="fa-solid fa-chart-line"></i> PERFORMANCE
+        </button>
 
         <div class="dashboard-card">
             <h3 class="dash-card-title">Brief Analysis</h3>

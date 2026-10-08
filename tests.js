@@ -7,13 +7,16 @@ let userDraftsMap = {};
 let isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
 let isExploreOpen = false;
 
+// Selection Variables for Test Start Modal
+let pendingTestStart = { testId: null, isReattempt: false, isResume: false };
+let selectedMode = 'quiz'; // Default 'quiz'
+
 // Pagination variables
 let visibleTestCount = 5; // Start me sirf 5 dikhenge
 function loadMoreTests() {
     visibleTestCount += 10; // Batch size increment
     renderRecentFiveTests();
 }
-
 
 // Selection State Tracker for Explore Section (Student Tests)
 let selectedBoard = "ALL";
@@ -297,7 +300,6 @@ function renderRecentFiveTests() {
         testCountBadge.innerText = `${testsToDisplay.length} of ${studentTests.length}`;
     }
 
-    // --- YAHAN BADLAAV KIYA GAYA HAI ---
     const remainingCount = studentTests.length - visibleTestCount;
     const showLoadMoreBtn = remainingCount > 0;
 
@@ -521,7 +523,6 @@ function filterStudentTests() {
     if (headingTitle) headingTitle.innerHTML = `<i class="fa-solid fa-list-check" style="color: #4A00E0;"></i> Filtered Tests`;
     if (testCountBadge) testCountBadge.innerText = filtered.length + " Found";
 
-    // Search ya Filter mode me direct bina Load More ke render karein (ya paginated render bhi kar sakte hain)
     renderStudentTests(filtered, false);
 }
 
@@ -554,6 +555,7 @@ function renderStudentTests(tests, showLoadMoreBtn = false, remainingCount = 0) 
         let timeMins = test.time_limit_mins || 15;
         let classBadge = test.class_level ? `<span style="background: #edf2f7; color: #4a5568; padding: 2px 8px; border-radius: 4px; font-size: 11px; margin-left: 6px;">${test.class_level}</span>` : '';
 
+        // Check if New
         let isNew = false;
         if (test.created_at) {
             const testDate = new Date(test.created_at);
@@ -562,6 +564,15 @@ function renderStudentTests(tests, showLoadMoreBtn = false, remainingCount = 0) 
             if (diffDays >= 0 && diffDays <= 7) isNew = true;
         }
         let newBadgeHtml = isNew ? `<span class="badge-new">NEW</span>` : '';
+
+        // Medium Badge Detection (हिंदी, English, Hinglish)
+        let mediumText = test.medium || test.language || 'Hinglish';
+        if (!test.medium && !test.language) {
+            let fullTxt = `${test.title || ''} ${test.subject || ''}`.toLowerCase();
+            if (fullTxt.includes('hindi') || fullTxt.includes('हिंदी')) mediumText = 'हिंदी';
+            else if (fullTxt.includes('english')) mediumText = 'English';
+        }
+        let mediumBadgeHtml = `<span class="badge-medium">${mediumText}</span>`;
 
         let statusBlockHtml = '';
         let buttonText = 'Start Test';
@@ -612,9 +623,12 @@ function renderStudentTests(tests, showLoadMoreBtn = false, remainingCount = 0) 
 
         html += `
             <div class="test-card">
-                <div class="test-card-header" style="display: flex; justify-content: space-between; align-items: center;">
-                    <h3>${test.title} ${classBadge}</h3>
+                <div class="card-badges-container">
                     ${newBadgeHtml}
+                    ${mediumBadgeHtml}
+                </div>
+                <div class="test-card-header" style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px;">
+                    <h3>${test.title} ${classBadge}</h3>
                 </div>
                 <div class="test-meta">
                     <span><i class="fa-solid fa-file-alt"></i> ${qCount} Qs</span> • 
@@ -628,7 +642,7 @@ function renderStudentTests(tests, showLoadMoreBtn = false, remainingCount = 0) 
             </div>
         `;
     });
-    // Render Load More Button container if more items exist
+
     if (showLoadMoreBtn) {
         const nextBatchSize = Math.min(10, remainingCount);
 
@@ -710,8 +724,10 @@ function openWhatsAppFallback(text) {
 }
 
 /* ==========================================
-   AUTH & MODAL HANDLING
+   AUTH & MODE SELECTION MODAL HANDLING
    ========================================== */
+/* Updated handleStartTest function in tests_2.js */
+
 function handleStartTest(testId, isReattempt = false, isResume = false) {
     const userLoggedIn = isLoggedIn || localStorage.getItem("isLoggedIn") === "true";
 
@@ -720,10 +736,61 @@ function handleStartTest(testId, isReattempt = false, isResume = false) {
         return;
     }
 
-    let urlParams = `id=${testId}`;
+    pendingTestStart = { testId, isReattempt, isResume };
+
+    // Resume case: Jump directly to take-test without prompt & reuse saved mode
+    if (isResume) {
+        const draft = userDraftsMap[testId];
+        const savedMode = (draft && draft.mode) ? draft.mode : 'quiz';
+        window.location.href = `take-test.html?id=${testId}&mode=${savedMode}&resume=true`;
+        return;
+    }
+
+    openModeModal();
+}
+
+
+function openModeModal() {
+    const modeModal = document.getElementById("modeModal");
+    if (modeModal) {
+        selectTestMode('quiz'); // Reset to default quiz mode
+        modeModal.style.display = "flex";
+    } else {
+        proceedToTestWithMode();
+    }
+}
+
+function closeModeModal() {
+    const modeModal = document.getElementById("modeModal");
+    if (modeModal) modeModal.style.display = "none";
+}
+
+function selectTestMode(mode) {
+    selectedMode = mode;
+    const qCard = document.getElementById("optQuizMode");
+    const pCard = document.getElementById("optPracticeMode");
+    const iconElem = document.getElementById("startBtnModeIcon");
+
+    if (mode === 'quiz') {
+        if (qCard) qCard.classList.add("selected");
+        if (pCard) pCard.classList.remove("selected");
+        if (iconElem) iconElem.className = "fa-solid fa-stopwatch";
+    } else {
+        if (pCard) pCard.classList.add("selected");
+        if (qCard) qCard.classList.remove("selected");
+        if (iconElem) iconElem.className = "fa-solid fa-book-open";
+    }
+}
+
+function proceedToTestWithMode() {
+    const { testId, isReattempt, isResume } = pendingTestStart;
+    if (!testId) return;
+
+    let urlParams = `id=${testId}&mode=${selectedMode}`;
     if (isReattempt) urlParams += '&reattempt=true';
     if (isResume) urlParams += '&resume=true';
 
+    closeModeModal();
     window.location.href = `take-test.html?${urlParams}`;
 }
 
@@ -1138,7 +1205,7 @@ async function loadLeaderboardData() {
         let processedData = Object.values(uniqueMap);
         processedData.sort((a, b) => b.score - a.score);
 
-        // Strict Leaderboard Filter Matching Logic
+        // Filter Logic
         let filteredData = processedData.filter(row => {
             const testTitle = (row.tests?.title || '').toLowerCase();
             const testClass = (row.tests?.class_level || '').trim().toLowerCase();
@@ -1164,13 +1231,22 @@ async function loadLeaderboardData() {
 
         renderPodiumCards(filteredData);
 
+        // 1. User Ka Overall Rank Find Karein
+        let userRankIndex = filteredData.findIndex(row => row.user_id === user.id);
+        let userRank = userRankIndex !== -1 ? userRankIndex + 1 : null;
+        let userData = userRankIndex !== -1 ? filteredData[userRankIndex] : null;
+
+        // 2. Default sirf Top 10 Display honge
+        const top10Data = filteredData.slice(0, 10);
+
         let html = "";
         const defaultAvatar = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
         const locationSvg = `<svg width="12" height="12" viewBox="0 0 24 24" fill="#a0aec0" style="vertical-align: middle; margin-right: 3px;"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5-2.5z"/></svg>`;
         const crownSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="#f6e05e"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/></svg>`;
 
-        filteredData.forEach((row, index) => {
-            let rankDisplay = index === 0 ? crownSvg : (index === 1 ? '🥈' : (index === 2 ? '🥉' : `#${index + 1}`));
+        top10Data.forEach((row, index) => {
+            // '#' ki jagah clean symbol/badge formatting
+            let rankDisplay = index === 0 ? crownSvg : (index === 1 ? '🥈' : (index === 2 ? '🥉' : `<span style="background:#edf2f7; color:#2d3748; padding:3px 8px; border-radius:6px; font-weight:700;">${index + 1}</span>`));
             let userPhoto = row.profiles?.avatar_url || defaultAvatar;
             let areaName = row.profiles?.city || 'Local Area';
             let pincodeText = row.profiles?.pincode ? `<div style="font-size: 11px; color: #718096; margin-top: 2px;">${row.profiles.pincode}</div>` : '';
@@ -1204,6 +1280,41 @@ async function loadLeaderboardData() {
         if (tbody) {
             tbody.innerHTML = html || `<tr><td colspan="5" style="text-align:center; padding:20px; color:#718096;">Is filter criteria ke liye koi leaderboard entries nahi mili.</td></tr>`;
         }
+
+        // 3. User Bottom Card Logic (Gar user rank > 10 hai to hi dikhega)
+        let userRankCard = document.getElementById("currentUserRankCard");
+        
+        // Dynamic Card Create Karein Gar DOM me na ho
+        if (!userRankCard) {
+            userRankCard = document.createElement("div");
+            userRankCard.id = "currentUserRankCard";
+            userRankCard.className = "user-rank-card";
+            const leaderSection = document.getElementById("leaderboardSection");
+            if (leaderSection) leaderSection.appendChild(userRankCard);
+        }
+
+        if (userRank && userRank > 10 && userData) {
+            let uPct = userData.total_marks > 0 ? Math.round((userData.score / userData.total_marks) * 100) : 0;
+            userRankCard.style.display = "flex";
+            userRankCard.innerHTML = `
+                <div class="user-rank-info">
+                    <span class="rank-badge-symbol"> ${userRank}</span>
+                    <img src="${userData.profiles?.avatar_url || defaultAvatar}" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;" onerror="this.src='${defaultAvatar}'">
+                    <div>
+                        <div style="font-size: 13px; font-weight: bold;">You</div>
+                        <div style="font-size: 11px; color: #94a3b8;">${userData.profiles?.full_name || 'Student'}</div>
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-weight: 800; color: #38bdf8; font-size: 14px;">${userData.score} / ${userData.total_marks}</div>
+                    <div style="font-size: 11px; color: #4ade80;">(${uPct}%)</div>
+                </div>
+            `;
+        } else {
+            // Gar Top 10 me hai ya test nahi diya to card hide kar dein
+            userRankCard.style.display = "none";
+        }
+
     } catch (err) {
         if (tbody) {
             tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:red;">Error loading leaderboard: ${err.message}</td></tr>`;
@@ -1212,38 +1323,3 @@ async function loadLeaderboardData() {
         if (loader) loader.style.display = "none";
     }
 }
-
-document.addEventListener("DOMContentLoaded", () => {
-    const cards = document.querySelectorAll(".test-card, .podium-card");
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-    if (isMobile && window.DeviceOrientationEvent) {
-        window.addEventListener("deviceorientation", (event) => {
-            let tiltX = event.beta;
-            let tiltY = event.gamma;
-
-            if (tiltX === null || tiltY === null) return;
-
-            tiltX = Math.max(-30, Math.min(30, tiltX));
-            tiltY = Math.max(-30, Math.min(30, tiltY));
-
-            cards.forEach(card => {
-                card.style.transform = `rotateX(${-tiltX * 0.5}deg) rotateY(${tiltY * 0.5}deg)`;
-            });
-        }, true);
-    } else {
-        cards.forEach(card => {
-            card.addEventListener("mousemove", (e) => {
-                const rect = card.getBoundingClientRect();
-                const x = e.clientX - rect.left - rect.width / 2;
-                const y = e.clientY - rect.top - rect.height / 2;
-
-                card.style.transform = `rotateY(${x * 0.05}deg) rotateX(${-y * 0.05}deg) scale(1.02)`;
-            });
-
-            card.addEventListener("mouseleave", () => {
-                card.style.transform = "rotateY(0deg) rotateX(0deg) scale(1)";
-            });
-        });
-    }
-});

@@ -159,6 +159,7 @@ input:checked + .slider:before {
 
 input:checked + .slider .icon-sun { color: #64748b; }
 input:checked + .slider .icon-moon { color: #f59e0b; }
+
 /* ==========================================
    LOAD MORE BUTTON STYLING
    ========================================== */
@@ -611,12 +612,19 @@ body.dark .test-card .test-meta, body.dark-mode .test-card .test-meta {
     transform: scale(0.98);
 }
 
-.badge-new {
+.card-badges-container {
     position: absolute;
-    top: 18px;
-    right: 18px;
+    top: 16px;
+    right: 16px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    z-index: 5;
+}
+
+.badge-new {
     background: linear-gradient(135deg, #ff416c, #ff4b2b);
-    padding: 4px 10px;
+    padding: 4px 8px;
     border-radius: 20px;
     color: #ffffff;
     font-size: 10px;
@@ -624,6 +632,17 @@ body.dark .test-card .test-meta, body.dark-mode .test-card .test-meta {
     letter-spacing: 0.5px;
     box-shadow: 0 3px 8px rgba(255, 65, 108, 0.35);
     animation: pulseGlow 1.5s infinite alternate ease-in-out;
+}
+
+.badge-medium {
+    background: linear-gradient(135deg, #007bff, #00d2ff);
+    padding: 4px 8px;
+    border-radius: 20px;
+    color: #ffffff;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    box-shadow: 0 3px 8px rgba(0, 123, 255, 0.3);
 }
 
 /* ==========================================
@@ -681,7 +700,7 @@ body.dark .lb-title p, body.dark-mode .lb-title p {
     gap: 14px;
     margin: 20px 0 25px 0;
 }
-/* Card Container ke liye 3D Perspective */
+
 .podium-card {
     transform-style: preserve-3d;
     perspective: 1000px;
@@ -891,7 +910,7 @@ body.dark-mode .leaderboard-table th, body.dark-mode .leaderboard-table td {
     padding: 28px 24px;
     border-radius: 20px;
     width: 90%;
-    max-width: 360px;
+    max-width: 380px;
     text-align: center;
     box-shadow: 0 20px 40px rgba(0,0,0,0.2);
     animation: fadeInDown 0.25s ease;
@@ -960,6 +979,67 @@ body.dark .btn-secondary, body.dark-mode .btn-secondary {
     color: #ffffff;
 }
 
+/* MODE SELECTION MODAL CARDS */
+.mode-selection-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 18px 0;
+}
+
+.mode-option-card {
+    border: 1.5px solid var(--border-light);
+    border-radius: 14px;
+    padding: 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.25s ease;
+    background: rgba(0,0,0,0.02);
+}
+
+body.dark .mode-option-card, body.dark-mode .mode-option-card {
+    border-color: var(--border-dark);
+    background: rgba(255,255,255,0.02);
+}
+
+.mode-option-card.selected {
+    border: 1.5px solid #10b981 !important;
+    background: rgba(16, 185, 129, 0.06) !important;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+}
+
+.mode-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: #e2e8f0;
+    color: #4b5563;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+}
+
+.mode-option-card.selected .mode-icon {
+    background: #10b981;
+    color: #ffffff;
+}
+
+.mode-info h4 {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 2px;
+}
+
+.mode-info p {
+    font-size: 11px;
+    margin-bottom: 0;
+    color: var(--text-secondary-light);
+}
+
 /* ==========================================
    11. ANIMATIONS & RESPONSIVE BREAKPOINTS
    ========================================== */
@@ -1010,4 +1090,35 @@ body.dark .btn-secondary, body.dark-mode .btn-secondary {
         flex-direction: column;
         align-items: stretch;
     }
+}
+/* Sticky User Rank Bottom Card */
+.user-rank-card {
+    position: sticky;
+    bottom: 12px;
+    margin-top: 15px;
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    color: #ffffff;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    z-index: 99;
+}
+
+.user-rank-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.rank-badge-symbol {
+    background: #3b82f6;
+    color: #fff;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-weight: 800;
+    font-size: 13px;
 }
