@@ -7,6 +7,15 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase.js"></script>
+
+  <!-- MathJax CDN for Math, Physics & Chemistry Formula Rendering -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-user-select: none; user-select: none; }
     input, textarea, select { -webkit-user-select: text !important; user-select: text !important; }
@@ -28,6 +37,7 @@
     textarea.input-field { height: 85px; padding: 12px 14px; resize: vertical; }
     .btn-submit { width: 100%; height: 48px; margin-top: 20px; border: none; border-radius: 24px; background: #e6ebf4; box-shadow: 6px 6px 12px #c2c9d6, -6px -6px 12px #ffffff; font-size: 14px; font-weight: 800; color: #7c3aed; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
     .btn-submit:active { box-shadow: inset 4px 4px 8px #c2c9d6, inset -4px -4px 8px #ffffff; }
+    .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; box-shadow: none; }
     .btn-upload { background: #059669 !important; color: #ffffff !important; display: none; }
     .status-msg { margin-top: 15px; font-size: 12px; font-weight: bold; text-align: center; display: none; padding: 10px; border-radius: 12px; box-shadow: inset 2px 2px 4px #c2c9d6, inset -2px -2px 4px #ffffff; }
     
@@ -134,13 +144,20 @@
       </div>
 
       <div class="form-group full" id="qCountGroup">
-        <label><i class="fa-solid fa-hashtag"></i> Question Count</label>
-        <select class="input-field" id="qCount">
-          <option value="5">5 Questions</option>
-          <option value="10" selected>10 Questions</option>
-          <option value="15">15 Questions</option>
-          <option value="20">20 Questions</option>
-        </select>
+        <label><i class="fa-solid fa-hashtag"></i> Question Count (Select or Type Any Custom Number)</label>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <select class="input-field" id="qCountSelect" onchange="handleQCountSelectChange()">
+            <option value="4">4 Questions</option>
+            <option value="6" selected>6 Questions</option>
+            <option value="8">8 Questions</option>
+            <option value="10">10 Questions</option>
+            <option value="12">12 Questions</option>
+            <option value="16">16 Questions</option>
+            <option value="20">20 Questions</option>
+            <option value="custom">✏️ Custom Number</option>
+          </select>
+          <input type="number" class="input-field" id="qCountManual" placeholder="Type count" value="6" min="1" max="100">
+        </div>
       </div>
 
       <div class="form-group full">
@@ -188,10 +205,17 @@
     }
   };
 
-  // Improved Markdown Parser
+  function handleQCountSelectChange() {
+    const selectVal = document.getElementById("qCountSelect").value;
+    const manualInput = document.getElementById("qCountManual");
+    if (selectVal !== "custom") {
+      manualInput.value = selectVal;
+    }
+  }
+
   function parseMarkdownToHTML(text) {
     if (!text) return "";
-    let html = text
+    return text
       .replace(/^### (.*$)/gim, '<h3>$1</h3>')
       .replace(/^## (.*$)/gim, '<h2>$1</h2>')
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
@@ -200,7 +224,31 @@
       .replace(/^- (.*$)/gim, '• $1')
       .replace(/\n\n/g, '<br><br>')
       .replace(/\n/g, '<br>');
-    return html;
+  }
+
+  // ROBUST SANITIZATION & JSON PARSER
+  function cleanAndParseJSON(rawStr) {
+    if (!rawStr) throw new Error("AI Response is empty");
+    if (typeof rawStr === 'object') return rawStr;
+
+    let cleanedText = rawStr.replace(/```json/gi, '').replace(/```/g, '').trim();
+
+    const firstBrace = cleanedText.indexOf('{');
+    const lastBrace = cleanedText.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1) {
+      cleanedText = cleanedText.substring(firstBrace, lastBrace + 1);
+    }
+
+    try {
+      return JSON.parse(cleanedText);
+    } catch (err) {
+      let sanitized = cleanedText
+        .replace(/[\r\n]+/g, " ")
+        .replace(/[\u0000-\u001F\u007F-\u009F]/g, "")
+        .replace(/\\(?!["\\/bfnrtu])/g, "\\\\");
+
+      return JSON.parse(sanitized);
+    }
   }
 
   window.addEventListener('DOMContentLoaded', async () => {
@@ -208,16 +256,16 @@
       if (typeof window.requireAdminAuth === "function") {
         await window.requireAdminAuth();
       } else {
-        await verifyAdminStrictly();
+        await verifyTeammateAccess();
       }
       document.body.classList.add('admin-authenticated');
       handleClassChange();
     } catch (authErr) {
-      console.error("Admin Auth Error:", authErr);
+      console.error("Auth Check Error:", authErr);
     }
   });
 
-  async function verifyAdminStrictly() {
+  async function verifyTeammateAccess() {
     if (!window.supabaseClient) return;
 
     let currentUser = null;
@@ -225,19 +273,31 @@
     if (session) currentUser = session.user;
 
     if (!currentUser) {
-      alert("🔒 Access Denied!");
+      alert("🔒 Access Denied! Kripya Login karein.");
       window.location.href = "login.html";
       return;
     }
 
-    const { data } = await window.supabaseClient
+    const isOwner = currentUser.email && currentUser.email.toLowerCase().trim() === "rohitrajgoh91@gmail.com";
+
+    const { data: profile } = await window.supabaseClient
       .from('profiles')
-      .select('role')
+      .select('role, permissions')
       .eq('id', currentUser.id)
       .single();
 
-    if (!data || data.role !== 'admin') {
-      alert("⛔ Unauthorized!");
+    const role = (profile?.role || '').toLowerCase();
+    const perms = profile?.permissions || {};
+
+    const hasAccess = isOwner || 
+                      role === 'admin' || 
+                      role === 'superadmin' || 
+                      role === 'teammate' || 
+                      perms.upload_pyq || 
+                      perms.admin_panel;
+
+    if (!hasAccess) {
+      alert("⛔ Access Denied! PYQ Generator ki permission missing hai.");
       window.location.href = "profile.html";
     }
   }
@@ -314,12 +374,95 @@
     return `Class ${cleanClass} ${subject}: ${chapter} ${typeSuffix}`;
   }
 
+  async function fetchPYQChunk(chunkCount, startIndex, params) {
+    const { targetClass, stream, subject, langMode, qType, chapter, years, extra } = params;
+
+    let prompt = `Generate exactly ${chunkCount} BSEB questions for Class ${targetClass} ${targetClass === "12th" ? `(${stream})` : ''}, Subject: ${subject}, Chapter: ${chapter}, Years: ${years}, Type: ${qType}, Language: ${langMode}.
+${extra ? `Note: ${extra}` : ''}
+
+RULES:
+1. Do NOT use double quotes (") inside text values; use single quotes (') instead.
+2. Output single-line JSON without unescaped newlines.
+
+STRICT JSON OUTPUT:
+{
+  "questions": [
+    {
+      "question_en": "Question in English",
+      "question_hi": "Question in Hindi",
+      "year_tag": "2018, 2021",
+      "marks": "2 Marks",
+      "answer_en": "Answer in English",
+      "answer_hi": "Answer in Hindi"
+    }
+  ]
+}`;
+
+    const res = await fetch("https://ktastwehnnqicriknewr.supabase.co/functions/v1/smart-task", {
+      method: "POST",
+      headers: { 
+        "Content-Type": "application/json",
+        "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0YXN0d2Vobm5xaWNyaWtuZXdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyNTk5NTEsImV4cCI6MjA4MDgzNTk1MX0.5_UvwaG0X8k_Emj-cMC0KjEqlvU6hgAt5IsHJdgARvk",
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0YXN0d2Vobm5xaWNyaWtuZXdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyNTk5NTEsImV4cCI6MjA4MDgzNTk1MX0.5_UvwaG0X8k_Emj-cMC0KjEqlvU6hgAt5IsHJdgARvk"
+      },
+      body: JSON.stringify({ prompt })
+    });
+
+    const responseText = await res.text();
+    let data;
+    try { data = JSON.parse(responseText); } catch(e) { data = responseText; }
+
+    let rawText = data.choices?.[0]?.message?.content || data.candidates?.[0]?.content?.parts?.[0]?.text || data.result || data;
+    if (typeof rawText === 'object') rawText = JSON.stringify(rawText);
+
+    return cleanAndParseJSON(rawText);
+  }
+
+  async function fetchSummaryOnly(params) {
+    const { targetClass, stream, subject, langMode, chapter, years, extra } = params;
+
+    let prompt = `Generate Chapter Summary / Revision Notes for BSEB Class ${targetClass} ${targetClass === "12th" ? `(${stream})` : ''}, Subject: ${subject}, Chapter: ${chapter}, Years: ${years}, Language: ${langMode}.
+${extra ? `Note: ${extra}` : ''}
+
+RULES:
+1. Do NOT use double quotes (") inside text values; use single quotes (') instead.
+2. Output single-line JSON without unescaped newlines.
+
+STRICT JSON OUTPUT ONLY:
+{
+  "chapter_summary": {
+    "summary_en": "English summary notes...",
+    "summary_hi": "Hindi summary notes..."
+  }
+}`;
+
+    const res = await fetch("https://ktastwehnnqicriknewr.supabase.co/functions/v1/smart-task", {
+      method: "POST",
+      headers: { 
+        "Content-Type": "application/json",
+        "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0YXN0d2Vobm5xaWNyaWtuZXdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyNTk5NTEsImV4cCI6MjA4MDgzNTk1MX0.5_UvwaG0X8k_Emj-cMC0KjEqlvU6hgAt5IsHJdgARvk",
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0YXN0d2Vobm5xaWNyaWtuZXdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyNTk5NTEsImV4cCI6MjA4MDgzNTk1MX0.5_UvwaG0X8k_Emj-cMC0KjEqlvU6hgAt5IsHJdgARvk"
+      },
+      body: JSON.stringify({ prompt })
+    });
+
+    const responseText = await res.text();
+    let data;
+    try { data = JSON.parse(responseText); } catch(e) { data = responseText; }
+
+    let rawText = data.choices?.[0]?.message?.content || data.candidates?.[0]?.content?.parts?.[0]?.text || data.result || data;
+    if (typeof rawText === 'object') rawText = JSON.stringify(rawText);
+
+    return cleanAndParseJSON(rawText);
+  }
+
   async function generateBSEBPYQs() {
     const targetClass = document.getElementById("targetClass").value;
     const stream = targetClass === "12th" ? document.getElementById("streamSelect").value : "General";
     const subject = document.getElementById("subjectSelect").value;
     const langMode = document.getElementById("languageSelect").value;
-    const qCount = document.getElementById("qCount").value;
+    
+    const qCount = parseInt(document.getElementById("qCountManual").value) || 6;
     const qType = document.getElementById("qType").value;
     const chapter = document.getElementById("chapterName").value.trim();
     const extra = document.getElementById("extraInstructions").value.trim();
@@ -345,91 +488,51 @@
     }
 
     btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Generating...`;
+
     previewBox.style.display = "none";
     uploadBtn.style.display = "none";
     fileNameGroup.style.display = "none";
     statusBox.style.display = "block";
     statusBox.style.color = "#7c3aed";
-    statusBox.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i> AI Generating Content...";
 
     const isSummaryOnly = (qType === "Summary");
-
-    let prompt = "";
-    if (isSummaryOnly) {
-      prompt = `Generate comprehensive, highly structured, and easy-to-memorize Chapter Summary / Revision Notes for BSEB Class ${targetClass} ${targetClass === "12th" ? `(${stream} Stream)` : ''}.
-Subject: ${subject}
-Chapter: ${chapter}
-Years Range: ${years}
-Language Preference: ${langMode}
-${extra ? `Extra Instruction: ${extra}` : ''}
-
-STRICT JSON OUTPUT REQUIREMENT:
-Return ONLY a valid JSON object with format:
-{
-  "chapter_summary": {
-    "summary_en": "Detailed markdown formatted revision notes in English...",
-    "summary_hi": "Detailed markdown formatted revision notes in Hindi..."
-  }
-}`;
-    } else {
-      prompt = `Generate exact BSEB Study Material/PYQs for:
-Class: Class ${targetClass} ${targetClass === "12th" ? `(${stream} Stream)` : ''}
-Subject: ${subject}
-Chapter: ${chapter}
-Years: ${years}
-Type: ${qType}
-Question Count: ${qCount}
-Language Preference: ${langMode}
-${extra ? `Extra Instruction: ${extra}` : ''}
-
-STRICT JSON OUTPUT REQUIREMENT:
-Return ONLY a valid JSON object with format:
-{
-  "chapter_summary": {
-    "summary_en": "Markdown formatted summary in English...",
-    "summary_hi": "Markdown formatted summary in Hindi..."
-  },
-  "questions": [
-    {
-      "question_en": "Question in English",
-      "question_hi": "Question in Hindi",
-      "year_tag": "2018, 2021, 2024 II",
-      "marks": "2 Marks",
-      "answer_en": "Markdown formatted answer in English",
-      "answer_hi": "Markdown formatted answer in Hindi"
-    }
-  ]
-}`;
-    }
+    const params = { targetClass, stream, subject, langMode, qType, chapter, years, extra };
 
     try {
-      const res = await fetch("https://ktastwehnnqicriknewr.supabase.co/functions/v1/smart-task", {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0YXN0d2Vobm5xaWNyaWtuZXdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyNTk5NTEsImV4cCI6MjA4MDgzNTk1MX0.5_UvwaG0X8k_Emj-cMC0KjEqlvU6hgAt5IsHJdgARvk",
-          "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0YXN0d2Vobm5xaWNyaWtuZXdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyNTk5NTEsImV4cCI6MjA4MDgzNTk1MX0.5_UvwaG0X8k_Emj-cMC0KjEqlvU6hgAt5IsHJdgARvk"
-        },
-        body: JSON.stringify({ prompt })
-      });
+      let aggregatedSummary = null;
+      let aggregatedQuestions = [];
 
-      const textResponse = await res.text();
-      let parsed = JSON.parse(textResponse);
-      let rawText = parsed.choices?.[0]?.message?.content || parsed.candidates?.[0]?.content?.parts?.[0]?.text || parsed.result || textResponse;
+      // Step 1: Summary Note Generation
+      statusBox.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i> AI Generating Chapter Summary Notes...";
+      try {
+        const sumResult = await fetchSummaryOnly(params);
+        aggregatedSummary = sumResult.chapter_summary || sumResult;
+      } catch (sumErr) {
+        console.warn("Summary generation skipped or failed:", sumErr);
+      }
 
-      // Clean Markdown Block Wrapper Safe Extraction
-      const jsonMatch = rawText.match(/\{[\s\S]*\}/);
-      if (jsonMatch) rawText = jsonMatch[0];
+      // Step 2: Batching Question Generation (Chunks of 2 for 0% error)
+      if (!isSummaryOnly) {
+        const BATCH_SIZE = 2; // CHUNKING REDUCED TO 2 FOR STABILITY
+        const totalBatches = Math.ceil(qCount / BATCH_SIZE);
 
-      const generatedData = JSON.parse(rawText);
+        for (let b = 0; b < totalBatches; b++) {
+          const currentChunkCount = Math.min(BATCH_SIZE, qCount - (b * BATCH_SIZE));
+          const startIndex = b * BATCH_SIZE;
+
+          statusBox.innerHTML = `<i class='fa-solid fa-spinner fa-spin'></i> AI Generating Batch ${b + 1} of ${totalBatches} (${aggregatedQuestions.length}/${qCount} Questions)...`;
+
+          const chunkResult = await fetchPYQChunk(currentChunkCount, startIndex, params);
+
+          if (chunkResult && chunkResult.questions && Array.isArray(chunkResult.questions)) {
+            aggregatedQuestions = aggregatedQuestions.concat(chunkResult.questions);
+          }
+        }
+      }
+
       const generatedTitle = generateAutoFileTitle(targetClass, subject, chapter, qType);
-
       fileTitleInput.value = generatedTitle;
-
-      const summaryData = generatedData.chapter_summary ? {
-        summary_en: parseMarkdownToHTML(generatedData.chapter_summary.summary_en || ""),
-        summary_hi: parseMarkdownToHTML(generatedData.chapter_summary.summary_hi || "")
-      } : null;
 
       pendingPayload = {
         title: generatedTitle,
@@ -438,29 +541,36 @@ Return ONLY a valid JSON object with format:
         topic: chapter,
         years_range: years,
         language_mode: langMode,
-        questions: isSummaryOnly ? [] : (generatedData.questions || []).map(q => ({
-          ...q,
+        questions: isSummaryOnly ? [] : aggregatedQuestions.map(q => ({
+          question_en: q.question_en || "",
+          question_hi: q.question_hi || "",
+          year_tag: q.year_tag || q.year || years,
           year: q.year_tag || q.year || years,
+          marks: q.marks || "PYQ",
           answer_en: parseMarkdownToHTML(q.answer_en || ""),
           answer_hi: parseMarkdownToHTML(q.answer_hi || "")
         })),
-        chapter_summary: summaryData,
-        summary: summaryData // Sync both keys for DB compatibility
+        summary: aggregatedSummary ? {
+          summary_en: parseMarkdownToHTML(aggregatedSummary.summary_en || ""),
+          summary_hi: parseMarkdownToHTML(aggregatedSummary.summary_hi || "")
+        } : null
       };
 
       renderPreview(pendingPayload, langMode, isSummaryOnly);
 
       statusBox.style.color = "#10b981";
-      statusBox.innerHTML = "✅ Content Generated Successfully!";
+      statusBox.innerHTML = `✅ Successfully generated (${isSummaryOnly ? 'Summary Only' : aggregatedQuestions.length + ' Questions'})!`;
       fileNameGroup.style.display = "block";
       previewBox.style.display = "block";
       uploadBtn.style.display = "flex";
 
     } catch (err) {
+      console.error(err);
       statusBox.style.color = "#ef4444";
       statusBox.innerHTML = "❌ Generation Error: " + err.message;
     } finally {
       btn.disabled = false;
+      btn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i> Generate Content`;
     }
   }
 
@@ -468,21 +578,21 @@ Return ONLY a valid JSON object with format:
     const previewBox = document.getElementById("previewBox");
     let html = `<div class="preview-title"><i class="fa-solid fa-eye"></i> PREVIEW GENERATED CONTENT (${langMode.toUpperCase()})</div>`;
 
-    if (payload.chapter_summary) {
+    if (payload.summary) {
       html += `<div class="summary-card formatted-text">
         <h3><i class="fa-solid fa-book-open"></i> CHAPTER SUMMARY / REVISION NOTES</h3>`;
       
       if (langMode === "Bilingual" || langMode === "English") {
-        if (payload.chapter_summary.summary_en) {
-          html += `<div style="color: #60a5fa; margin-bottom: 6px;"><b>[ENGLISH VERSION]</b></div><div>${payload.chapter_summary.summary_en}</div>`;
+        if (payload.summary.summary_en) {
+          html += `<div style="color: #60a5fa; margin-bottom: 6px;"><b>[ENGLISH VERSION]</b></div><div>${payload.summary.summary_en}</div>`;
         }
       }
-      if (langMode === "Bilingual" && payload.chapter_summary.summary_en && payload.chapter_summary.summary_hi) {
+      if (langMode === "Bilingual" && payload.summary.summary_en && payload.summary.summary_hi) {
         html += `<div class="lang-divider"></div>`;
       }
       if (langMode === "Bilingual" || langMode === "Hindi") {
-        if (payload.chapter_summary.summary_hi) {
-          html += `<div style="color: #f472b6; margin-bottom: 6px;"><b>[HINDI VERSION]</b></div><div>${payload.chapter_summary.summary_hi}</div>`;
+        if (payload.summary.summary_hi) {
+          html += `<div style="color: #f472b6; margin-bottom: 6px;"><b>[HINDI VERSION]</b></div><div>${payload.summary.summary_hi}</div>`;
         }
       }
       html += `</div>`;
@@ -515,13 +625,18 @@ Return ONLY a valid JSON object with format:
     }
 
     previewBox.innerHTML = html;
+
+    if (window.MathJax && typeof window.MathJax.typeset === 'function') {
+      window.MathJax.typeset();
+    }
   }
 
+  // FIXED TABLE INSERT PAYLOAD MATCHING SUPABASE DATABASE SCHEMA
   async function uploadToDatabase() {
     if (!pendingPayload) return;
 
     const finalTitle = document.getElementById("fileTitleInput").value.trim();
-    if(!finalTitle) {
+    if (!finalTitle) {
       alert("⚠️ File Title khali nahi ho sakta!");
       return;
     }
@@ -532,17 +647,47 @@ Return ONLY a valid JSON object with format:
     const statusBox = document.getElementById("statusBox");
 
     uploadBtn.disabled = true;
+    uploadBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Saving...`;
 
-    const { error } = await window.supabaseClient.from('pyq_database').insert([pendingPayload]);
+    try {
+      const payloadToInsert = {
+        title: pendingPayload.title,
+        exam_target: pendingPayload.exam_target,
+        subject: pendingPayload.subject,
+        topic: pendingPayload.topic,
+        years_range: pendingPayload.years_range,
+        language_mode: pendingPayload.language_mode,
+        questions: pendingPayload.questions || [],
+        summary: pendingPayload.summary || null
+      };
 
-    if (error) {
+      const { data, error } = await window.supabaseClient
+        .from('pyq_database')
+        .insert([payloadToInsert]);
+
+      if (error) {
+        console.error("Supabase Save Error Details:", error);
+        
+        let errMessage = error.message;
+        if (!errMessage && typeof error === 'object') {
+          errMessage = JSON.stringify(error, null, 2);
+        }
+        
+        statusBox.style.color = "#ef4444";
+        statusBox.innerHTML = "❌ Upload Error: " + errMessage;
+        uploadBtn.disabled = false;
+        uploadBtn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> Save to Database`;
+      } else {
+        statusBox.style.color = "#10b981";
+        statusBox.innerHTML = "✅ Successfully Saved to Database as: <b>" + finalTitle + "</b>";
+        setTimeout(() => location.href = "manage-pyqs.html", 1500);
+      }
+    } catch(err) {
+      console.error("Exception:", err);
       statusBox.style.color = "#ef4444";
-      statusBox.innerHTML = "❌ Upload Error: " + error.message;
+      statusBox.innerHTML = "❌ Upload Failed: " + err.message;
       uploadBtn.disabled = false;
-    } else {
-      statusBox.style.color = "#10b981";
-      statusBox.innerHTML = "✅ Successfully Saved to Database as: <b>" + finalTitle + "</b>";
-      setTimeout(() => location.href = "manage-pyqs.html", 1500);
+      uploadBtn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> Save to Database`;
     }
   }
 </script>
