@@ -14,6 +14,17 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script src="supabase.js"></script>
 
+  <!-- MathJax for Math, Physics & Chemistry Formula Rendering -->
+  <script>
+    window.MathJax = {
+      tex: { 
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['[', ']']]
+      }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
   <style>
     :root {
       --bg: #090d16;
@@ -214,27 +225,26 @@
 
   function parseContent(rawContent) {
     if (!rawContent) return "";
-    if (/<[a-z][\s\S]*>/i.test(rawContent)) return rawContent;
     
-    let lines = rawContent.split('\n');
-    let html = [];
+    // Convert bold, italic, and headers cleanly
+    let parsed = rawContent
+      .replace(/^### (.*$)/gim, '<div class="md-h3">$1</div>')
+      .replace(/^## (.*$)/gim, '<div class="md-h2">$1</div>')
+      .replace(/^# (.*$)/gim, '<div class="md-h1">$1</div>')
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/^\* (.*$)/gim, '• $1')
+      .replace(/^- (.*$)/gim, '• $1')
+      .replace(/\n\n/g, '<br><br>')
+      .replace(/\n/g, '<br>');
 
-    lines.forEach(line => {
-      let trimmed = line.trim();
-      if (/^---$/.test(trimmed)) {
-        html.push('<hr style="border:0; height:1px; background:rgba(255,255,255,0.12); margin:12px 0;">');
-      } else if (trimmed.startsWith('# ')) {
-        html.push(`<div class="md-h1">${trimmed.replace(/^#\s+/, '')}</div>`);
-      } else if (trimmed.startsWith('## ')) {
-        html.push(`<div class="md-h2">${trimmed.replace(/^##\s+/, '')}</div>`);
-      } else if (/^[\*\-]\s+/.test(trimmed)) {
-        html.push(`<div style="padding-left: 14px;">• ${trimmed.replace(/^[\*\-]\s+/, '')}</div>`);
-      } else if (trimmed.length > 0) {
-        html.push(`<p>${trimmed}</p>`);
-      }
-    });
+    return parsed;
+  }
 
-    return html.join('');
+  function renderMathJax() {
+    if (window.MathJax && typeof window.MathJax.typeset === 'function') {
+      window.MathJax.typeset();
+    }
   }
 
   function trackPYQActivityLocally(paperData) {
@@ -334,9 +344,10 @@
       </div>
     `;
 
-    if (data.summary) {
-      let sumEn = data.summary.summary_en || (typeof data.summary === 'string' ? data.summary : '');
-      let sumHi = data.summary.summary_hi || '';
+    const summaryData = data.chapter_summary || data.summary;
+    if (summaryData) {
+      let sumEn = summaryData.summary_en || (typeof summaryData === 'string' ? summaryData : '');
+      let sumHi = summaryData.summary_hi || '';
 
       const boxTitle = hasQuestions ? "CHAPTER OVERVIEW & KEY CONCEPTS" : "SUMMARY / REVISION NOTES";
 
@@ -376,7 +387,7 @@
       const showEn = (activeLang === 'BOTH' || activeLang === 'EN') && q.answer_en;
       const showHi = (activeLang === 'BOTH' || activeLang === 'HI') && q.answer_hi;
 
-      const yearVal = q.year || currentData.years_range || '';
+      const yearVal = q.year || q.year_tag || currentData.years_range || '';
       const shiftVal = q.shift || '';
 
       const qUniqueId = `${currentData.id}_${idx}`;
@@ -421,6 +432,8 @@
         </div>
       `;
     }).join("");
+
+    renderMathJax();
   }
 
   /* LOCAL BOOKMARK LOGIC */
@@ -448,62 +461,55 @@
   }
 
   /* ULTRA-LIGHTWEIGHT & FAST PYQ PDF EXPORT LOGIC */
-async function downloadPDF() {
-  showToast("Preparing PDF...");
+  async function downloadPDF() {
+    showToast("Preparing PDF...");
 
-  // Give UI a moment to show toast message properly
-  await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise(resolve => setTimeout(resolve, 100));
 
-  // Clone main container
-  const clone = document.getElementById("mainContainer").cloneNode(true);
+    const clone = document.getElementById("mainContainer").cloneNode(true);
 
-  // Remove non-printable / interactive controls from clone
-  const removeSelectors = ['.sticky-bar', '#qSearch', '.q-actions', 'button'];
-  removeSelectors.forEach(selector => {
-    clone.querySelectorAll(selector).forEach(el => el.remove());
-  });
+    const removeSelectors = ['.sticky-bar', '#qSearch', '.q-actions', 'button'];
+    removeSelectors.forEach(selector => {
+      clone.querySelectorAll(selector).forEach(el => el.remove());
+    });
 
-  // Apply clean uniform dark styling on clone
-  clone.style.width = "100%";
-  clone.style.padding = "10px";
-  clone.style.background = "#090d16";
-  clone.style.color = "#cbd5e1";
+    clone.style.width = "100%";
+    clone.style.padding = "10px";
+    clone.style.background = "#090d16";
+    clone.style.color = "#cbd5e1";
 
-  // Prevent cards breaking across page margins
-  const cards = clone.querySelectorAll('.ans-card, .overview-box, .paper-header');
-  cards.forEach(card => {
-    card.style.pageBreakInside = "avoid";
-    card.style.breakInside = "avoid";
-    card.style.marginBottom = "12px";
-    card.style.background = "#111827";
-    card.style.border = "1px solid rgba(255, 255, 255, 0.08)";
-  });
+    const cards = clone.querySelectorAll('.ans-card, .overview-box, .paper-header');
+    cards.forEach(card => {
+      card.style.pageBreakInside = "avoid";
+      card.style.breakInside = "avoid";
+      card.style.marginBottom = "12px";
+      card.style.background = "#111827";
+      card.style.border = "1px solid rgba(255, 255, 255, 0.08)";
+    });
 
-  // Compressed & High-Efficiency PDF Options
-  const opt = {
-    margin:       [8, 8, 8, 8],
-    filename:     `${(currentData && currentData.title) ? currentData.title.replace(/[^a-zA-Z0-9]/g, '_') : 'PYQ_Notes'}.pdf`,
-    image:        { type: 'jpeg', quality: 0.75 }, // Compressed JPEG for smaller file size
-    html2canvas:  { 
-      scale: 1.5, // Optimized rendering scale
-      logging: false,
-      backgroundColor: '#090d16', 
-      useCORS: true,
-      allowTaint: true 
-    },
-    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true },
-    pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
-  };
+    const opt = {
+      margin:       [8, 8, 8, 8],
+      filename:     `${(currentData && currentData.title) ? currentData.title.replace(/[^a-zA-Z0-9]/g, '_') : 'PYQ_Notes'}.pdf`,
+      image:        { type: 'jpeg', quality: 0.75 },
+      html2canvas:  { 
+        scale: 1.5,
+        logging: false,
+        backgroundColor: '#090d16', 
+        useCORS: true,
+        allowTaint: true 
+      },
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true },
+      pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
+    };
 
-  try {
-    await html2pdf().set(opt).from(clone).save();
-    showToast("PDF Downloaded!");
-  } catch (err) {
-    console.error("PYQ PDF Export Error:", err);
-    alert("PDF export me error aaya. Please re-try karein.");
+    try {
+      await html2pdf().set(opt).from(clone).save();
+      showToast("PDF Downloaded!");
+    } catch (err) {
+      console.error("PYQ PDF Export Error:", err);
+      alert("PDF export me error aaya. Please re-try karein.");
+    }
   }
-}
-
 
   function setLanguage(lang) {
     activeLang = lang;
