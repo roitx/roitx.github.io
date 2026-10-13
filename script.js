@@ -119,6 +119,38 @@ function initCardTilt() {
     });
   });
 }
+function animateDots() {
+  ctx.clearRect(0, 0, c.width, c.height);
+
+  // Draw dots and connect close particles with futuristic beam lines
+  for (let i = 0; i < dots.length; i++) {
+    let d = dots[i];
+    ctx.beginPath();
+    ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(0, 240, 255, 0.6)";
+    ctx.fill();
+
+    // Connect dots with nearby dots
+    for (let j = i + 1; j < dots.length; j++) {
+      let d2 = dots[j];
+      let dist = Math.hypot(d.x - d2.x, d.y - d2.y);
+      if (dist < 100) {
+        ctx.beginPath();
+        ctx.moveTo(d.x, d.y);
+        ctx.lineTo(d2.x, d2.y);
+        ctx.strokeStyle = `rgba(0, 240, 255, ${1 - dist / 100})`;
+        ctx.lineWidth = 0.6;
+        ctx.stroke();
+      }
+    }
+
+    d.x += d.dx;
+    d.y += d.dy;
+    if (d.x < 0 || d.x > c.width) d.dx *= -1;
+    if (d.y < 0 || d.y > c.height) d.dy *= -1;
+  }
+  requestAnimationFrame(animateDots);
+}
 
 // ---------------------------------------------------------
 // 3. NOTIFICATION SYSTEM
