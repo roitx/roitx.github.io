@@ -1298,7 +1298,33 @@ footer {
   font-size: 13px;
   color: var(--muted);
 }
-
+.footer-class-links {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px; /* © 2026 se utna hi gap jitna neeche About ka hai */
+  margin-top: 8px;
+  font-size: 11px;
+  opacity: 0.55;
+}
+.footer-class-links a {
+  background: none !important;
+  border: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  color: inherit !important;
+  text-decoration: none !important;
+  font-size: 11px;
+  font-weight: 400;
+  transition: 0.2s ease;
+}
+.footer-class-links a:hover {
+  color: #3aa0ff !important;
+  opacity: 1 !important;
+  text-shadow: 0 0 8px rgba(58,160,255,0.6);
+}
 /* ================= 11. SCROLLBAR & MEDIA QUERIES ================= */
 ::-webkit-scrollbar {
   width: 6px;
