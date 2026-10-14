@@ -1,6 +1,12 @@
 /* =================================================================
    ROITX ELITE VIEWER v12.0 — ULTIMATE SECURE & PRODUCTIVITY SUITE
    ================================================================= */
+// Preload Page Flip Audio from auth folder
+const flipAudio = new Audio('auth/flipsound.mp3');
+flipAudio.preload = 'auto';
+
+// Sound Settings State (Default: Enabled/true)
+let isSoundEnabled = localStorage.getItem('pageFlipSound') !== 'false';
 
 // PDF.js Worker Setup
 const pdfjsVersion = pdfjsLib.version || '2.16.105'; 
@@ -222,41 +228,17 @@ let rawPath = params.get("path");
 const docName = params.get("name");
 
 function playPageTurnSound() {
+    if (!isSoundEnabled) return;
     try {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (!audioCtx) audioCtx = new AudioContext();
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-
-        const bufferSize = audioCtx.sampleRate * 0.12;
-        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-        const output = buffer.getChannelData(0);
-
-        for (let i = 0; i < bufferSize; i++) {
-            output[i] = Math.random() * 2 - 1;
-        }
-
-        const whiteNoise = audioCtx.createBufferSource();
-        whiteNoise.buffer = buffer;
-
-        const filter = audioCtx.createBiquadFilter();
-        filter.type = 'bandpass';
-        filter.frequency.setValueAtTime(850, audioCtx.currentTime);
-        filter.Q.setValueAtTime(1.2, audioCtx.currentTime);
-
-        const gain = audioCtx.createGain();
-        gain.gain.setValueAtTime(0.01, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.25, audioCtx.currentTime + 0.03);
-        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
-
-        whiteNoise.connect(filter);
-        filter.connect(gain);
-        gain.connect(audioCtx.destination);
-
-        whiteNoise.start();
+        flipAudio.currentTime = 0;
+        flipAudio.play().catch(e => {
+            console.warn("Audio play blocked or failed:", e);
+        });
     } catch (e) {
-        console.warn("Audio Context sound failed", e);
+        console.warn("Custom sound failed", e);
     }
 }
+
 
 async function initReader() {
     enableContentProtection();
@@ -917,7 +899,18 @@ async function renderVerticalView() {
     const container = document.getElementById("vertical-scroll-container");
     if (!container || container.children.length > 0) return;
 
-    for (let i = 1; i <= pdfDoc.numPages; i++) {
+    const isParamPremium = params.get("type") === "premium";
+    const isInPaidFolder = rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium"));
+    const isPremiumNote = isParamPremium || isInPaidFolder;
+    
+    const isPurchased = await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "");
+
+    let maxPagesToRender = pdfDoc.numPages;
+    if (isPremiumNote && !isPurchased) {
+        maxPagesToRender = 1;
+    }
+
+    for (let i = 1; i <= maxPagesToRender; i++) {
         const wrapper = document.createElement("div");
         wrapper.className = "v-page-wrapper";
         const canvas = document.createElement("canvas");
@@ -928,7 +921,7 @@ async function renderVerticalView() {
         const vp = page.getViewport({ scale: 1.2 });
         canvas.width = vp.width;
         canvas.height = vp.height;
-        page.render({ canvasContext: canvas.getContext('2d'), viewport: vp });
+        await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
     }
 }
 
@@ -938,6 +931,27 @@ window.togglePageSpread = () => {
     if (btn) btn.innerText = isDualPage ? "Dual Page Mode" : "Single Page Mode";
     alert("Re-loading structure for updated spread mode...");
     location.reload();
+};
+function playPageTurnSound() {
+    if (!isSoundEnabled) return; // Agar sound disabled hai toh play nahi hoga
+    try {
+        flipAudio.currentTime = 0;
+        flipAudio.play().catch(e => {
+            console.warn("Audio play blocked or failed:", e);
+        });
+    } catch (e) {
+        console.warn("Custom sound failed", e);
+    }
+}
+
+window.togglePageSound = () => {
+    isSoundEnabled = !isSoundEnabled;
+    localStorage.setItem('pageFlipSound', isSoundEnabled);
+    
+    const toggleSwitch = document.getElementById('sound-toggle-switch');
+    if (toggleSwitch) {
+        toggleSwitch.classList.toggle('active', isSoundEnabled);
+    }
 };
 
 function jumpToPage(pageNo) {
