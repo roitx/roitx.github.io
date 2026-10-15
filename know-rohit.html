@@ -243,7 +243,7 @@
                 <div class="gallery-grid">
                     <!-- VIDEO 1: Rainbow without rain -->
                     <div class="gallery-item videos tilt-card">
-                        <video src="auth/Rainbow_withoutrain.mp4" autoplay muted loop playsinline></video>
+                        <video src="auth/rainbow_withoutrain.mp4" autoplay muted loop playsinline></video>
                         <button class="vid-audio-btn" onclick="toggleAudio(this, event)">
                             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg> Muted
                         </button>
@@ -452,6 +452,19 @@
     </div>
 
     <script>
+        // Protected Page Guard Script
+(async () => {
+  if (window.supabaseClient) {
+    const { data: { session } } = await window.supabaseClient.auth.getSession();
+    
+    // Agar user logged-in nahi hai, toh access deny karke login/gateway par bhej dein
+    if (!session) {
+      alert("⚠️ Access Denied: Kripya pehle gateway/login karke aayein!");
+      window.location.replace("login.html"); // Ya apna gateway page URL
+    }
+  }
+})();
+
         // ANTI-SCREENSHOT
         const bodyEl = document.getElementById('app-body');
         document.addEventListener('contextmenu', e => e.preventDefault());
