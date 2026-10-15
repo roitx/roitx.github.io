@@ -1,5 +1,5 @@
 /* =================================================================
-   ROITX ELITE VIEWER v12.0 — ULTIMATE SECURE & PRODUCTIVITY SUITE
+   ROITX ELITE VIEWER v12.3 — TURN.JS REAL 3D BOOK FLIP SUITE
    ================================================================= */
 // Preload Page Flip Audio from auth folder
 const flipAudio = new Audio('auth/flipsound.mp3');
@@ -25,7 +25,6 @@ let panX = 0, panY = 0;
 let isUIVisible = true;
 let currentBlobUrl = null;
 let audioCtx = null;
-let pageFlipInstance = null;
 let renderedPagesMap = new Map();
 let globalFitScale = 1.0;
 let globalPageW = 0, globalPageH = 0;
@@ -81,7 +80,6 @@ function cleanTitleString(str) {
     if (!str || typeof str !== 'string') return "";
     return str.replace(/[^\w\s]/gi, '').toLowerCase().trim();
 }
-
 
 // SECURE VERIFICATION: Checks Supabase DB & Local Storage
 async function verifyPurchaseStatusLocallyOrDB(rawPath, docName) {
@@ -193,7 +191,7 @@ function trackActivityLocally(fileData, isDownloaded = false, isUserPurchased = 
 }
 
 function savePageProgress(pageNo) {
-    if (rawPath) {
+    if (rawPath && pageNo > 0) {
         localStorage.setItem(`pdf_pos_${rawPath}`, pageNo);
     }
     updateProgressUI(pageNo);
@@ -203,7 +201,6 @@ function updateProgressUI(pageNo) {
     if (!pdfDoc) return;
     const isPremiumNote = params.get("type") === "premium" || (rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("premium") || rawPath.toLowerCase().includes("locked")));
     
-    // Page Top Header Info update fix[span_1](start_span)[span_1](end_span)
     const indicator = document.getElementById("page-indicator-top");
     if (indicator) {
         const totalText = (isPremiumNote && !verifyPurchaseStatusLocallyOrDB(rawPath, docName || "")) ? "1 (Preview)" : pdfDoc.numPages;
@@ -213,6 +210,12 @@ function updateProgressUI(pageNo) {
     const percent = Math.round((pageNo / pdfDoc.numPages) * 100);
     const progressEl = document.getElementById("progress-percent");
     if (progressEl) progressEl.innerText = `${percent}%`;
+
+    const slider = document.getElementById("page-slider");
+    if (slider && parseInt(slider.value) !== pageNo) {
+        slider.value = pageNo;
+    }
+
     checkBookmarkState(pageNo);
 }
 
@@ -239,7 +242,6 @@ function playPageTurnSound() {
     }
 }
 
-
 async function initReader() {
     enableContentProtection();
 
@@ -252,26 +254,21 @@ async function initReader() {
         return;
     }
 
-    // 1. Path aur Title Setup
     let finalPath = rawPath.includes("/") ? rawPath : `notes/${rawPath}`;
     const displayTitle = docName || "Loading Document...";
 
-    // 2. DOM Title & Click/Tap Event Setup
     const titleEl = document.getElementById("doc-title");
 
     if (titleEl) {
         titleEl.innerText = displayTitle;
         titleEl.setAttribute("title", displayTitle);
-
         titleEl.onclick = null; 
         let hideTimer;
 
         titleEl.onclick = (e) => {
             e.stopPropagation();
             clearTimeout(hideTimer);
-
             titleEl.classList.toggle('show-full-title');
-
             if (titleEl.classList.contains('show-full-title')) {
                 hideTimer = setTimeout(() => {
                     titleEl.classList.remove('show-full-title');
@@ -280,15 +277,12 @@ async function initReader() {
         };
     }
 
-    // Global Click Listener to Close Expanded Title Card
     document.addEventListener('click', () => {
         if (titleEl) titleEl.classList.remove('show-full-title');
     });
 
-    // 3. Supabase File Download Logic
     try {
         const { data, error } = await window.supabaseClient.storage.from("admin-files").download(finalPath);
-        
         if (error) {
             if (finalPath.toLowerCase().includes("refbooks")) {
                 const alt = finalPath.includes("refbooks") ? finalPath.replace("refbooks", "Refbooks") : finalPath.replace("Refbooks", "refbooks");
@@ -306,7 +300,6 @@ async function initReader() {
     }
 }
 
-
 async function startEngine(blob) {
     currentBlobUrl = URL.createObjectURL(blob);
     
@@ -321,7 +314,6 @@ async function startEngine(blob) {
     const isParamPremium = params.get("type") === "premium";
     const isInPaidFolder = rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium"));
     const isPremiumNote = isParamPremium || isInPaidFolder;
-
     const isPurchased = await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "");
 
     trackActivityLocally({
@@ -331,7 +323,6 @@ async function startEngine(blob) {
         isPremium: isPremiumNote
     }, false, isPurchased);
 
-    // DOWNLOAD TRIGGER PROTECTION
     const dl = document.getElementById("download-trigger");
     if (dl) { 
         dl.removeAttribute("href"); 
@@ -352,7 +343,6 @@ async function startEngine(blob) {
             }
 
             const fileName = (docName || "document") + ".pdf";
-            
             const tempLink = document.createElement("a");
             tempLink.href = currentBlobUrl;
             tempLink.download = fileName;
@@ -384,16 +374,20 @@ async function startEngine(blob) {
         slider.value = 1;
     }
 
-    await setupFlipEngineStructure(maxAllowedPages, isPremiumNote, isPurchased);
+    await setupTurnJSStructure(maxAllowedPages, isPremiumNote, isPurchased);
     loadTOC();
     document.getElementById("master-loader").style.display = "none";
     setupPinchAndPanEngine();
     setupHighlightSelectionListener();
 }
 
-async function setupFlipEngineStructure(maxPages, isPremium, isPurchased) {
-    const bookContainer = document.getElementById("book-container");
-    bookContainer.innerHTML = '';
+async function setupTurnJSStructure(maxPages, isPremium, isPurchased) {
+    const bookContainer = $("#book-container");
+    
+    if (bookContainer.data('turn')) {
+        bookContainer.turn('destroy');
+    }
+    bookContainer.html('');
 
     const vpElement = document.getElementById("viewport");
     const containerWidth = vpElement.clientWidth || window.innerWidth;
@@ -403,80 +397,66 @@ async function setupFlipEngineStructure(maxPages, isPremium, isPurchased) {
     const unscaledVp = firstPage.getViewport({ scale: 1.0 });
 
     const scaleY = (containerHeight * 0.92) / unscaledVp.height;
-    const scaleX = (containerWidth * 0.92) / unscaledVp.width;
+    const scaleX = (containerWidth * 0.92) / (isDualPage ? unscaledVp.width * 2 : unscaledVp.width);
     globalFitScale = Math.min(scaleX, scaleY);
 
     globalPageW = Math.floor(unscaledVp.width * globalFitScale);
     globalPageH = Math.floor(unscaledVp.height * globalFitScale);
 
-    for (let i = 1; i <= maxPages; i++) {
-        const pageDiv = document.createElement("div");
-        pageDiv.className = "page-flip-page";
-        pageDiv.dataset.pageNum = i;
-        
-        const placeholder = document.createElement("div");
-        placeholder.className = "page-loader-placeholder";
-        placeholder.innerText = `Loading Page ${i}...`;
-        pageDiv.appendChild(placeholder);
+    bookContainer.css({
+        width: isDualPage ? globalPageW * 2 : globalPageW,
+        height: globalPageH
+    });
 
-        bookContainer.appendChild(pageDiv);
+    for (let i = 1; i <= maxPages; i++) {
+        const pageDiv = $(`<div class="page-flip-page" data-page-num="${i}"></div>`);
+        const placeholder = $(`<div class="page-loader-placeholder">Loading Page ${i}...</div>`);
+        pageDiv.append(placeholder);
+        bookContainer.append(pageDiv);
     }
 
-    pageFlipInstance = new St.PageFlip(bookContainer, {
-        width: globalPageW,
-        height: globalPageH,
-        size: "fixed",
-        minWidth: 200,
-        maxWidth: 1000,
-        minHeight: 300,
-        maxHeight: 1200,
-        maxShadowOpacity: 0.3,
-        showCover: true,
-        usePortrait: !isDualPage,
-        mobileScrollSupport: false,
-        flippingTime: 600,
-        drawShadow: true,
-        clickEventForward: false
-    });
-
-    pageFlipInstance.loadFromHTML(document.querySelectorAll(".page-flip-page"));
-
-    // PAGE FLIP & NEXT PAGE PURCHASE CHECK
-    pageFlipInstance.on("flip", (e) => {
-        const newPageNum = e.data + 1;
-        
-        if (isPremium && !isPurchased && newPageNum > 1) {
-            showPurchaseRequiredModal();
-            pageFlipInstance.flip(0); // Cancel flip and return to page 1
-            return;
-        }
-
-        currentPage = newPageNum;
-        playPageTurnSound();
-        savePageProgress(currentPage);
-
-        const slider = document.getElementById("page-slider");
-        if (slider) slider.value = currentPage;
-
-        lazyRenderPagesAround(currentPage, maxPages);
-    });
-
+    // Saved position retrieve karein
     const savedPage = getSavedPageProgress();
-    const targetPage = (savedPage > maxPages) ? 1 : savedPage;
+    let targetPage = (savedPage > maxPages) ? 1 : savedPage;
+    if (isDualPage && targetPage % 2 === 0 && targetPage > 1) {
+        targetPage = targetPage - 1; 
+    }
+
+    // Turant target page aur aas-pass ke pages render karwao taaki jump delay khatam ho
     currentPage = targetPage;
-    
-    // Header & local state auto sync execution[span_2](start_span)[span_2](end_span)
-    savePageProgress(currentPage);
-
-    const slider = document.getElementById("page-slider");
-    if (slider) slider.value = targetPage;
-
     await renderSingleCanvasPage(targetPage);
     lazyRenderPagesAround(targetPage, maxPages);
 
-    if (targetPage > 1) {
-        setTimeout(() => pageFlipInstance.flip(targetPage - 1), 200);
-    }
+    bookContainer.turn({
+        width: isDualPage ? globalPageW * 2 : globalPageW,
+        height: globalPageH,
+        autoCenter: true,
+        elevation: 80,
+        gradients: true,
+        display: isDualPage ? 'double' : 'single',
+        page: targetPage, // Turn initialization mein hi target page set kar diya
+        when: {
+            turning: function(e, page, view) {
+                if (isPremium && !isPurchased && page > 1) {
+                    e.preventDefault();
+                    showPurchaseRequiredModal();
+                    return;
+                }
+                currentPage = page;
+                playPageTurnSound();
+                savePageProgress(currentPage);
+
+                const slider = document.getElementById("page-slider");
+                if (slider) slider.value = currentPage;
+
+                lazyRenderPagesAround(currentPage, maxPages);
+            }
+        }
+    });
+
+    savePageProgress(currentPage);
+    const slider = document.getElementById("page-slider");
+    if (slider) slider.value = currentPage;
 }
 
 async function renderSingleCanvasPage(pageNum) {
@@ -501,24 +481,18 @@ async function renderSingleCanvasPage(pageNum) {
         ctx.scale(dpr, dpr);
         await page.render({ canvasContext: ctx, viewport: viewport }).promise;
 
-        // renderSingleCanvasPage() ke andar Canvas Render ke baad use karein:
-ctx.save();
-// Canvas ke exact screen center point par translate karein
-const centerX = (canvas.width / dpr) / 2;
-const centerY = (canvas.height / dpr) / 2;
+        ctx.save();
+        const centerX = (canvas.width / dpr) / 2;
+        const centerY = (canvas.height / dpr) / 2;
+        ctx.translate(centerX, centerY);
+        ctx.rotate((-45 + rotation) * Math.PI / 180);
 
-ctx.translate(centerX, centerY);
-ctx.rotate(-45 * Math.PI / 180); // 45 degree angle
-
-// Font styling
-ctx.font = "bold 22px Inter, system-ui, sans-serif";
-ctx.fillStyle = "rgba(0, 0, 0, 0.12)"; // Soft, secure contrast
-ctx.textAlign = "center";
-ctx.textBaseline = "middle";
-
-// Watermark Text Render
-ctx.fillText("ROITX SECURE • DO NOT SHARE", 0, 0);
-ctx.restore();
+        ctx.font = "bold 22px Inter, system-ui, sans-serif";
+        ctx.fillStyle = "rgba(0, 0, 0, 0.12)";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("ROITX SECURE • DO NOT SHARE", 0, 0);
+        ctx.restore();
 
         pageDiv.innerHTML = '';
         pageDiv.appendChild(canvas);
@@ -530,7 +504,7 @@ ctx.restore();
 }
 
 function lazyRenderPagesAround(current, maxPages) {
-    const range = [current - 1, current, current + 1, current + 2];
+    const range = [current - 2, current - 1, current, current + 1, current + 2, current + 3];
     range.forEach(p => {
         if (p >= 1 && p <= maxPages) {
             renderSingleCanvasPage(p);
@@ -604,7 +578,7 @@ window.applyHighlight = (color) => {
     hlData[currentPage].push({ color, time: Date.now() });
     localStorage.setItem(`hl_${rawPath}`, JSON.stringify(hlData));
     
-    alert("Highlight saved on this page!");
+    showToast("✨ Highlight saved successfully!");
     const bar = document.getElementById("highlight-bar");
     if (bar) bar.classList.remove("active");
 };
@@ -613,7 +587,7 @@ window.clearPageHighlights = () => {
     let hlData = getStoredHighlights();
     delete hlData[currentPage];
     localStorage.setItem(`hl_${rawPath}`, JSON.stringify(hlData));
-    alert("Highlights cleared!");
+    showToast("🗑️ Page highlights cleared!");
     const bar = document.getElementById("highlight-bar");
     if (bar) bar.classList.remove("active");
 };
@@ -633,7 +607,7 @@ function applySavedHighlightsToPage(pageNum, ctx, viewport) {
 }
 
 /* =================================================================
-   HANDS-FREE AUTO-SCROLL Engine
+   AUTO-SCROLL Engine
    ================================================================= */
 window.toggleAutoScroll = () => {
     const btn = document.getElementById("btn-autoscroll");
@@ -708,8 +682,10 @@ window.toggleCurrentPageBookmark = () => {
     let bookmarks = getBookmarks();
     if (bookmarks.includes(currentPage)) {
         bookmarks = bookmarks.filter(p => p !== currentPage);
+        showToast(`📌 Bookmark removed from Page ${currentPage}`);
     } else {
         bookmarks.push(currentPage);
+        showToast(`🔖 Page ${currentPage} bookmarked successfully! ✨`);
     }
     localStorage.setItem(`bookmarks_${rawPath}`, JSON.stringify(bookmarks));
     checkBookmarkState(currentPage);
@@ -724,8 +700,6 @@ function checkBookmarkState(pageNo) {
 
 window.showSavedBookmarks = () => {
     const bookmarks = getBookmarks();
-    
-    // Purane Modal ko remove karein agar pehle se open ho
     const existingModal = document.getElementById("bookmarksModal");
     if (existingModal) existingModal.remove();
 
@@ -734,7 +708,6 @@ window.showSavedBookmarks = () => {
         return; 
     }
 
-    // Modal Outer Container
     const modal = document.createElement("div");
     modal.id = "bookmarksModal";
     modal.style.cssText = `
@@ -744,7 +717,6 @@ window.showSavedBookmarks = () => {
         justify-content: center; z-index: 999999; animation: bookmarkFadeIn 0.25s ease;
     `;
 
-    // Bookmarks List Buttons Generator
     const bookmarkButtonsHTML = bookmarks.map(page => `
         <button class="bm-page-btn" onclick="jumpToBookmarkedPage(${page})" style="
             background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12);
@@ -756,7 +728,6 @@ window.showSavedBookmarks = () => {
         </button>
     `).join('');
 
-    // Inner Card UI
     modal.innerHTML = `
         <div style="background: #12161f; border: 1px solid rgba(255,255,255,0.12); border-radius: 20px; 
                     padding: 24px; width: 90%; max-width: 340px; text-align: center; color: #fff; 
@@ -771,7 +742,7 @@ window.showSavedBookmarks = () => {
             </div>
 
             <p style="font-size: 12px; color: #a0aec0; margin: 0 0 16px 0; text-align: left;">
-                Kise page par jana chahte hain? Click karke jump karein:
+                Kis page par jana chahte hain? Click karke jump karein:
             </p>
 
             <div style="display: flex; flex-direction: column; gap: 10px; max-height: 240px; overflow-y: auto; padding-right: 4px;">
@@ -784,25 +755,38 @@ window.showSavedBookmarks = () => {
     window.toggleSettings(false);
 };
 
-// Bookmarked Page par Direct Jump Handler Helper
 window.jumpToBookmarkedPage = (pageNo) => {
     jumpToPage(pageNo);
     const modal = document.getElementById("bookmarksModal");
     if (modal) modal.remove();
 };
 
-// Toast Notification Helper (Prompt/Alert alternative)
 function showToast(message) {
+    const oldToast = document.getElementById("roitx-custom-toast");
+    if (oldToast) oldToast.remove();
+
     const toast = document.createElement("div");
+    toast.id = "roitx-custom-toast";
     toast.innerText = message;
     toast.style.cssText = `
-        position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
-        background: rgba(22, 27, 38, 0.95); border: 1px solid rgba(255,255,255,0.15);
-        color: #fff; padding: 10px 20px; border-radius: 30px; font-size: 13px;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 999999; backdrop-filter: blur(10px);
+        position: fixed; bottom: 85px; left: 50%; transform: translateX(-50%) translateY(20px);
+        background: rgba(20, 25, 38, 0.95); border: 1px solid rgba(99, 102, 241, 0.4);
+        color: #fff; padding: 12px 24px; border-radius: 30px; font-size: 13.5px; font-weight: 500;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.6); z-index: 999999; backdrop-filter: blur(12px);
+        opacity: 0; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     `;
     document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 2500);
+    
+    requestAnimationFrame(() => {
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateX(-50%) translateY(0)';
+    });
+
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(-50%) translateY(20px)';
+        setTimeout(() => toast.remove(), 300);
+    }, 2500);
 }
 
 window.toggleThumbnailGrid = async (show = true) => {
@@ -858,7 +842,7 @@ window.saveStickyNote = () => {
     else delete notes[currentPage];
     
     localStorage.setItem(`notes_${rawPath}`, JSON.stringify(notes));
-    alert("Note saved!");
+    showToast("📝 Sticky note saved!");
     toggleStickyNote(false);
 };
 
@@ -875,7 +859,7 @@ window.toggleSpeech = async () => {
     const textContent = await page.getTextContent();
     const pageText = textContent.items.map(item => item.str).join(" ");
 
-    if (!pageText.trim()) { alert("No readable text found on this page."); return; }
+    if (!pageText.trim()) { showToast("⚠️ No readable text found on this page."); return; }
 
     const utterance = new SpeechSynthesisUtterance(pageText);
     utterance.onend = () => {
@@ -886,63 +870,91 @@ window.toggleSpeech = async () => {
     synth.speak(utterance);
     isSpeaking = true;
     if (btn) btn.style.color = "var(--accent)";
+    showToast("🔊 Reading page aloud...");
 };
 
 window.setViewMode = (mode) => {
     viewMode = mode;
     document.body.className = `theme-${document.body.className.split(' ')[0].replace('theme-', '')} ui-visible mode-${mode}`;
-    if (mode === 'vertical') renderVerticalView();
+    if (mode === 'vertical') {
+        renderVerticalView();
+    }
     window.toggleSettings(false);
 };
 
 async function renderVerticalView() {
     const container = document.getElementById("vertical-scroll-container");
-    if (!container || container.children.length > 0) return;
-
-    const isParamPremium = params.get("type") === "premium";
-    const isInPaidFolder = rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium"));
-    const isPremiumNote = isParamPremium || isInPaidFolder;
+    if (!container) return;
     
-    const isPurchased = await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "");
+    if (container.children.length === 0) {
+        const isParamPremium = params.get("type") === "premium";
+        const isInPaidFolder = rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium"));
+        const isPremiumNote = isParamPremium || isInPaidFolder;
+        const isPurchased = await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "");
 
-    let maxPagesToRender = pdfDoc.numPages;
-    if (isPremiumNote && !isPurchased) {
-        maxPagesToRender = 1;
+        let maxPagesToRender = pdfDoc.numPages;
+        if (isPremiumNote && !isPurchased) {
+            maxPagesToRender = 1;
+        }
+
+        for (let i = 1; i <= maxPagesToRender; i++) {
+            const wrapper = document.createElement("div");
+            wrapper.className = "v-page-wrapper";
+            wrapper.setAttribute("data-page-num", i);
+            const canvas = document.createElement("canvas");
+            wrapper.appendChild(canvas);
+            container.appendChild(wrapper);
+
+            const page = await pdfDoc.getPage(i);
+            const vp = page.getViewport({ scale: 1.2 });
+            canvas.width = vp.width;
+            canvas.height = vp.height;
+            await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+        }
     }
+    setupVerticalScrollObserver();
+}
 
-    for (let i = 1; i <= maxPagesToRender; i++) {
-        const wrapper = document.createElement("div");
-        wrapper.className = "v-page-wrapper";
-        const canvas = document.createElement("canvas");
-        wrapper.appendChild(canvas);
-        container.appendChild(wrapper);
+function setupVerticalScrollObserver() {
+    const container = document.getElementById("vertical-scroll-container");
+    if (!container) return;
+    const wrappers = container.querySelectorAll(".v-page-wrapper");
 
-        const page = await pdfDoc.getPage(i);
-        const vp = page.getViewport({ scale: 1.2 });
-        canvas.width = vp.width;
-        canvas.height = vp.height;
-        await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
-    }
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const pageNum = parseInt(entry.target.getAttribute("data-page-num"));
+                if (pageNum) {
+                    currentPage = pageNum;
+                    updateProgressUI(currentPage);
+                }
+            }
+        });
+    }, { root: container, threshold: 0.35 });
+
+    wrappers.forEach(w => observer.observe(w));
 }
 
 window.togglePageSpread = () => {
     isDualPage = !isDualPage;
     const btn = document.getElementById("btn-spread-toggle");
-    if (btn) btn.innerText = isDualPage ? "Dual Page Mode" : "Single Page Mode";
-    alert("Re-loading structure for updated spread mode...");
-    location.reload();
-};
-function playPageTurnSound() {
-    if (!isSoundEnabled) return; // Agar sound disabled hai toh play nahi hoga
-    try {
-        flipAudio.currentTime = 0;
-        flipAudio.play().catch(e => {
-            console.warn("Audio play blocked or failed:", e);
-        });
-    } catch (e) {
-        console.warn("Custom sound failed", e);
+    if (btn) btn.innerText = isDualPage ? "Single Page Mode" : "Dual Page Mode";
+    
+    const bookContainer = $("#book-container");
+    if (bookContainer.data('turn')) {
+        try {
+            bookContainer.turn('display', isDualPage ? 'double' : 'single');
+            bookContainer.turn('size', isDualPage ? globalPageW * 2 : globalPageW, globalPageH);
+            bookContainer.turn('page', currentPage);
+        } catch (err) {
+            console.warn("Spread toggle recreation required:", err);
+            setupTurnJSStructure(pdfDoc.numPages, false, true);
+        }
+    } else {
+        setupTurnJSStructure(pdfDoc.numPages, false, true);
     }
-}
+    showToast(isDualPage ? "📖 Dual Page Book Mode Activated" : "📄 Single Page Mode Activated");
+};
 
 window.togglePageSound = () => {
     isSoundEnabled = !isSoundEnabled;
@@ -952,17 +964,34 @@ window.togglePageSound = () => {
     if (toggleSwitch) {
         toggleSwitch.classList.toggle('active', isSoundEnabled);
     }
+    showToast(isSoundEnabled ? "🔊 Flip Sound Enabled" : "🔇 Flip Sound Muted");
 };
 
-function jumpToPage(pageNo) {
+async function jumpToPage(pageNo) {
     if (viewMode === 'vertical') {
         const container = document.getElementById("vertical-scroll-container");
         if (container) {
-            const pageEl = container.children[pageNo - 1];
-            if (pageEl) pageEl.scrollIntoView({ behavior: 'smooth' });
+            const pageEl = container.querySelector(`.v-page-wrapper[data-page-num="${pageNo}"]`);
+            if (pageEl) {
+                pageEl.scrollIntoView({ behavior: 'smooth' });
+                currentPage = pageNo;
+                updateProgressUI(currentPage);
+            }
         }
-    } else if (pageFlipInstance) {
-        pageFlipInstance.turnToPage(pageNo - 1);
+    } else {
+        try {
+            const max = pdfDoc ? pdfDoc.numPages : 1;
+            const target = Math.min(Math.max(1, pageNo), max);
+            
+            // Direct jump par delay avoid karne ke liye turant page render karo
+            await renderSingleCanvasPage(target);
+            lazyRenderPagesAround(target, max);
+            
+            $("#book-container").turn('page', target);
+        } catch (e) {
+            console.warn("Jump page range error caught:", e);
+            setupTurnJSStructure(pdfDoc.numPages, false, true);
+        }
     }
 }
 
@@ -1050,9 +1079,7 @@ function setupPinchAndPanEngine() {
 }
 
 window.handleViewportClick = (e) => {
-    // FIX: Floating toolbar interactions par background UI toggle ko bypass karo
     if (e.target.closest('#highlight-bar') || e.target.closest('#search-bar-container')) return;
-    
     if (isPinching || zoomScale > 1.05) return;
     if (isPresentationMode) {
         if (e.clientX > window.innerWidth / 2) window.navPage('next');
@@ -1064,13 +1091,19 @@ window.handleViewportClick = (e) => {
     document.body.classList.toggle("ui-hidden", !isUIVisible);
 };
 
-
 window.navPage = (dir) => {
-    if (!pageFlipInstance || isPinching || isAnimating) return;
+    if (isPinching || isAnimating) return;
     isAnimating = true;
     setTimeout(() => { isAnimating = false; }, 550);
     
     if (zoomScale > 1.05) window.resetZoom();
+
+    if (viewMode === 'vertical') {
+        const step = dir === 'next' ? 1 : -1;
+        const target = Math.min(Math.max(1, currentPage + step), pdfDoc.numPages);
+        jumpToPage(target);
+        return;
+    }
 
     if (dir === 'next') {
         const isParamPremium = params.get("type") === "premium";
@@ -1085,9 +1118,13 @@ window.navPage = (dir) => {
             return;
         }
 
-        pageFlipInstance.flipNext('bottom');
+        try {
+            $("#book-container").turn('next');
+        } catch(e) { console.warn(e); }
     } else if (dir === 'prev') {
-        pageFlipInstance.flipPrev('top');
+        try {
+            $("#book-container").turn('previous');
+        } catch(e) { console.warn(e); }
     }
 };
 
@@ -1103,31 +1140,23 @@ if (pageSlider) {
     };
     pageSlider.onchange = function() {
         if (bubble) bubble.style.display = "none";
-        if (pageFlipInstance) {
-            if (zoomScale > 1.05) window.resetZoom();
-            const targetIndex = parseInt(this.value) - 1;
-            const currentIndex = pageFlipInstance.getCurrentPageIndex();
-            
-            if (targetIndex < currentIndex) {
-                 pageFlipInstance.flipPrev('top');
-            } else if (targetIndex > currentIndex) {
-                 const isParamPremium = params.get("type") === "premium";
-                 const isInPaidFolder = rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium"));
-                 const isPremiumNote = isParamPremium || isInPaidFolder;
-                 
-                 // FIX: Added local & DB verification consistency check
-                 let purchasedList = JSON.parse(localStorage.getItem("purchasedFiles") || "[]");
-                 let isPurchased = purchasedList.includes(rawPath);
+        if (zoomScale > 1.05) window.resetZoom();
+        const targetPage = parseInt(this.value);
+        
+        const isParamPremium = params.get("type") === "premium";
+        const isInPaidFolder = rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium"));
+        const isPremiumNote = isParamPremium || isInPaidFolder;
+        
+        let purchasedList = JSON.parse(localStorage.getItem("purchasedFiles") || "[]");
+        let isPurchased = purchasedList.includes(rawPath);
 
-                 if (isPremiumNote && !isPurchased) {
-                     showPurchaseRequiredModal();
-                     this.value = 1;
-                     pageFlipInstance.turnToPage(0); // FIX: Instantly force reset engine to page 1
-                     return;
-                 }
-                 pageFlipInstance.flipNext('bottom');
-            }
+        if (isPremiumNote && !isPurchased && targetPage > 1) {
+            showPurchaseRequiredModal();
+            this.value = 1;
+            jumpToPage(1);
+            return;
         }
+        jumpToPage(targetPage);
     };
 }
 
@@ -1147,7 +1176,16 @@ window.resetZoom = () => {
 
 window.rotateCanvas = () => {
     rotation = (rotation + 90) % 360;
-    updateTransform();
+    if (viewMode === 'vertical') {
+        const container = document.getElementById("vertical-scroll-container");
+        if (container) {
+            container.style.transform = `rotate(${rotation}deg)`;
+            container.style.transformOrigin = 'center center';
+        }
+    } else {
+        updateTransform();
+    }
+    showToast(`🔄 Rotated ${rotation}°`);
 };
 
 window.setTheme = (t) => {
@@ -1179,7 +1217,6 @@ window.closeAllModals = () => {
 
 function showError(path) {
     const fileName = docName || (path ? path.split('/').pop() : "Document");
-    
     const popup = document.createElement('div');
     popup.innerHTML = `
         <div style="display: flex; align-items: center; gap: 12px;">
@@ -1252,5 +1289,3 @@ if (viewportEl) {
         lastTap = currentTime;
     });
 }
-
-
