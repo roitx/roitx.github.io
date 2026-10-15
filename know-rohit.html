@@ -4,7 +4,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rohit Kumar | Secured Mind_Palace</title>
-    
+    <!-- Supabase Dependencies (Agar pehle se nahi hain toh yeh add karein) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+
+<!-- Bulletproof Gateway Guard Script -->
+<script>
+  (async function checkGatewayAccess() {
+    // Thoda wait karein taaki supabaseClient properly initialize ho jaye
+    let retries = 0;
+    while (!window.supabaseClient && retries < 10) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      retries++;
+    }
+
+    if (window.supabaseClient) {
+      const { data: { session }, error } = await window.supabaseClient.auth.getSession();
+      
+      // Agar session nahi hai, toh turant login/gateway par redirect kar dein
+      if (error || !session) {
+        window.location.replace("login.html"); // Yahan apna login ya gateway page ka naam likhein
+      }
+    } else {
+      // Fallback agar supabase load hi na ho paye
+      console.warn("Supabase client failed to load for security check.");
+    }
+  })();
+</script>
+
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -464,7 +491,6 @@
     }
   }
 })();
-
         // ANTI-SCREENSHOT
         const bodyEl = document.getElementById('app-body');
         document.addEventListener('contextmenu', e => e.preventDefault());
