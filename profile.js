@@ -705,7 +705,21 @@ function goToHome() {
 }
 
 async function logoutUser() {
-  await window.supabaseClient.auth.signOut();
-  localStorage.clear();
-  window.location.href = "login.html";
+  try {
+    await window.supabaseClient.auth.signOut();
+  } catch (err) {
+    console.error("Logout error:", err);
+  }
+
+  // Sirf Supabase session aur auth keys ko remove karein, baki local storage (preferences/cookies) safe rahegi
+  Object.keys(localStorage).forEach(key => {
+    if (key.startsWith('sb-') || key.includes('auth')) {
+      localStorage.removeItem(key);
+    }
+  });
+
+  sessionStorage.clear();
+  
+  // window.location.replace use karne se browser history mein page replace ho jayega aur back button kaam nahi karega
+  window.location.replace("index.html");
 }

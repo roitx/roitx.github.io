@@ -302,6 +302,18 @@
   </div>
 
   <script src="profile.js"></script>
+<script>
+  (async () => {
+    // Page load hote hi turant check karein ki user logged in hai ya nahi
+    if (window.supabaseClient) {
+      const { data: { session } } = await window.supabaseClient.auth.getSession();
+      if (!session) {
+        // Agar session nahi hai, toh back button se aane par bhi turant login par bhej do
+        window.location.replace("login.html");
+      }
+    }
+  })();
+</script>
 
   <!-- Navigation Helper Functions -->
   <script>
