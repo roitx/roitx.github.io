@@ -381,6 +381,14 @@
             </div>
         </section>
     </div>
+    <!-- Jaise Notification page ke liye -->
+<script src="guard.js"></script>
+<script>
+  (async () => {
+    await requirePermission('send_notif'); // Database key ke mutabiq
+  })();
+</script>
+
 
     <script>
     let cachedNotifs = [];

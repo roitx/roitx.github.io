@@ -531,13 +531,14 @@
 
 </main>
 
+<script src="guard.js"></script>
 <script>
   (async () => {
-    if (typeof window.requireAdminAuth === 'function') {
-      await window.requireAdminAuth();
-    }
+    // Admin panel ke liye 'admin_panel' permission check hogi
+    await requirePermission('admin_panel');
   })();
 </script>
+
 
 <script src="admin.js"></script>
 </body>
