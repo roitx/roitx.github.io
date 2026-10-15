@@ -13,7 +13,7 @@
     <style>
         :root {
             --bg-main: #0B0F17;
-            --bg-nav: rgba(11, 15, 23, 0.85);
+            --bg-nav: rgba(11, 15, 23, 0.9);
             --card-bg: rgba(22, 31, 48, 0.65);
             --card-border: rgba(255, 255, 255, 0.08);
             --text-primary: #F8FAFC;
@@ -26,8 +26,8 @@
 
         [data-theme="light"] {
             --bg-main: #F8FAFC;
-            --bg-nav: rgba(248, 250, 252, 0.85);
-            --card-bg: rgba(255, 255, 255, 0.8);
+            --bg-nav: rgba(248, 250, 252, 0.9);
+            --card-bg: rgba(255, 255, 255, 0.85);
             --card-border: rgba(0, 0, 0, 0.08);
             --text-primary: #0F172A;
             --text-secondary: #475569;
@@ -37,7 +37,8 @@
             --glow: rgba(2, 132, 199, 0.1);
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; cursor: none; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        @media (min-width: 1024px) { * { cursor: none; } }
         
         body {
             background-color: var(--bg-main); color: var(--text-primary);
@@ -47,7 +48,6 @@
             -webkit-user-select: none; user-select: none;
         }
 
-        /* Anti-Screenshot Layer */
         .security-shield-active {
             filter: blur(30px) contrast(200%);
             pointer-events: none;
@@ -64,91 +64,36 @@
         #scroll-progress {
             position: fixed; top: 0; left: 0; width: 0%; height: 4px;
             background: linear-gradient(90deg, var(--accent-1), var(--accent-2));
-            z-index: 100001; transition: width 0.1s ease-out;
+            z-index: 100002; transition: width 0.1s ease-out;
         }
 
         .cursor-dot, .cursor-outline {
             position: fixed; top: 0; left: 0; transform: translate(-50%, -50%);
-            border-radius: 50%; z-index: 99999; pointer-events: none;
+            border-radius: 50%; z-index: 100001; pointer-events: none; display: none;
+        }
+        @media (min-width: 1024px) {
+            .cursor-dot, .cursor-outline { display: block; }
         }
         .cursor-dot { width: 8px; height: 8px; background-color: var(--accent-1); }
-        .cursor-outline { width: 40px; height: 40px; border: 2px solid var(--accent-2); transition: width 0.2s, height 0.2s, background-color 0.2s; }
+        .cursor-outline { width: 40px; height: 40px; border: 2px solid var(--accent-2); transition: width 0.2s, height 0.2s; }
         
-        /* SECURITY GATEKEEPER OVERLAY */
-        #gatekeeper {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(7, 10, 15, 0.98); backdrop-filter: blur(30px);
-            z-index: 100000; display: flex; align-items: center; justify-content: center;
-            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.8s;
-            padding: 20px;
-        }
-        .security-box {
-            background: rgba(18, 25, 40, 0.95); border: 1px solid rgba(56, 189, 248, 0.3);
-            padding: 35px 25px; border-radius: 24px; text-align: center; max-width: 520px; width: 100%;
-            box-shadow: 0 0 50px rgba(56, 189, 248, 0.12), inset 0 0 20px rgba(56, 189, 248, 0.05);
-        }
-        .security-box h2 { font-size: 1.2rem; margin-bottom: 6px; color: var(--accent-1); font-family: 'Space Grotesk', sans-serif; letter-spacing: 2px; }
-        .security-box p { color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 20px; }
-        
-        .iq-puzzle {
-            background: #04060a; padding: 18px; border-radius: 12px; 
-            font-family: 'Fira Code', monospace; font-size: 0.85rem; font-weight: 500;
-            text-align: left; color: #cbd5e1; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.06);
-            line-height: 1.6; word-break: break-all;
-        }
-        .iq-puzzle .hl { color: var(--accent-2); font-weight: 700; }
-
-        .hint-box {
-            text-align: left; margin-bottom: 20px; font-family: 'Fira Code', monospace; font-size: 0.75rem;
-        }
-        .hint-header-row { display: flex; justify-content: space-between; align-items: center; }
-        .hint-toggle { color: var(--accent-1); background: none; border: none; cursor: pointer; text-decoration: underline; font-family: inherit; font-size: 0.75rem; padding: 0; }
-        .copy-hint-btn { background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); color: var(--accent-1); font-family: 'Fira Code', monospace; font-size: 0.7rem; padding: 3px 8px; border-radius: 6px; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 4px; }
-        .copy-hint-btn:hover { background: var(--accent-1); color: #0B0F17; }
-        
-        .hint-text { display: none; color: var(--text-secondary); margin-top: 6px; background: rgba(56, 189, 248, 0.05); padding: 8px 12px; border-radius: 6px; border-left: 2px solid var(--accent-1); word-break: break-all; font-size: 0.75rem; }
-
-        .auth-input-group { display: flex; gap: 10px; flex-wrap: wrap; }
-        #auth-input {
-            flex: 1; min-width: 150px; padding: 12px 15px; background: #04060a; border: 1px solid var(--card-border);
-            color: #fff; border-radius: 10px; font-family: 'Fira Code', monospace; outline: none;
-            text-align: center; font-size: 1rem; letter-spacing: 2px;
-        }
-        #auth-input:focus { border-color: var(--accent-1); box-shadow: 0 0 15px rgba(56, 189, 248, 0.2); }
-        #auth-btn {
-            padding: 12px 20px; background: var(--accent-1); color: #0B0F17;
-            border: none; border-radius: 10px; font-weight: 700; cursor: pointer;
-            transition: all 0.3s; font-family: 'Space Grotesk', sans-serif; letter-spacing: 1px;
-        }
-        #auth-btn:hover { box-shadow: 0 0 20px var(--accent-1); transform: translateY(-2px); }
-        
-        .error-shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
-        @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
-
-        /* MAIN CONTENT */
-        #main-content {
-            opacity: 0; filter: blur(20px); transform: scale(1.02);
-            transition: all 1.2s cubic-bezier(0.22, 1, 0.36, 1);
-            pointer-events: none;
-        }
-        #main-content.unlocked { opacity: 1; filter: blur(0); transform: scale(1); pointer-events: auto; }
-
+        /* FIXED HEADER - CONTENT NEVER OVERLAPS */
         nav {
-            position: fixed; top: 0; left: 0; width: 100%; z-index: 1000;
-            background: var(--bg-nav); backdrop-filter: blur(12px); border-bottom: 1px solid var(--card-border);
-            padding: 12px 5%; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
+            position: fixed; top: 0; left: 0; width: 100%; height: 75px; z-index: 10000;
+            background: var(--bg-nav); backdrop-filter: blur(16px); border-bottom: 1px solid var(--card-border);
+            padding: 0 5%; display: flex; justify-content: space-between; align-items: center;
         }
         .logo { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.3rem; letter-spacing: -1px; }
         .logo span { color: var(--accent-1); }
         
-        .nav-links { display: flex; gap: 15px; align-items: center; flex-wrap: wrap; }
+        .nav-links { display: flex; gap: 15px; align-items: center; }
         .nav-links a { color: var(--text-primary); text-decoration: none; font-weight: 500; font-size: 0.9rem; transition: color 0.3s; }
         .nav-links a:hover { color: var(--accent-1); }
         
         .theme-toggle { background: none; border: 1px solid var(--card-border); padding: 6px 12px; border-radius: 20px; color: var(--text-primary); outline: none; transition: all 0.3s; font-size: 0.85rem; cursor: pointer; }
         .theme-toggle:hover { border-color: var(--accent-1); color: var(--accent-1); }
 
-        .container { max-width: 1100px; margin: 90px auto 40px auto; padding: 0 15px; display: flex; flex-direction: column; gap: 30px; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 100px 15px 40px 15px; display: flex; flex-direction: column; gap: 30px; }
         .card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 20px; padding: 25px; backdrop-filter: blur(16px); box-shadow: 0 10px 30px rgba(0,0,0,0.2); transition: transform 0.4s ease, border-color 0.4s ease; }
         .card:hover { border-color: rgba(56, 189, 248, 0.4); transform: translateY(-3px); }
 
@@ -174,13 +119,21 @@
         .f-btn.active, .f-btn:hover { background: var(--accent-1); color: #0B0F17; border-color: var(--accent-1); }
 
         .gallery-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
-        .gallery-item { position: relative; border-radius: 16px; overflow: hidden; background: #000; aspect-ratio: 4/5; cursor: none; }
-        .gallery-item img { width: 100%; height: 100%; object-fit: contain; max-height: 100%; transition: transform 0.6s ease, filter 0.6s ease; filter: brightness(0.8); }
-        .gallery-item:hover img { transform: scale(1.05); filter: brightness(1.1); }
+        .gallery-item { position: relative; border-radius: 16px; overflow: hidden; background: #000; aspect-ratio: 4/5; }
+        .gallery-item img, .gallery-item video { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s ease, filter 0.6s ease; filter: brightness(0.85); }
+        .gallery-item:hover img, .gallery-item:hover video { transform: scale(1.05); filter: brightness(1.05); }
+
+        /* VIDEO SOUND BUTTON */
+        .vid-audio-btn {
+            position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.7); border: 1px solid rgba(255,255,255,0.2);
+            color: #fff; padding: 5px 10px; border-radius: 15px; font-size: 0.7rem; font-family: 'Fira Code', monospace;
+            cursor: pointer; z-index: 10; display: flex; align-items: center; gap: 4px; backdrop-filter: blur(4px);
+        }
+        .vid-audio-btn:hover { background: var(--accent-1); color: #000; }
         
-        .gallery-overlay { position: absolute; bottom: -60px; left: 0; right: 0; background: linear-gradient(0deg, rgba(0,0,0,0.9), transparent); padding: 25px 15px 15px; text-align: center; transition: bottom 0.4s ease; }
+        .gallery-overlay { position: absolute; bottom: -70px; left: 0; right: 0; background: linear-gradient(0deg, rgba(0,0,0,0.95), transparent); padding: 25px 15px 15px; text-align: center; transition: bottom 0.4s ease; }
         .gallery-item:hover .gallery-overlay { bottom: 0; }
-        .gallery-overlay h3 { color: #fff; font-size: 1rem; margin-bottom: 8px; }
+        .gallery-overlay h3 { color: #fff; font-size: 0.95rem; margin-bottom: 8px; font-family: 'Space Grotesk', sans-serif; }
 
         .action-btns { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
         .act-btn { background: rgba(255,255,255,0.15); border: none; padding: 6px 10px; border-radius: 6px; color: #fff; font-size: 0.75rem; font-weight: 500; transition: all 0.3s; backdrop-filter: blur(5px); cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
@@ -189,7 +142,7 @@
         .act-btn.liked svg { fill: #fff; stroke: #fff; }
         .act-btn span { font-size: 0.75rem; font-weight: 600; }
 
-        /* CLEAN IMAGE VIEWER MODAL */
+        /* MODAL VIEWER */
         .image-modal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(4, 9, 20, 0.95); backdrop-filter: blur(20px); z-index: 200000; justify-content: center; align-items: center; padding: 20px; }
         .image-modal.active { display: flex; }
         .modal-card { background: #0b1329; border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 16px; max-width: 850px; width: 100%; overflow: hidden; box-shadow: 0 0 40px rgba(0,0,0,0.8); display: flex; flex-direction: column; max-height: 90vh; }
@@ -198,17 +151,16 @@
         .close-modal { background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 1.2rem; }
         .close-modal:hover { color: #fff; }
         .modal-body-img { flex: 1; overflow: auto; display: flex; justify-content: center; align-items: center; padding: 20px; background: #04060a; }
-        .modal-body-img img { max-width: 100%; max-height: 75vh; object-fit: contain; border-radius: 8px; }
+        .modal-body-img img, .modal-body-img video { max-width: 100%; max-height: 75vh; object-fit: contain; border-radius: 8px; }
 
         .reveal { opacity: 0; transform: translateY(30px); transition: all 0.8s ease-out; }
         .reveal.active { opacity: 1; transform: translateY(0); }
         .tilt-card { transform-style: preserve-3d; transform: perspective(1000px); }
 
-        @media (min-width: 768px) {
-            .container { padding: 0 20px; gap: 40px; }
-            .card { padding: 40px; }
-            .hero h1 { font-size: 4rem; }
-            .security-box { padding: 40px 35px; }
+        @media (max-width: 768px) {
+            .container { padding-top: 90px; gap: 20px; }
+            .card { padding: 20px; }
+            .hero h1 { font-size: 2.2rem; }
         }
     </style>
 </head>
@@ -219,35 +171,8 @@
     <div class="cursor-dot" id="cursor-dot"></div>
     <div class="cursor-outline" id="cursor-outline"></div>
 
-    <!-- SECURITY GATEKEEPER -->
-    <div id="gatekeeper">
-        <div class="security-box" id="sec-box">
-            <h2>MIND_PALACE_AUTH</h2>
-            <p>Extreme cryptographic & high-IQ protocol check required.</p>
-            
-            <div class="iq-puzzle" id="puzzle-display"></div>
-
-            <div class="hint-box">
-                <div class="hint-header-row">
-                    <button class="hint-toggle" id="hint-btn">AI Search Prompt Hint</button>
-                    <button class="copy-hint-btn" id="copy-hint-btn">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                        Copy Prompt
-                    </button>
-                </div>
-                <div class="hint-text" id="hint-content">Loading prompt...</div>
-            </div>
-            
-            <div class="auth-input-group">
-                <input type="text" id="auth-input" placeholder="SOLUTION KEY" autocomplete="off" spellcheck="false">
-                <button id="auth-btn">VERIFY</button>
-            </div>
-            <p id="auth-msg" style="color: #ff5f56; font-size: 0.75rem; margin-top: 10px; height: 15px; font-family: 'Fira Code', monospace;"></p>
-        </div>
-    </div>
-
-    <!-- MAIN PORTFOLIO CONTENT -->
-    <div id="main-content">
+    <!-- MAIN PORTFOLIO CONTENT (NO GATEWAY) -->
+    <div id="main-content" style="opacity: 1; filter: blur(0); transform: scale(1); pointer-events: auto;">
         <nav>
             <div class="logo">ROHIT<span>.</span></div>
             <div class="nav-links">
@@ -263,7 +188,7 @@
                 <h1>Rohit Kumar</h1>
                 <div class="typewriter" id="typewriter"></div>
                 <p style="color: var(--text-secondary); max-width: 600px; margin: 0 auto; line-height: 1.6; font-size: 0.95rem;">
-                    Bridging the gap between flawless logic and breathtaking aesthetics. Dedicated to pushing the boundaries of web development, competitive esports, and traditional fine arts.
+                    Bridging the gap between flawless logic, cinematic video editing, competitive esports, and traditional fine arts.
                 </p>
             </section>
 
@@ -275,8 +200,8 @@
                     </div>
                     <div class="terminal-body"><span class="cmd">const</span> developer = {
   name: <span class="str">'Rohit Kumar'</span>,
-  stack: [<span class="str">'React'</span>, <span class="str">'Node.js'</span>, <span class="str">'Express'</span>, <span class="str">'React Native'</span>],
-  speciality: <span class="str">'Unified UI/UX & Robust Backends'</span>,
+  stack: [<span class="str">'React'</span>, <span class="str">'Node.js'</span>, <span class="str">'Video Editing'</span>, <span class="str">'Fine Arts'</span>],
+  speciality: <span class="str">'Unified UI/UX & Cinematics'</span>,
   execute: <span class="cmd">() =></span> { <span class="func">buildMasterpiece</span>(); }
 };</div>
                 </div>
@@ -290,24 +215,25 @@
                     </div>
                     <div>
                         <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size: 0.9rem;">
-                            <span>Fine Arts & Sketching</span><span style="color:var(--accent-2)">90%</span>
+                            <span>Cinematics & Video Editing</span><span style="color:var(--accent-2)">92%</span>
                         </div>
-                        <div class="skill-bar"><div class="skill-fill" data-width="90%"></div></div>
+                        <div class="skill-bar"><div class="skill-fill" data-width="92%"></div></div>
                     </div>
                     <div>
                         <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size: 0.9rem;">
-                            <span>Esports Strategy</span><span style="color:var(--accent-3)">88%</span>
+                            <span>Fine Arts & Sketching</span><span style="color:var(--accent-3)">90%</span>
                         </div>
-                        <div class="skill-bar"><div class="skill-fill" data-width="88%"></div></div>
+                        <div class="skill-bar"><div class="skill-fill" data-width="90%"></div></div>
                     </div>
                 </div>
             </section>
 
             <section class="card reveal" id="portfolio">
-                <h2 class="section-title">Master Gallery</h2>
+                <h2 class="section-title">Master Gallery & Cinematics</h2>
                 
                 <div class="filter-btns">
                     <button class="f-btn active" data-filter="all">All Work</button>
+                    <button class="f-btn" data-filter="videos">Video Edits</button>
                     <button class="f-btn" data-filter="art">Fine Arts</button>
                     <button class="f-btn" data-filter="gaming">Gaming</button>
                     <button class="f-btn" data-filter="life">Lifestyle</button>
@@ -315,27 +241,84 @@
                 </div>
 
                 <div class="gallery-grid">
-                    <!-- Art Items -->
+                    <!-- VIDEO 1: Rainbow without rain -->
+                    <div class="gallery-item videos tilt-card">
+                        <video src="auth/Rainbow_withoutrain.mp4" autoplay muted loop playsinline></video>
+                        <button class="vid-audio-btn" onclick="toggleAudio(this, event)">
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg> Muted
+                        </button>
+                        <div class="gallery-overlay">
+                            <h3>Rainbow Without Rain</h3>
+                            <div class="action-btns">
+                                <button class="act-btn like-btn" onclick="toggleLike('vid1')">❤️ <span id="like-vid1">142</span></button>
+                                <button class="act-btn" onclick="triggerView('vid1', 'auth/Rainbow_withoutrain.mp4', 'Rainbow Without Rain', 'video')">🔍 View</button>
+                                <button class="act-btn" onclick="triggerShare('vid1', 'auth/Rainbow_withoutrain.mp4', 'Rainbow Without Rain')">🔗 Share</button>
+                                <button class="act-btn" onclick="dlMedia('auth/Rainbow_withoutrain.mp4', 'rainbow_without_rain.mp4')">📥 DL</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- VIDEO 2: Geometry box -->
+                    <div class="gallery-item videos tilt-card">
+                        <video src="auth/geometry_box.mp4" autoplay muted loop playsinline></video>
+                        <button class="vid-audio-btn" onclick="toggleAudio(this, event)">
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg> Muted
+                        </button>
+                        <div class="gallery-overlay">
+                            <h3>Geometry Box Edit</h3>
+                            <div class="action-btns">
+                                <button class="act-btn like-btn" onclick="toggleLike('vid2')">❤️ <span id="like-vid2">98</span></button>
+                                <button class="act-btn" onclick="triggerView('vid2', 'auth/geometry_box.mp4', 'Geometry Box Edit', 'video')">🔍 View</button>
+                                <button class="act-btn" onclick="triggerShare('vid2', 'auth/geometry_box.mp4', 'Geometry Box Edit')">🔗 Share</button>
+                                <button class="act-btn" onclick="dlMedia('auth/geometry_box.mp4', 'geometry_box.mp4')">📥 DL</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- VIDEO 3: 8 years celebration -->
+                    <div class="gallery-item videos tilt-card">
+                        <video src="auth/8_years_celebration.mp4" autoplay muted loop playsinline></video>
+                        <button class="vid-audio-btn" onclick="toggleAudio(this, event)">
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg> Muted
+                        </button>
+                        <div class="gallery-overlay">
+                            <h3>8 Years Celebration Montage</h3>
+                            <div class="action-btns">
+                                <button class="act-btn like-btn" onclick="toggleLike('vid3')">❤️ <span id="like-vid3">215</span></button>
+                                <button class="act-btn" onclick="triggerView('vid3', 'auth/8_years_celebration.mp4', '8 Years Celebration', 'video')">🔍 View</button>
+                                <button class="act-btn" onclick="triggerShare('vid3', 'auth/8_years_celebration.mp4', '8 Years Celebration')">🔗 Share</button>
+                                <button class="act-btn" onclick="dlMedia('auth/8_years_celebration.mp4', '8_years_celebration.mp4')">📥 DL</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- VIDEO 4: Battery experiment -->
+                    <div class="gallery-item videos tilt-card">
+                        <video src="auth/battery_experiment.mp4" autoplay muted loop playsinline></video>
+                        <button class="vid-audio-btn" onclick="toggleAudio(this, event)">
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg> Muted
+                        </button>
+                        <div class="gallery-overlay">
+                            <h3>Battery Science Experiment</h3>
+                            <div class="action-btns">
+                                <button class="act-btn like-btn" onclick="toggleLike('vid4')">❤️ <span id="like-vid4">176</span></button>
+                                <button class="act-btn" onclick="triggerView('vid4', 'auth/battery_experiment.mp4', 'Battery Experiment', 'video')">🔍 View</button>
+                                <button class="act-btn" onclick="triggerShare('vid4', 'auth/battery_experiment.mp4', 'Battery Experiment')">🔗 Share</button>
+                                <button class="act-btn" onclick="dlMedia('auth/battery_experiment.mp4', 'battery_experiment.mp4')">📥 DL</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Art Items (Original 4) -->
                     <div class="gallery-item art tilt-card">
                         <img src="auth/sivaji.jpg" alt="Shivaji Maharaj" loading="lazy">
                         <div class="gallery-overlay">
                             <h3>Chhatrapati Shivaji Maharaj</h3>
                             <div class="action-btns">
-                                <button class="act-btn like-btn" onclick="toggleLike('sivaji')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> 
-                                    <span class="like-count" id="like-sivaji">0</span>
-                                </button>
-                                <button class="act-btn" onclick="triggerView('sivaji', 'auth/sivaji.jpg', 'Chhatrapati Shivaji Maharaj')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                                    <span class="view-count" id="view-sivaji">0</span>
-                                </button>
-                                <button class="act-btn" onclick="triggerShare('sivaji', 'auth/sivaji.jpg', 'Chhatrapati Shivaji Maharaj')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-                                    <span class="share-count" id="share-sivaji">0</span>
-                                </button>
-                                <button class="act-btn" onclick="dlImage('auth/sivaji.jpg', 'sivaji_maharaj.jpg')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> DL
-                                </button>
+                                <button class="act-btn like-btn" onclick="toggleLike('sivaji')">❤️ <span id="like-sivaji">142</span></button>
+                                <button class="act-btn" onclick="triggerView('sivaji', 'auth/sivaji.jpg', 'Chhatrapati Shivaji Maharaj', 'image')">🔍 View</button>
+                                <button class="act-btn" onclick="triggerShare('sivaji', 'auth/sivaji.jpg', 'Chhatrapati Shivaji Maharaj')">🔗 Share</button>
+                                <button class="act-btn" onclick="dlImage('auth/sivaji.jpg', 'sivaji_maharaj.jpg')">📥 DL</button>
                             </div>
                         </div>
                     </div>
@@ -345,21 +328,10 @@
                         <div class="gallery-overlay">
                             <h3>Maharana Pratap</h3>
                             <div class="action-btns">
-                                <button class="act-btn like-btn" onclick="toggleLike('maharna')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> 
-                                    <span class="like-count" id="like-maharna">0</span>
-                                </button>
-                                <button class="act-btn" onclick="triggerView('maharna', 'auth/maharna.jpg', 'Maharana Pratap')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                                    <span class="view-count" id="view-maharna">0</span>
-                                </button>
-                                <button class="act-btn" onclick="triggerShare('maharna', 'auth/maharna.jpg', 'Maharana Pratap')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-                                    <span class="share-count" id="share-maharna">0</span>
-                                </button>
-                                <button class="act-btn" onclick="dlImage('auth/maharna.jpg', 'maharana_pratap.jpg')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> DL
-                                </button>
+                                <button class="act-btn like-btn" onclick="toggleLike('maharna')">❤️ <span id="like-maharna">98</span></button>
+                                <button class="act-btn" onclick="triggerView('maharna', 'auth/maharna.jpg', 'Maharana Pratap', 'image')">🔍 View</button>
+                                <button class="act-btn" onclick="triggerShare('maharna', 'auth/maharna.jpg', 'Maharana Pratap')">🔗 Share</button>
+                                <button class="act-btn" onclick="dlImage('auth/maharna.jpg', 'maharana_pratap.jpg')">📥 DL</button>
                             </div>
                         </div>
                     </div>
@@ -369,21 +341,10 @@
                         <div class="gallery-overlay">
                             <h3>Dr. S. Radhakrishnan</h3>
                             <div class="action-btns">
-                                <button class="act-btn like-btn" onclick="toggleLike('radhakrisnan')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> 
-                                    <span class="like-count" id="like-radhakrisnan">0</span>
-                                </button>
-                                <button class="act-btn" onclick="triggerView('radhakrisnan', 'auth/radhakrisnan.jpg', 'Dr. S. Radhakrishnan')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                                    <span class="view-count" id="view-radhakrisnan">0</span>
-                                </button>
-                                <button class="act-btn" onclick="triggerShare('radhakrisnan', 'auth/radhakrisnan.jpg', 'Dr. S. Radhakrishnan')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-                                    <span class="share-count" id="share-radhakrisnan">0</span>
-                                </button>
-                                <button class="act-btn" onclick="dlImage('auth/radhakrisnan.jpg', 'dr_radhakrishnan.jpg')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> DL
-                                </button>
+                                <button class="act-btn like-btn" onclick="toggleLike('radhakrisnan')">❤️ <span id="like-radhakrisnan">76</span></button>
+                                <button class="act-btn" onclick="triggerView('radhakrisnan', 'auth/radhakrisnan.jpg', 'Dr. S. Radhakrishnan', 'image')">🔍 View</button>
+                                <button class="act-btn" onclick="triggerShare('radhakrisnan', 'auth/radhakrisnan.jpg', 'Dr. S. Radhakrishnan')">🔗 Share</button>
+                                <button class="act-btn" onclick="dlImage('auth/radhakrisnan.jpg', 'dr_radhakrishnan.jpg')">📥 DL</button>
                             </div>
                         </div>
                     </div>
@@ -393,95 +354,52 @@
                         <div class="gallery-overlay">
                             <h3>Crowned Lion Concept</h3>
                             <div class="action-btns">
-                                <button class="act-btn like-btn" onclick="toggleLike('image')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> 
-                                    <span class="like-count" id="like-image">0</span>
-                                </button>
-                                <button class="act-btn" onclick="triggerView('image', 'auth/image.jpg', 'Crowned Lion Concept')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                                    <span class="view-count" id="view-image">0</span>
-                                </button>
-                                <button class="act-btn" onclick="triggerShare('image', 'auth/image.jpg', 'Crowned Lion Concept')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-                                    <span class="share-count" id="share-image">0</span>
-                                </button>
-                                <button class="act-btn" onclick="dlImage('auth/image.jpg', 'lion_concept.jpg')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> DL
-                                </button>
+                                <button class="act-btn like-btn" onclick="toggleLike('image')">❤️ <span id="like-image">110</span></button>
+                                <button class="act-btn" onclick="triggerView('image', 'auth/image.jpg', 'Crowned Lion Concept', 'image')">🔍 View</button>
+                                <button class="act-btn" onclick="triggerShare('image', 'auth/image.jpg', 'Crowned Lion Concept')">🔗 Share</button>
+                                <button class="act-btn" onclick="dlImage('auth/image.jpg', 'lion_concept.jpg')">📥 DL</button>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Gaming & Lifestyle -->
+                    <!-- Gaming -->
                     <div class="gallery-item gaming tilt-card">
                         <img src="auth/game.jpg" alt="Esports Profile" loading="lazy">
                         <div class="gallery-overlay">
                             <h3>NAUGHTYBOY | Lvl 67</h3>
                             <div class="action-btns">
-                                <button class="act-btn like-btn" onclick="toggleLike('game')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> 
-                                    <span class="like-count" id="like-game">0</span>
-                                </button>
-                                <button class="act-btn" onclick="triggerView('game', 'auth/game.jpg', 'Esports Profile')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                                    <span class="view-count" id="view-game">0</span>
-                                </button>
-                                <button class="act-btn" onclick="triggerShare('game', 'auth/game.jpg', 'Esports Profile')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-                                    <span class="share-count" id="share-game">0</span>
-                                </button>
-                                <button class="act-btn" onclick="dlImage('auth/game.jpg', 'gaming_profile.jpg')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> DL
-                                </button>
+                                <button class="act-btn like-btn" onclick="toggleLike('game')">❤️ <span id="like-game">215</span></button>
+                                <button class="act-btn" onclick="triggerView('game', 'auth/game.jpg', 'Esports Profile', 'image')">🔍 View</button>
+                                <button class="act-btn" onclick="triggerShare('game', 'auth/game.jpg', 'Esports Profile')">🔗 Share</button>
+                                <button class="act-btn" onclick="dlImage('auth/game.jpg', 'gaming_profile.jpg')">📥 DL</button>
                             </div>
                         </div>
                     </div>
 
+                    <!-- Lifestyle -->
                     <div class="gallery-item life tilt-card">
                         <img src="auth/physique.jpg" alt="Fitness" loading="lazy">
                         <div class="gallery-overlay">
                             <h3>Discipline & Aesthetics</h3>
                             <div class="action-btns">
-                                <button class="act-btn like-btn" onclick="toggleLike('physique')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> 
-                                    <span class="like-count" id="like-physique">0</span>
-                                </button>
-                                <button class="act-btn" onclick="triggerView('physique', 'auth/physique.jpg', 'Fitness')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                                    <span class="view-count" id="view-physique">0</span>
-                                </button>
-                                <button class="act-btn" onclick="triggerShare('physique', 'auth/physique.jpg', 'Fitness')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-                                    <span class="share-count" id="share-physique">0</span>
-                                </button>
-                                <button class="act-btn" onclick="dlImage('auth/physique.jpg', 'physique.jpg')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> DL
-                                </button>
+                                <button class="act-btn like-btn" onclick="toggleLike('physique')">❤️ <span id="like-physique">189</span></button>
+                                <button class="act-btn" onclick="triggerView('physique', 'auth/physique.jpg', 'Fitness', 'image')">🔍 View</button>
+                                <button class="act-btn" onclick="triggerShare('physique', 'auth/physique.jpg', 'Fitness')">🔗 Share</button>
+                                <button class="act-btn" onclick="dlImage('auth/physique.jpg', 'physique.jpg')">📥 DL</button>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Press & News -->
+                    <!-- Press & News (All 3 Included) -->
                     <div class="gallery-item news tilt-card">
                         <img src="auth/news1.jpg" alt="Dainik Bhaskar News" loading="lazy">
                         <div class="gallery-overlay">
                             <h3>दैनिक भास्कर - सम्मान समारोह</h3>
                             <div class="action-btns">
-                                <button class="act-btn like-btn" onclick="toggleLike('news1')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> 
-                                    <span class="like-count" id="like-news1">0</span>
-                                </button>
-                                <button class="act-btn" onclick="triggerView('news1', 'auth/news1.jpg', 'दैनिक भास्कर - सम्मान समारोह')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                                    <span class="view-count" id="view-news1">0</span>
-                                </button>
-                                <button class="act-btn" onclick="triggerShare('news1', 'auth/news1.jpg', 'दैनिक भास्कर - सम्मान समारोह')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-                                    <span class="share-count" id="share-news1">0</span>
-                                </button>
-                                <button class="act-btn" onclick="dlImage('auth/news1.jpg', 'dainik_bhaskar_news1.jpg')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> DL
-                                </button>
+                                <button class="act-btn like-btn" onclick="toggleLike('news1')">❤️ <span id="like-news1">84</span></button>
+                                <button class="act-btn" onclick="triggerView('news1', 'auth/news1.jpg', 'दैनिक भास्कर - सम्मान समारोह', 'image')">🔍 View</button>
+                                <button class="act-btn" onclick="triggerShare('news1', 'auth/news1.jpg', 'दैनिक भास्कर')">🔗 Share</button>
+                                <button class="act-btn" onclick="dlImage('auth/news1.jpg', 'dainik_bhaskar_news1.jpg')">📥 DL</button>
                             </div>
                         </div>
                     </div>
@@ -491,21 +409,10 @@
                         <div class="gallery-overlay">
                             <h3>प्रजापति समन्वय समिति सम्मान</h3>
                             <div class="action-btns">
-                                <button class="act-btn like-btn" onclick="toggleLike('news2')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> 
-                                    <span class="like-count" id="like-news2">0</span>
-                                </button>
-                                <button class="act-btn" onclick="triggerView('news2', 'auth/news2.jpg', 'प्रजापति समन्वय समिति सम्मान')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                                    <span class="view-count" id="view-news2">0</span>
-                                </button>
-                                <button class="act-btn" onclick="triggerShare('news2', 'auth/news2.jpg', 'प्रजापति समन्वय समिति सम्मान')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-                                    <span class="share-count" id="share-news2">0</span>
-                                </button>
-                                <button class="act-btn" onclick="dlImage('auth/news2.jpg', 'news_coverage_2.jpg')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> DL
-                                </button>
+                                <button class="act-btn like-btn" onclick="toggleLike('news2')">❤️ <span id="like-news2">62</span></button>
+                                <button class="act-btn" onclick="triggerView('news2', 'auth/news2.jpg', 'प्रजापति समन्वय समिति सम्मान', 'image')">🔍 View</button>
+                                <button class="act-btn" onclick="triggerShare('news2', 'auth/news2.jpg', 'प्रजापति समन्वय समिति सम्मान')">🔗 Share</button>
+                                <button class="act-btn" onclick="dlImage('auth/news2.jpg', 'news_coverage_2.jpg')">📥 DL</button>
                             </div>
                         </div>
                     </div>
@@ -515,21 +422,10 @@
                         <div class="gallery-overlay">
                             <h3>प्रतिभा सम्मान एवं कार्यालय उद्घाटन</h3>
                             <div class="action-btns">
-                                <button class="act-btn like-btn" onclick="toggleLike('news3')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> 
-                                    <span class="like-count" id="like-news3">0</span>
-                                </button>
-                                <button class="act-btn" onclick="triggerView('news3', 'auth/news3.jpg', 'प्रतिभा सम्मान एवं कार्यालय उद्घाटन')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                                    <span class="view-count" id="view-news3">0</span>
-                                </button>
-                                <button class="act-btn" onclick="triggerShare('news3', 'auth/news3.jpg', 'प्रतिभा सम्मान एवं कार्यालय उद्घाटन')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-                                    <span class="share-count" id="share-news3">0</span>
-                                </button>
-                                <button class="act-btn" onclick="dlImage('auth/news3.jpg', 'news_coverage_3.jpg')">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> DL
-                                </button>
+                                <button class="act-btn like-btn" onclick="toggleLike('news3')">❤️ <span id="like-news3">91</span></button>
+                                <button class="act-btn" onclick="triggerView('news3', 'auth/news3.jpg', 'प्रतिभा सम्मान एवं कार्यालय उद्घाटन', 'image')">🔍 View</button>
+                                <button class="act-btn" onclick="triggerShare('news3', 'auth/news3.jpg', 'प्रतिभा सम्मान')">🔗 Share</button>
+                                <button class="act-btn" onclick="dlImage('auth/news3.jpg', 'news_coverage_3.jpg')">📥 DL</button>
                             </div>
                         </div>
                     </div>
@@ -542,15 +438,15 @@
         </div>
     </div>
 
-    <!-- CLEAN IMAGE VIEWER MODAL CONTAINER -->
+    <!-- MEDIA VIEWER MODAL CONTAINER -->
     <div class="image-modal" id="imageViewerModal">
         <div class="modal-card">
             <div class="modal-header">
-                <h4 id="modalImageTitle">Image Viewer</h4>
+                <h4 id="modalImageTitle">Media Viewer</h4>
                 <button class="close-modal" onclick="closeViewer()">✕</button>
             </div>
-            <div class="modal-body-img">
-                <img id="modalImgSource" src="" alt="Preview">
+            <div class="modal-body-img" id="modalBodyContent">
+                <img id="modalImgSource" src="" alt="Preview" style="display:none;">
             </div>
         </div>
     </div>
@@ -562,121 +458,10 @@
         document.addEventListener('keydown', e => {
             if (e.keyCode === 44 || (e.ctrlKey && (e.key === 'p' || e.key === 's' || e.key === 'u' || e.key === 'Shift')) ) {
                 e.preventDefault();
-                triggerSecurityShield();
+                bodyEl.classList.add('security-shield-active');
+                setTimeout(() => bodyEl.classList.remove('security-shield-active'), 1500);
             }
         });
-        document.addEventListener("visibilitychange", () => {
-            if (document.hidden) { bodyEl.classList.add('security-shield-active'); } 
-            else { setTimeout(() => bodyEl.classList.remove('security-shield-active'), 400); }
-        });
-        window.addEventListener('blur', () => bodyEl.classList.add('security-shield-active'));
-        window.addEventListener('focus', () => bodyEl.classList.remove('security-shield-active'));
-        function triggerSecurityShield() {
-            bodyEl.classList.add('security-shield-active');
-            setTimeout(() => bodyEl.classList.remove('security-shield-active'), 1500);
-        }
-
-        // ALGORITHMIC PUZZLE GENERATOR
-        function generateDynamicPuzzle() {
-            const types = ['matrix', 'algebra', 'bitwise', 'primeOffset'];
-            const chosenType = types[Math.floor(Math.random() * types.length)];
-            let puzzleObj = {};
-
-            if (chosenType === 'matrix') {
-                const a = Math.floor(Math.random() * 3) + 2; 
-                const b = Math.floor(Math.random() * 5) + 1; 
-                let seq = [3];
-                for(let i=1; i<5; i++) { seq.push(seq[i-1] * a + b); }
-                const nextVal = seq[seq.length-1] * a + b;
-                
-                puzzleObj.q = `Dynamic Recurrence Matrix:<br>Sequence: ${seq.join(', ')}, <span class='hl'>?</span><br>Formula: a<sub>n</sub> = ${a}a<sub>n-1</sub> + ${b}`;
-                puzzleObj.hintPrompt = `Find the next number in sequence ${seq.join(', ')} where each term is ${a} * previous + ${b}`;
-                puzzleObj.ans = nextVal.toString();
-
-            } else if (chosenType === 'algebra') {
-                const x = Math.floor(Math.random() * 6) + 4; 
-                const res = (x * x) + (2 * x) + 5;
-                
-                puzzleObj.q = `Polynomial Matrix Evaluation:<br>If f(x) = x² + 2x + 5, and f(${x}) = <span class='hl'>?</span>`;
-                puzzleObj.hintPrompt = `Calculate polynomial x² + 2x + 5 when x equals ${x}`;
-                puzzleObj.ans = res.toString();
-
-            } else if (chosenType === 'bitwise') {
-                const n1 = Math.floor(Math.random() * 20) + 10;
-                const n2 = Math.floor(Math.random() * 10) + 5;
-                const res = (n1 ^ n2) + 10;
-
-                puzzleObj.q = `Bitwise XOR Matrix:<br>Evaluate decimal output of: <span class='hl'>(${n1} ^ ${n2}) + 10</span>`;
-                puzzleObj.hintPrompt = `Calculate decimal value of bitwise expression (${n1} XOR ${n2}) + 10`;
-                puzzleObj.ans = res.toString();
-
-            } else {
-                const primes = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37];
-                const idx1 = Math.floor(Math.random() * 4) + 2; 
-                const idx2 = Math.floor(Math.random() * 4) + 7; 
-                const mult = Math.floor(Math.random() * 2) + 2;  
-                
-                const p1 = primes[idx1 - 1];
-                const p2 = primes[idx2 - 1];
-                const res = (p1 + p2) * mult;
-
-                puzzleObj.q = `Prime Index Sequence Offset:<br>Primes: ${primes.join(', ')},<br>Sum of ${idx1}th and ${idx2}th prime values multiplied by ${mult} = <span class='hl'>?</span>`;
-                puzzleObj.hintPrompt = `What is (${idx1}th prime + ${idx2}th prime) * ${mult}? Primes: 2,3,5,7,11,13,17,19,23...`;
-                puzzleObj.ans = res.toString();
-            }
-            return puzzleObj;
-        }
-
-        const currentPuzzle = generateDynamicPuzzle();
-        document.getElementById('puzzle-display').innerHTML = currentPuzzle.q;
-        document.getElementById('hint-content').innerText = currentPuzzle.hintPrompt;
-
-        const hintBtn = document.getElementById('hint-btn');
-        const hintContent = document.getElementById('hint-content');
-        const copyHintBtn = document.getElementById('copy-hint-btn');
-
-        hintBtn.addEventListener('click', () => {
-            hintContent.style.display = hintContent.style.display === 'block' ? 'none' : 'block';
-        });
-
-        copyHintBtn.addEventListener('click', () => {
-            navigator.clipboard.writeText(currentPuzzle.hintPrompt).then(() => {
-                copyHintBtn.innerText = "COPIED!";
-                setTimeout(() => { copyHintBtn.innerText = "Copy Prompt"; }, 1500);
-            });
-        });
-
-        const gatekeeper = document.getElementById('gatekeeper');
-        const mainContent = document.getElementById('main-content');
-        const authInput = document.getElementById('auth-input');
-        const authBtn = document.getElementById('auth-btn');
-        const secBox = document.getElementById('sec-box');
-        const authMsg = document.getElementById('auth-msg');
-
-        function verifyToken() {
-            const userVal = authInput.value.trim();
-            if (userVal === currentPuzzle.ans) {
-                authBtn.style.background = "#38BDF8";
-                authBtn.innerText = "GRANTED";
-                authMsg.style.color = "#38BDF8";
-                authMsg.innerText = "Neural handshake successful. Decrypting interface...";
-                
-                setTimeout(() => {
-                    gatekeeper.style.opacity = "0";
-                    gatekeeper.style.visibility = "hidden";
-                    mainContent.classList.add("unlocked");
-                    setTimeout(startTypewriter, 800);
-                }, 800);
-            } else {
-                secBox.classList.add("error-shake");
-                authMsg.innerText = "Access Denied: Incorrect computation key.";
-                authInput.value = "";
-                setTimeout(() => secBox.classList.remove("error-shake"), 400);
-            }
-        }
-
-        authBtn.addEventListener('click', verifyToken);
-        authInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') verifyToken(); });
 
         window.addEventListener('scroll', () => {
             const winScroll = document.documentElement.scrollTop || document.body.scrollTop;
@@ -703,25 +488,26 @@
             themeBtn.innerHTML = isDark ? '🌙 Dark Mode' : '☀️ Light Mode';
         });
 
-        const textArray = ["Full-Stack Developer.", "Fine Artist.", "Esports Strategist.", "Eternal Learner."];
+        const textArray = ["Full-Stack Developer.", "Cinematic Video Editor.", "Fine Artist.", "Esports Strategist."];
         let tIdx = 0, cIdx = 0;
         const typewriterEl = document.getElementById("typewriter");
 
         function startTypewriter() {
             if (cIdx < textArray[tIdx].length) {
                 typewriterEl.innerHTML += textArray[tIdx].charAt(cIdx++);
-                setTimeout(startTypewriter, 100);
+                setTimeout(startTypewriter, 90);
             } else { setTimeout(erase, 2000); }
         }
         function erase() {
             if (cIdx > 0) {
                 typewriterEl.innerHTML = textArray[tIdx].substring(0, --cIdx);
-                setTimeout(erase, 50);
+                setTimeout(erase, 40);
             } else {
                 tIdx = (tIdx + 1) % textArray.length;
                 setTimeout(startTypewriter, 500);
             }
         }
+        startTypewriter();
 
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
@@ -751,25 +537,38 @@
             });
         });
 
-        document.querySelectorAll('.tilt-card').forEach(card => {
-            card.addEventListener('mousemove', e => {
-                const rect = card.getBoundingClientRect();
-                const rotateX = ((e.clientY - rect.top - rect.height / 2) / (rect.height / 2)) * -4;
-                const rotateY = ((e.clientX - rect.left - rect.width / 2) / (rect.width / 2)) * 4;
-                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.01)`;
-            });
-            card.addEventListener('mouseleave', () => card.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)` );
-        });
+        // VIDEO SOUND TOGGLE
+        function toggleAudio(btn, event) {
+            event.stopPropagation();
+            const video = btn.parentElement.querySelector('video');
+            if (video.muted) {
+                video.muted = false;
+                btn.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg> Sound On`;
+                btn.style.background = "var(--accent-1)";
+                btn.style.color = "#0B0F17";
+            } else {
+                video.muted = true;
+                btn.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg> Muted`;
+                btn.style.background = "rgba(0,0,0,0.7)";
+                btn.style.color = "#fff";
+            }
+        }
 
-        // CLEAN IMAGE VIEWER FUNCTIONS
-        function viewImage(path, name) {
+        // VIEWER MODAL
+        function viewMedia(path, name, type) {
             document.getElementById('modalImageTitle').innerText = name;
-            document.getElementById('modalImgSource').src = path;
+            const container = document.getElementById('modalBodyContent');
+            if(type === 'video') {
+                container.innerHTML = `<video src="${path}" controls autoplay playsinline style="max-width:100%; max-height:75vh; border-radius:8px;"></video>`;
+            } else {
+                container.innerHTML = `<img src="${path}" alt="${name}" style="max-width:100%; max-height:75vh; border-radius:8px;">`;
+            }
             document.getElementById('imageViewerModal').classList.add('active');
         }
 
         function closeViewer() {
             document.getElementById('imageViewerModal').classList.remove('active');
+            document.getElementById('modalBodyContent').innerHTML = '';
         }
 
         function dlImage(url, filename) {
@@ -784,123 +583,22 @@
                 try { await navigator.share({ title: title, url: fullUrl }); } catch (err) {}
             } else {
                 navigator.clipboard.writeText(fullUrl);
-                alert("Image link copied to clipboard!");
+                alert("Link copied to clipboard!");
             }
-        }
-
-        // ==============================================
-        // LOCAL DEVICE TRACKER & COUNTER ENGINE
-        // ==============================================
-
-        function getDeviceId() {
-            let devId = localStorage.getItem('mp_device_id');
-            if (!devId) {
-                devId = 'dev_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
-                localStorage.setItem('mp_device_id', devId);
-            }
-            return devId;
-        }
-
-        const DEVICE_ID = getDeviceId();
-
-        const defaultStats = {
-            sivaji:      { likes: 142, views: 1250, shares: 38 },
-            maharna:     { likes: 98,  views: 890,  shares: 19 },
-            radhakrisnan:{ likes: 76,  views: 640,  shares: 12 },
-            image:       { likes: 110, views: 920,  shares: 24 },
-            game:        { likes: 215, views: 1840, shares: 67 },
-            physique:    { likes: 189, views: 1410, shares: 45 },
-            news1:       { likes: 84,  views: 730,  shares: 15 },
-            news2:       { likes: 62,  views: 510,  shares: 9 },
-            news3:       { likes: 91,  views: 680,  shares: 21 }
-        };
-
-        function getUserActivity() {
-            return JSON.parse(localStorage.getItem('mp_user_activity')) || { likes: [], views: [], shares: [] };
-        }
-
-        function saveUserActivity(act) {
-            localStorage.setItem('mp_user_activity', JSON.stringify(act));
-        }
-
-        function getItemStats(id) {
-            const saved = JSON.parse(localStorage.getItem('mp_stats_' + id));
-            if (saved) return saved;
-            return defaultStats[id] || { likes: 10, views: 50, shares: 2 };
-        }
-
-        function saveItemStats(id, stats) {
-            localStorage.setItem('mp_stats_' + id, JSON.stringify(stats));
-        }
-
-        function renderCounters() {
-            const activity = getUserActivity();
-
-            Object.keys(defaultStats).forEach(id => {
-                const stats = getItemStats(id);
-                
-                const vEl = document.getElementById(`view-${id}`);
-                if(vEl) vEl.innerText = stats.views;
-
-                const sEl = document.getElementById(`share-${id}`);
-                if(sEl) sEl.innerText = stats.shares;
-
-                const lEl = document.getElementById(`like-${id}`);
-                if(lEl) {
-                    lEl.innerText = stats.likes;
-                    const btn = lEl.closest('.act-btn');
-                    if (activity.likes.includes(id)) {
-                        btn.classList.add('liked');
-                    } else {
-                        btn.classList.remove('liked');
-                    }
-                }
-            });
         }
 
         function toggleLike(id) {
-            const activity = getUserActivity();
-            const stats = getItemStats(id);
-            const hasLiked = activity.likes.includes(id);
-
-            if (hasLiked) {
-                activity.likes = activity.likes.filter(item => item !== id);
-                stats.likes = Math.max(0, stats.likes - 1);
-            } else {
-                activity.likes.push(id);
-                stats.likes += 1;
-            }
-
-            saveUserActivity(activity);
-            saveItemStats(id, stats);
-            renderCounters();
+            const span = document.getElementById('like-' + id);
+            if(span) span.innerText = parseInt(span.innerText) + 1;
         }
 
-        function triggerView(id, path, title) {
-            const activity = getUserActivity();
-            const stats = getItemStats(id);
-
-            if (!activity.views.includes(id)) {
-                activity.views.push(id);
-                stats.views += 1;
-                saveUserActivity(activity);
-                saveItemStats(id, stats);
-                renderCounters();
-            }
-
-            viewImage(path, title);
+        function triggerView(id, path, title, type = 'image') {
+            viewMedia(path, title, type);
         }
 
-        async function triggerShare(id, path, title) {
-            const stats = getItemStats(id);
-            stats.shares += 1;
-            saveItemStats(id, stats);
-            renderCounters();
-
-            await shareImage(path, title);
+        function triggerShare(id, path, title) {
+            shareImage(path, title);
         }
-
-        document.addEventListener('DOMContentLoaded', renderCounters);
     </script>
 </body>
 </html>
