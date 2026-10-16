@@ -4,12 +4,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const chapterSelect = document.getElementById("chapterSelect");
   const msgBox = document.getElementById("msgBox");
 
-  // Class change hone par available subjects fetch karein
+  // Class change handler
   if (classSelect) {
     classSelect.addEventListener("change", async () => {
       const clsVal = classSelect.value.trim();
       subjectSelect.innerHTML = '<option value="">Select Subject</option>';
-      chapterSelect.innerHTML = '<option value="">Select Chapter</option>';
+      chapterSelect.innerHTML = '<option value="">Select Subject First</option>';
       subjectSelect.disabled = true;
       chapterSelect.disabled = true;
       msgBox.textContent = "";
@@ -18,16 +18,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (window.supabaseClient) {
         try {
-          msgBox.textContent = "✨ Searching available subjects...";
+          msgBox.textContent = "✨ Searching subjects...";
           const { data, error } = await window.supabaseClient
             .from("notes")
             .select("subject")
             .eq("class", clsVal);
 
           if (!error && data && data.length > 0) {
-            // Unique subjects extract karna
             const uniqueSubjects = [...new Set(data.map(item => item.subject.toLowerCase()))];
-            
             subjectSelect.innerHTML = '<option value="">Select Subject</option>';
             uniqueSubjects.forEach(sub => {
               const opt = document.createElement("option");
@@ -38,17 +36,17 @@ document.addEventListener("DOMContentLoaded", () => {
             subjectSelect.disabled = false;
             msgBox.textContent = "";
           } else {
-            msgBox.textContent = "🥺 Maaf kijiye, is class ke liye abhi koi notes available nahi hain!";
+            msgBox.textContent = "🥺 Is class ke liye abhi koi notes available nahi hain!";
           }
         } catch (err) {
           console.warn("Supabase error:", err);
-          msgBox.textContent = "⚠️ Kuch error aa gaya, kripya dobara try karein.";
+          msgBox.textContent = "⚠️ Error loading subjects.";
         }
       }
     });
   }
 
-  // Subject change hone par available chapters fetch karein
+  // Subject change handler
   if (subjectSelect) {
     subjectSelect.addEventListener("change", async () => {
       const clsVal = classSelect.value.trim();
@@ -61,7 +59,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (window.supabaseClient) {
         try {
-          msgBox.textContent = "✨ Searching available chapters...";
+          msgBox.textContent = "✨ Searching chapters...";
           const { data, error } = await window.supabaseClient
             .from("notes")
             .select("chapter_number, chapter_name")
@@ -80,19 +78,19 @@ document.addEventListener("DOMContentLoaded", () => {
             chapterSelect.disabled = false;
             msgBox.textContent = "";
           } else {
-            msgBox.textContent = "🥺 Is subject ke liye abhi koi chapters nahi jude hain!";
+            msgBox.textContent = "🥺 Is subject ke liye chapters nahi jude hain!";
           }
         } catch (err) {
           console.warn("Supabase error:", err);
-          msgBox.textContent = "⚠️ Chapter load karne me samasya aayi.";
+          msgBox.textContent = "⚠️ Error loading chapters.";
         }
       }
     });
   }
 });
 
-// Dropdown se direct notes-viewer.html par bhejne ke liye function
-async function loadPdf() {
+// Helper function to resolve file path & details securely
+async function getNoteDetails() {
   const classSelect = document.getElementById("classSelect");
   const subjectSelect = document.getElementById("subjectSelect");
   const chapterSelect = document.getElementById("chapterSelect");
@@ -101,10 +99,9 @@ async function loadPdf() {
   const subVal = subjectSelect ? subjectSelect.value.trim() : "";
   const chVal = chapterSelect ? chapterSelect.value.trim() : "";
 
-  // Validation
   if (!clsVal || !subVal || !chVal) {
-    alert("❌ Kripya Class, Subject aur Chapter teeno select karein.");
-    return;
+    alert("❌ Kripya pehle Class, Subject aur Chapter select karein.");
+    return null;
   }
 
   const cleanClassNum = clsVal;
@@ -115,7 +112,6 @@ async function loadPdf() {
   let chapterTitle = `Chapter ${chapterNum}`;
   let filePath = "";
 
-  // Supabase database se actual file_path aur chapter name fetch karna[span_2](start_span)[span_2](end_span)
   if (window.supabaseClient) {
     try {
       const { data: notesData, error } = await window.supabaseClient
@@ -127,26 +123,47 @@ async function loadPdf() {
         .maybeSingle();
 
       if (!error && notesData) {
-        if (notesData.chapter_name) {
-          chapterTitle = notesData.chapter_name; 
-        }
-        if (notesData.file_path) {
-          filePath = notesData.file_path; 
-        }
+        if (notesData.chapter_name) chapterTitle = notesData.chapter_name;
+        if (notesData.file_path) filePath = notesData.file_path;
       }
     } catch (err) {
       console.warn("Supabase fetch warning:", err);
     }
   }
 
-  // Fallback agar database me path na mile toh standard format use karenge
   if (!filePath) {
-    const finalFileName = `${cleanClassNum}_${subVal}_ch${chapterNum}.pdf`;
-    filePath = `notes/${finalFileName}`;
+    filePath = `notes/${cleanClassNum}_${subVal}_ch${chapterNum}.pdf`;
   }
 
   const descriptiveName = [className, subjectName, `Chapter ${chapterNum} - ${chapterTitle}`].filter(Boolean).join(' • ');
-  const viewerUrl = 'notes-viewer.html?path=' + encodeURIComponent(filePath) + '&name=' + encodeURIComponent(descriptiveName);
+  return { filePath, descriptiveName };
+}
 
+// Open Preview Modal (Using notes-viewer.html with viewer-main.js engine)
+async function openPreviewModal() {
+  const details = await getNoteDetails();
+  if (!details) return;
+
+  document.getElementById("modalTitle").textContent = details.descriptiveName;
+  
+  // Correctly route through notes-viewer.html so viewer-main.js loads it from Supabase storage
+  const viewerUrl = 'notes-viewer.html?path=' + encodeURIComponent(details.filePath) + '&name=' + encodeURIComponent(details.descriptiveName);
+  
+  document.getElementById("previewFrame").src = viewerUrl;
+  document.getElementById("previewModal").classList.add("active");
+}
+
+// Close Preview Modal
+function closePreviewModal() {
+  document.getElementById("previewModal").classList.remove("active");
+  document.getElementById("previewFrame").src = ""; // Stop background loading
+}
+
+// Redirect to full notes viewer page
+async function loadPdf() {
+  const details = await getNoteDetails();
+  if (!details) return;
+
+  const viewerUrl = 'notes-viewer.html?path=' + encodeURIComponent(details.filePath) + '&name=' + encodeURIComponent(details.descriptiveName);
   window.location.href = viewerUrl;
 }
