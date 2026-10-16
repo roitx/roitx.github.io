@@ -1,5 +1,5 @@
 /* =================================================================
-   ROITX ELITE VIEWER v12.3 — TURN.JS REAL 3D BOOK FLIP SUITE
+   ROITX ELITE VIEWER v12.7 — TURN.JS REAL 3D BOOK FLIP SUITE
    ================================================================= */
 // Preload Page Flip Audio from auth folder
 const flipAudio = new Audio('auth/flipsound.mp3');
@@ -81,7 +81,6 @@ function cleanTitleString(str) {
     return str.replace(/[^\w\s]/gi, '').toLowerCase().trim();
 }
 
-// SECURE VERIFICATION: Checks Supabase DB & Local Storage
 async function verifyPurchaseStatusLocallyOrDB(rawPath, docName) {
     let purchasedList = JSON.parse(localStorage.getItem("purchasedFiles") || "[]");
     let userPurchases = JSON.parse(localStorage.getItem("userPurchasedNotes") || "[]");
@@ -125,7 +124,6 @@ async function verifyPurchaseStatusLocallyOrDB(rawPath, docName) {
     return false;
 }
 
-// MODAL FOR NEXT PAGE & UNLOCK RESTRICTION
 function showPurchaseRequiredModal() {
     let existingModal = document.getElementById("purchaseRequiredModal");
     if (existingModal) existingModal.remove();
@@ -191,7 +189,7 @@ function trackActivityLocally(fileData, isDownloaded = false, isUserPurchased = 
 }
 
 function savePageProgress(pageNo) {
-    if (rawPath && pageNo > 0) {
+    if (rawPath && pageNo > 0 && pageNo <= pdfDoc.numPages) {
         localStorage.setItem(`pdf_pos_${rawPath}`, pageNo);
     }
     updateProgressUI(pageNo);
@@ -199,25 +197,33 @@ function savePageProgress(pageNo) {
 
 function updateProgressUI(pageNo) {
     if (!pdfDoc) return;
+    const actualPage = Math.min(pageNo, pdfDoc.numPages);
     const isPremiumNote = params.get("type") === "premium" || (rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("premium") || rawPath.toLowerCase().includes("locked")));
     
     const indicator = document.getElementById("page-indicator-top");
     if (indicator) {
         const totalText = (isPremiumNote && !verifyPurchaseStatusLocallyOrDB(rawPath, docName || "")) ? "1 (Preview)" : pdfDoc.numPages;
-        indicator.innerText = `Page ${pageNo} of ${totalText}`;
+        
+        if (isDualPage && actualPage < pdfDoc.numPages) {
+            const nextPairPage = actualPage + 1;
+            indicator.innerText = `Pages ${actualPage}-${nextPairPage} of ${totalText}`;
+        } else {
+            indicator.innerText = `Page ${actualPage} of ${totalText}`;
+        }
     }
 
-    const percent = Math.round((pageNo / pdfDoc.numPages) * 100);
+    const percent = Math.round((actualPage / pdfDoc.numPages) * 100);
     const progressEl = document.getElementById("progress-percent");
     if (progressEl) progressEl.innerText = `${percent}%`;
 
     const slider = document.getElementById("page-slider");
-    if (slider && parseInt(slider.value) !== pageNo) {
-        slider.value = pageNo;
+    if (slider && parseInt(slider.value) !== actualPage) {
+        slider.value = actualPage;
     }
 
-    checkBookmarkState(pageNo);
+    checkBookmarkState(actualPage);
 }
+
 
 function getSavedPageProgress() {
     if (rawPath) {
@@ -408,24 +414,44 @@ async function setupTurnJSStructure(maxPages, isPremium, isPurchased) {
         height: globalPageH
     });
 
-    for (let i = 1; i <= maxPages; i++) {
+    // Dual mode me range error se bachne ke liye total pages ko even banana zaroori hai
+    let totalDOMPages = maxPages;
+    if (isDualPage && totalDOMPages % 2 !== 0) {
+        totalDOMPages += 1;
+    }
+
+    for (let i = 1; i <= totalDOMPages; i++) {
         const pageDiv = $(`<div class="page-flip-page" data-page-num="${i}"></div>`);
-        const placeholder = $(`<div class="page-loader-placeholder">Loading Page ${i}...</div>`);
-        pageDiv.append(placeholder);
+        if (i <= maxPages) {
+            const placeholder = $(`<div class="page-loader-placeholder">Loading Page ${i}...</div>`);
+            pageDiv.append(placeholder);
+        } else {
+            pageDiv.css("background", "#ffffff"); // Blank filler page for range safety
+        }
         bookContainer.append(pageDiv);
     }
 
-    // Saved position retrieve karein
-    const savedPage = getSavedPageProgress();
-    let targetPage = (savedPage > maxPages) ? 1 : savedPage;
-    if (isDualPage && targetPage % 2 === 0 && targetPage > 1) {
-        targetPage = targetPage - 1; 
+    let savedPage = getSavedPageProgress();
+    if (savedPage > maxPages) savedPage = maxPages;
+    
+    // Dual mode me left page hamesha odd hona chahiye
+    if (isDualPage && savedPage > 1) {
+        if (savedPage % 2 === 0) {
+            savedPage = savedPage - 1; 
+        }
     }
 
-    // Turant target page aur aas-pass ke pages render karwao taaki jump delay khatam ho
-    currentPage = targetPage;
-    await renderSingleCanvasPage(targetPage);
-    lazyRenderPagesAround(targetPage, maxPages);
+    currentPage = savedPage;
+    
+    let renderPromises = [renderSingleCanvasPage(currentPage)];
+    if (isDualPage && currentPage > 1) {
+        renderPromises.push(renderSingleCanvasPage(currentPage - 1));
+    }
+    if (currentPage < maxPages) {
+        renderPromises.push(renderSingleCanvasPage(currentPage + 1));
+    }
+    await Promise.all(renderPromises);
+    lazyRenderPagesAround(currentPage, maxPages);
 
     bookContainer.turn({
         width: isDualPage ? globalPageW * 2 : globalPageW,
@@ -434,9 +460,13 @@ async function setupTurnJSStructure(maxPages, isPremium, isPurchased) {
         elevation: 80,
         gradients: true,
         display: isDualPage ? 'double' : 'single',
-        page: targetPage, // Turn initialization mein hi target page set kar diya
+        page: currentPage,
         when: {
             turning: function(e, page, view) {
+                if (page < 1 || page > maxPages) {
+                    e.preventDefault();
+                    return;
+                }
                 if (isPremium && !isPurchased && page > 1) {
                     e.preventDefault();
                     showPurchaseRequiredModal();
@@ -449,6 +479,14 @@ async function setupTurnJSStructure(maxPages, isPremium, isPurchased) {
                 const slider = document.getElementById("page-slider");
                 if (slider) slider.value = currentPage;
 
+                let turnPromises = [renderSingleCanvasPage(page)];
+                if (isDualPage && page > 1) {
+                    turnPromises.push(renderSingleCanvasPage(page - 1));
+                }
+                if (page < maxPages) {
+                    turnPromises.push(renderSingleCanvasPage(page + 1));
+                }
+                Promise.all(turnPromises);
                 lazyRenderPagesAround(currentPage, maxPages);
             }
         }
@@ -456,10 +494,14 @@ async function setupTurnJSStructure(maxPages, isPremium, isPurchased) {
 
     savePageProgress(currentPage);
     const slider = document.getElementById("page-slider");
-    if (slider) slider.value = currentPage;
+    if (slider) {
+        slider.max = maxPages;
+        slider.value = currentPage;
+    }
 }
 
 async function renderSingleCanvasPage(pageNum) {
+    if (!pageNum || pageNum > pdfDoc.numPages) return;
     if (renderedPagesMap.has(pageNum)) return;
 
     const pageDiv = document.querySelector(`.page-flip-page[data-page-num="${pageNum}"]`);
@@ -504,7 +546,7 @@ async function renderSingleCanvasPage(pageNum) {
 }
 
 function lazyRenderPagesAround(current, maxPages) {
-    const range = [current - 2, current - 1, current, current + 1, current + 2, current + 3];
+    const range = [current - 3, current - 2, current - 1, current, current + 1, current + 2, current + 3, current + 4];
     range.forEach(p => {
         if (p >= 1 && p <= maxPages) {
             renderSingleCanvasPage(p);
@@ -935,26 +977,111 @@ function setupVerticalScrollObserver() {
     wrappers.forEach(w => observer.observe(w));
 }
 
-window.togglePageSpread = () => {
-    isDualPage = !isDualPage;
-    const btn = document.getElementById("btn-spread-toggle");
-    if (btn) btn.innerText = isDualPage ? "Single Page Mode" : "Dual Page Mode";
-    
-    const bookContainer = $("#book-container");
-    if (bookContainer.data('turn')) {
-        try {
-            bookContainer.turn('display', isDualPage ? 'double' : 'single');
-            bookContainer.turn('size', isDualPage ? globalPageW * 2 : globalPageW, globalPageH);
-            bookContainer.turn('page', currentPage);
-        } catch (err) {
-            console.warn("Spread toggle recreation required:", err);
-            setupTurnJSStructure(pdfDoc.numPages, false, true);
-        }
-    } else {
-        setupTurnJSStructure(pdfDoc.numPages, false, true);
+// SMART DUAL PAGE MODE TOGGLE WITH CONFIRMATION PROMPT
+window.togglePageSpread = async () => {
+    window.toggleSettings(false);
+
+    if (isDualPage) {
+        isDualPage = false;
+        const btn = document.getElementById("btn-spread-toggle");
+        if (btn) btn.innerText = "Dual Page Mode";
+        applyDualModeState();
+        showToast("📄 Single Page Mode Activated");
+        return;
     }
-    showToast(isDualPage ? "📖 Dual Page Book Mode Activated" : "📄 Single Page Mode Activated");
+
+    if (currentPage > 1) {
+        showDualModePrompt();
+    } else {
+        activateDualMode(1);
+    }
 };
+
+function showDualModePrompt() {
+    let existingModal = document.getElementById("dualPromptModal");
+    if (existingModal) existingModal.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "dualPromptModal";
+    modal.style.cssText = `
+        position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(10px);
+        display: flex; align-items: center; justify-content: center; z-index: 999999;
+        animation: fadeIn 0.2s ease-in-out;
+    `;
+
+    modal.innerHTML = `
+        <div style="background: #161b26; border: 1px solid rgba(255,255,255,0.15); border-radius: 20px; padding: 26px; max-width: 340px; text-align: center; color: #fff; box-shadow: 0 25px 50px rgba(0,0,0,0.6);">
+            <div style="font-size: 38px; margin-bottom: 10px;">📖</div>
+            <h3 style="margin: 0 0 8px 0; font-size: 18px; font-weight: 700;">Dual Page View Mode</h3>
+            <p style="font-size: 13.5px; color: #a0aec0; margin: 0 0 22px 0; line-height: 1.5;">
+                Aap abhi <b>Page ${currentPage}</b> par hain. Kya aap shuruat (Page 1) se book view shuru karna chahte hain ya yahin se?
+            </p>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <button id="btnStartFrom1" style="width: 100%; padding: 12px; background: var(--accent, #6366f1); border: none; border-radius: 12px; color: #fff; font-weight: 600; cursor: pointer;">Shuruat (Page 1) se karein</button>
+                <button id="btnStartFromCurrent" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; color: #fff; font-weight: 600; cursor: pointer;">Yahin se (Page ${currentPage})</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    document.getElementById("btnStartFrom1").onclick = () => {
+        modal.remove();
+        activateDualMode(1);
+    };
+
+    document.getElementById("btnStartFromCurrent").onclick = () => {
+        modal.remove();
+        let target = currentPage;
+        if (target > 1 && target % 2 === 0) {
+            target = target - 1;
+        }
+        activateDualMode(target);
+    };
+}
+
+async function activateDualMode(targetPage) {
+    isDualPage = true;
+    const btn = document.getElementById("btn-spread-toggle");
+    if (btn) btn.innerText = "Single Page Mode";
+
+    const isParamPremium = params.get("type") === "premium";
+    const isInPaidFolder = rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium"));
+    let maxPages = pdfDoc ? pdfDoc.numPages : 1;
+    if ((isParamPremium || isInPaidFolder) && !verifyPurchaseStatusLocallyOrDB(rawPath, docName || "")) {
+        maxPages = 1;
+    }
+
+    let safeTarget = Math.min(targetPage, maxPages);
+    if (safeTarget > 1 && safeTarget % 2 === 0) {
+        safeTarget = safeTarget - 1; // Odd alignment for Turn.js double mode
+    }
+
+    currentPage = safeTarget;
+
+    let renderPromises = [renderSingleCanvasPage(currentPage)];
+    if (currentPage > 1) {
+        renderPromises.push(renderSingleCanvasPage(currentPage - 1));
+    }
+    if (currentPage < maxPages) {
+        renderPromises.push(renderSingleCanvasPage(currentPage + 1));
+    }
+    await Promise.all(renderPromises);
+
+    setupTurnJSStructure(maxPages, isParamPremium, verifyPurchaseStatusLocallyOrDB(rawPath, docName || ""));
+    showToast("📖 Dual Page Book Mode Activated");
+}
+
+
+async function applyDualModeState() {
+    const isParamPremium = params.get("type") === "premium";
+    const isInPaidFolder = rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium"));
+    let maxPages = pdfDoc ? pdfDoc.numPages : 1;
+    if ((isParamPremium || isInPaidFolder) && !verifyPurchaseStatusLocallyOrDB(rawPath, docName || "")) {
+        maxPages = 1;
+    }
+    setupTurnJSStructure(maxPages, isParamPremium, verifyPurchaseStatusLocallyOrDB(rawPath, docName || ""));
+}
 
 window.togglePageSound = () => {
     isSoundEnabled = !isSoundEnabled;
@@ -980,17 +1107,36 @@ async function jumpToPage(pageNo) {
         }
     } else {
         try {
-            const max = pdfDoc ? pdfDoc.numPages : 1;
-            const target = Math.min(Math.max(1, pageNo), max);
+            const isParamPremium = params.get("type") === "premium";
+            const isInPaidFolder = rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium"));
+            let maxAllowed = pdfDoc ? pdfDoc.numPages : 1;
             
-            // Direct jump par delay avoid karne ke liye turant page render karo
-            await renderSingleCanvasPage(target);
-            lazyRenderPagesAround(target, max);
+            if ((isParamPremium || isInPaidFolder) && !await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "")) {
+                maxAllowed = Math.min(maxAllowed, 1);
+            }
+
+            let target = Math.min(Math.max(1, pageNo), maxAllowed);
+            if (isDualPage && target > 1 && target % 2 === 0) {
+                target = target - 1; 
+            }
             
-            $("#book-container").turn('page', target);
+            currentPage = target;
+            let jumpPromises = [renderSingleCanvasPage(target)];
+            if (isDualPage && target > 1) {
+                jumpPromises.push(renderSingleCanvasPage(target - 1));
+            }
+            if (target < maxAllowed) {
+                jumpPromises.push(renderSingleCanvasPage(target + 1));
+            }
+            await Promise.all(jumpPromises);
+            lazyRenderPagesAround(target, maxAllowed);
+            
+            const bookContainer = $("#book-container");
+            if (bookContainer.data('turn')) {
+                bookContainer.turn('page', target);
+            }
         } catch (e) {
-            console.warn("Jump page range error caught:", e);
-            setupTurnJSStructure(pdfDoc.numPages, false, true);
+            console.warn("Jump page range error caught safely:", e);
         }
     }
 }
@@ -1093,6 +1239,12 @@ window.handleViewportClick = (e) => {
 
 window.navPage = (dir) => {
     if (isPinching || isAnimating) return;
+    
+    if (isDualPage && dir === 'next' && currentPage >= pdfDoc.numPages) {
+        showToast("📖 Ye aakhiri page hai.");
+        return;
+    }
+
     isAnimating = true;
     setTimeout(() => { isAnimating = false; }, 550);
     

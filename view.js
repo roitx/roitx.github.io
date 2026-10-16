@@ -5,17 +5,58 @@ document.addEventListener("DOMContentLoaded", () => {
   const msgBox = document.getElementById("msgBox");
   const previewBtn = document.getElementById("previewBtn");
   const viewFullBtn = document.getElementById("viewFullBtn");
+  const classIconWrap = document.getElementById("classIconWrap");
+  const subjectIconWrap = document.getElementById("subjectIconWrap");
+  const chapterIconWrap = document.getElementById("chapterIconWrap");
 
-  // Helper function to reset and disable buttons & dependent selects
+  // Roman mapping for classes
+  const romanClasses = {
+    "9": "IX",
+    "10": "X",
+    "11": "XI",
+    "12": "XII"
+  };
+
+  // Comprehensive Subject Symbols mapping
+  const subjectSymbols = {
+    "bio": "🧬",
+    "biology": "🧬",
+    "math": "𝚺",
+    "maths": "𝚺",
+    "mathematics": "𝚺",
+    "physics": "⚛️",
+    "chemistry": "🧪",
+    "english": "A",
+    "hindi": "अ",
+    "history": "🏛️",
+    "geography": "🌍",
+    "civics": "⚖️",
+    "political science": "🗳️",
+    "economics": "📈",
+    "computer science": "💻",
+    "it": "🖥️",
+    "accountancy": "📊",
+    "business studies": "💼",
+    "science": "🔬",
+    "social science": "🌐",
+    "sanskrit": "ॐ"
+  };
+
+  const defaultClassSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8fa8cc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>`;
+  const defaultSubjectSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8fa8cc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`;
+  const defaultChapterSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8fa8cc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>`;
+
   function resetSubjects() {
     subjectSelect.innerHTML = '<option value="">Select Class First</option>';
     subjectSelect.disabled = true;
+    subjectIconWrap.innerHTML = defaultSubjectSvg;
     resetChapters();
   }
 
   function resetChapters() {
     chapterSelect.innerHTML = '<option value="">Select Subject First</option>';
     chapterSelect.disabled = true;
+    chapterIconWrap.innerHTML = defaultChapterSvg;
     if (previewBtn) previewBtn.disabled = true;
     if (viewFullBtn) viewFullBtn.disabled = true;
     msgBox.textContent = "";
@@ -27,7 +68,14 @@ document.addEventListener("DOMContentLoaded", () => {
       const clsVal = classSelect.value.trim();
       resetSubjects();
 
-      if (!clsVal) return;
+      if (!clsVal) {
+        classIconWrap.innerHTML = defaultClassSvg;
+        return;
+      }
+
+      // Jo class select ho, uska sahi Roman numeral yaha dynamic dikhega
+      const romanClass = romanClasses[clsVal] || clsVal;
+      classIconWrap.innerHTML = `<span style="font-size:13px; font-weight:800; color:#4a8bff; letter-spacing:0.5px;">${romanClass}</span>`;
 
       if (window.supabaseClient) {
         try {
@@ -66,7 +114,13 @@ document.addEventListener("DOMContentLoaded", () => {
       const subVal = subjectSelect.value.trim();
       resetChapters();
 
-      if (!subVal) return;
+      if (!subVal) {
+        subjectIconWrap.innerHTML = defaultSubjectSvg;
+        return;
+      }
+
+      const symbol = subjectSymbols[subVal] || "📖";
+      subjectIconWrap.innerHTML = `<span style="font-size:15px; font-weight:bold;">${symbol}</span>`;
 
       if (window.supabaseClient) {
         try {
@@ -99,22 +153,23 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Chapter change handler (Enable/Disable Buttons)
+  // Chapter change handler (Without # symbol, only chapter number)
   if (chapterSelect) {
     chapterSelect.addEventListener("change", () => {
       const chVal = chapterSelect.value.trim();
       if (chVal) {
         if (previewBtn) previewBtn.disabled = false;
         if (viewFullBtn) viewFullBtn.disabled = false;
+        chapterIconWrap.innerHTML = `<span style="font-size:13px; font-weight:800; color:#4a8bff;">${chVal}</span>`;
       } else {
         if (previewBtn) previewBtn.disabled = true;
         if (viewFullBtn) viewFullBtn.disabled = true;
+        chapterIconWrap.innerHTML = defaultChapterSvg;
       }
     });
   }
 });
 
-// Helper function to resolve file path & details securely
 async function getNoteDetails() {
   const classSelect = document.getElementById("classSelect");
   const subjectSelect = document.getElementById("subjectSelect");
@@ -164,7 +219,6 @@ async function getNoteDetails() {
   return { filePath, descriptiveName };
 }
 
-// Open Preview Modal (Using notes-viewer.html with viewer-main.js engine)
 async function openPreviewModal() {
   const details = await getNoteDetails();
   if (!details) return;
@@ -177,13 +231,11 @@ async function openPreviewModal() {
   document.getElementById("previewModal").classList.add("active");
 }
 
-// Close Preview Modal
 function closePreviewModal() {
   document.getElementById("previewModal").classList.remove("active");
-  document.getElementById("previewFrame").src = ""; // Stop background loading
+  document.getElementById("previewFrame").src = "";
 }
 
-// Redirect to full notes viewer page
 async function loadPdf() {
   const details = await getNoteDetails();
   if (!details) return;
