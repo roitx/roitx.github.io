@@ -3,11 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Notes Viewer - PM Roitx</title>
-<meta name="robots" content="noindex, follow">
+<title>Advanced Notes Viewer - PM Roitx</title>
+<meta name="description" content="Access and preview high quality study notes, chapters, and educational materials seamlessly on PM Roitx.">
+<meta name="keywords" content="PM Roitx, Notes Viewer, Study Material, Class 12 Notes, Physics, Chemistry, Maths, Biology">
+<meta name="author" content="Rohit">
+<meta name="robots" content="index, follow">
 <link rel="canonical" href="https://roitx.qd.je/view.html">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js"></script>
+
 <style>
 :root{ --border:rgba(255,255,255,0.12); --text:#eaf1ff; --muted:#8fa8cc; --accent1:#4a8bff; --accent2:#7b6bff; }
 *{box-sizing:border-box; font-family:system-ui, Inter, Segoe UI, sans-serif;}
@@ -22,16 +26,19 @@ h2{margin:0 0 4px; text-align:center; font-size:24px; font-weight:900;}
 .sel{position:relative;}
 .sel .field-icon{position:absolute; left:14px; top:50%; transform:translateY(-50%); pointer-events:none; opacity:.8; display:flex; align-items:center;}
 .sel svg.dropdown-arrow{position:absolute; right:14px; top:50%; transform:translateY(-50%); pointer-events:none; opacity:.7;}
-select{width:100%; padding:14px 42px 14px 44px; border-radius:14px; background:rgba(11,22,51,.9); color:var(--text); border:1px solid var(--border); outline:none; font-size:14.5px; appearance:none; transition:0.2s;}
+select{width:100%; padding:14px 42px 14px 44px; border-radius:14px; background:rgba(11,22,51,0.95); color:var(--text); border:1px solid var(--border); outline:none; font-size:14.5px; appearance:none; transition:0.2s;}
+select option{background:#0b1633; color:#eaf1ff; padding:12px;}
 select:focus{border-color:#6b8cff; box-shadow:0 0 0 4px rgba(107,140,255,.15);}
+select:disabled{opacity:0.6; cursor:not-allowed;}
 .msg-box{margin-top:6px; margin-bottom:10px; text-align:center; font-size:12.5px; color:#ffb4ab; min-height:16px;}
 
 .btn-group{display:flex; gap:10px; margin-top:16px;}
 .btn{flex:1; padding:14px; font-weight:750; border:none; border-radius:14px; cursor:pointer; font-size:14px; transition:.25s; position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center; gap:8px;}
+.btn:disabled{opacity:0.4; cursor:not-allowed; transform:none !important; box-shadow:none !important;}
 .btn-preview{background:rgba(255,255,255,0.08); border:1px solid var(--border); color:var(--text);}
-.btn-preview:hover{background:rgba(255,255,255,0.15);}
+.btn-preview:not(:disabled):hover{background:rgba(255,255,255,0.15);}
 .btn-primary{background:linear-gradient(135deg,var(--accent1),var(--accent2),#a36bff); color:#fff; box-shadow:0 6px 20px rgba(123,107,255,.4);}
-.btn-primary:hover{transform:translateY(-1px); box-shadow:0 8px 24px rgba(123,107,255,.6);}
+.btn-primary:not(:disabled):hover{transform:translateY(-1px); box-shadow:0 8px 24px rgba(123,107,255,.6);}
 
 /* MODAL STYLES */
 .modal-overlay{position:fixed; inset:0; background:rgba(3,7,18,0.85); backdrop-filter:blur(10px); z-index:999; display:flex; align-items:center; justify-content:center; padding:16px; opacity:0; pointer-events:none; transition:all 0.3s ease;}
@@ -110,11 +117,11 @@ select:focus{border-color:#6b8cff; box-shadow:0 0 0 4px rgba(107,140,255,.15);}
   <div id="msgBox" class="msg-box"></div>
 
   <div class="btn-group">
-    <button class="btn btn-preview" onclick="openPreviewModal()">
+    <button id="previewBtn" class="btn btn-preview" onclick="openPreviewModal()" disabled>
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
       Preview
     </button>
-    <button class="btn btn-primary" onclick="loadPdf()">
+    <button id="viewFullBtn" class="btn btn-primary" onclick="loadPdf()" disabled>
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
       View Full
     </button>

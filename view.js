@@ -3,16 +3,29 @@ document.addEventListener("DOMContentLoaded", () => {
   const subjectSelect = document.getElementById("subjectSelect");
   const chapterSelect = document.getElementById("chapterSelect");
   const msgBox = document.getElementById("msgBox");
+  const previewBtn = document.getElementById("previewBtn");
+  const viewFullBtn = document.getElementById("viewFullBtn");
+
+  // Helper function to reset and disable buttons & dependent selects
+  function resetSubjects() {
+    subjectSelect.innerHTML = '<option value="">Select Class First</option>';
+    subjectSelect.disabled = true;
+    resetChapters();
+  }
+
+  function resetChapters() {
+    chapterSelect.innerHTML = '<option value="">Select Subject First</option>';
+    chapterSelect.disabled = true;
+    if (previewBtn) previewBtn.disabled = true;
+    if (viewFullBtn) viewFullBtn.disabled = true;
+    msgBox.textContent = "";
+  }
 
   // Class change handler
   if (classSelect) {
     classSelect.addEventListener("change", async () => {
       const clsVal = classSelect.value.trim();
-      subjectSelect.innerHTML = '<option value="">Select Subject</option>';
-      chapterSelect.innerHTML = '<option value="">Select Subject First</option>';
-      subjectSelect.disabled = true;
-      chapterSelect.disabled = true;
-      msgBox.textContent = "";
+      resetSubjects();
 
       if (!clsVal) return;
 
@@ -51,9 +64,7 @@ document.addEventListener("DOMContentLoaded", () => {
     subjectSelect.addEventListener("change", async () => {
       const clsVal = classSelect.value.trim();
       const subVal = subjectSelect.value.trim();
-      chapterSelect.innerHTML = '<option value="">Select Chapter</option>';
-      chapterSelect.disabled = true;
-      msgBox.textContent = "";
+      resetChapters();
 
       if (!subVal) return;
 
@@ -84,6 +95,20 @@ document.addEventListener("DOMContentLoaded", () => {
           console.warn("Supabase error:", err);
           msgBox.textContent = "⚠️ Error loading chapters.";
         }
+      }
+    });
+  }
+
+  // Chapter change handler (Enable/Disable Buttons)
+  if (chapterSelect) {
+    chapterSelect.addEventListener("change", () => {
+      const chVal = chapterSelect.value.trim();
+      if (chVal) {
+        if (previewBtn) previewBtn.disabled = false;
+        if (viewFullBtn) viewFullBtn.disabled = false;
+      } else {
+        if (previewBtn) previewBtn.disabled = true;
+        if (viewFullBtn) viewFullBtn.disabled = true;
       }
     });
   }
@@ -146,7 +171,6 @@ async function openPreviewModal() {
 
   document.getElementById("modalTitle").textContent = details.descriptiveName;
   
-  // Correctly route through notes-viewer.html so viewer-main.js loads it from Supabase storage
   const viewerUrl = 'notes-viewer.html?path=' + encodeURIComponent(details.filePath) + '&name=' + encodeURIComponent(details.descriptiveName);
   
   document.getElementById("previewFrame").src = viewerUrl;
