@@ -1,5 +1,5 @@
 /* =================================================================
-   ROITX ELITE VIEWER v12.7 — TURN.JS REAL 3D BOOK FLIP SUITE
+   ROITX ELITE VIEWER v12.8 — TURN.JS REAL 3D BOOK FLIP SUITE
    ================================================================= */
 // Preload Page Flip Audio from auth folder
 const flipAudio = new Audio('auth/flipsound.mp3');
@@ -224,7 +224,6 @@ function updateProgressUI(pageNo) {
     checkBookmarkState(actualPage);
 }
 
-
 function getSavedPageProgress() {
     if (rawPath) {
         return parseInt(localStorage.getItem(`pdf_pos_${rawPath}`)) || 1;
@@ -250,6 +249,11 @@ function playPageTurnSound() {
 
 async function initReader() {
     enableContentProtection();
+
+    const toggleSwitch = document.getElementById('sound-toggle-switch');
+    if (toggleSwitch) {
+        toggleSwitch.classList.toggle('active', isSoundEnabled);
+    }
 
     if (!rawPath || rawPath === "null") {
         const titleEl = document.getElementById("doc-title");
@@ -414,7 +418,6 @@ async function setupTurnJSStructure(maxPages, isPremium, isPurchased) {
         height: globalPageH
     });
 
-    // Dual mode me range error se bachne ke liye total pages ko even banana zaroori hai
     let totalDOMPages = maxPages;
     if (isDualPage && totalDOMPages % 2 !== 0) {
         totalDOMPages += 1;
@@ -426,7 +429,7 @@ async function setupTurnJSStructure(maxPages, isPremium, isPurchased) {
             const placeholder = $(`<div class="page-loader-placeholder">Loading Page ${i}...</div>`);
             pageDiv.append(placeholder);
         } else {
-            pageDiv.css("background", "#ffffff"); // Blank filler page for range safety
+            pageDiv.css("background", "#ffffff");
         }
         bookContainer.append(pageDiv);
     }
@@ -434,7 +437,6 @@ async function setupTurnJSStructure(maxPages, isPremium, isPurchased) {
     let savedPage = getSavedPageProgress();
     if (savedPage > maxPages) savedPage = maxPages;
     
-    // Dual mode me left page hamesha odd hona chahiye
     if (isDualPage && savedPage > 1) {
         if (savedPage % 2 === 0) {
             savedPage = savedPage - 1; 
@@ -475,9 +477,6 @@ async function setupTurnJSStructure(maxPages, isPremium, isPurchased) {
                 currentPage = page;
                 playPageTurnSound();
                 savePageProgress(currentPage);
-
-                const slider = document.getElementById("page-slider");
-                if (slider) slider.value = currentPage;
 
                 let turnPromises = [renderSingleCanvasPage(page)];
                 if (isDualPage && page > 1) {
@@ -920,6 +919,8 @@ window.setViewMode = (mode) => {
     document.body.className = `theme-${document.body.className.split(' ')[0].replace('theme-', '')} ui-visible mode-${mode}`;
     if (mode === 'vertical') {
         renderVerticalView();
+    } else if (mode === 'flip') {
+        jumpToPage(currentPage);
     }
     window.toggleSettings(false);
 };
@@ -1054,7 +1055,7 @@ async function activateDualMode(targetPage) {
 
     let safeTarget = Math.min(targetPage, maxPages);
     if (safeTarget > 1 && safeTarget % 2 === 0) {
-        safeTarget = safeTarget - 1; // Odd alignment for Turn.js double mode
+        safeTarget = safeTarget - 1;
     }
 
     currentPage = safeTarget;
@@ -1071,7 +1072,6 @@ async function activateDualMode(targetPage) {
     setupTurnJSStructure(maxPages, isParamPremium, verifyPurchaseStatusLocallyOrDB(rawPath, docName || ""));
     showToast("📖 Dual Page Book Mode Activated");
 }
-
 
 async function applyDualModeState() {
     const isParamPremium = params.get("type") === "premium";
@@ -1094,50 +1094,58 @@ window.togglePageSound = () => {
     showToast(isSoundEnabled ? "🔊 Flip Sound Enabled" : "🔇 Flip Sound Muted");
 };
 
+// FULLY ROBUST JUMP TO PAGE FUNCTION FOR ALL MODES
 async function jumpToPage(pageNo) {
+    if (!pdfDoc) return;
+    
+    const isParamPremium = params.get("type") === "premium";
+    const isInPaidFolder = rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium"));
+    let maxAllowed = pdfDoc.numPages;
+    
+    let isPurchased = await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "");
+    if ((isParamPremium || isInPaidFolder) && !isPurchased) {
+        maxAllowed = Math.min(maxAllowed, 1);
+    }
+
+    let target = Math.min(Math.max(1, pageNo), maxAllowed);
+
     if (viewMode === 'vertical') {
         const container = document.getElementById("vertical-scroll-container");
         if (container) {
-            const pageEl = container.querySelector(`.v-page-wrapper[data-page-num="${pageNo}"]`);
+            const pageEl = container.querySelector(`.v-page-wrapper[data-page-num="${target}"]`);
             if (pageEl) {
                 pageEl.scrollIntoView({ behavior: 'smooth' });
-                currentPage = pageNo;
+                currentPage = target;
                 updateProgressUI(currentPage);
             }
         }
-    } else {
-        try {
-            const isParamPremium = params.get("type") === "premium";
-            const isInPaidFolder = rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium"));
-            let maxAllowed = pdfDoc ? pdfDoc.numPages : 1;
-            
-            if ((isParamPremium || isInPaidFolder) && !await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "")) {
-                maxAllowed = Math.min(maxAllowed, 1);
-            }
+        return;
+    }
 
-            let target = Math.min(Math.max(1, pageNo), maxAllowed);
-            if (isDualPage && target > 1 && target % 2 === 0) {
-                target = target - 1; 
-            }
-            
-            currentPage = target;
-            let jumpPromises = [renderSingleCanvasPage(target)];
-            if (isDualPage && target > 1) {
-                jumpPromises.push(renderSingleCanvasPage(target - 1));
-            }
-            if (target < maxAllowed) {
-                jumpPromises.push(renderSingleCanvasPage(target + 1));
-            }
-            await Promise.all(jumpPromises);
-            lazyRenderPagesAround(target, maxAllowed);
-            
-            const bookContainer = $("#book-container");
-            if (bookContainer.data('turn')) {
-                bookContainer.turn('page', target);
-            }
-        } catch (e) {
-            console.warn("Jump page range error caught safely:", e);
+    // Flip or Dual Mode Handling
+    try {
+        if (isDualPage && target > 1 && target % 2 === 0) {
+            target = target - 1; 
         }
+        
+        currentPage = target;
+        let jumpPromises = [renderSingleCanvasPage(target)];
+        if (isDualPage && target > 1) {
+            jumpPromises.push(renderSingleCanvasPage(target - 1));
+        }
+        if (target < maxAllowed) {
+            jumpPromises.push(renderSingleCanvasPage(target + 1));
+        }
+        await Promise.all(jumpPromises);
+        lazyRenderPagesAround(target, maxAllowed);
+        
+        const bookContainer = $("#book-container");
+        if (bookContainer.data('turn')) {
+            bookContainer.turn('page', target);
+        }
+        savePageProgress(target);
+    } catch (e) {
+        console.warn("Jump page range error caught safely:", e);
     }
 }
 
@@ -1288,6 +1296,10 @@ if (pageSlider) {
             bubble.innerText = this.value;
             bubble.style.display = "block";
             bubble.style.left = `${(this.value / this.max) * 100}%`;
+        }
+        const targetPage = parseInt(this.value);
+        if (pdfDoc && targetPage >= 1 && targetPage <= pdfDoc.numPages) {
+            jumpToPage(targetPage);
         }
     };
     pageSlider.onchange = function() {
