@@ -21,7 +21,8 @@ h2{margin:0 0 6px; text-align:center; font-size:26px; font-weight:900;}
 .sel svg{position:absolute; right:14px; top:50%; transform:translateY(-50%); pointer-events:none; opacity:.7;}
 select{width:100%; padding:15px 42px 15px 14px; border-radius:14px; background:rgba(11,22,51,.9); color:var(--text); border:1px solid var(--border); outline:none; font-size:15px; appearance:none;}
 select:focus{border-color:#6b8cff; box-shadow:0 0 0 4px rgba(107,140,255,.15);}
-.btn{width:100%; margin-top:22px; padding:15px; font-weight:800; border:none; border-radius:14px; background:linear-gradient(135deg,#4a8bff,#7b6bff,#a36bff); color:#fff; cursor:pointer; box-shadow:0 8px 28px rgba(123,107,255,.6); position:relative; overflow:hidden; transition:.25s;}
+.msg-box{margin-top:14px; text-align:center; font-size:13px; color:#ffb4ab; min-height:18px;}
+.btn{width:100%; margin-top:14px; padding:15px; font-weight:800; border:none; border-radius:14px; background:linear-gradient(135deg,#4a8bff,#7b6bff,#a36bff); color:#fff; cursor:pointer; box-shadow:0 8px 28px rgba(123,107,255,.6); position:relative; overflow:hidden; transition:.25s;}
 .btn::after{content:''; position:absolute; inset:0; background:linear-gradient(90deg, transparent, rgba(255,255,255,.3), transparent); transform:translateX(-100%); transition:.6s;}
 .btn:hover::after{transform:translateX(100%);} .btn:hover{transform:translateY(-2px);}
 </style>
@@ -47,11 +48,33 @@ select:focus{border-color:#6b8cff; box-shadow:0 0 0 4px rgba(107,140,255,.15);}
   <p class="sub">Select class, subject & chapter</p>
 
   <div style="display:flex; flex-direction:column; gap:14px;">
-    <div class="sel"><select id="classSelect"><option>Select Class</option><option value="9">Class 9</option><option value="10">Class 10</option><option value="11">Class 11</option><option value="12">Class 12</option></select><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M5 7.5L10 12.5L15 7.5" stroke="#9fb4d6" stroke-width="1.6" stroke-linecap="round"/></svg></div>
-    <div class="sel"><select id="subjectSelect"><option>Select Subject</option><option value="physics">Physics</option><option value="chemistry">Chemistry</option><option value="maths">Maths</option><option value="biology">Biology</option></select><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M5 7.5L10 12.5L15 7.5" stroke="#9fb4d6" stroke-width="1.6" stroke-linecap="round"/></svg></div>
-    <div class="sel"><select id="chapterSelect"><option>Select Chapter</option><option>Chapter 1</option><option>Chapter 2</option><option>Chapter 3</option><option>Chapter 4</option></select><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M5 7.5L10 12.5L15 7.5" stroke="#9fb4d6" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+    <div class="sel">
+      <select id="classSelect">
+        <option value="">Select Class</option>
+        <option value="9">Class 9</option>
+        <option value="10">Class 10</option>
+        <option value="11">Class 11</option>
+        <option value="12">Class 12</option>
+      </select>
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M5 7.5L10 12.5L15 7.5" stroke="#9fb4d6" stroke-width="1.6" stroke-linecap="round"/></svg>
+    </div>
+    
+    <div class="sel">
+      <select id="subjectSelect" disabled>
+        <option value="">Select Subject First</option>
+      </select>
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M5 7.5L10 12.5L15 7.5" stroke="#9fb4d6" stroke-width="1.6" stroke-linecap="round"/></svg>
+    </div>
+
+    <div class="sel">
+      <select id="chapterSelect" disabled>
+        <option value="">Select Subject First</option>
+      </select>
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M5 7.5L10 12.5L15 7.5" stroke="#9fb4d6" stroke-width="1.6" stroke-linecap="round"/></svg>
+    </div>
   </div>
 
+  <div id="msgBox" class="msg-box"></div>
   <button class="btn" onclick="loadPdf()">📄 Open Notes</button>
 </div>
 <script src="view.js"></script>
