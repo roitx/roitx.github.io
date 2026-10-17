@@ -418,14 +418,22 @@ async function setupTurnJSStructure(maxPages, isPremium, isPurchased) {
         height: globalPageH
     });
 
-    let totalDOMPages = maxPages;
+    // STRICT SECURITY: Agar premium hai aur purchased nahi hai, toh max pages sirf 1 hi honge taaki dual mode me bhi leak na ho
+    let effectiveMaxPages = maxPages;
+    const isParamPremium = params.get("type") === "premium";
+    const isInPaidFolder = rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium"));
+    if ((isParamPremium || isInPaidFolder) && !isPurchased) {
+        effectiveMaxPages = 1;
+    }
+
+    let totalDOMPages = effectiveMaxPages;
     if (isDualPage && totalDOMPages % 2 !== 0) {
         totalDOMPages += 1;
     }
 
     for (let i = 1; i <= totalDOMPages; i++) {
         const pageDiv = $(`<div class="page-flip-page" data-page-num="${i}"></div>`);
-        if (i <= maxPages) {
+        if (i <= effectiveMaxPages) {
             const placeholder = $(`<div class="page-loader-placeholder">Loading Page ${i}...</div>`);
             pageDiv.append(placeholder);
         } else {
@@ -435,7 +443,7 @@ async function setupTurnJSStructure(maxPages, isPremium, isPurchased) {
     }
 
     let savedPage = getSavedPageProgress();
-    if (savedPage > maxPages) savedPage = maxPages;
+    if (savedPage > effectiveMaxPages) savedPage = effectiveMaxPages;
     
     if (isDualPage && savedPage > 1) {
         if (savedPage % 2 === 0) {
@@ -449,11 +457,11 @@ async function setupTurnJSStructure(maxPages, isPremium, isPurchased) {
     if (isDualPage && currentPage > 1) {
         renderPromises.push(renderSingleCanvasPage(currentPage - 1));
     }
-    if (currentPage < maxPages) {
+    if (currentPage < effectiveMaxPages) {
         renderPromises.push(renderSingleCanvasPage(currentPage + 1));
     }
     await Promise.all(renderPromises);
-    lazyRenderPagesAround(currentPage, maxPages);
+    lazyRenderPagesAround(currentPage, effectiveMaxPages);
 
     bookContainer.turn({
         width: isDualPage ? globalPageW * 2 : globalPageW,
@@ -464,29 +472,36 @@ async function setupTurnJSStructure(maxPages, isPremium, isPurchased) {
         display: isDualPage ? 'double' : 'single',
         page: currentPage,
         when: {
-            turning: function(e, page, view) {
-                if (page < 1 || page > maxPages) {
-                    e.preventDefault();
-                    return;
-                }
-                if (isPremium && !isPurchased && page > 1) {
-                    e.preventDefault();
-                    showPurchaseRequiredModal();
-                    return;
-                }
-                currentPage = page;
-                playPageTurnSound();
-                savePageProgress(currentPage);
+    turning: function(e, page, view) {
+        if (page < 1 || page > effectiveMaxPages) {
+            e.preventDefault();
+            return;
+        }
+        
+        // Manual drag/swipe ya turn par bhi strict block
+        const isParamPremium = params.get("type") === "premium";
+        const isInPaidFolder = rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium"));
+        
+        if ((isParamPremium || isInPaidFolder) && !isPurchased && page > 1) {
+            e.preventDefault();
+            showPurchaseRequiredModal();
+            return;
+        }
+
+        currentPage = page;
+        playPageTurnSound();
+        savePageProgress(currentPage);
+       
 
                 let turnPromises = [renderSingleCanvasPage(page)];
                 if (isDualPage && page > 1) {
                     turnPromises.push(renderSingleCanvasPage(page - 1));
                 }
-                if (page < maxPages) {
+                if (page < effectiveMaxPages) {
                     turnPromises.push(renderSingleCanvasPage(page + 1));
                 }
                 Promise.all(turnPromises);
-                lazyRenderPagesAround(currentPage, maxPages);
+                lazyRenderPagesAround(currentPage, effectiveMaxPages);
             }
         }
     });
@@ -494,9 +509,44 @@ async function setupTurnJSStructure(maxPages, isPremium, isPurchased) {
     savePageProgress(currentPage);
     const slider = document.getElementById("page-slider");
     if (slider) {
-        slider.max = maxPages;
+        slider.max = effectiveMaxPages;
         slider.value = currentPage;
     }
+}
+
+async function activateDualMode(targetPage) {
+    isDualPage = true;
+    const btn = document.getElementById("btn-spread-toggle");
+    if (btn) btn.innerText = "Single Page Mode";
+
+    const isParamPremium = params.get("type") === "premium";
+    const isInPaidFolder = rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium"));
+    let isPurchased = await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "");
+    
+    let maxPages = pdfDoc ? pdfDoc.numPages : 1;
+    if ((isParamPremium || isInPaidFolder) && !isPurchased) {
+        maxPages = 1;
+        targetPage = 1; // Forcefully restrict to page 1 preview
+    }
+
+    let safeTarget = Math.min(targetPage, maxPages);
+    if (safeTarget > 1 && safeTarget % 2 === 0) {
+        safeTarget = safeTarget - 1;
+    }
+
+    currentPage = safeTarget;
+
+    let renderPromises = [renderSingleCanvasPage(currentPage)];
+    if (currentPage > 1) {
+        renderPromises.pageDiv?.(renderSingleCanvasPage(currentPage - 1));
+    }
+    if (currentPage < maxPages) {
+        renderPromises.push(renderSingleCanvasPage(currentPage + 1));
+    }
+    await Promise.all(renderPromises);
+
+    setupTurnJSStructure(maxPages, (isParamPremium || isInPaidFolder), isPurchased);
+    showToast("📖 Dual Page Book Mode Activated");
 }
 
 async function renderSingleCanvasPage(pageNum) {
@@ -982,6 +1032,16 @@ function setupVerticalScrollObserver() {
 window.togglePageSpread = async () => {
     window.toggleSettings(false);
 
+    // Strict Security Check: Agar premium note hai aur purchased nahi hai, toh dual page mode enable mat hone do!
+    const isParamPremium = params.get("type") === "premium";
+    const isInPaidFolder = rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium"));
+    let isPurchased = await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "");
+
+    if ((isParamPremium || isInPaidFolder) && !isPurchased) {
+        showPurchaseRequiredModal();
+        return; // Yahin rok do, dual mode on nahi hoga!
+    }
+
     if (isDualPage) {
         isDualPage = false;
         const btn = document.getElementById("btn-spread-toggle");
@@ -997,6 +1057,7 @@ window.togglePageSpread = async () => {
         activateDualMode(1);
     }
 };
+
 
 function showDualModePrompt() {
     let existingModal = document.getElementById("dualPromptModal");
