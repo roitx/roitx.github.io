@@ -1514,3 +1514,28 @@ if (viewportEl) {
         lastTap = currentTime;
     });
 }
+document.addEventListener('keydown', (e) => {
+    // F12 block karne ke liye
+    if (e.key === 'F12' || e.keyCode === 123) {
+        e.preventDefault();
+        alert("⚠️ Developer tools are disabled!");
+        return false;
+    }
+
+    // Ctrl + Shift + I / J / C (Dev tools shortcuts) block karne ke liye
+    if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C' || e.key === 'i' || e.key === 'j' || e.key === 'c')) {
+        e.preventDefault();
+        return false;
+    }
+
+    // Ctrl + U (View Page Source) block karne ke liye
+    if (e.ctrlKey && (e.key === 'u' || e.key === 'U')) {
+        e.preventDefault();
+        return false;
+    }
+});
+
+// Right-click menu block karne ke liye (Inspect element rokne ke liye)
+document.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+});
