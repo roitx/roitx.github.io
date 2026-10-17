@@ -50,7 +50,6 @@
       padding: 0;
     }
    
-    
     /* Partial Fill Star Styling */
     .star-fill {
       font-size: 20px;
@@ -545,6 +544,12 @@
 
         <textarea id="reviewText" placeholder="Apna feedback ya suggestion yahan likhein..." rows="3" style="width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; color: #fff; box-sizing: border-box; resize: none; font-size: 13px; font-family: inherit; outline: none;"></textarea>
 
+        <!-- Guest Login Notice Box -->
+        <div id="guestLoginNotice" style="display: none; background: rgba(58, 160, 255, 0.08); border: 1px solid rgba(58, 160, 255, 0.2); padding: 10px 14px; border-radius: 10px; align-items: center; justify-content: space-between; font-size: 12px; color: #cbd5e0;">
+          <span>🔒 Review publish karne ke liye login zaroori hai</span>
+          <a href="login.html" style="color: #00d2ff; font-weight: 700; text-decoration: none; background: rgba(0,210,255,0.1); padding: 4px 10px; border-radius: 6px;">Login Now</a>
+        </div>
+
         <button onclick="submitRatingToSupabase()" class="btn primary" style="width: 100%; padding: 12px; font-weight: 700; border-radius: 10px; cursor: pointer; background: linear-gradient(135deg, #00d2ff, #3a7bd5); color: #fff; border: none; box-shadow: 0 4px 15px rgba(0,210,255,0.3);">Publish Review</button>
       </div>
 
@@ -764,7 +769,7 @@
       }
     }
 
-    // --- Strict Login Check & Supabase Rate Modal Logic ---
+    // --- Rate Modal Logic (Public Viewing & Login Check on Submit) ---
     let currentSelectedRating = 5.0;
     let loggedInUserData = null;
 
@@ -774,30 +779,38 @@
         return;
       }
 
-      const { data: { session } } = await window.supabaseClient.auth.getSession();
-      if (!session) {
-        alert('Rate karne ke liye pehle login karna zaroori hai!');
-        window.location.href = 'login.html';
-        return;
-      }
-
-      const { data: profile } = await window.supabaseClient
-        .from('profiles')
-        .select('*')
-        .eq('id', session.user.id)
-        .single();
-
-      loggedInUserData = profile || { id: session.user.id, full_name: session.user.email.split('@')[0], avatar_url: null };
-
-      const nameInput = document.getElementById('reviewerName');
-      if (nameInput) {
-        nameInput.value = loggedInUserData.full_name || 'Verified Student';
-      }
-
       const modal = document.getElementById('rateModal');
       if (modal) modal.style.display = 'flex';
       
       fetchAndRenderSupabaseReviews();
+
+      const { data: { session } } = await window.supabaseClient.auth.getSession();
+      const nameInput = document.getElementById('reviewerName');
+      const guestNotice = document.getElementById('guestLoginNotice');
+
+      if (session) {
+        const { data: profile } = await window.supabaseClient
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+
+        loggedInUserData = profile || { id: session.user.id, full_name: session.user.email.split('@')[0], avatar_url: null };
+
+        if (nameInput) {
+          nameInput.value = loggedInUserData.full_name || 'Verified Student';
+          nameInput.style.display = 'block';
+        }
+        if (guestNotice) guestNotice.style.display = 'none';
+      } else {
+        loggedInUserData = null;
+        if (nameInput) {
+          nameInput.value = '';
+          nameInput.placeholder = 'Aapka Naam (Student)';
+        }
+        // Guest user ke liye notice box ko explicitly flex block set karenge taaki show ho
+        if (guestNotice) guestNotice.style.display = 'flex';
+      }
     }
 
     function closeRateModal() {
@@ -840,7 +853,8 @@
 
     async function submitRatingToSupabase() {
       if (!loggedInUserData) {
-        alert('Session expired. Please login again.');
+        alert('Review publish karne ke liye pehle login karna zaroori hai!');
+        window.location.href = 'login.html';
         return;
       }
 

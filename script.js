@@ -1,11 +1,16 @@
 /* =========================================================
    PM ROITX - MAIN CONTROLLER SCRIPT
    ========================================================= */
-fetch("https://analytics.digitalplat.org/a/collect", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({"property":"dpa_ljL0RgOwajacQYbgGjK2fheU5hfng00","event":"page_view","url":"https://example.com/docs"})
-});
+
+// Localhost par CORS error se bachne ke liye condition check
+if (!window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1')) {
+  fetch("https://analytics.digitalplat.org/a/collect", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({"property":"dpa_ljL0RgOwajacQYbgGjK2fheU5hfng00","event":"page_view","url":window.location.href})
+  }).catch(err => console.log("Analytics block or failed"));
+}
+
 // ---------------------------------------------------------
 // 1. CONSTANTS & UTILITIES
 // ---------------------------------------------------------
@@ -44,6 +49,7 @@ function getOrCreateFirstVisitTime() {
   }
   return visitTime;
 }
+
 
 // ---------------------------------------------------------
 // 2. WATERMARK & CURSOR SPOTLIGHT & INTERACTIONS
