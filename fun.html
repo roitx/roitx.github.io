@@ -10,21 +10,33 @@
 
 <div class="top-bar">
   <div class="bar-left">
-    <button id="toggleControl" class="glow-btn small">🕹️ Controls</button>
-    <button id="audioBtn" class="glow-btn small">🔊 Audio Engine</button>
+    <button id="toggleControl" class="glow-btn small" style="display:inline-flex; align-items:center; gap:5px;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="12" x="3" y="6" rx="2"/><path d="M6 12h4m-2-2v4"/><circle cx="15" cy="11" r="1"/><circle cx="18" cy="13" r="1"/></svg>
+    </button>
+    <button id="audioBtn" class="glow-btn small" style="display:inline-flex; align-items:center; gap:5px;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg> Audio
+    </button>
   </div>
   
   <div class="hud">
     <span id="score">SCORE: 0</span>
-    <span id="coins">🪙 0</span>
+    <span id="coins" style="display:inline-flex; align-items:center; gap:4px;">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="#ffd600" stroke="#b45309" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 6v12M15 9.5H10.5a1.5 1.5 0 0 0 0 3h3a1.5 1.5 0 0 1 0 3H9"/></svg> 0
+    </span>
     <span id="combo" class="combo-glow">1x MULTI</span>
     <span id="level">LVL: 1</span>
-    <span id="lives">❤️ 10</span>
+    <span id="lives" style="display:inline-flex; align-items:center; gap:4px;">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="#f43f5e" stroke="#f43f5e" stroke-width="1"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg> 10
+    </span>
   </div>
 
   <div class="bar-right">
-    <button id="shopBtn" class="glow-btn shop-icon">🛒</button>
-    <button id="pauseBtn" class="glow-btn pause-icon">⏸️</button>
+    <button id="shopBtn" class="glow-btn shop-icon" title="Tech Matrix Shop">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+    </button>
+    <button id="pauseBtn" class="glow-btn pause-icon" title="Pause">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="4" height="16" x="6" y="4"/><rect width="4" height="16" x="14" y="4"/></svg>
+    </button>
   </div>
 </div>
 
@@ -32,27 +44,35 @@
 
 <!-- SHOP MODAL -->
 <div id="shop-modal" class="screen">
-  <h2 class="glow-text">🛸 TECH MATRIX SHOP</h2>
+  <h2 class="glow-text" style="display:flex; align-items:center; justify-content:center; gap:8px;">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> TECH MATRIX SHOP
+  </h2>
   <p class="sub-text">Available Credits: <span id="shop-coins">0</span> 🪙</p>
   
   <div class="shop-items">
     <div class="shop-item">
       <div>
-        <h4>⚡ Overclock Lasers</h4>
+        <h4 style="display:flex; align-items:center; gap:6px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Overclock Lasers
+        </h4>
         <p>Fire Rate + Velocity Boost</p>
       </div>
       <button id="buyFireRate" class="glow-btn small">50 🪙</button>
     </div>
     <div class="shop-item">
       <div>
-        <h4>🛡️ Kinetic Shield Matrix</h4>
+        <h4 style="display:flex; align-items:center; gap:6px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Kinetic Shield Matrix
+        </h4>
         <p>Deploy Absorptive Barrier</p>
       </div>
       <button id="buyShield" class="glow-btn small">80 🪙</button>
     </div>
     <div class="shop-item">
       <div>
-        <h4>❤️ Nanite Hull Repair</h4>
+        <h4 style="display:flex; align-items:center; gap:6px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="#f43f5e" stroke="#f43f5e"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg> Nanite Hull Repair
+        </h4>
         <p>Instantly Restore +5 HP</p>
       </div>
       <button id="buyHealth" class="glow-btn small">60 🪙</button>
@@ -62,61 +82,118 @@
   <button id="closeShopBtn" class="glow-btn main-btn">RESUME OPERATION</button>
 </div>
 
+<!-- PAUSE MENU MODAL -->
+<div id="pause-modal" class="screen">
+  <h2 class="glow-text" style="display:flex; align-items:center; justify-content:center; gap:8px;">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="10" x2="10" y1="15" y2="9"/><line x1="14" x2="14" y1="15" y2="9"/></svg> GAME PAUSED
+  </h2>
+  <p class="sub-text">Operation suspended temporarily.</p>
+  
+  <div class="shop-items" style="max-width: 280px; gap: 10px;">
+    <button id="resumeBtn" class="glow-btn main-btn" style="width: 100%; padding: 12px; font-size: 14px; display:flex; align-items:center; justify-content:center; gap:6px;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg> RESUME GAME
+    </button>
+    <button id="restartBtnPause" class="glow-btn main-btn" style="width: 100%; padding: 12px; font-size: 14px; background: linear-gradient(135deg, #0284c7, #10b981); display:flex; align-items:center; justify-content:center; gap:6px;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg> RESTART
+    </button>
+    <button id="homeBtn" class="glow-btn main-btn" style="width: 100%; padding: 12px; font-size: 14px; background: linear-gradient(135deg, #ef4444, #f97316); display:flex; align-items:center; justify-content:center; gap:6px;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> MAIN MENU
+    </button>
+  </div>
+</div>
+
+<!-- CLEAN HTML QUESTION & OPTIONS OVERLAY HUD -->
+<div id="study-hud-overlay" style="display: none; position: fixed; top: 75px; left: 50%; transform: translateX(-50%); width: 92%; max-width: 520px; background: rgba(15, 23, 42, 0.95); border: 2px solid #38bdf8; border-radius: 14px; padding: 14px; z-index: 120; text-align: center; box-shadow: 0 0 30px rgba(56, 189, 248, 0.5); backdrop-filter: blur(16px);">
+  <div id="overlay-question-text" style="color: #fff; font-weight: bold; font-size: 14px; margin-bottom: 12px;"></div>
+  <div id="overlay-options-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;"></div>
+</div>
+
 <!-- START SCREEN -->
 <div id="start-screen" class="screen show">
-  <h1 class="glow-text mega">🚀 CYBER OVERDRIVE PRO</h1>
+  <h1 class="glow-text mega" style="display:flex; align-items:center; justify-content:center; gap:10px;">
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.71 1.1-1.35 1.32-1.92L14.4 12.1a12.98 12.98 0 0 0 5.1-6.1c.36-.91-.32-1.59-1.23-1.23a12.98 12.98 0 0 0-6.1 5.1l-5.48 5.58c-.57.22-1.21.61-1.92 1.32z"/><path d="m12 15 4 4"/><path d="m15 12 4 4"/></svg> CYBER OVERDRIVE PRO
+  </h1>
   <p class="sub-text">Deploy Fighting Class Fighter</p>
   
   <div class="ship-select-container">
     <div class="ship-card active" data-ship="pulse">
-      <div class="ship-preview">⚡</div>
+      <div class="ship-preview">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      </div>
       <h3>Aero-Pulse</h3>
       <p>Hyper Beam Cannon</p>
       <span>Speed: Extreme</span>
     </div>
 
     <div class="ship-card" data-ship="titan">
-      <div class="ship-preview">🛡️</div>
+      <div class="ship-preview">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
       <h3>Titan Dread</h3>
       <p>EMP Shockwave</p>
       <span>Armor: Heavy</span>
     </div>
 
     <div class="ship-card" data-ship="phantom">
-      <div class="ship-preview">🌀</div>
+      <div class="ship-preview">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>
+      </div>
       <h3>Chrono Phantom</h3>
       <p>Time Freeze Field</p>
       <span>Array: Triple Beam</span>
     </div>
   </div>
-<!-- Cyberpunk Styled Math Overdrive Toggle -->
-<div class="math-card-container">
-  <label class="math-toggle-card" for="mathModeCheckbox">
-    <div class="math-card-content">
-      <div class="math-icon-badge">🧠</div>
-      <div class="math-card-text">
-        <span class="math-title">Math Overdrive Mode</span>
-        <span class="math-desc">Boss fights me quick-fire math challenges!</span>
+
+  <div class="math-card-container">
+    <label class="math-toggle-card" for="mathModeCheckbox">
+      <div class="math-card-content">
+        <div class="math-icon-badge">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 3.44-4.54Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-3.44-4.54Z"/></svg>
+        </div>
+        <div class="math-card-text">
+          <span class="math-title">Math Overdrive Mode</span>
+          <span class="math-desc">Boss fights me quick-fire math challenges!</span>
+        </div>
       </div>
+      <div class="switch-wrapper">
+        <input type="checkbox" id="mathModeCheckbox">
+        <span class="switch-slider"></span>
+      </div>
+    </label>
+  </div>
+
+  <div class="math-card-container" style="margin-top: 10px;">
+    <div class="math-toggle-card" style="justify-content: space-between;">
+      <div class="math-card-content">
+        <div class="math-icon-badge">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10M6 10h10"/></svg>
+        </div>
+        <div class="math-card-text">
+          <span class="math-title">Select Subject Domain</span>
+          <span class="math-desc">Choose your study category</span>
+        </div>
+      </div>
+      <select id="subjectSelect" style="background: #0f172a; color: #38bdf8; border: 1px solid #38bdf8; padding: 6px 10px; border-radius: 8px; font-weight: bold; cursor: pointer;">
+        <option value="math">Mathematics</option>
+        <option value="science">General Science</option>
+        <option value="reasoning">Logical Reasoning</option>
+      </select>
     </div>
-    <div class="switch-wrapper">
-      <input type="checkbox" id="mathModeCheckbox">
-      <span class="switch-slider"></span>
-    </div>
-  </label>
-</div>
+  </div>
 
   <button id="startBtn" class="glow-btn main-btn pulse-btn">LAUNCH MISSION</button>
-  <button id="openLeaderboardBtn" class="glow-btn main-btn" style="margin-top: 10px; background: rgba(14, 165, 233, 0.2);">🏆 LEADERBOARD</button>
+  <button id="openLeaderboardBtn" class="glow-btn main-btn" style="margin-top: 10px; background: rgba(14, 165, 233, 0.2); display:flex; align-items:center; justify-content:center; gap:6px;">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#facc15" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg> LEADERBOARD
+  </button>
 </div>
 
 <!-- LEADERBOARD SCREEN -->
 <div id="leaderboard-screen" class="screen">
-  <h2 class="glow-text">🏆 TOP PILOTS LEADERBOARD</h2>
+  <h2 class="glow-text" style="display:flex; align-items:center; justify-content:center; gap:8px;">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#facc15" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg> TOP PILOTS LEADERBOARD
+  </h2>
   <div style="max-height: 220px; overflow-y: auto; margin: 15px auto; width: 85%; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 8px;">
-    <div id="leaderboard-list" style="color: #fff; text-align: left; font-size: 14px;">
-      Loading leaderboard...
-    </div>
+    <div id="leaderboard-list" style="color: #fff; text-align: left; font-size: 14px;">Loading leaderboard...</div>
   </div>
   <button id="closeLeaderboardBtn" class="glow-btn main-btn">BACK</button>
 </div>
@@ -128,24 +205,28 @@
   <button id="restartBtn" class="glow-btn main-btn">REDEPLOY</button>
 </div>
 
-<!-- CONTROLS -->
+<!-- CONTROLS (Ab left aur right arrows bilkul same size ke hain) -->
 <div class="controls" id="manual-controls">
-  <button id="leftBtn" class="move-btn">⬅</button>
-  <button id="dashBtn" class="move-btn dash-btn">💨 DASH</button>
-  <button id="ultimateBtn" class="move-btn ultimate-btn">⚡ ULTI</button>
-  <button id="rightBtn" class="move-btn">➡</button>
+  <button id="leftBtn" class="move-btn" style="display:flex; align-items:center; justify-content:center;">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+  </button>
+  <button id="dashBtn" class="move-btn dash-btn" style="display:flex; align-items:center; justify-content:center; gap:4px;">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#00ffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 7-7 7 7"/><path d="m5 19 7-7 7 7"/></svg> DASH
+  </button>
+  <button id="ultimateBtn" class="move-btn ultimate-btn" style="display:flex; align-items:center; justify-content:center; gap:4px;">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f43f5e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> ULTI
+  </button>
+  <button id="rightBtn" class="move-btn" style="display:flex; align-items:center; justify-content:center;">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+  </button>
 </div>
 
 <div id="monster-alert" class="alert-text">⚠️ OVERLORD MOTHERSHIP ENGAGED! ⚠️</div>
 
-<!-- SCRIPTS LOAD ORDER: 
-     1. Supabase Official CDN Library
-     2. Supabase Configuration (supabase.js)
-     3. Game Graphics/Renderers (renderers.js)
-     4. Main Game Script (scriptgame.js) -->
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script defer src="supabase.js"></script>
 <script defer src="renderers.js"></script>
+<script defer src="questions.js"></script>
 <script defer src="scriptgame.js"></script>
 
 </body>

@@ -5,40 +5,6 @@ let isMathMode = false;
 let currentMathQuestion = null;
 let mathDrones = [];
 
-// REALISTIC QUESTIONS JSON BANK
-const mathQuestions = [
-    {
-        question: "18 km/h ko m/s mein badalne par kitna hoga?",
-        options: ["5 m/s", "10 m/s", "18 m/s", "2.5 m/s"],
-        correctIndex: 0
-    },
-    {
-        question: "Vritt (Circle) ki sabse badi jeeva (chord) kya hoti hai?",
-        options: ["Trijya (Radius)", "Vyas (Diameter)", "Sparsh Rekha", "Chaap"],
-        correctIndex: 1
-    },
-    {
-        question: "Samkon tribhuj mein sin(90°) ka maan kya hota hai?",
-        options: ["0", "0.5", "1", "Anant"],
-        correctIndex: 2
-    },
-    {
-        question: "Prakash ki chaal (Speed of Light) vacuum me kitni hoti hai?",
-        options: ["3 x 10^8 m/s", "3 x 10^6 m/s", "3000 km/s", "10^8 m/s"],
-        correctIndex: 0
-    },
-    {
-        question: "Samikaran x² - 16 = 0 ke mool (roots) kya honge?",
-        options: ["4", "-4", "+4 ya -4", "16"],
-        correctIndex: 2
-    },
-    {
-        question: "Samroop (Similar) Tribhuj ki bhujayein hoti hain:",
-        options: ["Barabar", "Samanupati", "Lambvat", "Zero"],
-        correctIndex: 1
-    }
-];
-
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas ? canvas.getContext("2d") : null;
 
@@ -121,7 +87,7 @@ const svgIcons = {
 if (audioBtn) {
     audioBtn.onclick = () => {
         audioEnabled = !audioEnabled;
-        audioBtn.innerText = audioEnabled ? "🔊 Audio Engine" : "🔇 Muted";
+        audioBtn.innerText = audioEnabled ? "🔊 Audio" : "🔇 Muted";
     };
 }
 
@@ -160,7 +126,22 @@ const player = {
 const keys = {};
 
 // ==========================================
-// 3. CONTROLS & AUTH SYSTEM
+// 3. ROBUST STUDY QUESTION BANK FETCHER
+// ==========================================
+function getQuestionsForSubject(subject = "math") {
+    if (typeof studyQuestionBank !== 'undefined') {
+        if (studyQuestionBank[subject] && studyQuestionBank[subject].length > 0) {
+            return studyQuestionBank[subject];
+        }
+    }
+    // Fallback safe questions
+    return [
+        { question: "18 km/h ko m/s mein badalne par kitna hoga?", options: ["5 m/s", "10 m/s", "18 m/s", "2.5 m/s"], correctIndex: 0 }
+    ];
+}
+
+// ==========================================
+// 4. CONTROLS & AUTH SYSTEM
 // ==========================================
 window.addEventListener("keydown", e => {
     keys[e.key] = true;
@@ -188,9 +169,7 @@ async function checkAuthStatus() {
 if (openLeaderboardBtn) {
     openLeaderboardBtn.onclick = async () => {
         if (!currentUser) {
-            const loginModal = document.getElementById("login-modal");
-            if (loginModal) loginModal.classList.add("show");
-            else alert("Leaderboard dekhne ke liye pehle login karein!");
+            alert("Leaderboard dekhne ke liye pehle login karein!");
             return;
         }
         if (startScreen) startScreen.classList.remove("show");
@@ -385,16 +364,45 @@ if (buyHealth) {
     };
 }
 
+// Pause Menu Logic
+const pauseModal = document.getElementById("pause-modal");
+const resumeBtn = document.getElementById("resumeBtn");
+const restartBtnPause = document.getElementById("restartBtnPause");
+const homeBtn = document.getElementById("homeBtn");
+
 if (pauseBtn) {
     pauseBtn.onclick = () => {
-        paused = !paused;
-        pauseBtn.innerText = paused ? "▶️" : "⏸️";
-        if (!paused) update();
+        paused = true;
+        if (pauseModal) pauseModal.classList.add("show");
+    };
+}
+
+if (resumeBtn) {
+    resumeBtn.onclick = () => {
+        paused = false;
+        if (pauseModal) pauseModal.classList.remove("show");
+        update();
+    };
+}
+
+if (restartBtnPause) {
+    restartBtnPause.onclick = () => {
+        if (pauseModal) pauseModal.classList.remove("show");
+        startGame();
+    };
+}
+
+if (homeBtn) {
+    homeBtn.onclick = () => {
+        paused = false;
+        game = false;
+        if (pauseModal) pauseModal.classList.remove("show");
+        if (startScreen) startScreen.classList.add("show");
     };
 }
 
 // ==========================================
-// 4. GAME MECHANICS & SPAWN LOGIC
+// 5. GAME MECHANICS & SPAWN LOGIC
 // ==========================================
 function updateHUD() {
     if (scoreEl) scoreEl.textContent = score;
@@ -513,12 +521,12 @@ function spawnPowerup(x, y) {
     }
 }
 
-// 4 Floating Option Drones Setup Function
+// Compact & Responsive Option Drones Setup (Smaller width to prevent overflowing)
 function setupMathDrones() {
     mathDrones = [];
     if (!currentMathQuestion || !canvas) return;
 
-    const droneWidth = 100;
+    const droneWidth = 90; // Compact width
     const spacing = (canvas.width - (4 * droneWidth)) / 5;
 
     currentMathQuestion.options.forEach((optText, index) => {
@@ -526,11 +534,12 @@ function setupMathDrones() {
             index: index,
             text: optText,
             x: spacing + index * (droneWidth + spacing),
-            y: 180,
+            y: 190,
             w: droneWidth,
-            h: 40,
-            baseY: 180,
-            floatOffset: index * 0.8
+            h: 36, // Compact height
+            baseY: 190,
+            floatOffset: index * 0.8,
+            dir: 1
         });
     });
 }
@@ -547,14 +556,29 @@ function spawnMonster() {
     const maxHp = 90 + (level * 45);
     monster = { x: canvas.width / 2 - 80, y: -150, w: 160, h: 100, hp: maxHp, maxHp: maxHp, speed: 3.5, dir: 1, angle: 0, phase: 1 };
 
-    // Math Mode Setup
-    if (isMathMode && mathQuestions.length > 0) {
-        const randomIndex = Math.floor(Math.random() * mathQuestions.length);
-        currentMathQuestion = mathQuestions[randomIndex];
-        setupMathDrones();
+    if (isMathMode) {
+        const subjectDropdown = document.getElementById("subjectSelect");
+        const selectedSubject = subjectDropdown ? subjectDropdown.value : "math";
+        
+        let questionsList = getQuestionsForSubject(selectedSubject);
+        if (questionsList && questionsList.length > 0) {
+            currentMathQuestion = questionsList[Math.floor(Math.random() * questionsList.length)];
+            setupMathDrones();
+        }
     } else {
         currentMathQuestion = null;
         mathDrones = [];
+    }
+}
+
+function loadNextQuestion() {
+    const subjectDropdown = document.getElementById("subjectSelect");
+    const selectedSubject = subjectDropdown ? subjectDropdown.value : "math";
+    
+    let questionsList = getQuestionsForSubject(selectedSubject);
+    if (questionsList && questionsList.length > 0) {
+        currentMathQuestion = questionsList[Math.floor(Math.random() * questionsList.length)];
+        setupMathDrones();
     }
 }
 
@@ -730,7 +754,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 });
 
 // ==========================================
-// 5. MAIN GAME LOOP (RENDER & UPDATE)
+// 6. MAIN GAME LOOP (RENDER & UPDATE)
 // ==========================================
 function update() {
     if (!game || paused || !ctx) return;
@@ -815,43 +839,41 @@ function update() {
     // Bullets
     bullets.forEach((b, i) => {
         b.y += b.vy; b.x += b.vx || 0;
-        ctx.shadowBlur = 12; ctx.shadowColor = b.c;
-        ctx.fillStyle = b.c;
-        ctx.fillRect(b.x - b.size/2, b.y, b.size, 16);
-        ctx.shadowBlur = 0;
+        
+        if (typeof drawLaser === "function") {
+            drawLaser(ctx, { x: b.x - b.size/2, y: b.y, w: b.size, h: 16, isEnemy: false });
+        } else {
+            ctx.shadowBlur = 12; ctx.shadowColor = b.c;
+            ctx.fillStyle = b.c;
+            ctx.fillRect(b.x - b.size/2, b.y, b.size, 16);
+            ctx.shadowBlur = 0;
+        }
+
         if (b.y < -20 || b.x < 0 || b.x > canvas.width) bullets.splice(i, 1);
     });
-
-    // Missiles
-    missiles.forEach((m, i) => {
-        let target = enemies[0] || monster;
-        if (target) {
-            let tx = target.x + target.w/2, ty = target.y + target.h/2;
-            let angle = Math.atan2(ty - m.y, tx - m.x);
-            m.vx += Math.cos(angle) * 0.65;
-            m.vy += Math.sin(angle) * 0.65;
-        } else {
-            m.vy -= 0.3;
-        }
-        m.x += m.vx; m.y += m.vy;
-        ctx.fillStyle = "#facc15"; ctx.fillRect(m.x - 2, m.y - 2, 5, 10);
-
-        if (m.y < -20 || m.y > canvas.height || m.x < 0 || m.x > canvas.width) missiles.splice(i, 1);
-    });
-
+    
     // Asteroids
     asteroids.forEach((a, i) => {
         if (!timeFreeze) { a.y += a.speed; a.rot += a.vRot; }
-        ctx.save();
-        ctx.translate(a.x + a.w/2, a.y + a.h/2);
-        ctx.rotate(a.rot);
-        ctx.fillStyle = "#64748b"; ctx.fillRect(-a.w/2, -a.h/2, a.w, a.h);
-        ctx.restore();
+        
+        if (typeof drawAsteroid === "function") {
+            drawAsteroid(ctx, a);
+        } else {
+            ctx.save();
+            ctx.translate(a.x + a.w/2, a.y + a.h/2);
+            ctx.rotate(a.rot);
+            ctx.fillStyle = "#475569";
+            ctx.beginPath();
+            ctx.arc(0, 0, a.w/2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
 
         if (a.y > canvas.height) asteroids.splice(i, 1);
 
         if (a.x < player.x + player.w && a.x + a.w > player.x && a.y < player.y + player.h && a.y + a.h > player.y) {
-            asteroids.splice(i, 1); hitPlayer();
+            asteroids.splice(i, 1); 
+            hitPlayer();
         }
     });
 
@@ -872,8 +894,13 @@ function update() {
     // Powerups
     powerups.forEach((p, i) => {
         p.y += 1.8;
-        ctx.fillStyle = p.type === "shield" ? "#38bdf8" : p.type === "health" ? "#22c55e" : "#a855f7";
-        ctx.fillRect(p.x, p.y, p.size, p.size);
+        
+        if (typeof drawPowerup === "function") {
+            drawPowerup(ctx, p);
+        } else {
+            ctx.fillStyle = p.type === "shield" ? "#38bdf8" : p.type === "health" ? "#22c55e" : "#a855f7";
+            ctx.fillRect(p.x, p.y, p.size, p.size);
+        }
 
         if (p.x < player.x + player.w && p.x + p.size > player.x && p.y < player.y + player.h && p.y + p.size > player.y) {
             if (p.type === "shield") player.shield = true;
@@ -927,7 +954,7 @@ function update() {
         }
     }
 
-    // Boss Monster Logic
+    // Boss Monster & Question Drones Logic
     if (monsterActive && monster) {
         if (!timeFreeze) {
             if (monster.y < 80) monster.y += 2;
@@ -961,7 +988,6 @@ function update() {
             }
         }
 
-        // Draw Boss Monster Renderer
         if (typeof drawMonster === "function") {
             drawMonster(ctx, monster);
         } else {
@@ -969,53 +995,53 @@ function update() {
             ctx.fillRect(monster.x, monster.y, monster.w, monster.h);
         }
         
-        // Health bar
+        // Boss Health Bar
         ctx.fillStyle = "rgba(255,255,255,0.3)";
         ctx.fillRect(monster.x, monster.y - 12, monster.w, 6);
         ctx.fillStyle = "#22c55e";
         ctx.fillRect(monster.x, monster.y - 12, (monster.hp / monster.maxHp) * monster.w, 6);
 
-        // MATH OVERDRIVE QUESTION OVERLAY
+        // Compact Question Box Header (Optimized for readability & fitting inside screen)
         if (isMathMode && currentMathQuestion) {
-            ctx.fillStyle = "rgba(15, 23, 42, 0.9)";
+            ctx.fillStyle = "rgba(15, 23, 42, 0.92)";
             ctx.strokeStyle = "#38bdf8";
             ctx.lineWidth = 2;
             
-            let qBoxWidth = Math.min(canvas.width - 40, 500);
+            let qBoxWidth = Math.min(canvas.width - 30, 480);
             let qBoxX = (canvas.width - qBoxWidth) / 2;
-            let qBoxY = 100;
+            let qBoxY = 95;
 
             ctx.beginPath();
-            ctx.roundRect(qBoxX, qBoxY, qBoxWidth, 50, 10);
+            ctx.roundRect(qBoxX, qBoxY, qBoxWidth, 42, 8);
             ctx.fill();
             ctx.stroke();
 
             ctx.fillStyle = "#ffffff";
-            ctx.font = "bold 15px sans-serif";
+            ctx.font = "bold 12px sans-serif"; // Compact font to avoid overflowing
             ctx.textAlign = "center";
-            ctx.fillText("❓ " + currentMathQuestion.question, canvas.width / 2, qBoxY + 30);
+            ctx.fillText("❓ " + currentMathQuestion.question, canvas.width / 2, qBoxY + 26);
             ctx.textAlign = "left";
         }
 
-        // --- TARGET DRONES RENDER & COLLISION LOGIC ---
+        // Floating Option Drones (Compact & Clean)
         if (isMathMode && currentMathQuestion && mathDrones.length > 0) {
             mathDrones.forEach((drone) => {
-                drone.floatOffset += 0.05;
-                drone.y = drone.baseY + Math.sin(drone.floatOffset) * 10;
+                drone.x += drone.dir * 1.5;
+                if (drone.x < 20 || drone.x + drone.w > canvas.width - 20) {
+                    drone.dir *= -1;
+                }
 
-                ctx.fillStyle = "rgba(30, 41, 59, 0.9)";
-                ctx.strokeStyle = drone.index === currentMathQuestion.correctIndex ? "rgba(56, 189, 248, 0.6)" : "rgba(239, 68, 68, 0.5)";
-                ctx.lineWidth = 2;
+                drone.floatOffset += 0.04;
+                drone.y = drone.baseY + Math.sin(drone.floatOffset) * 5;
 
-                ctx.beginPath();
-                ctx.roundRect(drone.x, drone.y, drone.w, drone.h, 8);
-                ctx.fill();
-                ctx.stroke();
+                if (typeof drawStudyBlock === "function") {
+                    drawStudyBlock(ctx, drone, drone.index === currentMathQuestion.correctIndex);
+                }
 
                 ctx.fillStyle = "#ffffff";
-                ctx.font = "bold 12px sans-serif";
+                ctx.font = "bold 11px sans-serif"; // Smaller crisp text for options
                 ctx.textAlign = "center";
-                ctx.fillText(drone.text, drone.x + drone.w / 2, drone.y + 24);
+                ctx.fillText(drone.text, drone.x + drone.w / 2, drone.y + 22);
                 ctx.textAlign = "left";
 
                 for (let j = bullets.length - 1; j >= 0; j--) {
@@ -1025,19 +1051,16 @@ function update() {
 
                         if (drone.index === currentMathQuestion.correctIndex) {
                             explode(drone.x + drone.w / 2, drone.y + drone.h / 2, "#22c55e", 20);
-                            addFloatingText(drone.x, drone.y, "CORRECT! OVERDRIVE DAMAGE! ⚡", "#22c55e");
+                            addFloatingText(drone.x, drone.y, "CORRECT! +150 ⚡", "#22c55e");
                             
-                            monster.hp -= 35;
-                            score += 100;
+                            monster.hp -= 40;
+                            score += 150;
                             updateHUD();
-
-                            const nextIndex = Math.floor(Math.random() * mathQuestions.length);
-                            currentMathQuestion = mathQuestions[nextIndex];
-                            setupMathDrones();
+                            loadNextQuestion();
                         } else {
                             explode(drone.x + drone.w / 2, drone.y + drone.h / 2, "#ef4444", 15);
-                            addFloatingText(drone.x, drone.y, "WRONG ANSWER! ❌", "#ef4444");
-                            screenShake = 12;
+                            addFloatingText(drone.x, drone.y, "WRONG! ❌", "#ef4444");
+                            screenShake = 14;
                         }
                         break;
                     }
@@ -1065,7 +1088,7 @@ function update() {
         }
     }
 
-    // Enemy Bullets Logic
+    // Enemy Bullets
     enemyBullets.forEach((eb, i) => {
         eb.x += eb.vx; eb.y += eb.vy;
         ctx.fillStyle = "#f43f5e";
@@ -1078,7 +1101,7 @@ function update() {
         if (eb.y > canvas.height || eb.y < 0 || eb.x < 0 || eb.x > canvas.width) enemyBullets.splice(i, 1);
     });
 
-    // Particles Render
+    // Particles
     particles.forEach((p, i) => {
         p.x += p.vx; p.y += p.vy; p.l--;
         ctx.fillStyle = p.c;
@@ -1086,7 +1109,7 @@ function update() {
         if (p.l <= 0) particles.splice(i, 1);
     });
 
-    // Floating Text Render
+    // Floating Texts
     floatingTexts.forEach((ft, i) => {
         ft.y += ft.vy; ft.alpha -= 0.02;
         ctx.fillStyle = ft.color;

@@ -20,6 +20,25 @@ body, html {
     color: #ffffff;
 }
 
+/* --- Crystal Clear Study Terminal Box (Fixed Overflow & Font) --- */
+.study-question-terminal {
+  position: absolute;
+  top: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 94%;
+  max-width: 460px;
+  background: rgba(15, 23, 42, 0.95);
+  border: 2px solid #38bdf8;
+  box-shadow: 0 0 25px rgba(56, 189, 248, 0.4), inset 0 0 10px rgba(56, 189, 248, 0.2);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-radius: 12px;
+  padding: 10px 14px;
+  text-align: center;
+  z-index: 120;
+}
+
 /* ==========================================
    2. GAME CANVAS
    ========================================== */
@@ -32,47 +51,59 @@ body, html {
 }
 
 /* ==========================================
-   3. TOP BAR & HUD
+   MOBILE & DESKTOP FRIENDLY TOP BAR
    ========================================== */
 .top-bar {
     position: fixed;
-    top: 10px;
+    top: 8px;
     left: 50%;
     transform: translateX(-50%);
-    width: 95%;
+    width: 98%;
     max-width: 1200px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     z-index: 100;
+    gap: 6px;
 }
 
 .bar-left, .bar-right {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
+    flex-shrink: 0;
 }
 
 .hud {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 8px 16px;
-    border-radius: 20px;
-    background: rgba(15, 23, 42, 0.85);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 16px;
+    background: rgba(15, 23, 42, 0.9);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border: 1px solid rgba(6, 182, 212, 0.4);
-    box-shadow: 0 0 25px rgba(0, 229, 255, 0.25);
+    box-shadow: 0 0 20px rgba(0, 229, 255, 0.2);
     font-weight: 700;
-    font-size: 11px;
-    letter-spacing: 0.5px;
+    font-size: 10px;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    overflow-x: auto;
+    max-width: 55vw;
 }
 
-#coins { color: #ffd600; }
-.combo-glow { 
-    color: #f43f5e; 
-    text-shadow: 0 0 10px #f43f5e; 
+.hud::-webkit-scrollbar {
+    display: none;
+}
+
+.glow-btn.pause-icon, 
+.glow-btn.shop-icon { 
+    width: 36px; 
+    height: 36px; 
+    border-radius: 50%; 
+    font-size: 13px; 
+    flex-shrink: 0;
 }
 
 /* ==========================================
@@ -204,11 +235,11 @@ body, html {
     max-width: 380px;
     overflow-x: auto;
     padding: 10px 5px;
-    scrollbar-width: none; /* Firefox */
+    scrollbar-width: none;
 }
 
 .ship-select-container::-webkit-scrollbar {
-    display: none; /* Chrome, Safari, Opera */
+    display: none;
 }
 
 .ship-card {
@@ -321,7 +352,7 @@ body, html {
     animation: blink 0.4s infinite alternate;
     z-index: 50;
 }
-/* Math Overdrive Card & Switch Styling */
+
 .math-card-container {
   width: 100%;
   max-width: 420px;
@@ -383,7 +414,6 @@ body, html {
   margin-top: 2px;
 }
 
-/* Custom Cyber Switch Toggle */
 .switch-wrapper {
   position: relative;
   width: 48px;
