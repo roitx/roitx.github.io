@@ -13,6 +13,10 @@
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://roitx.qd.je/" />
 
+  <!-- Preconnect to external origins for speed -->
+  <link rel="preconnect" href="https://analytics.digitalplat.org" />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+
   <!-- Favicon & Icons -->
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="icon" href="/favicon.png" type="image/png" />
@@ -34,6 +38,7 @@
   <meta name="twitter:title" content="PM Roitx - Free Class 9-12 Notes & AI Tools" />
   <meta name="twitter:description" content="Access free Class 12 Science notes, practice tests, AI calculator, and study timers on PM Roitx." />
   <meta name="twitter:image" content="https://roitx.qd.je/banner.png" />
+  
   <!-- Web App & PWA Settings -->
   <meta name="application-name" content="PM Roitx" />
   <meta name="mobile-web-app-capable" content="yes" />
@@ -127,7 +132,7 @@
     <div class="energy-ring ring-2"></div>
     
     <div class="logo-core">
-      <img src="1profile.jpg" alt="PM Roitx Logo" class="splash-logo" />
+      <img src="1profile.jpg" alt="PM Roitx Logo" class="splash-logo" width="175" height="175" fetchpriority="high" />
       <div class="shimmer-overlay"></div>
     </div>
 
@@ -152,7 +157,7 @@
       <span></span>
       <span></span>
     </div>
-    <img src="1profile.jpg" alt="Logo" class="logo" />
+    <img src="1profile.jpg" alt="Logo" class="logo" width="40" height="40" />
     <div>
       <div class="brand-name glow">PM ROITX</div>
       <div class="brand-sub">Personal Study Hub</div>
@@ -394,7 +399,7 @@
 
   <div id="installContainer" style="display:none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; background: #0c1427; border: 1px solid rgba(0, 210, 255, 0.3); padding: 10px 16px; border-radius: 14px; box-shadow: 0 8px 32px rgba(0,0,0,0.5);">
     <button id="installApp" aria-label="Install PM Roitx Hub App" style="background: transparent; border: none; color: white; display: flex; align-items: center; gap: 12px; cursor: pointer; width: 100%;">
-      <img src="1profile.jpg" alt="PM Roitx Hub App Logo" style="width: 40px; height: 40px; border-radius: 10px;" />
+      <img src="1profile.jpg" alt="PM Roitx Hub App Logo" style="width: 40px; height: 40px; border-radius: 10px;" width="40" height="40" />
       <div style="text-align: left;">
         <div style="font-weight: bold; font-size: 15px; color: #3aa0ff;">Install PM Roitx Hub</div>
         <div style="font-size: 12px; opacity: 0.8;">Smart Study Tools & Notes</div>
@@ -808,7 +813,6 @@
           nameInput.value = '';
           nameInput.placeholder = 'Aapka Naam (Student)';
         }
-        // Guest user ke liye notice box ko explicitly flex block set karenge taaki show ho
         if (guestNotice) guestNotice.style.display = 'flex';
       }
     }
@@ -929,7 +933,7 @@
         const formattedDate = new Date(rev.created_at).toLocaleDateString();
 
         const avatarHTML = avatarUrl 
-          ? `<img src="${avatarUrl}" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid #00d2ff; flex-shrink: 0;">`
+          ? `<img src="${avatarUrl}" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid #00d2ff; flex-shrink: 0;" width="32" height="32">`
           : `<div style="width: 32px; height: 32px; border-radius: 50%; background: #3b82f6; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex-shrink: 0;">${initial}</div>`;
 
         return `
