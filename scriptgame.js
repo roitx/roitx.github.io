@@ -128,13 +128,61 @@ const keys = {};
 // ==========================================
 // 3. ROBUST STUDY QUESTION BANK FETCHER
 // ==========================================
+// OpenTDB API se dynamic questions fetch karne ka function
+async function fetchApiQuestions(category = 18, amount = 10) {
+    try {
+        console.log("Fetching API questions...");
+        let response = await fetch(`https://opentdb.com/api.php?amount=${amount}&category=${category}&type=multiple`);
+        let data = await response.json();
+        
+        console.log("API Response Data:", data); // Yeh check karne ke liye ki data mila ya nahi
+        
+        if (data && data.results && data.results.length > 0) {
+            return data.results.map(item => {
+                let incorrects = item.incorrect_answers;
+                let randomIndex = Math.floor(Math.random() * (incorrects.length + 1));
+                let optionsList = [...incorrects];
+                optionsList.splice(randomIndex, 0, item.correct_answer);
+                
+                return {
+                    question: decodeHTML(item.question),
+                    options: optionsList.map(opt => decodeHTML(opt)),
+                    correctIndex: randomIndex,
+                    concept: `Category: ${item.category} (${item.difficulty.toUpperCase()})`
+                };
+            });
+        }
+    } catch (err) {
+        console.error("API fetch error:", err);
+    }
+    return null;
+}
+
+
+// Special helper function HTML entities (jaise &#039;) ko normal text mein badalne ke liye
+function decodeHTML(html) {
+    let txt = document.createElement("textarea");
+    txt.innerHTML = html;
+    return txt.value;
+}
+
 function getQuestionsForSubject(subject = "math") {
-    if (typeof studyQuestionBank !== 'undefined') {
-        if (studyQuestionBank[subject] && studyQuestionBank[subject].length > 0) {
-            return studyQuestionBank[subject];
+    console.log("Requested Subject:", subject); // Console mein check karne ke liye ki kya select hua
+    
+    // Agar dynamic cache mein koi bhi data pada hai, toh wahi se utha lo (Chahe koi bhi subject ho)
+    for (let key in dynamicQuestionCache) {
+        if (dynamicQuestionCache[key] && dynamicQuestionCache[key].length > 0) {
+            console.log("Using API Cache for subject:", key);
+            return dynamicQuestionCache[key];
         }
     }
-    // Fallback safe questions
+    
+    // Agar cache khali hai, tab local backup use karega
+    if (typeof studyQuestionBank !== 'undefined' && studyQuestionBank[subject]) {
+        return studyQuestionBank[subject];
+    }
+    
+    // Fallback
     return [
         { question: "18 km/h ko m/s mein badalne par kitna hoga?", options: ["5 m/s", "10 m/s", "18 m/s", "2.5 m/s"], correctIndex: 0 }
     ];
@@ -748,10 +796,26 @@ function setActiveShipCard(shipName) {
 
 window.addEventListener('DOMContentLoaded', async () => {
     resize();
+    
+    // 1. Science Questions (Category 18)
+    let scienceData = await fetchApiQuestions(18, 10);
+    if (scienceData) dynamicQuestionCache['science'] = scienceData;
+
+    // 2. Mathematics Questions (Category 19)
+    let mathData = await fetchApiQuestions(19, 10);
+    if (mathData) dynamicQuestionCache['math'] = mathData;
+
+    // 3. General Knowledge / Current Affairs type (Category 9)
+    let gkData = await fetchApiQuestions(9, 10);
+    if (gkData) dynamicQuestionCache['reasoning'] = gkData;
+
+    console.log("All API questions loaded into cache successfully!");
+
     setTimeout(async () => {
         await checkAuthStatus();
     }, 400);
 });
+
 
 // ==========================================
 // 6. MAIN GAME LOOP (RENDER & UPDATE)
