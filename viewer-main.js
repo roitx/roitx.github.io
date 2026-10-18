@@ -1170,6 +1170,12 @@ async function jumpToPage(pageNo) {
 
     let target = Math.min(Math.max(1, pageNo), maxAllowed);
 
+    if ((isParamPremium || isInPaidFolder) && !isPurchased && target > 1) {
+        showPurchaseRequiredModal();
+        return;
+    }
+
+    // 1. Vertical View handling
     if (viewMode === 'vertical') {
         const container = document.getElementById("vertical-scroll-container");
         if (container) {
@@ -1183,30 +1189,31 @@ async function jumpToPage(pageNo) {
         return;
     }
 
-    // Flip or Dual Mode Handling
+    // 2. 3D Flip / Dual Page View handling (Fixed with Proper Structure Rebuild)
     try {
         if (isDualPage && target > 1 && target % 2 === 0) {
             target = target - 1; 
         }
         
         currentPage = target;
-        let jumpPromises = [renderSingleCanvasPage(target)];
+        savePageProgress(target); // Target page ko localStorage me save karein taaki setupTurnJSStructure ise pick kare
+
+        // Target page aur uske aas-paas ke pages ko render karein
+        await renderSingleCanvasPage(target);
         if (isDualPage && target > 1) {
-            jumpPromises.push(renderSingleCanvasPage(target - 1));
+            await renderSingleCanvasPage(target - 1);
         }
         if (target < maxAllowed) {
-            jumpPromises.push(renderSingleCanvasPage(target + 1));
+            await renderSingleCanvasPage(target + 1);
         }
-        await Promise.all(jumpPromises);
         lazyRenderPagesAround(target, maxAllowed);
+
+        // Turn.js ke saare DOM elements aur instance ko target page ke sath properly rebuild karein
+        await setupTurnJSStructure(maxAllowed, (isParamPremium || isInPaidFolder), isPurchased);
         
-        const bookContainer = $("#book-container");
-        if (bookContainer.data('turn')) {
-            bookContainer.turn('page', target);
-        }
-        savePageProgress(target);
+        updateProgressUI(target);
     } catch (e) {
-        console.warn("Jump page range error caught safely:", e);
+        console.warn("Jump page error caught safely:", e);
     }
 }
 
@@ -1514,28 +1521,3 @@ if (viewportEl) {
         lastTap = currentTime;
     });
 }
-document.addEventListener('keydown', (e) => {
-    // F12 block karne ke liye
-    if (e.key === 'F12' || e.keyCode === 123) {
-        e.preventDefault();
-        alert("⚠️ Developer tools are disabled!");
-        return false;
-    }
-
-    // Ctrl + Shift + I / J / C (Dev tools shortcuts) block karne ke liye
-    if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C' || e.key === 'i' || e.key === 'j' || e.key === 'c')) {
-        e.preventDefault();
-        return false;
-    }
-
-    // Ctrl + U (View Page Source) block karne ke liye
-    if (e.ctrlKey && (e.key === 'u' || e.key === 'U')) {
-        e.preventDefault();
-        return false;
-    }
-});
-
-// Right-click menu block karne ke liye (Inspect element rokne ke liye)
-document.addEventListener('contextmenu', (e) => {
-    e.preventDefault();
-});
