@@ -32,7 +32,6 @@
 
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     
-
     <style>
         * {
             box-sizing: border-box;
@@ -42,42 +41,48 @@
         }
 
         body {
-            background: #0f172a; /* Deep modern dark theme */
+            background: #090d16;
             color: #f8fafc;
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 30px 20px;
+            padding: 24px 16px;
         }
 
         .container {
             width: 100%;
-            max-width: 680px;
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 35px;
-            border-radius: 24px;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            max-width: 650px;
+            background: rgba(19, 29, 48, 0.75);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 32px 24px;
+            border-radius: 28px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
         }
 
-        /* --- Glowing Profile Section --- */
+        @media (max-width: 480px) {
+            .container {
+                padding: 24px 16px;
+                border-radius: 20px;
+            }
+        }
+
+        /* --- Profile Section --- */
         .profile-card {
             text-align: center;
-            margin-bottom: 35px;
-            position: relative;
+            margin-bottom: 32px;
         }
 
         .img-wrapper {
             position: relative;
-            width: 140px;
-            height: 140px;
-            margin: 0 auto 20px auto;
+            width: 130px;
+            height: 130px;
+            margin: 0 auto 18px auto;
             border-radius: 50%;
         }
 
-        /* Ultra Glowing Ring Animation */
         .img-wrapper::before, .img-wrapper::after {
             content: '';
             position: absolute;
@@ -85,12 +90,12 @@
             border-radius: 50%;
             background: linear-gradient(45deg, #3b82f6, #8b5cf6, #ec4899, #06b6d4);
             z-index: -1;
-            animation: spinGlow 4s linear infinite;
+            animation: spinGlow 5s linear infinite;
         }
 
         .img-wrapper::after {
-            filter: blur(20px);
-            opacity: 0.8;
+            filter: blur(16px);
+            opacity: 0.7;
         }
 
         @keyframes spinGlow {
@@ -108,10 +113,9 @@
         }
 
         .profile-card h2 {
-            font-size: 1.8rem;
+            font-size: 1.7rem;
             font-weight: 700;
             color: #fff;
-            letter-spacing: 0.5px;
             margin-bottom: 8px;
             background: linear-gradient(to right, #60a5fa, #c084fc);
             -webkit-background-clip: text;
@@ -120,19 +124,41 @@
 
         .profile-card p.author-msg {
             color: #94a3b8;
-            font-size: 0.95rem;
-            max-width: 520px;
+            font-size: 0.92rem;
+            max-width: 480px;
             margin: 0 auto;
             line-height: 1.6;
             font-style: italic;
         }
 
+        .know-more-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 16px;
+            padding: 9px 20px;
+            background: rgba(96, 165, 250, 0.08);
+            border: 1px solid rgba(96, 165, 250, 0.3);
+            color: #60a5fa;
+            border-radius: 30px;
+            text-decoration: none;
+            font-size: 0.88rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .know-more-btn:hover {
+            background: rgba(96, 165, 250, 0.18);
+            border-color: rgba(96, 165, 250, 0.6);
+            transform: translateY(-2px);
+        }
+
         /* --- Section Titles --- */
         .section-title {
-            font-size: 1.25rem;
+            font-size: 1.15rem;
             font-weight: 600;
             color: #f1f5f9;
-            margin-bottom: 16px;
+            margin-bottom: 14px;
             display: flex;
             align-items: center;
             gap: 10px;
@@ -141,47 +167,46 @@
         .section-title::before {
             content: '';
             width: 4px;
-            height: 20px;
+            height: 18px;
             background: #3b82f6;
             border-radius: 4px;
         }
 
         /* --- Accordion FAQ Section --- */
         .faq-section {
-            margin-bottom: 35px;
+            margin-bottom: 32px;
         }
 
         .faq-item {
-            background: rgba(51, 65, 85, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(30, 41, 59, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.06);
             border-radius: 12px;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             overflow: hidden;
-            transition: all 0.3s ease;
+            transition: border-color 0.3s;
         }
 
         .faq-item:hover {
-            border-color: rgba(96, 165, 250, 0.3);
+            border-color: rgba(96, 165, 250, 0.25);
         }
 
         .faq-question {
             width: 100%;
-            padding: 16px 20px;
+            padding: 14px 18px;
             background: none;
             border: none;
             color: #e2e8f0;
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-weight: 600;
             text-align: left;
             display: flex;
             justify-content: space-between;
             align-items: center;
             cursor: pointer;
-            outline: none;
         }
 
         .faq-icon {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             transition: transform 0.3s ease;
             color: #60a5fa;
         }
@@ -189,18 +214,17 @@
         .faq-answer {
             max-height: 0;
             overflow: hidden;
-            transition: max-height 0.3s cubic-bezier(0, 1, 0, 1);
-            background: rgba(15, 23, 42, 0.3);
+            transition: max-height 0.3s ease, padding 0.3s ease;
+            background: rgba(15, 23, 42, 0.25);
             color: #cbd5e1;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             line-height: 1.6;
-            padding: 0 20px;
+            padding: 0 18px;
         }
 
         .faq-item.active .faq-answer {
-            max-height: 300px;
-            padding: 16px 20px;
-            transition: max-height 0.3s cubic-bezier(1, 0, 1, 0);
+            max-height: 250px;
+            padding: 14px 18px;
         }
 
         .faq-item.active .faq-icon {
@@ -215,7 +239,7 @@
         }
 
         label {
-            font-size: 0.9rem;
+            font-size: 0.88rem;
             font-weight: 500;
             color: #cbd5e1;
             margin-bottom: 6px;
@@ -225,13 +249,13 @@
         select, textarea {
             width: 100%;
             padding: 12px 16px;
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(15, 23, 42, 0.65);
+            border: 1px solid rgba(255, 255, 255, 0.12);
             border-radius: 10px;
             color: #f8fafc;
-            font-size: 0.95rem;
+            font-size: 0.92rem;
             outline: none;
-            transition: border-color 0.3s, box-shadow 0.3s;
+            transition: all 0.3s ease;
         }
 
         select:focus, textarea:focus {
@@ -246,7 +270,7 @@
 
         textarea {
             resize: vertical;
-            min-height: 110px;
+            min-height: 105px;
         }
 
         /* Image Attachment Styling */
@@ -262,30 +286,30 @@
             justify-content: center;
             gap: 8px;
             padding: 10px 16px;
-            background: rgba(51, 65, 85, 0.6);
+            background: rgba(30, 41, 59, 0.5);
             border: 1px dashed #3b82f6;
             border-radius: 10px;
             color: #60a5fa;
-            font-size: 0.9rem;
+            font-size: 0.88rem;
             font-weight: 600;
             cursor: pointer;
-            transition: background 0.2s, border-color 0.2s;
+            transition: background 0.2s;
         }
 
         .custom-file-btn:hover {
-            background: rgba(59, 130, 246, 0.15);
+            background: rgba(59, 130, 246, 0.12);
         }
 
         .image-preview-container {
             display: none;
             position: relative;
             width: fit-content;
-            margin-top: 6px;
+            margin-top: 4px;
         }
 
         .image-preview-container img {
-            max-width: 140px;
-            max-height: 100px;
+            max-width: 130px;
+            max-height: 90px;
             border-radius: 8px;
             border: 1px solid #334155;
             object-fit: cover;
@@ -299,31 +323,31 @@
             color: white;
             border: none;
             border-radius: 50%;
-            width: 22px;
-            height: 22px;
-            font-size: 12px;
+            width: 20px;
+            height: 20px;
+            font-size: 11px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.4);
         }
 
         .form-footer {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-top: -8px;
+            margin-top: 4px;
         }
 
-        .word-count {
-            font-size: 0.8rem;
-            color: #64748b;
+        .char-count {
+            font-size: 0.78rem;
+            color: #94a3b8;
         }
 
         .error-msg {
             color: #f87171;
-            font-size: 0.85rem;
+            font-size: 0.82rem;
             display: none;
         }
 
@@ -332,17 +356,18 @@
             background: linear-gradient(135deg, #3b82f6, #8b5cf6);
             color: white;
             border: none;
-            padding: 14px;
+            padding: 13px;
             border-radius: 10px;
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-weight: 600;
             cursor: pointer;
             transition: opacity 0.3s, transform 0.2s;
             box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+            margin-top: 4px;
         }
 
         button.submit-btn:hover {
-            opacity: 0.95;
+            opacity: 0.92;
             transform: translateY(-1px);
         }
 
@@ -350,6 +375,7 @@
             transform: translateY(0);
         }
     </style>
+
     <!-- Supabase Dependencies -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase.js"></script>
@@ -360,33 +386,18 @@
     <!-- Glowing Author Profile Section -->
     <div class="profile-card">
         <div class="img-wrapper">
-            <img src="auth.jpg" alt="Author Photo">
+            <img src="auth.jpg" alt="Rohit Babu Photo">
         </div>
         <h2>ROHIT BABU</h2>
         <p class="author-msg">
-            "Is platform ko banane ka maksad sabhi students ko ek behtareen aur bina kisi rukawat ke padhai ka mahaul dena hai. Aasha hai ye aapki journey me madadgar sabit hoga!"
+            "Is platform ko banane ka mukhya uddeshya sabhi students ko ek behtareen, aasan aur bina kisi rukawat ke padhne ka mahaul dena hai. Aasha hai ye aapke academic safar me madadgar sabit hoga!"
         </p>
-        <!-- Example Button for about.html -->
-<a href="know-rohit.html" style="
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 15px;
-    padding: 10px 20px;
-    background: rgba(96, 165, 250, 0.1);
-    border: 1px solid rgba(96, 165, 250, 0.4);
-    color: #60a5fa;
-    border-radius: 30px;
-    text-decoration: none;
-    font-size: 0.9rem;
-    font-weight: 600;
-    transition: all 0.3s ease;">
-    ✨ Know More About Rohit
-</a>
-
+        <a href="know-rohit.html" class="know-more-btn">
+            ✨ Know More About Rohit
+        </a>
     </div>
 
-    <!-- Accordion Google-style FAQ Section -->
+    <!-- Accordion FAQ Section -->
     <div class="faq-section">
         <div class="section-title">Frequently Asked Questions</div>
         
@@ -396,7 +407,7 @@
                 <span class="faq-icon">▼</span>
             </button>
             <div class="faq-answer">
-                <p>A: Ye platform study materials, notes aur learning tools ko ek jagah access karne ke liye banaya gaya hai, taaki sabhi students bina kisi pareshani ke padhai kar sakein.</p>
+                <p>A: Ye platform study materials, notes aur learning tools ko ek jagah aasaani se access karne ke liye banaya gaya hai.</p>
             </div>
         </div>
         
@@ -406,7 +417,7 @@
                 <span class="faq-icon">▼</span>
             </button>
             <div class="faq-answer">
-                <p>A: Aap niche diye gaye feedback form ke zariye topic select karke apna sujhav (30-150 words me) bhej sakte hain.</p>
+                <p>A: Aap niche diye gaye feedback form me topic select karke apna sujhav minimum 30 aur maximum 120 letters me bhej sakte hain.</p>
             </div>
         </div>
         
@@ -416,17 +427,17 @@
                 <span class="faq-icon">▼</span>
             </button>
             <div class="faq-answer">
-                <p>A: Aap jaha apka file khulta h wah setting ⚙️ par tap karke download kar sakte hain.</p>
+                <p>A: Aap jahan file khulte hain, wahan top corner par setting ⚙️ icon par tap karke download kar sakte hain.</p>
             </div>
         </div>
 
         <div class="faq-item">
             <button class="faq-question" onclick="toggleFaq(this)">
-                <span>Q: Mai apna feedback ka jawab kaha pa sakta hu?</span>
+                <span>Q: Feedback ka status kahan dekh sakte hain?</span>
                 <span class="faq-icon">▼</span>
             </button>
             <div class="faq-answer">
-                <p>A: Aap home page se menu ke through ask-doubt page par jakar waha feedback 💬 button par tap karke uska status dekh sakte hain.</p>
+                <p>A: Home page se menu ke through ask-doubt page par jakar wahan feedback 💬 icon par tap karke status check kar sakte hain.</p>
             </div>
         </div>
 
@@ -436,7 +447,7 @@
                 <span class="faq-icon">▼</span>
             </button>
             <div class="faq-answer">
-                <p>A: Haan, yahan milne wale sabhi basic notes aur learning guides sabhi students ke liye free hain.</p>
+                <p>A: Haan, yahan milne wale sabhi basic notes aur study guides students ke liye bilkul free hain.</p>
             </div>
         </div>
     </div>
@@ -458,17 +469,17 @@
             </div>
 
             <div>
-                <label for="description">Apna Feedback Describe Karein (30 - 150 Words):</label>
-                <textarea id="description" placeholder="Aapka feedback hamare liye mahatvapurna hai..." oninput="validateWordCount()"></textarea>
+                <label for="description">Apna Feedback Describe Karein (30 - 120 Letters):</label>
+                <textarea id="description" placeholder="Aapka feedback hamare liye behad mahatvapurna hai..." maxlength="120" oninput="validateCharCount()"></textarea>
                 <div class="form-footer">
-                    <div id="errorMsg" class="error-msg">Max 150 words allowed.</div>
-                    <div class="word-count"><span id="currentCount">0</span> / 150 words</div>
+                    <div id="errorMsg" class="error-msg">Kam se kam 30 letters hone chahiye.</div>
+                    <div class="char-count"><span id="currentCount">0</span> / 120 chars</div>
                 </div>
             </div>
 
-            <!-- Screenshot/Photo Upload Attachment -->
+            <!-- Screenshot/Photo Upload Attachment with 2MB Limit Notice -->
             <div class="image-upload-wrapper">
-                <label>Screenshot / Photo Attach Karein (Optional):</label>
+                <label>Screenshot / Photo Attach Karein (Max 2MB):</label>
                 <label for="feedbackImgInput" class="custom-file-btn">
                     📷 Attach Image / Screenshot
                 </label>
@@ -480,7 +491,7 @@
                 </div>
             </div>
 
-            <button type="submit" class="submit-btn" style="margin-top: 10px;">Submit Feedback</button>
+            <button type="submit" class="submit-btn">Submit Feedback</button>
         </form>
     </div>
 </div>
@@ -498,41 +509,38 @@ function toggleFaq(button) {
     }
 }
 
-// Word Count Helpers
-function countWords(str) {
-    const trimmed = str.trim();
-    if (!trimmed) return 0;
-    return trimmed.split(/\s+/).length;
-}
-
-function validateWordCount() {
+// Character Count & Validation Logic (Min 30, Max 120)
+function validateCharCount() {
     const textarea = document.getElementById('description');
-    let text = textarea.value;
-    let words = countWords(text);
-
-    const maxWords = 150;
+    const text = textarea.value;
+    const charLen = text.length;
     const errorMsg = document.getElementById('errorMsg');
 
-    if (words > maxWords) {
-        const wordArray = text.trim().split(/\s+/).slice(0, maxWords);
-        textarea.value = wordArray.join(" ") + " ";
-        words = maxWords;
-    }
+    document.getElementById('currentCount').innerText = charLen;
 
-    document.getElementById('currentCount').innerText = words;
-
-    if (words === maxWords) {
-        errorMsg.innerText = "Max 150 words reached!";
+    if (charLen > 0 && charLen < 30) {
+        errorMsg.innerText = "Kam se kam 30 letters likhna anivarya hai!";
+        errorMsg.style.display = 'block';
+    } else if (charLen >= 120) {
+        errorMsg.innerText = "Maximum 120 letters ki limit puri ho chuki hai!";
         errorMsg.style.display = 'block';
     } else {
         errorMsg.style.display = 'none';
     }
 }
 
-// Image Preview & Base64 Logic
+// Image Preview & 2MB Size Validation Logic
 function previewFeedbackImage(event) {
     const file = event.target.files[0];
     if (file) {
+        // 2MB Size Limit Check (2 * 1024 * 1024 bytes)
+        const maxSize = 2 * 1024 * 1024; 
+        if (file.size > maxSize) {
+            alert("❌ File size bohot badi hai! Kripya 2MB se chhoti image select karein.");
+            event.target.value = ''; // Reset file input
+            return;
+        }
+
         const reader = new FileReader();
         reader.onload = function(e) {
             attachedBase64Image = e.target.result;
@@ -564,7 +572,6 @@ function getSessionId() {
 async function handleFeedback(event) {
     event.preventDefault();
 
-    // 1. Submit par tap karte hi Login status check
     let session = null;
     if (window.supabaseClient && window.supabaseClient.auth) {
         const authRes = await window.supabaseClient.auth.getSession();
@@ -577,12 +584,16 @@ async function handleFeedback(event) {
         return;
     }
 
-    // 2. Feedback inputs validation
     const topic = document.getElementById('topic').value;
     const text = document.getElementById('description').value.trim();
-    const words = countWords(text);
+    const charLen = text.length;
 
-    if (words === 0 && !attachedBase64Image) {
+    if (charLen > 0 && charLen < 30) {
+        alert('Feedback kam se kam 30 letters ka hona chahiye!');
+        return;
+    }
+
+    if (charLen === 0 && !attachedBase64Image) {
         alert('Kripya apna feedback likhein ya photo attach karein!');
         return;
     }
@@ -595,7 +606,6 @@ async function handleFeedback(event) {
         other: "Other"
     };
 
-    // Prepare Question Payload with Image if attached
     let fullMessage = `[FEEDBACK - ${topicNames[topic] || topic}]:\n${text}`;
     if (attachedBase64Image) {
         fullMessage = `<div style="margin-bottom:8px;"><img src="${attachedBase64Image}" style="max-width:200px; max-height:150px; border-radius:8px; border:1px solid #334155;"></div>` + fullMessage;
@@ -615,7 +625,6 @@ async function handleFeedback(event) {
             }
         } catch (err) {}
 
-        // 3. Insert into 'doubts' table
         const { error } = await window.supabaseClient.from("doubts").insert([{
             question: fullMessage,
             status: "pending",

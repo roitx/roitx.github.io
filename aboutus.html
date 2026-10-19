@@ -324,6 +324,26 @@
       font-size: 0.88rem;
     }
 
+    .action-btn-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 14px;
+      padding: 8px 16px;
+      background: rgba(0, 210, 255, 0.1);
+      border: 1px solid rgba(0, 210, 255, 0.3);
+      color: var(--accent-blue);
+      border-radius: 8px;
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+    .action-btn-link:hover {
+      background: rgba(0, 210, 255, 0.2);
+      transform: translateY(-2px);
+    }
+
     .email-box {
       display: inline-flex;
       align-items: center;
@@ -419,7 +439,7 @@
 
     <article id="about" class="legal-card open">
       <div class="card-header" onclick="toggleCard(this)">
-        <h2><span>🌐</span> 1. About PM Roitx Study Hub</h2>
+        <h2><span>🌐</span> 1. About PM Roitx Study Hub & Creator</h2>
         <span class="accordion-icon">▼</span>
       </div>
       <div class="card-body">
@@ -429,7 +449,15 @@
           <strong>Core Mission:</strong> To bridge complex academic curriculums with smart retention tools, structured notes, formula sheets, and practice sets freely accessible for students.
         </div>
 
-        <h3>1.1 Ecosystem Features</h3>
+        <h3>1.1 About the Creator</h3>
+        <p>This entire platform has been conceptualized, designed, and developed independently by <strong>Rohit Babu</strong>. Being a single student developer, the vision behind PM Roitx is to provide peer students with a seamless, clean, and distraction-free learning environment.</p>
+
+        <!-- Link to about.html where FAQs and Feedback Desk exist -->
+        <a href="about.html" class="action-btn-link">
+          💬 Check FAQs & Send Feedback Here →
+        </a>
+
+        <h3>1.2 Ecosystem Features</h3>
         <ul>
           <li><strong>Interactive Learning Notes:</strong> High-yield exam notes curated for top academic performance.</li>
           <li><strong>Assessment Engine:</strong> Quick revision MCQs and dynamic chapter test series.</li>
