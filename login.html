@@ -118,7 +118,7 @@ body {
   background: #333;
   border-radius: 50%;
   position: relative;
-  transition: transform 0.3s ease, background 0.3s ease, border 0.3s ease;
+  transition: transform 0.3s ease, background 0.3s ease, border 0.3s ease, height 0.3s ease;
   animation: blink 4.5s infinite;
 }
 
@@ -168,6 +168,34 @@ body {
   stroke: #28a745;
 }
 
+/* Zzz Animation for Sleep Mode */
+.zzz-container {
+  position: absolute;
+  top: -22px;
+  right: 18px;
+  display: none;
+  z-index: 15;
+}
+.character.expr-sleep .zzz-container {
+  display: block;
+}
+.zzz-container span {
+  position: absolute;
+  font-weight: bold;
+  color: #5a2eff;
+  opacity: 0;
+  animation: floatZzz 2.2s ease-in-out infinite;
+}
+.zzz-container span:nth-child(1) { font-size: 11px; animation-delay: 0s; left: 0px; }
+.zzz-container span:nth-child(2) { font-size: 15px; animation-delay: 0.7s; left: 8px; }
+.zzz-container span:nth-child(3) { font-size: 19px; animation-delay: 1.4s; left: 18px; }
+
+@keyframes floatZzz {
+  0% { transform: translateY(0px) scale(0.8); opacity: 0; }
+  50% { opacity: 0.85; }
+  100% { transform: translateY(-28px) scale(1.2); opacity: 0; }
+}
+
 /* Detailed Expressions */
 .character.jump {
   animation: teddyJump 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -194,13 +222,9 @@ body {
 .character.expr-pain .eye { transform: rotate(45deg) scale(0.75); }
 .character.expr-pain .mouth path { d: path("M2 2 Q 18 14 34 2"); }
 
-/* 😴 Sleep */
-.character.expr-sleep .eye { transform: scaleY(0.12); }
-.character.expr-sleep .mouth path { d: path("M4 8 Q 18 2 32 8"); }
-
-/* 🤧 Sneezing */
-.character.expr-sneezing .eye-container { transform: scale(0.8) translateY(4px); }
-.character.expr-sneezing .mouth path { d: path("M14 6 A 4 4 0 1 1 22 6 A 4 4 0 1 1 14 6"); fill: #333; stroke: none; }
+/* 😴 Sleep (Poori tarah aankh band + Zzz) */
+.character.expr-sleep .eye { height: 3px !important; border-radius: 2px !important; background: #333 !important; transform: none !important; }
+.character.expr-sleep .mouth path { d: path("M8 8 Q 18 5 28 8"); }
 
 /* 😉 Wink */
 .character.expr-wink .eye.right { transform: scaleY(0.12); }
@@ -435,6 +459,13 @@ button.primary-btn:active {
 <main class="wrapper">
   <!-- INTERACTIVE CHARACTER -->
   <aside class="character" id="char" aria-hidden="true" title="Click or tap me for detailed reactions!">
+    <!-- Zzz Container for Sleep Mode -->
+    <div class="zzz-container">
+      <span>Z</span>
+      <span>z</span>
+      <span>z</span>
+    </div>
+
     <div class="eye-container">
       <div class="eye left" id="leftEye"></div>
       <div class="eye right" id="rightEye"></div>
@@ -561,7 +592,7 @@ document.addEventListener("mousemove", (e) => {
 });
 
 const allExpressions = [
-  "expr-pain", "expr-sleep", "expr-sneezing", "expr-wink", 
+  "expr-pain", "expr-sleep", "expr-wink", 
   "expr-dizzy", "expr-tired", "expr-woozy", "expr-monocle", 
   "expr-yawn", "expr-kiss", "expr-blush", "jump", "wiggle",
   "expr-star", "expr-silly", "expr-pleading", "expr-shush"
@@ -591,7 +622,7 @@ let rotateInterval = null;
 
 function resetIdleTimer() {
   clearTimeout(idleTimer);
-  clearInterval(rotateInterval);
+  clearTimeout(rotateInterval);
   clearAllExpressions();
   
   idleTimer = setTimeout(() => {
@@ -613,7 +644,7 @@ function triggerExpressionWithCustomTiming() {
   void char.offsetWidth;
   char.classList.add(randomExpr);
 
-  // If it's sleep, hold it for 15 seconds, else hold for 4 seconds before next rotation
+  // If sleep, hold for 15 seconds, else hold for 4 seconds
   const displayDuration = (randomExpr === "expr-sleep") ? 15000 : 4000;
 
   rotateInterval = setTimeout(() => {
