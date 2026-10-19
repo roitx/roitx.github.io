@@ -205,6 +205,11 @@
             autoplay: true,
             path: `assets/3d/working_${randomAnimIndex}.json`
         });
+
+        // 15 Seconds ke baad bina countdown dikhaye purane page par bhej dega
+        setTimeout(() => {
+            window.history.back();
+        }, 15000);
     </script>
 </body>
 </html>
