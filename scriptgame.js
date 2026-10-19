@@ -4,6 +4,19 @@
 let isMathMode = false;
 let currentMathQuestion = null;
 let mathDrones = [];
+let selectedSubject = "math";
+let selectedMedium = "english";
+
+window.selectedSubject = "math";
+window.selectedMedium = "english";
+
+// Dynamic storage for all subjects API questions
+window.dynamicQuestionCache = window.dynamicQuestionCache || {
+    science: [],
+    math: [],
+    reasoning: [],
+    currentAffairs: []
+};
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas ? canvas.getContext("2d") : null;
@@ -19,23 +32,6 @@ function resize() {
 }
 window.addEventListener("resize", resize);
 
-// DOM Elements
-const scoreEl = document.getElementById("score"), coinsEl = document.getElementById("coins"), livesEl = document.getElementById("lives"), levelEl = document.getElementById("level"), comboEl = document.getElementById("combo");
-const startScreen = document.getElementById("start-screen"), gameOverScreen = document.getElementById("game-over"), shopModal = document.getElementById("shop-modal");
-const finalScore = document.getElementById("final-score"), monsterAlert = document.getElementById("monster-alert"), shopCoins = document.getElementById("shop-coins");
-const toggleBtn = document.getElementById("toggleControl"), pauseBtn = document.getElementById("pauseBtn"), shopBtn = document.getElementById("shopBtn"), audioBtn = document.getElementById("audioBtn");
-const ultiBtn = document.getElementById("ultimateBtn"), dashBtn = document.getElementById("dashBtn");
-const shipCards = document.querySelectorAll(".ship-card");
-
-// Leaderboard Modal DOM Elements
-const leaderboardScreen = document.getElementById("leaderboard-screen");
-const openLeaderboardBtn = document.getElementById("openLeaderboardBtn");
-const closeLeaderboardBtn = document.getElementById("closeLeaderboardBtn");
-const leaderboardList = document.getElementById("leaderboard-list");
-const startBtn = document.getElementById("startBtn");
-const restartBtn = document.getElementById("restartBtn");
-
-// Core Game State Variables
 let game = false, paused = false, score = 0, coins = 0, lives = 12, level = 1;
 let bullets = [], missiles = [], enemies = [], asteroids = [], particles = [], stars = [], enemyBullets = [], powerups = [], floatingTexts = [], coinDrops = [], shockwaves = [], trails = [];
 let controlMode = "buttons", screenShake = 0, combo = 1, comboTimer = 0;
@@ -44,7 +40,140 @@ let scenarioEvent = null, scenarioTimer = 0, gridOffset = 0;
 let currentUser = null;
 
 // ==========================================
-// 2. AUDIO SYNTHESIZER & ASSETS
+// 2. DOM ELEMENTS & TRANSLATION LOGIC
+// ==========================================
+const scoreEl = document.getElementById("score"), coinsEl = document.getElementById("coins"), livesEl = document.getElementById("lives"), levelEl = document.getElementById("level"), comboEl = document.getElementById("combo");
+const startScreen = document.getElementById("start-screen"), gameOverScreen = document.getElementById("game-over"), shopModal = document.getElementById("shop-modal");
+const finalScore = document.getElementById("final-score"), monsterAlert = document.getElementById("monster-alert"), shopCoins = document.getElementById("shop-coins");
+const toggleBtn = document.getElementById("toggleControl"), pauseBtn = document.getElementById("pauseBtn"), shopBtn = document.getElementById("shopBtn"), audioBtn = document.getElementById("audioBtn");
+const ultiBtn = document.getElementById("ultimateBtn"), dashBtn = document.getElementById("dashBtn");
+const shipCards = document.querySelectorAll(".ship-card");
+
+const leaderboardScreen = document.getElementById("leaderboard-screen");
+const openLeaderboardBtn = document.getElementById("openLeaderboardBtn");
+const closeLeaderboardBtn = document.getElementById("closeLeaderboardBtn");
+const leaderboardList = document.getElementById("leaderboard-list");
+const startBtn = document.getElementById("startBtn");
+const restartBtn = document.getElementById("restartBtn");
+
+const mathModeCheckbox = document.getElementById("mathModeCheckbox");
+const subjectOverrideContainer = document.getElementById("subjectOverrideContainer");
+
+// Google Translate API Helper Function
+async function translateText(text, targetLang) {
+    if (targetLang === "english" || !text) return text;
+    try {
+        let tlCode = "hi"; 
+        let url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${tlCode}&dt=t&q=${encodeURIComponent(text)}`;
+        let res = await fetch(url);
+        let data = await res.json();
+        if (data && data[0]) {
+            return data[0].map(item => item[0]).join('');
+        }
+    } catch (e) {
+        console.error("Translation error:", e);
+    }
+    return text;
+}
+
+// Canvas Text Wrapping Helper Function
+function wrapText(context, text, x, y, maxWidth, lineHeight) {
+    let words = text.split(' ');
+    let line = '';
+    let lines = [];
+
+    for(let n = 0; n < words.length; n++) {
+        let testLine = line + words[n] + ' ';
+        let metrics = context.measureText(testLine);
+        let testWidth = metrics.width;
+        if (testWidth > maxWidth && n > 0) {
+            lines.push(line);
+            line = words[n] + ' ';
+        } else {
+            line = testLine;
+        }
+    }
+    lines.push(line);
+    for(let k = 0; k < lines.length; k++) {
+        context.fillText(lines[k].trim(), x, y + (k * lineHeight));
+    }
+    return lines.length;
+}
+
+// Launch Button Validator
+function updateLaunchButtonState() {
+    const mathCheckbox = document.getElementById("mathModeCheckbox");
+    const startButton = document.getElementById("startBtn");
+    
+    if (!mathCheckbox || !startButton) return;
+
+    if (mathCheckbox.checked) {
+        if (selectedSubject && selectedMedium) {
+            startButton.disabled = false;
+            startButton.style.opacity = "1";
+            startButton.style.pointerEvents = "auto";
+        } else {
+            startButton.disabled = true;
+            startButton.style.opacity = "0.4";
+            startButton.style.pointerEvents = "none";
+        }
+    } else {
+        startButton.disabled = false;
+        startButton.style.opacity = "1";
+        startButton.style.pointerEvents = "auto";
+    }
+}
+
+if (mathModeCheckbox && subjectOverrideContainer) {
+    mathModeCheckbox.addEventListener("change", () => {
+        if (mathModeCheckbox.checked) {
+            subjectOverrideContainer.classList.add("show-override");
+        } else {
+            subjectOverrideContainer.classList.remove("show-override");
+        }
+        updateLaunchButtonState();
+    });
+}
+
+const subjectCards = document.querySelectorAll(".subject-card[data-subject]");
+subjectCards.forEach(card => {
+    card.addEventListener("click", () => {
+        subjectCards.forEach(c => c.classList.remove("active"));
+        card.classList.add("active");
+        selectedSubject = card.dataset.subject;
+        window.selectedSubject = selectedSubject;
+        updateLaunchButtonState();
+    });
+});
+
+const mediumCards = document.querySelectorAll(".subject-card[data-medium]");
+mediumCards.forEach(card => {
+    card.addEventListener("click", () => {
+        mediumCards.forEach(c => c.classList.remove("active"));
+        card.classList.add("active");
+        selectedMedium = card.dataset.medium;
+        window.selectedMedium = selectedMedium;
+        updateLaunchButtonState();
+    });
+});
+
+shipCards.forEach(card => {
+    card.addEventListener("click", () => {
+        shipCards.forEach(c => c.classList.remove("active"));
+        card.classList.add("active");
+        selectedShip = card.dataset.ship;
+        
+        if (game) {
+            const ship = shipTypes[selectedShip];
+            player.speed = ship.speed;
+            addFloatingText(player.x, player.y, "SHIP CHANGED!", ship.color);
+        }
+        if (currentUser) saveUserData();
+    });
+});
+
+// ==========================================
+// 3. AUDIO SYNTHESIZER
 // ==========================================
 let audioEnabled = true;
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -91,7 +220,6 @@ if (audioBtn) {
     };
 }
 
-// Player Ship Types & Background Setup
 const shipTypes = {
     pulse: { speed: 10, hp: 12, fireRate: 5, color: "#10b981", coreColor: "#6ee7b7" },
     titan: { speed: 6.5, hp: 22, fireRate: 10, color: "#f97316", coreColor: "#fdba74" },
@@ -103,21 +231,6 @@ for(let i = 0; i < 60; i++) {
     stars.push({ x: Math.random() * window.innerWidth, y: Math.random() * window.innerHeight, s: Math.random() * 2 + 1, speed: Math.random() * 2 + 0.5, opacity: Math.random() });
 }
 
-shipCards.forEach(card => {
-    card.addEventListener("click", () => {
-        shipCards.forEach(c => c.classList.remove("active"));
-        card.classList.add("active");
-        selectedShip = card.dataset.ship;
-        
-        if (game) {
-            const ship = shipTypes[selectedShip];
-            player.speed = ship.speed;
-            addFloatingText(player.x, player.y, "SHIP CHANGED!", ship.color);
-        }
-        if (currentUser) saveUserData();
-    });
-});
-
 const player = { 
     x: 0, y: 0, w: 56, h: 56, 
     speed: 8, cooldown: 0, missileCooldown: 0, shield: false, 
@@ -126,16 +239,12 @@ const player = {
 const keys = {};
 
 // ==========================================
-// 3. ROBUST STUDY QUESTION BANK FETCHER
+// 4. EXTERNAL API QUESTION FETCHER & TRANSLATOR
 // ==========================================
-// OpenTDB API se dynamic questions fetch karne ka function
 async function fetchApiQuestions(category = 18, amount = 10) {
     try {
-        console.log("Fetching API questions...");
         let response = await fetch(`https://opentdb.com/api.php?amount=${amount}&category=${category}&type=multiple`);
         let data = await response.json();
-        
-        console.log("API Response Data:", data); // Yeh check karne ke liye ki data mila ya nahi
         
         if (data && data.results && data.results.length > 0) {
             return data.results.map(item => {
@@ -147,8 +256,7 @@ async function fetchApiQuestions(category = 18, amount = 10) {
                 return {
                     question: decodeHTML(item.question),
                     options: optionsList.map(opt => decodeHTML(opt)),
-                    correctIndex: randomIndex,
-                    concept: `Category: ${item.category} (${item.difficulty.toUpperCase()})`
+                    correctIndex: randomIndex
                 };
             });
         }
@@ -158,38 +266,38 @@ async function fetchApiQuestions(category = 18, amount = 10) {
     return null;
 }
 
-
-// Special helper function HTML entities (jaise &#039;) ko normal text mein badalne ke liye
 function decodeHTML(html) {
     let txt = document.createElement("textarea");
     txt.innerHTML = html;
     return txt.value;
 }
 
-function getQuestionsForSubject(subject = "math") {
-    console.log("Requested Subject:", subject); // Console mein check karne ke liye ki kya select hua
+async function loadNextQuestion() {
+    let activeSubject = window.selectedSubject || selectedSubject || "math";
+    let activeMedium = window.selectedMedium || selectedMedium || "english";
     
-    // Agar dynamic cache mein koi bhi data pada hai, toh wahi se utha lo (Chahe koi bhi subject ho)
-    for (let key in dynamicQuestionCache) {
-        if (dynamicQuestionCache[key] && dynamicQuestionCache[key].length > 0) {
-            console.log("Using API Cache for subject:", key);
-            return dynamicQuestionCache[key];
-        }
+    let cacheList = window.dynamicQuestionCache[activeSubject];
+    if (!cacheList || cacheList.length === 0) {
+        cacheList = window.dynamicQuestionCache['math'];
     }
     
-    // Agar cache khali hai, tab local backup use karega
-    if (typeof studyQuestionBank !== 'undefined' && studyQuestionBank[subject]) {
-        return studyQuestionBank[subject];
+    if (cacheList && cacheList.length > 0) {
+        let rawQ = cacheList[Math.floor(Math.random() * cacheList.length)];
+        
+        let translatedQ = await translateText(rawQ.question, activeMedium);
+        let translatedOptions = await Promise.all(rawQ.options.map(opt => translateText(opt, activeMedium)));
+
+        currentMathQuestion = {
+            question: translatedQ,
+            options: translatedOptions,
+            correctIndex: rawQ.correctIndex
+        };
+        setupMathDrones();
     }
-    
-    // Fallback
-    return [
-        { question: "18 km/h ko m/s mein badalne par kitna hoga?", options: ["5 m/s", "10 m/s", "18 m/s", "2.5 m/s"], correctIndex: 0 }
-    ];
 }
 
 // ==========================================
-// 4. CONTROLS & AUTH SYSTEM
+// 5. CONTROLS, AUTH & LEADERBOARD SYSTEM
 // ==========================================
 window.addEventListener("keydown", e => {
     keys[e.key] = true;
@@ -314,7 +422,7 @@ async function fetchLeaderboard(shipMode) {
     }
 }
 
-// Mobile & On-Screen Controls
+// Mobile Controls
 const leftBtn = document.getElementById("leftBtn");
 const rightBtn = document.getElementById("rightBtn");
 
@@ -354,7 +462,7 @@ window.addEventListener("deviceorientation", (e) => {
     }
 });
 
-// Shop Logic
+// Shop & Pause Modals
 if (shopBtn) {
     shopBtn.onclick = () => {
         if (!game) return;
@@ -412,7 +520,6 @@ if (buyHealth) {
     };
 }
 
-// Pause Menu Logic
 const pauseModal = document.getElementById("pause-modal");
 const resumeBtn = document.getElementById("resumeBtn");
 const restartBtnPause = document.getElementById("restartBtnPause");
@@ -450,7 +557,7 @@ if (homeBtn) {
 }
 
 // ==========================================
-// 5. GAME MECHANICS & SPAWN LOGIC
+// 6. GAME MECHANICS & SPAWN LOGIC
 // ==========================================
 function updateHUD() {
     if (scoreEl) scoreEl.textContent = score;
@@ -569,12 +676,11 @@ function spawnPowerup(x, y) {
     }
 }
 
-// Compact & Responsive Option Drones Setup (Smaller width to prevent overflowing)
 function setupMathDrones() {
     mathDrones = [];
     if (!currentMathQuestion || !canvas) return;
 
-    const droneWidth = 90; // Compact width
+    const droneWidth = 90;
     const spacing = (canvas.width - (4 * droneWidth)) / 5;
 
     currentMathQuestion.options.forEach((optText, index) => {
@@ -584,7 +690,7 @@ function setupMathDrones() {
             x: spacing + index * (droneWidth + spacing),
             y: 190,
             w: droneWidth,
-            h: 36, // Compact height
+            h: 36,
             baseY: 190,
             floatOffset: index * 0.8,
             dir: 1
@@ -592,7 +698,7 @@ function setupMathDrones() {
     });
 }
 
-function spawnMonster() {
+async function spawnMonster() {
     if (!canvas) return;
     monsterActive = true;
     
@@ -605,28 +711,10 @@ function spawnMonster() {
     monster = { x: canvas.width / 2 - 80, y: -150, w: 160, h: 100, hp: maxHp, maxHp: maxHp, speed: 3.5, dir: 1, angle: 0, phase: 1 };
 
     if (isMathMode) {
-        const subjectDropdown = document.getElementById("subjectSelect");
-        const selectedSubject = subjectDropdown ? subjectDropdown.value : "math";
-        
-        let questionsList = getQuestionsForSubject(selectedSubject);
-        if (questionsList && questionsList.length > 0) {
-            currentMathQuestion = questionsList[Math.floor(Math.random() * questionsList.length)];
-            setupMathDrones();
-        }
+        await loadNextQuestion();
     } else {
         currentMathQuestion = null;
         mathDrones = [];
-    }
-}
-
-function loadNextQuestion() {
-    const subjectDropdown = document.getElementById("subjectSelect");
-    const selectedSubject = subjectDropdown ? subjectDropdown.value : "math";
-    
-    let questionsList = getQuestionsForSubject(selectedSubject);
-    if (questionsList && questionsList.length > 0) {
-        currentMathQuestion = questionsList[Math.floor(Math.random() * questionsList.length)];
-        setupMathDrones();
     }
 }
 
@@ -699,7 +787,9 @@ async function startGame() {
 if(startBtn) startBtn.onclick = startGame;
 if(restartBtn) restartBtn.onclick = startGame;
 
-// Database Sync Logic
+// ==========================================
+// 7. DATABASE SYNC & INITIALIZATION
+// ==========================================
 async function loadUserData() {
     try {
         if (!window.supabaseClient || !currentUser) return;
@@ -796,29 +886,30 @@ function setActiveShipCard(shipName) {
 
 window.addEventListener('DOMContentLoaded', async () => {
     resize();
+    updateLaunchButtonState();
     
-    // 1. Science Questions (Category 18)
-    let scienceData = await fetchApiQuestions(18, 10);
-    if (scienceData) dynamicQuestionCache['science'] = scienceData;
+    // Fetching questions for ALL subjects with respective OpenTDB categories
+    let scienceData = await fetchApiQuestions(17, 10); // Category 17: Science & Nature
+    if (scienceData) window.dynamicQuestionCache['science'] = scienceData;
 
-    // 2. Mathematics Questions (Category 19)
-    let mathData = await fetchApiQuestions(19, 10);
-    if (mathData) dynamicQuestionCache['math'] = mathData;
+    let mathData = await fetchApiQuestions(19, 10); // Category 19: Mathematics
+    if (mathData) window.dynamicQuestionCache['math'] = mathData;
 
-    // 3. General Knowledge / Current Affairs type (Category 9)
-    let gkData = await fetchApiQuestions(9, 10);
-    if (gkData) dynamicQuestionCache['reasoning'] = gkData;
+    let reasoningData = await fetchApiQuestions(18, 10); // Category 18: Science: Computers (Logic/Reasoning fallback)
+    if (reasoningData) window.dynamicQuestionCache['reasoning'] = reasoningData;
 
-    console.log("All API questions loaded into cache successfully!");
+    let gkData = await fetchApiQuestions(9, 10); // Category 9: General Knowledge (Current Affairs fallback)
+    if (gkData) window.dynamicQuestionCache['currentAffairs'] = gkData;
+
+    console.log("All subjects API questions loaded into cache successfully!");
 
     setTimeout(async () => {
         await checkAuthStatus();
     }, 400);
 });
 
-
 // ==========================================
-// 6. MAIN GAME LOOP (RENDER & UPDATE)
+// 8. MAIN GAME LOOP (RENDER & UPDATE)
 // ==========================================
 function update() {
     if (!game || paused || !ctx) return;
@@ -832,7 +923,6 @@ function update() {
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Grid Background
     ctx.strokeStyle = "rgba(14, 165, 233, 0.08)";
     ctx.lineWidth = 1;
     gridOffset = (gridOffset + (scenarioEvent === "warp" ? 8 : 2)) % 40;
@@ -843,7 +933,6 @@ function update() {
         ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
     }
 
-    // Parallax Stars
     let speedMult = scenarioEvent === "warp" ? 4.5 : 1;
     stars.forEach(s => {
         s.y += s.speed * speedMult;
@@ -852,7 +941,6 @@ function update() {
         ctx.fillRect(s.x, s.y, s.s, s.s * (scenarioEvent === "warp" ? 6 : 1));
     });
 
-    // Scenario Trigger
     if (Math.random() < 0.003) triggerScenario();
     if (scenarioEvent) {
         scenarioTimer--;
@@ -860,7 +948,6 @@ function update() {
         if (scenarioTimer <= 0) scenarioEvent = null;
     }
 
-    // Shockwaves
     shockwaves.forEach((sw, i) => {
         sw.r += 4.5; sw.alpha -= 0.03;
         ctx.strokeStyle = sw.color; ctx.lineWidth = 3;
@@ -870,7 +957,6 @@ function update() {
     });
     ctx.globalAlpha = 1.0;
 
-    // Thruster Trails
     trails.forEach((t, i) => {
         t.y += 2.5; t.alpha -= 0.04; t.size *= 0.91;
         ctx.fillStyle = t.color; ctx.globalAlpha = Math.max(0, t.alpha);
@@ -879,7 +965,6 @@ function update() {
     });
     ctx.globalAlpha = 1.0;
 
-    // Player Controls
     if (controlMode === "buttons") {
         let speedMultiplier = player.isDashing ? 2.3 : 1;
         if (keys["ArrowLeft"] && player.x > 0) player.x -= player.speed * speedMultiplier;
@@ -895,31 +980,23 @@ function update() {
     if (ultiBtn) ultiBtn.style.opacity = player.ultiCooldown <= 0 ? "1" : "0.4";
     if (dashBtn) dashBtn.style.opacity = player.dashCooldown <= 0 ? "1" : "0.4";
 
-    // Draw Player Ship
     if (typeof drawPlayerShip === "function") {
         drawPlayerShip(ctx, player, shipTypes, selectedShip, trails);
     }
 
-    // Bullets
     bullets.forEach((b, i) => {
         b.y += b.vy; b.x += b.vx || 0;
-        
         if (typeof drawLaser === "function") {
             drawLaser(ctx, { x: b.x - b.size/2, y: b.y, w: b.size, h: 16, isEnemy: false });
         } else {
-            ctx.shadowBlur = 12; ctx.shadowColor = b.c;
             ctx.fillStyle = b.c;
             ctx.fillRect(b.x - b.size/2, b.y, b.size, 16);
-            ctx.shadowBlur = 0;
         }
-
         if (b.y < -20 || b.x < 0 || b.x > canvas.width) bullets.splice(i, 1);
     });
     
-    // Asteroids
     asteroids.forEach((a, i) => {
         if (!timeFreeze) { a.y += a.speed; a.rot += a.vRot; }
-        
         if (typeof drawAsteroid === "function") {
             drawAsteroid(ctx, a);
         } else {
@@ -927,26 +1004,19 @@ function update() {
             ctx.translate(a.x + a.w/2, a.y + a.h/2);
             ctx.rotate(a.rot);
             ctx.fillStyle = "#475569";
-            ctx.beginPath();
-            ctx.arc(0, 0, a.w/2, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.beginPath(); ctx.arc(0, 0, a.w/2, 0, Math.PI * 2); ctx.fill();
             ctx.restore();
         }
-
         if (a.y > canvas.height) asteroids.splice(i, 1);
-
         if (a.x < player.x + player.w && a.x + a.w > player.x && a.y < player.y + player.h && a.y + a.h > player.y) {
-            asteroids.splice(i, 1); 
-            hitPlayer();
+            asteroids.splice(i, 1); hitPlayer();
         }
     });
 
-    // Coins
     coinDrops.forEach((c, i) => {
         c.y += 2.2;
         ctx.fillStyle = "#ffd600";
         ctx.beginPath(); ctx.arc(c.x, c.y, c.size/2, 0, Math.PI*2); ctx.fill();
-
         if (c.x < player.x + player.w && c.x + c.size > player.x && c.y < player.y + player.h && c.y + c.size > player.y) {
             coins += 10;
             addFloatingText(c.x, c.y, "+10 🪙", "#ffd600");
@@ -955,17 +1025,14 @@ function update() {
         }
     });
 
-    // Powerups
     powerups.forEach((p, i) => {
         p.y += 1.8;
-        
         if (typeof drawPowerup === "function") {
             drawPowerup(ctx, p);
         } else {
             ctx.fillStyle = p.type === "shield" ? "#38bdf8" : p.type === "health" ? "#22c55e" : "#a855f7";
             ctx.fillRect(p.x, p.y, p.size, p.size);
         }
-
         if (p.x < player.x + player.w && p.x + p.size > player.x && p.y < player.y + player.h && p.y + p.size > player.y) {
             if (p.type === "shield") player.shield = true;
             if (p.type === "health") lives = Math.min(shipTypes[selectedShip].hp + 10, lives + 4);
@@ -977,7 +1044,6 @@ function update() {
         }
     });
 
-    // Enemies Loop
     if (!monsterActive && Math.random() < 0.038) spawnEnemy();
     for (let i = enemies.length - 1; i >= 0; i--) {
         let e = enemies[i];
@@ -985,9 +1051,7 @@ function update() {
             e.y += e.speed;
             e.x += Math.sin(e.y * 0.05 + e.sineOffset) * 2 + (e.flankDir * 0.4);
         }
-        
         if (typeof drawEnemy === "function") drawEnemy(ctx, e);
-
         if (e.y > canvas.height) { enemies.splice(i, 1); hitPlayer(); }
 
         for (let j = bullets.length - 1; j >= 0; j--) {
@@ -1004,51 +1068,14 @@ function update() {
                 break;
             }
         }
-
-        missiles.forEach((m, mIdx) => {
-            if (m.x > e.x && m.x < e.x + e.w && m.y > e.y && m.y < e.y + e.h) {
-                explode(e.x + e.w/2, e.y + e.h/2, "#facc15", 14);
-                enemies.splice(i, 1); missiles.splice(mIdx, 1);
-                score += 15 * combo; updateHUD();
-            }
-        });
-
-        if (e.x < player.x + player.w && e.x + e.w > player.x && e.y < player.y + player.h && e.y + e.h > player.y) {
-            enemies.splice(i, 1); hitPlayer();
-        }
     }
 
-    // Boss Monster & Question Drones Logic
     if (monsterActive && monster) {
         if (!timeFreeze) {
             if (monster.y < 80) monster.y += 2;
             else {
                 monster.x += monster.speed * monster.dir;
                 if (monster.x + monster.w > canvas.width || monster.x < 0) monster.dir *= -1;
-
-                monster.angle += 0.14;
-                let hpRatio = monster.hp / monster.maxHp;
-
-                if (hpRatio < 0.2) monster.phase = 3;
-                else if (hpRatio < 0.55) monster.phase = 2;
-
-                if (Math.random() < (monster.phase === 3 ? 0.22 : 0.13)) {
-                    let mCenterX = monster.x + monster.w / 2;
-                    let mCenterY = monster.y + monster.h / 2;
-
-                    if (monster.phase === 1) {
-                        enemyBullets.push({ x: mCenterX, y: mCenterY, vx: (Math.random() - 0.5) * 5, vy: 4.5 });
-                    } else if (monster.phase === 2) {
-                        let dx = (player.x + player.w/2) - mCenterX;
-                        let dy = (player.y + player.h/2) - mCenterY;
-                        let angle = Math.atan2(dy, dx);
-                        enemyBullets.push({ x: mCenterX, y: mCenterY, vx: Math.cos(angle) * 5.5, vy: Math.sin(angle) * 5.5 });
-                    } else if (monster.phase === 3) {
-                        for(let a = 0; a < Math.PI * 2; a += Math.PI / 4) {
-                            enemyBullets.push({ x: mCenterX, y: mCenterY, vx: Math.cos(a) * 4, vy: Math.sin(a) * 4 });
-                        }
-                    }
-                }
             }
         }
 
@@ -1059,42 +1086,36 @@ function update() {
             ctx.fillRect(monster.x, monster.y, monster.w, monster.h);
         }
         
-        // Boss Health Bar
         ctx.fillStyle = "rgba(255,255,255,0.3)";
         ctx.fillRect(monster.x, monster.y - 12, monster.w, 6);
         ctx.fillStyle = "#22c55e";
         ctx.fillRect(monster.x, monster.y - 12, (monster.hp / monster.maxHp) * monster.w, 6);
 
-        // Compact Question Box Header (Optimized for readability & fitting inside screen)
         if (isMathMode && currentMathQuestion) {
-            ctx.fillStyle = "rgba(15, 23, 42, 0.92)";
+            ctx.fillStyle = "rgba(15, 23, 42, 0.95)";
             ctx.strokeStyle = "#38bdf8";
             ctx.lineWidth = 2;
             
-            let qBoxWidth = Math.min(canvas.width - 30, 480);
+            let qBoxWidth = Math.min(canvas.width - 40, 500);
             let qBoxX = (canvas.width - qBoxWidth) / 2;
-            let qBoxY = 95;
+            let qBoxY = 85;
 
             ctx.beginPath();
-            ctx.roundRect(qBoxX, qBoxY, qBoxWidth, 42, 8);
+            ctx.roundRect(qBoxX, qBoxY, qBoxWidth, 65, 10);
             ctx.fill();
             ctx.stroke();
 
             ctx.fillStyle = "#ffffff";
-            ctx.font = "bold 12px sans-serif"; // Compact font to avoid overflowing
+            ctx.font = "bold 11px sans-serif";
             ctx.textAlign = "center";
-            ctx.fillText("❓ " + currentMathQuestion.question, canvas.width / 2, qBoxY + 26);
+            wrapText(ctx, "❓ " + currentMathQuestion.question, canvas.width / 2, qBoxY + 22, qBoxWidth - 20, 16);
             ctx.textAlign = "left";
         }
 
-        // Floating Option Drones (Compact & Clean)
         if (isMathMode && currentMathQuestion && mathDrones.length > 0) {
             mathDrones.forEach((drone) => {
                 drone.x += drone.dir * 1.5;
-                if (drone.x < 20 || drone.x + drone.w > canvas.width - 20) {
-                    drone.dir *= -1;
-                }
-
+                if (drone.x < 20 || drone.x + drone.w > canvas.width - 20) drone.dir *= -1;
                 drone.floatOffset += 0.04;
                 drone.y = drone.baseY + Math.sin(drone.floatOffset) * 5;
 
@@ -1103,7 +1124,7 @@ function update() {
                 }
 
                 ctx.fillStyle = "#ffffff";
-                ctx.font = "bold 11px sans-serif"; // Smaller crisp text for options
+                ctx.font = "bold 11px sans-serif";
                 ctx.textAlign = "center";
                 ctx.fillText(drone.text, drone.x + drone.w / 2, drone.y + 22);
                 ctx.textAlign = "left";
@@ -1112,11 +1133,9 @@ function update() {
                     let b = bullets[j];
                     if (b.x > drone.x && b.x < drone.x + drone.w && b.y > drone.y && b.y < drone.y + drone.h) {
                         bullets.splice(j, 1);
-
                         if (drone.index === currentMathQuestion.correctIndex) {
                             explode(drone.x + drone.w / 2, drone.y + drone.h / 2, "#22c55e", 20);
                             addFloatingText(drone.x, drone.y, "CORRECT! +150 ⚡", "#22c55e");
-                            
                             monster.hp -= 40;
                             score += 150;
                             updateHUD();
@@ -1131,41 +1150,8 @@ function update() {
                 }
             });
         }
-
-        // Player bullets vs Boss
-        for (let j = bullets.length - 1; j >= 0; j--) {
-            let b = bullets[j];
-            if (b.x > monster.x && b.x < monster.x + monster.w && b.y > monster.y && b.y < monster.y + monster.h) {
-                monster.hp -= 2;
-                bullets.splice(j, 1);
-                explode(b.x, b.y, "#ef4444", 4);
-                if (monster.hp <= 0) {
-                    explode(monster.x + monster.w/2, monster.y + monster.h/2, "#f43f5e", 40);
-                    score += 200;
-                    monsterActive = false;
-                    monster = null;
-                    mathDrones = [];
-                    updateHUD();
-                    break;
-                }
-            }
-        }
     }
 
-    // Enemy Bullets
-    enemyBullets.forEach((eb, i) => {
-        eb.x += eb.vx; eb.y += eb.vy;
-        ctx.fillStyle = "#f43f5e";
-        ctx.beginPath(); ctx.arc(eb.x, eb.y, 4, 0, Math.PI * 2); ctx.fill();
-
-        if (eb.x < player.x + player.w && eb.x > player.x && eb.y < player.y + player.h && eb.y > player.y) {
-            enemyBullets.splice(i, 1);
-            hitPlayer();
-        }
-        if (eb.y > canvas.height || eb.y < 0 || eb.x < 0 || eb.x > canvas.width) enemyBullets.splice(i, 1);
-    });
-
-    // Particles
     particles.forEach((p, i) => {
         p.x += p.vx; p.y += p.vy; p.l--;
         ctx.fillStyle = p.c;
@@ -1173,7 +1159,6 @@ function update() {
         if (p.l <= 0) particles.splice(i, 1);
     });
 
-    // Floating Texts
     floatingTexts.forEach((ft, i) => {
         ft.y += ft.vy; ft.alpha -= 0.02;
         ctx.fillStyle = ft.color;

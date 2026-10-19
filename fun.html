@@ -101,58 +101,55 @@
     </button>
   </div>
 </div>
-
-<!-- CLEAN HTML QUESTION & OPTIONS OVERLAY HUD -->
-<div id="study-hud-overlay" style="display: none; position: fixed; top: 75px; left: 50%; transform: translateX(-50%); width: 92%; max-width: 520px; background: rgba(15, 23, 42, 0.95); border: 2px solid #38bdf8; border-radius: 14px; padding: 14px; z-index: 120; text-align: center; box-shadow: 0 0 30px rgba(56, 189, 248, 0.5); backdrop-filter: blur(16px);">
-  <div id="overlay-question-text" style="color: #fff; font-weight: bold; font-size: 14px; margin-bottom: 12px;"></div>
-  <div id="overlay-options-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;"></div>
-</div>
-
 <!-- START SCREEN -->
 <div id="start-screen" class="screen show">
-  <h1 class="glow-text mega" style="display:flex; align-items:center; justify-content:center; gap:10px;">
-    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.71 1.1-1.35 1.32-1.92L14.4 12.1a12.98 12.98 0 0 0 5.1-6.1c.36-.91-.32-1.59-1.23-1.23a12.98 12.98 0 0 0-6.1 5.1l-5.48 5.58c-.57.22-1.21.61-1.92 1.32z"/><path d="m12 15 4 4"/><path d="m15 12 4 4"/></svg> CYBER OVERDRIVE PRO
+  <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 50% 20%, rgba(56, 189, 248, 0.1), transparent 60%); pointer-events: none;"></div>
+
+  <h1 class="glow-text mega" style="display:flex; align-items:center; justify-content:center; gap:10px; position: relative; z-index: 2;">
+    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.2"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.71 1.1-1.35 1.32-1.92L14.4 12.1a12.98 12.98 0 0 0 5.1-6.1c.36-.91-.32-1.59-1.23-1.23a12.98 12.98 0 0 0-6.1 5.1l-5.48 5.58c-.57.22-1.21.61-1.92 1.32z"/><path d="m12 15 4 4"/><path d="m15 12 4 4"/></svg> CYBER OVERDRIVE PRO
   </h1>
-  <p class="sub-text">Deploy Fighting Class Fighter</p>
+  <p class="sub-text" style="position: relative; z-index: 2; margin-bottom: 10px;">SELECT COMBAT FIGHTER & CONFIG MATRIX</p>
   
-  <div class="ship-select-container">
+  <!-- Ship Selection Carousel -->
+  <div class="ship-select-container" style="position: relative; z-index: 2;">
     <div class="ship-card active" data-ship="pulse">
       <div class="ship-preview">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
       </div>
       <h3>Aero-Pulse</h3>
-      <p>Hyper Beam Cannon</p>
+      <p>Hyper Beam</p>
       <span>Speed: Extreme</span>
     </div>
 
     <div class="ship-card" data-ship="titan">
       <div class="ship-preview">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
       </div>
       <h3>Titan Dread</h3>
-      <p>EMP Shockwave</p>
+      <p>EMP Shock</p>
       <span>Armor: Heavy</span>
     </div>
 
     <div class="ship-card" data-ship="phantom">
       <div class="ship-preview">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>
       </div>
-      <h3>Chrono Phantom</h3>
-      <p>Time Freeze Field</p>
-      <span>Array: Triple Beam</span>
+      <h3>Phantom</h3>
+      <p>Time Freeze</p>
+      <span>Array: Triple</span>
     </div>
   </div>
 
-  <div class="math-card-container">
+  <!-- Subject Override Toggle Card -->
+  <div class="math-card-container" style="position: relative; z-index: 2; margin: 6px auto;">
     <label class="math-toggle-card" for="mathModeCheckbox">
       <div class="math-card-content">
         <div class="math-icon-badge">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 3.44-4.54Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-3.44-4.54Z"/></svg>
         </div>
         <div class="math-card-text">
-          <span class="math-title">Math Overdrive Mode</span>
-          <span class="math-desc">Boss fights me quick-fire math challenges!</span>
+          <span class="math-title">Subject Question Override</span>
+          <span class="math-desc">Enable custom study questions during boss combat</span>
         </div>
       </div>
       <div class="switch-wrapper">
@@ -160,33 +157,50 @@
         <span class="switch-slider"></span>
       </div>
     </label>
-  </div>
 
-  <div class="math-card-container" style="margin-top: 10px;">
-    <div class="math-toggle-card" style="justify-content: space-between;">
-      <div class="math-card-content">
-        <div class="math-icon-badge">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10M6 10h10"/></svg>
+    <!-- Swipeable Subject & Medium Selector Container (Initially Hidden) -->
+    <div class="subject-override-wrapper" id="subjectOverrideContainer">
+      <div style="text-align: left; padding: 0 4px; margin-bottom: 4px; font-size: 11px; color: #38bdf8; font-weight: bold;">CHOOSE ACTIVE DOMAIN:</div>
+      <div class="subject-select-container" id="subjectCarousel" style="margin: 0 auto; max-width: 420px;">
+        <div class="subject-card active" data-subject="math">
+          <h4>📐 Math</h4>
         </div>
-        <div class="math-card-text">
-          <span class="math-title">Select Subject Domain</span>
-          <span class="math-desc">Choose your study category</span>
+        <div class="subject-card" data-subject="science">
+          <h4>🔬 Science</h4>
+        </div>
+        <div class="subject-card" data-subject="reasoning">
+          <h4>🧩 Reasoning</h4>
+        </div>
+        <div class="subject-card" data-subject="currentAffairs">
+          <h4>📅 Current</h4>
         </div>
       </div>
-      <select id="subjectSelect" style="background: #0f172a; color: #38bdf8; border: 1px solid #38bdf8; padding: 6px 10px; border-radius: 8px; font-weight: bold; cursor: pointer;">
-  <option value="math">Mathematics</option>
-  <option value="science">General Science</option>
-  <option value="reasoning">Logical Reasoning</option>
-  <option value="currentAffairs">📅 Current Affairs</option>
-</select>
 
+      <!-- MEDIUM SELECTION CAROUSEL (Inside Toggle Wrapper) -->
+      <div style="text-align: left; padding: 0 4px; margin-top: 8px; margin-bottom: 4px; font-size: 11px; color: #38bdf8; font-weight: bold;">CHOOSE QUESTION MEDIUM:</div>
+      <div class="subject-select-container" id="mediumCarousel" style="margin: 0 auto; max-width: 420px;">
+        <div class="subject-card active" data-medium="english">
+          <h4>🇬🇧 English</h4>
+        </div>
+        <div class="subject-card" data-medium="hindi">
+          <h4>🇮🇳 हिंदी</h4>
+        </div>
+        <div class="subject-card" data-medium="hinglish">
+          <h4>💬 Hinglish</h4>
+        </div>
+      </div>
     </div>
   </div>
 
-  <button id="startBtn" class="glow-btn main-btn pulse-btn">LAUNCH MISSION</button>
-  <button id="openLeaderboardBtn" class="glow-btn main-btn" style="margin-top: 10px; background: rgba(14, 165, 233, 0.2); display:flex; align-items:center; justify-content:center; gap:6px;">
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#facc15" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg> LEADERBOARD
-  </button>
+  <!-- Launch & Ranks Buttons -->
+  <div style="display: flex; gap: 10px; margin-top: 12px; position: relative; z-index: 2;">
+    <button id="startBtn" class="glow-btn main-btn pulse-btn" style="display:flex; align-items:center; gap:8px;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg> LAUNCH MISSION
+    </button>
+    <button id="openLeaderboardBtn" class="glow-btn main-btn" style="background: rgba(14, 165, 233, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); display:flex; align-items:center; gap:6px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#facc15" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg> RANKS
+    </button>
+  </div>
 </div>
 
 <!-- LEADERBOARD SCREEN -->
@@ -207,7 +221,7 @@
   <button id="restartBtn" class="glow-btn main-btn">REDEPLOY</button>
 </div>
 
-<!-- CONTROLS (Ab left aur right arrows bilkul same size ke hain) -->
+<!-- CONTROLS -->
 <div class="controls" id="manual-controls">
   <button id="leftBtn" class="move-btn" style="display:flex; align-items:center; justify-content:center;">
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>

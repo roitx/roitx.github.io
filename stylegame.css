@@ -11,6 +11,157 @@
     touch-action: manipulation;
     font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
 }
+/* ==========================================
+   PROFESSIONAL GAME APP START SCREEN STYLES
+   ========================================== */
+
+#start-screen {
+    background: radial-gradient(circle at center, #0f172a 0%, #020617 100%);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    padding: 30px 20px;
+}
+
+/* Mega Title with Holographic Glow */
+.glow-text.mega {
+    font-size: 34px;
+    font-weight: 900;
+    letter-spacing: 1.5px;
+    background: linear-gradient(135deg, #ffffff 30%, #38bdf8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 20px rgba(56, 189, 248, 0.6));
+    margin-bottom: 4px;
+}
+
+/* Ship Selection Carousel Enhancements */
+.ship-select-container {
+    display: flex;
+    gap: 14px;
+    margin: 20px 0;
+    width: 100%;
+    max-width: 420px;
+    overflow-x: auto;
+    padding: 10px;
+    scrollbar-width: none;
+}
+
+.ship-card {
+    background: rgba(15, 23, 42, 0.7);
+    border: 1.5px solid rgba(255, 255, 255, 0.1);
+    border-radius: 18px;
+    padding: 16px 12px;
+    width: 135px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    flex-shrink: 0;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.ship-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(56, 189, 248, 0.5);
+}
+
+.ship-card.active {
+    border-color: #38bdf8;
+    box-shadow: 0 0 30px rgba(56, 189, 248, 0.4), inset 0 0 15px rgba(56, 189, 248, 0.2);
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.15), rgba(15, 23, 42, 0.9));
+}
+
+/* Professional Launch Button */
+.main-btn {
+    background: linear-gradient(135deg, #0284c7 0%, #6366f1 100%);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    padding: 16px 40px;
+    font-size: 17px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: #ffffff;
+    cursor: pointer;
+    box-shadow: 0 0 25px rgba(99, 102, 241, 0.5), 0 10px 20px rgba(0, 0, 0, 0.4);
+    transition: all 0.2s ease;
+}
+
+.main-btn:hover {
+    transform: scale(1.03);
+    box-shadow: 0 0 35px rgba(56, 189, 248, 0.8);
+}
+/* ==========================================
+   SUBJECT OVERRIDE CONTAINER & TOGGLE ANIMATION
+   ========================================== */
+.subject-override-wrapper {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 0.4s ease, opacity 0.3s ease, margin 0.3s ease;
+    margin-top: 0;
+}
+
+.subject-override-wrapper.show-override {
+    max-height: 280px; /* Badha kar 280px kiya gaya hai taaki dono carousels easily dikhein */
+    opacity: 1;
+    margin-top: 10px;
+}
+
+.study-question-terminal, 
+#study-hud-overlay, 
+div[style*="background: rgba(15, 23, 42, 0.95)"] {
+  max-width: 92% !important;
+  width: auto !important;
+  min-width: 320px;
+  padding: 12px 16px !important;
+  box-sizing: border-box;
+  word-wrap: break-word;
+  white-space: normal !important;
+}
+
+/* Canvas ke andar render hone wale question box ke liye script update */
+
+/* ==========================================
+   SWIPEABLE SUBJECT SELECTOR CAROUSEL
+   ========================================== */
+.subject-select-container {
+    display: flex;
+    gap: 12px;
+    margin: 15px auto;
+    width: 100%;
+    max-width: 420px;
+    overflow-x: auto;
+    padding: 8px 5px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+}
+
+.subject-select-container::-webkit-scrollbar {
+    display: none;
+}
+
+.subject-card {
+    background: rgba(15, 23, 42, 0.7);
+    border: 1.5px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    padding: 12px 14px;
+    min-width: 110px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    flex-shrink: 0;
+    text-align: center;
+}
+
+.subject-card.active {
+    border-color: #38bdf8;
+    box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+    background: rgba(56, 189, 248, 0.15);
+}
+
+.subject-card h4 {
+    font-size: 12px;
+    color: #ffffff;
+    font-weight: 700;
+}
 
 body, html {
     width: 100%;
