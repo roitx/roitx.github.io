@@ -599,6 +599,11 @@
       <div id="analysisContainer"></div>
     </div>
 
+    <!-- Secret Gesture Trigger Footer -->
+    <div class="footer-promo" style="text-align: center; margin-top: 30px; font-size: 12px; color: var(--text-secondary);">
+      Designed with passion by Rohit | Official Portal: <span id="secretPortalBtn" style="color: var(--accent-cyan); font-weight: bold; cursor: default; user-select: none;">roitx.xo.je</span>
+    </div>
+
   </main>
 
   <script>
@@ -1002,6 +1007,28 @@
         currentState.step = 'chapters';
       }
       updateView();
+    }
+
+    // --- SECRET GESTURE SCRIPT (5 Taps on roitx.xo.je text to open login/generator) ---
+    let tapCount = 0;
+    let tapTimer = null;
+    const secretBtn = document.getElementById('secretPortalBtn');
+
+    if (secretBtn) {
+      secretBtn.addEventListener('click', function() {
+        tapCount++;
+        if (tapTimer) clearTimeout(tapTimer);
+
+        if (tapCount === 5) {
+          tapCount = 0;
+          // Seedhe login.php par redirect karega jo session banakar generator khol dega
+          window.location.href = 'login.php';
+        } else {
+          tapTimer = setTimeout(() => {
+            tapCount = 0;
+          }, 800); // 800ms ke andar 5 taps hone chahiye
+        }
+      });
     }
   </script>
 </body>
