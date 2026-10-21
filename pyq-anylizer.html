@@ -73,11 +73,16 @@
       gap: 14px;
     }
 
-    /* Elastic Pull-Down Logo Container */
+    /* Draggable Logo Container */
     .logo-wrapper {
       position: relative;
       touch-action: none;
-      transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      cursor: grab;
+      z-index: 102;
+      transition: transform 0.1s ease;
+    }
+    .logo-wrapper:active {
+      cursor: grabbing;
     }
     .logo {
       width: 42px;
@@ -86,32 +91,8 @@
       object-fit: cover;
       border: 2px solid var(--accent-cyan);
       box-shadow: 0 0 15px rgba(0, 210, 255, 0.35);
-      cursor: grab;
       display: block;
-    }
-
-    /* Secret Hidden Trigger Area below pulled logo */
-    #secretTriggerArea {
-      position: absolute;
-      top: 50px;
-      left: 0;
-      width: 42px;
-      height: 0px;
-      background: rgba(0, 210, 255, 0.15);
-      border: 1px dashed var(--accent-cyan);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      cursor: pointer;
-      opacity: 0;
-      transition: all 0.3s ease;
-      z-index: 101;
-    }
-    #secretTriggerArea.revealed {
-      height: 45px;
-      opacity: 1;
+      pointer-events: none; /* Dragging smoothly handle karne ke liye */
     }
 
     .brand-title-group {
@@ -135,7 +116,7 @@
       font-weight: 600;
     }
 
-    /* Official Google Minimalist Globe Icon Language Button */
+    /* Google Translate Icon Button (Secret Target Drop Zone) */
     .google-lang-btn {
       display: inline-flex;
       align-items: center;
@@ -149,6 +130,7 @@
       cursor: pointer;
       transition: all 0.25s ease;
       box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      position: relative;
     }
     .google-lang-btn:hover {
       background: rgba(0, 210, 255, 0.15);
@@ -157,8 +139,8 @@
       transform: scale(1.05);
     }
     .google-lang-btn svg {
-      width: 18px;
-      height: 18px;
+      width: 20px;
+      height: 20px;
       fill: currentColor;
     }
 
@@ -567,16 +549,14 @@
 </head>
 <body>
 
-  <!-- Top Navigation Header with Pull-down Elastic Logo & Minimalist Google Globe Icon -->
+  <!-- Top Navigation Header -->
   <header class="topbar">
     <div class="brand">
       <div style="display: flex; align-items: center; text-decoration: none; gap: 14px;">
         
-        <!-- Logo container with elastic pull-down effect -->
+        <!-- Draggable Logo Container -->
         <div class="logo-wrapper" id="logoWrapper">
           <img src="1profile.jpg" alt="Logo" class="logo" id="secretLogo" />
-          <!-- Khali sthan jo logo ko niche karne par khulega -->
-          <div id="secretTriggerArea" onclick="openSecretTool()" title="Open Generator">⚙️</div>
         </div>
 
         <div class="brand-title-group">
@@ -586,9 +566,11 @@
       </div>
     </div>
     
-    <!-- Minimalist Google Official Globe Icon Language Button -->
+    <!-- Google Translate Icon Button (Acts as Language Toggle normally, but Secret Drop Target for Logo) -->
     <button class="google-lang-btn" id="langToggleBtn" onclick="toggleLanguage()" title="Change Language">
-      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+      <svg viewBox="0 0 24 24">
+        <path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/>
+      </svg>
     </button>
   </header>
 
@@ -931,8 +913,8 @@
       const completedData = getCompletedChapters();
       const isDone = completedData[chapKey];
 
-      const yearsLeft = ["2018", "2017", "2016", "2015", "2014", "2013", "2012", "2011"];
-      const yearsRight = ["2026", "2025", "2024", "2023", "2022", "2021", "2020", "2019"];
+      const yearsLeft = ["2026", "2025", "2024", "2023", "2022", "2021", "2020", "2019"];
+      const yearsRight = ["2018", "2017", "2016", "2015", "2014", "2013", "2012", "2011"];
 
       const renderTableRows = (yearsList) => {
         return yearsList.map(yr => {
@@ -1062,64 +1044,53 @@
       updateView();
     }
 
-    // --- ELASTIC PULL-DOWN LOGO INTERACTION ---
+    // --- DRAG LOGO TO LANGUAGE ICON SECRET HACKER TRIGGER LOGIC ---
     const logoWrapper = document.getElementById('logoWrapper');
-    const secretTriggerArea = document.getElementById('secretTriggerArea');
-    let startY = 0;
-    let currentY = 0;
-    let isPulled = false;
+    const langBtn = document.getElementById('langToggleBtn');
+    
+    let isDragging = false;
+    let startX = 0, startY = 0;
+    let currentX = 0, currentY = 0;
 
-    logoWrapper.addEventListener('touchstart', (e) => {
-      startY = e.touches[0].clientY;
-    });
-
-    logoWrapper.addEventListener('touchmove', (e) => {
-      currentY = e.touches[0].clientY;
-      let diff = currentY - startY;
-      if (diff > 0 && diff < 70) {
-        logoWrapper.style.transform = `translateY(${diff}px)`;
-        if (diff > 45) {
-          secretTriggerArea.classList.add('revealed');
-          isPulled = true;
-        }
-      }
-    });
-
-    logoWrapper.addEventListener('touchend', () => {
-      if (!isPulled) {
-        logoWrapper.style.transform = `translateY(0px)`;
-      }
-    });
-
-    // Mouse support for Desktop dragging simulation
-    let isMouseDown = false;
-    logoWrapper.addEventListener('mousedown', (e) => {
-      isMouseDown = true;
+    logoWrapper.addEventListener('pointerdown', (e) => {
+      isDragging = true;
+      startX = e.clientX;
       startY = e.clientY;
+      logoWrapper.style.position = 'relative';
+      logoWrapper.setPointerCapture(e.pointerId);
     });
 
-    window.addEventListener('mousemove', (e) => {
-      if (!isMouseDown) return;
-      let diff = e.clientY - startY;
-      if (diff > 0 && diff < 70) {
-        logoWrapper.style.transform = `translateY(${diff}px)`;
-        if (diff > 45) {
-          secretTriggerArea.classList.add('revealed');
-          isPulled = true;
-        }
+    logoWrapper.addEventListener('pointermove', (e) => {
+      if (!isDragging) return;
+      currentX = e.clientX - startX;
+      currentY = e.clientY - startY;
+      logoWrapper.style.transform = `translate(${currentX}px, ${currentY}px)`;
+    });
+
+    logoWrapper.addEventListener('pointerup', (e) => {
+      if (!isDragging) return;
+      isDragging = false;
+      logoWrapper.releasePointerCapture(e.pointerId);
+
+      // Check karo ki drop kahan hua (agar langBtn ke bounding box ke andar hai)
+      const logoRect = logoWrapper.getBoundingClientRect();
+      const langRect = langBtn.getBoundingClientRect();
+
+      const overlap = !(
+        logoRect.right < langRect.left ||
+        logoRect.left > langRect.right ||
+        logoRect.bottom < langRect.top ||
+        logoRect.top > langRect.bottom
+      );
+
+      // Logo ko wapas apni original jagah smooth bhej do
+      logoWrapper.style.transform = `translate(0px, 0px)`;
+
+      if (overlap) {
+        // Target matched! Khofiya rasta khul gaya!
+        window.location.href = 'https://roitx.xo.je/login.php';
       }
     });
-
-    window.addEventListener('mouseup', () => {
-      if (isMouseDown && !isPulled) {
-        logoWrapper.style.transform = `translateY(0px)`;
-      }
-      isMouseDown = false;
-    });
-
-    function openSecretTool() {
-      window.location.href = 'https://roitx.xo.je/login.php';
-    }
   </script>
 </body>
 </html>
