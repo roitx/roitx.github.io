@@ -1,6 +1,50 @@
 /* =========================================================
    PM ROITX - FULLY ORGANISED & RESPONSIVE STYLESHEET
    ========================================================= */
+/* =========================================================
+   DESKTOP WIDGET ENHANCEMENT (75% Screen Height)
+   ========================================================= */
+@media (min-width: 1024px) {
+  /* Snap section container ko viewport ki height ke mutabiq adjust karein */
+  .snap-section.snap-widget-slide {
+    min-height: 85vh !important;
+    padding: 20px !important;
+  }
+
+  /* Card container screen ki height ka 75% gherega */
+  .slide-inner-card {
+    max-width: 1300px !important;
+    min-height: 75vh !important;
+    padding: 36px 40px !important;
+    border-radius: 32px !important;
+    display: grid !important;
+    grid-template-columns: 1.3fr 1fr !important;
+    align-items: center !important;
+    gap: 40px !important;
+  }
+
+  /* Mini screen aur iframe scaling setup */
+  .widget-mini-screen {
+    height: 100% !important;
+    min-height: 480px !important;
+    border-radius: 24px !important;
+  }
+
+  /* Description and button layout adjustment */
+  .widget-description {
+    gap: 20px !important;
+  }
+
+  .widget-description h3 {
+    font-size: 32px !important;
+  }
+
+  .widget-description p {
+    font-size: 16px !important;
+    line-height: 1.6 !important;
+  }
+}
+
 
 /* ================= 1. ROOT & COLOR THEMES ================= */
 :root {
