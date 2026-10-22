@@ -1463,80 +1463,69 @@ footer {
 }
 
 /* =========================================================
-   FORMAL VALUE SECTION & CURSOR TILT/GLOW EFFECT STYLES
+   WHY CHOOSE US FULLSCREEN SNAP STYLING
    ========================================================= */
-.formal-info-section {
-  margin: 60px auto 30px;
-  width: 92%;
+.formal-info-snap-section {
+  width: 100%;
+  height: 100vh;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  box-sizing: border-box;
+}
+
+.formal-snap-inner {
+  width: 100%;
   max-width: 1100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   background: var(--glass);
   backdrop-filter: blur(25px) saturate(180%);
   -webkit-backdrop-filter: blur(25px) saturate(180%);
   border: 1px solid var(--glass-border);
   border-radius: 28px;
-  padding: 40px 30px;
+  padding: 32px 28px;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
-  position: relative;
-  overflow: hidden;
-}
-
-.formal-header-wrapper {
-  text-align: center;
-  max-width: 700px;
-  margin: 0 auto 35px;
-}
-
-.formal-badge {
-  font-size: 11px;
-  font-weight: 800;
-  color: var(--accent);
-  background: rgba(58, 160, 255, 0.12);
-  padding: 5px 14px;
-  border-radius: 20px;
-  border: 1px solid rgba(58, 160, 255, 0.25);
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  display: inline-block;
-  margin-bottom: 12px;
-}
-
-.formal-header-wrapper h3 {
-  color: var(--text);
-  font-size: 28px;
-  font-weight: 800;
-  margin-bottom: 8px;
-  letter-spacing: -0.5px;
-}
-
-.formal-header-wrapper p {
-  color: var(--muted);
-  font-size: 14px;
-  line-height: 1.6;
 }
 
 .formal-info-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
 }
 
 .formal-info-card {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 28px 24px;
-  border-radius: 20px;
-  text-align: left;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  padding: 18px 20px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
   position: relative;
   overflow: hidden;
   cursor: pointer;
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, box-shadow 0.3s ease;
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.formal-info-card.reverse {
+  flex-direction: row-reverse;
+  text-align: right;
+}
+
+.formal-info-card.reverse .formal-text-box {
+  align-items: flex-end;
 }
 
 .formal-card-glow {
   position: absolute;
   top: 0; left: 0;
   width: 100%; height: 100%;
-  background: radial-gradient(circle 220px at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(0, 240, 255, 0.12), transparent 80%);
+  background: radial-gradient(circle 180px at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(0, 240, 255, 0.1), transparent 80%);
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.3s ease;
@@ -1547,47 +1536,59 @@ footer {
 }
 
 .formal-info-card:hover {
-  transform: translateY(-6px);
+  transform: translateY(-4px);
   border-color: var(--gold-glow);
-  box-shadow: 0 15px 35px var(--gold-shadow), 0 0 20px rgba(255, 215, 0, 0.15);
+  box-shadow: 0 10px 25px var(--gold-shadow);
 }
 
 .formal-icon-box {
-  width: 50px;
-  height: 50px;
-  border-radius: 14px;
-  background: rgba(58, 160, 255, 0.12);
-  border: 1px solid rgba(58, 160, 255, 0.3);
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  border-radius: 12px;
+  background: rgba(58, 160, 255, 0.1);
+  border: 1px solid rgba(58, 160, 255, 0.25);
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--accent);
-  margin-bottom: 18px;
   transition: all 0.3s ease;
 }
 
 .formal-icon-box svg {
-  width: 26px;
-  height: 26px;
+  width: 22px;
+  height: 22px;
 }
 
 .formal-info-card:hover .formal-icon-box {
   background: rgba(255, 215, 0, 0.15);
   border-color: var(--gold-glow);
   color: var(--gold-glow);
-  transform: scale(1.1) rotate(5deg);
+  transform: scale(1.08) rotate(5deg);
+}
+
+.formal-text-box {
+  display: flex;
+  flex-direction: column;
 }
 
 .formal-info-card h4 {
   color: var(--text);
-  margin-bottom: 10px;
-  font-size: 18px;
+  margin-bottom: 4px;
+  font-size: 15px;
   font-weight: 700;
 }
 
 .formal-info-card p {
   color: var(--muted);
-  font-size: 13.5px;
-  line-height: 1.6;
+  font-size: 12.5px;
+  line-height: 1.4;
   margin: 0;
+}
+
+@media (max-width: 900px) {
+  .formal-snap-inner {
+    padding: 20px 16px;
+    height: auto;
+  }
 }
