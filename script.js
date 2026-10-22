@@ -443,6 +443,12 @@ async function showMotivation() {
   }
 
   await applySavedLanguagePreference(textElem);
+
+  // Auto-close timer (7 seconds ke baad popup apne aap band ho jayega)
+  if (window.motivationTimeout) clearTimeout(window.motivationTimeout);
+  window.motivationTimeout = setTimeout(() => {
+    popup.style.display = "none";
+  }, 7000);
 }
 
 function loadFallbackQuoteForPopup() {
@@ -458,36 +464,38 @@ function loadFallbackQuoteForPopup() {
 
 async function applySavedLanguagePreference(textElem) {
   const savedLang = localStorage.getItem("pm_motivation_lang") || "en";
-  const langLabel = document.getElementById("langLabel");
 
   if (savedLang === "hi") {
-    if (langLabel) langLabel.textContent = "English";
     textElem.textContent = "Translating...";
     const translatedQuote = await translateMotivationText(currentQuoteFullText, "hindi");
-    // Author name ko translate nahi karenge, sirf quote translate hoga aur author waise hi jud jayega
     textElem.textContent = currentQuoteAuthorPart ? `"${translatedQuote}" ${currentQuoteAuthorPart}` : `"${translatedQuote}"`;
   } else {
-    if (langLabel) langLabel.textContent = "हिंदी";
     textElem.textContent = currentQuoteAuthorPart ? `"${currentQuoteFullText}" ${currentQuoteAuthorPart}` : `"${currentQuoteFullText}"`;
   }
 }
 
 async function toggleMotivationLanguage() {
   const textElem = document.getElementById("motivationText");
-  const langLabel = document.getElementById("langLabel");
   const currentLang = localStorage.getItem("pm_motivation_lang") || "en";
+
+  // Jab user language toggle kare, toh timer reset kar do taaki padhte waqt achanak band na ho
+  if (window.motivationTimeout) clearTimeout(window.motivationTimeout);
 
   if (currentLang === "en") {
     localStorage.setItem("pm_motivation_lang", "hi");
-    if (langLabel) langLabel.textContent = "English";
     textElem.textContent = "Translating...";
     const translatedQuote = await translateMotivationText(currentQuoteFullText, "hindi");
     textElem.textContent = currentQuoteAuthorPart ? `"${translatedQuote}" ${currentQuoteAuthorPart}` : `"${translatedQuote}"`;
   } else {
     localStorage.setItem("pm_motivation_lang", "en");
-    if (langLabel) langLabel.textContent = "हिंदी";
     textElem.textContent = currentQuoteAuthorPart ? `"${currentQuoteFullText}" ${currentQuoteAuthorPart}` : `"${currentQuoteFullText}"`;
   }
+
+  // Translation ke baad dobara 7 seconds ka timer start kar do
+  window.motivationTimeout = setTimeout(() => {
+    const popup = document.getElementById("motivationPopup");
+    if (popup) popup.style.display = "none";
+  }, 7000);
 }
 
 async function translateMotivationText(text, targetLang) {
@@ -504,33 +512,6 @@ async function translateMotivationText(text, targetLang) {
         console.error("Translation error:", e);
     }
     return text;
-}
-
-
-async function showMotivation() {
-  const popup = document.getElementById("motivationPopup");
-  const textElem = document.getElementById("motivationText");
-
-  if (!popup || !textElem) return;
-
-  textElem.textContent = "Loading motivation...";
-  popup.style.display = "flex";
-
-  if (navigator.onLine) {
-    try {
-      const response = await fetch("https://dummyjson.com/quotes/random");
-      const data = await response.json();
-      textElem.textContent = `"${data.quote}" — ${data.author}`;
-    } catch (err) {
-      loadFallbackQuote(textElem);
-    }
-  } else {
-    loadFallbackQuote(textElem);
-  }
-
-  setTimeout(() => {
-    popup.style.display = "none";
-  }, 7000);
 }
 
 function loadFallbackQuote(element) {
@@ -552,6 +533,7 @@ if (motivationPopupElem) {
     if (e.target.id === "motivationPopup") e.target.style.display = "none";
   });
 }
+
 
 // ---------------------------------------------------------
 // 5. CANVAS ANIMATION & WAVE GRAPHICS
