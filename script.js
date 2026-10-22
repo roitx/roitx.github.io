@@ -417,8 +417,8 @@ async function loadSupabaseNotifications() {
 // ---------------------------------------------------------
 // 4. MOTIVATION POPUP & FALLBACKS
 // ---------------------------------------------------------
-let currentMotivationOriginalText = "";
-let currentMotivationAuthor = "";
+let currentQuoteFullText = ""; // Sirf quote text translation ke liye
+let currentQuoteAuthorPart = ""; // Author ka hissa alag rakhne ke liye
 
 async function showMotivation() {
   const popup = document.getElementById("motivationPopup");
@@ -433,31 +433,27 @@ async function showMotivation() {
     try {
       const response = await fetch("https://dummyjson.com/quotes/random");
       const data = await response.json();
-      currentMotivationOriginalText = data.quote;
-      currentMotivationAuthor = data.author ? `— ${data.author}` : "";
+      currentQuoteFullText = data.quote || "Stay focused. Stay unstoppable.";
+      currentQuoteAuthorPart = data.author ? `— ${data.author}` : "";
     } catch (err) {
-      loadFallbackQuoteForPopup(textElem);
-      return;
+      loadFallbackQuoteForPopup();
     }
   } else {
-    loadFallbackQuoteForPopup(textElem);
-    return;
+    loadFallbackQuoteForPopup();
   }
 
-  applySavedLanguagePreference(textElem);
+  await applySavedLanguagePreference(textElem);
 }
 
-function loadFallbackQuoteForPopup(textElem) {
+function loadFallbackQuoteForPopup() {
   let quotesList = GLOBAL_FALLBACK_QUOTES;
   if (typeof fallbackQuotes !== 'undefined' && Array.isArray(fallbackQuotes) && fallbackQuotes.length > 0) {
     quotesList = fallbackQuotes;
   } else if (window.quotes && Array.isArray(window.quotes) && window.quotes.length > 0) {
     quotesList = window.quotes;
   }
-  const randomQuote = quotesList[Math.floor(Math.random() * quotesList.length)];
-  currentMotivationOriginalText = randomQuote;
-  currentMotivationAuthor = "";
-  applySavedLanguagePreference(textElem);
+  currentQuoteFullText = quotesList[Math.floor(Math.random() * quotesList.length)] || "Stay focused. Stay unstoppable.";
+  currentQuoteAuthorPart = ""; // Offline mode mein author nahi hota
 }
 
 async function applySavedLanguagePreference(textElem) {
@@ -466,11 +462,13 @@ async function applySavedLanguagePreference(textElem) {
 
   if (savedLang === "hi") {
     if (langLabel) langLabel.textContent = "English";
-    const translatedText = await translateToHindiDevanagari(currentMotivationOriginalText);
-    textElem.textContent = `"${translatedText}" ${currentMotivationAuthor}`;
+    textElem.textContent = "Translating...";
+    const translatedQuote = await translateMotivationText(currentQuoteFullText, "hindi");
+    // Author name ko translate nahi karenge, sirf quote translate hoga aur author waise hi jud jayega
+    textElem.textContent = currentQuoteAuthorPart ? `"${translatedQuote}" ${currentQuoteAuthorPart}` : `"${translatedQuote}"`;
   } else {
     if (langLabel) langLabel.textContent = "हिंदी";
-    textElem.textContent = `"${currentMotivationOriginalText}" ${currentMotivationAuthor}`;
+    textElem.textContent = currentQuoteAuthorPart ? `"${currentQuoteFullText}" ${currentQuoteAuthorPart}` : `"${currentQuoteFullText}"`;
   }
 }
 
@@ -483,28 +481,31 @@ async function toggleMotivationLanguage() {
     localStorage.setItem("pm_motivation_lang", "hi");
     if (langLabel) langLabel.textContent = "English";
     textElem.textContent = "Translating...";
-    const translatedText = await translateToHindiDevanagari(currentMotivationOriginalText);
-    textElem.textContent = `"${translatedText}" ${currentMotivationAuthor}`;
+    const translatedQuote = await translateMotivationText(currentQuoteFullText, "hindi");
+    textElem.textContent = currentQuoteAuthorPart ? `"${translatedQuote}" ${currentQuoteAuthorPart}` : `"${translatedQuote}"`;
   } else {
     localStorage.setItem("pm_motivation_lang", "en");
     if (langLabel) langLabel.textContent = "हिंदी";
-    textElem.textContent = `"${currentMotivationOriginalText}" ${currentMotivationAuthor}`;
+    textElem.textContent = currentQuoteAuthorPart ? `"${currentQuoteFullText}" ${currentQuoteAuthorPart}` : `"${currentQuoteFullText}"`;
   }
 }
 
-async function translateToHindiDevanagari(text) {
-  try {
-    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=hi&dt=t&q=${encodeURIComponent(text)}`;
-    const res = await fetch(url);
-    const json = await res.json();
-    if (json && json[0]) {
-      return json[0].map(item => item[0]).join("");
+async function translateMotivationText(text, targetLang) {
+    if (targetLang === "english" || !text) return text;
+    try {
+        let tlCode = "hi"; 
+        let url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${tlCode}&dt=t&q=${encodeURIComponent(text)}`;
+        let res = await fetch(url);
+        let data = await res.json();
+        if (data && data[0]) {
+            return data[0].map(item => item[0]).join('');
+        }
+    } catch (e) {
+        console.error("Translation error:", e);
     }
-  } catch (e) {
-    console.error("Translation failed:", e);
-  }
-  return text;
+    return text;
 }
+
 
 async function showMotivation() {
   const popup = document.getElementById("motivationPopup");
