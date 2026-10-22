@@ -417,6 +417,95 @@ async function loadSupabaseNotifications() {
 // ---------------------------------------------------------
 // 4. MOTIVATION POPUP & FALLBACKS
 // ---------------------------------------------------------
+let currentMotivationOriginalText = "";
+let currentMotivationAuthor = "";
+
+async function showMotivation() {
+  const popup = document.getElementById("motivationPopup");
+  const textElem = document.getElementById("motivationText");
+
+  if (!popup || !textElem) return;
+
+  textElem.textContent = "Loading motivation...";
+  popup.style.display = "flex";
+
+  if (navigator.onLine) {
+    try {
+      const response = await fetch("https://dummyjson.com/quotes/random");
+      const data = await response.json();
+      currentMotivationOriginalText = data.quote;
+      currentMotivationAuthor = data.author ? `— ${data.author}` : "";
+    } catch (err) {
+      loadFallbackQuoteForPopup(textElem);
+      return;
+    }
+  } else {
+    loadFallbackQuoteForPopup(textElem);
+    return;
+  }
+
+  applySavedLanguagePreference(textElem);
+}
+
+function loadFallbackQuoteForPopup(textElem) {
+  let quotesList = GLOBAL_FALLBACK_QUOTES;
+  if (typeof fallbackQuotes !== 'undefined' && Array.isArray(fallbackQuotes) && fallbackQuotes.length > 0) {
+    quotesList = fallbackQuotes;
+  } else if (window.quotes && Array.isArray(window.quotes) && window.quotes.length > 0) {
+    quotesList = window.quotes;
+  }
+  const randomQuote = quotesList[Math.floor(Math.random() * quotesList.length)];
+  currentMotivationOriginalText = randomQuote;
+  currentMotivationAuthor = "";
+  applySavedLanguagePreference(textElem);
+}
+
+async function applySavedLanguagePreference(textElem) {
+  const savedLang = localStorage.getItem("pm_motivation_lang") || "en";
+  const langLabel = document.getElementById("langLabel");
+
+  if (savedLang === "hi") {
+    if (langLabel) langLabel.textContent = "English";
+    const translatedText = await translateToHindiDevanagari(currentMotivationOriginalText);
+    textElem.textContent = `"${translatedText}" ${currentMotivationAuthor}`;
+  } else {
+    if (langLabel) langLabel.textContent = "हिंदी";
+    textElem.textContent = `"${currentMotivationOriginalText}" ${currentMotivationAuthor}`;
+  }
+}
+
+async function toggleMotivationLanguage() {
+  const textElem = document.getElementById("motivationText");
+  const langLabel = document.getElementById("langLabel");
+  const currentLang = localStorage.getItem("pm_motivation_lang") || "en";
+
+  if (currentLang === "en") {
+    localStorage.setItem("pm_motivation_lang", "hi");
+    if (langLabel) langLabel.textContent = "English";
+    textElem.textContent = "Translating...";
+    const translatedText = await translateToHindiDevanagari(currentMotivationOriginalText);
+    textElem.textContent = `"${translatedText}" ${currentMotivationAuthor}`;
+  } else {
+    localStorage.setItem("pm_motivation_lang", "en");
+    if (langLabel) langLabel.textContent = "हिंदी";
+    textElem.textContent = `"${currentMotivationOriginalText}" ${currentMotivationAuthor}`;
+  }
+}
+
+async function translateToHindiDevanagari(text) {
+  try {
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=hi&dt=t&q=${encodeURIComponent(text)}`;
+    const res = await fetch(url);
+    const json = await res.json();
+    if (json && json[0]) {
+      return json[0].map(item => item[0]).join("");
+    }
+  } catch (e) {
+    console.error("Translation failed:", e);
+  }
+  return text;
+}
+
 async function showMotivation() {
   const popup = document.getElementById("motivationPopup");
   const textElem = document.getElementById("motivationText");

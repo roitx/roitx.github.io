@@ -410,12 +410,19 @@
     </footer>
   </div>
 
-  <div id="motivationPopup" class="popup">
-    <div class="popup-content">
-      <h3>✨ Daily Motivation</h3>
+    <div id="motivationPopup" class="popup">
+    <div class="popup-content" style="position: relative;">
+      <!-- Google Translate Free API Language Changer Button -->
+      <button id="langToggleBtn" onclick="toggleMotivationLanguage()" title="Translate to Hindi" style="position: absolute; top: 14px; right: 14px; background: rgba(58, 160, 255, 0.15); border: 1px solid rgba(58, 160, 255, 0.4); color: #00d2ff; padding: 6px 10px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; transition: all 0.2s ease;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8l6 6"></path><path d="M4 14l6-6 2-3"></path><path d="M2 5h12"></path><path d="M7 2h1"></path><path d="M22 22l-5-10-5 10"></path><path d="M14 18h6"></path></svg>
+        <span id="langLabel">हिंदी</span>
+      </button>
+
+      <h3 style="margin-top: 10px;">✨ Daily Motivation</h3>
       <p id="motivationText">Stay focused. Stay unstoppable.</p>
     </div>
   </div>
+
 
   <div id="installContainer" style="display:none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; background: #0c1427; border: 1px solid rgba(0, 210, 255, 0.3); padding: 10px 16px; border-radius: 14px; box-shadow: 0 8px 32px rgba(0,0,0,0.5);">
     <button id="installApp" aria-label="Install PM Roitx Hub App" style="background: transparent; border: none; color: white; display: flex; align-items: center; gap: 12px; cursor: pointer; width: 100%;">
