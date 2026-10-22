@@ -1,5 +1,5 @@
 /* =========================================================
-   PM ROITX - MAIN CONTROLLER SCRIPT
+   PM ROITX - MAIN CONTROLLER SCRIPT (PART 1)
    ========================================================= */
 
 // Localhost par CORS error se bachne ke liye condition check
@@ -49,7 +49,6 @@ function getOrCreateFirstVisitTime() {
   }
   return visitTime;
 }
-
 
 // ---------------------------------------------------------
 // 2. WATERMARK & CURSOR SPOTLIGHT & INTERACTIONS
@@ -124,38 +123,6 @@ function initCardTilt() {
       card.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px)`;
     });
   });
-}
-function animateDots() {
-  ctx.clearRect(0, 0, c.width, c.height);
-
-  // Draw dots and connect close particles with futuristic beam lines
-  for (let i = 0; i < dots.length; i++) {
-    let d = dots[i];
-    ctx.beginPath();
-    ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
-    ctx.fillStyle = "rgba(0, 240, 255, 0.6)";
-    ctx.fill();
-
-    // Connect dots with nearby dots
-    for (let j = i + 1; j < dots.length; j++) {
-      let d2 = dots[j];
-      let dist = Math.hypot(d.x - d2.x, d.y - d2.y);
-      if (dist < 100) {
-        ctx.beginPath();
-        ctx.moveTo(d.x, d.y);
-        ctx.lineTo(d2.x, d2.y);
-        ctx.strokeStyle = `rgba(0, 240, 255, ${1 - dist / 100})`;
-        ctx.lineWidth = 0.6;
-        ctx.stroke();
-      }
-    }
-
-    d.x += d.dx;
-    d.y += d.dy;
-    if (d.x < 0 || d.x > c.width) d.dx *= -1;
-    if (d.y < 0 || d.y > c.height) d.dy *= -1;
-  }
-  requestAnimationFrame(animateDots);
 }
 
 // ---------------------------------------------------------
@@ -415,10 +382,10 @@ async function loadSupabaseNotifications() {
 }
 
 // ---------------------------------------------------------
-// 4. MOTIVATION POPUP & FALLBACKS
+// 4. MOTIVATION POPUP & AUTO-CLOSE TRANSLATION
 // ---------------------------------------------------------
-let currentQuoteFullText = ""; // Sirf quote text translation ke liye
-let currentQuoteAuthorPart = ""; // Author ka hissa alag rakhne ke liye
+let currentQuoteFullText = ""; 
+let currentQuoteAuthorPart = ""; 
 
 async function showMotivation() {
   const popup = document.getElementById("motivationPopup");
@@ -444,7 +411,6 @@ async function showMotivation() {
 
   await applySavedLanguagePreference(textElem);
 
-  // Auto-close timer (7 seconds ke baad popup apne aap band ho jayega)
   if (window.motivationTimeout) clearTimeout(window.motivationTimeout);
   window.motivationTimeout = setTimeout(() => {
     popup.style.display = "none";
@@ -459,7 +425,7 @@ function loadFallbackQuoteForPopup() {
     quotesList = window.quotes;
   }
   currentQuoteFullText = quotesList[Math.floor(Math.random() * quotesList.length)] || "Stay focused. Stay unstoppable.";
-  currentQuoteAuthorPart = ""; // Offline mode mein author nahi hota
+  currentQuoteAuthorPart = ""; 
 }
 
 async function applySavedLanguagePreference(textElem) {
@@ -478,7 +444,6 @@ async function toggleMotivationLanguage() {
   const textElem = document.getElementById("motivationText");
   const currentLang = localStorage.getItem("pm_motivation_lang") || "en";
 
-  // Jab user language toggle kare, toh timer reset kar do taaki padhte waqt achanak band na ho
   if (window.motivationTimeout) clearTimeout(window.motivationTimeout);
 
   if (currentLang === "en") {
@@ -491,7 +456,6 @@ async function toggleMotivationLanguage() {
     textElem.textContent = currentQuoteAuthorPart ? `"${currentQuoteFullText}" ${currentQuoteAuthorPart}` : `"${currentQuoteFullText}"`;
   }
 
-  // Translation ke baad dobara 7 seconds ka timer start kar do
   window.motivationTimeout = setTimeout(() => {
     const popup = document.getElementById("motivationPopup");
     if (popup) popup.style.display = "none";
@@ -514,26 +478,15 @@ async function translateMotivationText(text, targetLang) {
     return text;
 }
 
-function loadFallbackQuote(element) {
-  let quotesList = GLOBAL_FALLBACK_QUOTES;
-
-  if (typeof fallbackQuotes !== 'undefined' && Array.isArray(fallbackQuotes) && fallbackQuotes.length > 0) {
-    quotesList = fallbackQuotes;
-  } else if (window.quotes && Array.isArray(window.quotes) && window.quotes.length > 0) {
-    quotesList = window.quotes;
-  }
-
-  const randomQuote = quotesList[Math.floor(Math.random() * quotesList.length)];
-  element.textContent = randomQuote || "Focus on progress, not perfection!";
-}
-
 const motivationPopupElem = document.getElementById("motivationPopup");
 if (motivationPopupElem) {
   motivationPopupElem.addEventListener("click", (e) => {
     if (e.target.id === "motivationPopup") e.target.style.display = "none";
   });
 }
-
+/* =========================================================
+   PM ROITX - MAIN CONTROLLER SCRIPT (PART 2)
+   ========================================================= */
 
 // ---------------------------------------------------------
 // 5. CANVAS ANIMATION & WAVE GRAPHICS
@@ -775,3 +728,78 @@ document.addEventListener("keydown", (e) => {
 window.addEventListener("load", () => {
   document.body.classList.add("app-loaded");
 });
+// ---------------------------------------------------------
+// FUTURISTIC SCROLL WIDGETS OBSERVER
+// ---------------------------------------------------------
+document.addEventListener("DOMContentLoaded", () => {
+  const observerOptions = {
+    root: null,
+    rootMargin: '0px',
+    threshold: 0.15
+  };
+
+  const observer = new IntersectionObserver((entries, observer) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, observerOptions);
+
+  document.querySelectorAll('.scroll-widget-row').forEach(row => {
+    observer.observe(row);
+  });
+});
+// Auto-scale iframe content to fit mini widget perfectly
+window.addEventListener('load', () => {
+  document.querySelectorAll('.widget-mini-screen iframe').forEach(iframe => {
+    iframe.onload = () => {
+      try {
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+        const contentHeight = iframeDoc.body.scrollHeight;
+        // Yeh automatically content ki height ke mutabiq scale adjust kar dega
+      } catch (e) {
+        console.log("Cross-origin or scale adjustment info:", e);
+      }
+    };
+  });
+});
+// ---------------------------------------------------------
+// FORMAL CARDS MOUSE CURSOR GLOW TRACKER
+// ---------------------------------------------------------
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll('.formal-info-card').forEach(card => {
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      card.style.setProperty('--mouse-x', `${x}px`);
+      card.style.setProperty('--mouse-y', `${y}px`);
+    });
+  });
+});
+// Dynamic Iframe Auto-Scaling for Mini Screens
+function autoFitMiniIframes() {
+  document.querySelectorAll('.widget-mini-screen').forEach(container => {
+    const iframe = container.querySelector('iframe');
+    if (!iframe) return;
+
+    // Base design resolution jisme iframe banaya gaya hai
+    const baseWidth = 1200; 
+    const containerWidth = container.clientWidth;
+    
+    // Scale factor calculate karna
+    const scale = containerWidth / baseWidth;
+
+    iframe.style.width = `${baseWidth}px`;
+    iframe.style.height = `${800}px`; // Aapki desired height
+    iframe.style.transform = `scale(${scale})`;
+    iframe.style.transformOrigin = 'top left';
+    
+    // Container ki height ko scale ke anusaar adjust karna taaki extra space na bache
+    container.style.height = `${800 * scale}px`;
+  });
+}
+
+window.addEventListener('load', autoFitMiniIframes);
+window.addEventListener('resize', autoFitMiniIframes);
