@@ -803,3 +803,6 @@ function autoFitMiniIframes() {
 
 window.addEventListener('load', autoFitMiniIframes);
 window.addEventListener('resize', autoFitMiniIframes);
+window.addEventListener('orientationchange', () => {
+  setTimeout(autoFitMiniIframes, 200); // Thoda delay taaki orientation shift complete ho jaye
+});
