@@ -73,16 +73,9 @@
       gap: 14px;
     }
 
-    /* Draggable Logo Container */
     .logo-wrapper {
       position: relative;
-      touch-action: none;
-      cursor: grab;
       z-index: 102;
-      transition: transform 0.1s ease;
-    }
-    .logo-wrapper:active {
-      cursor: grabbing;
     }
     .logo {
       width: 42px;
@@ -92,7 +85,6 @@
       border: 2px solid var(--accent-cyan);
       box-shadow: 0 0 15px rgba(0, 210, 255, 0.35);
       display: block;
-      pointer-events: none; /* Dragging smoothly handle karne ke liye */
     }
 
     .brand-title-group {
@@ -116,7 +108,7 @@
       font-weight: 600;
     }
 
-    /* Google Translate Icon Button (Secret Target Drop Zone) */
+    /* Google Translate Icon Button */
     .google-lang-btn {
       display: inline-flex;
       align-items: center;
@@ -554,7 +546,6 @@
     <div class="brand">
       <div style="display: flex; align-items: center; text-decoration: none; gap: 14px;">
         
-        <!-- Draggable Logo Container -->
         <div class="logo-wrapper" id="logoWrapper">
           <img src="1profile.jpg" alt="Logo" class="logo" id="secretLogo" />
         </div>
@@ -566,7 +557,6 @@
       </div>
     </div>
     
-    <!-- Google Translate Icon Button (Acts as Language Toggle normally, but Secret Drop Target for Logo) -->
     <button class="google-lang-btn" id="langToggleBtn" onclick="toggleLanguage()" title="Change Language">
       <svg viewBox="0 0 24 24">
         <path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/>
@@ -1043,54 +1033,6 @@
       }
       updateView();
     }
-
-    // --- DRAG LOGO TO LANGUAGE ICON SECRET HACKER TRIGGER LOGIC ---
-    const logoWrapper = document.getElementById('logoWrapper');
-    const langBtn = document.getElementById('langToggleBtn');
-    
-    let isDragging = false;
-    let startX = 0, startY = 0;
-    let currentX = 0, currentY = 0;
-
-    logoWrapper.addEventListener('pointerdown', (e) => {
-      isDragging = true;
-      startX = e.clientX;
-      startY = e.clientY;
-      logoWrapper.style.position = 'relative';
-      logoWrapper.setPointerCapture(e.pointerId);
-    });
-
-    logoWrapper.addEventListener('pointermove', (e) => {
-      if (!isDragging) return;
-      currentX = e.clientX - startX;
-      currentY = e.clientY - startY;
-      logoWrapper.style.transform = `translate(${currentX}px, ${currentY}px)`;
-    });
-
-    logoWrapper.addEventListener('pointerup', (e) => {
-      if (!isDragging) return;
-      isDragging = false;
-      logoWrapper.releasePointerCapture(e.pointerId);
-
-      // Check karo ki drop kahan hua (agar langBtn ke bounding box ke andar hai)
-      const logoRect = logoWrapper.getBoundingClientRect();
-      const langRect = langBtn.getBoundingClientRect();
-
-      const overlap = !(
-        logoRect.right < langRect.left ||
-        logoRect.left > langRect.right ||
-        logoRect.bottom < langRect.top ||
-        logoRect.top > langRect.bottom
-      );
-
-      // Logo ko wapas apni original jagah smooth bhej do
-      logoWrapper.style.transform = `translate(0px, 0px)`;
-
-      if (overlap) {
-        // Target matched! Khofiya rasta khul gaya!
-        window.location.href = 'https://roitx.xo.je/login.php';
-      }
-    });
   </script>
 </body>
 </html>
