@@ -149,9 +149,7 @@ function initCardTilt() {
     });
   });
 }
-// ---------------------------------------------------------
-// 3. NOTIFICATION & TODAY'S CALENDAR SYSTEM
-// ---------------------------------------------------------
+
 // ---------------------------------------------------------
 // 3. NOTIFICATION & TODAY'S CALENDAR SYSTEM
 // ---------------------------------------------------------
@@ -178,6 +176,8 @@ async function checkTodayCalendarNotifications() {
   const todayKey = `${yyyy}-${mm}-${dd}`;
   const monthDayKey = `${mm}-${dd}`;
 
+  console.log("🔍 Checking calendar notifications for today:", todayKey);
+
   let fetchedHolidays = {};
   try {
     const timeMin = new Date(`${yyyy}-01-01T00:00:00Z`).toISOString();
@@ -186,6 +186,8 @@ async function checkTodayCalendarNotifications() {
     
     const res = await fetch(url);
     const data = await res.json();
+    console.log("🌐 Google Calendar API Response:", data);
+
     if (data.items) {
       data.items.forEach(item => {
         const hDate = item.start.date || (item.start.dateTime ? item.start.dateTime.split("T")[0] : null);
@@ -193,34 +195,45 @@ async function checkTodayCalendarNotifications() {
       });
     }
   } catch (e) {
-    console.warn("Holiday fetch error:", e);
+    console.warn("⚠️ Holiday fetch error:", e);
   }
 
   let dbEventsList = [];
   if (window.supabaseClient) {
     try {
-      const { data: evData } = await window.supabaseClient
+      const { data: evData, error: evErr } = await window.supabaseClient
         .from("events")
         .select("*")
         .eq("event_date", todayKey);
-      if (evData) dbEventsList = evData;
+      
+      if (evErr) {
+        console.warn("⚠️ Supabase events fetch error:", evErr);
+      } else {
+        console.log("🗄️ Supabase Events for today:", evData);
+        if (evData) dbEventsList = evData;
+      }
     } catch (err) {
-      console.warn("DB events fetch error:", err);
+      console.warn("⚠️ DB query catch error:", err);
     }
+  } else {
+    console.warn("⚠️ Supabase client not found in script.js");
   }
 
   let activeEvents = [];
 
   // 1. Google Holiday check
   if (fetchedHolidays[todayKey]) {
+    console.log("🎉 Today is Google Holiday:", fetchedHolidays[todayKey]);
     activeEvents.push(`🎉 Holiday: ${fetchedHolidays[todayKey]}`);
   }
   // 2. Observance check
   if (observanceDays[monthDayKey]) {
+    console.log("✨ Today is Observance Day:", observanceDays[monthDayKey]);
     activeEvents.push(`✨ Observance: ${observanceDays[monthDayKey]}`);
   }
   // 3. Sunday check
   if (today.getDay() === 0) {
+    console.log("☀️ Today is Sunday");
     activeEvents.push(`☀️ Sunday (Weekly Off)`);
   }
   // 4. Supabase events check
@@ -230,6 +243,8 @@ async function checkTodayCalendarNotifications() {
     });
   }
 
+  console.log("📌 Active Events list assembled:", activeEvents);
+
   if (activeEvents.length > 0) {
     const notifId = `cal-today-${todayKey}`;
     const expiryKey = `notif_expiry_${notifId}`;
@@ -237,9 +252,12 @@ async function checkTodayCalendarNotifications() {
     const nowTime = new Date().getTime();
     const twentyFourHours = 24 * 60 * 60 * 1000;
 
-    // 24 ghante ke andar ek hi baar trigger ho
+    console.log("⏰ Last triggered time for today's notification:", lastTriggered);
+
+    // 24 ghante ke andar ek hi baar trigger ho (testing ke liye chahe toh localStorage.removeItem(expiryKey) kar sakte ho)
     if (!lastTriggered || (nowTime - parseInt(lastTriggered)) > twentyFourHours) {
       if (typeof addNotification === 'function') {
+        console.log("🚀 Adding notification to UI...");
         addNotification(
           notifId, 
           "📅 Aaj Ka Calendar Event & Wish", 
@@ -250,10 +268,17 @@ async function checkTodayCalendarNotifications() {
           "event"
         );
         localStorage.setItem(expiryKey, nowTime.toString());
+      } else {
+        console.warn("⚠️ addNotification function is not available!");
       }
+    } else {
+      console.log("⏳ Notification already triggered within last 24 hours.");
     }
+  } else {
+    console.log("ℹ️ No events or holidays found for today.");
   }
 }
+
 
 function cleanupOldNotifications() {
   const now = new Date().getTime();
