@@ -155,18 +155,45 @@ function initCardTilt() {
 // ---------------------------------------------------------
 const GOOGLE_API_KEY = "AIzaSyC7sf9ZgjLqIos3BEx0uR2_7ytoS-oDgwo";
 const INDIAN_HOLIDAY_CALENDAR_ID = "en.indian#holiday@group.v.calendar.google.com";
-
 const observanceDays = {
+  // --- Original Days ---
+  "01-01": "New Year's Day",
   "02-14": "Valentine's Day", 
   "03-08": "International Women's Day",
   "05-10": "Mother's Day", 
   "06-21": "Father's Day & Yoga Day",
   "08-02": "Friendship Day", 
-  "10-26": "Halloween",
+  "10-31": "Halloween",
   "11-19": "International Men's Day", 
   "12-25": "Christmas Eve / Day",
-  "01-01": "New Year's Day"
+
+  // --- New Additions (National & International) ---
+  "01-12": "National Youth Day (Swami Vivekananda Jayanti)",
+  "01-26": "Republic Day (India)",
+  "01-30": "Martyrs' Day (Shaheed Diwas)",
+  "02-28": "National Science Day",
+  "03-22": "World Water Day",
+  "04-07": "World Health Day",
+  "04-22": "Earth Day",
+  "05-01": "International Labour Day",
+  "06-05": "World Environment Day",
+  "07-11": "World Population Day",
+  "07-26": "Kargil Vijay Diwas",
+  "08-15": "Independence Day (India)",
+  "08-29": "National Sports Day",
+  "09-05": "Teachers' Day",
+  "09-14": "Hindi Diwas",
+  "09-27": "World Tourism Day",
+  "10-02": "Gandhi Jayanti & International Day of Non-Violence",
+  "10-08": "Indian Air Force Day",
+  "11-14": "Children's Day",
+  "11-26": "Constitution Day (India)",
+  "12-01": "World AIDS Day",
+  "12-04": "Indian Navy Day",
+  "12-10": "Human Rights Day",
+  "12-23": "National Farmers' Day (Kisan Diwas)"
 };
+
 
 async function checkTodayCalendarNotifications() {
   const today = new Date();
