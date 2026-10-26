@@ -12,6 +12,31 @@ if (!window.location.hostname.includes('localhost') && !window.location.hostname
 }
 
 // ---------------------------------------------------------
+// FUTURISTIC FADE SCROLL OBSERVER FOR WIDGETS & SECTIONS
+// ---------------------------------------------------------
+document.addEventListener("DOMContentLoaded", () => {
+  const sections = document.querySelectorAll(".snap-section");
+
+  const observerOptions = {
+    root: null,
+    rootMargin: '0px',
+    threshold: 0.25
+  };
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add("active-snap");
+      } else {
+        entry.target.classList.remove("active-snap");
+      }
+    });
+  }, observerOptions);
+
+  sections.forEach(section => observer.observe(section));
+});
+
+// ---------------------------------------------------------
 // 1. CONSTANTS & UTILITIES
 // ---------------------------------------------------------
 const GLOBAL_FALLBACK_QUOTES = [
@@ -126,8 +151,72 @@ function initCardTilt() {
 }
 
 // ---------------------------------------------------------
-// 3. NOTIFICATION SYSTEM
+// 3. NOTIFICATION & TODAY'S CALENDAR SYSTEM
 // ---------------------------------------------------------
+function checkTodayCalendarNotifications() {
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  const todayKey = `${yyyy}-${mm}-${dd}`;
+
+  let todayEventsCount = 0;
+  let eventText = "";
+
+  // 1. Google Holiday ya Observance check
+  if (window.fetchedHolidays && window.fetchedHolidays[todayKey]) {
+    todayEventsCount++;
+    eventText = window.fetchedHolidays[todayKey];
+  }
+
+  // 2. Database ya local calendar events check
+  if (typeof dbEvents !== 'undefined' && dbEvents[todayKey]) {
+    todayEventsCount += dbEvents[todayKey].length;
+    eventText = dbEvents[todayKey][0].event_name;
+  }
+
+  if (todayEventsCount > 0) {
+    const notifId = `cal-today-${todayKey}`;
+    const expiryKey = `notif_expiry_${notifId}`;
+    const lastTriggered = localStorage.getItem(expiryKey);
+    const nowTime = new Date().getTime();
+    const twentyFourHours = 24 * 60 * 60 * 1000;
+
+    // 24 ghante ke andar ek hi baar trigger ho
+    if (!lastTriggered || (nowTime - parseInt(lastTriggered)) > twentyFourHours) {
+      if (typeof addNotification === 'function') {
+        addNotification(
+          notifId, 
+          "📅 Aaj Ka Calendar Event", 
+          `Aaj ka event/holiday: ${eventText}`, 
+          "calendar.html", 
+          true, 
+          new Date().toISOString(), 
+          "event"
+        );
+        localStorage.setItem(expiryKey, nowTime.toString());
+      }
+    }
+  }
+}
+
+function cleanupOldNotifications() {
+  const now = new Date().getTime();
+  const twentyFourHours = 24 * 60 * 60 * 1000;
+
+  const notifItems = document.querySelectorAll(".notif-item");
+  notifItems.forEach(item => {
+    const timeAttr = item.getAttribute("data-time");
+    if (timeAttr) {
+      const itemTime = new Date(timeAttr).getTime();
+      if ((now - itemTime) > twentyFourHours) {
+        item.remove();
+      }
+    }
+  });
+  updateUnreadCount();
+}
+
 let readNotifIds = JSON.parse(localStorage.getItem("read_notifs") || "[]");
 let deletedNotifIds = JSON.parse(localStorage.getItem("deleted_notifs") || "[]");
 
@@ -279,7 +368,7 @@ function addNotification(id, title, message, link = "#", isNew = false, createdA
   const formattedTime = timeAgo(timeStr);
 
   const itemHtml = `
-    <div class="notif-item ${isRead ? 'read' : 'unread'}" id="notif-item-${id}" data-id="${id}" 
+    <div class="notif-item ${isRead ? 'read' : 'unread'}" id="notif-item-${id}" data-id="${id}" data-time="${timeStr}"
          onclick="openNotifModal('${id}', '${safeTitle}', '${safeMessage}', '${safeLink}', '${timeStr}')">
       <div>
         <span class="notif-type-tag ${type}">${type}</span>
@@ -365,6 +454,10 @@ async function loadSupabaseNotifications() {
         }
       });
     }
+
+    // Call calendar check after loading supabase data
+    checkTodayCalendarNotifications();
+    cleanupOldNotifications();
 
     window.supabaseClient
       .channel('public:notifications')
@@ -484,6 +577,7 @@ if (motivationPopupElem) {
     if (e.target.id === "motivationPopup") e.target.style.display = "none";
   });
 }
+
 /* =========================================================
    PM ROITX - MAIN CONTROLLER SCRIPT (PART 2)
    ========================================================= */
@@ -728,6 +822,7 @@ document.addEventListener("keydown", (e) => {
 window.addEventListener("load", () => {
   document.body.classList.add("app-loaded");
 });
+
 // ---------------------------------------------------------
 // FUTURISTIC SCROLL WIDGETS OBSERVER
 // ---------------------------------------------------------
@@ -750,20 +845,7 @@ document.addEventListener("DOMContentLoaded", () => {
     observer.observe(row);
   });
 });
-// Auto-scale iframe content to fit mini widget perfectly
-window.addEventListener('load', () => {
-  document.querySelectorAll('.widget-mini-screen iframe').forEach(iframe => {
-    iframe.onload = () => {
-      try {
-        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-        const contentHeight = iframeDoc.body.scrollHeight;
-        // Yeh automatically content ki height ke mutabiq scale adjust kar dega
-      } catch (e) {
-        console.log("Cross-origin or scale adjustment info:", e);
-      }
-    };
-  });
-});
+
 // ---------------------------------------------------------
 // FORMAL CARDS MOUSE CURSOR GLOW TRACKER
 // ---------------------------------------------------------
@@ -778,25 +860,22 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 });
+
 // Dynamic Iframe Auto-Scaling for Mini Screens
 function autoFitMiniIframes() {
   document.querySelectorAll('.widget-mini-screen').forEach(container => {
     const iframe = container.querySelector('iframe');
     if (!iframe) return;
 
-    // Base design resolution jisme iframe banaya gaya hai
     const baseWidth = 1200; 
     const containerWidth = container.clientWidth;
-    
-    // Scale factor calculate karna
     const scale = containerWidth / baseWidth;
 
     iframe.style.width = `${baseWidth}px`;
-    iframe.style.height = `${800}px`; // Aapki desired height
+    iframe.style.height = `${800}px`; 
     iframe.style.transform = `scale(${scale})`;
     iframe.style.transformOrigin = 'top left';
     
-    // Container ki height ko scale ke anusaar adjust karna taaki extra space na bache
     container.style.height = `${800 * scale}px`;
   });
 }
@@ -804,5 +883,5 @@ function autoFitMiniIframes() {
 window.addEventListener('load', autoFitMiniIframes);
 window.addEventListener('resize', autoFitMiniIframes);
 window.addEventListener('orientationchange', () => {
-  setTimeout(autoFitMiniIframes, 200); // Thoda delay taaki orientation shift complete ho jaye
+  setTimeout(autoFitMiniIframes, 200);
 });

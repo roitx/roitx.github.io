@@ -415,6 +415,7 @@ document.getElementById('gotoDate')?.addEventListener('change', function() {
   const parts = dateVal.split("-");
   const yyyy = parseInt(parts[0], 10);
   const mm = parseInt(parts[1], 10) - 1;
+  const dd = parseInt(parts[2], 10);
 
   selectedGotoDateKey = dateVal;
   cur = new Date(yyyy, mm, 1);
@@ -425,8 +426,49 @@ document.getElementById('gotoDate')?.addEventListener('change', function() {
       targetCell.classList.add('goto');
       targetCell.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
+
+    // --- YE NAYA CODE POPUP DIRECT TRIGGER KAREGA ---
+    const targetDateObj = new Date(yyyy, mm, dd);
+    const mmStr = String(mm + 1).padStart(2, '0');
+    const ddStr = String(dd).padStart(2, '0');
+    const monthDayKey = `${mmStr}-${ddStr}`;
+
+    let popupInfoList = [];
+
+    // Check Sunday
+    if (targetDateObj.getDay() === 0) {
+      popupInfoList.push({ type: 'holiday', text: "Sunday (Weekly Off)" });
+    }
+
+    // Check Google Holiday
+    if (fetchedHolidays[dateVal]) {
+      popupInfoList.push({ type: 'holiday', text: fetchedHolidays[dateVal] });
+    } 
+    // Check Observance Day
+    else if (observanceDays[monthDayKey]) {
+      popupInfoList.push({ type: 'observance', text: observanceDays[monthDayKey] });
+    }
+
+    // Check DB Events
+    if (dbEvents[dateVal]) {
+      dbEvents[dateVal].forEach(ev => {
+        popupInfoList.push({ 
+          type: 'event', 
+          text: (ev.is_global ? '📢 ' : '📌 ') + ev.event_name,
+          id: ev.id,
+          is_global: ev.is_global,
+          user_id: ev.user_id
+        });
+      });
+    }
+
+    // Agar us din koi holiday, observance ya event hoga toh popup direct khul jayega
+    if (popupInfoList.length > 0) {
+      showInteractivePopup(popupInfoList, dateVal);
+    }
   });
 });
+
 
 const prevBtn = document.getElementById('prevBtn');
 const nextBtn = document.getElementById('nextBtn');
