@@ -6,6 +6,7 @@ let currentMathQuestion = null;
 let mathDrones = [];
 let selectedSubject = "math";
 let selectedMedium = "english";
+let monsterSpawnedAt2500 = false;
 
 window.selectedSubject = "math";
 window.selectedMedium = "english";
@@ -778,9 +779,9 @@ async function startGame() {
     lives = shipTypes[selectedShip].hp;
     bullets = []; missiles = []; enemies = []; asteroids = [];
     particles = []; enemyBullets = []; powerups = []; coinDrops = []; mathDrones = [];
-    monsterActive = false; monster = null;
+    monsterActive = false; monster = null; monsterSpawnedAt2500 = false;
     
-    // Game shuru hote hi turant active subject ke questions preload karwa lo taaki 800 score par bina delay ke monster aaye
+    // Game shuru hote hi turant active subject ke questions preload karwa lo taaki 2500 score par bina delay ke monster aaye
     if (isMathMode) {
         let activeSubject = window.selectedSubject || selectedSubject || "math";
         let cacheList = window.dynamicQuestionCache[activeSubject];
@@ -1085,8 +1086,15 @@ function update() {
                 spawnPowerup(e.x, e.y);
                 explode(e.x + e.w/2, e.y + e.h/2, "#f43f5e", 10);
                 enemies.splice(i, 1); bullets.splice(j, 1);
-                score += 10 * combo; updateHUD();
-if (score > 0 && score % 800 === 0) spawnMonster(); // Yahan 250 se badhakar 800 kar diya gaya hai
+                score += 10 * combo; 
+updateHUD();
+
+// Yahan exact match ki jagah >= use karo aur flag check lagao
+if (score >= 2500 && !monsterSpawnedAt2500 && !monsterActive) {
+    monsterSpawnedAt2500 = true;
+    spawnMonster();
+}
+
 if (score % 350 === 0) level++;
 break;
 
@@ -1158,13 +1166,18 @@ break;
                     if (b.x > drone.x && b.x < drone.x + drone.w && b.y > drone.y && b.y < drone.y + drone.h) {
                         bullets.splice(j, 1);
                         if (drone.index === currentMathQuestion.correctIndex) {
-                            explode(drone.x + drone.w / 2, drone.y + drone.h / 2, "#22c55e", 20);
-                            addFloatingText(drone.x, drone.y, "CORRECT! +150 ⚡", "#22c55e");
-                            monster.hp -= 40;
-                            score += 150;
-                            updateHUD();
-                            loadNextQuestion();
-                        } else {
+    explode(drone.x + drone.w / 2, drone.y + drone.h / 2, "#22c55e", 20);
+    
+    // Normal enemy ka score (10 * combo) ka 1.5 guna (dedh guna) calculate hoga
+    let monsterReward = Math.floor(10 * combo * 1.5);
+    
+    addFloatingText(drone.x, drone.y, `CORRECT! +${monsterReward} ⚡`, "#22c55e");
+    monster.hp -= 40;
+    score += monsterReward;
+    updateHUD();
+    loadNextQuestion();
+}
+                         else {
                             explode(drone.x + drone.w / 2, drone.y + drone.h / 2, "#ef4444", 15);
                             addFloatingText(drone.x, drone.y, "WRONG! ❌", "#ef4444");
                             screenShake = 14;
