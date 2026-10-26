@@ -149,7 +149,6 @@ function initCardTilt() {
     });
   });
 }
-
 // ---------------------------------------------------------
 // 3. NOTIFICATION & TODAY'S CALENDAR SYSTEM
 // ---------------------------------------------------------
@@ -159,18 +158,28 @@ function checkTodayCalendarNotifications() {
   const mm = String(today.getMonth() + 1).padStart(2, '0');
   const dd = String(today.getDate()).padStart(2, '0');
   const todayKey = `${yyyy}-${mm}-${dd}`;
+  const monthDayKey = `${mm}-${dd}`;
 
   let todayEventsCount = 0;
   let eventText = "";
 
-  // 1. Google Holiday ya Observance check
-  if (window.fetchedHolidays && window.fetchedHolidays[todayKey]) {
+  // 1. Calendar ke observanceDays se check karein (Jaise Halloween, Women's Day etc.)
+  if (typeof observanceDays !== 'undefined' && observanceDays[monthDayKey]) {
+    todayEventsCount++;
+    eventText = observanceDays[monthDayKey];
+  }
+  // 2. Google Holiday check karein
+  else if (window.fetchedHolidays && window.fetchedHolidays[todayKey]) {
     todayEventsCount++;
     eventText = window.fetchedHolidays[todayKey];
   }
-
-  // 2. Database ya local calendar events check
-  if (typeof dbEvents !== 'undefined' && dbEvents[todayKey]) {
+  // 3. Sunday check karein
+  else if (today.getDay() === 0) {
+    todayEventsCount++;
+    eventText = "Sunday (Weekly Off)";
+  }
+  // 4. Database / Local calendar events check karein
+  else if (typeof dbEvents !== 'undefined' && dbEvents[todayKey]) {
     todayEventsCount += dbEvents[todayKey].length;
     eventText = dbEvents[todayKey][0].event_name;
   }
@@ -455,7 +464,7 @@ async function loadSupabaseNotifications() {
       });
     }
 
-    // Call calendar check after loading supabase data
+    // Call calendar check and cleanup after loading notifications
     checkTodayCalendarNotifications();
     cleanupOldNotifications();
 
