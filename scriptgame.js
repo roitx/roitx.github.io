@@ -278,7 +278,15 @@ async function loadNextQuestion() {
     
     let cacheList = window.dynamicQuestionCache[activeSubject];
     if (!cacheList || cacheList.length === 0) {
-        cacheList = window.dynamicQuestionCache['math'];
+        let catMap = { science: 17, math: 19, reasoning: 18, currentAffairs: 9 };
+        let catId = catMap[activeSubject] || 19;
+        let freshData = await fetchApiQuestions(catId, 10);
+        if (freshData && freshData.length > 0) {
+            window.dynamicQuestionCache[activeSubject] = freshData;
+            cacheList = freshData;
+        } else {
+            cacheList = window.dynamicQuestionCache['math'] || [];
+        }
     }
     
     if (cacheList && cacheList.length > 0) {
@@ -772,6 +780,21 @@ async function startGame() {
     particles = []; enemyBullets = []; powerups = []; coinDrops = []; mathDrones = [];
     monsterActive = false; monster = null;
     
+    // Game shuru hote hi turant active subject ke questions preload karwa lo taaki 800 score par bina delay ke monster aaye
+    if (isMathMode) {
+        let activeSubject = window.selectedSubject || selectedSubject || "math";
+        let cacheList = window.dynamicQuestionCache[activeSubject];
+        if (!cacheList || cacheList.length === 0) {
+            let catMap = { science: 17, math: 19, reasoning: 18, currentAffairs: 9 };
+            let catId = catMap[activeSubject] || 19;
+            let freshData = await fetchApiQuestions(catId, 10);
+            if (freshData && freshData.length > 0) {
+                window.dynamicQuestionCache[activeSubject] = freshData;
+            }
+        }
+        await loadNextQuestion();
+    }
+
     if (canvas) {
         player.x = canvas.width / 2 - player.w / 2;
         player.y = canvas.height - 120;
@@ -1063,9 +1086,10 @@ function update() {
                 explode(e.x + e.w/2, e.y + e.h/2, "#f43f5e", 10);
                 enemies.splice(i, 1); bullets.splice(j, 1);
                 score += 10 * combo; updateHUD();
-                if (score > 0 && score % 250 === 0) spawnMonster();
-                if (score % 350 === 0) level++;
-                break;
+if (score > 0 && score % 800 === 0) spawnMonster(); // Yahan 250 se badhakar 800 kar diya gaya hai
+if (score % 350 === 0) level++;
+break;
+
             }
         }
     }
