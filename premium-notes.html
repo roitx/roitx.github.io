@@ -862,55 +862,41 @@
     }
 
     async function submitManualPayment() {
-        const utr = document.getElementById('utrInput').value.trim();
-        if (!/^\d{12}$/.test(utr)) {
-            alert("⚠️ Kripya 12-digit ka valid UTR / Transaction number darj karein!");
-            return;
-        }
-
-        if (!selectedNoteForPay || !currentUser) {
-            alert("Something went wrong. Refresh and try again.");
-            return;
-        }
-
-        const { data: profile } = await window.supabaseClient
-            .from('profiles')
-            .select('*')
-            .eq('id', currentUser.id)
-            .single();
-
-        const orderPayload = {
-            user_id: currentUser.id,
-            user_email: currentUser.email,
-            note_id: selectedNoteForPay.id,
-            note_title: selectedNoteForPay.title,
-            amount: selectedNoteForPay.price,
-            utr_code: utr,
-            status: 'pending',
-            user_name: profile?.full_name || '',
-            user_phone: profile?.phone || '',
-            target_class: profile?.target_class || '',
-            stream: profile?.stream || '',
-            institution: profile?.institution || '',
-            city: profile?.city || '',
-            state: profile?.state || '',
-            avatar_url: profile?.avatar_url || ''
-        };
-
-        const { error: orderError } = await window.supabaseClient
-            .from('user_orders')
-            .insert([orderPayload]);
-
-        if (orderError) {
-            alert("Order submit nahi ho paya: " + orderError.message);
-        } else {
-            alert("🎉 Payment request submit ho gayi hai! Verification ke baad note unlock ho jayega.");
-            orderStatuses[String(selectedNoteForPay.id)] = 'pending';
-            document.getElementById('paymentModal').style.display = 'none';
-            document.getElementById('utrInput').value = '';
-            renderNotesGrid(cachedNotesList);
-        }
+    const utr = document.getElementById('utrInput').value.trim();
+    if (!/^\d{12}$/.test(utr)) {
+        alert("⚠️ Kripya 12-digit ka valid UTR / Transaction number darj karein!");
+        return;
     }
+
+    if (!selectedNoteForPay || !currentUser) {
+        alert("Something went wrong. Refresh and try again.");
+        return;
+    }
+
+    const orderPayload = {
+        user_email: currentUser.email,
+        note_id: selectedNoteForPay.id,
+        note_title: selectedNoteForPay.title,
+        amount: selectedNoteForPay.price,
+        utr_code: utr,
+        status: 'pending'
+    };
+
+    const { error: orderError } = await window.supabaseClient
+        .from('user_orders')
+        .insert([orderPayload]);
+
+    if (orderError) {
+        alert("Order submit nahi ho paya: " + orderError.message);
+    } else {
+        alert("🎉 Payment request submit ho gayi hai! Verification ke baad note unlock ho jayega.");
+        orderStatuses[String(selectedNoteForPay.id)] = 'pending';
+        document.getElementById('paymentModal').style.display = 'none';
+        document.getElementById('utrInput').value = '';
+        renderNotesGrid(cachedNotesList);
+    }
+}
+
 </script>
 
 </body>

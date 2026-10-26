@@ -152,7 +152,25 @@ function initCardTilt() {
 // ---------------------------------------------------------
 // 3. NOTIFICATION & TODAY'S CALENDAR SYSTEM
 // ---------------------------------------------------------
-function checkTodayCalendarNotifications() {
+// ---------------------------------------------------------
+// 3. NOTIFICATION & TODAY'S CALENDAR SYSTEM
+// ---------------------------------------------------------
+const GOOGLE_API_KEY = "AIzaSyC7sf9ZgjLqIos3BEx0uR2_7ytoS-oDgwo";
+const INDIAN_HOLIDAY_CALENDAR_ID = "en.indian#holiday@group.v.calendar.google.com";
+
+const observanceDays = {
+  "02-14": "Valentine's Day", 
+  "03-08": "International Women's Day",
+  "05-10": "Mother's Day", 
+  "06-21": "Father's Day & Yoga Day",
+  "08-02": "Friendship Day", 
+  "10-26": "Halloween",
+  "11-19": "International Men's Day", 
+  "12-25": "Christmas Eve / Day",
+  "01-01": "New Year's Day"
+};
+
+async function checkTodayCalendarNotifications() {
   const today = new Date();
   const yyyy = today.getFullYear();
   const mm = String(today.getMonth() + 1).padStart(2, '0');
@@ -160,31 +178,59 @@ function checkTodayCalendarNotifications() {
   const todayKey = `${yyyy}-${mm}-${dd}`;
   const monthDayKey = `${mm}-${dd}`;
 
-  let todayEventsCount = 0;
-  let eventText = "";
-
-  // 1. Calendar ke observanceDays se check karein (Jaise Halloween, Women's Day etc.)
-  if (typeof observanceDays !== 'undefined' && observanceDays[monthDayKey]) {
-    todayEventsCount++;
-    eventText = observanceDays[monthDayKey];
-  }
-  // 2. Google Holiday check karein
-  else if (window.fetchedHolidays && window.fetchedHolidays[todayKey]) {
-    todayEventsCount++;
-    eventText = window.fetchedHolidays[todayKey];
-  }
-  // 3. Sunday check karein
-  else if (today.getDay() === 0) {
-    todayEventsCount++;
-    eventText = "Sunday (Weekly Off)";
-  }
-  // 4. Database / Local calendar events check karein
-  else if (typeof dbEvents !== 'undefined' && dbEvents[todayKey]) {
-    todayEventsCount += dbEvents[todayKey].length;
-    eventText = dbEvents[todayKey][0].event_name;
+  let fetchedHolidays = {};
+  try {
+    const timeMin = new Date(`${yyyy}-01-01T00:00:00Z`).toISOString();
+    const timeMax = new Date(`${yyyy}-12-31T23:59:59Z`).toISOString();
+    const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(INDIAN_HOLIDAY_CALENDAR_ID)}/events?key=${GOOGLE_API_KEY}&timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&maxResults=2500`;
+    
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.items) {
+      data.items.forEach(item => {
+        const hDate = item.start.date || (item.start.dateTime ? item.start.dateTime.split("T")[0] : null);
+        if (hDate) fetchedHolidays[hDate] = item.summary;
+      });
+    }
+  } catch (e) {
+    console.warn("Holiday fetch error:", e);
   }
 
-  if (todayEventsCount > 0) {
+  let dbEventsList = [];
+  if (window.supabaseClient) {
+    try {
+      const { data: evData } = await window.supabaseClient
+        .from("events")
+        .select("*")
+        .eq("event_date", todayKey);
+      if (evData) dbEventsList = evData;
+    } catch (err) {
+      console.warn("DB events fetch error:", err);
+    }
+  }
+
+  let activeEvents = [];
+
+  // 1. Google Holiday check
+  if (fetchedHolidays[todayKey]) {
+    activeEvents.push(`🎉 Holiday: ${fetchedHolidays[todayKey]}`);
+  }
+  // 2. Observance check
+  if (observanceDays[monthDayKey]) {
+    activeEvents.push(`✨ Observance: ${observanceDays[monthDayKey]}`);
+  }
+  // 3. Sunday check
+  if (today.getDay() === 0) {
+    activeEvents.push(`☀️ Sunday (Weekly Off)`);
+  }
+  // 4. Supabase events check
+  if (dbEventsList.length > 0) {
+    dbEventsList.forEach(ev => {
+      activeEvents.push(`📌 ${ev.event_name}`);
+    });
+  }
+
+  if (activeEvents.length > 0) {
     const notifId = `cal-today-${todayKey}`;
     const expiryKey = `notif_expiry_${notifId}`;
     const lastTriggered = localStorage.getItem(expiryKey);
@@ -196,8 +242,8 @@ function checkTodayCalendarNotifications() {
       if (typeof addNotification === 'function') {
         addNotification(
           notifId, 
-          "📅 Aaj Ka Calendar Event", 
-          `Aaj ka event/holiday: ${eventText}`, 
+          "📅 Aaj Ka Calendar Event & Wish", 
+          activeEvents.join(" | "), 
           "calendar.html", 
           true, 
           new Date().toISOString(), 
