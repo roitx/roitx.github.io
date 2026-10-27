@@ -577,6 +577,29 @@
             </div>
         </div>
     </div>
+    <!-- Pending / Stuck Info Modal -->
+<div id="pendingInfoModal" class="modal">
+    <div class="modal-content" style="max-width: 350px; text-align: center;">
+        <div style="font-size: 2.2rem; color: #ffab00; margin-bottom: 8px;">
+            <i class="fa-solid fa-hourglass-clock"></i>
+        </div>
+        <h3 style="margin: 0 0 8px 0; font-size: 1.1rem; color: #fff;">Verification Under Process</h3>
+        <p style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 16px;">
+            Aapka UTR safely submit ho gaya hai! Admin jald hi ise verify karke note unlock kar denge (Aam taur par 5-10 minute lagte hain).
+        </p>
+
+        <div style="background: rgba(255, 171, 0, 0.08); border: 1px dashed rgba(255, 171, 0, 0.3); padding: 10px; border-radius: 10px; margin-bottom: 14px; font-size: 0.78rem; color: #ffab00;">
+            <b>Note:</b> Agar 15 minute se zyada ho jaye, toh aap seedha admin ko urgent notification bhej sakte hain.
+        </div>
+
+        <a id="modalUrgentBtn" href="#" target="_blank" class="btn-mini" style="background: rgba(255, 71, 87, 0.15); color: #ff4757; border: 1px solid rgba(255, 71, 87, 0.3); margin-bottom: 10px; text-decoration: none;">
+            <i class="fa-solid fa-paper-plane"></i> Send Urgent Mail to Admin
+        </a>
+
+        <button class="btn-mini btn-cancel" onclick="document.getElementById('pendingInfoModal').style.display='none'" style="width: 100%;">Close</button>
+    </div>
+</div>
+
 
     <script>
         const MY_UPI_ID = "9199364179-3@ibl";
@@ -748,13 +771,21 @@
                 const isPending = orderStatuses[noteIdStr] === 'pending';
 
                 let actionBtnHtml = '';
-                if (isApproved) {
-                    actionBtnHtml = `<button class="btn-mini btn-read" onclick="openInViewer(${note.id})"><i class="fa-solid fa-book-open"></i> Read Note</button>`;
-                } else if (isPending) {
-                    actionBtnHtml = `<button class="btn-mini btn-pending" disabled><i class="fa-regular fa-clock"></i> Pending Verification</button>`;
-                } else {
-                    actionBtnHtml = `<button class="btn-mini btn-unlock" onclick="openPaymentModal(${note.id})"><i class="fa-solid fa-bolt"></i> Unlock Note</button>`;
-                }
+                            if (isApproved) {
+                actionBtnHtml = `<button class="btn-mini btn-read" onclick="openInViewer(${note.id})"><i class="fa-solid fa-book-open"></i> Read Note</button>`;
+            } else if (isPending) {
+                actionBtnHtml = `
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <button class="btn-mini btn-pending" disabled><i class="fa-regular fa-clock"></i> Pending Verification</button>
+                        <button class="btn-mini" onclick="showPendingInfo('${note.title}', ${note.price})" style="background: rgba(0, 210, 255, 0.1); color: var(--accent-cyan); border: 1px solid rgba(0, 210, 255, 0.3); font-size: 0.72rem; padding: 6px 0;">
+                            <i class="fa-solid fa-circle-info"></i> Payment Stuck? Check
+                        </button>
+                    </div>
+                `;
+            } else {
+                actionBtnHtml = `<button class="btn-mini btn-unlock" onclick="openPaymentModal(${note.id})"><i class="fa-solid fa-bolt"></i> Unlock Note</button>`;
+            }
+
 
                 let previewIconHtml = !isApproved 
                     ? `<div class="icon-btn-action" title="Preview Note" onclick="openInViewer(${note.id})"><i class="fa-regular fa-eye"></i></div>`
@@ -949,6 +980,17 @@
                 renderNotesGrid(cachedNotesList);
             }
         }
+        function showPendingInfo(noteTitle, notePrice) {
+    if (!currentUser) return;
+    
+    // Urgent mail ka link dynamic set karna
+    const mailSubject = encodeURIComponent(`Urgent Payment Verification: ${noteTitle}`);
+    const mailBody = encodeURIComponent(`Hello Admin,\n\nI have submitted my payment for "${noteTitle}" (₹${notePrice}), but it is still pending.\nMy Email: ${currentUser.email}\n\nPlease verify and approve.`);
+    
+    document.getElementById('modalUrgentBtn').href = `mailto:legal@roitx.qd.je?subject=${mailSubject}&body=${mailBody}`;
+    document.getElementById('pendingInfoModal').style.display = 'flex';
+}
+
     </script>
 </body>
 </html>
