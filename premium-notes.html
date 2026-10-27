@@ -46,8 +46,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase.js"></script>
-</head>
-
 
     <style>
         :root {
@@ -282,7 +280,6 @@
             align-items: center;
         }
 
-        /* Top-Right Eye & Share Buttons */
         .icon-btn-action {
             width: 26px;
             height: 26px;
@@ -335,7 +332,6 @@
             text-shadow: 0 0 8px rgba(0, 210, 255, 0.3);
         }
 
-        /* Sleek Button Styles */
         .btn-mini {
             width: 100%;
             padding: 9px 0;
@@ -558,13 +554,20 @@
                 Tap to Open PhonePe / GPay / Paytm
             </a>
 
-         <p style="font-size: 0.75rem; color: #aaa; margin: 8px 0;">
-    UPI ID: <span class="copy-box" onclick="copyUpiId()"><b style="color: #fff;" id="maskedUpiText"></b> <i class="fa-regular fa-copy" style="color: var(--accent-cyan);"></i></span>
-</p>
-
-        
+            <p style="font-size: 0.75rem; color: #aaa; margin: 8px 0;">
+                UPI ID: <span class="copy-box" onclick="copyUpiId()"><b style="color: #fff;" id="maskedUpiText"></b> <i class="fa-regular fa-copy" style="color: var(--accent-cyan);"></i></span>
+            </p>
 
             <input type="text" id="utrInput" class="input-utr" placeholder="Enter 12-digit UTR / Trans ID" maxlength="12" inputmode="numeric">
+            
+            <div style="text-align: left; margin: 10px 0;">
+                <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Payment Screenshot (Optional / Recommended):</label>
+                <input type="file" id="receiptInput" accept="image/*" style="width: 100%; font-size: 0.75rem; color: #aaa; background: #090d16; padding: 8px; border-radius: 8px; border: 1px dashed rgba(0, 210, 255, 0.3);">
+            </div>
+
+            <a id="urgentNotifyBtn" href="#" target="_blank" class="btn-mini" style="background: rgba(255, 71, 87, 0.15); color: #ff4757; border: 1px solid rgba(255, 71, 87, 0.3); margin-top: 8px; text-decoration: none;">
+                <i class="fa-solid fa-triangle-exclamation"></i> Payment Stuck? Urgent Notify Admin
+            </a>
 
             <div class="modal-actions">
                 <button class="btn-mini btn-unlock" onclick="submitManualPayment()">
@@ -576,350 +579,376 @@
     </div>
 
     <script>
-    
-    let currentUser = null;
-    let purchases = [];
-    let orderStatuses = {}; 
-    let selectedNoteForPay = null;
-    const loadedNotesMap = {};
-    let cachedNotesList = [];
-    let activeSubjectFilter = 'ALL';
-    const MY_UPI_ID = "9199364179-3@ibl";
+        const MY_UPI_ID = "9199364179-3@ibl";
+        let currentUser = null;
+        let purchases = [];
+        let orderStatuses = {}; 
+        let selectedNoteForPay = null;
+        const loadedNotesMap = {};
+        let cachedNotesList = [];
+        let activeSubjectFilter = 'ALL';
 
-// Masking function jo screen par number ko chupayega (e.g., 9199******-3@ibl)
-function getMaskedUpi(upi) {
-    if (!upi) return "";
-    const parts = upi.split('@');
-    if (parts.length < 2) return upi;
-    const userPart = parts[0];
-    if (userPart.length > 4) {
-        // Shuru ke 4 digit rakh kar baaki bich ke digits ko * kar dena
-        const visible = userPart.substring(0, 4);
-        const masked = '*'.repeat(userPart.length - 4);
-        return visible + masked + '@' + parts[1];
-    }
-    return upi;
-}
-
-
-    window.onload = async () => {
-        if (typeof window.getCurrentUser === "function") {
-            currentUser = await window.getCurrentUser();
+        // Masking function jo screen par number ko chupayega (e.g., 9199******-3@ibl)
+        function getMaskedUpi(upi) {
+            if (!upi) return "";
+            const parts = upi.split('@');
+            if (parts.length < 2) return upi;
+            const userPart = parts[0];
+            if (userPart.length > 4) {
+                const visible = userPart.substring(0, 4);
+                const masked = '*'.repeat(userPart.length - 4);
+                return visible + masked + '@' + parts[1];
+            }
+            return upi;
         }
 
-        if (currentUser) {
-            const { data: purchaseData } = await window.supabaseClient
-                .from('user_purchases')
-                .select('note_id')
-                .eq('user_id', currentUser.id);
-            
-            purchases = (purchaseData || []).map(p => String(p.note_id));
-
-            const { data: ordersData } = await window.supabaseClient
-                .from('user_orders')
-                .select('note_id, status')
-                .eq('user_email', currentUser.email);
-
-            if (ordersData) {
-                ordersData.forEach(o => {
-                    const nId = String(o.note_id);
-                    orderStatuses[nId] = o.status;
-                    if (o.status === 'approved' && !purchases.includes(nId)) {
-                        purchases.push(nId);
-                    }
-                });
+        window.onload = async () => {
+            if (typeof window.getCurrentUser === "function") {
+                currentUser = await window.getCurrentUser();
             }
 
-            setupRealtimeOrderListener();
-        }
+            if (currentUser) {
+                const { data: purchaseData } = await window.supabaseClient
+                    .from('user_purchases')
+                    .select('note_id')
+                    .eq('user_id', currentUser.id);
+                
+                purchases = (purchaseData || []).map(p => String(p.note_id));
 
-        loadNotes();
-    };
+                const { data: ordersData } = await window.supabaseClient
+                    .from('user_orders')
+                    .select('note_id, status')
+                    .eq('user_email', currentUser.email);
 
-    function setupRealtimeOrderListener() {
-        if (!currentUser || !window.supabaseClient) return;
-
-        window.supabaseClient
-            .channel('public:user_orders')
-            .on('postgres_changes', { 
-                event: 'UPDATE', 
-                schema: 'public', 
-                table: 'user_orders',
-                filter: `user_email=eq.${currentUser.email}`
-            }, payload => {
-                const updatedOrder = payload.new;
-                if (updatedOrder) {
-                    const noteIdStr = String(updatedOrder.note_id);
-                    orderStatuses[noteIdStr] = updatedOrder.status;
-                    
-                    if (updatedOrder.status === 'approved') {
-                        if (!purchases.includes(noteIdStr)) {
-                            purchases.push(noteIdStr);
+                if (ordersData) {
+                    ordersData.forEach(o => {
+                        const nId = String(o.note_id);
+                        orderStatuses[nId] = o.status;
+                        if (o.status === 'approved' && !purchases.includes(nId)) {
+                            purchases.push(nId);
                         }
-                    }
-                    renderNotesGrid(cachedNotesList); 
+                    });
                 }
-            })
-            .subscribe();
-    }
 
-    async function loadNotes() {
-        const { data: notes, error } = await window.supabaseClient
-            .from('premium_notes')
-            .select('*')
-            .order('id', { ascending: false });
-
-        if (error) {
-            console.error("Error loading notes:", error);
-            return;
-        }
-
-        cachedNotesList = notes || [];
-        cachedNotesList.forEach(note => {
-            loadedNotesMap[note.id] = note;
-        });
-
-        generateDynamicSubjectPills(cachedNotesList);
-        renderNotesGrid(cachedNotesList);
-    }
-
-    // Dynamic Subject Filter Pill Generator
-    function generateDynamicSubjectPills(notes) {
-        const pillsContainer = document.getElementById('filterPills');
-        if (!pillsContainer) return;
-
-        // Unique subjects extract karein aur format karein
-        const uniqueSubjects = new Set();
-        notes.forEach(n => {
-            if (n.subject && n.subject.trim() !== '') {
-                uniqueSubjects.add(n.subject.trim().toUpperCase());
+                setupRealtimeOrderListener();
             }
-        });
 
-        let html = `<button class="pill-btn ${activeSubjectFilter === 'ALL' ? 'active' : ''}" onclick="setSubjectFilter('ALL', this)">All Notes</button>`;
+            loadNotes();
+        };
 
-        uniqueSubjects.forEach(subj => {
-            const isActive = activeSubjectFilter === subj ? 'active' : '';
-            // Capitalize First Letter for display
-            const formattedSubj = subj.charAt(0) + subj.slice(1).toLowerCase();
-            html += `<button class="pill-btn ${isActive}" onclick="setSubjectFilter('${subj}', this)">${formattedSubj}</button>`;
-        });
+        function setupRealtimeOrderListener() {
+            if (!currentUser || !window.supabaseClient) return;
 
-        pillsContainer.innerHTML = html;
-    }
-
-    function setSubjectFilter(subj, btnElem) {
-        activeSubjectFilter = subj;
-        document.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
-        if (btnElem) btnElem.classList.add('active');
-        filterNotesUI();
-    }
-
-    function filterNotesUI() {
-        const query = (document.getElementById('searchInput').value || '').toLowerCase().trim();
-
-        const filtered = cachedNotesList.filter(note => {
-            const titleStr = (note.title || '').toLowerCase();
-            const subjStr = (note.subject || '').toLowerCase();
-            const chapStr = (note.chapter_no || '').toLowerCase();
-
-            const matchesSearch = !query || titleStr.includes(query) || subjStr.includes(query) || chapStr.includes(query);
-            const matchesSubject = activeSubjectFilter === 'ALL' || subjStr === activeSubjectFilter.toLowerCase();
-
-            return matchesSearch && matchesSubject;
-        });
-
-        renderNotesGrid(filtered);
-    }
-
-    function renderNotesGrid(notes) {
-        const container = document.getElementById('notesGrid');
-        container.innerHTML = "";
-
-        if (!notes || notes.length === 0) {
-            container.innerHTML = `<div style="color:#8a99ad; grid-column:1/-1; text-align:center; padding: 40px 10px; font-size:0.9rem;">
-                <i class="fa-solid fa-folder-open" style="font-size:2rem; display:block; margin-bottom:8px; color:var(--accent-cyan);"></i>
-                No premium notes found matching your criteria.
-            </div>`;
-            return;
+            window.supabaseClient
+                .channel('public:user_orders')
+                .on('postgres_changes', { 
+                    event: 'UPDATE', 
+                    schema: 'public', 
+                    table: 'user_orders',
+                    filter: `user_email=eq.${currentUser.email}`
+                }, payload => {
+                    const updatedOrder = payload.new;
+                    if (updatedOrder) {
+                        const noteIdStr = String(updatedOrder.note_id);
+                        orderStatuses[noteIdStr] = updatedOrder.status;
+                        
+                        if (updatedOrder.status === 'approved') {
+                            if (!purchases.includes(noteIdStr)) {
+                                purchases.push(noteIdStr);
+                            }
+                        }
+                        renderNotesGrid(cachedNotesList); 
+                    }
+                })
+                .subscribe();
         }
 
-        notes.forEach(note => {
-            const noteIdStr = String(note.id);
-            
-            const isApproved = purchases.includes(noteIdStr) || orderStatuses[noteIdStr] === 'approved';
-            const isPending = orderStatuses[noteIdStr] === 'pending';
+        async function loadNotes() {
+            const { data: notes, error } = await window.supabaseClient
+                .from('premium_notes')
+                .select('*')
+                .order('id', { ascending: false });
 
-            let actionBtnHtml = '';
-            if (isApproved) {
-                actionBtnHtml = `<button class="btn-mini btn-read" onclick="openInViewer(${note.id})"><i class="fa-solid fa-book-open"></i> Read Note</button>`;
-            } else if (isPending) {
-                actionBtnHtml = `<button class="btn-mini btn-pending" disabled><i class="fa-regular fa-clock"></i> Pending Verification</button>`;
+            if (error) {
+                console.error("Error loading notes:", error);
+                return;
+            }
+
+            cachedNotesList = notes || [];
+            cachedNotesList.forEach(note => {
+                loadedNotesMap[note.id] = note;
+            });
+
+            generateDynamicSubjectPills(cachedNotesList);
+            renderNotesGrid(cachedNotesList);
+        }
+
+        function generateDynamicSubjectPills(notes) {
+            const pillsContainer = document.getElementById('filterPills');
+            if (!pillsContainer) return;
+
+            const uniqueSubjects = new Set();
+            notes.forEach(n => {
+                if (n.subject && n.subject.trim() !== '') {
+                    uniqueSubjects.add(n.subject.trim().toUpperCase());
+                }
+            });
+
+            let html = `<button class="pill-btn ${activeSubjectFilter === 'ALL' ? 'active' : ''}" onclick="setSubjectFilter('ALL', this)">All Notes</button>`;
+
+            uniqueSubjects.forEach(subj => {
+                const isActive = activeSubjectFilter === subj ? 'active' : '';
+                const formattedSubj = subj.charAt(0) + subj.slice(1).toLowerCase();
+                html += `<button class="pill-btn ${isActive}" onclick="setSubjectFilter('${subj}', this)">${formattedSubj}</button>`;
+            });
+
+            pillsContainer.innerHTML = html;
+        }
+
+        function setSubjectFilter(subj, btnElem) {
+            activeSubjectFilter = subj;
+            document.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
+            if (btnElem) btnElem.classList.add('active');
+            filterNotesUI();
+        }
+
+        function filterNotesUI() {
+            const query = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+
+            const filtered = cachedNotesList.filter(note => {
+                const titleStr = (note.title || '').toLowerCase();
+                const subjStr = (note.subject || '').toLowerCase();
+                const chapStr = (note.chapter_no || '').toLowerCase();
+
+                const matchesSearch = !query || titleStr.includes(query) || subjStr.includes(query) || chapStr.includes(query);
+                const matchesSubject = activeSubjectFilter === 'ALL' || subjStr === activeSubjectFilter.toLowerCase();
+
+                return matchesSearch && matchesSubject;
+            });
+
+            renderNotesGrid(filtered);
+        }
+
+        function renderNotesGrid(notes) {
+            const container = document.getElementById('notesGrid');
+            container.innerHTML = "";
+
+            if (!notes || notes.length === 0) {
+                container.innerHTML = `<div style="color:#8a99ad; grid-column:1/-1; text-align:center; padding: 40px 10px; font-size:0.9rem;">
+                    <i class="fa-solid fa-folder-open" style="font-size:2rem; display:block; margin-bottom:8px; color:var(--accent-cyan);"></i>
+                    No premium notes found matching your criteria.
+                </div>`;
+                return;
+            }
+
+            notes.forEach(note => {
+                const noteIdStr = String(note.id);
+                
+                const isApproved = purchases.includes(noteIdStr) || orderStatuses[noteIdStr] === 'approved';
+                const isPending = orderStatuses[noteIdStr] === 'pending';
+
+                let actionBtnHtml = '';
+                if (isApproved) {
+                    actionBtnHtml = `<button class="btn-mini btn-read" onclick="openInViewer(${note.id})"><i class="fa-solid fa-book-open"></i> Read Note</button>`;
+                } else if (isPending) {
+                    actionBtnHtml = `<button class="btn-mini btn-pending" disabled><i class="fa-regular fa-clock"></i> Pending Verification</button>`;
+                } else {
+                    actionBtnHtml = `<button class="btn-mini btn-unlock" onclick="openPaymentModal(${note.id})"><i class="fa-solid fa-bolt"></i> Unlock Note</button>`;
+                }
+
+                let previewIconHtml = !isApproved 
+                    ? `<div class="icon-btn-action" title="Preview Note" onclick="openInViewer(${note.id})"><i class="fa-regular fa-eye"></i></div>`
+                    : `<div class="icon-btn-action" style="color:#2ed573; border-color:rgba(46,213,115,0.3); background:rgba(46,213,115,0.1); cursor:default;"><i class="fa-solid fa-check"></i></div>`;
+
+                let shareIconHtml = `<div class="icon-btn-action" title="Share Note" onclick="shareNote(${note.id})"><i class="fa-solid fa-share-nodes"></i></div>`;
+
+                container.innerHTML += `
+                    <div class="mini-card">
+                        <div class="card-header-line">
+                            <span class="badge-tag">${note.class_no || ''} | ${note.subject || ''}</span>
+                            <div class="card-top-actions">
+                                ${previewIconHtml}
+                                ${shareIconHtml}
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="card-title" title="${note.title}">${note.title}</div>
+                            <div class="meta-info-row">
+                                <span class="chapter-sub">${note.chapter_no || 'Chapter'}</span>
+                                <span class="price-tag">₹${note.price}</span>
+                            </div>
+                        </div>
+                        
+                        ${actionBtnHtml}
+                    </div>
+                `;
+            });
+        }
+
+        function shareNote(noteId) {
+            const note = loadedNotesMap[noteId];
+            if (!note) return;
+
+            const shareText = `📚 Check out this premium note: *${note.title}* (${note.subject || 'Study Material'}) on PM-Roit!`;
+            if (navigator.share) {
+                navigator.share({
+                    title: note.title,
+                    text: shareText,
+                    url: window.location.href
+                }).catch(() => {});
             } else {
-                actionBtnHtml = `<button class="btn-mini btn-unlock" onclick="openPaymentModal(${note.id})"><i class="fa-solid fa-bolt"></i> Unlock Note</button>`;
+                navigator.clipboard.writeText(`${shareText}\n${window.location.href}`);
+                alert("🔗 Note link copied to clipboard!");
+            }
+        }
+
+        function openInViewer(noteId) {
+            const note = loadedNotesMap[noteId];
+            if (!note) return;
+
+            const noteIdStr = String(note.id);
+            const isApproved = purchases.includes(noteIdStr) || orderStatuses[noteIdStr] === 'approved';
+            let targetFilePath = note.file_path || note.full_pdf_url || '';
+
+            let rawClass = note.class_no ? String(note.class_no) : '';
+            let classDigits = rawClass.replace(/\D/g, ''); 
+            const classPart = classDigits ? classDigits : rawClass;
+
+            const subjectPart = note.subject ? note.subject.toUpperCase() : '';
+            const titlePart = note.title || 'Note';
+            const prefixSymbol = "💎";
+            
+            const descriptiveName = [prefixSymbol, classPart, subjectPart, titlePart].filter(Boolean).join(' • ');
+
+            const cleanPath = encodeURIComponent(targetFilePath);
+            const cleanName = encodeURIComponent(descriptiveName);
+
+            if (typeof trackActivityLocally === "function") {
+                trackActivityLocally({
+                    title: descriptiveName,
+                    url: targetFilePath,
+                    meta: "Notes Viewer",
+                    isPremium: true,
+                    isPurchased: isApproved
+                }, isApproved);
+            }
+            
+            let url = `notes-viewer.html?path=${cleanPath}&name=${cleanName}&type=premium&status=premium`;
+            if (isApproved) {
+                url += `&purchased=true`;
             }
 
-            let previewIconHtml = !isApproved 
-                ? `<div class="icon-btn-action" title="Preview Note" onclick="openInViewer(${note.id})"><i class="fa-regular fa-eye"></i></div>`
-                : `<div class="icon-btn-action" style="color:#2ed573; border-color:rgba(46,213,115,0.3); background:rgba(46,213,115,0.1); cursor:default;"><i class="fa-solid fa-check"></i></div>`;
-
-            let shareIconHtml = `<div class="icon-btn-action" title="Share Note" onclick="shareNote(${note.id})"><i class="fa-solid fa-share-nodes"></i></div>`;
-
-            container.innerHTML += `
-                <div class="mini-card">
-                    <div class="card-header-line">
-                        <span class="badge-tag">${note.class_no || ''} | ${note.subject || ''}</span>
-                        <div class="card-top-actions">
-                            ${previewIconHtml}
-                            ${shareIconHtml}
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <div class="card-title" title="${note.title}">${note.title}</div>
-                        <div class="meta-info-row">
-                            <span class="chapter-sub">${note.chapter_no || 'Chapter'}</span>
-                            <span class="price-tag">₹${note.price}</span>
-                        </div>
-                    </div>
-                    
-                    ${actionBtnHtml}
-                </div>
-            `;
-        });
-    }
-
-    function shareNote(noteId) {
-        const note = loadedNotesMap[noteId];
-        if (!note) return;
-
-        const shareText = `📚 Check out this premium note: *${note.title}* (${note.subject || 'Study Material'}) on PM-Roit!`;
-        if (navigator.share) {
-            navigator.share({
-                title: note.title,
-                text: shareText,
-                url: window.location.href
-            }).catch(() => {});
-        } else {
-            navigator.clipboard.writeText(`${shareText}\n${window.location.href}`);
-            alert("🔗 Note link copied to clipboard!");
-        }
-    }
-
-    function openInViewer(noteId) {
-        const note = loadedNotesMap[noteId];
-        if (!note) return;
-
-        const noteIdStr = String(note.id);
-        const isApproved = purchases.includes(noteIdStr) || orderStatuses[noteIdStr] === 'approved';
-        let targetFilePath = note.file_path || note.full_pdf_url || '';
-
-        let rawClass = note.class_no ? String(note.class_no) : '';
-        let classDigits = rawClass.replace(/\D/g, ''); 
-        const classPart = classDigits ? classDigits : rawClass;
-
-        const subjectPart = note.subject ? note.subject.toUpperCase() : '';
-        const titlePart = note.title || 'Note';
-        const prefixSymbol = "💎";
-        
-        const descriptiveName = [prefixSymbol, classPart, subjectPart, titlePart].filter(Boolean).join(' • ');
-
-        const cleanPath = encodeURIComponent(targetFilePath);
-        const cleanName = encodeURIComponent(descriptiveName);
-
-        if (typeof trackActivityLocally === "function") {
-            trackActivityLocally({
-                title: descriptiveName,
-                url: targetFilePath,
-                meta: "Notes Viewer",
-                isPremium: true,
-                isPurchased: isApproved
-            }, isApproved);
-        }
-        
-        let url = `notes-viewer.html?path=${cleanPath}&name=${cleanName}&type=premium&status=premium`;
-        if (isApproved) {
-            url += `&purchased=true`;
+            window.location.href = url;
         }
 
-        window.location.href = url;
-    }
+        async function openPaymentModal(noteId) {
+            const note = loadedNotesMap[noteId];
+            if (!note) return;
 
-    async function openPaymentModal(noteId) {
-        const note = loadedNotesMap[noteId];
-        if (!note) return;
+            if (typeof window.getCurrentUser === "function") {
+                currentUser = await window.getCurrentUser();
+            }
+            
+            if (!currentUser) {
+                alert("🔒 Unlock karne ke liye pehle login karein!");
+                sessionStorage.setItem("redirect_after_login", window.location.href);
+                const loginUrl = typeof window.getPageUrl === "function" ? window.getPageUrl("login.html") : "login.html";
+                window.location.href = loginUrl;
+                return;
+            }
 
-        if (typeof window.getCurrentUser === "function") {
-            currentUser = await window.getCurrentUser();
+            selectedNoteForPay = note;
+            document.getElementById('modalTitle').innerText = "Pay for " + note.title;
+            document.getElementById('modalPrice').innerText = "₹" + note.price;
+            
+            // Screen par masked UPI ID dikhayein
+            document.getElementById('maskedUpiText').innerText = getMaskedUpi(MY_UPI_ID);
+            
+            const upiUri = `upi://pay?pa=${encodeURIComponent(MY_UPI_ID)}&pn=PM-Roit&am=${note.price}&cu=INR&tn=${encodeURIComponent('Note: ' + note.title)}`;
+            document.getElementById('payDirectBtn').href = upiUri;
+
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(upiUri)}`;
+            document.getElementById('upiQrCode').src = qrUrl;
+
+            // Urgent button ka link dynamic set karein
+            const mailSubject = encodeURIComponent(`Urgent Payment Support: ${note.title}`);
+            const mailBody = encodeURIComponent(`Hello Admin,\n\nI need help regarding payment for note "${note.title}" (Price: ₹${note.price}).\nMy Email: ${currentUser ? currentUser.email : 'Not Logged In'}\n\nPlease help.`);
+            document.getElementById('urgentNotifyBtn').href = `mailto:legal@roitx.qd.je?subject=${mailSubject}&body=${mailBody}`;
+            
+            document.getElementById('paymentModal').style.display = 'flex';
         }
-        
-        if (!currentUser) {
-            alert("🔒 Unlock karne ke liye pehle login karein!");
-            sessionStorage.setItem("redirect_after_login", window.location.href);
-            const loginUrl = typeof window.getPageUrl === "function" ? window.getPageUrl("login.html") : "login.html";
-            window.location.href = loginUrl;
-            return;
+
+        function copyUpiId() {
+            navigator.clipboard.writeText(MY_UPI_ID);
+            alert("📋 UPI ID Copied to Clipboard!");
         }
 
-selectedNoteForPay = note;
-    document.getElementById('modalTitle').innerText = "Pay for " + note.title;
-    document.getElementById('modalPrice').innerText = "₹" + note.price;
-    
-    // Screen par masked UPI ID dikhayein
-    document.getElementById('maskedUpiText').innerText = getMaskedUpi(MY_UPI_ID);
-    
-    // Lekin payment URI me asli MY_UPI_ID hi jayegi taaki payment fail na ho
-    const upiUri = `upi://pay?pa=${encodeURIComponent(MY_UPI_ID)}&pn=PM-Roit&am=${note.price}&cu=INR&tn=${encodeURIComponent('Note: ' + note.title)}`;
-    document.getElementById('payDirectBtn').href = upiUri;
+        async function submitManualPayment() {
+            const utr = document.getElementById('utrInput').value.trim();
+            const receiptFile = document.getElementById('receiptInput').files[0];
 
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(upiUri)}`;
-    document.getElementById('upiQrCode').src = qrUrl;
-    
-    document.getElementById('paymentModal').style.display = 'flex';
-}
+            if (!/^\d{12}$/.test(utr)) {
+                alert("⚠️ Kripya 12-digit ka valid UTR / Transaction number darj karein!");
+                return;
+            }
 
-// Jab user copy kare toh background me asli number clipboard par jaye
-function copyUpiId() {
-    navigator.clipboard.writeText(MY_UPI_ID);
-    alert("📋 UPI ID Copied to Clipboard!");
-}
-    async function submitManualPayment() {
-    const utr = document.getElementById('utrInput').value.trim();
-    if (!/^\d{12}$/.test(utr)) {
-        alert("⚠️ Kripya 12-digit ka valid UTR / Transaction number darj karein!");
-        return;
-    }
+            if (!selectedNoteForPay || !currentUser) {
+                alert("Something went wrong. Refresh and try again.");
+                return;
+            }
 
-    if (!selectedNoteForPay || !currentUser) {
-        alert("Something went wrong. Refresh and try again.");
-        return;
-    }
+            let receiptUrl = "";
 
-    const orderPayload = {
-        user_email: currentUser.email,
-        note_id: selectedNoteForPay.id,
-        note_title: selectedNoteForPay.title,
-        amount: selectedNoteForPay.price,
-        utr_code: utr,
-        status: 'pending'
-    };
+            // Agar user ne screenshot diya hai toh Supabase Storage me upload karein
+            if (receiptFile) {
+                const fileExt = receiptFile.name.split('.').pop();
+                const fileName = `${currentUser.id}_${Date.now()}.${fileExt}`;
+                const filePath = `payment_receipts/${fileName}`;
 
-    const { error: orderError } = await window.supabaseClient
-        .from('user_orders')
-        .insert([orderPayload]);
+                const { data: uploadData, error: uploadError } = await window.supabaseClient.storage
+                    .from('notes-bucket')
+                    .upload(filePath, receiptFile);
 
-    if (orderError) {
-        alert("Order submit nahi ho paya: " + orderError.message);
-    } else {
-        alert("🎉 Payment request submit ho gayi hai! Verification ke baad note unlock ho jayega.");
-        orderStatuses[String(selectedNoteForPay.id)] = 'pending';
-        document.getElementById('paymentModal').style.display = 'none';
-        document.getElementById('utrInput').value = '';
-        renderNotesGrid(cachedNotesList);
-    }
-}
+                if (!uploadError) {
+                    const { data: publicURLData } = window.supabaseClient.storage
+                        .from('notes-bucket')
+                        .getPublicUrl(filePath);
+                    receiptUrl = publicURLData.publicUrl;
+                }
+            }
 
-</script>
+            const orderPayload = {
+                user_email: currentUser.email,
+                note_id: selectedNoteForPay.id,
+                note_title: selectedNoteForPay.title,
+                amount: selectedNoteForPay.price,
+                utr_code: utr,
+                receipt_url: receiptUrl,
+                status: 'pending'
+            };
 
+            const { error: orderError } = await window.supabaseClient
+                .from('user_orders')
+                .insert([orderPayload]);
+
+            if (orderError) {
+                alert("Order submit nahi ho paya: " + orderError.message);
+            } else {
+                alert("🎉 Payment request submit ho gayi hai! Verification ke baad note unlock ho jayega.");
+                
+                // Admin ko mail bhejne ka option open karna
+                const mailSubject = encodeURIComponent(`Urgent Payment Verification: ${selectedNoteForPay.title}`);
+                const mailBody = encodeURIComponent(`Hello Admin,\n\nI have made a payment of ₹${selectedNoteForPay.price} for note "${selectedNoteForPay.title}".\nUTR / Trans ID: ${utr}\nUser Email: ${currentUser.email}\n\nPlease verify and approve.`);
+                window.open(`mailto:legal@roitx.qd.je?subject=${mailSubject}&body=${mailBody}`, '_blank');
+
+                orderStatuses[String(selectedNoteForPay.id)] = 'pending';
+                document.getElementById('paymentModal').style.display = 'none';
+                document.getElementById('utrInput').value = '';
+                document.getElementById('receiptInput').value = '';
+                renderNotesGrid(cachedNotesList);
+            }
+        }
+    </script>
 </body>
 </html>
