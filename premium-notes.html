@@ -539,7 +539,7 @@
         </div>
     </div>
 
-    <!-- Payment Modal (Cleaned up: No Stuck Button here) -->
+    <!-- Payment Modal -->
     <div id="paymentModal" class="modal">
         <div class="modal-content">
             <h3 id="modalTitle" style="margin: 0 0 5px 0; font-size: 1.15rem; color: #fff;">Complete Payment</h3>
@@ -582,11 +582,11 @@
             </div>
             <h3 style="margin: 0 0 8px 0; font-size: 1.1rem; color: #fff;">Verification Under Process</h3>
             <p style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 16px;">
-                Aapka UTR safely submit ho gaya hai! Admin jald hi ise verify karke note unlock kar denge (Aam taur par 5-10 minute lagte hain).
+                Aapka UTR safely submit ho gaya hai! Admin jald hi ise verify karke note unlock kar denge (Aam taur par 1-2 din ka samay lag sakta hai).
             </p>
 
             <div style="background: rgba(255, 171, 0, 0.08); border: 1px dashed rgba(255, 171, 0, 0.3); padding: 10px; border-radius: 10px; margin-bottom: 14px; font-size: 0.78rem; color: #ffab00;">
-                <b>Note:</b> Agar 15 minute se zyada ho jaye, toh aap seedha admin ko urgent notification bhej sakte hain.
+                <b>Note:</b> Agar 1-2 din se zyada ho jaye, toh aap seedha admin ko urgent notification bhej sakte hain.
             </div>
 
             <a id="modalUrgentBtn" href="#" target="_blank" class="btn-mini" style="background: rgba(255, 71, 87, 0.15); color: #ff4757; border: 1px solid rgba(255, 71, 87, 0.3); margin-bottom: 10px; text-decoration: none;">
@@ -903,7 +903,7 @@
             alert("📋 UPI ID Copied to Clipboard!");
         }
 
-        async function submitManualPayment() {
+                async function submitManualPayment() {
             const utr = document.getElementById('utrInput').value.trim();
             const receiptFile = document.getElementById('receiptInput').files[0];
 
@@ -919,6 +919,7 @@
 
             let receiptUrl = "";
 
+            // Agar user ne screenshot select kiya hai, toh Supabase Storage me upload karein
             if (receiptFile) {
                 const fileExt = receiptFile.name.split('.').pop();
                 const fileName = `${currentUser.id}_${Date.now()}.${fileExt}`;
@@ -928,21 +929,28 @@
                     .from('notes-bucket')
                     .upload(filePath, receiptFile);
 
-                if (!uploadError) {
+                if (uploadError) {
+                    console.error("Screenshot upload error:", uploadError.message);
+                } else {
+                    // Yahan public URL nikal kar receiptUrl variable me daal rahe hain
                     const { data: publicURLData } = window.supabaseClient.storage
                         .from('notes-bucket')
                         .getPublicUrl(filePath);
-                    receiptUrl = publicURLData.publicUrl;
+                    
+                    if (publicURLData) {
+                        receiptUrl = publicURLData.publicUrl;
+                    }
                 }
             }
 
+            // Ab ye receiptUrl seedha database ke user_orders table me save hoga
             const orderPayload = {
                 user_email: currentUser.email,
                 note_id: selectedNoteForPay.id,
                 note_title: selectedNoteForPay.title,
                 amount: selectedNoteForPay.price,
                 utr_code: utr,
-                receipt_url: receiptUrl,
+                receipt_url: receiptUrl, // <--- Ye ab proper save hoga!
                 status: 'pending'
             };
 
@@ -954,10 +962,6 @@
                 alert("Order submit nahi ho paya: " + orderError.message);
             } else {
                 alert("🎉 Payment request submit ho gayi hai! Verification ke baad note unlock ho jayega.");
-                
-                const mailSubject = encodeURIComponent(`Urgent Payment Verification: ${selectedNoteForPay.title}`);
-                const mailBody = encodeURIComponent(`Hello Admin,\n\nI have made a payment of ₹${selectedNoteForPay.price} for note "${selectedNoteForPay.title}".\nUTR / Trans ID: ${utr}\nUser Email: ${currentUser.email}\n\nPlease verify and approve.`);
-                window.open(`mailto:legal@roitx.qd.je?subject=${mailSubject}&body=${mailBody}`, '_blank');
 
                 orderStatuses[String(selectedNoteForPay.id)] = 'pending';
                 document.getElementById('paymentModal').style.display = 'none';
@@ -966,6 +970,7 @@
                 renderNotesGrid(cachedNotesList);
             }
         }
+
 
         function showPendingInfo(noteTitle, notePrice) {
             if (!currentUser) return;
