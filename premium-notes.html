@@ -903,7 +903,7 @@
             alert("📋 UPI ID Copied to Clipboard!");
         }
 
-                async function submitManualPayment() {
+                        async function submitManualPayment() {
             const utr = document.getElementById('utrInput').value.trim();
             const receiptFile = document.getElementById('receiptInput').files[0];
 
@@ -919,23 +919,24 @@
 
             let receiptUrl = "";
 
-            // Agar user ne screenshot select kiya hai, toh Supabase Storage me upload karein
+            // Agar user ne screenshot select kiya hai, toh 'avatars' bucket me upload karein
             if (receiptFile) {
                 const fileExt = receiptFile.name.split('.').pop();
-                const fileName = `${currentUser.id}_${Date.now()}.${fileExt}`;
-                const filePath = `payment_receipts/${fileName}`;
+                const fileName = `receipts/${currentUser.id}_${Date.now()}.${fileExt}`;
 
                 const { data: uploadData, error: uploadError } = await window.supabaseClient.storage
-                    .from('notes-bucket')
-                    .upload(filePath, receiptFile);
+                    .from('avatars') // <--- Yahan 'notes-bucket' ki jagah 'avatars' bucket ka naam kar diya hai
+                    .upload(fileName, receiptFile);
 
                 if (uploadError) {
                     console.error("Screenshot upload error:", uploadError.message);
+                    alert("Receipt upload failed: " + uploadError.message);
+                    return;
                 } else {
-                    // Yahan public URL nikal kar receiptUrl variable me daal rahe hain
+                    // Public URL nikal kar receiptUrl me save karna
                     const { data: publicURLData } = window.supabaseClient.storage
-                        .from('notes-bucket')
-                        .getPublicUrl(filePath);
+                        .from('avatars') // <--- Yahan bhi 'avatars'
+                        .getPublicUrl(fileName);
                     
                     if (publicURLData) {
                         receiptUrl = publicURLData.publicUrl;
@@ -943,14 +944,13 @@
                 }
             }
 
-            // Ab ye receiptUrl seedha database ke user_orders table me save hoga
             const orderPayload = {
                 user_email: currentUser.email,
                 note_id: selectedNoteForPay.id,
                 note_title: selectedNoteForPay.title,
                 amount: selectedNoteForPay.price,
                 utr_code: utr,
-                receipt_url: receiptUrl, // <--- Ye ab proper save hoga!
+                receipt_url: receiptUrl, // <--- Ab ye URL database me properly save ho jayega!
                 status: 'pending'
             };
 
@@ -970,7 +970,6 @@
                 renderNotesGrid(cachedNotesList);
             }
         }
-
 
         function showPendingInfo(noteTitle, notePrice) {
             if (!currentUser) return;
