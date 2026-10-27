@@ -16,6 +16,124 @@
       console.log("🌐 ask-chat.js Language Updated To:", selectedLanguage);
     }
   };
+  // Text ko clean karne ke liye function taaki speech bina error ke chal sake
+function cleanTextForNaturalSpeech(text) {
+    if (!text) return "";
+    let clean = String(text);
+    
+    // HTML tags hataein
+    clean = clean.replace(/<[^>]*>?/gm, '');
+    
+    // Common shorthand/slang correction
+    clean = clean.replace(/\bhii\b/gi, 'hi');
+    clean = clean.replace(/\bka\b/gi, 'ka');
+    
+    // LaTeX aur math symbols clean karna
+    clean = clean.replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '$1 batte $2');
+    clean = clean.replace(/\\sqrt\{([^}]+)\}/g, 'square root $1');
+    clean = clean.replace(/[\$\#\&\_\{\}\[\]\\\^\%\~]/g, ' '); 
+    clean = clean.replace(/\\alpha/g, 'alpha');
+    clean = clean.replace(/\\beta/g, 'beta');
+    clean = clean.replace(/\\theta/g, 'theta');
+    clean = clean.replace(/\\pi/g, 'pi');
+    clean = clean.replace(/\\int/g, 'integral');
+    clean = clean.replace(/\\sum/g, 'summation');
+    clean = clean.replace(/\\times/g, 'guna');
+    clean = clean.replace(/\\div/g, 'bhag');
+    
+    return clean.replace(/\s+/g, ' ').trim();
+}
+
+function stopCurrentSpeech() {
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+    }
+    if (window.activeSpeakerBtn) {
+        window.activeSpeakerBtn.classList.remove('speaking');
+        window.activeSpeakerBtn = null;
+    }
+}
+
+  function stripLatexForSpeech(text) {
+    if (!text) return "";
+    let clean = String(text);
+    
+    // HTML tags hata dein
+    clean = clean.replace(/<[^>]*>?/gm, '');
+    
+    // LaTeX symbols aur math syntax clean karna
+    clean = clean.replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '$1 batte $2'); // fractions
+    clean = clean.replace(/\\sqrt\{([^}]+)\}/g, 'square root $1');
+    clean = clean.replace(/[\$\#\&\_\{\}\[\]\\\^\%\~]/g, ' '); // special chars/symbols remove
+    clean = clean.replace(/\\alpha/g, 'alpha');
+    clean = clean.replace(/\\beta/g, 'beta');
+    clean = clean.replace(/\\theta/g, 'theta');
+    clean = clean.replace(/\\pi/g, 'pi');
+    clean = clean.replace(/\\int/g, 'integral');
+    clean = clean.replace(/\\sum/g, 'summation');
+    clean = clean.replace(/\\approx/g, 'lagbhag barabar');
+    clean = clean.replace(/\\neq/g, 'barabar nahi');
+    clean = clean.replace(/\\times/g, 'guna');
+    clean = clean.replace(/\\div/g, 'bhag');
+    
+    // Extra spaces clean karein
+    return clean.replace(/\s+/g, ' ').trim();
+}
+let currentUtterance = null;
+// LocalStorage se speech preference check karein (Default true rahega agar pehli baar hai)
+let isSpeechEnabledGlobally = localStorage.getItem('roitx_speech_pref') !== null 
+    ? localStorage.getItem('roitx_speech_pref') === 'true' 
+    : true; 
+
+function speakText(rawText, btnElement, forcePlay = false) {
+    if (!('speechSynthesis' in window)) return;
+    
+    window.speechSynthesis.cancel();
+
+    if (!isSpeechEnabledGlobally && !forcePlay) return;
+
+    isSpeechEnabledGlobally = true;
+    localStorage.setItem('roitx_speech_pref', 'true');
+
+    const plainText = cleanTextForNaturalSpeech(rawText);
+    if (!plainText) return;
+
+    currentUtterance = new SpeechSynthesisUtterance(plainText);
+    currentUtterance.lang = selectedLanguage === 'hi' ? 'hi-IN' : 'en-IN';
+    currentUtterance.rate = 0.95; 
+    currentUtterance.pitch = 0.9;
+
+    if (btnElement) {
+        btnElement.classList.add('speaking');
+        window.activeSpeakerBtn = btnElement;
+    }
+
+    // REAL-TIME SYNC: Jab speech kisi specific character ya word par ho
+    currentUtterance.onboundary = (event) => {
+        if (event.name === 'word' && window.activeContentDiv) {
+            const charIndex = event.charIndex;
+            // Yahan aap current spoken text ko highlight ya track kar sakte hain
+            console.log("Speaking at index:", charIndex);
+        }
+    };
+
+    currentUtterance.onend = () => {
+        if (btnElement) btnElement.classList.remove('speaking');
+        if (window.activeSpeakerBtn === btnElement) window.activeSpeakerBtn = null;
+        window.activeContentDiv = null;
+    };
+
+    currentUtterance.onerror = (event) => {
+        console.error("Speech error:", event);
+        if (btnElement) btnElement.classList.remove('speaking');
+        if (window.activeSpeakerBtn === btnElement) window.activeSpeakerBtn = null;
+    };
+
+    setTimeout(() => {
+        window.speechSynthesis.speak(currentUtterance);
+    }, 100);
+}
+
 
   // ---- DOM ELEMENTS ----
   const chatWindow = document.getElementById('chatWindow');
@@ -53,7 +171,8 @@
   window.runCommand = (text) => { if (!input) return; input.value = text; onSend(); };
 
   // ---- USER WELCOME GREETING ----
-  async function initUserGreeting() {
+  // Jab page load ho aur pehli baar bot message aaye
+async function initUserGreeting() {
     let displayName = "Student";
 
     try {
@@ -78,7 +197,7 @@
       console.warn("User session greeting error:", err);
     }
 
-    addBotMsg(`
+    const greetingHTML = `
       <div style="background: linear-gradient(135deg, rgba(6,182,212,0.1), rgba(59,130,246,0.1)); border: 1px solid rgba(6,182,212,0.3); border-radius: 10px; padding: 12px;">
         <div style="font-weight: bold; color: #38bdf8; font-size: 14px; display: flex; align-items: center; gap: 6px;">
           ${SVG.user} Namaste, ${escapeHtml(displayName)}!
@@ -87,8 +206,11 @@
           Main aapka <b>Roitx AI Assistant</b> hu. Books, PDF Notes, Formulas, Calculator, ya PDF Export tools accessibility active hain.
         </div>
       </div>
-    `);
-  }
+    `;
+
+    // Bot message add karein aur speech force-trigger karein
+    addBotMsg(greetingHTML, true); 
+}
 
   // ---- UI MESSAGING & MATH RENDERING HELPERS ----
   function addUserMsg(text) {
@@ -128,17 +250,85 @@
     return text;
   }
 
-  function addBotMsg(htmlContent) {
+  function addBotMsg(htmlContent, isAutoGreet = false) {
     if (!chatWindow) return;
     const d = document.createElement('div'); 
     d.className = 'msg bot'; 
-    d.innerHTML = htmlContent;
+
+    const speakerSvg = `<svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5zM19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    
+    const speakerBtn = document.createElement('button');
+    speakerBtn.className = 'msg-speaker-btn';
+    speakerBtn.title = "Toggle Voice Output";
+    speakerBtn.innerHTML = speakerSvg;
+    
+    // Agar localStorage me false nahi hai toh default greenish/active state dikhayein
+    if (isSpeechEnabledGlobally) {
+        speakerBtn.classList.add('speaking');
+    }
+
+    speakerBtn.onclick = (e) => {
+        e.stopPropagation();
+        if (window.speechSynthesis && window.speechSynthesis.speaking && window.activeSpeakerBtn === speakerBtn) {
+            stopCurrentSpeech();
+            isSpeechEnabledGlobally = false;
+            localStorage.setItem('roitx_speech_pref', 'false');
+            speakerBtn.classList.remove('speaking');
+        } else {
+            isSpeechEnabledGlobally = true;
+            localStorage.setItem('roitx_speech_pref', 'true');
+            speakText(contentDiv.innerText || htmlContent, speakerBtn, true);
+        }
+    };
+
+    d.appendChild(speakerBtn);
+
+        const contentDiv = document.createElement('div');
+    contentDiv.className = 'msg-content-body';
+    d.appendChild(contentDiv);
+
+    // Isko add karein taaki speech boundary isko target kar sake
+    window.activeContentDiv = contentDiv;
+
+
     chatWindow.appendChild(d); 
     chatWindow.scrollTop = chatWindow.scrollHeight;
 
-    // Trigger MathJax Render
-    renderMathSafely(d);
-  }
+    let charIndex = 0;
+    contentDiv.innerHTML = ""; 
+
+    function typeWriter() {
+        if (charIndex < htmlContent.length) {
+            contentDiv.innerHTML = htmlContent.substring(0, charIndex + 1);
+            charIndex += 4;
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+            setTimeout(typeWriter, 12);
+        } else {
+            contentDiv.innerHTML = htmlContent; 
+            renderMathSafely(d);
+
+            if (isAutoGreet && isSpeechEnabledGlobally) {
+                // Browser policy fix: Agar speech block ho toh screen touch/click par chala do
+                const triggerSpeech = () => {
+                    speakText(contentDiv.innerText || htmlContent, speakerBtn, true);
+                    window.removeEventListener('click', triggerSpeech);
+                    window.removeEventListener('touchstart', triggerSpeech);
+                };
+                
+                // Pehle direct try karo, agar fail ho toh touch/click event listener use hoga
+                try {
+                    speakText(contentDiv.innerText || htmlContent, speakerBtn, true);
+                } catch (e) {
+                    window.addEventListener('click', triggerSpeech);
+                    window.addEventListener('touchstart', triggerSpeech);
+                }
+            }
+        }
+    }
+
+    typeWriter();
+}
+
 
   function showTyping() {
     if (!chatWindow) return null;
