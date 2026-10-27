@@ -92,11 +92,11 @@ async function requirePermission(requiredPermission) {
       return;
     }
 
-    const currentPage = window.location.pathname.split("/").pop();
+        const currentPage = window.location.pathname.split("/").pop();
 
-    // 4. Strict Security Rule: Teammates kabhi bhi 'manage-team.html' access nahi kar sakte
-    if (currentPage === "manage-team.html" && role !== 'superadmin' && role !== 'admin') {
-      showAccessDeniedModal("Aapke paas 'Manage Team' page ko access karne ki anumati nahi hai.");
+    // 4. Strict Security Rule: Teammates ya normal users 'manage-team.html' ya 'admin-orders.html' access nahi kar sakte
+      if ((currentPage === "manage-team.html" || currentPage === "admin-orders.html") && isSuperAdmin !== true) {
+      showAccessDeniedModal("Yeh page sirf Superadmin ke liye restricted hai.");
       return;
     }
 

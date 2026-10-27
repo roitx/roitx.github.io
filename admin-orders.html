@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Admin - Secure Payment Approvals | PM-Roit</title>
+    <title>Admin - Payment Approvals | PM-Roit</title>
     <link rel="stylesheet" href="premium.css">
     <!-- FontAwesome for Vector Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -74,36 +74,15 @@
             padding: clamp(12px, 3vw, 24px);
         }
 
-        .security-banner {
-            background: rgba(255, 71, 87, 0.1);
-            border: 1px solid rgba(255, 71, 87, 0.25);
-            color: #ff4757;
-            font-size: clamp(0.72rem, 2vw, 0.78rem);
-            text-align: center;
-            padding: 10px;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-            margin-bottom: 16px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            backdrop-filter: blur(8px);
-        }
-
         .admin-header {
             background: var(--card-bg);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             border: 1px solid var(--border-glow);
             border-radius: 20px;
-            padding: clamp(16px, 4vw, 24px);
+            padding: clamp(16px, 4vw, 22px);
             margin-bottom: 20px;
             box-shadow: 0 12px 35px rgba(0, 0, 0, 0.45);
-        }
-
-        .header-top {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -112,12 +91,12 @@
         }
 
         .admin-header h1 {
-            font-size: clamp(1.2rem, 4vw, 1.6rem);
+            font-size: clamp(1.2rem, 4vw, 1.5rem);
             margin: 0;
             color: #fff;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
             font-weight: 800;
         }
 
@@ -125,20 +104,11 @@
             font-size: 0.72rem;
             background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
             color: #fff;
-            padding: 5px 12px;
+            padding: 6px 14px;
             border-radius: 20px;
             font-weight: 700;
             text-transform: uppercase;
             box-shadow: 0 0 12px rgba(0, 210, 255, 0.3);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .admin-header p {
-            margin: 8px 0 0 0;
-            font-size: clamp(0.78rem, 2.2vw, 0.86rem);
-            color: var(--text-muted);
             display: flex;
             align-items: center;
             gap: 6px;
@@ -513,16 +483,10 @@
 
     <div class="admin-container">
         
-        <div class="security-banner">
-            <i class="fa-solid fa-user-lock"></i> RESTRICTED ACCESS: Authorized Admin Personnel Only. All actions logged.
-        </div>
-
+        <!-- Clean & Modern Header -->
         <header class="admin-header">
-            <div class="header-top">
-                <h1><i class="fa-solid fa-shield-halved" style="color: var(--accent-cyan);"></i> Admin Panel</h1>
-                <span class="badge-admin"><i class="fa-solid fa-file-invoice-dollar"></i> Payment Approvals</span>
-            </div>
-            <p><i class="fa-solid fa-circle-check" style="color: #2ed573;"></i> Verify user UTR codes & receipts securely to grant instant access.</p>
+            <h1><i class="fa-solid fa-shield-halved" style="color: var(--accent-cyan);"></i> Admin Panel</h1>
+            <span class="badge-admin"><i class="fa-solid fa-file-invoice-dollar"></i> Payment Approvals</span>
         </header>
 
         <section class="card">
@@ -592,7 +556,11 @@
         </div>
     </div>
     <script src="guard.js"></script>
-
+<script>
+  (async () => {
+    await requirePermission('send_notif'); // Database key ke mutabiq
+  })();
+</script>
     <script>
         let cachedOrders = [];
         let currentStatusFilter = 'pending';
