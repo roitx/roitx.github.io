@@ -562,7 +562,15 @@
             
             <div style="text-align: left; margin: 10px 0;">
                 <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Payment Screenshot (Optional / Recommended):</label>
-                <input type="file" id="receiptInput" accept="image/*" style="width: 100%; font-size: 0.75rem; color: #aaa; background: #090d16; padding: 8px; border-radius: 8px; border: 1px dashed rgba(0, 210, 255, 0.3);">
+                <label for="receiptInput" style="display: block; width: 100%; text-align: center; padding: 9px; background: #090d16; border: 1px dashed rgba(0, 210, 255, 0.4); border-radius: 8px; color: var(--accent-cyan); font-size: 0.78rem; font-weight: 600; cursor: pointer;">
+                    <i class="fa-solid fa-camera"></i> Attach Screenshot
+                </label>
+                <input type="file" id="receiptInput" accept="image/*" style="display: none;" onchange="previewReceiptImage(event)">
+                
+                <div id="receiptPreviewContainer" style="display: none; position: relative; width: fit-content; margin-top: 8px;">
+                    <img id="previewReceiptImg" src="" alt="Preview" style="max-width: 100px; max-height: 80px; border-radius: 6px; border: 1px solid var(--accent-cyan);">
+                    <button type="button" onclick="removeReceiptImage()" style="position: absolute; top: -6px; right: -6px; background: #ff4757; color: white; border: none; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center;">✖</button>
+                </div>
             </div>
 
             <div class="modal-actions">
@@ -603,6 +611,7 @@
         let purchases = [];
         let orderStatuses = {}; 
         let selectedNoteForPay = null;
+        let attachedReceiptBase64 = null;
         const loadedNotesMap = {};
         let cachedNotesList = [];
         let activeSubjectFilter = 'ALL';
@@ -618,6 +627,33 @@
                 return visible + masked + '@' + parts[1];
             }
             return upi;
+        }
+
+        function previewReceiptImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const maxSize = 2 * 1024 * 1024; // 2MB Limit
+                if (file.size > maxSize) {
+                    alert("❌ File size bohot badi hai! Kripya 2MB se chhoti image select karein.");
+                    event.target.value = '';
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    attachedReceiptBase64 = e.target.result;
+                    document.getElementById('previewReceiptImg').src = attachedReceiptBase64;
+                    document.getElementById('receiptPreviewContainer').style.display = 'inline-block';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function removeReceiptImage() {
+            attachedReceiptBase64 = null;
+            document.getElementById('previewReceiptImg').src = '';
+            document.getElementById('receiptPreviewContainer').style.display = 'none';
+            document.getElementById('receiptInput').value = '';
         }
 
         window.onload = async () => {
@@ -903,9 +939,8 @@
             alert("📋 UPI ID Copied to Clipboard!");
         }
 
-                        async function submitManualPayment() {
+        async function submitManualPayment() {
             const utr = document.getElementById('utrInput').value.trim();
-            const receiptFile = document.getElementById('receiptInput').files[0];
 
             if (!/^\d{12}$/.test(utr)) {
                 alert("⚠️ Kripya 12-digit ka valid UTR / Transaction number darj karein!");
@@ -917,31 +952,9 @@
                 return;
             }
 
-            let receiptUrl = "";
-
-            // Agar user ne screenshot select kiya hai, toh 'avatars' bucket me upload karein
-            if (receiptFile) {
-                const fileExt = receiptFile.name.split('.').pop();
-                const fileName = `receipts/${currentUser.id}_${Date.now()}.${fileExt}`;
-
-                const { data: uploadData, error: uploadError } = await window.supabaseClient.storage
-                    .from('avatars') // <--- Yahan 'notes-bucket' ki jagah 'avatars' bucket ka naam kar diya hai
-                    .upload(fileName, receiptFile);
-
-                if (uploadError) {
-                    console.error("Screenshot upload error:", uploadError.message);
-                    alert("Receipt upload failed: " + uploadError.message);
-                    return;
-                } else {
-                    // Public URL nikal kar receiptUrl me save karna
-                    const { data: publicURLData } = window.supabaseClient.storage
-                        .from('avatars') // <--- Yahan bhi 'avatars'
-                        .getPublicUrl(fileName);
-                    
-                    if (publicURLData) {
-                        receiptUrl = publicURLData.publicUrl;
-                    }
-                }
+            let finalReceiptData = "";
+            if (attachedReceiptBase64) {
+                finalReceiptData = `<img src="${attachedReceiptBase64}" style="max-width:100%; max-height:350px; border-radius:8px;">`;
             }
 
             const orderPayload = {
@@ -950,7 +963,7 @@
                 note_title: selectedNoteForPay.title,
                 amount: selectedNoteForPay.price,
                 utr_code: utr,
-                receipt_url: receiptUrl, // <--- Ab ye URL database me properly save ho jayega!
+                receipt_url: finalReceiptData,
                 status: 'pending'
             };
 
@@ -966,7 +979,7 @@
                 orderStatuses[String(selectedNoteForPay.id)] = 'pending';
                 document.getElementById('paymentModal').style.display = 'none';
                 document.getElementById('utrInput').value = '';
-                document.getElementById('receiptInput').value = '';
+                removeReceiptImage();
                 renderNotesGrid(cachedNotesList);
             }
         }
