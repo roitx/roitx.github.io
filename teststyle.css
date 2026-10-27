@@ -26,6 +26,18 @@
     --radius-md: 10px;
     --transition-fast: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
+.badge-count {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #f8fafc;
+    padding: 1px 7px;
+    border-radius: 6px;
+    font-size: 11.5px;
+    font-weight: 700;
+    margin-left: auto; /* Numbers ko right side align karne ke liye agar space ho */
+    letter-spacing: 0.3px;
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05);
+}
 
 [data-theme="light"] {
     --bg-body: #f1f5f9;

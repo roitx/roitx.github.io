@@ -16,6 +16,37 @@ let selectedPracticeOptions = {};
 let practiceRevealed = {}; 
 
 let chartBrief = null, chartAccuracy = null, chartScore = null;
+function updateLegendCounts() {
+    let attempted = 0;
+    let skipped = 0;
+    let review = 0;
+    let attRev = 0;
+    let skipRev = 0;
+
+    questions.forEach((q, idx) => {
+        const isAnswered = userAnswers[idx] !== undefined;
+        const isReview = !!reviewStatus[idx];
+        const isExplicitSkipped = !!skippedQuestions[idx];
+
+        if (isAnswered && isReview) {
+            attRev++;
+        } else if (!isAnswered && isReview) {
+            skipRev++;
+        } else if (isReview) {
+            review++;
+        } else if (isAnswered) {
+            attempted++;
+        } else {
+            skipped++;
+        }
+    });
+
+    if (document.getElementById('legendAttempted')) document.getElementById('legendAttempted').innerText = attempted;
+    if (document.getElementById('legendSkipped')) document.getElementById('legendSkipped').innerText = skipped;
+    if (document.getElementById('legendReview')) document.getElementById('legendReview').innerText = review;
+    if (document.getElementById('legendAttRev')) document.getElementById('legendAttRev').innerText = attRev;
+    if (document.getElementById('legendSkipRev')) document.getElementById('legendSkipRev').innerText = skipRev;
+}
 
 // MathJax Configuration
 window.MathJax = {
@@ -662,8 +693,12 @@ function renderPalette() {
         list.appendChild(listCard);
     });
     
+    // 👇 Bas yeh wali line yahan add karni hai!
+    updateLegendCounts();
+
     renderMathJax();
 }
+
 
 function filterPalette(filter, el) {
     currentFilter = filter;

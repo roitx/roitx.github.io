@@ -222,13 +222,15 @@
             <div class="palette-grid" id="paletteGrid"></div>
             <div class="palette-list" id="paletteList" style="display: none;"></div>
             
-            <div class="legend">
-                <div class="legend-item"><div class="dot dot-success"></div> Attempted</div>
-                <div class="legend-item"><div class="dot dot-orange"></div> Skipped</div>
-                <div class="legend-item"><div class="dot dot-purple"></div> Review</div>
-                <div class="legend-item"><div class="dot dot-att-rev"></div> Attempted + Review</div>
-                <div class="legend-item"><div class="dot dot-skip-rev"></div> Skipped + Review</div>
-            </div>
+         <div class="legend">
+    <div class="legend-item"><div class="dot dot-success"></div> Attempted <span class="badge-count" id="legendAttempted">0</span></div>
+    <div class="legend-item"><div class="dot dot-orange"></div> Skipped <span class="badge-count" id="legendSkipped">0</span></div>
+    <div class="legend-item"><div class="dot dot-purple"></div> Review <span class="badge-count" id="legendReview">0</span></div>
+    <div class="legend-item"><div class="dot dot-att-rev"></div> Attempted + Review <span class="badge-count" id="legendAttRev">0</span></div>
+    <div class="legend-item"><div class="dot dot-skip-rev"></div> Skipped + Review <span class="badge-count" id="legendSkipRev">0</span></div>
+</div>
+
+
         </div>
 
         <div class="submit-zone" style="margin-top: 10px;">
