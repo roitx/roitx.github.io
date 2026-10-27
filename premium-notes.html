@@ -558,9 +558,11 @@
                 Tap to Open PhonePe / GPay / Paytm
             </a>
 
-            <p style="font-size: 0.75rem; color: #aaa; margin: 8px 0;">
-                UPI ID: <span class="copy-box" onclick="copyUpiId()"><b style="color: #fff;">9199364179-3@ibl</b> <i class="fa-regular fa-copy" style="color: var(--accent-cyan);"></i></span>
-            </p>
+         <p style="font-size: 0.75rem; color: #aaa; margin: 8px 0;">
+    UPI ID: <span class="copy-box" onclick="copyUpiId()"><b style="color: #fff;" id="maskedUpiText"></b> <i class="fa-regular fa-copy" style="color: var(--accent-cyan);"></i></span>
+</p>
+
+        
 
             <input type="text" id="utrInput" class="input-utr" placeholder="Enter 12-digit UTR / Trans ID" maxlength="12" inputmode="numeric">
 
@@ -574,7 +576,7 @@
     </div>
 
     <script>
-    const MY_UPI_ID = "9199364179-3@ibl";
+    
     let currentUser = null;
     let purchases = [];
     let orderStatuses = {}; 
@@ -582,6 +584,23 @@
     const loadedNotesMap = {};
     let cachedNotesList = [];
     let activeSubjectFilter = 'ALL';
+    const MY_UPI_ID = "9199364179-3@ibl";
+
+// Masking function jo screen par number ko chupayega (e.g., 9199******-3@ibl)
+function getMaskedUpi(upi) {
+    if (!upi) return "";
+    const parts = upi.split('@');
+    if (parts.length < 2) return upi;
+    const userPart = parts[0];
+    if (userPart.length > 4) {
+        // Shuru ke 4 digit rakh kar baaki bich ke digits ko * kar dena
+        const visible = userPart.substring(0, 4);
+        const masked = '*'.repeat(userPart.length - 4);
+        return visible + masked + '@' + parts[1];
+    }
+    return upi;
+}
+
 
     window.onload = async () => {
         if (typeof window.getCurrentUser === "function") {
@@ -842,25 +861,28 @@
             return;
         }
 
-        selectedNoteForPay = note;
-        document.getElementById('modalTitle').innerText = "Pay for " + note.title;
-        document.getElementById('modalPrice').innerText = "₹" + note.price;
-        
-        const upiUri = `upi://pay?pa=${encodeURIComponent(MY_UPI_ID)}&pn=PM-Roit&am=${note.price}&cu=INR&tn=${encodeURIComponent('Note: ' + note.title)}`;
-        
-        document.getElementById('payDirectBtn').href = upiUri;
+selectedNoteForPay = note;
+    document.getElementById('modalTitle').innerText = "Pay for " + note.title;
+    document.getElementById('modalPrice').innerText = "₹" + note.price;
+    
+    // Screen par masked UPI ID dikhayein
+    document.getElementById('maskedUpiText').innerText = getMaskedUpi(MY_UPI_ID);
+    
+    // Lekin payment URI me asli MY_UPI_ID hi jayegi taaki payment fail na ho
+    const upiUri = `upi://pay?pa=${encodeURIComponent(MY_UPI_ID)}&pn=PM-Roit&am=${note.price}&cu=INR&tn=${encodeURIComponent('Note: ' + note.title)}`;
+    document.getElementById('payDirectBtn').href = upiUri;
 
-        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(upiUri)}`;
-        document.getElementById('upiQrCode').src = qrUrl;
-        
-        document.getElementById('paymentModal').style.display = 'flex';
-    }
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(upiUri)}`;
+    document.getElementById('upiQrCode').src = qrUrl;
+    
+    document.getElementById('paymentModal').style.display = 'flex';
+}
 
-    function copyUpiId() {
-        navigator.clipboard.writeText(MY_UPI_ID);
-        alert("📋 UPI ID Copied to Clipboard!");
-    }
-
+// Jab user copy kare toh background me asli number clipboard par jaye
+function copyUpiId() {
+    navigator.clipboard.writeText(MY_UPI_ID);
+    alert("📋 UPI ID Copied to Clipboard!");
+}
     async function submitManualPayment() {
     const utr = document.getElementById('utrInput').value.trim();
     if (!/^\d{12}$/.test(utr)) {
