@@ -118,6 +118,34 @@
             border-radius: 20px;
             border: 1px solid var(--border-glow);
             box-shadow: 0 12px 35px rgba(0, 0, 0, 0.45);
+            position: relative;
+        }
+
+        /* Perfectly Round Theme-Matched Payment Info Button */
+        .payment-info-btn {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(0, 210, 255, 0.12);
+            border: 1px solid rgba(0, 210, 255, 0.35);
+            color: var(--accent-cyan);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 15px rgba(0, 210, 255, 0.2);
+        }
+
+        .payment-info-btn:hover {
+            background: rgba(0, 210, 255, 0.25);
+            border-color: var(--accent-cyan);
+            transform: scale(1.08);
+            box-shadow: 0 6px 20px rgba(0, 210, 255, 0.35);
         }
 
         .header-box h1 {
@@ -513,6 +541,11 @@
     <div class="notes-container">
         <!-- Glass Header -->
         <div class="header-box">
+            <!-- Round Theme-Matched Payment Info Button -->
+            <button class="payment-info-btn" onclick="openPaymentGuideModal()" title="Payment Process & Rules">
+                <i class="fa-solid fa-info"></i>
+            </button>
+            
             <h1><i class="fa-solid fa-crown" style="color: #00d2ff;"></i> PM-Roit <span>Premium Notes</span></h1>
             <p>Select your chapter, search topics & unlock full study access instantly</p>
         </div>
@@ -602,6 +635,36 @@
             </a>
 
             <button class="btn-mini btn-cancel" onclick="document.getElementById('pendingInfoModal').style.display='none'" style="width: 100%;">Close</button>
+        </div>
+    </div>
+
+    <!-- Payment Process Guide Modal (Updated) -->
+    <div id="paymentGuideModal" class="modal">
+        <div class="modal-content" style="max-width: 380px; text-align: left;">
+            <div style="text-align: center; margin-bottom: 12px;">
+                <div style="font-size: 2rem; color: var(--accent-cyan); margin-bottom: 4px;">
+                    <i class="fa-solid fa-circle-question"></i>
+                </div>
+                <h3 style="margin: 0; font-size: 1.15rem; color: #fff;">Payment Process & Rules</h3>
+                <p style="font-size: 0.78rem; color: var(--text-muted); margin: 4px 0 0 0;">Jaaniye payment aur verification ki puri jankari</p>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 10px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 18px; line-height: 1.4;">
+                <div style="display: flex; gap: 10px; align-items: flex-start; background: rgba(255,255,255,0.03); padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06);">
+                    <span style="background: var(--accent-cyan); color: #080c14; font-weight: 800; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.7rem;">1</span>
+                    <div><b>Payment & UTR:</b> QR code ya UPI app se payment karke 12-digit ka UTR number submit karein.</div>
+                </div>
+                <div style="display: flex; gap: 10px; align-items: flex-start; background: rgba(255,255,255,0.03); padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06);">
+                    <span style="background: var(--accent-cyan); color: #080c14; font-weight: 800; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.7rem;">2</span>
+                    <div><b>Verification Time:</b> Payment verify hone mein aam taur par <b>1-2 din ka samay</b> lag sakta hai.</div>
+                </div>
+                <div style="display: flex; gap: 10px; align-items: flex-start; background: rgba(255,255,255,0.03); padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06);">
+                    <span style="background: var(--accent-cyan); color: #080c14; font-weight: 800; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.7rem;">3</span>
+                    <div><b>Urgent Request:</b> Agar note urgently chahiye, toh payment pending status ke dauran aap wahi se <b>admin ko email request</b> bhej sakte hain. Email ke shuru mein <i>"DO NOT EDIT"</i> likha hoga.</div>
+                </div>
+            </div>
+
+            <button class="btn-mini btn-unlock" onclick="document.getElementById('paymentGuideModal').style.display='none'" style="width: 100%;">Got It, Thanks!</button>
         </div>
     </div>
 
@@ -903,6 +966,10 @@
             window.location.href = url;
         }
 
+        function openPaymentGuideModal() {
+            document.getElementById('paymentGuideModal').style.display = 'flex';
+        }
+
         async function openPaymentModal(noteId) {
             const note = loadedNotesMap[noteId];
             if (!note) return;
@@ -988,7 +1055,7 @@
             if (!currentUser) return;
             
             const mailSubject = encodeURIComponent(`Urgent Payment Verification: ${noteTitle}`);
-            const mailBody = encodeURIComponent(`Hello Admin,\n\nI have submitted my payment for "${noteTitle}" (₹${notePrice}), but it is still pending.\nMy Email: ${currentUser.email}\n\nPlease verify and approve.`);
+            const mailBody = encodeURIComponent(`DO NOT EDIT\n\nHello Admin,\n\nI have submitted my payment for "${noteTitle}" (₹${notePrice}), but it is still pending.\nMy Email: ${currentUser.email}\n\nPlease verify and approve urgently.`);
             
             document.getElementById('modalUrgentBtn').href = `mailto:legal@roitx.qd.je?subject=${mailSubject}&body=${mailBody}`;
             document.getElementById('pendingInfoModal').style.display = 'flex';
