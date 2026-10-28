@@ -1,5 +1,5 @@
 /* =====================================================
-   ROITX IMAGE ELITE ENGINE — UPGRADED & PERSISTENT
+   ROITX IMAGE ELITE ENGINE — NO BLUR START & 10S PREVIEW
    ===================================================== */
 
 function trackActivityLocally(fileData, isDownloaded = false) {
@@ -39,6 +39,89 @@ function trackActivityLocally(fileData, isDownloaded = false) {
     }
 }
 
+// --- PURCHASE & SECURITY CHECK HELPERS ---
+function cleanTitleString(str) {
+    if (!str || typeof str !== 'string') return "";
+    return str.replace(/[^\w\s]/gi, '').toLowerCase().trim();
+}
+
+async function verifyPurchaseStatusLocallyOrDB(rawPath, docName) {
+    const params = new URLSearchParams(location.search);
+    const isPurchasedParam = params.get("purchased") === "true";
+    if (isPurchasedParam) return true;
+
+    let purchasedList = JSON.parse(localStorage.getItem("purchasedFiles") || "[]");
+    let userPurchases = JSON.parse(localStorage.getItem("userPurchasedNotes") || "[]");
+    
+    const cleanDoc = cleanTitleString(docName);
+
+    if (purchasedList.includes(rawPath) || userPurchases.some(lp => cleanTitleString(lp.title) === cleanDoc)) {
+        return true;
+    }
+
+    try {
+        if (window.supabaseClient) {
+            const { data: { session } } = await window.supabaseClient.auth.getSession();
+            if (session && session.user && session.user.email) {
+                const { data: orders } = await window.supabaseClient
+                    .from('user_orders')
+                    .select('id, status, note_title')
+                    .eq('user_email', session.user.email)
+                    .eq('status', 'approved');
+
+                if (orders && orders.length > 0) {
+                    const isApprovedInDB = orders.some(o => {
+                        const cleanOrderTitle = cleanTitleString(o.note_title);
+                        return cleanOrderTitle && (cleanOrderTitle.includes(cleanDoc) || cleanDoc.includes(cleanOrderTitle));
+                    });
+
+                    if (isApprovedInDB) {
+                        if (!purchasedList.includes(rawPath)) {
+                            purchasedList.push(rawPath);
+                            localStorage.setItem("purchasedFiles", JSON.stringify(purchasedList));
+                        }
+                        return true;
+                    }
+                }
+            }
+        }
+    } catch (err) {
+        console.error("Purchase DB Verification Error:", err);
+    }
+
+    return false;
+}
+
+function showPurchaseRequiredModal() {
+    let existingModal = document.getElementById("purchaseRequiredModal");
+    if (existingModal) existingModal.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "purchaseRequiredModal";
+    modal.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(15px);
+        display: flex; align-items: center; justify-content: center;
+        z-index: 999999; animation: fadeIn 0.2s ease-in-out;
+    `;
+
+    modal.innerHTML = `
+        <div style="background: #161b26; border: 1px solid rgba(255,255,255,0.15); border-radius: 20px; padding: 28px; max-width: 330px; text-align: center; color: #fff; box-shadow: 0 25px 50px rgba(0,0,0,0.6);">
+            <div style="font-size: 42px; margin-bottom: 12px;">🔒</div>
+            <h3 style="margin: 0 0 10px 0; font-size: 20px; font-weight: 700;">Purchase Required</h3>
+            <p style="font-size: 14px; color: #a0aec0; margin: 0 0 24px 0; line-height: 1.5;">
+                Ise clear dekhne aur access karne ke liye aapko is Premium Material ko purchase karna padega.
+            </p>
+            <div style="display: flex; gap: 12px;">
+                <button onclick="document.getElementById('purchaseRequiredModal').remove()" style="flex: 1; padding: 12px; background: rgba(255,255,255,0.08); border: none; border-radius: 12px; color: #fff; font-weight: 600; cursor: pointer;">Close</button>
+                <button onclick="window.location.href='premium-notes.html'" style="flex: 1; padding: 12px; background: #3182ce; border: none; border-radius: 12px; color: #fff; font-weight: 600; cursor: pointer;">Buy Now</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+}
+
 let zoomScale = 1.0;
 let rotation = 0;
 let flipH = 1, flipV = 1;
@@ -47,6 +130,7 @@ let isUIVisible = true;
 let isHighlightMode = false;
 let isMagnifierActive = false;
 let magnifierLens = null;
+let previewTimer = null;
 
 let canvas, ctx, img;
 let drawingHistory = [];
@@ -73,6 +157,23 @@ async function initImageViewer() {
     const finalPath = rawPath.includes("/") ? rawPath : `formulas/${rawPath}`;
     document.getElementById("doc-title").innerText = docName || "Image Viewer";
 
+    const isParamPremium = params.get("type") === "premium" || (rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium")));
+    
+    // Session Check
+    if (window.supabaseClient) {
+        const { data: { session } } = await window.supabaseClient.auth.getSession();
+        if (isParamPremium && !session) {
+            showToast("Login karna anivarya hai.");
+            sessionStorage.setItem("redirect_after_login", window.location.href);
+            setTimeout(() => {
+                window.location.href = "login.html";
+            }, 1500);
+            return;
+        }
+    }
+
+    const isPurchased = await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "");
+
     try {
         const { data, error } = await window.supabaseClient.storage.from("admin-files").download(finalPath);
         if (error) throw error;
@@ -91,6 +192,19 @@ async function initImageViewer() {
             setupKeyboardShortcuts();
             checkBookmarkState();
 
+            // STRICT SECURITY & 10 SECONDS PREVIEW TIMER (NO INITIAL BLUR)
+            if (isParamPremium && !isPurchased) {
+                img.style.filter = "none"; // Shuruat me bilkul saaf dikhega
+                
+                // Exact 10 seconds baad blur aur modal aayega
+                previewTimer = setTimeout(() => {
+                    img.style.filter = "blur(25px)";
+                    showPurchaseRequiredModal();
+                }, 10000); 
+            } else {
+                applyImageFilters();
+            }
+
             trackActivityLocally({
                 title: docName || "Image Asset",
                 url: rawPath,
@@ -102,7 +216,19 @@ async function initImageViewer() {
     }
 }
 
-window.handleViewportClick = (e) => {
+window.addEventListener('beforeunload', () => {
+    if (previewTimer) clearTimeout(previewTimer);
+});
+
+window.handleViewportClick = async (e) => {
+    const isParamPremium = new URLSearchParams(location.search).get("type") === "premium" || (rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium")));
+    const isPurchased = await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "");
+
+    if (isParamPremium && !isPurchased) {
+        showPurchaseRequiredModal();
+        return;
+    }
+
     if (e.clientY < 80 || e.clientY > window.innerHeight - 80) return;
     isUIVisible = !isUIVisible;
     document.body.classList.toggle("ui-hidden", !isUIVisible);
@@ -120,7 +246,6 @@ window.toggleSettings = (show = true) => {
     if (overlay) overlay.style.display = show ? "block" : "none";
 };
 
-/* TRANSFORM ENGINE WITH PINCH, PAN & FLIP */
 function updateTransform() {
     const wrapper = document.getElementById("imageWrapper");
     wrapper.style.transform = `translate(${panX}px, ${panY}px) scale(${zoomScale}) rotate(${rotation}deg) scaleX(${flipH}) scaleY(${flipV})`;
@@ -129,12 +254,28 @@ function updateTransform() {
     document.getElementById("zoom-indicator").innerText = Math.round(zoomScale * 100) + "%";
 }
 
-window.adjustZoom = (delta) => {
+window.adjustZoom = async (delta) => {
+    const isParamPremium = new URLSearchParams(location.search).get("type") === "premium" || (rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium")));
+    const isPurchased = await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "");
+
+    if (isParamPremium && !isPurchased) {
+        showPurchaseRequiredModal();
+        return[span_4](start_span)[span_4](end_span);
+    }
+
     zoomScale = Math.min(Math.max(zoomScale + delta, 0.5), 3.5);
     updateTransform();
 };
 
-window.resetZoom = () => {
+window.resetZoom = async () => {
+    const isParamPremium = new URLSearchParams(location.search).get("type") === "premium" || (rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium")));
+    const isPurchased = await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "");
+
+    if (isParamPremium && !isPurchased) {
+        showPurchaseRequiredModal();
+        return;
+    }
+
     zoomScale = 1.0;
     rotation = 0;
     flipH = 1;
@@ -160,38 +301,42 @@ window.flipImage = (axis) => {
 };
 
 window.applyImageFilters = () => {
+    const isParamPremium = new URLSearchParams(location.search).get("type") === "premium" || (rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium")));
+    
+    if (isParamPremium) {
+        let purchasedList = JSON.parse(localStorage.getItem("purchasedFiles") || "[]");
+        if (!purchasedList.includes(rawPath)) {
+            img.style.filter = "none";
+            return; 
+        }
+    } 
+
     const b = document.getElementById("brightnessSlider").value;
     const c = document.getElementById("contrastSlider").value;
     img.style.filter = `brightness(${b}%) contrast(${c}%)`;
 };
 
-/* 🟢 HIGHLIGHT DIRECTION FIX ENGINE (Coordinate Mapping Matrix) */
 function getCanvasRelativeCoords(e) {
     const rect = canvas.getBoundingClientRect();
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
 
-    // Viewport click relative to canvas center
     let normX = (clientX - (rect.left + rect.width / 2)) / zoomScale;
     let normY = (clientY - (rect.top + rect.height / 2)) / zoomScale;
 
-    // Undo horizontal & vertical flips
     normX *= flipH;
     normY *= flipV;
 
-    // Undo Rotation transformation angle
     const rad = (-rotation * Math.PI) / 180;
     const rotX = normX * Math.cos(rad) - normY * Math.sin(rad);
     const rotY = normX * Math.sin(rad) + normY * Math.cos(rad);
 
-    // Map back to canvas native dimensions
     const finalX = rotX + canvas.width / 2;
     const finalY = rotY + canvas.height / 2;
 
     return { x: finalX, y: finalY };
 }
 
-/* BOOKMARK SYSTEM ENGINE */
 function getImageBookmarks() {
     return JSON.parse(localStorage.getItem("image_bookmarks") || "[]");
 }
@@ -225,7 +370,6 @@ function checkBookmarkState() {
 
 window.showSavedBookmarks = () => {
     const bookmarks = getImageBookmarks();
-    
     const existingModal = document.getElementById("bookmarksModal");
     if (existingModal) existingModal.remove();
 
@@ -239,35 +383,25 @@ window.showSavedBookmarks = () => {
     modal.style.cssText = `
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px); display: flex; align-items: center;
-        justify-content: center; z-index: 999999; animation: bookmarkFadeIn 0.25s ease;
+        display: flex; align-items: center; justify-content: center; z-index: 999999;
     `;
 
     const bookmarkButtonsHTML = bookmarks.map(bm => `
-        <div style="background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12);
-                    padding: 12px 14px; border-radius: 12px; display: flex; align-items: center;
-                    justify-content: space-between; gap: 8px;">
+        <div style="background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12); padding: 12px 14px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
             <div style="text-align: left; overflow: hidden;">
                 <div style="font-weight: 600; font-size: 13px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px;">📌 ${bm.title}</div>
                 <div style="font-size: 10px; color: #a0aec0;">Saved: ${bm.date}</div>
             </div>
-            <button onclick="openBookmarkedImage('${bm.url}', '${bm.title}')" style="
-                background: var(--accent, #007aff); border: none; color: #fff; padding: 6px 12px;
-                border-radius: 8px; font-size: 11px; cursor: pointer; font-weight: 600;">Open</button>
+            <button onclick="openBookmarkedImage('${bm.url}', '${bm.title}')" style="background: var(--accent, #007aff); border: none; color: #fff; padding: 6px 12px; border-radius: 8px; font-size: 11px; cursor: pointer; font-weight: 600;">Open</button>
         </div>
     `).join('');
 
     modal.innerHTML = `
-        <div style="background: #12161f; border: 1px solid rgba(255,255,255,0.12); border-radius: 20px; 
-                    padding: 24px; width: 90%; max-width: 360px; text-align: center; color: #fff; 
-                    box-shadow: 0 20px 40px rgba(0,0,0,0.6);">
-            
+        <div style="background: #12161f; border: 1px solid rgba(255,255,255,0.12); border-radius: 20px; padding: 24px; width: 90%; max-width: 360px; text-align: center; color: #fff; box-shadow: 0 20px 40px rgba(0,0,0,0.6);">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                 <h3 style="margin: 0; font-size: 17px; font-weight: 700;">Saved Bookmarks</h3>
-                <span onclick="document.getElementById('bookmarksModal').remove()" 
-                      style="cursor: pointer; font-size: 20px; color: #a0aec0; padding: 4px;">✕</span>
+                <span onclick="document.getElementById('bookmarksModal').remove()" style="cursor: pointer; font-size: 20px; color: #a0aec0; padding: 4px;">✕</span>
             </div>
-
             <div style="display: flex; flex-direction: column; gap: 10px; max-height: 260px; overflow-y: auto; padding-right: 4px;">
                 ${bookmarkButtonsHTML}
             </div>
@@ -282,13 +416,20 @@ window.openBookmarkedImage = (url, name) => {
     window.location.href = `?path=${encodeURIComponent(url)}&name=${encodeURIComponent(name)}`;
 };
 
-/* 🔍 MAGNIFIER LENS TOOL ENGINE */
-window.toggleMagnifierMode = () => {
+window.toggleMagnifierMode = async () => {
+    const isParamPremium = new URLSearchParams(location.search).get("type") === "premium" || (rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium")));
+    const isPurchased = await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "");
+
+    if (isParamPremium && !isPurchased) {
+        showPurchaseRequiredModal();
+        return;
+    }
+
     isMagnifierActive = !isMagnifierActive;
     const btn = document.getElementById("magnifierBtn");
 
     if (isMagnifierActive) {
-        if (isHighlightMode) toggleHighlightMode(); // Turn off highlighter if active
+        if (isHighlightMode) toggleHighlightMode();
         btn.classList.add("active");
         createMagnifierLens();
         showToast("Magnifier Active");
@@ -306,8 +447,7 @@ function createMagnifierLens() {
     magnifierLens.style.cssText = `
         position: fixed; width: 140px; height: 140px; border-radius: 50%;
         border: 3px solid var(--accent, #007aff); box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-        pointer-events: none; display: none; z-index: 99999;
-        background-repeat: no-repeat; background-color: #12161f;
+        pointer-events: none; display: none; z-index: 99999; background-repeat: no-repeat; background-color: #12161f;
     `;
     document.body.appendChild(magnifierLens);
 
@@ -338,17 +478,25 @@ function createMagnifierLens() {
     viewport.addEventListener("mouseleave", () => { if(magnifierLens) magnifierLens.style.display = "none"; });
 }
 
-/* KEYBOARD SHORTCUTS ENGINE */
 function setupKeyboardShortcuts() {
-    window.addEventListener("keydown", (e) => {
+    window.addEventListener("keydown", async (e) => {
         if (e.target.tagName === "INPUT") return;
         
+        const isParamPremium = new URLSearchParams(location.search).get("type") === "premium" || (rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium")));
+        const isPurchased = await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "");
+
         switch (e.key.toLowerCase()) {
-            case "+": case "=": adjustZoom(0.2); break;
-            case "-": case "_": adjustZoom(-0.2); break;
+            case "+": case "=": 
+                if (isParamPremium && !isPurchased) { showPurchaseRequiredModal(); return; }
+                adjustZoom(0.2); 
+                break;
+            case "-": case "_": 
+                if (isParamPremium && !isPurchased) { showPurchaseRequiredModal(); return; }
+                adjustZoom(-0.2); 
+                break;
             case "r": rotateImage(); break;
             case "h": toggleHighlightMode(); break;
-            case "z": if (e.ctrlKey || e.metaKey) undoLastStroke(); else undoLastStroke(); break;
+            case "z": undoLastStroke(); break;
             case "escape": 
                 toggleSettings(false); 
                 const modal = document.getElementById("bookmarksModal");
@@ -363,14 +511,22 @@ function setupKeyboardShortcuts() {
     });
 }
 
-/* PINCH ZOOM & PAN ENGINE FOR IMAGE */
 function setupPinchAndPanEngine() {
     const viewport = document.getElementById("viewport");
     let initialDist = 0;
     let isDragging = false;
     let dragStart = { x: 0, y: 0 };
 
-    viewport.addEventListener('touchstart', (e) => {
+    viewport.addEventListener('touchstart', async (e) => {
+        const isParamPremium = new URLSearchParams(location.search).get("type") === "premium" || (rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium")));
+        const isPurchased = await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "");
+
+        if (isParamPremium && !isPurchased) {
+            e.preventDefault();
+            showPurchaseRequiredModal();
+            return;
+        }
+
         if (isHighlightMode || isMagnifierActive) return;
         
         if (e.touches.length === 2) {
@@ -382,12 +538,21 @@ function setupPinchAndPanEngine() {
             isDragging = true;
             dragStart = { x: e.touches[0].clientX - panX, y: e.touches[0].clientY - panY };
         }
-    }, { passive: true });
+    }, { passive: false });
 
-    viewport.addEventListener('touchmove', (e) => {
+    viewport.addEventListener('touchmove', async (e) => {
+        const isParamPremium = new URLSearchParams(location.search).get("type") === "premium" || (rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium")));
+        const isPurchased = await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "");
+
+        if (isParamPremium && !isPurchased) {
+            e.preventDefault();
+            return;
+        }
+
         if (isHighlightMode || isMagnifierActive) return;
 
         if (e.touches.length === 2 && initialDist > 0) {
+            e.preventDefault();
             const currentDist = Math.hypot(
                 e.touches[0].clientX - e.touches[1].clientX,
                 e.touches[0].clientY - e.touches[1].clientY
@@ -401,7 +566,7 @@ function setupPinchAndPanEngine() {
             panY = e.touches[0].clientY - dragStart.y;
             updateTransform();
         }
-    }, { passive: true });
+    }, { passive: false });
 
     viewport.addEventListener('touchend', () => {
         initialDist = 0;
@@ -409,7 +574,6 @@ function setupPinchAndPanEngine() {
     });
 }
 
-/* HIGHLIGHTING CANVAS ENGINE */
 function toggleHighlightMode() {
     isHighlightMode = !isHighlightMode;
     const btn = document.getElementById("highlightBtn");
@@ -426,7 +590,13 @@ function toggleHighlightMode() {
 }
 
 function setupCanvasEvents() {
-    const startDrawing = (e) => {
+    const startDrawing = async (e) => {
+        const isParamPremium = new URLSearchParams(location.search).get("type") === "premium" || (rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium")));
+        const isPurchased = await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "");
+        if (isParamPremium && !isPurchased) {
+            showPurchaseRequiredModal();
+            return;
+        }
         if (!isHighlightMode) return;
         isDrawing = true;
         const coords = getCanvasRelativeCoords(e);
@@ -507,8 +677,13 @@ window.clearCanvasAnnotations = () => {
 };
 
 async function downloadImage() {
-    if (!window.supabaseClient) {
-        console.error("Supabase client initialized nahi hai.");
+    if (!window.supabaseClient) return;
+
+    const isParamPremium = new URLSearchParams(location.search).get("type") === "premium" || (rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium")));
+    const isPurchased = await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "");
+
+    if (isParamPremium && !isPurchased) {
+        showPurchaseRequiredModal();
         return;
     }
 
@@ -553,7 +728,6 @@ function showToast(message) {
         background: rgba(18, 22, 31, 0.9); border: 1px solid rgba(255,255,255,0.15);
         color: #fff; padding: 10px 20px; border-radius: 30px; font-size: 13px;
         box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 999999; backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px); animation: bookmarkFadeIn 0.2s ease;
     `;
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 2500);
@@ -578,7 +752,7 @@ function showError(path) {
         background: rgba(18, 22, 31, 0.85); border: 1px solid rgba(255, 255, 255, 0.08);
         padding: 12px 18px; border-radius: 14px; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
         font-family: 'Inter', sans-serif; z-index: 99999; backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px); opacity: 0; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        opacity: 0; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     `;
     
     document.body.appendChild(popup);

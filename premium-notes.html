@@ -660,7 +660,11 @@
                 </div>
                 <div style="display: flex; gap: 10px; align-items: flex-start; background: rgba(255,255,255,0.03); padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06);">
                     <span style="background: var(--accent-cyan); color: #080c14; font-weight: 800; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.7rem;">3</span>
-                    <div><b>Urgent Request:</b> Agar note urgently chahiye, toh payment pending status ke dauran aap wahi se <b>admin ko email request</b> bhej sakte hain. Email ke shuru mein <i>"DO NOT EDIT"</i> likha hoga.</div>
+                    <div>
+  <b>Urgent Request:</b> Agar aapko notes urgently chahiye, to payment pending hone par aap wahin se admin ko email request bhej sakte hain.
+  <br>
+  <i>Note: Message ko edit na karein (DO NOT EDIT), warna details me gadbadi ho sakti hai.</i>
+</div>
                 </div>
             </div>
 
@@ -927,7 +931,7 @@
             }
         }
 
-        function openInViewer(noteId) {
+                function openInViewer(noteId) {
             const note = loadedNotesMap[noteId];
             if (!note) return;
 
@@ -958,9 +962,20 @@
                 }, isApproved);
             }
             
-            let url = `notes-viewer.html?path=${cleanPath}&name=${cleanName}&type=premium&status=premium`;
-            if (isApproved) {
-                url += `&purchased=true`;
+            // Check if file path is an image or pdf to route to correct viewer
+            const isImg = /\.(png|jpg|jpeg|webp|gif)$/i.test(targetFilePath);
+            
+            let url = "";
+            if (isImg) {
+                url = `image-viewer.html?path=${cleanPath}&name=${cleanName}&type=premium`;
+                if (isApproved) {
+                    url += `&purchased=true`;
+                }
+            } else {
+                url = `notes-viewer.html?path=${cleanPath}&name=${cleanName}&type=premium&status=premium`;
+                if (isApproved) {
+                    url += `&purchased=true`;
+                }
             }
 
             window.location.href = url;

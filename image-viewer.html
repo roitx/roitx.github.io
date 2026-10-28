@@ -51,6 +51,9 @@
             </div>
         </div>
         
+        <!-- Secure Overlay for Unpurchased Material -->
+        <div id="security-overlay" style="display:none; position:absolute; inset:0; z-index:9999;" onclick="showPurchaseRequiredModal()"></div>
+        
         <div id="master-loader">
             <div class="loader-ring"><div></div><div></div><div></div><div></div></div>
             <p>Optimizing image...</p>
@@ -60,7 +63,6 @@
     <!-- FLOATING QUICK TOOLBAR -->
     <div class="scrub-bar" id="scrubBar">
         <div class="scrub-container">
-            <!-- Highlight Button with SVG -->
             <button id="highlightBtn" class="pill-btn" onclick="toggleHighlightMode()" style="display:flex; align-items:center; gap:6px;">
                 <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M18.5,1.15C17.97,1.15 17.46,1.36 17.07,1.75L15.13,3.69L19.81,8.37L21.75,6.43C22.53,5.65 22.53,4.38 21.75,3.6L19.9,1.75C19.5,1.36 19,1.15 18.5,1.15M13.71,5.11L3,15.82V20.5H7.68L18.39,9.79L13.71,5.11Z"/></svg>
                 <span>Highlight</span>
@@ -70,17 +72,14 @@
                 <input type="color" id="penColor" value="#ffeb3b" title="Pick Marker Color">
             </div>
 
-            <!-- Magnifier Toggle Button -->
             <button id="magnifierBtn" class="scrub-btn" onclick="toggleMagnifierMode()" title="Magnifier Glass">
                 <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M15.5,14H14.71L14.43,13.73C15.41,12.59 16,11.11 16,9.5A6.5,6.5 0 0,0 9.5,3A6.5,6.5 0 0,0 3,9.5A6.5,6.5 0 0,0 9.5,16C11.11,16 12.59,15.41 13.73,14.43L14,14.71V15.5L19,20.49L20.49,19L15.5,14ZM9.5,14C7.01,14 5,11.99 5,9.5C5,7.01 7.01,5 9.5,5C11.99,5 14,7.01 14,9.5C14,11.99 11.99,14 9.5,14Z"/></svg>
             </button>
 
-            <!-- Undo Button -->
             <button class="scrub-btn" onclick="undoLastStroke()" title="Undo Draw (Z)">
                 <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M12.5,8C9.85,8 7.45,9 5.6,10.6L2,7V16H11L7.38,12.38C8.77,11.22 10.54,10.5 12.5,10.5C16.04,10.5 19.05,12.81 20.1,16L22.47,15.22C21.08,11.03 17.15,8 12.5,8Z"/></svg>
             </button>
 
-            <!-- Rotate Button -->
             <button class="scrub-btn" onclick="rotateImage()" title="Rotate 90° (R)">
                 <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M7.11,8.53L5.7,7.11C4.8,8.27 4.24,9.61 4.07,11H6.09C6.24,10.13 6.58,9.3 7.11,8.53M6.09,13H4.07C4.24,14.39 4.8,15.73 5.7,16.89L7.11,15.47C6.58,14.7 6.24,13.87 6.09,13M9.61,19.93L8.2,21.34C9.36,22.24 10.7,22.8 12.09,22.97V20.95C11.22,20.8 10.39,20.46 9.61,19.93M12,4V1L8,5L12,9V6A6,6 0 0,1 18,12A6,6 0 0,1 12,18C10.6,18 9.35,17.5 8.35,16.7L6.94,18.11C8.32,19.3 10.07,20 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4Z"/></svg>
             </button>
