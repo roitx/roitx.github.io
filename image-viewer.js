@@ -1,5 +1,5 @@
 /* =====================================================
-   ROITX IMAGE ELITE ENGINE — NO BLUR START & 10S PREVIEW
+   ROITX IMAGE ELITE ENGINE — SECURE DB & LOCAL PURCHASE CHECK
    ===================================================== */
 
 function trackActivityLocally(fileData, isDownloaded = false) {
@@ -39,26 +39,24 @@ function trackActivityLocally(fileData, isDownloaded = false) {
     }
 }
 
-// --- PURCHASE & SECURITY CHECK HELPERS ---
+// --- SECURE PURCHASE & OWNERSHIP VERIFICATION ---
 function cleanTitleString(str) {
     if (!str || typeof str !== 'string') return "";
     return str.replace(/[^\w\s]/gi, '').toLowerCase().trim();
 }
 
 async function verifyPurchaseStatusLocallyOrDB(rawPath, docName) {
-    const params = new URLSearchParams(location.search);
-    const isPurchasedParam = params.get("purchased") === "true";
-    if (isPurchasedParam) return true;
-
     let purchasedList = JSON.parse(localStorage.getItem("purchasedFiles") || "[]");
     let userPurchases = JSON.parse(localStorage.getItem("userPurchasedNotes") || "[]");
     
     const cleanDoc = cleanTitleString(docName);
 
+    // 1. Local Storage Check
     if (purchasedList.includes(rawPath) || userPurchases.some(lp => cleanTitleString(lp.title) === cleanDoc)) {
         return true;
     }
 
+    // 2. Direct Supabase Database & Orders Verification (URL tampering bypass proof)
     try {
         if (window.supabaseClient) {
             const { data: { session } } = await window.supabaseClient.auth.getSession();
@@ -159,19 +157,7 @@ async function initImageViewer() {
 
     const isParamPremium = params.get("type") === "premium" || (rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium")));
     
-    // Session Check
-    if (window.supabaseClient) {
-        const { data: { session } } = await window.supabaseClient.auth.getSession();
-        if (isParamPremium && !session) {
-            showToast("Login karna anivarya hai.");
-            sessionStorage.setItem("redirect_after_login", window.location.href);
-            setTimeout(() => {
-                window.location.href = "login.html";
-            }, 1500);
-            return;
-        }
-    }
-
+    // Independent Real Purchase Verification (ignores URL tampering)
     const isPurchased = await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "");
 
     try {
@@ -192,14 +178,17 @@ async function initImageViewer() {
             setupKeyboardShortcuts();
             checkBookmarkState();
 
-            // STRICT SECURITY & 10 SECONDS PREVIEW TIMER (NO INITIAL BLUR)
+            // STRICT SECURITY: Agar actual me purchased nahi hai, tabhi 10s preview ke baad lock hoga
             if (isParamPremium && !isPurchased) {
-                img.style.filter = "none"; // Shuruat me bilkul saaf dikhega
+                img.style.filter = "none"; 
                 
-                // Exact 10 seconds baad blur aur modal aayega
-                previewTimer = setTimeout(() => {
-                    img.style.filter = "blur(25px)";
-                    showPurchaseRequiredModal();
+                previewTimer = setTimeout(async () => {
+                    // Dobara final verification taaki koi loophole na bache
+                    const doubleCheckPurchased = await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "");
+                    if (!doubleCheckPurchased) {
+                        img.style.filter = "blur(25px)";
+                        showPurchaseRequiredModal();
+                    }
                 }, 10000); 
             } else {
                 applyImageFilters();
@@ -260,7 +249,7 @@ window.adjustZoom = async (delta) => {
 
     if (isParamPremium && !isPurchased) {
         showPurchaseRequiredModal();
-        return[span_4](start_span)[span_4](end_span);
+        return;
     }
 
     zoomScale = Math.min(Math.max(zoomScale + delta, 0.5), 3.5);
