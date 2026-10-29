@@ -18,6 +18,178 @@ let strokeHistory = []; // Undo Stack
 if (!window.supabaseClient) {
   console.error("❌ Supabase connection missing");
 }
+// =========================================================
+// SOLVER.JS — VOICE / TTS EXTENSION (MATCHED WITH ASK-CHAT)
+// =========================================================
+
+let currentUtterance = null;
+let isSpeechEnabledGlobally = localStorage.getItem('roitx_speech_pref') !== null 
+    ? localStorage.getItem('roitx_speech_pref') === 'true' 
+    : true; 
+
+window.activeSpeakerBtn = null;
+
+// ---- PRELOAD & AUDIO UNLOCK ENGINE ----
+let isAudioUnlocked = false;
+let pendingGreetingText = null;
+let windowActiveFirstSpeakerBtn = null;
+
+function unlockAudioEngine() {
+    if (isAudioUnlocked) return;
+    if ('speechSynthesis' in window) {
+        const dummyUtter = new SpeechSynthesisUtterance("");
+        window.speechSynthesis.speak(dummyUtter);
+        isAudioUnlocked = true;
+        console.log("🔊 Solver TTS Engine Preloaded & Unlocked!");
+
+        if (pendingGreetingText && windowActiveFirstSpeakerBtn) {
+            speakText(pendingGreetingText, windowActiveFirstSpeakerBtn, true);
+            pendingGreetingText = null;
+        }
+    }
+}
+
+window.addEventListener('click', unlockAudioEngine, { once: true });
+window.addEventListener('touchstart', unlockAudioEngine, { once: true });
+window.addEventListener('keydown', unlockAudioEngine, { once: true });
+
+// ---- TEXT CLEANING FOR NATURAL SPEECH ----
+function cleanTextForNaturalSpeech(text) {
+  if (!text) return "";
+  let clean = String(text);
+  clean = clean.replace(/<[^>]*>?/gm, '');
+  clean = clean.replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '$1 batte $2');
+  clean = clean.replace(/\\sqrt\{([^}]+)\}/g, 'square root $1');
+  clean = clean.replace(/[\$\#\&\_\{\}\[\]\\\^\%\~]/g, ' '); 
+  clean = clean.replace(/\\alpha/g, 'alpha');
+  clean = clean.replace(/\\beta/g, 'beta');
+  clean = clean.replace(/\\times/g, 'guna');
+  clean = clean.replace(/\\div/g, 'bhag');
+  return clean.replace(/\s+/g, ' ').trim();
+}
+
+function stopCurrentSpeech() {
+  if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+  }
+  if (window.activeSpeakerBtn) {
+      window.activeSpeakerBtn.classList.remove('speaking');
+      window.activeSpeakerBtn = null;
+  }
+}
+
+// ---- SPEAK TEXT FUNCTION ----
+function speakText(rawText, btnElement, forcePlay = false) {
+  if (!('speechSynthesis' in window)) return;
+  
+  window.speechSynthesis.cancel();
+
+  if (!isSpeechEnabledGlobally && !forcePlay) return;
+
+  const plainText = cleanTextForNaturalSpeech(rawText);
+  if (!plainText) return;
+
+  currentUtterance = new SpeechSynthesisUtterance(plainText);
+  currentUtterance.rate = 0.95; 
+  currentUtterance.pitch = 0.9; 
+
+  const voices = window.speechSynthesis.getVoices();
+  const selectedVoice = voices.find(v => 
+      (v.lang.includes('hi') || v.lang.includes('en')) && 
+      (v.name.toLowerCase().includes('madhur') || v.name.toLowerCase().includes('male') || v.name.toLowerCase().includes('hemant') || v.name.toLowerCase().includes('google'))
+  ) || voices.find(v => v.lang.includes('hi-IN')) || voices[0];
+
+  if (selectedVoice) {
+      currentUtterance.voice = selectedVoice;
+      currentUtterance.lang = selectedVoice.lang;
+  } else {
+      currentUtterance.lang = 'hi-IN';
+  }
+
+  if (btnElement) {
+      if (window.activeSpeakerBtn && window.activeSpeakerBtn !== btnElement) {
+          window.activeSpeakerBtn.classList.remove('speaking');
+      }
+      btnElement.classList.add('speaking');
+      window.activeSpeakerBtn = btnElement;
+  }
+
+  currentUtterance.onend = () => {
+      if (btnElement) btnElement.classList.remove('speaking');
+      if (window.activeSpeakerBtn === btnElement) window.activeSpeakerBtn = null;
+  };
+
+  currentUtterance.onerror = (event) => {
+      console.error("Speech error:", event);
+      if (btnElement) btnElement.classList.remove('speaking');
+      if (window.activeSpeakerBtn === btnElement) window.activeSpeakerBtn = null;
+  };
+
+  setTimeout(() => {
+      window.speechSynthesis.speak(currentUtterance);
+  }, 100);
+}
+
+// ---- OVERRIDE APPEND CHAT MESSAGE TO INCLUDE SPEAKER BUTTON ----
+const originalAppendChatMessage = typeof appendChatMessage === 'function' ? appendChatMessage : null;
+
+window.appendChatMessage = function(htmlContent, type = "ai", showTime = true) {
+  const container = document.getElementById("answerHistory");
+  if (!container) return;
+
+  const msgDiv = document.createElement("div");
+  msgDiv.className = `chat-bubble ${type}`;
+  
+  // Agar AI message hai toh bottom-right par speaker button add karein
+  if (type === "ai") {
+    const speakerOnSvg = `<svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5zM19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    const speakerOffSvg = `<svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5zM23 9l-6 6M17 9l6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    
+    const speakerBtn = document.createElement('button');
+    speakerBtn.className = 'msg-speaker-btn';
+    speakerBtn.title = "Toggle Voice Output";
+    speakerBtn.innerHTML = isSpeechEnabledGlobally ? speakerOnSvg : speakerOffSvg;
+
+    speakerBtn.onclick = (e) => {
+        e.stopPropagation();
+        if (window.speechSynthesis && window.speechSynthesis.speaking && window.activeSpeakerBtn === speakerBtn) {
+            stopCurrentSpeech();
+            isSpeechEnabledGlobally = false;
+            localStorage.setItem('roitx_speech_pref', 'false');
+            speakerBtn.innerHTML = speakerOffSvg;
+        } else {
+            isSpeechEnabledGlobally = true;
+            localStorage.setItem('roitx_speech_pref', 'true');
+            speakerBtn.innerHTML = speakerOnSvg;
+            speakText(contentDiv.innerText || htmlContent, speakerBtn, true);
+        }
+    };
+    msgDiv.appendChild(speakerBtn);
+
+    // Auto speech play for AI responses
+    if (isSpeechEnabledGlobally) {
+        setTimeout(() => {
+            speakText(htmlContent, speakerBtn, true);
+        }, 300);
+    }
+  }
+
+  const contentDiv = document.createElement("div");
+  contentDiv.className = "msg-content-body";
+  contentDiv.innerHTML = htmlContent;
+  msgDiv.appendChild(contentDiv);
+
+  const timeStamp = showTime ? `<span class="chat-time">${getCurrentFormattedTime()}</span>` : '';
+  if (showTime) {
+    const timeDiv = document.createElement("div");
+    timeDiv.innerHTML = timeStamp;
+    msgDiv.appendChild(timeDiv);
+  }
+
+  container.appendChild(msgDiv);
+  scrollToBottom();
+  renderMathSafely(msgDiv);
+};
 
 /* =====================================================
    INLINE SVG ICONS LIBRARY
@@ -877,19 +1049,19 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-/* =====================================================
-   UNIFIED FAST AI SOLVER ENGINE (WITH VISION SUPPORT)
-   ===================================================== */
+// =====================================================
+// SOLVER.JS — UPDATED TYPEWRITER & VOICE ENGINE
+// =====================================================
 
 async function solveWithAI(questionText, imageBase64 = null) {
+  // "AI Analyzing Request..." hata diya gaya hai taaki direct clean response aaye
   const loadingId = "loading-" + Date.now();
   appendChatMessage(`
     <div id="${loadingId}" class="typing-indicator">
-      <span>AI Analyzing Request</span>
       <div class="typing-dot"></div>
       <div class="typing-dot"></div>
       <div class="typing-dot"></div>
-    </div>`, "ai", false);
+    </div>`, "ai", false, false); // Typewriter aur Speaker shuru me hidden rahenge
 
   const sendBtn = document.getElementById("solveBtn");
   if (sendBtn) sendBtn.disabled = true;
@@ -952,9 +1124,11 @@ Solve in clean Hinglish (Roman Hindi + English). Use LaTeX for math ($...$ inlin
     if (rawText) {
       const cleanContent = cleanAIResponse(rawText);
       let formattedAnswer = typeof marked !== 'undefined' ? marked.parse(cleanContent) : cleanContent.replace(/\n/g, "<br>");
-      appendChatMessage(`<b>💡 Solution / Answer:</b><br><br>${formattedAnswer}`, "ai");
+      
+      // Typewriter ke sath message append hoga
+      appendChatMessage(`<b>💡 Solution / Answer:</b><br><br>${formattedAnswer}`, "ai", true, true);
     } else {
-      appendChatMessage(`⚠️ Server Error: Invalid response structure received.`, "system-error");
+      appendChatMessage(`⚠️ Server Error: Invalid response structure received.`, "system-error", true, false);
     }
 
   } catch (err) {
@@ -963,12 +1137,96 @@ Solve in clean Hinglish (Roman Hindi + English). Use LaTeX for math ($...$ inlin
     if (loadingElem && loadingElem.closest('.chat-bubble')) {
       loadingElem.closest('.chat-bubble').remove();
     }
-    appendChatMessage(`⚠️ Error: ${err.message || 'Network issue'}.`, "system-error");
+    appendChatMessage(`⚠️ Error: ${err.message || 'Network issue'}.`, "system-error", true, false);
   } finally {
     const sendBtn = document.getElementById("solveBtn");
     if (sendBtn) sendBtn.disabled = false;
   }
 }
+
+// ---- UPDATED APPEND CHAT MESSAGE WITH TYPEWRITER & SPEAKER LOGIC ----
+window.appendChatMessage = function(htmlContent, type = "ai", showTime = true, enableTypewriter = false) {
+  const container = document.getElementById("answerHistory");
+  if (!container) return;
+
+  const msgDiv = document.createElement("div");
+  msgDiv.className = `chat-bubble ${type}`;
+  
+  const speakerBtn = document.createElement('button');
+  const contentDiv = document.createElement("div");
+  contentDiv.className = "msg-content-body";
+
+  if (type === "ai") {
+    const speakerOnSvg = `<svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5zM19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    const speakerOffSvg = `<svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5zM23 9l-6 6M17 9l6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    
+    speakerBtn.className = 'msg-speaker-btn';
+    speakerBtn.title = "Toggle Voice Output";
+    speakerBtn.innerHTML = isSpeechEnabledGlobally ? speakerOnSvg : speakerOffSvg;
+    
+    // Shuru me jab tak text pura load na ho, speaker button hidden ya disabled rahega
+    speakerBtn.style.display = "none"; 
+
+    speakerBtn.onclick = (e) => {
+        e.stopPropagation();
+        if (window.speechSynthesis && window.speechSynthesis.speaking && window.activeSpeakerBtn === speakerBtn) {
+            stopCurrentSpeech();
+            isSpeechEnabledGlobally = false;
+            localStorage.setItem('roitx_speech_pref', 'false');
+            speakerBtn.innerHTML = speakerOffSvg;
+        } else {
+            isSpeechEnabledGlobally = true;
+            localStorage.setItem('roitx_speech_pref', 'true');
+            speakerBtn.innerHTML = speakerOnSvg;
+            speakText(contentDiv.innerText || htmlContent, speakerBtn, true);
+        }
+    };
+    msgDiv.appendChild(speakerBtn);
+  }
+
+  msgDiv.appendChild(contentDiv);
+
+  if (showTime) {
+    const timeDiv = document.createElement("div");
+    timeDiv.innerHTML = `<span class="chat-time">${getCurrentFormattedTime()}</span>`;
+    msgDiv.appendChild(timeDiv);
+  }
+
+  container.appendChild(msgDiv);
+  scrollToBottom();
+
+  // Typewriter Effect Logic (Jisse text ekdum smooth print ho)
+  if (enableTypewriter && type === "ai") {
+    let charIndex = 0;
+    contentDiv.innerHTML = ""; 
+
+    function typeWriter() {
+        if (charIndex < htmlContent.length) {
+            charIndex = Math.min(charIndex + 4, htmlContent.length);
+            contentDiv.innerHTML = htmlContent.substring(0, charIndex);
+            scrollToBottom();
+            setTimeout(typeWriter, 15);
+        } else {
+            contentDiv.innerHTML = htmlContent; 
+            renderMathSafely(msgDiv);
+            scrollToBottom();
+
+            // Jab text pura type ho jaye, tabhi speaker button show hoga aur aawaz play hogi
+            if (speakerBtn) {
+              speakerBtn.style.display = "flex";
+            }
+            if (isSpeechEnabledGlobally) {
+              speakText(htmlContent, speakerBtn, true);
+            }
+        }
+    }
+    typeWriter();
+  } else {
+    contentDiv.innerHTML = htmlContent;
+    renderMathSafely(msgDiv);
+    if (speakerBtn) speakerBtn.style.display = "flex";
+  }
+};
 
 /* =====================================================
    MAIN SOLVE TRIGGER WITH IMAGE & GUEST LIMIT
