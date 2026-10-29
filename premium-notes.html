@@ -1022,49 +1022,66 @@
         }
 
         async function submitManualPayment() {
-            const utr = document.getElementById('utrInput').value.trim();
+    const utr = document.getElementById('utrInput').value.trim();
 
-            if (!/^\d{12}$/.test(utr)) {
-                alert("⚠️ Kripya 12-digit ka valid UTR / Transaction number darj karein!");
-                return;
-            }
+    if (!/^\d{12}$/.test(utr)) {
+        alert("⚠️ Kripya 12-digit ka valid UTR / Transaction number darj karein!");
+        return;
+    }
 
-            if (!selectedNoteForPay || !currentUser) {
-                alert("Something went wrong. Refresh and try again.");
-                return;
-            }
+    if (!selectedNoteForPay || !currentUser) {
+        alert("Something went wrong. Refresh and try again.");
+        return;
+    }
 
-            let finalReceiptData = "";
-            if (attachedReceiptBase64) {
-                finalReceiptData = `<img src="${attachedReceiptBase64}" style="max-width:100%; max-height:350px; border-radius:8px;">`;
-            }
+    // Confirm button ko select karke disable karein
+    const confirmBtn = document.querySelector('#paymentModal .btn-unlock');
+    if (confirmBtn) {
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Submitting...`;
+    }
 
-            const orderPayload = {
-                user_email: currentUser.email,
-                note_id: selectedNoteForPay.id,
-                note_title: selectedNoteForPay.title,
-                amount: selectedNoteForPay.price,
-                utr_code: utr,
-                receipt_url: finalReceiptData,
-                status: 'pending'
-            };
-
-            const { error: orderError } = await window.supabaseClient
-                .from('user_orders')
-                .insert([orderPayload]);
-
-            if (orderError) {
-                alert("Order submit nahi ho paya: " + orderError.message);
-            } else {
-                alert("🎉 Payment request submit ho gayi hai! Verification ke baad note unlock ho jayega.");
-
-                orderStatuses[String(selectedNoteForPay.id)] = 'pending';
-                document.getElementById('paymentModal').style.display = 'none';
-                document.getElementById('utrInput').value = '';
-                removeReceiptImage();
-                renderNotesGrid(cachedNotesList);
-            }
+    try {
+        let finalReceiptData = "";
+        if (attachedReceiptBase64) {
+            finalReceiptData = `<img src="${attachedReceiptBase64}" style="max-width:100%; max-height:350px; border-radius:8px;">`;
         }
+
+        const orderPayload = {
+            user_email: currentUser.email,
+            note_id: selectedNoteForPay.id,
+            note_title: selectedNoteForPay.title,
+            amount: selectedNoteForPay.price,
+            utr_code: utr,
+            receipt_url: finalReceiptData,
+            status: 'pending'
+        };
+
+        const { error: orderError } = await window.supabaseClient
+            .from('user_orders')
+            .insert([orderPayload]);
+
+        if (orderError) throw orderError;
+
+        alert("🎉 Payment request submit ho gayi hai! Verification ke baad note unlock ho jayega.");
+
+        orderStatuses[String(selectedNoteForPay.id)] = 'pending';
+        document.getElementById('paymentModal').style.display = 'none';
+        document.getElementById('utrInput').value = '';
+        removeReceiptImage();
+        renderNotesGrid(cachedNotesList);
+
+    } catch (err) {
+        alert("Order submit nahi ho paya: " + err.message);
+    } finally {
+        // Request khatam hone par button wapas normal karein
+        if (confirmBtn) {
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = `<i class="fa-solid fa-circle-check"></i> Confirm Payment`;
+        }
+    }
+}
+
 
         function showPendingInfo(noteTitle, notePrice) {
             if (!currentUser) return;

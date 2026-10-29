@@ -152,16 +152,21 @@ async function initImageViewer() {
         return;
     }
 
-    const finalPath = rawPath.includes("/") ? rawPath : `formulas/${rawPath}`;
-    document.getElementById("doc-title").innerText = docName || "Image Viewer";
-
-    const isParamPremium = params.get("type") === "premium" || (rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium")));
+    const isParamPremium = params.get("type") === "premium" || (rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium") || rawPath.toLowerCase().includes("pre_")));
     
-    // Independent Real Purchase Verification (ignores URL tampering)
+    // Bucket aur path determination
+    const targetBucket = isParamPremium ? "private-premium-files" : "admin-files";
+    let finalPath = rawPath;
+
+    if (!isParamPremium && !rawPath.includes("/")) {
+        finalPath = `formulas/${rawPath}`;
+    }
+
+    document.getElementById("doc-title").innerText = docName || "Image Viewer";
     const isPurchased = await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "");
 
     try {
-        const { data, error } = await window.supabaseClient.storage.from("admin-files").download(finalPath);
+        const { data, error } = await window.supabaseClient.storage.from(targetBucket).download(finalPath);
         if (error) throw error;
 
         const url = URL.createObjectURL(data);
@@ -178,12 +183,9 @@ async function initImageViewer() {
             setupKeyboardShortcuts();
             checkBookmarkState();
 
-            // STRICT SECURITY: Agar actual me purchased nahi hai, tabhi 10s preview ke baad lock hoga
             if (isParamPremium && !isPurchased) {
                 img.style.filter = "none"; 
-                
                 previewTimer = setTimeout(async () => {
-                    // Dobara final verification taaki koi loophole na bache
                     const doubleCheckPurchased = await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "");
                     if (!doubleCheckPurchased) {
                         img.style.filter = "blur(25px)";

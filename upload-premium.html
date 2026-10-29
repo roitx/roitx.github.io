@@ -333,7 +333,7 @@
             await fetchUploadedNotes();
         };
 
-        function autoGeneratePath() {
+                function autoGeneratePath() {
             const classVal = document.getElementById('classNo').value;
             const subjectVal = document.getElementById('subject').value.toLowerCase().substring(0, 3);
             const chapterVal = document.getElementById('chapterNo').value.trim();
@@ -348,11 +348,14 @@
                 }
             }
 
+            // Random Timestamp / Unique Suffix jod rahe hain randomness ke liye
+            const randomSuffix = Date.now() + "_" + Math.floor(Math.random() * 1000);
+
             if (chapterVal) {
-                const generated = `notes/pre_class${classVal}_${subjectVal}_ch${chapterVal}.${ext}`;
+                const generated = `pre_class${classVal}_${subjectVal}_ch${chapterVal}_${randomSuffix}.${ext}`;
                 document.getElementById('filePath').value = generated;
             } else {
-                document.getElementById('filePath').value = `notes/pre_class${classVal}_${subjectVal}_ch[NO].${ext}`;
+                document.getElementById('filePath').value = `pre_class${classVal}_${subjectVal}_ch[NO]_${randomSuffix}.${ext}`;
             }
         }
 
@@ -376,8 +379,9 @@
             btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Uploading to Storage...`;
 
             try {
+                // Yahan naya private bucket name set kiya gaya hai
                 const { data: storageData, error: storageError } = await window.supabaseClient.storage
-                    .from('admin-files')
+                    .from('private-premium-files')
                     .upload(filePath, file, { cacheControl: '3600', upsert: true });
 
                 if (storageError) throw new Error("Storage Upload Failed: " + storageError.message);
@@ -385,16 +389,17 @@
                 btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Saving to Database...`;
 
                 const dbPayload = {
-                    class_no: `Class ${classNo}th`,
-                    subject: subject,
-                    chapter_no: `Chapter ${chapterNo}`,
-                    title: title,
-                    price: price,
-                    file_path: filePath,
-                    demo_pdf_url: filePath,
-                    full_pdf_url: filePath,
-                    type: 'premium'
-                };
+    class_no: `Class ${classNo}th`,
+    subject: subject,
+    chapter_no: `Chapter ${chapterNo}`,
+    title: title,
+    price: price,
+    file_path: filePath, // Yeh wahi unique timestamp wala path hai jo bucket me upload hua hai
+    demo_pdf_url: filePath,
+    full_pdf_url: filePath,
+    type: 'premium'
+};
+
 
                 const { error: dbError } = await window.supabaseClient
                     .from('premium_notes')
@@ -402,7 +407,7 @@
 
                 if (dbError) throw new Error("Database Entry Failed: " + dbError.message);
 
-                alert(`🎉 Success! File Uploaded & Published!\nPath: ${filePath}`);
+                alert(`🎉 Success! File Uploaded & Published with Timestamp!\nPath: ${filePath}`);
                 
                 document.getElementById('chapterNo').value = "";
                 document.getElementById('noteTitle').value = "";
@@ -465,19 +470,17 @@
             }
 
             notes.forEach(note => {
-                let rawPath = note.file_path || note.full_pdf_url || '';
-                
-                if (rawPath && !rawPath.startsWith('notes/')) {
-                    rawPath = 'notes/' + rawPath;
-                }
+ // upload-premium.html ke renderTable function me yeh karein:
+let rawPath = note.file_path || note.full_pdf_url || '';
 
-                const cleanPath = encodeURIComponent(rawPath);
-                const cleanName = encodeURIComponent(note.title || 'Material');
-                
-                const isImg = /\.(png|jpg|jpeg|webp|gif)$/i.test(rawPath);
-                const viewerUrl = isImg 
-                    ? `image-viewer.html?path=${cleanPath}&name=${cleanName}`
-                    : `notes-viewer.html?path=${cleanPath}&name=${cleanName}&type=premium&purchased=true`;
+// Agar file ke path me pehle se folder nahi hai aur yeh premium note hai, toh direct path bhejein
+const cleanPath = encodeURIComponent(rawPath);
+const cleanName = encodeURIComponent(note.title || 'Material');
+
+const isImg = /\.(png|jpg|jpeg|webp|gif)$/i.test(rawPath);
+const viewerUrl = isImg 
+    ? `image-viewer.html?path=${cleanPath}&name=${cleanName}&type=premium`
+    : `notes-viewer.html?path=${cleanPath}&name=${cleanName}&type=premium&purchased=true`;
 
                 tbody.innerHTML += `
                     <tr>
@@ -502,26 +505,28 @@
         }
 
         async function deleteNote(id, filePath) {
-            if (!confirm("Kya aap sach mein is file ko delete karna chahte hain?")) return;
+    if (!confirm("Kya aap sach mein is file ko delete karna chahte hain?")) return;
 
-            try {
-                const { error: dbErr } = await window.supabaseClient
-                    .from('premium_notes')
-                    .delete()
-                    .eq('id', id);
+    try {
+        const { error: dbErr } = await window.supabaseClient
+            .from('premium_notes')
+            .delete()
+            .eq('id', id);
 
-                if (dbErr) throw dbErr;
+        if (dbErr) throw dbErr;
 
-                if (filePath) {
-                    await window.supabaseClient.storage.from('admin-files').remove([filePath]);
-                }
-
-                alert("File successfully delete ho gayi! 🗑️");
-                await fetchUploadedNotes();
-            } catch (err) {
-                alert("Delete failed: " + err.message);
-            }
+        if (filePath) {
+            // Yahan 'admin-files' ki jagah 'private-premium-files' hona chahiye
+            await window.supabaseClient.storage.from('private-premium-files').remove([filePath]);
         }
+
+        alert("File successfully delete ho gayi! 🗑️");
+        await fetchUploadedNotes();
+    } catch (err) {
+        alert("Delete failed: " + err.message);
+    }
+}
+
     </script>
 </body>
 </html>

@@ -259,56 +259,41 @@ async function initReader() {
         const titleEl = document.getElementById("doc-title");
         if (titleEl) {
             titleEl.innerText = "No File Selected";
-            titleEl.setAttribute("title", "No File Selected");
         }
         return;
     }
 
-    let finalPath = rawPath.includes("/") ? rawPath : `notes/${rawPath}`;
     const displayTitle = docName || "Loading Document...";
-
     const titleEl = document.getElementById("doc-title");
-
     if (titleEl) {
         titleEl.innerText = displayTitle;
         titleEl.setAttribute("title", displayTitle);
-        titleEl.onclick = null; 
-        let hideTimer;
-
-        titleEl.onclick = (e) => {
-            e.stopPropagation();
-            clearTimeout(hideTimer);
-            titleEl.classList.toggle('show-full-title');
-            if (titleEl.classList.contains('show-full-title')) {
-                hideTimer = setTimeout(() => {
-                    titleEl.classList.remove('show-full-title');
-                }, 4000);
-            }
-        };
     }
 
-    document.addEventListener('click', () => {
-        if (titleEl) titleEl.classList.remove('show-full-title');
-    });
+    // Check karein ki yeh premium file hai ya nahi
+    const isParamPremium = params.get("type") === "premium";
+    const isInPaidFolder = rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium") || rawPath.toLowerCase().includes("pre_"));
+    const isPremiumNote = isParamPremium || isInPaidFolder;
+    
+    // Agar premium hai, toh bucket 'private-premium-files' hoga aur path direct rawPath hoga (kyunki root me hai)
+    // Agar normal hai, toh bucket 'admin-files' hoga aur path me folder hoga agar nahi hai toh notes/ jidega
+    const targetBucket = isPremiumNote ? "private-premium-files" : "admin-files";
+    let finalPath = rawPath;
+    
+    if (!isPremiumNote && !rawPath.includes("/")) {
+        finalPath = `notes/${rawPath}`;
+    }
 
     try {
-        const { data, error } = await window.supabaseClient.storage.from("admin-files").download(finalPath);
-        if (error) {
-            if (finalPath.toLowerCase().includes("refbooks")) {
-                const alt = finalPath.includes("refbooks") ? finalPath.replace("refbooks", "Refbooks") : finalPath.replace("Refbooks", "refbooks");
-                const retry = await window.supabaseClient.storage.from("admin-files").download(alt);
-                if (!retry.error) { 
-                    startEngine(retry.data); 
-                    return; 
-                }
-            }
-            throw error;
-        }
+        const { data, error } = await window.supabaseClient.storage.from(targetBucket).download(finalPath);
+        if (error) throw error;
         startEngine(data);
     } catch (err) {
+        console.error("Storage download error:", err);
         showError(finalPath);
     }
 }
+
 
 async function startEngine(blob) {
     currentBlobUrl = URL.createObjectURL(blob);
