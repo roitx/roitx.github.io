@@ -6,7 +6,8 @@ let currentMathQuestion = null;
 let mathDrones = [];
 let selectedSubject = "math";
 let selectedMedium = "english";
-let monsterSpawnedAt2500 = false;
+let monsterSpawnCount = 0; // Kitni baar monster aa chuka hai track karne ke liye
+let monsterSpawnedAt1000 = false;
 
 window.selectedSubject = "math";
 window.selectedMedium = "english";
@@ -779,8 +780,11 @@ async function startGame() {
     lives = shipTypes[selectedShip].hp;
     bullets = []; missiles = []; enemies = []; asteroids = [];
     particles = []; enemyBullets = []; powerups = []; coinDrops = []; mathDrones = [];
-    monsterActive = false; monster = null; monsterSpawnedAt2500 = false;
+    monsterActive = false; monster = null; 
     
+    // Yahan reset karein
+    monsterSpawnCount = 0; 
+    monsterSpawnedAt1000 = false;
     // Game shuru hote hi turant active subject ke questions preload karwa lo taaki 2500 score par bina delay ke monster aaye
     if (isMathMode) {
         let activeSubject = window.selectedSubject || selectedSubject || "math";
@@ -1089,11 +1093,32 @@ function update() {
                 score += 10 * combo; 
 updateHUD();
 
-// Yahan exact match ki jagah >= use karo aur flag check lagao
-if (score >= 2500 && !monsterSpawnedAt2500 && !monsterActive) {
-    monsterSpawnedAt2500 = true;
-    spawnMonster();
+// Score check update for monster spawn intervals (Infinite Loop Fix)
+if (!monsterActive) {
+    // Pehla monster 1000 score par
+    if (monsterSpawnCount === 0 && score >= 1000 && !monsterSpawnedAt1000) {
+        monsterSpawnedAt1000 = true;
+        monsterSpawnCount = 1;
+        spawnMonster();
+    } 
+    // Doosra aur uske baad ke monsters tabhi aayenge jab score pichle milestone se 2500 zyada ho 
+    // AUR pichla monster puri tarah defeat ho chuka ho (!monsterActive zaroori hai)
+    else if (monsterSpawnCount > 0 && score >= (1000 + (monsterSpawnCount * 2500)) && !monsterSpawnedAt1000) {
+        monsterSpawnedAt1000 = true;
+        monsterSpawnCount++;
+        spawnMonster();
+    }
 }
+
+// Jab monster defeat ho jaye (HP khatam ho jaye), tabhi flag reset ho
+if (monster && monster.hp <= 0) {
+    monsterActive = false;
+    monster = null;
+    monsterSpawnedAt1000 = false; // Agle milestone ke liye flag reset
+    explode(canvas.width / 2, 100, "#facc15", 35);
+    addFloatingText(canvas.width / 2 - 50, 100, "MOTHERSHIP DEFEATED!", "#facc15");
+}
+
 
 if (score % 350 === 0) level++;
 break;
@@ -1102,7 +1127,7 @@ break;
         }
     }
 
-    if (monsterActive && monster) {
+      if (monsterActive && monster) {
         if (!timeFreeze) {
             if (monster.y < 80) monster.y += 2;
             else {
@@ -1123,6 +1148,16 @@ break;
         ctx.fillStyle = "#22c55e";
         ctx.fillRect(monster.x, monster.y - 12, (monster.hp / monster.maxHp) * monster.w, 6);
 
+        // Direct bullets damage
+        for (let j = bullets.length - 1; j >= 0; j--) {
+            let b = bullets[j];
+            if (monster && b.x > monster.x && b.x < monster.x + monster.w && b.y > monster.y && b.y < monster.y + monster.h) {
+                bullets.splice(j, 1);
+                monster.hp = Math.max(0, monster.hp - 2);
+                break;
+            }
+        }
+        // Agar Math Mode ON hai
         if (isMathMode && currentMathQuestion) {
             ctx.fillStyle = "rgba(15, 23, 42, 0.95)";
             ctx.strokeStyle = "#38bdf8";
@@ -1144,7 +1179,7 @@ break;
             ctx.textAlign = "left";
         }
 
-        if (isMathMode && currentMathQuestion && mathDrones.length > 0) {
+                if (isMathMode && currentMathQuestion && mathDrones.length > 0) {
             mathDrones.forEach((drone) => {
                 drone.x += drone.dir * 1.5;
                 if (drone.x < 20 || drone.x + drone.w > canvas.width - 20) drone.dir *= -1;
@@ -1166,18 +1201,16 @@ break;
                     if (b.x > drone.x && b.x < drone.x + drone.w && b.y > drone.y && b.y < drone.y + drone.h) {
                         bullets.splice(j, 1);
                         if (drone.index === currentMathQuestion.correctIndex) {
-    explode(drone.x + drone.w / 2, drone.y + drone.h / 2, "#22c55e", 20);
-    
-    // Normal enemy ka score (10 * combo) ka 1.5 guna (dedh guna) calculate hoga
-    let monsterReward = Math.floor(10 * combo * 1.5);
-    
-    addFloatingText(drone.x, drone.y, `CORRECT! +${monsterReward} ⚡`, "#22c55e");
-    monster.hp -= 40;
-    score += monsterReward;
-    updateHUD();
-    loadNextQuestion();
-}
-                         else {
+                            explode(drone.x + drone.w / 2, drone.y + drone.h / 2, "#22c55e", 20);
+                            
+                            let monsterReward = Math.floor(10 * combo * 1.5);
+                            addFloatingText(drone.x, drone.y, `CORRECT! +${monsterReward} ⚡`, "#22c55e");
+                            
+                            monster.hp = Math.max(0, monster.hp - 40);
+                            score += monsterReward;
+                            updateHUD();
+                            loadNextQuestion();
+                        } else {
                             explode(drone.x + drone.w / 2, drone.y + drone.h / 2, "#ef4444", 15);
                             addFloatingText(drone.x, drone.y, "WRONG! ❌", "#ef4444");
                             screenShake = 14;
@@ -1186,6 +1219,17 @@ break;
                     }
                 }
             });
+        }
+
+        // MONSTER DEFEAT CHECK (Ye monsterActive block ke andar hi hona chahiye)
+        if (monster.hp <= 0) {
+            monsterActive = false;
+            monster = null;
+            mathDrones = [];
+            currentMathQuestion = null;
+            monsterSpawnedAt1000 = false; 
+            explode(canvas.width / 2, 100, "#facc15", 35);
+            addFloatingText(canvas.width / 2 - 50, 100, "MOTHERSHIP DEFEATED!", "#facc15");
         }
     }
 
@@ -1208,4 +1252,50 @@ break;
 
     ctx.restore();
     requestAnimationFrame(update);
+}
+
+// Global tracking array for used question indexes
+window.usedQuestionIndices = window.usedQuestionIndices || [];
+
+async function loadNextQuestion() {
+    let activeSubject = window.selectedSubject || selectedSubject || "math";
+    let activeMedium = window.selectedMedium || selectedMedium || "english";
+    
+    let cacheList = window.dynamicQuestionCache[activeSubject];
+    if (!cacheList || cacheList.length === 0) {
+        let catMap = { science: 17, math: 19, reasoning: 18, currentAffairs: 9 };
+        let catId = catMap[activeSubject] || 19;
+        let freshData = await fetchApiQuestions(catId, 10);
+        if (freshData && freshData.length > 0) {
+            window.dynamicQuestionCache[activeSubject] = freshData;
+            cacheList = freshData;
+        } else {
+            cacheList = window.dynamicQuestionCache['math'] || [];
+        }
+    }
+    
+    if (cacheList && cacheList.length > 0) {
+        let availableQuestions = cacheList.filter((_, idx) => !window.usedQuestionIndices.includes(idx));
+        
+        if (availableQuestions.length === 0) {
+            window.usedQuestionIndices = []; 
+            availableQuestions = cacheList;
+        }
+
+        let randomIndex = Math.floor(Math.random() * availableQuestions.length);
+        let originalIndex = cacheList.indexOf(availableQuestions[randomIndex]);
+        window.usedQuestionIndices.push(originalIndex);
+
+        let rawQ = availableQuestions[randomIndex];
+        
+        let translatedQ = await translateText(rawQ.question, activeMedium);
+        let translatedOptions = await Promise.all(rawQ.options.map(opt => translateText(opt, activeMedium)));
+
+        currentMathQuestion = {
+            question: translatedQ,
+            options: translatedOptions,
+            correctIndex: rawQ.correctIndex
+        };
+        setupMathDrones();
+    }
 }
