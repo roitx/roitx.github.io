@@ -27,6 +27,24 @@
 <meta property="twitter:image" content="https://roitx.qd.je/profile.png">
 
 
+<script>
+  let isAskChatAudioUnlocked = false;
+  
+  function unlockAskChatAudio() {
+      if (isAskChatAudioUnlocked) return;
+      if ('speechSynthesis' in window) {
+          const silentUtter = new SpeechSynthesisUtterance("");
+          silentUtter.volume = 0;
+          window.speechSynthesis.speak(silentUtter);
+          isAskChatAudioUnlocked = true;
+          console.log("🔊 Ask-Chat Audio Unlocked!");
+      }
+  }
+
+  ['click', 'touchstart', 'keydown'].forEach(evt => {
+      window.addEventListener(evt, unlockAskChatAudio, { once: true });
+  });
+</script>
 
 
 <!-- GOOGLE SCHEMA MARKUP (JSON-LD FOR CRAWLERS) -->
