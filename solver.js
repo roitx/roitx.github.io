@@ -1,25 +1,24 @@
 /* =====================================================
    SOLVER.JS — HYBRID CHATBOT, QUEUE ENGINE & MODAL PANEL
-   (RESPONSIVE HIGHLIGHT MODAL + CAMERA & FILE CHOICE)
    ===================================================== */
 
 let userMsgCount = 0;    
 let currentLanguage = 'hinglish'; 
 let selectedSubject = 'General';
-let selectedBase64Image = null; // Stores final image payload for Vision AI
-let cropperInstance = null;      // Cropper.js instance
+let selectedBase64Image = null; 
+let cropperInstance = null;      
 
-// Pencil / Highlight Canvas Variables
 let isDrawing = false;
-let drawColor = '#ef4444'; // Default Red Pencil
+let drawColor = '#ef4444'; 
 let drawLineWidth = 4;
-let strokeHistory = []; // Undo Stack
+let strokeHistory = []; 
 
 if (!window.supabaseClient) {
   console.error("❌ Supabase connection missing");
 }
+
 // =========================================================
-// SOLVER.JS — VOICE / TTS EXTENSION (MATCHED WITH ASK-CHAT)
+// VOICE / TTS EXTENSION & PRELOAD ENGINE
 // =========================================================
 
 let currentUtterance = null;
@@ -29,7 +28,6 @@ let isSpeechEnabledGlobally = localStorage.getItem('roitx_speech_pref') !== null
 
 window.activeSpeakerBtn = null;
 
-// ---- PRELOAD & AUDIO UNLOCK ENGINE ----
 let isAudioUnlocked = false;
 let pendingGreetingText = null;
 let windowActiveFirstSpeakerBtn = null;
@@ -40,7 +38,6 @@ function unlockAudioEngine() {
         const dummyUtter = new SpeechSynthesisUtterance("");
         window.speechSynthesis.speak(dummyUtter);
         isAudioUnlocked = true;
-        console.log("🔊 Solver TTS Engine Preloaded & Unlocked!");
 
         if (pendingGreetingText && windowActiveFirstSpeakerBtn) {
             speakText(pendingGreetingText, windowActiveFirstSpeakerBtn, true);
@@ -53,7 +50,6 @@ window.addEventListener('click', unlockAudioEngine, { once: true });
 window.addEventListener('touchstart', unlockAudioEngine, { once: true });
 window.addEventListener('keydown', unlockAudioEngine, { once: true });
 
-// ---- TEXT CLEANING FOR NATURAL SPEECH ----
 function cleanTextForNaturalSpeech(text) {
   if (!text) return "";
   let clean = String(text);
@@ -78,77 +74,100 @@ function stopCurrentSpeech() {
   }
 }
 
-// ---- SPEAK TEXT FUNCTION ----
 function speakText(rawText, btnElement, forcePlay = false) {
-  if (!('speechSynthesis' in window)) return;
-  
-  window.speechSynthesis.cancel();
+    if (!('speechSynthesis' in window)) return;
 
-  if (!isSpeechEnabledGlobally && !forcePlay) return;
+    try {
+        window.speechSynthesis.cancel();
+        if (!isSpeechEnabledGlobally && !forcePlay) return;
 
-  const plainText = cleanTextForNaturalSpeech(rawText);
-  if (!plainText) return;
+        const plainText = cleanTextForNaturalSpeech(rawText);
+        if (!plainText) return;
 
-  currentUtterance = new SpeechSynthesisUtterance(plainText);
-  currentUtterance.rate = 0.95; 
-  currentUtterance.pitch = 0.9; 
+        currentUtterance = new SpeechSynthesisUtterance(plainText);
+        currentUtterance.rate = 1.0; 
+        currentUtterance.pitch = 1.0; 
+        currentUtterance.lang = currentLanguage === 'hi' ? 'hi-IN' : 'en-IN';
 
-  const voices = window.speechSynthesis.getVoices();
-  const selectedVoice = voices.find(v => 
-      (v.lang.includes('hi') || v.lang.includes('en')) && 
-      (v.name.toLowerCase().includes('madhur') || v.name.toLowerCase().includes('male') || v.name.toLowerCase().includes('hemant') || v.name.toLowerCase().includes('google'))
-  ) || voices.find(v => v.lang.includes('hi-IN')) || voices[0];
+        if (btnElement) {
+            if (window.activeSpeakerBtn && window.activeSpeakerBtn !== btnElement) {
+                window.activeSpeakerBtn.classList.remove('speaking');
+            }
+            btnElement.classList.add('speaking');
+            window.activeSpeakerBtn = btnElement;
+        }
 
-  if (selectedVoice) {
-      currentUtterance.voice = selectedVoice;
-      currentUtterance.lang = selectedVoice.lang;
-  } else {
-      currentUtterance.lang = 'hi-IN';
-  }
+        currentUtterance.onend = () => {
+            if (btnElement) btnElement.classList.remove('speaking');
+            if (window.activeSpeakerBtn === btnElement) window.activeSpeakerBtn = null;
+        };
 
-  if (btnElement) {
-      if (window.activeSpeakerBtn && window.activeSpeakerBtn !== btnElement) {
-          window.activeSpeakerBtn.classList.remove('speaking');
-      }
-      btnElement.classList.add('speaking');
-      window.activeSpeakerBtn = btnElement;
-  }
+        currentUtterance.onerror = () => {
+            window.speechSynthesis.cancel();
+            if (btnElement) btnElement.classList.remove('speaking');
+            if (window.activeSpeakerBtn === btnElement) window.activeSpeakerBtn = null;
+        };
 
-  currentUtterance.onend = () => {
-      if (btnElement) btnElement.classList.remove('speaking');
-      if (window.activeSpeakerBtn === btnElement) window.activeSpeakerBtn = null;
-  };
+        setTimeout(() => {
+            window.speechSynthesis.speak(currentUtterance);
+        }, 200);
 
-  currentUtterance.onerror = (event) => {
-      console.error("Speech error:", event);
-      if (btnElement) btnElement.classList.remove('speaking');
-      if (window.activeSpeakerBtn === btnElement) window.activeSpeakerBtn = null;
-  };
-
-  setTimeout(() => {
-      window.speechSynthesis.speak(currentUtterance);
-  }, 100);
+    } catch (err) {
+        if (btnElement) btnElement.classList.remove('speaking');
+    }
 }
 
-// ---- OVERRIDE APPEND CHAT MESSAGE TO INCLUDE SPEAKER BUTTON ----
-const originalAppendChatMessage = typeof appendChatMessage === 'function' ? appendChatMessage : null;
+/* =====================================================
+   TOAST NOTIFICATION POPUP (FOR THUMBS UP/DOWN)
+   ===================================================== */
+function showToast(message) {
+  let toast = document.getElementById("roitxToastPopup");
+  if (!toast) {
+    toast = document.createElement("div");
+    toast.id = "roitxToastPopup";
+    toast.style.cssText = `
+      position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px);
+      background: rgba(15, 23, 42, 0.95); border: 1px solid #38bdf8; color: #fff;
+      padding: 10px 20px; border-radius: 30px; font-size: 13px; font-weight: 600;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 100000; opacity: 0;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); backdrop-filter: blur(6px);
+      display: flex; align-items: center; gap: 8px;
+    `;
+    document.body.appendChild(toast);
+  }
+  toast.innerHTML = `✨ ${message}`;
+  toast.style.opacity = "1";
+  toast.style.transform = "translateX(-50%) translateY(0)";
 
-window.appendChatMessage = function(htmlContent, type = "ai", showTime = true) {
+  clearTimeout(window.toastTimer);
+  window.toastTimer = setTimeout(() => {
+    toast.style.opacity = "0";
+    toast.style.transform = "translateX(-50%) translateY(20px)";
+  }, 2500);
+}
+
+/* =====================================================
+   APPEND CHAT MESSAGE (WITH TYPEWRITER, SPEAKER & FEEDBACK)
+   ===================================================== */
+window.appendChatMessage = function(htmlContent, type = "ai", showTime = true, enableTypewriter = false) {
   const container = document.getElementById("answerHistory");
   if (!container) return;
 
   const msgDiv = document.createElement("div");
   msgDiv.className = `chat-bubble ${type}`;
   
-  // Agar AI message hai toh bottom-right par speaker button add karein
+  const speakerBtn = document.createElement('button');
+  const contentDiv = document.createElement("div");
+  contentDiv.className = "msg-content-body";
+
   if (type === "ai") {
     const speakerOnSvg = `<svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5zM19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
     const speakerOffSvg = `<svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5zM23 9l-6 6M17 9l6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
     
-    const speakerBtn = document.createElement('button');
     speakerBtn.className = 'msg-speaker-btn';
     speakerBtn.title = "Toggle Voice Output";
     speakerBtn.innerHTML = isSpeechEnabledGlobally ? speakerOnSvg : speakerOffSvg;
+    speakerBtn.style.display = "none"; // Shuru me hidden rahega jab tak text complete n ho
 
     speakerBtn.onclick = (e) => {
         e.stopPropagation();
@@ -165,34 +184,88 @@ window.appendChatMessage = function(htmlContent, type = "ai", showTime = true) {
         }
     };
     msgDiv.appendChild(speakerBtn);
-
-    // Auto speech play for AI responses
-    if (isSpeechEnabledGlobally) {
-        setTimeout(() => {
-            speakText(htmlContent, speakerBtn, true);
-        }, 300);
-    }
   }
 
-  const contentDiv = document.createElement("div");
-  contentDiv.className = "msg-content-body";
-  contentDiv.innerHTML = htmlContent;
   msgDiv.appendChild(contentDiv);
 
-  const timeStamp = showTime ? `<span class="chat-time">${getCurrentFormattedTime()}</span>` : '';
+  // Thumbs Up / Down Bar for AI responses
+  if (type === "ai") {
+    const feedbackBar = document.createElement("div");
+    feedbackBar.className = "msg-feedback-bar";
+    feedbackBar.style.cssText = `
+      display: flex; gap: 12px; align-items: center; margin-top: 10px; 
+      padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.08);
+    `;
+
+    const thumbsUpSvg = `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>`;
+    const thumbsDownSvg = `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"></path></svg>`;
+
+    const upBtn = document.createElement("button");
+    upBtn.title = "Helpful";
+    upBtn.innerHTML = thumbsUpSvg;
+    upBtn.style.cssText = "background:transparent; border:none; color:#94a3b8; cursor:pointer; display:flex; align-items:center; transition:color 0.2s;";
+    upBtn.onmouseover = () => upBtn.style.color = "#4ade80";
+    upBtn.onmouseout = () => upBtn.style.color = "#94a3b8";
+    upBtn.onclick = () => showToast("Aapka bahut-bahut shukriya! Feedback recorded 👍");
+
+    const downBtn = document.createElement("button");
+    downBtn.title = "Not Helpful";
+    downBtn.innerHTML = thumbsDownSvg;
+    downBtn.style.cssText = "background:transparent; border:none; color:#94a3b8; cursor:pointer; display:flex; align-items:center; transition:color 0.2s;";
+    downBtn.onmouseover = () => downBtn.style.color = "#f87171";
+    downBtn.onmouseout = () => downBtn.style.color = "#94a3b8";
+    downBtn.onclick = () => showToast("Feedback note kar liya gaya hai. Isme sudhar kiya jayega 👎");
+
+    feedbackBar.appendChild(upBtn);
+    feedbackBar.appendChild(downBtn);
+    msgDiv.appendChild(feedbackBar);
+  }
+
   if (showTime) {
     const timeDiv = document.createElement("div");
-    timeDiv.innerHTML = timeStamp;
+    timeDiv.innerHTML = `<span class="chat-time">${getCurrentFormattedTime()}</span>`;
     msgDiv.appendChild(timeDiv);
   }
 
   container.appendChild(msgDiv);
   scrollToBottom();
-  renderMathSafely(msgDiv);
+
+  if (enableTypewriter && type === "ai") {
+    let charIndex = 0;
+    contentDiv.innerHTML = ""; 
+
+    function typeWriter() {
+        if (charIndex < htmlContent.length) {
+            charIndex = Math.min(charIndex + 6, htmlContent.length); // Speed badha di gayi hai taaki text kate nahi
+            contentDiv.innerHTML = htmlContent.substring(0, charIndex);
+            scrollToBottom();
+            setTimeout(typeWriter, 12);
+        } else {
+            contentDiv.innerHTML = htmlContent; 
+            renderMathSafely(msgDiv);
+            scrollToBottom();
+
+            // Jab text poora type ho jaye, tabhi speaker button dikhe aur speech chale
+            if (speakerBtn) {
+              speakerBtn.style.display = "flex";
+            }
+            if (isSpeechEnabledGlobally) {
+              const tempDiv = document.createElement("div");
+              tempDiv.innerHTML = htmlContent;
+              speakText(tempDiv.innerText || htmlContent, speakerBtn, true);
+            }
+        }
+    }
+    typeWriter();
+  } else {
+    contentDiv.innerHTML = htmlContent;
+    renderMathSafely(msgDiv);
+    if (speakerBtn) speakerBtn.style.display = "flex";
+  }
 };
 
 /* =====================================================
-   INLINE SVG ICONS LIBRARY
+   SVG ICONS LIBRARY & UTILITIES
    ===================================================== */
 const SVG_ICONS = {
   math: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19l4-14 4 14 4-14 4 14"></path></svg>`,
@@ -205,6 +278,181 @@ const SVG_ICONS = {
   lang: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1 4-10z"></path></svg>`,
   admin: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"></path><path d="M22 2l-7 20-4-9-9-4 20-7z"></path></svg>`
 };
+
+function getQuestion() {
+  const el = document.getElementById("question");
+  return el ? el.value.trim() : "";
+}
+
+function clearQuestionInput() {
+  const el = document.getElementById("question");
+  if (el) el.value = "";
+}
+
+function getCurrentFormattedTime() {
+  const now = new Date();
+  return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function renderMathSafely(element) {
+  if (window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
+    window.MathJax.typesetPromise([element]).catch((err) => console.warn("MathJax error:", err));
+  } else if (window.MathJax && typeof window.MathJax.typeset === 'function') {
+    window.MathJax.typeset([element]);
+  }
+}
+
+function scrollToBottom() {
+  const container = document.getElementById("answerHistory");
+  if (container) {
+    setTimeout(() => {
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: 'smooth'
+      });
+    }, 100);
+  }
+}
+
+function cleanAIResponse(rawText) {
+  let text = rawText || "";
+  if (text.includes("Step 1") || text.includes("Step1") || text.includes("चरण 1")) {
+    const matchIdx = text.search(/(Step 1|Step1|चरण 1|Given|दिया गया)/i);
+    if (matchIdx !== -1) text = text.substring(matchIdx);
+  }
+  return text
+    .replace(/I need to follow.*?\n/gi, "")
+    .replace(/Let's look at.*?\n/gi, "")
+    .replace(/Drafting response.*?\n/gi, "")
+    .replace(/Strict instructions.*?\n/gi, "")
+    .trim();
+}
+
+function getSessionId() {
+  let sid = localStorage.getItem("solver_sid");
+  if (!sid) {
+    sid = crypto.randomUUID();
+    localStorage.setItem("solver_sid", sid);
+  }
+  return sid;
+}
+
+function escapeHtml(str) {
+  return String(str || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+}
+
+/* =====================================================
+   MAIN AI SOLVE ENGINE
+   ===================================================== */
+async function solveWithAI(questionText, imageBase64 = null) {
+  const loadingId = "loading-" + Date.now();
+  appendChatMessage(`
+    <div id="${loadingId}" class="typing-indicator">
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+    </div>`, "ai", false, false);
+
+  const sendBtn = document.getElementById("solveBtn");
+  if (sendBtn) sendBtn.disabled = true;
+
+  const SUPABASE_FUNCTION_URL = window.SUPABASE_FUNCTION_URL || "https://ktastwehnnqicriknewr.supabase.co/functions/v1/smart-task";
+  const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0YXN0d2Vobm5xaWNyaWtuZXdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyNTk5NTEsImV4cCI6MjA4MDgzNTk1MX0.5_UvwaG0X8k_Emj-cMC0KjEqlvU6hgAt5IsHJdgARvk"; 
+
+  let PROMPT = "";
+  if (currentLanguage === 'en') {
+    PROMPT = `You are an expert tutor for Class 9-12. Subject: ${selectedSubject}. Solve step-by-step in English. Use LaTeX for math.`;
+  } else if (currentLanguage === 'hi') {
+    PROMPT = `You are an expert tutor for Class 9-12. Subject: ${selectedSubject}. Solve in Hindi Devanagari script. Use LaTeX for math.`;
+  } else {
+    PROMPT = `You are an expert tutor for Class 9-12. Subject: ${selectedSubject}. Solve in clean Hinglish. Use LaTeX for math.`;
+  }
+
+  try {
+    const response = await fetch(SUPABASE_FUNCTION_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": SUPABASE_ANON_KEY,
+        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+      },
+      body: JSON.stringify({ 
+        prompt: `${PROMPT}\n\nQuery: ${questionText || "Solve the attached question"}`,
+        language: currentLanguage,
+        image: imageBase64
+      })
+    });
+
+    const data = await response.json();
+
+    const loadingElem = document.getElementById(loadingId);
+    if (loadingElem && loadingElem.closest('.chat-bubble')) {
+      loadingElem.closest('.chat-bubble').remove();
+    }
+
+    let rawText = "";
+    if (data.choices && data.choices[0]?.message?.content) {
+      rawText = data.choices[0].message.content;
+    } else if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
+      rawText = data.candidates[0].content.parts[0].text;
+    } else if (data.content) {
+      rawText = data.content;
+    } else if (data.result || data.response || data.output || data.message) {
+      rawText = data.result || data.response || data.output || data.message;
+    } else if (data.error) {
+      let errMsg = typeof data.error === 'string' ? data.error : (data.error.message || JSON.stringify(data.error));
+      throw new Error(errMsg);
+    }
+
+    if (rawText) {
+      const cleanContent = cleanAIResponse(rawText);
+      let formattedAnswer = typeof marked !== 'undefined' ? marked.parse(cleanContent) : cleanContent.replace(/\n/g, "<br>");
+      
+      appendChatMessage(`<b>💡 Solution / Answer:</b><br><br>${formattedAnswer}`, "ai", true, true);
+    } else {
+      appendChatMessage(`⚠️ Server Error: Invalid response structure received.`, "system-error", true, false);
+    }
+
+  } catch (err) {
+    const loadingElem = document.getElementById(loadingId);
+    if (loadingElem && loadingElem.closest('.chat-bubble')) {
+      loadingElem.closest('.chat-bubble').remove();
+    }
+    appendChatMessage(`⚠️ Error: ${err.message || 'Network issue'}.`, "system-error", true, false);
+  } finally {
+    const sendBtn = document.getElementById("solveBtn");
+    if (sendBtn) sendBtn.disabled = false;
+  }
+}
+
+async function solve() {
+  const qRaw = getQuestion();
+  const currentImg = selectedBase64Image;
+
+  if (!qRaw && !currentImg) {
+    alert("Kripya koi question type karein ya photo upload karein!");
+    return;
+  }
+
+  userMsgCount++; 
+  let userHtml = escapeHtml(qRaw);
+  if (currentImg) {
+    userHtml = `<div style="margin-bottom:6px;"><img src="${currentImg}" style="max-width:180px; max-height:140px; border-radius:8px; border:1px solid #334155;"></div>` + userHtml;
+  }
+
+  appendChatMessage(userHtml, "user");
+  clearQuestionInput();
+  removeSelectedImage();
+  solveWithAI(qRaw, currentImg);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const chatContainer = document.getElementById("answerHistory");
+  if (chatContainer && chatContainer.children.length === 0) {
+    renderLanguageSelection();
+  }
+});
+
 
 /* =====================================================
    CAMERA vs GALLERY SELECTOR MODAL
@@ -1215,8 +1463,16 @@ window.appendChatMessage = function(htmlContent, type = "ai", showTime = true, e
             if (speakerBtn) {
               speakerBtn.style.display = "flex";
             }
-            if (isSpeechEnabledGlobally) {
-              speakText(htmlContent, speakerBtn, true);
+           // Jab AI response successfully mil jaye aur type ho jaye:
+if (isSpeechEnabledGlobally) {
+    // Yahan hum pure HTML tags hata kar sirf clean text pass karenge
+    const tempDiv = document.createElement("div");
+    tempDiv.innerHTML = formattedAnswer;
+    const purePlainText = tempDiv.innerText || tempDiv.textContent || "";
+    
+    speakText(purePlainText, speakerBtn, true);
+
+
             }
         }
     }
