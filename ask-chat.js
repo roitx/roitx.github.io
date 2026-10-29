@@ -1,5 +1,5 @@
 // =========================================================
-// ask-chat.js — FULL UPDATED WITH MATH EVALUATOR & FIXES
+// ask-chat.js — FULL UPDATED WITH MATH EVALUATOR & FIXED TTS
 // =========================================================
 (function () {
   // ---- PREVENT DOUBLE INITIALIZATION ----
@@ -9,6 +9,14 @@
   // ---- GLOBAL STATE ----
   let selectedLanguage = 'hi'; 
   let miniCalCurDate = new Date();
+  let currentUtterance = null;
+  
+  // LocalStorage se speech preference check karein
+  let isSpeechEnabledGlobally = localStorage.getItem('roitx_speech_pref') !== null 
+      ? localStorage.getItem('roitx_speech_pref') === 'true' 
+      : true; 
+
+  window.activeSpeakerBtn = null;
 
   window.setAskChatLanguage = function(lang) {
     if (lang === 'hi' || lang === 'en') {
@@ -17,6 +25,166 @@
     }
   };
 
+  // ---- TEXT CLEANING FOR TTS (Single Robust Function) ----
+  function cleanTextForNaturalSpeech(text) {
+    if (!text) return "";
+    let clean = String(text);
+    
+    // HTML tags hataein
+    clean = clean.replace(/<[^>]*>?/gm, '');
+    
+    // Common shorthand/slang correction
+    clean = clean.replace(/\bhii\b/gi, 'hi');
+    clean = clean.replace(/\bka\b/gi, 'ka');
+    
+    // LaTeX aur math symbols clean karna
+    clean = clean.replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '$1 batte $2');
+    clean = clean.replace(/\\sqrt\{([^}]+)\}/g, 'square root $1');
+    clean = clean.replace(/[\$\#\&\_\{\}\[\]\\\^\%\~]/g, ' '); 
+    clean = clean.replace(/\\alpha/g, 'alpha');
+    clean = clean.replace(/\\beta/g, 'beta');
+    clean = clean.replace(/\\theta/g, 'theta');
+    clean = clean.replace(/\\pi/g, 'pi');
+    clean = clean.replace(/\\int/g, 'integral');
+    clean = clean.replace(/\\sum/g, 'summation');
+    clean = clean.replace(/\\approx/g, 'lagbhag barabar');
+    clean = clean.replace(/\\neq/g, 'barabar nahi');
+    clean = clean.replace(/\\times/g, 'guna');
+    clean = clean.replace(/\\div/g, 'bhag');
+    
+    return clean.replace(/\s+/g, ' ').trim();
+  }
+
+  // ---- STOP SPEECH FUNCTION ----
+  function stopCurrentSpeech() {
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+    }
+    if (window.activeSpeakerBtn) {
+        window.activeSpeakerBtn.classList.remove('speaking');
+        window.activeSpeakerBtn = null;
+    }
+  }
+
+  // ---- SPEAK TEXT FUNCTION (FIXED) ----
+function speakText(rawText, btnElement, forcePlay = false) {
+  if (!('speechSynthesis' in window)) return;
+  
+  window.speechSynthesis.cancel();
+  if (!isSpeechEnabledGlobally && !forcePlay) return;
+
+  const plainText = cleanTextForNaturalSpeech(rawText);
+  if (!plainText) return;
+
+  currentUtterance = new SpeechSynthesisUtterance(plainText);
+  currentUtterance.rate = 1.0;  // Normal speed taaki aawaz fate nahi
+  currentUtterance.pitch = 1.0; // Natural pitch
+
+  // Sabse best aur saaf HD voice uthane ka logic
+  const voices = window.speechSynthesis.getVoices();
+  
+  // Microsoft ya Google ki natural/online voices ko sabse pehle select karein
+  const bestVoice = voices.find(v => 
+      (v.name.includes('Natural') || v.name.includes('Online') || v.name.includes('Google')) && 
+      (v.lang.includes('hi') || v.lang.includes('en'))
+  ) || voices.find(v => v.lang.includes('hi-IN')) || voices[0];
+
+  if (bestVoice) {
+      currentUtterance.voice = bestVoice;
+      currentUtterance.lang = bestVoice.lang;
+  }
+
+  if (btnElement) {
+      if (window.activeSpeakerBtn && window.activeSpeakerBtn !== btnElement) {
+          window.activeSpeakerBtn.classList.remove('speaking');
+      }
+      btnElement.classList.add('speaking');
+      window.activeSpeakerBtn = btnElement;
+  }
+
+  currentUtterance.onend = () => {
+      if (btnElement) btnElement.classList.remove('speaking');
+      if (window.activeSpeakerBtn === btnElement) window.activeSpeakerBtn = null;
+  };
+
+  currentUtterance.onerror = () => {
+      if (btnElement) btnElement.classList.remove('speaking');
+      if (window.activeSpeakerBtn === btnElement) window.activeSpeakerBtn = null;
+  };
+
+  window.speechSynthesis.speak(currentUtterance);
+}
+
+// Global voices cache
+let cachedVoices = [];
+
+function loadSystemVoices() {
+    if ('speechSynthesis' in window) {
+        cachedVoices = window.speechSynthesis.getVoices();
+    }
+}
+
+if ('speechSynthesis' in window) {
+    loadSystemVoices();
+    window.speechSynthesis.onvoiceschanged = loadSystemVoices;
+}
+
+// ---- BULLETPROOF SPEAK TEXT FUNCTION ----
+function speakText(rawText, btnElement, forcePlay = false) {
+    if (!('speechSynthesis' in window)) {
+        console.warn("Speech Synthesis is not supported in this browser.");
+        return;
+    }
+
+    try {
+        // Browser ki stuck speech queue ko force clear karne ke liye
+        window.speechSynthesis.cancel();
+
+        if (!isSpeechEnabledGlobally && !forcePlay) return;
+
+        const plainText = cleanTextForNaturalSpeech(rawText);
+        if (!plainText) return;
+
+        currentUtterance = new SpeechSynthesisUtterance(plainText);
+        currentUtterance.rate = 1.0; 
+        currentUtterance.pitch = 1.0; 
+
+        // Language set karna
+        currentUtterance.lang = selectedLanguage === 'hi' ? 'hi-IN' : 'en-IN';
+
+        if (btnElement) {
+            if (window.activeSpeakerBtn && window.activeSpeakerBtn !== btnElement) {
+                window.activeSpeakerBtn.classList.remove('speaking');
+            }
+            btnElement.classList.add('speaking');
+            window.activeSpeakerBtn = btnElement;
+        }
+
+        currentUtterance.onend = () => {
+            if (btnElement) btnElement.classList.remove('speaking');
+            if (window.activeSpeakerBtn === btnElement) window.activeSpeakerBtn = null;
+        };
+
+        currentUtterance.onerror = (event) => {
+            console.warn("Speech synthesis error/blocked:", event);
+            window.speechSynthesis.cancel(); // Error aane par queue clear karein
+            if (btnElement) btnElement.classList.remove('speaking');
+            if (window.activeSpeakerBtn === btnElement) window.activeSpeakerBtn = null;
+        };
+
+        // Safe delay taaki browser engine free ho jaye
+        setTimeout(() => {
+            window.speechSynthesis.speak(currentUtterance);
+        }, 200);
+
+    } catch (err) {
+        console.error("Speech exception caught:", err);
+        if (btnElement) btnElement.classList.remove('speaking');
+    }
+}
+
+
+    
   // ---- DOM ELEMENTS ----
   const chatWindow = document.getElementById('chatWindow');
   const input = document.getElementById('chatInput');
@@ -53,7 +221,8 @@
   window.runCommand = (text) => { if (!input) return; input.value = text; onSend(); };
 
   // ---- USER WELCOME GREETING ----
-  async function initUserGreeting() {
+  // Jab page load ho aur pehli baar bot message aaye
+async function initUserGreeting() {
     let displayName = "Student";
 
     try {
@@ -78,7 +247,7 @@
       console.warn("User session greeting error:", err);
     }
 
-    addBotMsg(`
+    const greetingHTML = `
       <div style="background: linear-gradient(135deg, rgba(6,182,212,0.1), rgba(59,130,246,0.1)); border: 1px solid rgba(6,182,212,0.3); border-radius: 10px; padding: 12px;">
         <div style="font-weight: bold; color: #38bdf8; font-size: 14px; display: flex; align-items: center; gap: 6px;">
           ${SVG.user} Namaste, ${escapeHtml(displayName)}!
@@ -87,8 +256,19 @@
           Main aapka <b>Roitx AI Assistant</b> hu. Books, PDF Notes, Formulas, Calculator, ya PDF Export tools accessibility active hain.
         </div>
       </div>
-    `);
-  }
+    `;
+
+    addBotMsg(greetingHTML, true);
+
+    // Thoda sa delay dekar greeting ko automatic speak trigger karein
+    setTimeout(() => {
+        if (isSpeechEnabledGlobally) {
+            const speakerBtn = document.querySelector('.msg.bot .msg-speaker-btn');
+            speakText(greetingHTML, speakerBtn, true);
+        }
+    }, 800);
+}
+
 
   // ---- UI MESSAGING & MATH RENDERING HELPERS ----
   function addUserMsg(text) {
@@ -127,18 +307,154 @@
 
     return text;
   }
+     
+// =========================================================
+// FIXED & CLEANED GREETING, AUDIO UNLOCK & SPEECH MODULE
+// =========================================================
 
-  function addBotMsg(htmlContent) {
+// ---- ADVANCED AUTO-UNLOCK & GREETING FIX ----
+let isAudioUnlocked = false;
+
+// Page load hote hi background me audio unlock karne ki koshish
+window.addEventListener('DOMContentLoaded', () => {
+    if ('speechSynthesis' in window) {
+        const silentUtter = new SpeechSynthesisUtterance("");
+        silentUtter.volume = 0; // Silent taaki user ko disturb na ho
+        window.speechSynthesis.speak(silentUtter);
+    }
+});
+
+function unlockAudioEngine() {
+    if (isAudioUnlocked) return;
+    if ('speechSynthesis' in window) {
+        const dummyUtter = new SpeechSynthesisUtterance("");
+        window.speechSynthesis.speak(dummyUtter);
+        isAudioUnlocked = true;
+        console.log("🔊 Audio engine fully unlocked!");
+    }
+}
+
+// User ke kisi bhi action par audio 100% active ho jayega
+['click', 'touchstart', 'mousemove', 'keydown'].forEach(evt => {
+    window.addEventListener(evt, unlockAudioEngine, { once: true });
+});
+
+
+// ---- USER WELCOME GREETING ----
+async function initUserGreeting() {
+    let displayName = "Student";
+
+    try {
+      if (window.supabaseClient) {
+        const { data: { session }, error } = await window.supabaseClient.auth.getSession();
+        if (session && session.user && !error) {
+          const user = session.user;
+          const { data: profile } = await window.supabaseClient
+            .from('profiles')
+            .select('full_name')
+            .eq('id', user.id)
+            .maybeSingle();
+
+          if (profile && profile.full_name && profile.full_name.trim() !== "") {
+            displayName = profile.full_name.trim();
+          } else if (user.email) {
+            displayName = user.email.split('@')[0];
+          }
+        }
+      }
+    } catch (err) {
+      console.warn("User session greeting error:", err);
+    }
+
+    const greetingHTML = `
+      <div style="background: linear-gradient(135deg, rgba(6,182,212,0.1), rgba(59,130,246,0.1)); border: 1px solid rgba(6,182,212,0.3); border-radius: 10px; padding: 12px;">
+        <div style="font-weight: bold; color: #38bdf8; font-size: 14px; display: flex; align-items: center; gap: 6px;">
+          ${SVG.user} Namaste, ${escapeHtml(displayName)}!
+        </div>
+        <div style="font-size: 12px; color: #e2e8f0; margin-top: 6px;">
+          Main aapka <b>Roitx AI Assistant</b> hu. Books, PDF Notes, Formulas, Calculator, ya PDF Export tools accessibility active hain.
+        </div>
+      </div>
+    `;
+
+    // Greeting message ko bot chat me render karna
+    addBotMsg(greetingHTML, true); 
+}
+
+// ---- UNIFIED BOT MESSAGE & TYPEWRITER FUNCTION ----
+function addBotMsg(htmlContent, isGreeting = false) {
     if (!chatWindow) return;
     const d = document.createElement('div'); 
     d.className = 'msg bot'; 
-    d.innerHTML = htmlContent;
+
+    const speakerOnSvg = `<svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5zM19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    const speakerOffSvg = `<svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5zM23 9l-6 6M17 9l6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    
+    const speakerBtn = document.createElement('button');
+    speakerBtn.className = 'msg-speaker-btn';
+    speakerBtn.title = "Toggle Voice Output";
+    speakerBtn.innerHTML = isSpeechEnabledGlobally ? speakerOnSvg : speakerOffSvg;
+
+    speakerBtn.onclick = (e) => {
+        e.stopPropagation();
+        if (window.speechSynthesis && window.speechSynthesis.speaking && window.activeSpeakerBtn === speakerBtn) {
+            stopCurrentSpeech();
+            isSpeechEnabledGlobally = false;
+            localStorage.setItem('roitx_speech_pref', 'false');
+            speakerBtn.innerHTML = speakerOffSvg;
+        } else {
+            isSpeechEnabledGlobally = true;
+            localStorage.setItem('roitx_speech_pref', 'true');
+            speakerBtn.innerHTML = speakerOnSvg;
+            speakText(contentDiv.innerText || htmlContent, speakerBtn, true);
+        }
+    };
+
+    d.appendChild(speakerBtn);
+
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'msg-content-body';
+    d.appendChild(contentDiv);
+
     chatWindow.appendChild(d); 
     chatWindow.scrollTop = chatWindow.scrollHeight;
 
-    // Trigger MathJax Render
-    renderMathSafely(d);
-  }
+    // Speech execution
+    if (isSpeechEnabledGlobally) {
+        if (isGreeting) {
+            if (isAudioUnlocked) {
+                speakText(htmlContent, speakerBtn, true);
+            } else {
+                pendingGreetingText = htmlContent;
+                windowActiveFirstSpeakerBtn = speakerBtn;
+            }
+        } else {
+            try {
+                speakText(htmlContent, speakerBtn, true);
+            } catch (e) {
+                console.warn("Speech error:", e);
+            }
+        }
+    }
+
+    // Fast & Smooth Typewriter Effect
+    let charIndex = 0;
+    contentDiv.innerHTML = ""; 
+
+    function typeWriter() {
+        if (charIndex < htmlContent.length) {
+            charIndex = Math.min(charIndex + 4, htmlContent.length);
+            contentDiv.innerHTML = htmlContent.substring(0, charIndex);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+            setTimeout(typeWriter, 15);
+        } else {
+            contentDiv.innerHTML = htmlContent; 
+            renderMathSafely(d);
+        }
+    }
+
+    typeWriter();
+}
 
   function showTyping() {
     if (!chatWindow) return null;

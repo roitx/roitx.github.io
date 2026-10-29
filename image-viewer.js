@@ -191,7 +191,7 @@ async function initImageViewer() {
                         img.style.filter = "blur(25px)";
                         showPurchaseRequiredModal();
                     }
-                }, 10000); 
+                }, 5000); 
             } else {
                 applyImageFilters();
             }
@@ -332,7 +332,16 @@ function getImageBookmarks() {
     return JSON.parse(localStorage.getItem("image_bookmarks") || "[]");
 }
 
-window.toggleCurrentBookmark = () => {
+window.toggleCurrentBookmark = async () => {
+    const isParamPremium = new URLSearchParams(location.search).get("type") === "premium" || (rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium")));
+    const isPurchased = await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "");
+
+    // Agar premium hai aur purchase nahi kiya, toh bookmark save nahi hoga aur popup aa jayega
+    if (isParamPremium && !isPurchased) {
+        showPurchaseRequiredModal();
+        return;
+    }
+
     let bookmarks = getImageBookmarks();
     const existingIndex = bookmarks.findIndex(b => b.url === rawPath);
     
