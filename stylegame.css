@@ -12,6 +12,40 @@
     font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
 }
 /* ==========================================
+   MOBILE MODE SIZE OPTIMIZATION (DESKTOP SAFE)
+   ========================================== */
+@media screen and (max-width: 768px) {
+  /* Canvas elements aur touch controls ko mobile friendly aur compact banana */
+  #gameCanvas {
+    transform: scale(1);
+  }
+  
+  /* Agar aapko game ke andar render hone wale UI/text boxes ko mobile me thoda chhota karna ho */
+  .study-question-terminal {
+    max-width: 88% !important;
+    padding: 8px 10px !important;
+    font-size: 11px !important;
+  }
+
+  /* Mobile buttons ko compact karna taaki screen par space achhi mile */
+  .move-btn {
+    width: 52px !important;
+    height: 52px !important;
+    font-size: 10px !important;
+  }
+
+  .move-btn.ultimate-btn {
+    width: 60px !important;
+    height: 60px !important;
+  }
+
+  .move-btn.dash-btn {
+    width: 52px !important;
+    height: 52px !important;
+  }
+}
+
+/* ==========================================
    PROFESSIONAL GAME APP START SCREEN STYLES
    ========================================== */
 
