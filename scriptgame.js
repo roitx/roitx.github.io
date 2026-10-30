@@ -28,10 +28,14 @@ function resize() {
     canvas.width = window.innerWidth; 
     canvas.height = window.innerHeight; 
     if (player) {
-        player.y = canvas.height - 120;
+        let screenHeight = canvas.height || window.innerHeight || 600;
+        // Yahan -120 ki jagah -140 ya safe padding dein taaki jet screen ke andar rahe
+        player.y = screenHeight - 140; 
+        
         if (player.x > canvas.width - player.w) player.x = canvas.width - player.w;
     }
 }
+
 window.addEventListener("resize", resize);
 
 let game = false, paused = false, score = 0, coins = 0, lives = 12, level = 1;
@@ -682,7 +686,8 @@ function spawnPowerup(x, y) {
         powerups.push({ x, y, type: types[Math.floor(Math.random() * types.length)], size: 24 });
     }
     if (Math.random() < 0.75) {
-        coinDrops.push({ x, y, size: 14 });
+        coinDrops.push({ x: x, y: y, w: 28, h: 28, size: 28 });
+
     }
 }
 
@@ -800,10 +805,13 @@ async function startGame() {
         await loadNextQuestion();
     }
 
-    if (canvas) {
+            if (canvas) {
         player.x = canvas.width / 2 - player.w / 2;
-        player.y = canvas.height - 120;
+        // Yeh ensure karega ki jet screen ke andar hi render ho
+        player.y = Math.min(canvas.height - 140, window.innerHeight - 140); 
     }
+
+
     player.speed = shipTypes[selectedShip].speed;
     
     if (startScreen) startScreen.classList.remove("show");
@@ -1041,19 +1049,36 @@ function update() {
         }
     });
 
-    coinDrops.forEach((c, i) => {
+            coinDrops.forEach((c, i) => {
         c.y += 2.2;
-        ctx.fillStyle = "#ffd600";
-        ctx.beginPath(); ctx.arc(c.x, c.y, c.size/2, 0, Math.PI*2); ctx.fill();
-        if (c.x < player.x + player.w && c.x + c.size > player.x && c.y < player.y + player.h && c.y + c.size > player.y) {
+        
+        // 🪙 Yahan hum ensure kar rahe hain ki renderers.js ka 3D function call ho
+        if (typeof drawCoin === "function") {
+            // Agar coin object me w aur h nahi hai, toh default 28 size set kar do
+            c.w = c.w || c.size || 28;
+            c.h = c.h || c.size || 28;
+            drawCoin(ctx, c);
+        } else {
+            // Fallback agar function kisi wajah se na mile
+            ctx.fillStyle = "#ffd600";
+            ctx.beginPath(); 
+            ctx.arc(c.x, c.y, (c.size || 28)/2, 0, Math.PI*2); 
+            ctx.fill();
+        }
+
+        // Player coin collection check
+        if (c.x < player.x + player.w && c.x + (c.w || 28) > player.x && c.y < player.y + player.h && c.y + (c.h || 28) > player.y) {
             coins += 10;
             addFloatingText(c.x, c.y, "+10 🪙", "#ffd600");
-            coinDrops.splice(i, 1); updateHUD();
+            coinDrops.splice(i, 1); 
+            updateHUD();
             if (currentUser) saveUserData();
         }
     });
 
-    powerups.forEach((p, i) => {
+
+
+        powerups.forEach((p, i) => {
         p.y += 1.8;
         if (typeof drawPowerup === "function") {
             drawPowerup(ctx, p);
@@ -1072,13 +1097,57 @@ function update() {
         }
     });
 
+    // 🎯 AYA A CODE-SNIPPET MUKVO (ENEMY & MONSTER BULLETS UPDATE):
+        enemyBullets.forEach((eb, i) => {
+        eb.y += eb.vy;
+        if (typeof drawLaser === "function") {
+            drawLaser(ctx, eb);
+        } else {
+            ctx.fillStyle = eb.isYellowEnemy ? "#facc15" : "#ef4444";
+            ctx.fillRect(eb.x, eb.y, eb.w, eb.h);
+        }
+        
+        // Player collision with enemy/monster bullet
+        if (eb.x < player.x + player.w && eb.x + eb.w > player.x && eb.y < player.y + player.h && eb.y + eb.h > player.y) {
+            enemyBullets.splice(i, 1);
+            if (eb.isYellowEnemy) {
+                // Yellow goli kam damage degi: Sirf shield ya choti life ghatayegi bina heavy screen shake ke
+                lives = Math.max(0, lives - 0.5); 
+                updateHUD();
+                if (lives <= 0) gameOver();
+            } else {
+                hitPlayer(); // Monster ya heavy goli full damage
+            }
+        }
+        if (eb.y > canvas.height) enemyBullets.splice(i, 1);
+    });
+
+
     if (!monsterActive && Math.random() < 0.038) spawnEnemy();
+
+        // 👾 Enemies Update Loop ke andar yellow bullet firing add ki gayi hai
     for (let i = enemies.length - 1; i >= 0; i--) {
         let e = enemies[i];
         if (!timeFreeze) {
             e.y += e.speed;
             e.x += Math.sin(e.y * 0.05 + e.sineOffset) * 2 + (e.flankDir * 0.4);
+
+            // 🔥 Normal Enemy bhi ab yellow laser/goli chhodega (Kam frequency par)
+            if (Math.random() < 0.015) {
+                enemyBullets.push({
+                    x: e.x + e.w / 2,
+                    y: e.y + e.h,
+                    w: 5,
+                    h: 14,
+                    vx: 0,
+                    vy: 4.5, // Thoda dheema taaki kam damage/avoid karna asan ho
+                    isEnemy: true,
+                    isYellowEnemy: true, // Yellow laser flag
+                    damage: 1 // Kam damage
+                });
+            }
         }
+
         if (typeof drawEnemy === "function") drawEnemy(ctx, e);
         if (e.y > canvas.height) { enemies.splice(i, 1); hitPlayer(); }
 
@@ -1091,7 +1160,9 @@ function update() {
                 explode(e.x + e.w/2, e.y + e.h/2, "#f43f5e", 10);
                 enemies.splice(i, 1); bullets.splice(j, 1);
                 score += 10 * combo; 
-updateHUD();
+                updateHUD();
+                
+
 
 // Score check update for monster spawn intervals (Infinite Loop Fix)
 if (!monsterActive) {
@@ -1127,12 +1198,26 @@ break;
         }
     }
 
-      if (monsterActive && monster) {
+           if (monsterActive && monster) {
         if (!timeFreeze) {
             if (monster.y < 80) monster.y += 2;
             else {
                 monster.x += monster.speed * monster.dir;
                 if (monster.x + monster.w > canvas.width || monster.x < 0) monster.dir *= -1;
+            }
+
+            // 🔥 Monster Firing Logic (Simple mode / Normal mode mein monster shoot karega)
+            if (Math.random() < 0.04) {
+                playSynthSound('laser');
+                enemyBullets.push({
+                    x: monster.x + monster.w / 2,
+                    y: monster.y + monster.h,
+                    w: 6,
+                    h: 16,
+                    vx: 0,
+                    vy: 6,
+                    isEnemy: true
+                });
             }
         }
 
@@ -1148,15 +1233,24 @@ break;
         ctx.fillStyle = "#22c55e";
         ctx.fillRect(monster.x, monster.y - 12, (monster.hp / monster.maxHp) * monster.w, 6);
 
-        // Direct bullets damage
+          // Direct bullets damage to Monster + Sound effect + Screen Shake & Particles
         for (let j = bullets.length - 1; j >= 0; j--) {
             let b = bullets[j];
             if (monster && b.x > monster.x && b.x < monster.x + monster.w && b.y > monster.y && b.y < monster.y + monster.h) {
                 bullets.splice(j, 1);
                 monster.hp = Math.max(0, monster.hp - 2);
+                
+                // 💥 Monster ko goli lagne par screen shake aur particles (khoon/explosion)
+                screenShake = 6;
+                explode(b.x, b.y, "#ef4444", 6);
+                
+                // 🔊 Sound effect
+                playSynthSound('blast'); 
                 break;
             }
         }
+
+
         // Agar Math Mode ON hai
         if (isMathMode && currentMathQuestion) {
             ctx.fillStyle = "rgba(15, 23, 42, 0.95)";
