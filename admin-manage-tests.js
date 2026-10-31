@@ -542,7 +542,7 @@ function deleteTest(testId) {
     });
 }
 
-// --- BUG REPORTS MANAGER ---
+// --- BUG REPORTS MANAGER (OPTIMIZED & HANG-FIXED) ---
 async function fetchBugReportsCount() {
   if (!window.supabaseClient) return;
   try {
@@ -550,11 +550,15 @@ async function fetchBugReportsCount() {
       .from('bug_reports')
       .select('*', { count: 'exact', head: true });
     
-    if (!error && count > 0) {
+    if (!error) {
       const badge = document.getElementById('bugBadge');
       if (badge) {
-        badge.innerText = count;
-        badge.style.display = 'flex';
+        if (count > 0) {
+          badge.innerText = count;
+          badge.style.display = 'flex';
+        } else {
+          badge.style.display = 'none';
+        }
       }
     }
   } catch(e) {
@@ -563,9 +567,13 @@ async function fetchBugReportsCount() {
 }
 
 async function openBugReportsModal() {
-  document.getElementById("bugReportsModal").style.display = "flex";
+  const modal = document.getElementById("bugReportsModal");
+  if (modal) modal.style.display = "flex";
+
   const container = document.getElementById("bugReportsContainer");
-  container.innerHTML = `<p style="text-align: center; color: #8E2DE2; font-weight: 600;"><i class="fa-solid fa-spinner fa-spin"></i> Fetching reports...</p>`;
+  if (!container) return;
+
+  container.innerHTML = `<p style="text-align: center; color: #8E2DE2; font-weight: 600; padding: 20px;"><i class="fa-solid fa-spinner fa-spin"></i> Fetching reports...</p>`;
 
   try {
     const { data: reports, error } = await window.supabaseClient
@@ -581,19 +589,26 @@ async function openBugReportsModal() {
     }
 
     let html = "";
-        reports.forEach(r => {
+    reports.forEach(r => {
+      let formattedDate = '';
+      try {
+        formattedDate = r.created_at ? new Date(r.created_at).toLocaleDateString() : '';
+      } catch (e) {
+        formattedDate = '';
+      }
+
       html += `
-        <div style="background: #ffffff; border-radius: 12px; padding: 14px; border: 1px solid #cbd5e1; position: relative;">
+        <div id="bug-card-${r.id}" style="background: #ffffff; border-radius: 12px; padding: 14px; border: 1px solid #cbd5e1; position: relative;">
           <div style="font-size: 11px; color: #64748b; margin-bottom: 4px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px;">
             <span>Test: <b>${r.test_title || r.test_id || 'N/A'}</b> | Class/Stream: <b>${r.class_stream || 'N/A'}</b></span>
-            <span>Q Index: <b>${(r.question_index ?? 0) + 1}</b> | ${new Date(r.created_at).toLocaleDateString()}</span>
+            <span>Q Index: <b>${(r.question_index ?? 0) + 1}</b> | ${formattedDate}</span>
           </div>
           <p style="font-size: 13px; font-weight: 700; color: #1e293b; margin-bottom: 6px;">Q: ${r.question_text || 'No Text'}</p>
           <p style="font-size: 12.5px; color: #dc2626; background: #fef2f2; padding: 8px; border-radius: 6px; margin-bottom: 8px;">
-            <b>Issue:</b> ${r.issue_description}
+            <b>Issue:</b> ${r.issue_description || 'No description'}
           </p>
-          <button onclick="resolveBugReport(${r.id})" style="background: #10b981; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer;">
-            <i class="fa-solid fa-check"></i> Mark Resolved
+          <button type="button" onclick="resolveBugReport('${r.id}')" style="background: #10b981; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer;">
+            <i class="fa-solid fa-check"></i> Mark Resolved & Delete
           </button>
         </div>
       `;
@@ -602,21 +617,40 @@ async function openBugReportsModal() {
     container.innerHTML = html;
 
   } catch (err) {
-    container.innerHTML = `<p style="color: #ef4444; text-align: center;">Error loading reports: ${err.message}</p>`;
+    console.error("Error loading bug reports:", err);
+    container.innerHTML = `<p style="color: #ef4444; text-align: center; padding: 20px;">Error loading reports: ${err.message}</p>`;
   }
 }
 
+
 function closeBugReportsModal() {
-  document.getElementById("bugReportsModal").style.display = "none";
+  const modal = document.getElementById("bugReportsModal");
+  if (modal) modal.style.display = "none";
 }
 
 async function resolveBugReport(reportId) {
-  if (!confirm("Is bug report ko resolve karke delete karna chahte hain?")) return;
+  if (!confirm("Kya aap is bug report ko resolve karke delete karna chahte hain?")) return;
+  
   try {
-    await window.supabaseClient.from('bug_reports').delete().eq('id', reportId);
-    openBugReportsModal();
+    const { data, error } = await window.supabaseClient
+      .from('bug_reports')
+      .delete()
+      .eq('id', reportId);
+
+    if (error) {
+      console.error("Supabase Delete Error:", error);
+      alert("Delete nahi ho paaya: " + error.message);
+      return;
+    }
+
+    // UI se card remove karein
+    const card = document.getElementById(`bug-card-${reportId}`);
+    if (card) card.remove();
+    
     fetchBugReportsCount();
   } catch (err) {
+    console.error("Exception:", err);
     alert("Error deleting report: " + err.message);
   }
 }
+
