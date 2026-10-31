@@ -20,6 +20,13 @@
       tex: { 
         inlineMath: [['$', '$'], ['\\(', '\\)']],
         displayMath: [['$$', '$$'], ['[', ']']]
+      },
+      startup: {
+        pageReady: () => {
+          return MathJax.startup.defaultPageReady().then(() => {
+            makeMathScrollableAndExpandable();
+          });
+        }
       }
     };
   </script>
@@ -193,6 +200,97 @@
     .eng-tag { color: #34d399 !important; }
     .hin-tag { color: #60a5fa !important; }
 
+    /* MATH & EQUATION SCROLLBOX & POPUP */
+    .math-wrapper {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      max-width: 100%;
+      overflow-x: auto;
+      vertical-align: middle;
+      padding: 4px 34px 4px 6px;
+      margin: 4px 0;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 8px;
+      border: 1px dashed rgba(255, 255, 255, 0.12);
+      user-select: text;
+    }
+    .math-wrapper::-webkit-scrollbar {
+      height: 4px;
+    }
+    .math-wrapper::-webkit-scrollbar-thumb {
+      background: rgba(56, 189, 248, 0.3);
+      border-radius: 4px;
+    }
+    .math-expand-btn {
+      position: absolute;
+      right: 4px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(255, 255, 255, 0.08);
+      border: none;
+      color: var(--accent);
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: 0.2s;
+    }
+    .math-expand-btn:hover {
+      background: var(--accent);
+      color: #0f172a;
+    }
+
+    /* EQUATION POPUP MODAL */
+    .math-modal-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 9999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .math-modal-card {
+      background: #111827;
+      border: 1px solid var(--accent);
+      border-radius: 20px;
+      padding: 24px;
+      max-width: 90vw;
+      max-height: 80vh;
+      overflow: auto;
+      box-shadow: 0 15px 40px rgba(56, 189, 248, 0.2);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      align-items: center;
+      position: relative;
+    }
+    .math-modal-content {
+      font-size: 22px;
+      color: #fff;
+      overflow-x: auto;
+      width: 100%;
+      text-align: center;
+      padding: 10px 0;
+    }
+    .math-modal-close {
+      align-self: flex-end;
+      background: rgba(255,255,255,0.1);
+      border: none;
+      color: #fff;
+      padding: 6px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 13px;
+    }
+
     .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--accent); color: #0f172a; padding: 8px 18px; border-radius: 30px; font-weight: 800; font-size: 12px; display: none; z-index: 1000; box-shadow: 0 10px 20px rgba(0,0,0,0.4); }
   </style>
 </head>
@@ -205,6 +303,14 @@
 
   <div class="reader-card" id="mainContainer">
     <div style="text-align:center; padding: 40px; color:var(--text-muted);"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading Question Set...</div>
+  </div>
+
+  <!-- EQUATION FULLSCREEN POPUP -->
+  <div class="math-modal-overlay" id="mathModal">
+    <div class="math-modal-card">
+      <button class="math-modal-close" onclick="closeMathModal()">Close ✖</button>
+      <div class="math-modal-content" id="mathModalContent"></div>
+    </div>
   </div>
 
   <div id="toast" class="toast">Copied to Clipboard!</div>
@@ -242,9 +348,74 @@
   }
 
   function renderMathJax() {
-    if (window.MathJax && typeof window.MathJax.typeset === 'function') {
-      window.MathJax.typeset();
+    if (window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
+      window.MathJax.typesetPromise().then(() => {
+        makeMathScrollableAndExpandable();
+      });
     }
+  }
+
+  /* WRAP MATH ELEMENTS & ADD DOUBLE TAP / EXPAND BUTTON */
+  function makeMathScrollableAndExpandable() {
+    const mathNodes = document.querySelectorAll('mjx-container:not(.math-processed)');
+    
+    mathNodes.forEach(node => {
+      node.classList.add('math-processed');
+
+      // Create scroll wrapper
+      const wrapper = document.createElement('span');
+      wrapper.className = 'math-wrapper';
+
+      node.parentNode.insertBefore(wrapper, node);
+      wrapper.appendChild(node);
+
+      // Add Fullscreen SVG Icon Button
+      const expandBtn = document.createElement('button');
+      expandBtn.className = 'math-expand-btn';
+      expandBtn.title = 'View Fullscreen Equation';
+      expandBtn.innerHTML = `
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 3 21 3 21 9"></polyline>
+          <polyline points="9 21 3 21 3 15"></polyline>
+          <line x1="21" y1="3" x2="14" y2="10"></line>
+          <line x1="3" y1="21" x2="10" y2="14"></line>
+        </svg>
+      `;
+
+      expandBtn.onclick = (e) => {
+        e.stopPropagation();
+        openMathModal(node.outerHTML);
+      };
+
+      wrapper.appendChild(expandBtn);
+
+      // Double-Tap Logic
+      let lastTap = 0;
+      wrapper.addEventListener('touchend', (e) => {
+        const currentTime = new Date().getTime();
+        const tapLength = currentTime - lastTap;
+        if (tapLength < 300 && tapLength > 0) {
+          e.preventDefault();
+          openMathModal(node.outerHTML);
+        }
+        lastTap = currentTime;
+      });
+
+      wrapper.addEventListener('dblclick', () => {
+        openMathModal(node.outerHTML);
+      });
+    });
+  }
+
+  function openMathModal(htmlContent) {
+    const modal = document.getElementById("mathModal");
+    const container = document.getElementById("mathModalContent");
+    container.innerHTML = htmlContent;
+    modal.style.display = "flex";
+  }
+
+  function closeMathModal() {
+    document.getElementById("mathModal").style.display = "none";
   }
 
   function trackPYQActivityLocally(paperData) {
@@ -468,7 +639,7 @@
 
     const clone = document.getElementById("mainContainer").cloneNode(true);
 
-    const removeSelectors = ['.sticky-bar', '#qSearch', '.q-actions', 'button'];
+    const removeSelectors = ['.sticky-bar', '#qSearch', '.q-actions', 'button', '.math-expand-btn'];
     removeSelectors.forEach(selector => {
       clone.querySelectorAll(selector).forEach(el => el.remove());
     });
@@ -568,7 +739,7 @@
   }
 
   function escapeQuotes(str) {
-    return str ? str.replace(/'/g, "\\'").replace(/"/g, '&quot;') : '';
+    return str ? str.replace(/'/g, "\\'").replace(/"/g, '"') : '';
   }
 </script>
 
