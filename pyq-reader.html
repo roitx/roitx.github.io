@@ -208,12 +208,16 @@
       max-width: 100%;
       overflow-x: auto;
       vertical-align: middle;
-      padding: 4px 34px 4px 6px;
+      padding: 4px 6px;
       margin: 4px 0;
       background: rgba(255, 255, 255, 0.03);
       border-radius: 8px;
       border: 1px dashed rgba(255, 255, 255, 0.12);
       user-select: text;
+    }
+    /* Jab length badi ho tabhi extra padding denge button ke liye */
+    .math-wrapper.has-expand {
+      padding-right: 34px;
     }
     .math-wrapper::-webkit-scrollbar {
       height: 4px;
@@ -332,7 +336,6 @@
   function parseContent(rawContent) {
     if (!rawContent) return "";
     
-    // Convert bold, italic, and headers cleanly
     let parsed = rawContent
       .replace(/^### (.*$)/gim, '<div class="md-h3">$1</div>')
       .replace(/^## (.*$)/gim, '<div class="md-h2">$1</div>')
@@ -355,7 +358,7 @@
     }
   }
 
-  /* WRAP MATH ELEMENTS & ADD DOUBLE TAP / EXPAND BUTTON */
+  /* WRAP MATH ELEMENTS & ADD LENGTH CHECK (SVG FULLSCREEN ICON REMOVED FOR SHORT TERMS) */
   function makeMathScrollableAndExpandable() {
     const mathNodes = document.querySelectorAll('mjx-container:not(.math-processed)');
     
@@ -369,29 +372,38 @@
       node.parentNode.insertBefore(wrapper, node);
       wrapper.appendChild(node);
 
-      // Add Fullscreen SVG Icon Button
-      const expandBtn = document.createElement('button');
-      expandBtn.className = 'math-expand-btn';
-      expandBtn.title = 'View Fullscreen Equation';
-      expandBtn.innerHTML = `
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="15 3 21 3 21 9"></polyline>
-          <polyline points="9 21 3 21 3 15"></polyline>
-          <line x1="21" y1="3" x2="14" y2="10"></line>
-          <line x1="3" y1="21" x2="10" y2="14"></line>
-        </svg>
-      `;
+      // Check text length (Threshold: 15 characters)
+      const textLength = node.innerText ? node.innerText.trim().length : 0;
+      const LENGTH_THRESHOLD = 15;
 
-      expandBtn.onclick = (e) => {
-        e.stopPropagation();
-        openMathModal(node.outerHTML);
-      };
+      if (textLength > LENGTH_THRESHOLD) {
+        wrapper.classList.add('has-expand');
 
-      wrapper.appendChild(expandBtn);
+        // Add Fullscreen Button (SVG icon completely removed, using clean text/icon layout or simple symbol)
+        const expandBtn = document.createElement('button');
+        expandBtn.className = 'math-expand-btn';
+        expandBtn.title = 'View Fullscreen Equation';
+        expandBtn.innerHTML = `
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 3 21 3 21 9"></polyline>
+            <polyline points="9 21 3 21 3 15"></polyline>
+            <line x1="21" y1="3" x2="14" y2="10"></line>
+            <line x1="3" y1="21" x2="10" y2="14"></line>
+          </svg>
+        `;
 
-      // Double-Tap Logic
+        expandBtn.onclick = (e) => {
+          e.stopPropagation();
+          openMathModal(node.outerHTML);
+        };
+
+        wrapper.appendChild(expandBtn);
+      }
+
+      // Double-Tap Logic (Available for long elements)
       let lastTap = 0;
       wrapper.addEventListener('touchend', (e) => {
+        if (textLength <= LENGTH_THRESHOLD) return;
         const currentTime = new Date().getTime();
         const tapLength = currentTime - lastTap;
         if (tapLength < 300 && tapLength > 0) {
@@ -402,7 +414,9 @@
       });
 
       wrapper.addEventListener('dblclick', () => {
-        openMathModal(node.outerHTML);
+        if (textLength > LENGTH_THRESHOLD) {
+          openMathModal(node.outerHTML);
+        }
       });
     });
   }
@@ -607,7 +621,6 @@
     renderMathJax();
   }
 
-  /* LOCAL BOOKMARK LOGIC */
   function getLocalBookmarks() {
     return JSON.parse(localStorage.getItem("pyq_bookmarks") || "[]");
   }
@@ -631,7 +644,6 @@
     renderReader();
   }
 
-  /* ULTRA-LIGHTWEIGHT & FAST PYQ PDF EXPORT LOGIC */
   async function downloadPDF() {
     showToast("Preparing PDF...");
 
@@ -684,7 +696,6 @@
 
   function setLanguage(lang) {
     activeLang = lang;
-    renderReader();
   }
 
   function adjustFontSize(delta) {
