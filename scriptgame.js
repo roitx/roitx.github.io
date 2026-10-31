@@ -29,12 +29,14 @@ function resize() {
     canvas.height = window.innerHeight; 
     if (player) {
         let screenHeight = canvas.height || window.innerHeight || 600;
-        // Yahan -120 ki jagah -140 ya safe padding dein taaki jet screen ke andar rahe
-        player.y = screenHeight - 140; 
+        // -220 ya -240 karne se jet aur upar aa jayega
+        player.y = screenHeight - 220; 
         
         if (player.x > canvas.width - player.w) player.x = canvas.width - player.w;
     }
 }
+
+
 
 window.addEventListener("resize", resize);
 
@@ -805,11 +807,14 @@ async function startGame() {
         await loadNextQuestion();
     }
 
-            if (canvas) {
-        player.x = canvas.width / 2 - player.w / 2;
-        // Yeh ensure karega ki jet screen ke andar hi render ho
-        player.y = Math.min(canvas.height - 140, window.innerHeight - 140); 
-    }
+          if (canvas) {
+    player.x = canvas.width / 2 - player.w / 2;
+    // Yahan bhi -220 kar dein
+    player.y = Math.min(canvas.height - 220, window.innerHeight - 220); 
+}
+
+
+
 
 
     player.speed = shipTypes[selectedShip].speed;
