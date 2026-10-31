@@ -382,79 +382,72 @@ async function initUserGreeting() {
 }
 
 // ---- UNIFIED BOT MESSAGE & TYPEWRITER FUNCTION ----
-function addBotMsg(htmlContent, isGreeting = false) {
-    if (!chatWindow) return;
-    const d = document.createElement('div'); 
-    d.className = 'msg bot'; 
+// Function ko is tarah update karein taaki HTML allow ho sake
+function addBotMsg(content, isHTML = false) {
+  if (!chatWindow) return;
+  const d = document.createElement('div'); 
+  d.className = 'msg bot'; 
 
-    const speakerOnSvg = `<svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5zM19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-    const speakerOffSvg = `<svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5zM23 9l-6 6M17 9l6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-    
-    const speakerBtn = document.createElement('button');
-    speakerBtn.className = 'msg-speaker-btn';
-    speakerBtn.title = "Toggle Voice Output";
-    speakerBtn.innerHTML = isSpeechEnabledGlobally ? speakerOnSvg : speakerOffSvg;
+  // Speaker button logic (agar pehle se hai toh wahi rakhna)
+  const speakerOnSvg = `<svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5zM19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  const speakerOffSvg = `<svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5zM23 9l-6 6M17 9l6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  
+  const speakerBtn = document.createElement('button');
+  speakerBtn.className = 'msg-speaker-btn';
+  speakerBtn.title = "Toggle Voice Output";
+  speakerBtn.innerHTML = isSpeechEnabledGlobally ? speakerOnSvg : speakerOffSvg;
 
-    speakerBtn.onclick = (e) => {
-        e.stopPropagation();
-        if (window.speechSynthesis && window.speechSynthesis.speaking && window.activeSpeakerBtn === speakerBtn) {
-            stopCurrentSpeech();
-            isSpeechEnabledGlobally = false;
-            localStorage.setItem('roitx_speech_pref', 'false');
-            speakerBtn.innerHTML = speakerOffSvg;
-        } else {
-            isSpeechEnabledGlobally = true;
-            localStorage.setItem('roitx_speech_pref', 'true');
-            speakerBtn.innerHTML = speakerOnSvg;
-            speakText(contentDiv.innerText || htmlContent, speakerBtn, true);
-        }
-    };
+  speakerBtn.onclick = (e) => {
+      e.stopPropagation();
+      if (window.speechSynthesis && window.speechSynthesis.speaking && window.activeSpeakerBtn === speakerBtn) {
+          stopCurrentSpeech();
+          isSpeechEnabledGlobally = false;
+          localStorage.setItem('roitx_speech_pref', 'false');
+          speakerBtn.innerHTML = speakerOffSvg;
+      } else {
+          isSpeechEnabledGlobally = true;
+          localStorage.setItem('roitx_speech_pref', 'true');
+          speakerBtn.innerHTML = speakerOnSvg;
+          speakText(contentDiv.innerText || content, speakerBtn, true);
+      }
+  };
+  d.appendChild(speakerBtn);
 
-    d.appendChild(speakerBtn);
+  const contentDiv = document.createElement('div');
+  contentDiv.className = 'msg-content-body';
+  d.appendChild(contentDiv);
 
-    const contentDiv = document.createElement('div');
-    contentDiv.className = 'msg-content-body';
-    d.appendChild(contentDiv);
+  chatWindow.appendChild(d); 
+  chatWindow.scrollTop = chatWindow.scrollHeight;
 
-    chatWindow.appendChild(d); 
-    chatWindow.scrollTop = chatWindow.scrollHeight;
-
-    // Speech execution
-    if (isSpeechEnabledGlobally) {
-        if (isGreeting) {
-            if (isAudioUnlocked) {
-                speakText(htmlContent, speakerBtn, true);
-            } else {
-                pendingGreetingText = htmlContent;
-                windowActiveFirstSpeakerBtn = speakerBtn;
-            }
-        } else {
-            try {
-                speakText(htmlContent, speakerBtn, true);
-            } catch (e) {
-                console.warn("Speech error:", e);
-            }
-        }
-    }
-
-    // Fast & Smooth Typewriter Effect
+  // YAHAN MAIN CHANGE HAI: Agar isHTML true hai toh innerHTML use hoga
+  if (isHTML) {
+    contentDiv.innerHTML = content;
+    renderMathSafely(d);
+  } else {
+    // Normal text ke liye typewriter ya direct text setter
     let charIndex = 0;
     contentDiv.innerHTML = ""; 
-
     function typeWriter() {
-        if (charIndex < htmlContent.length) {
-            charIndex = Math.min(charIndex + 4, htmlContent.length);
-            contentDiv.innerHTML = htmlContent.substring(0, charIndex);
+        if (charIndex < content.length) {
+            charIndex = Math.min(charIndex + 4, content.length);
+            contentDiv.innerHTML = content.substring(0, charIndex);
             chatWindow.scrollTop = chatWindow.scrollHeight;
             setTimeout(typeWriter, 15);
         } else {
-            contentDiv.innerHTML = htmlContent; 
+            contentDiv.innerHTML = content; 
             renderMathSafely(d);
         }
     }
-
     typeWriter();
+  }
+
+  // Speech output handle
+  if (isSpeechEnabledGlobally && !isHTML) {
+      try { speakText(content, speakerBtn, true); } catch (e) {}
+  }
 }
+
 
   function showTyping() {
     if (!chatWindow) return null;
@@ -760,17 +753,60 @@ function addBotMsg(htmlContent, isGreeting = false) {
       return;
     }
 
-    // 13. OPEN LINK COMMAND
-    if (cmd.startsWith('open link') || /^open\s+https?:\/\//i.test(raw)) {
-      const url = raw.replace(/^open(link)?\s*/i, '').trim();
-      if (isValidUrl(url)) {
-        addBotMsg('Opening link...');
-        window.open(url, '_blank');
-      } else {
-        addBotMsg('Invalid URL. Use: open link https://example.com');
-      }
-      return;
-    }
+   // 13. OPEN LINK COMMAND - WITH PREVIEW + SHORT DOMAIN by PM Roitx
+if (cmd.startsWith('open link') || cmd.startsWith('open ')) {
+  let input = raw.replace(/^open(\s+link)?\s*/i, '').trim();
+  if (!input) {
+    addBotMsg('Kya kholna hai? Use: open fun / open https://google.com');
+    return;
+  }
+
+  let finalUrl = '';
+  let isInternal = false;
+
+  // CASE 1: Agar user ne pura link diya - https://google.com
+  if (/^https?:\/\//i.test(input)) {
+    finalUrl = input;
+  } 
+  // CASE 2: Agar domain jaisa hai - google.com, youtube.com/fun.html
+  else if (input.includes('.')) {
+    finalUrl = 'https://' + input;
+  } 
+  // CASE 3: Tumhara wala - open fun, open fun.html, open mytool
+  else {
+    let cleanName = input.split(' ')[0].toLowerCase().replace(/[^a-z0-9-_.]/g, '');
+    finalUrl = `https://roitx.qd.je/${cleanName}`;
+    isInternal = true;
+  }
+
+  try {
+    const parsed = new URL(finalUrl);
+    if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error('Blocked');
+
+    // PREVIEW CARD BANAO
+    const previewId = 'preview_' + Date.now();
+    const previewHTML = `
+      <div id="${previewId}" style="border:1px solid #00d2ff; border-radius:12px; padding:12px; background:#0f172a; margin-top:8px; max-width:320px;">
+        <div style="font-size:12px; color:#94a3b8;">${isInternal ? '📁 Internal Link' : '🌐 External Link'}</div>
+        <div style="font-weight:700; color:#fff; margin:4px 0; word-break:break-all;">${finalUrl}</div>
+        <div style="display:flex; gap:8px; margin-top:10px;">
+          <button onclick="window.open('${finalUrl}', '_blank', 'noopener,noreferrer'); document.getElementById('${previewId}').remove();" 
+            style="flex:1; background:#00d2ff; color:#000; border:none; padding:8px; border-radius:8px; font-weight:800; cursor:pointer;">🚀 Open</button>
+          <button onclick="document.getElementById('${previewId}').remove();" 
+            style="flex:1; background:#334155; color:#fff; border:none; padding:8px; border-radius:8px; cursor:pointer;">Cancel</button>
+        </div>
+        ${isInternal ? `<iframe src="${finalUrl}" style="width:100%; height:150px; border:none; border-radius:8px; margin-top:10px; background:#fff;" onerror="this.style.display='none'"></iframe>` : ''}
+      </div>
+    `;
+    
+    addBotMsg(previewHTML, true); // true yahan HTML allow karne ke liye pass kiya gaya hai
+
+  } catch (e) {
+    addBotMsg('❌ Invalid. Try: open fun | open fun.html | open google.com');
+  }
+  return;
+}
+
 
     // 14. NOTES MANAGEMENT
     if (cmd === 'show notes' || cmd === 'view notes') { showNotesModal(); return; }
@@ -781,7 +817,64 @@ function addBotMsg(htmlContent, isGreeting = false) {
       if (!note) { addBotMsg('Example: create note: Revise Optics'); return; }
       saveNote(note); addBotMsg('Note saved ✔'); return;
     }
+    // ---- 15. PYQ BANK & ANALYZER ----
+    if (cmd.includes('pyq') || cmd.includes('previous year') || cmd.includes('question bank')) {
+      addBotMsg(`
+        <div style="border: 1px solid #38bdf8; padding: 12px; border-radius: 10px; background: rgba(56, 189, 248, 0.1);">
+          <div style="font-size: 13px; font-weight: bold; color: #38bdf8; display: flex; align-items: center; gap: 6px;">
+            ${SVG.book} PYQ Bank & Analyzer Hub
+          </div>
+          <div style="font-size: 12px; color: #e0e7ff; margin: 6px 0;">Previous Year Questions aur unka analysis karne ke liye niche diye gaye tools kholein:</div>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px;">
+            <a href="pyq-list.html" style="background: #0284c7; color: #fff; text-decoration: none; padding: 6px 10px; border-radius: 5px; font-weight: bold; font-size: 11px;">
+              ${SVG.external} PYQ Bank
+            </a>
+            <a href="pyq-anylizer.html" style="background: #059669; color: #fff; text-decoration: none; padding: 6px 10px; border-radius: 5px; font-weight: bold; font-size: 11px;">
+              ${SVG.external} PYQ Analyzer
+            </a>
+          </div>
+        </div>
+      `);
+      return;
+    }
 
+    // ---- 16. PRACTICE TESTS & PERFORMANCE ----
+    if (cmd.includes('test') || cmd.includes('quiz') || cmd.includes('mock') || cmd.includes('score') || cmd.includes('performance')) {
+      addBotMsg(`
+        <div style="border: 1px solid #10b981; padding: 12px; border-radius: 10px; background: rgba(16, 185, 129, 0.1);">
+          <div style="font-size: 13px; font-weight: bold; color: #34d399; display: flex; align-items: center; gap: 6px;">
+            ${SVG.book} Tests & Performance Tracker
+          </div>
+          <div style="font-size: 12px; color: #e0e7ff; margin: 6px 0;">Apni taiyari parakhne ke liye mock tests dein aur performance track karein:</div>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px;">
+            <a href="tests.html" style="background: #059669; color: #fff; text-decoration: none; padding: 6px 10px; border-radius: 5px; font-weight: bold; font-size: 11px;">
+              ${SVG.external} Practice Tests
+            </a>
+            <a href="performance.html" style="background: #0284c7; color: #fff; text-decoration: none; padding: 6px 10px; border-radius: 5px; font-weight: bold; font-size: 11px;">
+              ${SVG.external} Performance
+            </a>
+          </div>
+        </div>
+      `);
+      return;
+    }
+
+    // ---- 17. RECENTLY VIEWED LIBRARY ----
+    if (cmd.includes('library') || cmd.includes('recent') || cmd.includes('history')) {
+      addBotMsg(`
+        <div style="border: 1px solid #8b5cf6; padding: 12px; border-radius: 10px; background: rgba(139, 92, 246, 0.1);">
+          <div style="font-size: 13px; font-weight: bold; color: #a78bfa; display: flex; align-items: center; gap: 6px;">
+            ${SVG.book} Recently Viewed Library
+          </div>
+          <div style="font-size: 12px; color: #e0e7ff; margin: 6px 0;">Aapne jo files recently dekhi hain ya access ki hain, unhe yahan check karein:</div>
+          <a href="library.html" style="background: #7c3aed; color: #fff; text-decoration: none; padding: 6px 12px; border-radius: 5px; font-weight: bold; font-size: 12px; display: inline-flex; align-items: center; gap: 4px;">
+            ${SVG.external} Open Library Dashboard
+          </a>
+        </div>
+      `);
+      return;
+    }
+    
     // DEFAULT: AI QUERY EXECUTION
     await askGroqAI(raw);
   }
@@ -1094,6 +1187,12 @@ When a user asks for classes, study materials, subjects, tools, or website navig
    - Calendar & Schedule: <a href="calendar.html">Study Calendar</a>
    - Focus Timer: <a href="study-timer.html">Pomodoro / Study Timer</a>
    - Doubt Solver: <a href="solver.html">Instant Doubt Solver</a>
+   - PYQ Bank: <a href="pyq-list.html">PYQ Question Bank</a>
+   - PYQ Analyzer: <a href="pyq-anylizer.html">PYQ Analyzer Tool</a>
+   - Practice Tests: <a href="tests.html">Mock Tests Hub</a>
+   - Performance Tracker: <a href="performance.html">Performance Analytics</a>
+   - Recent Library: <a href="library.html">Recently Viewed Library</a>
+
 
 --- STRICT SAFETY, CREATOR & FALLBACK RULES ---
 1. CREATOR PRIVACY: Do NOT mention "Rohit" or "Created by Rohit" in normal academic answers. Include developer details ONLY if the user explicitly asks "who created this", "who built this", "developer info", or "Rohit kaun hai". When asked, direct them to <a href="about.html">About Developer</a>.
