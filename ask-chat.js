@@ -753,11 +753,11 @@ function addBotMsg(content, isHTML = false) {
       return;
     }
 
-   // 13. OPEN LINK COMMAND - WITH PREVIEW + SHORT DOMAIN by PM Roitx
+// 13. OPEN LINK COMMAND - AUTO INTERNAL DETECT FOR ASK-CHAT & HTML PAGES
 if (cmd.startsWith('open link') || cmd.startsWith('open ')) {
   let input = raw.replace(/^open(\s+link)?\s*/i, '').trim();
   if (!input) {
-    addBotMsg('Kya kholna hai? Use: open fun / open https://google.com');
+    addBotMsg('Kya kholna hai? Use: open fun / open ask-chat / open https://google.com');
     return;
   }
 
@@ -767,15 +767,28 @@ if (cmd.startsWith('open link') || cmd.startsWith('open ')) {
   // CASE 1: Agar user ne pura link diya - https://google.com
   if (/^https?:\/\//i.test(input)) {
     finalUrl = input;
+    // Agar link khud ki website ka hai toh internal treat karein
+    if (finalUrl.includes('roitx.qd.je')) {
+      isInternal = true;
+    }
   } 
-  // CASE 2: Agar domain jaisa hai - google.com, youtube.com/fun.html
+  // CASE 2: Agar ask-chat, ask-chat.html ya koi bhi internal extension diya hai
+  else if (input.endsWith('.html') || ['ask-chat', 'view', 'fun', 'classes', 'study-timer', 'calculator', 'solver', 'tests', 'calendar', 'performance', 'formulas', 'pyq-list', 'pyq-anylizer', 'refbook', 'library'].includes(input.toLowerCase().replace('.html', ''))) {
+    let cleanName = input.toLowerCase().trim();
+    if (!cleanName.endsWith('.html') && !cleanName.startsWith('http')) {
+      cleanName += '.html';
+    }
+    finalUrl = `https://roitx.qd.je/${cleanName}`;
+    isInternal = true;
+  }
+  // CASE 3: Agar normal domain jaisa hai - google.com, youtube.com
   else if (input.includes('.')) {
     finalUrl = 'https://' + input;
   } 
-  // CASE 3: Tumhara wala - open fun, open fun.html, open mytool
+  // CASE 4: Baaki bache huye internal short names ke liye
   else {
     let cleanName = input.split(' ')[0].toLowerCase().replace(/[^a-z0-9-_.]/g, '');
-    finalUrl = `https://roitx.qd.je/${cleanName}`;
+    finalUrl = `https://roitx.qd.je/${cleanName}.html`;
     isInternal = true;
   }
 
@@ -783,26 +796,41 @@ if (cmd.startsWith('open link') || cmd.startsWith('open ')) {
     const parsed = new URL(finalUrl);
     if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error('Blocked');
 
-    // PREVIEW CARD BANAO
     const previewId = 'preview_' + Date.now();
     const previewHTML = `
-      <div id="${previewId}" style="border:1px solid #00d2ff; border-radius:12px; padding:12px; background:#0f172a; margin-top:8px; max-width:320px;">
-        <div style="font-size:12px; color:#94a3b8;">${isInternal ? '📁 Internal Link' : '🌐 External Link'}</div>
-        <div style="font-weight:700; color:#fff; margin:4px 0; word-break:break-all;">${finalUrl}</div>
-        <div style="display:flex; gap:8px; margin-top:10px;">
-          <button onclick="window.open('${finalUrl}', '_blank', 'noopener,noreferrer'); document.getElementById('${previewId}').remove();" 
-            style="flex:1; background:#00d2ff; color:#000; border:none; padding:8px; border-radius:8px; font-weight:800; cursor:pointer;">🚀 Open</button>
-          <button onclick="document.getElementById('${previewId}').remove();" 
-            style="flex:1; background:#334155; color:#fff; border:none; padding:8px; border-radius:8px; cursor:pointer;">Cancel</button>
+      <div id="${previewId}" style="border: 1px solid rgba(0, 240, 255, 0.3); border-radius: 20px; padding: 14px; background: rgba(10, 27, 61, 0.95); backdrop-filter: blur(20px); margin-top: 8px; width: 100%; max-width: 100%; box-sizing: border-box; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+        
+        <!-- Header Tag & Link -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <span style="font-size: 10px; font-weight: 800; color: #00f0ff; background: rgba(0,240,255,0.1); padding: 3px 10px; border-radius: 20px; border: 1px solid rgba(0,240,255,0.25); letter-spacing: 1px;">📁 ${isInternal ? 'INTERNAL PREVIEW' : 'EXTERNAL LINK'}</span>
+          <span style="font-size: 11px; color: #94a3b8; word-break: break-all; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${finalUrl}</span>
         </div>
-        ${isInternal ? `<iframe src="${finalUrl}" style="width:100%; height:150px; border:none; border-radius:8px; margin-top:10px; background:#fff;" onerror="this.style.display='none'"></iframe>` : ''}
+
+        <!-- Centered Mini-Screen Widget -->
+        ${isInternal ? `
+          <div class="widget-mini-screen" style="width: 100%; height: 220px; background: #050b18; border-radius: 16px; border: 1.5px solid rgba(0, 240, 255, 0.3); overflow: hidden; position: relative; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 0 20px rgba(0, 240, 255, 0.1);">
+            <div style="position: absolute; top: 50%; left: 50%; width: 1200px; height: 900px; transform: translate(-50%, -50%) scale(0.22); transform-origin: center; pointer-events: auto;">
+              <iframe src="${finalUrl}" title="Internal Preview" loading="lazy" style="width: 100%; height: 100%; border: none; background: #050b18;" onerror="this.parentElement.parentElement.style.display='none'"></iframe>
+            </div>
+          </div>
+        ` : ''}
+        
+        <!-- Action Buttons -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%;">
+          <button onclick="window.open('${finalUrl}', '_blank', 'noopener,noreferrer'); document.getElementById('${previewId}').remove();" 
+            style="background: linear-gradient(135deg, #00f0ff, #3a7bd5); color: #050b18; border: none; padding: 10px; border-radius: 12px; font-weight: 800; font-size: 12px; cursor: pointer; text-align: center; width: 100%; box-shadow: 0 4px 15px rgba(0,240,255,0.3);">🚀 Open Full View</button>
+          
+          <button onclick="document.getElementById('${previewId}').remove();" 
+            style="background: rgba(255,255,255,0.06); color: #fff; border: 1px solid rgba(255,255,255,0.15); padding: 10px; border-radius: 12px; font-weight: 600; font-size: 12px; cursor: pointer; text-align: center; width: 100%;">Close</button>
+        </div>
+
       </div>
     `;
     
-    addBotMsg(previewHTML, true); // true yahan HTML allow karne ke liye pass kiya gaya hai
+    addBotMsg(previewHTML, true);
 
   } catch (e) {
-    addBotMsg('❌ Invalid. Try: open fun | open fun.html | open google.com');
+    addBotMsg('❌ Invalid Link. Try: open view | open ask-chat | open google.com');
   }
   return;
 }
