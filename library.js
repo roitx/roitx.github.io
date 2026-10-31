@@ -4,14 +4,12 @@ document.addEventListener("DOMContentLoaded", () => {
     renderActivityFeed();
 });
 
-// Auto-update UI when navigating BACK to library page
 window.addEventListener("pageshow", (event) => {
     renderActivityFeed();
 });
 
-// Auto-update UI if localStorage changes in another tab
 window.addEventListener("storage", (event) => {
-    if (event.key === "recentFiles" || event.key === "downloadedFiles" || event.key === "userPurchasedNotes") {
+    if (event.key === "recentFiles" || event.key === "downloadedFiles" || event.key === "userPurchasedNotes" || (event.key && event.key.startsWith("test_draft_"))) {
         renderActivityFeed();
     }
 });
@@ -33,7 +31,6 @@ function toggleFilter() {
     renderActivityFeed();
 }
 
-// Track Activity Function
 function trackActivityLocally(fileData, isDownloaded = false) {
     try {
         let recent = getData("recentFiles");
@@ -44,11 +41,9 @@ function trackActivityLocally(fileData, isDownloaded = false) {
         let cleanBaseUrl = rawUrl.split('?')[0];
         const isPurchased = fileData.isPurchased || false;
 
-        // PYQ / Test detection
         const isPyqItem = fileData.isPyq || rawUrl.toLowerCase().includes("pyq") || (fileData.meta && fileData.meta.toLowerCase().includes("pyq"));
         const isTestItem = fileData.isTest || cleanBaseUrl.toLowerCase().includes("take-test") || (fileData.meta && fileData.meta.toLowerCase().includes("test"));
 
-        // Only add to downloadedFiles if it is NOT a PYQ paper and explicitly marked downloaded
         if (!isPyqItem && isDownloaded && !downloads.some(f => f.url && f.url.split('?')[0] === cleanBaseUrl)) {
             fileData.timeDownloaded = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             downloads.unshift(fileData);
@@ -75,7 +70,7 @@ function trackActivityLocally(fileData, isDownloaded = false) {
 
         recent.unshift({
             title: fileData.title,
-            url: fileData.url, // Original full URL keep-alive
+            url: fileData.url,
             meta: fileData.meta || defaultMeta,
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             downloaded: isPyqItem ? false : (downloads.some(f => f.url && f.url.split('?')[0] === cleanBaseUrl) || isDownloaded),
@@ -106,6 +101,19 @@ async function renderActivityFeed() {
     let downloads = getData("downloadedFiles");
     let localPurchases = getData("userPurchasedNotes");
 
+    // Scan local drafts for tests to check Resume / Retake status in Library
+    let userDraftsMap = {};
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith("test_draft_")) {
+            const testId = key.replace("test_draft_", "");
+            try {
+                const draftData = JSON.parse(localStorage.getItem(key));
+                if (draftData) userDraftsMap[testId] = draftData;
+            } catch (e) {}
+        }
+    }
+
     let supabaseApprovedTitles = [];
 
     try {
@@ -123,13 +131,8 @@ async function renderActivityFeed() {
                         if (o.note_title) {
                             const cleaned = cleanTitleString(o.note_title);
                             if (cleaned) supabaseApprovedTitles.push(cleaned);
-                            
-                            if (!localPurchases.some(lp => cleanTitleString(lp.title) === cleaned)) {
-                                localPurchases.push({ title: o.note_title });
-                            }
                         }
                     });
-                    localStorage.setItem("userPurchasedNotes", JSON.stringify(localPurchases));
                 }
             }
         }
@@ -161,9 +164,12 @@ async function renderActivityFeed() {
         let rawUrl = f.url || "";
         let cleanPath = rawUrl.split('?')[0];
 
-        // Type Detection
         let isPyqItem = f.isPyq || rawUrl.toLowerCase().includes("pyq") || (f.meta && f.meta.toLowerCase().includes("pyq"));
         let isTestItem = f.isTest || cleanPath.toLowerCase().includes("take-test.html");
+
+        let testIdMatch = rawUrl.match(/[?&]id=([^&]+)/);
+        let currentTestId = testIdMatch ? testIdMatch[1] : null;
+        let hasActiveDraft = currentTestId && userDraftsMap[currentTestId];
 
         let viewerPage = "notes-viewer.html";
         const cleanedFileTitle = cleanTitleString(f.title);
@@ -175,9 +181,7 @@ async function renderActivityFeed() {
         let isDownloaded = !isPyqItem && (downloads.some(item => (item.url && item.url.split('?')[0] === cleanPath) || cleanTitleString(item.title) === cleanedFileTitle) || f.downloaded);
         let isFilePremium = f.isPremium || cleanPath.toLowerCase().includes("premium") || cleanPath.toLowerCase().includes("paid");
 
-        // Target URL Logic
         if (isPyqItem) {
-            // FIX: Keep reader URL intact if already present, else fallback correctly
             if (rawUrl.includes("pyq-reader.html")) {
                 viewTargetUrl = rawUrl;
             } else if (rawUrl.includes("id=")) {
@@ -187,7 +191,11 @@ async function renderActivityFeed() {
                 viewTargetUrl = `pyq-reader.html?path=${encodeURIComponent(cleanPath)}&name=${encodeURIComponent(f.title)}`;
             }
         } else if (isTestItem) {
-            viewTargetUrl = rawUrl;
+            if (hasActiveDraft) {
+                viewTargetUrl = `${rawUrl}${rawUrl.includes('?') ? '&' : '?'}resume=true`;
+            } else {
+                viewTargetUrl = rawUrl;
+            }
         } else if (cleanPath.match(/\.(jpg|jpeg|png|webp|gif)$/i) || f.meta?.includes("Image")) {
             viewerPage = "image-viewer.html";
             if (!cleanPath.startsWith("formulas/") && !cleanPath.includes("/")) {
@@ -203,16 +211,21 @@ async function renderActivityFeed() {
             viewTargetUrl = `${viewerPage}?path=${encodeURIComponent(cleanPath)}&name=${encodeURIComponent(f.title)}${extraParams}`;
         }
 
-        // Action Button Text
-        let actionBtnText = isTestItem ? "Re-take Test →" : (isPyqItem ? "Read PYQ →" : "View File →");
+        // Action Button Text logic (Resume / Re-take / View)
+        let actionBtnText = "View File →";
+        if (isTestItem) {
+            if (hasActiveDraft) actionBtnText = "Resume Test ➔";
+            else actionBtnText = "Re-take Test ➔";
+        } else if (isPyqItem) {
+            actionBtnText = "Read PYQ →";
+        }
 
-        // Access Status Setup
         let accessTagHtml = "";
         let accessStatusText = "Free";
         
         if (isTestItem) {
             accessTagHtml = `<span class="access-tag purchased" title="Attempted">${checkSvg}</span>`;
-            accessStatusText = "Test Attempted";
+            accessStatusText = hasActiveDraft ? "Test In Progress" : "Test Attempted";
         } else if (isPyqItem) {
             accessTagHtml = `<span class="access-tag free" title="PYQ Paper">${checkSvg}</span>`;
             accessStatusText = "PYQ Available";
@@ -227,11 +240,10 @@ async function renderActivityFeed() {
             accessStatusText = "Free";
         }
 
-        // FIX: Download Badge HTML - PYQ cards ke liye Downloaded status badge ko bilkul hide kar diya gaya hai
         let badgeHtml = "";
         if (!isPyqItem) {
             let downloadBadgeClass = isDownloaded ? "downloaded" : "not-downloaded";
-            let downloadBadgeText = isTestItem ? "Attempted" : (isDownloaded ? "Downloaded" : "Not Downloaded");
+            let downloadBadgeText = isTestItem ? (hasActiveDraft ? "Unfinished" : "Attempted") : (isDownloaded ? "Downloaded" : "Not Downloaded");
             badgeHtml = `<span class="badge ${downloadBadgeClass}">${downloadBadgeText}</span>`;
         }
 
@@ -257,7 +269,7 @@ async function renderActivityFeed() {
                         <button class="info-btn" onclick="openInfoModal(${index})" title="View Details">i</button>
                     </div>
                 </div>
-                <span>${isTestItem ? 'Attempted' : (isPyqItem ? 'Read' : 'Viewed')} at ${f.time} • ${f.meta}</span>
+                <span>${isTestItem ? (hasActiveDraft ? 'In Progress' : 'Attempted') : (isPyqItem ? 'Read' : 'Viewed')} at ${f.time} • ${f.meta}</span>
             </div>
             <div class="badges-group">
                 ${badgeHtml}
@@ -278,7 +290,7 @@ function openInfoModal(index) {
         <div class="modal-row"><span>File Name:</span> <span>${data.title}</span></div>
         <div class="modal-row"><span>Item Type:</span> <span>${data.type}</span></div>
         <div class="modal-row"><span>Last Time:</span> <span>${data.time}</span></div>
-        <div class="modal-row"><span>Total Reads/Opens:</span> <span>${data.views} times</span></div>
+        <div class="icon-row"><span>Total Reads/Opens:</span> <span>${data.views} times</span></div>
         <div class="modal-row"><span>Download Status:</span> <span>${data.downloaded}</span></div>
         <div class="modal-row"><span>Access Type:</span> <span>${data.access}</span></div>
     `;
