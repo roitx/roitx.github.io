@@ -330,7 +330,7 @@ function unlockAudioEngine() {
         const dummyUtter = new SpeechSynthesisUtterance("");
         window.speechSynthesis.speak(dummyUtter);
         isAudioUnlocked = true;
-        console.log("🔊 Audio engine fully unlocked!");
+        
     }
 }
 
@@ -1192,7 +1192,8 @@ When a user asks for classes, study materials, subjects, tools, or website navig
    - Practice Tests: <a href="tests.html">Mock Tests Hub</a>
    - Performance Tracker: <a href="performance.html">Performance Analytics</a>
    - Recent Library: <a href="library.html">Recently Viewed Library</a>
-
+4. Game section 
+   - Practice Math, science and CA With Fun: <a href="fun.html">Game</a>
 
 --- STRICT SAFETY, CREATOR & FALLBACK RULES ---
 1. CREATOR PRIVACY: Do NOT mention "Rohit" or "Created by Rohit" in normal academic answers. Include developer details ONLY if the user explicitly asks "who created this", "who built this", "developer info", or "Rohit kaun hai". When asked, direct them to <a href="about.html">About Developer</a>.
