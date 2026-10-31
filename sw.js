@@ -1,4 +1,4 @@
-const CACHE_NAME = 'roitx-study-cache-v5';
+const CACHE_NAME = 'roitx-study-cache-v6';
 const ASSETS = [
   './',
   './index.html',
