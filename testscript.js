@@ -414,6 +414,7 @@ function setupInstructionAgreementUI(isResume) {
   
 async function setupTestInit() {
     isSubmitted = false;
+    trackTestActivity();
     const resArea = document.getElementById("resultArea");
     if (resArea) resArea.style.display = "none";
 
@@ -952,7 +953,7 @@ function exitExamConfirmed() {
 
 async function submitTest() {
     isSubmitted = true;
-    
+    trackTestActivity();
     if (timerInterval) {
         clearInterval(timerInterval);
         timerInterval = null;
@@ -1562,6 +1563,30 @@ function switchInstTab(tabName) {
         document.getElementById('tabContentGeneral')?.classList.add('active');
     }
 }
+function trackTestActivity() {
+    if (!currentTest) return;
+    try {
+        let recent = JSON.parse(localStorage.getItem("recentFiles") || "[]");
+        let cleanUrl = `take-test.html?id=${currentTest.id}`;
+        let existingIndex = recent.findIndex(f => f.url && f.url.includes(currentTest.id));
+        if (existingIndex !== -1) {
+            recent.splice(existingIndex, 1);
+        }
+        recent.unshift({
+            title: currentTest.title || "Portal Test",
+            url: cleanUrl,
+            meta: currentTest.class_level || currentTest.subject || "Mock Test",
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            isTest: true,
+            downloaded: false
+        });
+        recent = recent.slice(0, 20);
+        localStorage.setItem("recentFiles", JSON.stringify(recent));
+    } catch(e) {
+        console.warn("Activity track error:", e);
+    }
+}
+
 
 async function reportBug(questionIdx) {
     const q = questions[questionIdx];
@@ -1570,9 +1595,14 @@ async function reportBug(questionIdx) {
         if (window.supabaseClient) {
             try {
                 const { data: { user } } = await window.supabaseClient.auth.getUser();
+                const testTitle = currentTest ? currentTest.title : 'Demo Test';
+                const classStream = currentTest ? (currentTest.class_level || currentTest.stream || 'General') : 'General';
+
                 await window.supabaseClient.from('bug_reports').insert([{
                     user_id: user?.id || null,
                     test_id: currentTest ? currentTest.id : 'demo',
+                    test_title: testTitle,
+                    class_stream: classStream,
                     question_index: questionIdx,
                     question_text: q.question_text || q.question,
                     issue_description: userReason

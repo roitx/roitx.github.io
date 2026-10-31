@@ -581,12 +581,12 @@ async function openBugReportsModal() {
     }
 
     let html = "";
-    reports.forEach(r => {
+        reports.forEach(r => {
       html += `
         <div style="background: #ffffff; border-radius: 12px; padding: 14px; border: 1px solid #cbd5e1; position: relative;">
-          <div style="font-size: 11px; color: #64748b; margin-bottom: 4px; display: flex; justify-content: space-between;">
-            <span>Test ID: <b>${r.test_id || 'N/A'}</b> | Q Index: <b>${(r.question_index ?? 0) + 1}</b></span>
-            <span>${new Date(r.created_at).toLocaleDateString()}</span>
+          <div style="font-size: 11px; color: #64748b; margin-bottom: 4px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px;">
+            <span>Test: <b>${r.test_title || r.test_id || 'N/A'}</b> | Class/Stream: <b>${r.class_stream || 'N/A'}</b></span>
+            <span>Q Index: <b>${(r.question_index ?? 0) + 1}</b> | ${new Date(r.created_at).toLocaleDateString()}</span>
           </div>
           <p style="font-size: 13px; font-weight: 700; color: #1e293b; margin-bottom: 6px;">Q: ${r.question_text || 'No Text'}</p>
           <p style="font-size: 12.5px; color: #dc2626; background: #fef2f2; padding: 8px; border-radius: 6px; margin-bottom: 8px;">
@@ -598,6 +598,7 @@ async function openBugReportsModal() {
         </div>
       `;
     });
+
     container.innerHTML = html;
 
   } catch (err) {
