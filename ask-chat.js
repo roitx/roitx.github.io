@@ -1004,47 +1004,62 @@ if (cmd.startsWith('open link') || cmd.startsWith('open ')) {
     await askGroqAI(raw);
   }
 
-  // ---- CALCULATOR POPUP ----
+  // ---- MODERN MINI CALCULATOR POPUP ----
   window.showCalculatorModalDirect = function() {
     const calcHtml = `
-      <div style="background: #0b1329; border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 12px; padding: 16px; color: #fff; max-width: 320px; margin: 0 auto;">
+      <div style="background: linear-gradient(135deg, #071025, #0b1329); border: 1.5px solid rgba(0, 240, 255, 0.35); border-radius: 16px; padding: 18px; color: #fff; max-width: 310px; margin: 0 auto; box-shadow: 0 15px 35px rgba(0,0,0,0.6); backdrop-filter: blur(20px);">
+        
+        <!-- Header -->
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-          <h3 style="margin: 0; font-size: 15px; color: #38bdf8; display: flex; align-items: center; gap: 6px;">
-            ${SVG.calculator} Calculator
-          </h3>
-        </div>
-        <div style="display: flex; flex-direction: column; gap: 10px;">
-          <input type="text" id="calcDisplay" readonly style="width: 100%; padding: 12px; font-size: 22px; text-align: right; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); background: #040914; color: #38bdf8; font-family: monospace; box-sizing: border-box;" value="0">
-          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
-            <button onclick="clearCalc()" style="padding: 12px; border-radius: 6px; border: none; background: #ef4444; color: #fff; font-weight: bold; cursor: pointer;">C</button>
-            <button onclick="appendCalc('/')" style="padding: 12px; border-radius: 6px; border: none; background: #334155; color: #38bdf8; font-weight: bold; cursor: pointer;">/</button>
-            <button onclick="appendCalc('*')" style="padding: 12px; border-radius: 6px; border: none; background: #334155; color: #38bdf8; font-weight: bold; cursor: pointer;">*</button>
-            <button onclick="deleteCalc()" style="padding: 12px; border-radius: 6px; border: none; background: #334155; color: #f59e0b; font-weight: bold; cursor: pointer;">⌫</button>
-            
-            <button onclick="appendCalc('7')" style="padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">7</button>
-            <button onclick="appendCalc('8')" style="padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">8</button>
-            <button onclick="appendCalc('9')" style="padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">9</button>
-            <button onclick="appendCalc('-')" style="padding: 12px; border-radius: 6px; border: none; background: #334155; color: #38bdf8; font-weight: bold; cursor: pointer;">-</button>
-            
-            <button onclick="appendCalc('4')" style="padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">4</button>
-            <button onclick="appendCalc('5')" style="padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">5</button>
-            <button onclick="appendCalc('6')" style="padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">6</button>
-            <button onclick="appendCalc('+')" style="padding: 12px; border-radius: 6px; border: none; background: #334155; color: #38bdf8; font-weight: bold; cursor: pointer;">+</button>
-            
-            <button onclick="appendCalc('1')" style="padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">1</button>
-            <button onclick="appendCalc('2')" style="padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">2</button>
-            <button onclick="appendCalc('3')" style="padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">3</button>
-            <button onclick="calculateResult()" style="grid-row: span 2; padding: 12px; border-radius: 6px; border: none; background: #0284c7; color: #fff; font-weight: bold; cursor: pointer; font-size: 18px;">=</button>
-            
-            <button onclick="appendCalc('0')" style="grid-column: span 2; padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">0</button>
-            <button onclick="appendCalc('.')" style="padding: 12px; border-radius: 6px; border: none; background: #1e293b; color: #fff; font-weight: bold; cursor: pointer;">.</button>
+          <div style="font-size: 13px; font-weight: 800; color: #00f0ff; letter-spacing: 1px; display: flex; align-items: center; gap: 6px;">
+            ${SVG.calculator} SCIENTIFIC CALCULATOR
           </div>
+          <button onclick="closeModal()" style="background: rgba(255,255,255,0.08); border: none; color: #94a3b8; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold;">✕</button>
         </div>
-        <div style="margin-top: 12px; text-align: center;">
-          <a href="calculator.html" style="display: flex; align-items: center; justify-content: center; gap: 6px; background: rgba(56, 189, 248, 0.1); border: 1px dashed rgba(56, 189, 248, 0.5); color: #38bdf8; text-decoration: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; font-size: 12px;">
-            ${SVG.external} View Full Modal
+
+        <!-- Display Screen -->
+        <div style="margin-bottom: 14px;">
+          <input type="text" id="calcDisplay" readonly style="width: 100%; padding: 12px 14px; font-size: 22px; text-align: right; border-radius: 10px; border: 1px solid rgba(0, 240, 255, 0.3); background: #040812; color: #00f0ff; font-family: 'Orbitron', monospace, sans-serif; box-sizing: border-box; box-shadow: inset 0 2px 8px rgba(0,0,0,0.8);" value="0">
+        </div>
+
+        <!-- Keypad Grid -->
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
+          <!-- Row 1 -->
+          <button onclick="clearCalc()" style="padding: 11px; border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.15); color: #f87171; font-weight: bold; cursor: pointer; transition: 0.2s;">C</button>
+          <button onclick="appendCalc('/')" style="padding: 11px; border-radius: 8px; border: 1px solid rgba(0, 240, 255, 0.2); background: rgba(0, 240, 255, 0.08); color: #00f0ff; font-weight: bold; cursor: pointer;">÷</button>
+          <button onclick="appendCalc('*')" style="padding: 11px; border-radius: 8px; border: 1px solid rgba(0, 240, 255, 0.2); background: rgba(0, 240, 255, 0.08); color: #00f0ff; font-weight: bold; cursor: pointer;">×</button>
+          <button onclick="deleteCalc()" style="padding: 11px; border-radius: 8px; border: 1px solid rgba(245, 158, 11, 0.3); background: rgba(245, 158, 11, 0.15); color: #fbbf24; font-weight: bold; cursor: pointer;">⌫</button>
+          
+          <!-- Row 2 -->
+          <button onclick="appendCalc('7')" style="padding: 11px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.04); color: #fff; font-weight: bold; cursor: pointer;">7</button>
+          <button onclick="appendCalc('8')" style="padding: 11px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.04); color: #fff; font-weight: bold; cursor: pointer;">8</button>
+          <button onclick="appendCalc('9')" style="padding: 11px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.04); color: #fff; font-weight: bold; cursor: pointer;">9</button>
+          <button onclick="appendCalc('-')" style="padding: 11px; border-radius: 8px; border: 1px solid rgba(0, 240, 255, 0.2); background: rgba(0, 240, 255, 0.08); color: #00f0ff; font-weight: bold; cursor: pointer;">-</button>
+          
+          <!-- Row 3 -->
+          <button onclick="appendCalc('4')" style="padding: 11px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.04); color: #fff; font-weight: bold; cursor: pointer;">4</button>
+          <button onclick="appendCalc('5')" style="padding: 11px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.04); color: #fff; font-weight: bold; cursor: pointer;">5</button>
+          <button onclick="appendCalc('6')" style="padding: 11px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.04); color: #fff; font-weight: bold; cursor: pointer;">6</button>
+          <button onclick="appendCalc('+')" style="padding: 11px; border-radius: 8px; border: 1px solid rgba(0, 240, 255, 0.2); background: rgba(0, 240, 255, 0.08); color: #00f0ff; font-weight: bold; cursor: pointer;">+</button>
+          
+          <!-- Row 4 -->
+          <button onclick="appendCalc('1')" style="padding: 11px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.04); color: #fff; font-weight: bold; cursor: pointer;">1</button>
+          <button onclick="appendCalc('2')" style="padding: 11px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.04); color: #fff; font-weight: bold; cursor: pointer;">2</button>
+          <button onclick="appendCalc('3')" style="padding: 11px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.04); color: #fff; font-weight: bold; cursor: pointer;">3</button>
+          <button onclick="calculateResult()" style="grid-row: span 2; padding: 11px; border-radius: 8px; border: none; background: linear-gradient(135deg, #00f0ff, #3a7bd5); color: #050b18; font-weight: 800; cursor: pointer; font-size: 20px; box-shadow: 0 4px 12px rgba(0,240,255,0.3);">=</button>
+          
+          <!-- Row 5 -->
+          <button onclick="appendCalc('0')" style="grid-column: span 2; padding: 11px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.04); color: #fff; font-weight: bold; cursor: pointer;">0</button>
+          <button onclick="appendCalc('.')" style="padding: 11px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.04); color: #fff; font-weight: bold; cursor: pointer;">.</button>
+        </div>
+
+        <!-- Footer Full Page Link -->
+        <div style="margin-top: 14px; text-align: center; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 10px;">
+          <a href="calculator.html" style="display: inline-flex; align-items: center; justify-content: center; gap: 6px; color: #00f0ff; text-decoration: none; font-weight: bold; font-size: 11px;">
+            ${SVG.external} Open Full Calculator Pro Page
           </a>
         </div>
+
       </div>
     `;
     openModal(calcHtml);
