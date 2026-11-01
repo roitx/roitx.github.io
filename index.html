@@ -415,13 +415,20 @@
   </a>
 
   <!-- Side Menu Tests Icon -->
-  <a href="tests.html">
-    <svg class="menu-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <circle cx="12" cy="12" r="10"></circle>
-      <circle cx="12" cy="12" r="6"></circle>
-      <circle cx="12" cy="12" r="2"></circle>
-    </svg> Tests
-  </a>
+<a href="tests.html">
+  <svg class="menu-svg-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <defs>
+      <linearGradient id="redYellowGradMenu" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#ff4b4b" />
+        <stop offset="100%" stop-color="#ffb703" />
+      </linearGradient>
+    </defs>
+    <circle cx="12" cy="12" r="9" stroke="url(#redYellowGradMenu)"></circle>
+    <path d="M12 7a5 5 0 1 0 5 5" stroke="url(#redYellowGradMenu)"></path>
+    <path d="M9 12l2 2 6-6" stroke="url(#redYellowGradMenu)"></path>
+  </svg> Tests
+</a>
+
 
   <a href="ask-chat.html" class="ai-side-link">
     <svg class="menu-svg-icon ai-sparkle-icon" viewBox="0 0 24 24" fill="none" stroke="#00ffd4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -508,16 +515,22 @@
       </div>
     
       <div class="card" onclick="goto('tests.html')">
-        <div class="refbook-icon-badge">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"></circle>
-            <circle cx="12" cy="12" r="6"></circle>
-            <circle cx="12" cy="12" r="2"></circle>
-          </svg>
-        </div>
-        <h3>Practice Tests</h3>
-        <p>MCQs & Practice</p>
-      </div>
+  <div class="refbook-icon-badge">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <defs>
+        <linearGradient id="redYellowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#ff4b4b" />
+          <stop offset="100%" stop-color="#ffb703" />
+        </linearGradient>
+      </defs>
+      <circle cx="12" cy="12" r="9" stroke="url(#redYellowGrad)"></circle>
+      <path d="M12 7a5 5 0 1 0 5 5" stroke="url(#redYellowGrad)"></path>
+      <path d="M9 12l2 2 6-6" stroke="url(#redYellowGrad)"></path>
+    </svg>
+  </div>
+  <h3>Practice Tests</h3>
+  <p>MCQs & Practice</p>
+</div>
 
       <div class="card" onclick="goto('refbook.html')">
         <div class="refbook-icon-badge">
