@@ -199,6 +199,44 @@
   overflow-x: auto;
   max-width: 100%;
 }
+/* Mini Calendar Legend & Colors matching calendar.css */
+.mini-day {
+  padding: 8px 2px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: bold;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.03);
+  color: #e2e8f0;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  position: relative;
+  cursor: pointer;
+}
+.mini-day.sunday {
+  border-color: rgba(255, 183, 3, 0.6);
+  color: #ffb703;
+  box-shadow: 0 0 6px rgba(255, 183, 3, 0.3);
+}
+.mini-day.holiday {
+  background: rgba(255, 77, 77, 0.15) !important;
+  border-color: #ff4d4d !important;
+  color: #ff4d4d !important;
+}
+.mini-day.observance {
+  background: rgba(0, 242, 254, 0.1) !important;
+  border-color: #00f2fe !important;
+  color: #00f2fe !important;
+}
+.mini-day.event-glow {
+  background: rgba(164, 138, 255, 0.15) !important;
+  border-color: #a48aff !important;
+  color: #a48aff !important;
+}
+.mini-day.today {
+  background: linear-gradient(135deg, #3aa0ff, #7b6bff) !important;
+  color: #fff !important;
+  box-shadow: 0 0 10px #3aa0ff;
+}
 
 /* MathJax equations ko auto-wrap aur scrollable banane ke liye */
 .MathJax_Display, mjx-container {
