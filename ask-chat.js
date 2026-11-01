@@ -1288,7 +1288,7 @@ ${userQuery}`;
     renderMiniCalendar(miniCalCurDate);
   };
 
-  function renderMiniCalendar(dateObj) {
+    function renderMiniCalendar(dateObj) {
     const year = dateObj.getFullYear();
     const month = dateObj.getMonth();
     const monthName = dateObj.toLocaleString('default', { month: 'long', year: 'numeric' });
@@ -1296,36 +1296,43 @@ ${userQuery}`;
     const firstDayIndex = new Date(year, month, 1).getDay();
     const totalDays = new Date(year, month + 1, 0).getDate();
     const today = new Date();
-    const todayKey = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
+    const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
     let gridHtml = '';
     for (let i = 0; i < firstDayIndex; i++) {
-      gridHtml += `<div style="padding: 6px; opacity: 0.2;"></div>`;
+      gridHtml += `<div></div>`;
     }
 
     for (let d = 1; d <= totalDays; d++) {
       const currentCellDate = new Date(year, month, d);
+      const y = currentCellDate.getFullYear();
+      const mm = String(currentCellDate.getMonth() + 1).padStart(2, '0');
+      const dd = String(d).padStart(2, '0');
+      const dateKey = `${y}-${mm}-${dd}`;
+      const monthDayKey = `${mm}-${dd}`;
+
       const isSunday = currentCellDate.getDay() === 0;
-      const isToday = `${year}-${month}-${d}` === todayKey;
+      const isToday = dateKey === todayKey;
+      
+      // Check global holidays or events if available from calendar.js
+      const isHoliday = window.fetchedHolidays && window.fetchedHolidays[dateKey];
+      const holidayName = isHoliday ? window.fetchedHolidays[dateKey] : (isSunday ? "Sunday (Weekly Off)" : "");
 
-      let cellStyle = "padding: 8px 2px; border-radius: 6px; font-size: 11px; font-weight: bold; text-align: center; background: rgba(255,255,255,0.03); color: #e2e8f0; border: 1px solid rgba(255,255,255,0.05);";
+      let classList = "mini-day";
+      if (isToday) classList += " today";
+      else if (isHoliday) classList += " holiday";
+      else if (isSunday) classList += " sunday";
 
-      if (isSunday) {
-        cellStyle += " border-color: rgba(255, 183, 3, 0.6); color: #ffc107; box-shadow: 0 0 6px rgba(255,183,3,0.3);";
-      }
+      let titleAttr = holidayName ? `title="${escapeHtml(holidayName)}"` : "";
 
-      if (isToday) {
-        cellStyle += " background: linear-gradient(135deg, #3aa0ff, #7b6bff) !important; color: #fff !important; box-shadow: 0 0 10px #3aa0ff;";
-      }
-
-      gridHtml += `<div style="${cellStyle}">${d}</div>`;
+      gridHtml += `<div class="${classList}" ${titleAttr}>${d}</div>`;
     }
 
     const modalHtml = `
       <div style="background: #04101a; border: 1px solid rgba(58,160,255,0.3); border-radius: 12px; padding: 14px; color: #e9f5ff;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-          <div style="font-weight: 800; font-size: 14px; color: #3aa0ff; display: flex; align-items: center; gap: 6px;">
-            ${SVG.calendar} ${escapeHtml(monthName)}
+          <div style="font-weight: 800; font-size: 14px; color: #3aa0ff;">
+            📅 ${escapeHtml(monthName)}
           </div>
           <div style="display: flex; gap: 4px;">
             <button onclick="changeMiniMonth(-1)" style="background: rgba(255,255,255,0.1); border: none; color: #fff; border-radius: 4px; padding: 2px 8px; cursor: pointer;">◀</button>
@@ -1334,7 +1341,7 @@ ${userQuery}`;
         </div>
 
         <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; font-size: 10px; font-weight: bold; color: #94a3b8; margin-bottom: 6px;">
-          <div style="color: #ffc107;">Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+          <div style="color: #ffb703;">Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
         </div>
 
         <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;">
@@ -1342,8 +1349,8 @@ ${userQuery}`;
         </div>
 
         <div style="margin-top: 12px; display: flex; justify-content: space-between; align-items: center;">
-          <a href="calendar.html" style="color: #38bdf8; font-size: 11px; text-decoration: none; font-weight: bold; display: flex; align-items: center; gap: 4px;">
-            Full Calendar Page ${SVG.external}
+          <a href="calendar.html" style="color: #38bdf8; font-size: 11px; text-decoration: none; font-weight: bold;">
+            Full Calendar View 🌐
           </a>
           <button onclick="closeModal()" style="background: #334155; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px;">Close</button>
         </div>
@@ -1351,7 +1358,9 @@ ${userQuery}`;
     `;
 
     openModal(modalHtml);
-  }
+                                                                                     }
+  
+        
 
   window.changeMiniMonth = function(dir) {
     miniCalCurDate.setMonth(miniCalCurDate.getMonth() + dir);
