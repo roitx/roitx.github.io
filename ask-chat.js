@@ -1349,9 +1349,10 @@ ${userQuery}`;
         </div>
 
         <div style="margin-top: 12px; display: flex; justify-content: space-between; align-items: center;">
-          <a href="calendar.html" style="color: #38bdf8; font-size: 11px; text-decoration: none; font-weight: bold;">
-            Full Calendar View 🌐
+          <a href="calendar.html" style="color: #38bdf8; font-size: 11px; text-decoration: none; font-weight: bold; display: flex; align-items: center; gap: 4px;">
+            Full Calendar Page ${SVG.external}
           </a>
+          
           <button onclick="closeModal()" style="background: #334155; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px;">Close</button>
         </div>
       </div>
