@@ -1284,7 +1284,11 @@ ${userQuery}`;
   }
 
   // ---- INTERACTIVE MINI CALENDAR POPUP ----
-  window.showCalendarModalDirect = function() {
+    window.showCalendarModalDirect = async function() {
+    const year = miniCalCurDate.getFullYear();
+    if (window.fetchHolidays) {
+      await window.fetchHolidays(year);
+    }
     renderMiniCalendar(miniCalCurDate);
   };
 
