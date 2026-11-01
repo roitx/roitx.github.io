@@ -184,17 +184,61 @@ function speakText(rawText, btnElement, forcePlay = false) {
 }
 
 
-    
   // ---- DOM ELEMENTS ----
   const chatWindow = document.getElementById('chatWindow');
   const input = document.getElementById('chatInput');
   const sendBtn = document.getElementById('sendBtn');
+  const micBtn = document.getElementById('micBtn'); // Mic button element
   const modal = document.getElementById('modal');
   const modalContent = document.getElementById('modalContent');
   const notesCount = document.getElementById('notesCount');
 
-  if (!chatWindow || !input || !sendBtn) {
-    console.warn('ask-chat.js: Required DOM elements missing.');
+    // ---- VOICE RECOGNITION (MIC) SETUP WITH AUTO-SEND ----
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (SpeechRecognition && micBtn && input) {
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false; // False rakha hai taaki sentence khatam hote hi stop ho jaye
+    recognition.interimResults = true;
+
+    micBtn.addEventListener('click', () => {
+      try {
+        recognition.lang = selectedLanguage === 'hi' ? 'hi-IN' : 'en-US';
+        recognition.start();
+      } catch (e) {
+        console.log("Speech recognition already active or blocked");
+      }
+    });
+
+    recognition.onstart = () => {
+      micBtn.classList.add('listening');
+      input.placeholder = "🎤 Sun rahe hain, boliye...";
+    };
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      input.value = transcript;
+    };
+
+    recognition.onerror = (event) => {
+      console.warn("Speech recognition error:", event.error);
+      micBtn.classList.remove('listening');
+      input.placeholder = "Type a command or question...";
+    };
+
+    // Jaise hi user bolna band karega aur recognition end hoga, ye auto-send kar dega
+    recognition.onend = () => {
+      micBtn.classList.remove('listening');
+      input.placeholder = "Type a command or question...";
+      
+      const spokenText = input.value.trim();
+      if (spokenText !== "") {
+        addUserMsg(spokenText);
+        input.value = '';
+        handleCommand(spokenText); // Automatic message send aur process ho jayega
+      }
+    };
+  } else if (micBtn) {
+    micBtn.style.display = 'none';
   }
 
   // ---- FULL SVG ICONS TOOLKIT ----
@@ -449,13 +493,56 @@ function addBotMsg(content, isHTML = false) {
 }
 
 
-  function showTyping() {
+        function showTyping() {
     if (!chatWindow) return null;
     const el = document.createElement('div'); 
-    el.className = 'msg bot typing';
-    el.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
+    el.className = 'msg bot typing-indicator';
+    
+    const textSpan = document.createElement('span');
+    textSpan.style.fontSize = '12px';
+    textSpan.style.color = '#38bdf8';
+    textSpan.style.marginLeft = '8px';
+    textSpan.textContent = '🧩 Connecting pieces...'; // Emoji added
+
+    const dotsDiv = document.createElement('div');
+    dotsDiv.className = 'typing';
+    dotsDiv.innerHTML = '<span></span><span></span><span></span>';
+
+    const container = document.createElement('div');
+    container.style.display = 'flex';
+    container.style.alignItems = 'center';
+    container.style.gap = '8px';
+    container.appendChild(dotsDiv);
+    container.appendChild(textSpan);
+    el.appendChild(container);
+
     chatWindow.appendChild(el); 
     chatWindow.scrollTop = chatWindow.scrollHeight;
+
+    // 2 second baad emoji aur text change hoga
+    const timer1 = setTimeout(() => {
+      if (document.body.contains(textSpan)) {
+        textSpan.textContent = '🔍 Getting right message...'; // Emoji added
+      }
+    }, 2000);
+
+    // 4 second baad final emoji aur text aayega
+    const timer2 = setTimeout(() => {
+      if (document.body.contains(textSpan)) {
+        textSpan.textContent = '✨ Creating best ans...'; // Emoji added
+      }
+    }, 4000);
+
+    el._typingTimers = [timer1, timer2];
+
+    const originalRemove = el.remove;
+    el.remove = function() {
+      if (el._typingTimers) {
+        el._typingTimers.forEach(clearTimeout);
+      }
+      originalRemove.call(el);
+    };
+
     return el;
   }
 
@@ -501,21 +588,31 @@ function addBotMsg(content, isHTML = false) {
   async function handleCommand(raw) {
     const cmd = normalize(raw);
 
-    // 1. CREATOR DETAILS
+        // 1. CREATOR DETAILS
     if (cmd.includes('kiske dwara') || cmd.includes('kisne banaya') || cmd.includes('who made') || cmd.includes('who created') || cmd.includes('developer') || cmd.includes('creator') || cmd.includes('owner') || cmd === 'rohit' || cmd.includes('rohit kaun')) {
       addBotMsg(`
-        <div style="border: 1px solid #38bdf8; padding: 10px; border-radius: 8px; background: rgba(56, 189, 248, 0.08); margin-top: 5px;">
-          <div style="font-size: 13px; font-weight: bold; color: #38bdf8; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
-            ${SVG.user} Creator Details
+        <div style="border: 1px solid rgba(56, 189, 248, 0.4); padding: 14px; border-radius: 14px; background: linear-gradient(135deg, rgba(56, 189, 248, 0.08), rgba(15, 23, 42, 0.9)); margin-top: 5px; text-align: center; box-shadow: 0 8px 20px rgba(0,0,0,0.3);">
+          
+          <!-- Creator Round Image with Glowing Ring -->
+          <div style="display: flex; justify-content: center; margin-bottom: 10px;">
+            <div style="position: relative; width: 75px; height: 75px; border-radius: 50%; padding: 3px; background: linear-gradient(135deg, #00f0ff, #7c4dff); box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);">
+              <img src="auth.jpg" alt="Rohit Kumar" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; background: #050b18;" onerror="this.src='profile.png'">
+            </div>
           </div>
-          <div style="font-size: 12px; color: #e0e7ff; line-height: 1.5; margin-bottom: 8px;">
-            Is application ko <b>Rohit</b> ne banaya hai! Platform ke bare me aur janne ke liye link par click karein:
+
+          <div style="font-size: 14px; font-weight: bold; color: #38bdf8; margin-bottom: 4px;">
+            Rohit Kumar
           </div>
-          <a href="about.html" style="display: inline-flex; align-items: center; gap: 4px; background: #0284c7; color: #fff; text-decoration: none; padding: 6px 12px; border-radius: 5px; font-weight: bold; font-size: 12px;">
-            ${SVG.external} Visit About Page (about.html)
+          <div style="font-size: 11px; color: #94a3b8; margin-bottom: 8px; font-weight: 500;">Founder & Developer</div>
+
+          <div style="font-size: 12px; color: #e0e7ff; line-height: 1.5; margin-bottom: 12px;">
+            Is application ko <b>Rohit Sir</b> ne banaya hai! Platform ke bare me aur janne ke liye niche link par click karein:
+          </div>
+          <a href="about.html" style="display: inline-flex; align-items: center; justify-content: center; gap: 6px; background: linear-gradient(135deg, #0284c7, #0369a1); color: #fff; text-decoration: none; padding: 7px 14px; border-radius: 8px; font-weight: bold; font-size: 12px; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);">
+            ${SVG.external} Visit About Page
           </a>
         </div>
-      `);
+      `, true);
       return;
     }
 
@@ -1177,11 +1274,18 @@ if (cmd.startsWith('open link') || cmd.startsWith('open ')) {
 You are 'Roitx AI', an advanced, highly intelligent study assistant built for Rohit's educational platform (roitx.github.io).
 
 ### 🎯 CORE IDENTITY & TONE
+- REPETITION BAN: Never repeat words, phrases, or syllables endlessly (e.g., do not loop words like "kiya kiya kiya"). Keep responses concise, clean, and meaningful.
+
 - Respond in clear, simple, and friendly **Hindi / Hinglish** (mix of English and Hindi script/Latin text).
 - Be encouraging, precise, and highly accurate with academic concepts.
 - Avoid unnecessarily long explanations unless explicitly requested. Use bullet points for steps or multi-part answers.
 - Always write long mathematical steps line-by-line instead of a single wide equation to prevent horizontal overflow on mobile screens.
 -  This site is made by "ROHIT KUMAR" you call him Rohit sir.
+### 📏 RESPONSE CLARITY & STRUCTURE RULES
+1. DIRECT & CONCISE: Start answering immediately. Do not include filler phrases like "Sure, I can help with that" or "Here is your answer".
+2. NO HALLUCINATION / REPETITION: Never repeat words, phrases, or syllables. If a concept is unknown, politely redirect to the doubt solver instead of generating nonsense.
+3. FORMATTING RESTRICTIONS: Use bullet points for steps. Keep explanations short, clean, and mobile-friendly to prevent text overflow.
+4. LANGUAGE MATCHING: If the user asks in Hinglish/Hindi, reply in natural Hinglish. If in English, reply in English.
 
 ### 🔗 NAVIGATION & HTML LINK RULES
 When a user asks for classes, study materials, subjects, tools, or website navigation, ALWAYS generate valid, standard HTML inline <a> tags using the exact relative paths listed below.

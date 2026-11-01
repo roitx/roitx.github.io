@@ -212,6 +212,62 @@
   position: relative;
   cursor: pointer;
 }
+.micBtn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #38bdf8;
+  padding: 10px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+.micBtn:hover {
+  background: rgba(6, 182, 212, 0.2);
+  border-color: #38bdf8;
+}
+
+/* Jab mic sun raha ho tab ka glowing aur wave effect */
+.micBtn.listening {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #fff;
+  border-color: #f87171;
+  animation: micPulse 1.5s infinite;
+}
+
+@keyframes micPulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  }
+  50% {
+    transform: scale(1.08);
+    box-shadow: 0 0 0 12px rgba(239, 68, 68, 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+}
+.msg.bot.typing-indicator {
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.08), rgba(59, 130, 246, 0.08));
+  border: 1px solid rgba(6, 182, 212, 0.3);
+  box-shadow: 0 2px 10px rgba(6, 182, 212, 0.1);
+  border-radius: 10px;
+  padding: 6px 10px !important;
+  max-height: none !important;
+}
+
+
+@keyframes pulseAi {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+
 .mini-day.sunday {
   border-color: rgba(255, 183, 3, 0.6);
   color: #ffb703;
@@ -259,9 +315,21 @@
     <section class="left" aria-label="Chat Interface">
       <div id="chatWindow" class="chatWindow" aria-live="polite" aria-label="Message log"></div>
       <div class="inputBar">
-        <input id="chatInput" placeholder="Type a command or question..." aria-label="Chat input field">
-        <button id="sendBtn" class="sendBtn" aria-label="Send message">Send</button>
-      </div>
+  <input id="chatInput" placeholder="Type a command or question..." aria-label="Chat input field">
+  
+  <!-- MIC BUTTON ADDED HERE -->
+  <button id="micBtn" class="micBtn" title="Speak to type" aria-label="Voice input">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+      <path d="M19 10v1a7 7 0 0 1-14 0v-1"></path>
+      <line x1="12" y1="19" x2="12" y2="23"></line>
+      <line x1="8" y1="23" x2="16" y2="23"></line>
+    </svg>
+  </button>
+
+  <button id="sendBtn" class="sendBtn" aria-label="Send message">Send</button>
+</div>
+
     </section>
 
     <!-- Right Sidebar Tools -->
