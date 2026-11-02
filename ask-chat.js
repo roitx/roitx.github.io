@@ -200,8 +200,13 @@ function speakText(rawText, btnElement, forcePlay = false) {
     recognition.continuous = false; // False rakha hai taaki sentence khatam hote hi stop ho jaye
     recognition.interimResults = true;
 
-    micBtn.addEventListener('click', () => {
+        micBtn.addEventListener('click', () => {
       try {
+        // Mic click hote hi agar koi speech chal rahi ho toh use turant band kar dein
+        if (typeof stopCurrentSpeech === 'function') {
+          stopCurrentSpeech();
+        }
+
         recognition.lang = selectedLanguage === 'hi' ? 'hi-IN' : 'en-US';
         recognition.start();
       } catch (e) {
@@ -1390,10 +1395,16 @@ ${userQuery}`;
       }
 
       if (answerText) {
-        const cleanFormatted = cleanAndFormatText(answerText);
-        addBotMsg(cleanFormatted);
+        // Fallback check agar AI repeat karne lage ya loop me jaye
+        if (hasTextRepetition(answerText)) {
+          console.warn("⚠️ Repetition detected in AI response. Triggering local fallback.");
+          addBotMsg("Main isme madad karne me ashakam hu! Please try again.");
+        } else {
+          const cleanFormatted = cleanAndFormatText(answerText);
+          addBotMsg(cleanFormatted);
+        }
       } else {
-        addBotMsg("⚠️ Server se response structure empty mila.");
+        addBotMsg("Main isme madad karne me ashakam hu! Please try again.");
       }
 
     } catch (err) {
@@ -1588,7 +1599,39 @@ ${userQuery}`;
     const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent('📋 Roitx Notes:\n' + txt)}`;
     window.open(waUrl, '_blank');
   };
+   // ---- REPETITION & LOOP DETECTION FALLBACK FUNCTION (ADVANCED) ----
+  function hasTextRepetition(text) {
+    if (!text) return false;
+    
+    // 1. Check for character-level loops (jaise "ोगोगोगोगो" ya "XXXXXXXXX")
+    const charLoopPattern = /(.)\1{5,}/;
+    if (charLoopPattern.test(text)) return true;
 
+    // 2. Check for repeating syllables or words without proper spacing (jaise "upayogogogogo")
+    const subStringLoop = /(.{2,6})(?:\1){4,}/;
+    if (subStringLoop.test(text)) return true;
+    
+    // 3. Agar koi word 5 baar se zyada consecutive repeat ho raha ho
+    const repeatingPattern = /(\b\w+\b)(?:\s+\1){4,}/i;
+    if (repeatingPattern.test(text)) return true;
+
+    // 4. Agar text ki length lambi hai aur same words baar-baar loop me aa rahe hain
+    const words = text.split(/\s+/);
+    if (words.length > 15) {
+      let consecutiveCount = 1;
+      for (let i = 1; i < words.length; i++) {
+        if (words[i].toLowerCase() === words[i - 1].toLowerCase()) {
+          consecutiveCount++;
+          if (consecutiveCount > 4) return true; 
+        } else {
+          consecutiveCount = 1;
+        }
+      }
+    }
+    return false;
+  }
+
+  
   // ---- MODAL HELPERS ----
   function openModal(innerHtml) {
     if (!modal || !modalContent) return;
