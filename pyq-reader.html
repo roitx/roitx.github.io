@@ -41,6 +41,24 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
     body { background: var(--bg); color: var(--text-main); padding: 15px; display: flex; justify-content: center; min-height: 100vh; }
 
+    /* SCROLLABLE CHEMICAL EQUATION CONTAINER */
+    .chem-scroll {
+      overflow-x: auto;
+      max-width: 100%;
+      display: block;
+      margin: 8px 0;
+      padding: 4px 0;
+      scrollbar-width: thin;
+      scrollbar-color: var(--accent) var(--border);
+    }
+    .chem-scroll::-webkit-scrollbar {
+      height: 6px;
+    }
+    .chem-scroll::-webkit-scrollbar-thumb {
+      background: var(--accent);
+      border-radius: 4px;
+    }
+
     /* READING PROGRESS BAR */
     .progress-container {
       position: fixed;
@@ -242,9 +260,30 @@
   }
 
   function renderMathJax() {
-    if (window.MathJax && typeof window.MathJax.typeset === 'function') {
+    if (window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
+      window.MathJax.typesetPromise().then(() => {
+        makeEquationsScrollable();
+      }).catch((err) => console.log('MathJax error:', err));
+    } else if (window.MathJax && typeof window.MathJax.typeset === 'function') {
       window.MathJax.typeset();
+      makeEquationsScrollable();
     }
+  }
+
+  function makeEquationsScrollable() {
+    // Find all rendered math containers and check for chemical arrows or catalysts
+    const mathContainers = document.querySelectorAll('mjx-container');
+    mathContainers.forEach(container => {
+      const text = container.textContent || container.innerHTML || '';
+      if (text.includes('→') || container.innerHTML.includes('rightarrow') || container.innerHTML.includes('xrightarrow') || container.innerHTML.includes('ce{')) {
+        if (!container.parentElement.classList.contains('chem-scroll')) {
+          const wrapper = document.createElement('div');
+          wrapper.className = 'chem-scroll';
+          container.parentNode.insertBefore(wrapper, container);
+          wrapper.appendChild(container);
+        }
+      }
+    });
   }
 
   function trackPYQActivityLocally(paperData) {
