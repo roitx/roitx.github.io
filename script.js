@@ -994,75 +994,52 @@ function urlBase64ToUint8Array(base64String) {
   return outputArray;
 }
 
-// Jab user notification bell icon par tap kare ya auto trigger ho
-async function requestAndSubscribeNotification() {
-  if (typeof window === 'undefined' || !('Notification' in window)) return;
-
-  try {
-    const permission = await Notification.requestPermission();
-    if (permission === 'granted') {
-      await subscribeUserToPush();
-    }
-  } catch (err) {
-    console.error('Permission error:', err);
-  }
-}
-
-async function subscribeUserToPush() {
+// Background me push subscription save karne ke liye helper function
+async function subscribeUserToPushSilently() {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
 
   try {
     const registration = await navigator.serviceWorker.ready;
     let subscription = await registration.pushManager.getSubscription();
 
-    if (!subscription) {
+    if (!subscription && Notification.permission === 'granted') {
       subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
       });
     }
 
-    if (window.supabaseClient) {
+    if (subscription && window.supabaseClient) {
       const { data: { session } } = await window.supabaseClient.auth.getSession();
       const userId = session ? session.user.id : null;
 
       // Database ki push_subscriptions table me token save karna
-      const { error } = await window.supabaseClient
+      await window.supabaseClient
         .from('push_subscriptions')
         .upsert({
           user_id: userId,
           subscription: JSON.parse(JSON.stringify(subscription)),
           updated_at: new Date().toISOString()
         }, { onConflict: 'subscription' });
-
-      if (error) console.error("Supabase save error:", error);
-      else console.log("Successfully subscribed and saved to database!");
     }
   } catch (err) {
-    console.error('Subscription error:', err);
+    console.warn('Push silent subscription error:', err);
   }
 }
 
-// Bell icon click handler (Normal tab aur PWA dono ke liye 100% working)
-
-// Bell icon click handler without annoying alert popups
+// Bell Icon Click Handler: Purana Dropdown bhi khulega aur agar permission pending hai toh maang lega
 function toggleNotif() {
   if (typeof Notification !== 'undefined') {
-    if (Notification.permission === 'denied') {
-      // Alert ki jagah ek pyara sa subtle toast message dikhayenge
-      showToastNotification("Notifications Blocked", "Browser settings me jakar notification allow karein.", "#");
-      return;
-    } else if (Notification.permission === 'default') {
+    if (Notification.permission === 'default') {
       Notification.requestPermission().then(permission => {
         if (permission === 'granted') {
-          subscribeUserToPush();
+          subscribeUserToPushSilently();
         }
       });
-      return;
     }
   }
 
-  // Agar already granted hai toh dropdown/modal khulega
+  // Purana in-app notification dropdown / modal toggle logic
   const box = document.getElementById("notifBox");
   if (box) {
     box.classList.toggle("show");
@@ -1075,45 +1052,10 @@ function toggleNotif() {
   }
 }
 
-
-async function subscribeUserToPush() {
-  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
-
-  try {
-    const registration = await navigator.serviceWorker.ready;
-    let subscription = await registration.pushManager.getSubscription();
-
-    if (!subscription) {
-      subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
-      });
-    }
-
-    if (window.supabaseClient) {
-      const { data: { session } } = await window.supabaseClient.auth.getSession();
-      const userId = session ? session.user.id : null;
-
-      const { error } = await window.supabaseClient
-        .from('push_subscriptions')
-        .upsert({
-          user_id: userId,
-          subscription: JSON.parse(JSON.stringify(subscription)),
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'subscription' });
-
-      if (error) console.error("Supabase save error:", error);
-      else alert('🎉 Notifications successfully enabled!');
-    }
-  } catch (err) {
-    console.error('Subscription error:', err);
-  }
-}
-
-// App khulne par agar pehle se allowed hai toh background me token sync kar lo
+// App khulne par background me silent subscription sync
 document.addEventListener('DOMContentLoaded', () => {
   if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-    subscribeUserToPush();
+    subscribeUserToPushSilently();
   }
 });
 
