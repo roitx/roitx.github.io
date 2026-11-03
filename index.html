@@ -1342,29 +1342,6 @@
       }
     });
 </script>
-<script>
-  // Notification bell icon click handler update
-  document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('.notif-icon-btn, #notifBtn, .fa-bell').forEach(bell => {
-    bell.addEventListener('click', () => {
-      // Agar user ne notification allow kar di hai, toh banner kabhi mat dikhao, sirf drawer kholo
-      if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-        if (typeof toggleNotif === 'function') {
-          toggleNotif();
-        }
-      } else {
-        // Agar allow nahi kiya hai, tabhi custom banner dikhao
-        localStorage.removeItem('pm_notif_dismissed');
-        if (typeof checkAndShowNotificationBanner === 'function') {
-          checkAndShowNotificationBanner();
-        }
-      }
-    });
-  });
-});
-
-</script>
-
 
 </body>
 </html>
