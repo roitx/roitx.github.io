@@ -996,7 +996,9 @@ function urlBase64ToUint8Array(base64String) {
 
 // Custom UI Prompt dikhane ke liye agar permission nahi mili hai
 function checkAndShowNotificationBanner() {
-  if (!('Notification' in window) || Notification.permission === 'granted') return;
+  // Check if Notification API is supported by the browser/environment
+  if (typeof window === 'undefined' || !('Notification' in window)) return;
+  if (Notification.permission === 'granted') return;
 
   if (localStorage.getItem('pm_notif_dismissed')) return;
 
