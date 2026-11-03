@@ -980,7 +980,7 @@ window.addEventListener('resize', autoFitMiniIframes);
 window.addEventListener('orientationchange', () => {
   setTimeout(autoFitMiniIframes, 200);
 });
-// --- CUSTOM NOTIFICATION PERMISSION UI & PUSH SETUP ---
+// --- NATIVE NOTIFICATION PERMISSION & PUSH SETUP ---
 const VAPID_PUBLIC_KEY = 'BMYEkoJeS0XfUioxCbOxw74ZpQmow8-OaGLrYiB3Bolh2Fl4U5AXNFA-5QJ16skwIMxlc2ZzsAi9XenHbfyivEs';
 
 function urlBase64ToUint8Array(base64String) {
@@ -994,85 +994,59 @@ function urlBase64ToUint8Array(base64String) {
   return outputArray;
 }
 
-// Centre Modal Popup jo piche ki screen ko untouchable banayega
-function showCustomNotificationModal() {
+// Jab user notification bell icon par tap kare ya auto trigger ho
+async function requestAndSubscribeNotification() {
   if (typeof window === 'undefined' || !('Notification' in window)) return;
-  if (Notification.permission === 'granted') return;
 
-  // Agar pehle se modal khula hai toh dobara mat banao
-  if (document.getElementById('customNotifModalOverlay')) return;
-
-  const overlay = document.createElement('div');
-  overlay.id = 'customNotifModalOverlay';
-  overlay.style.cssText = `
-    position: fixed; inset: 0; z-index: 999999;
-    background: rgba(5, 11, 24, 0.85); backdrop-filter: blur(8px);
-    display: flex; align-items: center; justify-content: center; padding: 20px;
-    animation: fadeIn 0.3s ease;
-  `;
-
-  overlay.innerHTML = `
-    <div style="
-      width: 100%; max-width: 380px; background: #0c162d;
-      border: 1px solid rgba(0, 210, 255, 0.3); border-radius: 20px;
-      padding: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.7);
-      color: #fff; text-align: center; font-family: inherit;
-    ">
-      <div style="
-        background: linear-gradient(135deg, rgba(0,210,255,0.15), rgba(0,114,255,0.15));
-        width: 64px; height: 64px; border-radius: 50%; margin: 0 auto 16px auto;
-        display: flex; align-items: center; justify-content: center; font-size: 28px;
-        border: 1px solid rgba(0, 210, 255, 0.4); box-shadow: 0 0 20px rgba(0,210,255,0.2);
-      ">🔔</div>
-      
-      <h3 style="margin: 0 0 8px 0; font-size: 18px; font-weight: 700; color: #fff;">Enable Notifications</h3>
-      <p style="margin: 0 0 20px 0; font-size: 13px; color: #94a3b8; line-height: 1.5;">
-        Naye notes, study materials aur zaroori updates ke liye notifications allow karein taaki aap koi bhi update miss na karein!
-      </p>
-
-      <div style="display: flex; gap: 10px;">
-        <button id="modalLaterBtn" style="
-          flex: 1; background: rgba(255,255,255,0.06); color: #94a3b8;
-          border: 1px solid rgba(255,255,255,0.1); padding: 12px; border-radius: 12px;
-          font-weight: 600; cursor: pointer; font-size: 13px; transition: all 0.2s;
-        ">Later</button>
-        
-        <button id="modalAllowBtn" style="
-          flex: 1; background: linear-gradient(135deg, #00d2ff, #0072ff); color: #fff;
-          border: none; padding: 12px; border-radius: 12px; font-weight: 700;
-          cursor: pointer; font-size: 13px; box-shadow: 0 4px 15px rgba(0,210,255,0.3);
-          transition: all 0.2s;
-        ">Allow Now</button>
-      </div>
-    </div>
-  `;
-
-  document.body.appendChild(overlay);
-
-  document.getElementById('modalAllowBtn').onclick = async () => {
-    overlay.remove();
-    await subscribeUserToPush();
-  };
-
-  document.getElementById('modalLaterBtn').onclick = () => {
-    localStorage.setItem('pm_notif_dismissed', 'true');
-    overlay.remove();
-  };
+  try {
+    const permission = await Notification.requestPermission();
+    if (permission === 'granted') {
+      await subscribeUserToPush();
+    }
+  } catch (err) {
+    console.error('Permission error:', err);
+  }
 }
 
-// App land hote hi kuch seconds baad check karega
-function checkAndShowNotificationBanner() {
-  if (Notification.permission === 'granted') return;
-  if (localStorage.getItem('pm_notif_dismissed')) return;
-  
-  // Kuch seconds ka delay taaki splash screen ke baad smooth dikhe
-  setTimeout(showCustomNotificationModal, 3500);
+async function subscribeUserToPush() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+
+  try {
+    const registration = await navigator.serviceWorker.ready;
+    let subscription = await registration.pushManager.getSubscription();
+
+    if (!subscription) {
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+      });
+    }
+
+    if (window.supabaseClient) {
+      const { data: { session } } = await window.supabaseClient.auth.getSession();
+      const userId = session ? session.user.id : null;
+
+      // Database ki push_subscriptions table me token save karna
+      const { error } = await window.supabaseClient
+        .from('push_subscriptions')
+        .upsert({
+          user_id: userId,
+          subscription: JSON.parse(JSON.stringify(subscription)),
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'subscription' });
+
+      if (error) console.error("Supabase save error:", error);
+      else console.log("Successfully subscribed and saved to database!");
+    }
+  } catch (err) {
+    console.error('Subscription error:', err);
+  }
 }
 
-// Bell icon click override handler jisse agar permission nahi hai toh modal aayega
+// Bell icon click handler update
 function toggleNotif() {
   if (typeof Notification !== 'undefined' && Notification.permission !== 'granted') {
-    showCustomNotificationModal();
+    requestAndSubscribeNotification();
     return;
   }
 
@@ -1088,50 +1062,14 @@ function toggleNotif() {
   }
 }
 
-async function subscribeUserToPush() {
-  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
-
-  try {
-    const permission = await Notification.requestPermission();
-    if (permission !== 'granted') return;
-
-    const registration = await navigator.serviceWorker.ready;
-    let subscription = await registration.pushManager.getSubscription();
-
-    if (!subscription) {
-      subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
-      });
-    }
-
-    if (window.supabaseClient) {
-      const { data: { session } } = await window.supabaseClient.auth.getSession();
-      const userId = session ? session.user.id : null;
-
-      await window.supabaseClient
-        .from('push_subscriptions')
-        .upsert({
-          user_id: userId,
-          subscription: JSON.parse(JSON.stringify(subscription)),
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'subscription' });
-    }
-    
-    alert('🎉 Notifications successfully enabled!');
-  } catch (err) {
-    console.error('Subscription error:', err);
-  }
-}
-
-// DOM load par auto popup check
+// App khulne par agar pehle se allowed hai toh background me token sync kar lo
 document.addEventListener('DOMContentLoaded', () => {
-  checkAndShowNotificationBanner();
+  if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+    subscribeUserToPush();
+  }
 });
 
-
-
-// App khulne par badge clear karne ke liye (Optional)
+// App khulne par badge clear karne ke liye
 window.addEventListener('focus', async () => {
   if ('clearAppBadge' in navigator) {
     try {
@@ -1141,4 +1079,3 @@ window.addEventListener('focus', async () => {
     }
   }
 });
-  
