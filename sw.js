@@ -26,13 +26,11 @@ async function cleanUpCache() {
   const keys = await cache.keys();
   if (keys.length > 40) {
     await cache.delete(keys[0]);
-    await cleanUpCache(); // Add 'await' to ensure sequential deletion
+    await cleanUpCache();
   }
 }
 
-
-// FIXED: Safe caching taaki ek file miss hone se baki offline load hona na ruke
-// FIXED: Robust Offline Network Fallback
+// Robust Offline Network Fallback
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
 
@@ -89,10 +87,11 @@ self.addEventListener('push', function(event) {
     }
   }
 
+  // Aapka final selected icon & badge configuration
   const options = {
     body: data.body,
-    icon: './1profile.jpg',
-    badge: './1profile.jpg',
+    icon: '/profile.png',
+    badge: '/icon-512.png',
     data: { url: data.url || '/index.html' },
     vibrate: [200, 100, 200]
   };
@@ -100,8 +99,7 @@ self.addEventListener('push', function(event) {
   // Push notification dikhana aur Service Worker registration par badge set karna
   event.waitUntil(
     Promise.all([
-      self.registration.showNotification(data.title, options),
-      // Service Worker me navigator ki jagah self.registration use hota hai
+      self.registration.showNotification(data.title || 'PM Roitx Study Hub', options),
       (async () => {
         if ('setAppBadge' in self.registration && data.badgeCount) {
           try {
@@ -122,7 +120,6 @@ self.addEventListener('notificationclick', function(event) {
 
   event.waitUntil(
     Promise.all([
-      // Click hone par badge clear karna
       (async () => {
         if ('clearAppBadge' in self.registration) {
           try {
@@ -132,7 +129,6 @@ self.addEventListener('notificationclick', function(event) {
           }
         }
       })(),
-      // Specific page par redirect ya open karna
       clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windowClients => {
         for (let i = 0; i < windowClients.length; i++) {
           const client = windowClients[i];
