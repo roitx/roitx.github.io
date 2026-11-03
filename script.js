@@ -980,3 +980,87 @@ window.addEventListener('resize', autoFitMiniIframes);
 window.addEventListener('orientationchange', () => {
   setTimeout(autoFitMiniIframes, 200);
 });
+// --- PUSH NOTIFICATION & SUBSCRIPTION SETUP ---
+
+const VAPID_PUBLIC_KEY = 'YAHAN_APNA_VAPID_PUBLIC_KEY_DAALEIN'; // Apna VAPID Public Key yahan paste karein
+
+// Utility function to convert VAPID key
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
+// Push Notification Permission & Subscription Function
+async function subscribeUserToPush() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    console.warn('Push messaging is not supported in this browser.');
+    return;
+  }
+
+  try {
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') {
+      console.log('Notification permission denied.');
+      return;
+    }
+
+    const registration = await navigator.serviceWorker.ready;
+    let subscription = await registration.pushManager.getSubscription();
+
+    if (!subscription) {
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array('BMYEkoJeS0XfUioxCbOxw74ZpQmow8-OaGLrYiB3Bolh2Fl4U5AXNFA-5QJ16skwIMxlc2ZzsAi9XenHbfyivEs')
+      });
+    }
+
+    // Supabase me subscription save karna
+    if (window.supabaseClient) {
+      const { data: { session } } = await window.supabaseClient.auth.getSession();
+      const userId = session ? session.user.id : null;
+
+      const { error } = await window.supabaseClient
+        .from('push_subscriptions')
+        .upsert({
+          user_id: userId,
+          subscription: JSON.parse(JSON.stringify(subscription)),
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'subscription' });
+
+      if (error) {
+        console.error('Supabase subscription save error:', error);
+      } else {
+        console.log('Push subscription successfully saved to Supabase!');
+      }
+    }
+
+  } catch (err) {
+    console.error('Failed to subscribe the user: ', err);
+  }
+}
+
+// App load hone par ya user login ke baad ise call kar sakte hain
+document.addEventListener('DOMContentLoaded', () => {
+  // Aap chahein toh ise kisi button click par bhi trigger kar sakte hain
+  setTimeout(() => {
+    subscribeUserToPush();
+  }, 4000);
+});
+
+// App khulne par badge clear karne ke liye (Optional)
+window.addEventListener('focus', async () => {
+  if ('clearAppBadge' in navigator) {
+    try {
+      await navigator.clearAppBadge();
+    } catch (e) {
+      console.log('Badge clear failed:', e);
+    }
+  }
+});
+  
