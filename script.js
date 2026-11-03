@@ -980,11 +980,9 @@ window.addEventListener('resize', autoFitMiniIframes);
 window.addEventListener('orientationchange', () => {
   setTimeout(autoFitMiniIframes, 200);
 });
-// --- PUSH NOTIFICATION & SUBSCRIPTION SETUP ---
+// --- CUSTOM NOTIFICATION PERMISSION UI & PUSH SETUP ---
+const VAPID_PUBLIC_KEY = 'BMYEkoJeS0XfUioxCbOxw74ZpQmow8-OaGLrYiB3Bolh2Fl4U5AXNFA-5QJ16skwIMxlc2ZzsAi9XenHbfyivEs';
 
-const VAPID_PUBLIC_KEY = 'YAHAN_APNA_VAPID_PUBLIC_KEY_DAALEIN'; // Apna VAPID Public Key yahan paste karein
-
-// Utility function to convert VAPID key
 function urlBase64ToUint8Array(base64String) {
   const padding = '='.repeat((4 - base64String.length % 4) % 4);
   const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
@@ -996,19 +994,55 @@ function urlBase64ToUint8Array(base64String) {
   return outputArray;
 }
 
-// Push Notification Permission & Subscription Function
+// Custom UI Prompt dikhane ke liye agar permission nahi mili hai
+function checkAndShowNotificationBanner() {
+  if (!('Notification' in window) || Notification.permission === 'granted') return;
+
+  if (localStorage.getItem('pm_notif_dismissed')) return;
+
+  const banner = document.createElement('div');
+  banner.id = 'customNotifBanner';
+  banner.style.cssText = `
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    width: 90%; max-width: 400px; z-index: 99999;
+    background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(12px);
+    border: 1px solid rgba(0, 210, 255, 0.4); border-radius: 16px;
+    padding: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    color: #fff; font-family: inherit; animation: fadeInUp 0.4s ease;
+  `;
+  banner.innerHTML = `
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <div style="background: linear-gradient(135deg, #00d2ff, #0072ff); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;">🔔</div>
+      <div>
+        <div style="font-size: 14px; font-weight: 700; color: #fff;">PM Roitx Alerts</div>
+        <div style="font-size: 12px; color: #8a99ad; margin-top: 2px;">Naye notes aur updates ke liye notifications enable karein!</div>
+      </div>
+    </div>
+    <div style="display: flex; gap: 10px; margin-top: 14px;">
+      <button id="allowNotifBtn" style="flex: 1; background: linear-gradient(135deg, #00d2ff, #0072ff); color: #fff; border: none; padding: 8px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 12px;">Allow Now</button>
+      <button id="laterNotifBtn" style="background: rgba(255,255,255,0.08); color: #8a99ad; border: 1px solid rgba(255,255,255,0.1); padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px;">Later</button>
+    </div>
+  `;
+
+  document.body.appendChild(banner);
+
+  document.getElementById('allowNotifBtn').onclick = async () => {
+    banner.remove();
+    await subscribeUserToPush();
+  };
+
+  document.getElementById('laterNotifBtn').onclick = () => {
+    localStorage.setItem('pm_notif_dismissed', 'true');
+    banner.remove();
+  };
+}
+
 async function subscribeUserToPush() {
-  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-    console.warn('Push messaging is not supported in this browser.');
-    return;
-  }
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
 
   try {
     const permission = await Notification.requestPermission();
-    if (permission !== 'granted') {
-      console.log('Notification permission denied.');
-      return;
-    }
+    if (permission !== 'granted') return;
 
     const registration = await navigator.serviceWorker.ready;
     let subscription = await registration.pushManager.getSubscription();
@@ -1016,42 +1050,32 @@ async function subscribeUserToPush() {
     if (!subscription) {
       subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array('BMYEkoJeS0XfUioxCbOxw74ZpQmow8-OaGLrYiB3Bolh2Fl4U5AXNFA-5QJ16skwIMxlc2ZzsAi9XenHbfyivEs')
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
       });
     }
 
-    // Supabase me subscription save karna
     if (window.supabaseClient) {
       const { data: { session } } = await window.supabaseClient.auth.getSession();
       const userId = session ? session.user.id : null;
 
-      const { error } = await window.supabaseClient
+      await window.supabaseClient
         .from('push_subscriptions')
         .upsert({
           user_id: userId,
           subscription: JSON.parse(JSON.stringify(subscription)),
           updated_at: new Date().toISOString()
         }, { onConflict: 'subscription' });
-
-      if (error) {
-        console.error('Supabase subscription save error:', error);
-      } else {
-        console.log('Push subscription successfully saved to Supabase!');
-      }
     }
-
   } catch (err) {
-    console.error('Failed to subscribe the user: ', err);
+    console.error('Subscription error:', err);
   }
 }
 
-// App load hone par ya user login ke baad ise call kar sakte hain
+// Jab user top notification bell icon par click kare ya home page load ho
 document.addEventListener('DOMContentLoaded', () => {
-  // Aap chahein toh ise kisi button click par bhi trigger kar sakte hain
-  setTimeout(() => {
-    subscribeUserToPush();
-  }, 4000);
+  setTimeout(checkAndShowNotificationBanner, 3000);
 });
+
 
 // App khulne par badge clear karne ke liye (Optional)
 window.addEventListener('focus', async () => {
