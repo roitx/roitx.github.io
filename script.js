@@ -994,49 +994,98 @@ function urlBase64ToUint8Array(base64String) {
   return outputArray;
 }
 
-// Custom UI Prompt dikhane ke liye agar permission nahi mili hai
-function checkAndShowNotificationBanner() {
-  // Check if Notification API is supported by the browser/environment
+// Centre Modal Popup jo piche ki screen ko untouchable banayega
+function showCustomNotificationModal() {
   if (typeof window === 'undefined' || !('Notification' in window)) return;
   if (Notification.permission === 'granted') return;
 
-  if (localStorage.getItem('pm_notif_dismissed')) return;
+  // Agar pehle se modal khula hai toh dobara mat banao
+  if (document.getElementById('customNotifModalOverlay')) return;
 
-  const banner = document.createElement('div');
-  banner.id = 'customNotifBanner';
-  banner.style.cssText = `
-    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-    width: 90%; max-width: 400px; z-index: 99999;
-    background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(12px);
-    border: 1px solid rgba(0, 210, 255, 0.4); border-radius: 16px;
-    padding: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-    color: #fff; font-family: inherit; animation: fadeInUp 0.4s ease;
+  const overlay = document.createElement('div');
+  overlay.id = 'customNotifModalOverlay';
+  overlay.style.cssText = `
+    position: fixed; inset: 0; z-index: 999999;
+    background: rgba(5, 11, 24, 0.85); backdrop-filter: blur(8px);
+    display: flex; align-items: center; justify-content: center; padding: 20px;
+    animation: fadeIn 0.3s ease;
   `;
-  banner.innerHTML = `
-    <div style="display: flex; align-items: center; gap: 12px;">
-      <div style="background: linear-gradient(135deg, #00d2ff, #0072ff); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;">🔔</div>
-      <div>
-        <div style="font-size: 14px; font-weight: 700; color: #fff;">PM Roitx Alerts</div>
-        <div style="font-size: 12px; color: #8a99ad; margin-top: 2px;">Naye notes aur updates ke liye notifications enable karein!</div>
+
+  overlay.innerHTML = `
+    <div style="
+      width: 100%; max-width: 380px; background: #0c162d;
+      border: 1px solid rgba(0, 210, 255, 0.3); border-radius: 20px;
+      padding: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.7);
+      color: #fff; text-align: center; font-family: inherit;
+    ">
+      <div style="
+        background: linear-gradient(135deg, rgba(0,210,255,0.15), rgba(0,114,255,0.15));
+        width: 64px; height: 64px; border-radius: 50%; margin: 0 auto 16px auto;
+        display: flex; align-items: center; justify-content: center; font-size: 28px;
+        border: 1px solid rgba(0, 210, 255, 0.4); box-shadow: 0 0 20px rgba(0,210,255,0.2);
+      ">🔔</div>
+      
+      <h3 style="margin: 0 0 8px 0; font-size: 18px; font-weight: 700; color: #fff;">Enable Notifications</h3>
+      <p style="margin: 0 0 20px 0; font-size: 13px; color: #94a3b8; line-height: 1.5;">
+        Naye notes, study materials aur zaroori updates ke liye notifications allow karein taaki aap koi bhi update miss na karein!
+      </p>
+
+      <div style="display: flex; gap: 10px;">
+        <button id="modalLaterBtn" style="
+          flex: 1; background: rgba(255,255,255,0.06); color: #94a3b8;
+          border: 1px solid rgba(255,255,255,0.1); padding: 12px; border-radius: 12px;
+          font-weight: 600; cursor: pointer; font-size: 13px; transition: all 0.2s;
+        ">Later</button>
+        
+        <button id="modalAllowBtn" style="
+          flex: 1; background: linear-gradient(135deg, #00d2ff, #0072ff); color: #fff;
+          border: none; padding: 12px; border-radius: 12px; font-weight: 700;
+          cursor: pointer; font-size: 13px; box-shadow: 0 4px 15px rgba(0,210,255,0.3);
+          transition: all 0.2s;
+        ">Allow Now</button>
       </div>
     </div>
-    <div style="display: flex; gap: 10px; margin-top: 14px;">
-      <button id="allowNotifBtn" style="flex: 1; background: linear-gradient(135deg, #00d2ff, #0072ff); color: #fff; border: none; padding: 8px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 12px;">Allow Now</button>
-      <button id="laterNotifBtn" style="background: rgba(255,255,255,0.08); color: #8a99ad; border: 1px solid rgba(255,255,255,0.1); padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px;">Later</button>
-    </div>
   `;
 
-  document.body.appendChild(banner);
+  document.body.appendChild(overlay);
 
-  document.getElementById('allowNotifBtn').onclick = async () => {
-    banner.remove();
+  document.getElementById('modalAllowBtn').onclick = async () => {
+    overlay.remove();
     await subscribeUserToPush();
   };
 
-  document.getElementById('laterNotifBtn').onclick = () => {
+  document.getElementById('modalLaterBtn').onclick = () => {
     localStorage.setItem('pm_notif_dismissed', 'true');
-    banner.remove();
+    overlay.remove();
   };
+}
+
+// App land hote hi kuch seconds baad check karega
+function checkAndShowNotificationBanner() {
+  if (Notification.permission === 'granted') return;
+  if (localStorage.getItem('pm_notif_dismissed')) return;
+  
+  // Kuch seconds ka delay taaki splash screen ke baad smooth dikhe
+  setTimeout(showCustomNotificationModal, 3500);
+}
+
+// Bell icon click override handler jisse agar permission nahi hai toh modal aayega
+function toggleNotif() {
+  if (typeof Notification !== 'undefined' && Notification.permission !== 'granted') {
+    showCustomNotificationModal();
+    return;
+  }
+
+  const box = document.getElementById("notifBox");
+  if (box) {
+    box.classList.toggle("show");
+  } else {
+    const notifModal = document.getElementById('notifModal');
+    if (notifModal) {
+      notifModal.classList.add('active');
+      notifModal.style.display = 'flex';
+    }
+  }
 }
 
 async function subscribeUserToPush() {
@@ -1068,15 +1117,18 @@ async function subscribeUserToPush() {
           updated_at: new Date().toISOString()
         }, { onConflict: 'subscription' });
     }
+    
+    alert('🎉 Notifications successfully enabled!');
   } catch (err) {
     console.error('Subscription error:', err);
   }
 }
 
-// Jab user top notification bell icon par click kare ya home page load ho
+// DOM load par auto popup check
 document.addEventListener('DOMContentLoaded', () => {
-  setTimeout(checkAndShowNotificationBanner, 3000);
+  checkAndShowNotificationBanner();
 });
+
 
 
 // App khulne par badge clear karne ke liye (Optional)
