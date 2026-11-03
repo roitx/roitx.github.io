@@ -1043,13 +1043,26 @@ async function subscribeUserToPush() {
   }
 }
 
-// Bell icon click handler update
+// Bell icon click handler (Normal tab aur PWA dono ke liye 100% working)
 function toggleNotif() {
-  if (typeof Notification !== 'undefined' && Notification.permission !== 'granted') {
-    requestAndSubscribeNotification();
-    return;
+  if (typeof Notification !== 'undefined') {
+    if (Notification.permission === 'default') {
+      // Direct synchronous call taaki mobile browser gesture block na kare
+      Notification.requestPermission().then(permission => {
+        if (permission === 'granted') {
+          subscribeUserToPush();
+        } else {
+          alert('Aapne notification permission deny kar di hai. Ise enable karne ke liye browser settings ka use karein.');
+        }
+      });
+      return;
+    } else if (Notification.permission === 'denied') {
+      alert('Notifications blocked hain! Kripya browser site settings me jakar permission allow karein.');
+      return;
+    }
   }
 
+  // Agar already granted hai toh dropdown/modal khulega
   const box = document.getElementById("notifBox");
   if (box) {
     box.classList.toggle("show");
@@ -1059,6 +1072,40 @@ function toggleNotif() {
       notifModal.classList.add('active');
       notifModal.style.display = 'flex';
     }
+  }
+}
+
+async function subscribeUserToPush() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+
+  try {
+    const registration = await navigator.serviceWorker.ready;
+    let subscription = await registration.pushManager.getSubscription();
+
+    if (!subscription) {
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+      });
+    }
+
+    if (window.supabaseClient) {
+      const { data: { session } } = await window.supabaseClient.auth.getSession();
+      const userId = session ? session.user.id : null;
+
+      const { error } = await window.supabaseClient
+        .from('push_subscriptions')
+        .upsert({
+          user_id: userId,
+          subscription: JSON.parse(JSON.stringify(subscription)),
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'subscription' });
+
+      if (error) console.error("Supabase save error:", error);
+      else alert('🎉 Notifications successfully enabled!');
+    }
+  } catch (err) {
+    console.error('Subscription error:', err);
   }
 }
 
