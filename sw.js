@@ -1,4 +1,4 @@
-const CACHE_NAME = 'roitx-study-cache-v16';
+const CACHE_NAME = 'roitx-study-cache-v15';
 const ASSETS = [
   './',
   './index.html',
@@ -97,15 +97,15 @@ self.addEventListener('push', function(event) {
     vibrate: [200, 100, 200]
   };
 
-  // Push notification dikhana aur App Icon par Badge set karna
+  // Push notification dikhana aur Service Worker registration par badge set karna
   event.waitUntil(
     Promise.all([
       self.registration.showNotification(data.title, options),
-      // Set Badge API agar browser support karta hai
+      // Service Worker me navigator ki jagah self.registration use hota hai
       (async () => {
-        if ('setAppBadge' in navigator && data.badgeCount) {
+        if ('setAppBadge' in self.registration && data.badgeCount) {
           try {
-            await navigator.setAppBadge(data.badgeCount);
+            await self.registration.setAppBadge(data.badgeCount);
           } catch (err) {
             console.error('Badge error:', err);
           }
@@ -122,11 +122,11 @@ self.addEventListener('notificationclick', function(event) {
 
   event.waitUntil(
     Promise.all([
-      // Click hone par badge clear ya decrease karna
+      // Click hone par badge clear karna
       (async () => {
-        if ('clearAppBadge' in navigator) {
+        if ('clearAppBadge' in self.registration) {
           try {
-            await navigator.clearAppBadge();
+            await self.registration.clearAppBadge();
           } catch (err) {
             console.error('Clear badge error:', err);
           }
