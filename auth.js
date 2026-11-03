@@ -151,12 +151,38 @@ async function syncUserProfileFromAuth(user, extraMeta = {}) {
   }
 }
 
+// Helper: Auto-link push subscription with user_id after login/signup
+async function autoSubscribeUserAfterAuth(user) {
+  if (!user || !window.supabaseClient) return;
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+
+  try {
+    const registration = await navigator.serviceWorker.ready;
+    let subscription = await registration.pushManager.getSubscription();
+
+    if (subscription) {
+      await window.supabaseClient
+        .from('push_subscriptions')
+        .upsert({
+          user_id: user.id,
+          subscription: JSON.parse(JSON.stringify(subscription)),
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'subscription' });
+      
+      console.log("Push subscription linked with user_id:", user.id);
+    }
+  } catch (err) {
+    console.warn("Auto subscribe after auth error:", err);
+  }
+}
+
 // Helper: Post-Login Redirect Handler (INDEX SE AANE PAR PROFILE PAR BHEJEGA)
 async function handlePostLoginRedirect() {
   try {
     const user = await window.getCurrentUser();
     if (user) {
       await syncUserProfileFromAuth(user);
+      await autoSubscribeUserAfterAuth(user);
     }
   } catch (err) {
     console.warn("Redirect sync check failed:", err);
@@ -223,6 +249,7 @@ async function loginUser() {
 
     if (data?.user) {
       await syncUserProfileFromAuth(data.user);
+      await autoSubscribeUserAfterAuth(data.user);
     }
 
     handlePostLoginRedirect();
@@ -274,6 +301,7 @@ async function signUpUser() {
 
   if (data?.user) {
     await syncUserProfileFromAuth(data.user, { full_name: fullName, phone: phone, pincode: pincode });
+    await autoSubscribeUserAfterAuth(data.user);
   }
 
   alert("Signup successful! Account create ho gaya hai.");
@@ -353,6 +381,7 @@ function initAuthSystem() {
     window.supabaseClient.auth.onAuthStateChange(async (event, session) => {
       if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') && session?.user) {
         await syncUserProfileFromAuth(session.user);
+        await autoSubscribeUserAfterAuth(session.user);
       }
       applyAccessControl();
     });
@@ -376,3 +405,4 @@ window.updatePassword = updatePassword;
 window.signInWithGoogle = signInWithGoogle;
 window.handlePostLoginRedirect = handlePostLoginRedirect;
 window.syncUserProfileFromAuth = syncUserProfileFromAuth;
+window.autoSubscribeUserAfterAuth = autoSubscribeUserAfterAuth;

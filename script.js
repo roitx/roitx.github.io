@@ -1044,20 +1044,20 @@ async function subscribeUserToPush() {
 }
 
 // Bell icon click handler (Normal tab aur PWA dono ke liye 100% working)
+
+// Bell icon click handler without annoying alert popups
 function toggleNotif() {
   if (typeof Notification !== 'undefined') {
-    if (Notification.permission === 'default') {
-      // Direct synchronous call taaki mobile browser gesture block na kare
+    if (Notification.permission === 'denied') {
+      // Alert ki jagah ek pyara sa subtle toast message dikhayenge
+      showToastNotification("Notifications Blocked", "Browser settings me jakar notification allow karein.", "#");
+      return;
+    } else if (Notification.permission === 'default') {
       Notification.requestPermission().then(permission => {
         if (permission === 'granted') {
           subscribeUserToPush();
-        } else {
-          alert('Aapne notification permission deny kar di hai. Ise enable karne ke liye browser settings ka use karein.');
         }
       });
-      return;
-    } else if (Notification.permission === 'denied') {
-      alert('Notifications blocked hain! Kripya browser site settings me jakar permission allow karein.');
       return;
     }
   }
@@ -1074,6 +1074,7 @@ function toggleNotif() {
     }
   }
 }
+
 
 async function subscribeUserToPush() {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
