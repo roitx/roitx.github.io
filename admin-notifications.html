@@ -32,7 +32,6 @@
             box-sizing: inherit;
         }
 
-        /* Ambient Radial Background Glows */
         .bg-glow-1 {
             position: fixed;
             top: -120px;
@@ -167,6 +166,19 @@
             font-weight: 600;
         }
 
+        .link-selector-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        @media(max-width: 600px) {
+            .link-selector-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
         .input-box-wrapper {
             position: relative;
             display: flex;
@@ -174,15 +186,16 @@
             width: 100%;
         }
 
-        .input-box-wrapper i {
+        .input-box-wrapper i.field-icon {
             position: absolute;
             left: 14px;
             color: #8a99ad;
             font-size: 0.85rem;
             z-index: 2;
+            pointer-events: none;
         }
 
-        input[type="text"], textarea {
+        input[type="text"], textarea, select {
             width: 100%;
             background: #0d121d;
             border: 1px solid rgba(255, 255, 255, 0.12);
@@ -196,19 +209,31 @@
             font-family: inherit;
         }
 
+        select {
+            appearance: none;
+            cursor: pointer;
+            padding-right: 30px;
+        }
+
+        .select-wrapper::after {
+            content: '\f078';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute;
+            right: 14px;
+            color: #8a99ad;
+            font-size: 0.75rem;
+            pointer-events: none;
+        }
+
         textarea {
             padding-left: 14px;
             resize: vertical;
             min-height: 90px;
         }
 
-        input[type="text"]#filterSearch {
-            padding-left: 38px;
-        }
-
-        /* Specific style for Link input with action button */
         #notifLink {
-            padding-right: 75px;
+            padding-right: 48px;
         }
 
         .btn-paste-sm {
@@ -217,14 +242,14 @@
             background: rgba(0, 210, 255, 0.12);
             color: #00d2ff;
             border: 1px solid rgba(0, 210, 255, 0.3);
-            padding: 5px 10px;
+            width: 32px;
+            height: 32px;
             border-radius: 6px;
             cursor: pointer;
-            font-size: 0.72rem;
-            font-weight: 600;
+            font-size: 0.8rem;
             display: inline-flex;
             align-items: center;
-            gap: 4px;
+            justify-content: center;
             transition: all 0.2s;
             z-index: 3;
         }
@@ -234,7 +259,7 @@
             box-shadow: 0 0 8px rgba(0, 210, 255, 0.3);
         }
 
-        input[type="text"]:focus, textarea:focus {
+        input[type="text"]:focus, textarea:focus, select:focus {
             border-color: #00d2ff;
             box-shadow: 0 0 10px rgba(0, 210, 255, 0.25);
             background: #111726;
@@ -270,7 +295,6 @@
             transform: none !important;
         }
 
-        /* Responsive Table & Cards for Mobile View */
         .table-responsive {
             width: 100%;
             overflow-x: auto;
@@ -351,21 +375,6 @@
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(255, 71, 87, 0.4);
         }
-
-        @media (max-width: 600px) {
-            .admin-container {
-                padding: 10px;
-            }
-            .admin-header {
-                padding: 14px;
-            }
-            .card {
-                padding: 14px;
-            }
-            .admin-header h1 {
-                font-size: 1.1rem;
-            }
-        }
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -397,19 +406,52 @@
                 <div class="input-group">
                     <label for="notifTitle">Notification Title</label>
                     <div class="input-box-wrapper">
-                        <i class="fa-solid fa-heading"></i>
+                        <i class="fa-solid fa-heading field-icon"></i>
                         <input type="text" id="notifTitle" placeholder="e.g. 🎯 Class 12th New Physics Notes Uploaded!">
                     </div>
                 </div>
 
                 <div class="input-group">
-                    <label for="notifLink">Target Redirect Link (Optional)</label>
-                    <div class="input-box-wrapper">
-                        <i class="fa-solid fa-link"></i>
-                        <input type="text" id="notifLink" placeholder="e.g. classes.html or full URL">
-                        <button type="button" class="btn-paste-sm" onclick="pasteLinkClipboard()">
-                            <i class="fa-solid fa-paste"></i>  . .
-                </button>
+                    <label>Target Redirect Link (Choose or Type)</label>
+                    <div class="link-selector-row">
+                        <!-- Choose Link Dropdown based on Sitemap -->
+                        <div class="input-box-wrapper select-wrapper">
+                            <i class="fa-solid fa-compass field-icon"></i>
+                            <select id="sitemapSelect" onchange="onSitemapSelect(this)">
+                                <option value="">-- Choose from Sitemap --</option>
+                                <option value="https://roitx.github.io/">Homepage (Main)</option>
+                                <option value="https://roitx.github.io/classes.html">Classes Page</option>
+                                <option value="https://roitx.github.io/premium-notes.html">Premium Notes</option>
+                                <option value="https://roitx.github.io/formulas.html">Formulas</option>
+                                <option value="https://roitx.github.io/subjects-9.html">Class 9 Subjects</option>
+                                <option value="https://roitx.github.io/subjects-10.html">Class 10 Subjects</option>
+                                <option value="https://roitx.github.io/subjects-11.html">Class 11 Subjects</option>
+                                <option value="https://roitx.github.io/11-arts-subjects.html">11 Arts Subjects</option>
+                                <option value="https://roitx.github.io/11-commerce-subjects.html">11 Commerce Subjects</option>
+                                <option value="https://roitx.github.io/11-science-subjects.html">11 Science Subjects</option>
+                                <option value="https://roitx.github.io/subjects-12.html">Class 12 Subjects</option>
+                                <option value="https://roitx.github.io/12-arts-subjects.html">12 Arts Subjects</option>
+                                <option value="https://roitx.github.io/12-commerce-subjects.html">12 Commerce Subjects</option>
+                                <option value="https://roitx.github.io/12-science-subjects.html">12 Science Subjects</option>
+                                <option value="https://roitx.github.io/ask-chat.html">Ask Chat AI</option>
+                                <option value="https://roitx.github.io/solver.html">Solver Tool</option>
+                                <option value="https://roitx.github.io/study-timer.html">Study Timer</option>
+                                <option value="https://roitx.github.io/calculator.html">Calculator</option>
+                                <option value="https://roitx.github.io/calendar.html">Calendar</option>
+                                <option value="https://roitx.github.io/view.html">View Page</option>
+                                <option value="https://roitx.github.io/aboutus.html">About Us</option>
+                                <option value="https://roitx.github.io/fun.html">Fun Zone</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Type Link Input Box with clean SVG paste button -->
+                        <div class="input-box-wrapper">
+                            <i class="fa-solid fa-link field-icon"></i>
+                            <input type="text" id="notifLink" placeholder="Type or paste custom link">
+                            <button type="button" class="btn-paste-sm" onclick="pasteLinkClipboard()" title="Paste from Clipboard">
+                                <i class="fa-solid fa-paste"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -432,7 +474,7 @@
             
             <div style="margin-bottom: 16px;">
                 <div class="input-box-wrapper">
-                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <i class="fa-solid fa-magnifying-glass field-icon"></i>
                     <input type="text" id="filterSearch" placeholder="Search Title or Message content..." oninput="filterNotifs()">
                 </div>
             </div>
@@ -468,7 +510,6 @@
 
     <script>
     let cachedNotifs = [];
-    const BASE_PREFIX = "https://roitx.qd.je/";
 
     function escapeHtml(str) {
         if (!str) return '';
@@ -487,41 +528,33 @@
             }
             document.body.classList.add('admin-authenticated');
             await fetchNotifications();
-
-            // Auto-prefix logic on blur or input if it doesn't already have http/https
-            const linkInput = document.getElementById('notifLink');
-            linkInput.addEventListener('blur', () => {
-                let val = linkInput.value.trim();
-                if (val && !val.startsWith('http://') && !val.startsWith('https://')) {
-                    // Remove leading slashes if any to avoid duplication
-                    val = val.replace(/^\/+/, '');
-                    linkInput.value = BASE_PREFIX + val;
-                }
-            });
-
         } catch (authErr) {
             console.error("Admin Authentication Error:", authErr);
         }
     });
 
+    // Sitemap dropdown select handler
+    function onSitemapSelect(selectEl) {
+        const val = selectEl.value;
+        if (val) {
+            document.getElementById('notifLink').value = val;
+        }
+    }
+
     async function pasteLinkClipboard() {
         try {
             const text = await navigator.clipboard.readText();
             if (text) {
-                let cleanText = text.trim();
-                if (!cleanText.startsWith('http://') && !cleanText.startsWith('https://')) {
-                    cleanText = cleanText.replace(/^\/+/, '');
-                    document.getElementById('notifLink').value = BASE_PREFIX + cleanText;
-                } else {
-                    document.getElementById('notifLink').value = cleanText;
-                }
+                document.getElementById('notifLink').value = text.trim();
+                // Reset sitemap dropdown if custom pasted
+                document.getElementById('sitemapSelect').value = "";
             }
         } catch (err) {
             alert("Clipboard permission denied or unavailable. Please paste manually using Ctrl+V.");
         }
     }
 
-        async function sendNotification() {
+    async function sendNotification() {
         const titleEl = document.getElementById('notifTitle');
         const messageEl = document.getElementById('notifMessage');
         const linkEl = document.getElementById('notifLink');
@@ -533,11 +566,6 @@
         if (!title || !message) {
             alert("Please fill in both Title and Message fields!");
             return;
-        }
-
-        if (link && !link.startsWith('http://') && !link.startsWith('https://')) {
-            link = link.replace(/^\/+/, '');
-            link = BASE_PREFIX + link;
         }
 
         const btn = document.getElementById('sendBtn');
@@ -553,21 +581,19 @@
                 created_at: new Date().toISOString()
             };
 
-            // 1. Database me insert karein
             const { error } = await window.supabaseClient
                 .from('notifications')
                 .insert([dbPayload]);
 
             if (error) throw error;
 
-            // 2.             // Edge Function ko trigger karne ke liye updated fetch request
             try {
                 const functionUrl = `${SUPABASE_URL}/functions/v1/web-push`;
                 const res = await fetch(functionUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'apikey': SUPABASE_ANON_KEY // 'Authorization' ki jagah 'apikey' header ka use karein
+                        'apikey': SUPABASE_ANON_KEY
                     },
                     body: JSON.stringify(dbPayload)
                 });
@@ -577,12 +603,12 @@
                 console.warn("Edge function trigger error:", fnErr);
             }
 
-
             alert("🎉 Success! Notification Broadcasted!");
             
             titleEl.value = "";
             messageEl.value = "";
             linkEl.value = "";
+            document.getElementById('sitemapSelect').value = "";
 
             await fetchNotifications();
 
