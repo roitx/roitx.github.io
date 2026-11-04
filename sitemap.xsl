@@ -154,6 +154,10 @@
                           <xsl:when test="contains(sitemap:loc, 'classes.html')">Classes &amp; Courses</xsl:when>
                           <xsl:when test="contains(sitemap:loc, 'premium-notes.html')">Premium Notes</xsl:when>
                           <xsl:when test="contains(sitemap:loc, 'formulas.html')">Important Formulas</xsl:when>
+                          <xsl:when test="contains(sitemap:loc, 'tests.html')">Practice Tests &amp; Quizzes</xsl:when>
+                          <xsl:when test="contains(sitemap:loc, 'pyq-list.html')">PYQ Bank</xsl:when>
+                          <xsl:when test="contains(sitemap:loc, 'pyq-anylizer.html')">PYQ Analyzer</xsl:when>
+                          <xsl:when test="contains(sitemap:loc, 'refbook.html')">Reference Books</xsl:when>
                           <xsl:when test="contains(sitemap:loc, 'subjects-9.html')">Class 9 Subjects</xsl:when>
                           <xsl:when test="contains(sitemap:loc, 'subjects-10.html')">Class 10 Subjects</xsl:when>
                           <xsl:when test="contains(sitemap:loc, 'subjects-11.html')">Class 11 Subjects</xsl:when>
@@ -170,6 +174,10 @@
                           <xsl:when test="contains(sitemap:loc, 'calculator.html')">Scientific AI Calculator</xsl:when>
                           <xsl:when test="contains(sitemap:loc, 'calendar.html')">Calendar</xsl:when>
                           <xsl:when test="contains(sitemap:loc, 'view.html')">Notes Viewer</xsl:when>
+                          <xsl:when test="contains(sitemap:loc, 'performance.html')">Performance Tracker</xsl:when>
+                          <xsl:when test="contains(sitemap:loc, 'library.html')">Recently Viewed Library</xsl:when>
+                          <xsl:when test="contains(sitemap:loc, 'login.html')">Login Page</xsl:when>
+                          <xsl:when test="contains(sitemap:loc, 'profile.html')">User Profile</xsl:when>
                           <xsl:when test="contains(sitemap:loc, 'aboutus.html')">About Us &amp; Privacy</xsl:when>
                           <xsl:when test="contains(sitemap:loc, 'fun.html')">Fun Zone</xsl:when>
                           <xsl:otherwise><xsl:value-of select="sitemap:loc"/></xsl:otherwise>
