@@ -560,16 +560,14 @@
 
             if (error) throw error;
 
-            // 2. Supabase.js ke variables ka use karke Edge Function ko trigger karein
+            // 2.             // Edge Function ko trigger karne ke liye updated fetch request
             try {
-                // Function URL ko hamesha lowercase me rakhein
-const functionUrl = `${SUPABASE_URL}/functions/v1/web-push`;
-
+                const functionUrl = `${SUPABASE_URL}/functions/v1/web-push`;
                 const res = await fetch(functionUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                        'apikey': SUPABASE_ANON_KEY // 'Authorization' ki jagah 'apikey' header ka use karein
                     },
                     body: JSON.stringify(dbPayload)
                 });
@@ -578,6 +576,7 @@ const functionUrl = `${SUPABASE_URL}/functions/v1/web-push`;
             } catch (fnErr) {
                 console.warn("Edge function trigger error:", fnErr);
             }
+
 
             alert("🎉 Success! Notification Broadcasted!");
             
