@@ -192,7 +192,7 @@
     </button>
 
   </div>
-<script src="guard.js"></script>
+
 <script>
   let pendingPayload = null;
 
@@ -226,12 +226,12 @@
       .replace(/\n/g, '<br>');
   }
 
-  // ROBUST SANITIZATION & JSON PARSER
+  // ROBUST JSON PARSER FOR AI RESPONSE
   function cleanAndParseJSON(rawStr) {
     if (!rawStr) throw new Error("AI Response is empty");
     if (typeof rawStr === 'object') return rawStr;
 
-    let cleanedText = rawStr.replace(/```json/gi, '').replace(/```/g, '').trim();
+    let cleanedText = String(rawStr).replace(/```json/gi, '').replace(/```/g, '').trim();
 
     const firstBrace = cleanedText.indexOf('{');
     const lastBrace = cleanedText.lastIndexOf('}');
@@ -242,12 +242,15 @@
     try {
       return JSON.parse(cleanedText);
     } catch (err) {
-      let sanitized = cleanedText
-        .replace(/[\r\n]+/g, " ")
-        .replace(/[\u0000-\u001F\u007F-\u009F]/g, "")
-        .replace(/\\(?!["\\/bfnrtu])/g, "\\\\");
-
-      return JSON.parse(sanitized);
+      // Fallback cleanup for unescaped quotes or newlines inside strings
+      try {
+        let sanitized = cleanedText
+          .replace(/[\r\n]+/g, " ")
+          .replace(/[\u0000-\u001F\u007F-\u009F]/g, "");
+        return JSON.parse(sanitized);
+      } catch (e2) {
+        throw new Error("JSON Parse Failed: " + err.message);
+      }
     }
   }
 
@@ -381,38 +384,24 @@
 ${extra ? `Note: ${extra}` : ''}
 
 RULES:
-1. Do NOT use double quotes (") inside text values; use single quotes (') instead.
-2. Output single-line JSON without unescaped newlines.
-
-STRICT JSON OUTPUT:
-{
-  "questions": [
-    {
-      "question_en": "Question in English",
-      "question_hi": "Question in Hindi",
-      "year_tag": "2018, 2021",
-      "marks": "2 Marks",
-      "answer_en": "Answer in English",
-      "answer_hi": "Answer in Hindi"
-    }
-  ]
-}`;
+1. Return ONLY valid JSON format. Do not add markdown backticks outside or conversational text.
+2. Structure must be: {"questions": [{"question_en": "...", "question_hi": "...", "year_tag": "2018, 2021", "marks": "2 Marks", "answer_en": "...", "answer_hi": "..."}]}`;
 
     const res = await fetch("https://ktastwehnnqicriknewr.supabase.co/functions/v1/smart-task", {
       method: "POST",
       headers: { 
         "Content-Type": "application/json",
-        "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0YXN0d2Vobm5xaWNyaWtuZXdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyNTk5NTEsImV4cCI6MjA4MDgzNTk1MX0.5_UvwaG0X8k_Emj-cMC0KjEqlvU6hgAt5IsHJdgARvk",
-        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0YXN0d2Vobm5xaWNyaWtuZXdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyNTk5NTEsImV4cCI6MjA4MDgzNTk1MX0.5_UvwaG0X8k_Emj-cMC0KjEqlvU6hgAt5IsHJdgARvk"
+        "apikey": SUPABASE_ANON_KEY,
+        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
       },
       body: JSON.stringify({ prompt })
     });
 
     const responseText = await res.text();
     let data;
-    try { data = JSON.parse(responseText); } catch(e) { data = responseText; }
+    try { data = JSON.parse(responseText); } catch(e) { data = { result: responseText }; }
 
-    let rawText = data.choices?.[0]?.message?.content || data.candidates?.[0]?.content?.parts?.[0]?.text || data.result || data;
+    let rawText = data.choices?.[0]?.message?.content || data.candidates?.[0]?.content?.parts?.[0]?.text || data.result || responseText;
     if (typeof rawText === 'object') rawText = JSON.stringify(rawText);
 
     return cleanAndParseJSON(rawText);
@@ -425,32 +414,24 @@ STRICT JSON OUTPUT:
 ${extra ? `Note: ${extra}` : ''}
 
 RULES:
-1. Do NOT use double quotes (") inside text values; use single quotes (') instead.
-2. Output single-line JSON without unescaped newlines.
-
-STRICT JSON OUTPUT ONLY:
-{
-  "chapter_summary": {
-    "summary_en": "English summary notes...",
-    "summary_hi": "Hindi summary notes..."
-  }
-}`;
+1. Return ONLY valid JSON format.
+2. Structure must be: {"chapter_summary": {"summary_en": "...", "summary_hi": "..."}}`;
 
     const res = await fetch("https://ktastwehnnqicriknewr.supabase.co/functions/v1/smart-task", {
       method: "POST",
       headers: { 
         "Content-Type": "application/json",
-        "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0YXN0d2Vobm5xaWNyaWtuZXdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyNTk5NTEsImV4cCI6MjA4MDgzNTk1MX0.5_UvwaG0X8k_Emj-cMC0KjEqlvU6hgAt5IsHJdgARvk",
-        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0YXN0d2Vobm5xaWNyaWtuZXdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyNTk5NTEsImV4cCI6MjA4MDgzNTk1MX0.5_UvwaG0X8k_Emj-cMC0KjEqlvU6hgAt5IsHJdgARvk"
+        "apikey": SUPABASE_ANON_KEY,
+        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
       },
       body: JSON.stringify({ prompt })
     });
 
     const responseText = await res.text();
     let data;
-    try { data = JSON.parse(responseText); } catch(e) { data = responseText; }
+    try { data = JSON.parse(responseText); } catch(e) { data = { result: responseText }; }
 
-    let rawText = data.choices?.[0]?.message?.content || data.candidates?.[0]?.content?.parts?.[0]?.text || data.result || data;
+    let rawText = data.choices?.[0]?.message?.content || data.candidates?.[0]?.content?.parts?.[0]?.text || data.result || responseText;
     if (typeof rawText === 'object') rawText = JSON.stringify(rawText);
 
     return cleanAndParseJSON(rawText);
@@ -512,9 +493,9 @@ STRICT JSON OUTPUT ONLY:
         console.warn("Summary generation skipped or failed:", sumErr);
       }
 
-      // Step 2: Batching Question Generation (Chunks of 2 for 0% error)
+      // Step 2: Batching Question Generation (Chunks of 2 for stability)
       if (!isSummaryOnly) {
-        const BATCH_SIZE = 2; // CHUNKING REDUCED TO 2 FOR STABILITY
+        const BATCH_SIZE = 2;
         const totalBatches = Math.ceil(qCount / BATCH_SIZE);
 
         for (let b = 0; b < totalBatches; b++) {
@@ -631,7 +612,6 @@ STRICT JSON OUTPUT ONLY:
     }
   }
 
-  // FIXED TABLE INSERT PAYLOAD MATCHING SUPABASE DATABASE SCHEMA
   async function uploadToDatabase() {
     if (!pendingPayload) return;
 
@@ -667,14 +647,8 @@ STRICT JSON OUTPUT ONLY:
 
       if (error) {
         console.error("Supabase Save Error Details:", error);
-        
-        let errMessage = error.message;
-        if (!errMessage && typeof error === 'object') {
-          errMessage = JSON.stringify(error, null, 2);
-        }
-        
         statusBox.style.color = "#ef4444";
-        statusBox.innerHTML = "❌ Upload Error: " + errMessage;
+        statusBox.innerHTML = "❌ Upload Error: " + (error.message || JSON.stringify(error));
         uploadBtn.disabled = false;
         uploadBtn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> Save to Database`;
       } else {
