@@ -1,4 +1,4 @@
-const CACHE_NAME = 'roitx-study-cache-v17';
+const CACHE_NAME = 'roitx-study-cache-v18';
 const ASSETS = [
   './',
   './index.html',
@@ -6,7 +6,7 @@ const ASSETS = [
   './script.js',
   './profile.jpg',
   './1profile.jpg',
-  './notif.png'
+  './notif.png',
   './classes.html',
   './site.css',
   './site.js',
@@ -22,20 +22,46 @@ const ASSETS = [
   './offline.html'
 ];
 
+// 1. Install Event: Assets ko cache mein save karna
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(ASSETS))
+      .then(() => self.skipWaiting())
+  );
+});
+
+// 2. Activate Event: Purane caches ko saaf karna
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys().then(keys => {
+      return Promise.all(
+        keys.map(key => {
+          if (key !== CACHE_NAME) {
+            return caches.delete(key);
+          }
+        })
+      );
+    }).then(() => self.clients.claim())
+  );
+});
+
+// Safe Iterative Cache Limiter (No Call Stack Error)
 async function cleanUpCache() {
   const cache = await caches.open(CACHE_NAME);
   const keys = await cache.keys();
   if (keys.length > 40) {
-    await cache.delete(keys[0]);
-    await cleanUpCache();
+    for (let i = 0; i < keys.length - 40; i++) {
+      await cache.delete(keys[i]);
+    }
   }
 }
 
-// Robust Offline Network Fallback
-self.addEventListener('fetch', e => {
-  if (e.request.method !== 'GET') return;
+// 3. Fetch Event: Robust Offline Network Fallback
+self.addEventListener('fetch', event => {
+  if (event.request.method !== 'GET') return;
 
-  const url = e.request.url;
+  const url = event.request.url;
 
   if (
     url.endsWith('.pdf') || 
@@ -46,22 +72,22 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  e.respondWith(
-    fetch(e.request)
+  event.respondWith(
+    fetch(event.request)
       .then(networkResponse => {
         if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
           const responseClone = networkResponse.clone();
           caches.open(CACHE_NAME).then(cache => {
-            cache.put(e.request, responseClone);
+            cache.put(event.request, responseClone);
             cleanUpCache();
           });
         }
         return networkResponse;
       })
       .catch(() => {
-        return caches.match(e.request).then(cachedResponse => {
+        return caches.match(event.request).then(cachedResponse => {
           if (cachedResponse) return cachedResponse;
-          if (e.request.headers.get('accept')?.includes('text/html')) {
+          if (event.request.headers.get('accept')?.includes('text/html')) {
             return caches.match('./offline.html');
           }
         });
@@ -69,13 +95,14 @@ self.addEventListener('fetch', e => {
   );
 });
 
-// --- PUSH NOTIFICATION & AUTO-INCREMENT BADGE HANDLER IN SW ---
+// --- PUSH NOTIFICATION & BADGE HANDLER ---
 
 self.addEventListener('push', function(event) {
   let data = {
     title: 'PM Roitx Notification',
     body: 'Naya update ya study material uplabdh hai!',
-    url: '/index.html'
+    url: '/index.html',
+    badgeCount: 1
   };
 
   if (event.data) {
@@ -88,10 +115,11 @@ self.addEventListener('push', function(event) {
 
   const finalBody = data.body || data.message || 'Naya update uplabdh hai!';
   const finalUrl = data.url || data.link || '/index.html';
+  const badgeVal = data.badgeCount || 1;
 
   const options = {
     body: finalBody,
-    icon: '/profile.png',
+    icon: '/profile.png', // Aapke assets ke mutabiq profile.jpg rakha hai
     badge: '/notif.png',
     data: { url: finalUrl },
     vibrate: [200, 100, 200]
@@ -101,30 +129,20 @@ self.addEventListener('push', function(event) {
     Promise.all([
       self.registration.showNotification(data.title || 'PM Roitx Study Hub', options),
       (async () => {
-        try {
-          // Check if browser supports getting and setting app badge
-          if ('navigator' in self && 'getAppBadge' in navigator && 'setAppBadge' in navigator) {
-            let currentBadge = 0;
-            try {
-              currentBadge = await navigator.getAppBadge();
-            } catch (e) {
-              currentBadge = 0;
-            }
-            const newBadgeCount = (currentBadge || 0) + 1;
-            await navigator.setAppBadge(newBadgeCount);
-          } else if ('setAppBadge' in self.registration) {
-            // Fallback for service worker registration level
-            await self.registration.setAppBadge(1);
+        // Service worker level par safe badge setting
+        if ('setAppBadge' in self.registration) {
+          try {
+            await self.registration.setAppBadge(badgeVal);
+          } catch (err) {
+            console.error('Badge error:', err);
           }
-        } catch (err) {
-          console.error('Auto-increment badge error:', err);
         }
       })()
     ])
   );
 });
 
-// Notification Click Event: App open hone par badge clear karna
+// 4. Notification Click Event: Click hone par app kholna aur badge clear karna
 self.addEventListener('notificationclick', function(event) {
   event.notification.close();
 
@@ -133,14 +151,13 @@ self.addEventListener('notificationclick', function(event) {
   event.waitUntil(
     Promise.all([
       (async () => {
-        try {
-          if ('navigator' in self && 'clearAppBadge' in navigator) {
-            await navigator.clearAppBadge();
-          } else if (self.registration.clearAppBadge) {
+        // Service worker level par safe badge clearing
+        if ('clearAppBadge' in self.registration) {
+          try {
             await self.registration.clearAppBadge();
+          } catch (err) {
+            console.error('Clear badge error:', err);
           }
-        } catch (err) {
-          console.error('Clear badge error:', err);
         }
       })(),
       clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windowClients => {

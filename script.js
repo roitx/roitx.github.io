@@ -1027,8 +1027,8 @@ async function subscribeUserToPushSilently() {
   }
 }
 
-// Bell Icon Click Handler: Purana Dropdown bhi khulega aur agar permission pending hai toh maang lega
-function toggleNotif() {
+// Bell Icon Click Handler: Permission maangna aur dropdown/modal kholna
+window.toggleNotif = function() {
   if (typeof Notification !== 'undefined') {
     if (Notification.permission === 'default') {
       Notification.requestPermission().then(permission => {
@@ -1050,7 +1050,7 @@ function toggleNotif() {
       notifModal.style.display = 'flex';
     }
   }
-}
+};
 
 // App khulne par background me silent subscription sync
 document.addEventListener('DOMContentLoaded', () => {
