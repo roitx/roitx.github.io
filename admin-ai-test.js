@@ -298,6 +298,9 @@ Difficulty Level: ${difficulty}.
 ${languageInstruction}
 Additional Notes: ${customPrompt || "Follow standard NCERT / official exam pattern"}.
 
+CRITICAL UNIQUENESS RULE:
+- Do NOT repeat questions or conceptual patterns. Every single question must test a different sub-topic, formula, or concept.
+
 MATHEMATICS, CHEMISTRY, SYMBOLS & DIAGRAM GUIDELINES:
 1. Use standard LaTeX format for math formulas, integrals, limits, roots, fractions, matrix etc. (e.g. \\int_{0}^{\\pi} \\sin(x) dx, \\frac{d}{dx}, \\sqrt{x^2+a^2}).
 2. Escaped LaTeX strings inside JSON must use double backslashes (\\\\int, \\\\frac).
