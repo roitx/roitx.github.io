@@ -179,6 +179,7 @@
             left: 14px;
             color: #8a99ad;
             font-size: 0.85rem;
+            z-index: 2;
         }
 
         input[type="text"], textarea {
@@ -203,6 +204,34 @@
 
         input[type="text"]#filterSearch {
             padding-left: 38px;
+        }
+
+        /* Specific style for Link input with action button */
+        #notifLink {
+            padding-right: 75px;
+        }
+
+        .btn-paste-sm {
+            position: absolute;
+            right: 8px;
+            background: rgba(0, 210, 255, 0.12);
+            color: #00d2ff;
+            border: 1px solid rgba(0, 210, 255, 0.3);
+            padding: 5px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.72rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s;
+            z-index: 3;
+        }
+
+        .btn-paste-sm:hover {
+            background: rgba(0, 210, 255, 0.25);
+            box-shadow: 0 0 8px rgba(0, 210, 255, 0.3);
         }
 
         input[type="text"]:focus, textarea:focus {
@@ -377,7 +406,10 @@
                     <label for="notifLink">Target Redirect Link (Optional)</label>
                     <div class="input-box-wrapper">
                         <i class="fa-solid fa-link"></i>
-                        <input type="text" id="notifLink" placeholder="e.g. premium-notes.html or https://roitx.qd.je/classes.html">
+                        <input type="text" id="notifLink" placeholder="e.g. classes.html or full URL">
+                        <button type="button" class="btn-paste-sm" onclick="pasteLinkClipboard()">
+                            <i class="fa-solid fa-paste"></i>  . .
+                </button>
                     </div>
                 </div>
 
@@ -436,6 +468,7 @@
 
     <script>
     let cachedNotifs = [];
+    const BASE_PREFIX = "https://roitx.qd.je/";
 
     function escapeHtml(str) {
         if (!str) return '';
@@ -454,23 +487,57 @@
             }
             document.body.classList.add('admin-authenticated');
             await fetchNotifications();
+
+            // Auto-prefix logic on blur or input if it doesn't already have http/https
+            const linkInput = document.getElementById('notifLink');
+            linkInput.addEventListener('blur', () => {
+                let val = linkInput.value.trim();
+                if (val && !val.startsWith('http://') && !val.startsWith('https://')) {
+                    // Remove leading slashes if any to avoid duplication
+                    val = val.replace(/^\/+/, '');
+                    linkInput.value = BASE_PREFIX + val;
+                }
+            });
+
         } catch (authErr) {
             console.error("Admin Authentication Error:", authErr);
         }
     });
 
-    async function sendNotification() {
+    async function pasteLinkClipboard() {
+        try {
+            const text = await navigator.clipboard.readText();
+            if (text) {
+                let cleanText = text.trim();
+                if (!cleanText.startsWith('http://') && !cleanText.startsWith('https://')) {
+                    cleanText = cleanText.replace(/^\/+/, '');
+                    document.getElementById('notifLink').value = BASE_PREFIX + cleanText;
+                } else {
+                    document.getElementById('notifLink').value = cleanText;
+                }
+            }
+        } catch (err) {
+            alert("Clipboard permission denied or unavailable. Please paste manually using Ctrl+V.");
+        }
+    }
+
+        async function sendNotification() {
         const titleEl = document.getElementById('notifTitle');
         const messageEl = document.getElementById('notifMessage');
         const linkEl = document.getElementById('notifLink');
 
         const title = titleEl.value.trim();
         const message = messageEl.value.trim();
-        const link = linkEl.value.trim();
+        let link = linkEl.value.trim();
 
         if (!title || !message) {
             alert("Please fill in both Title and Message fields!");
             return;
+        }
+
+        if (link && !link.startsWith('http://') && !link.startsWith('https://')) {
+            link = link.replace(/^\/+/, '');
+            link = BASE_PREFIX + link;
         }
 
         const btn = document.getElementById('sendBtn');
@@ -486,11 +553,29 @@
                 created_at: new Date().toISOString()
             };
 
+            // 1. Database me insert karein
             const { error } = await window.supabaseClient
                 .from('notifications')
                 .insert([dbPayload]);
 
             if (error) throw error;
+
+            // 2. Supabase.js ke variables ka use karke Edge Function ko trigger karein
+            try {
+                const functionUrl = `${SUPABASE_URL}/functions/v1/Web-push`;
+                const res = await fetch(functionUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    },
+                    body: JSON.stringify(dbPayload)
+                });
+                const result = await res.json();
+                console.log("Edge function triggered response:", result);
+            } catch (fnErr) {
+                console.warn("Edge function trigger error:", fnErr);
+            }
 
             alert("🎉 Success! Notification Broadcasted!");
             
