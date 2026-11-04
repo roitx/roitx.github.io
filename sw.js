@@ -1,4 +1,4 @@
-const CACHE_NAME = 'roitx-study-cache-v16';
+const CACHE_NAME = 'roitx-study-cache-v1';
 const ASSETS = [
   './',
   './index.html',
@@ -91,7 +91,7 @@ self.addEventListener('push', function(event) {
   const options = {
     body: data.body,
     icon: '/profile.png',
-    badge: '/icon-512.png',
+    badge: '/notif.png',
     data: { url: data.url || '/index.html' },
     vibrate: [200, 100, 200]
   };
@@ -136,8 +136,8 @@ self.addEventListener('push', function(event) {
 
   const options = {
     body: finalBody,
-    icon: '/profile.jpg',  // Aapke project me profile.jpg hai toh wahi use karein
-    badge: '/1profile.jpg',
+    icon: '/profile.png',
+    badge: '/notif.png',
     data: { url: finalUrl },
     vibrate: [200, 100, 200]
   };
