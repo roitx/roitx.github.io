@@ -1,4 +1,4 @@
-const CACHE_NAME = 'roitx-study-cache-v15';
+const CACHE_NAME = 'roitx-study-cache-v16';
 const ASSETS = [
   './',
   './index.html',
@@ -114,32 +114,35 @@ self.addEventListener('push', function(event) {
 });
 
 // 2. Notification Click Event: Notification par click karne par redirect karna aur badge clear karna
-self.addEventListener('notificationclick', function(event) {
-  event.notification.close();
-  const targetUrl = event.notification.data.url || '/index.html';
+self.addEventListener('push', function(event) {
+  let data = {
+    title: 'PM Roitx Notification',
+    body: 'Naya update ya study material uplabdh hai!',
+    url: '/index.html',
+    badgeCount: 1
+  };
+
+  if (event.data) {
+    try {
+      data = event.data.json();
+    } catch (e) {
+      data.body = event.data.text();
+    }
+  }
+
+  // Key mismatch se bachne ke liye fallback (body ya message dono check karega)
+  const finalBody = data.body || data.message || 'Naya update uplabdh hai!';
+  const finalUrl = data.url || data.link || '/index.html';
+
+  const options = {
+    body: finalBody,
+    icon: '/profile.jpg',  // Aapke project me profile.jpg hai toh wahi use karein
+    badge: '/1profile.jpg',
+    data: { url: finalUrl },
+    vibrate: [200, 100, 200]
+  };
 
   event.waitUntil(
-    Promise.all([
-      (async () => {
-        if ('clearAppBadge' in self.registration) {
-          try {
-            await self.registration.clearAppBadge();
-          } catch (err) {
-            console.error('Clear badge error:', err);
-          }
-        }
-      })(),
-      clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windowClients => {
-        for (let i = 0; i < windowClients.length; i++) {
-          const client = windowClients[i];
-          if (client.url === targetUrl && 'focus' in client) {
-            return client.focus();
-          }
-        }
-        if (clients.openWindow) {
-          return clients.openWindow(targetUrl);
-        }
-      })
-    ])
+    self.registration.showNotification(data.title || 'PM Roitx Study Hub', options)
   );
 });
