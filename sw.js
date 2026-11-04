@@ -1,4 +1,4 @@
-const CACHE_NAME = 'roitx-study-cache-v1';
+const CACHE_NAME = 'roitx-study-cache-v17';
 const ASSETS = [
   './',
   './index.html',
@@ -6,6 +6,7 @@ const ASSETS = [
   './script.js',
   './profile.jpg',
   './1profile.jpg',
+  './notif.png'
   './classes.html',
   './site.css',
   './site.js',
@@ -68,15 +69,13 @@ self.addEventListener('fetch', e => {
   );
 });
 
-// --- PUSH NOTIFICATION & BADGE HANDLER IN SW ---
+// --- PUSH NOTIFICATION & AUTO-INCREMENT BADGE HANDLER IN SW ---
 
-// 1. Push Event: Server se push message aane par notification show karna
 self.addEventListener('push', function(event) {
   let data = {
     title: 'PM Roitx Notification',
     body: 'Naya update ya study material uplabdh hai!',
-    url: '/index.html',
-    badgeCount: 1
+    url: '/index.html'
   };
 
   if (event.data) {
@@ -87,50 +86,6 @@ self.addEventListener('push', function(event) {
     }
   }
 
-  // Aapka final selected icon & badge configuration
-  const options = {
-    body: data.body,
-    icon: '/profile.png',
-    badge: '/notif.png',
-    data: { url: data.url || '/index.html' },
-    vibrate: [200, 100, 200]
-  };
-
-  // Push notification dikhana aur Service Worker registration par badge set karna
-  event.waitUntil(
-    Promise.all([
-      self.registration.showNotification(data.title || 'PM Roitx Study Hub', options),
-      (async () => {
-        if ('setAppBadge' in self.registration && data.badgeCount) {
-          try {
-            await self.registration.setAppBadge(data.badgeCount);
-          } catch (err) {
-            console.error('Badge error:', err);
-          }
-        }
-      })()
-    ])
-  );
-});
-
-// 2. Notification Click Event: Notification par click karne par redirect karna aur badge clear karna
-self.addEventListener('push', function(event) {
-  let data = {
-    title: 'PM Roitx Notification',
-    body: 'Naya update ya study material uplabdh hai!',
-    url: '/index.html',
-    badgeCount: 1
-  };
-
-  if (event.data) {
-    try {
-      data = event.data.json();
-    } catch (e) {
-      data.body = event.data.text();
-    }
-  }
-
-  // Key mismatch se bachne ke liye fallback (body ya message dono check karega)
   const finalBody = data.body || data.message || 'Naya update uplabdh hai!';
   const finalUrl = data.url || data.link || '/index.html';
 
@@ -143,6 +98,62 @@ self.addEventListener('push', function(event) {
   };
 
   event.waitUntil(
-    self.registration.showNotification(data.title || 'PM Roitx Study Hub', options)
+    Promise.all([
+      self.registration.showNotification(data.title || 'PM Roitx Study Hub', options),
+      (async () => {
+        try {
+          // Check if browser supports getting and setting app badge
+          if ('navigator' in self && 'getAppBadge' in navigator && 'setAppBadge' in navigator) {
+            let currentBadge = 0;
+            try {
+              currentBadge = await navigator.getAppBadge();
+            } catch (e) {
+              currentBadge = 0;
+            }
+            const newBadgeCount = (currentBadge || 0) + 1;
+            await navigator.setAppBadge(newBadgeCount);
+          } else if ('setAppBadge' in self.registration) {
+            // Fallback for service worker registration level
+            await self.registration.setAppBadge(1);
+          }
+        } catch (err) {
+          console.error('Auto-increment badge error:', err);
+        }
+      })()
+    ])
+  );
+});
+
+// Notification Click Event: App open hone par badge clear karna
+self.addEventListener('notificationclick', function(event) {
+  event.notification.close();
+
+  const targetUrl = event.notification.data && event.notification.data.url ? event.notification.data.url : '/index.html';
+
+  event.waitUntil(
+    Promise.all([
+      (async () => {
+        try {
+          if ('navigator' in self && 'clearAppBadge' in navigator) {
+            await navigator.clearAppBadge();
+          } else if (self.registration.clearAppBadge) {
+            await self.registration.clearAppBadge();
+          }
+        } catch (err) {
+          console.error('Clear badge error:', err);
+        }
+      })(),
+      clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windowClients => {
+        for (let i = 0; i < windowClients.length; i++) {
+          const client = windowClients[i];
+          if (client.url === targetUrl && 'focus' in client) {
+            return client.focus();
+          }
+        }
+        if (clients.openWindow) {
+          return clients.openWindow(targetUrl);
+        }
+      })
+    ])
   );
 });
