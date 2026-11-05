@@ -81,15 +81,15 @@
       <div class="form-group">
         <label><i class="fa-solid fa-school"></i> Target Class</label>
         <select class="input-field" id="targetClass" onchange="handleClassChange()">
+          <option value="12th" selected>Class 12th (Inter)</option>
           <option value="10th">Class 10th (Matric)</option>
-          <option value="12th">Class 12th (Inter)</option>
         </select>
       </div>
 
-      <div class="form-group" id="streamGroup" style="display: none;">
+      <div class="form-group" id="streamGroup">
         <label><i class="fa-solid fa-layer-group"></i> Select Stream</label>
         <select class="input-field" id="streamSelect" onchange="updateSubjects()">
-          <option value="Science">Science</option>
+          <option value="Science" selected>Science</option>
           <option value="Arts">Arts</option>
           <option value="Commerce">Commerce</option>
         </select>
@@ -143,8 +143,9 @@
         </select>
       </div>
 
-      <div class="form-group full" id="qCountGroup">
-        <label><i class="fa-solid fa-hashtag"></i> Question Count (Select or Type Any Custom Number)</label>
+      <!-- Question Count Group -->
+      <div class="form-group full" id="qCountGroup" style="display: none;">
+        <label><i class="fa-solid fa-hashtag"></i> Question number </label>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
           <select class="input-field" id="qCountSelect" onchange="handleQCountSelectChange()">
             <option value="4">4 Questions</option>
@@ -172,8 +173,9 @@
 
     </div>
 
-    <button class="btn-submit" id="genBtn" onclick="generateBSEBPYQs()">
-      <i class="fa-solid fa-wand-magic-sparkles"></i> Generate Content
+    <!-- Dynamic Action Button -->
+    <button class="btn-submit" id="genBtn" onclick="handleMainAction()">
+      <i class="fa-solid fa-book-open"></i> Create Summary
     </button>
 
     <div id="statusBox" class="status-msg"></div>
@@ -195,6 +197,7 @@
 
 <script>
   let pendingPayload = null;
+  let summaryGeneratedState = false;
 
   const subjectsData = {
     "10th": ["Science", "Mathematics", "Social Science", "Hindi", "English", "Sanskrit"],
@@ -226,7 +229,6 @@
       .replace(/\n/g, '<br>');
   }
 
-  // ROBUST JSON PARSER FOR AI RESPONSE
   function cleanAndParseJSON(rawStr) {
     if (!rawStr) throw new Error("AI Response is empty");
     if (typeof rawStr === 'object') return rawStr;
@@ -235,18 +237,24 @@
 
     const firstBrace = cleanedText.indexOf('{');
     const lastBrace = cleanedText.lastIndexOf('}');
-    if (firstBrace !== -1 && lastBrace !== -1) {
+    const firstBracket = cleanedText.indexOf('[');
+    const lastBracket = cleanedText.lastIndexOf(']');
+
+    if (firstBrace !== -1 && lastBrace !== -1 && (firstBracket === -1 || firstBrace < firstBracket)) {
       cleanedText = cleanedText.substring(firstBrace, lastBrace + 1);
+    } else if (firstBracket !== -1 && lastBracket !== -1) {
+      cleanedText = cleanedText.substring(firstBracket, lastBracket + 1);
     }
 
     try {
       return JSON.parse(cleanedText);
     } catch (err) {
-      // Fallback cleanup for unescaped quotes or newlines inside strings
       try {
+        // Fallback sanitization for unescaped newlines and control characters inside JSON strings
         let sanitized = cleanedText
-          .replace(/[\r\n]+/g, " ")
-          .replace(/[\u0000-\u001F\u007F-\u009F]/g, "");
+          .replace(/[\u0000-\u001F\u007F-\u009F]/g, "")
+          .replace(/\n/g, "\\n")
+          .replace(/\r/g, "");
         return JSON.parse(sanitized);
       } catch (e2) {
         throw new Error("JSON Parse Failed: " + err.message);
@@ -315,7 +323,7 @@
       streamGrp.style.display = "none";
     }
     updateSubjects();
-    toggleQCountVisibility();
+    resetFlowState();
   }
 
   function handleYearRangeChange() {
@@ -329,14 +337,17 @@
   }
 
   function toggleQCountVisibility() {
+    resetFlowState();
+  }
+
+  function resetFlowState() {
+    summaryGeneratedState = false;
     const qType = document.getElementById("qType").value;
     const qCountGrp = document.getElementById("qCountGroup");
-    
-    if (qType === "Summary") {
-      qCountGrp.style.display = "none";
-    } else {
-      qCountGrp.style.display = "block";
-    }
+    const genBtn = document.getElementById("genBtn");
+
+    qCountGrp.style.display = "none";
+    genBtn.innerHTML = `<i class="fa-solid fa-book-open"></i> Create Summary`;
   }
 
   function updateSubjects() {
@@ -377,15 +388,29 @@
     return `Class ${cleanClass} ${subject}: ${chapter} ${typeSuffix}`;
   }
 
-  async function fetchPYQChunk(chunkCount, startIndex, params) {
+    async function fetchPYQChunk(chunkCount, startIndex, params) {
     const { targetClass, stream, subject, langMode, qType, chapter, years, extra } = params;
 
     let prompt = `Generate exactly ${chunkCount} BSEB questions for Class ${targetClass} ${targetClass === "12th" ? `(${stream})` : ''}, Subject: ${subject}, Chapter: ${chapter}, Years: ${years}, Type: ${qType}, Language: ${langMode}.
 ${extra ? `Note: ${extra}` : ''}
 
-RULES:
-1. Return ONLY valid JSON format. Do not add markdown backticks outside or conversational text.
-2. Structure must be: {"questions": [{"question_en": "...", "question_hi": "...", "year_tag": "2018, 2021", "marks": "2 Marks", "answer_en": "...", "answer_hi": "..."}]}`;
+STRICT FORMATTING RULES (FOLLOW ABSOLUTELY):
+1. Return ONLY a valid JSON object. No markdown backticks (like \`\`\`json), no introductory text, no conversational filler.
+2. The JSON structure MUST be precisely:
+{
+  "questions": [
+    {
+      "question_en": "Question text in English...",
+      "question_hi": "Question text in Hindi...",
+      "answer_en": "Detailed answer in English. Use HTML tags like <br> for line breaks, • for bullet points, and <strong>keyword</strong> to highlight main points/glow headings just like professional notes.",
+      "answer_hi": "Detailed answer in Hindi. Use HTML tags like <br> for line breaks, • for bullet points, and <strong>keyword</strong> to highlight main points/glow headings.",
+      "year": "${years}",
+      "year_tag": "${years}",
+      "marks": "2 Marks"
+    }
+  ]
+}
+3. CRITICAL: Ensure all string values use proper JSON escaping. Do not use raw unescaped double quotes inside text; use single quotes (') or escape them. Ensure all strings are properly closed so JSON.parse never fails.`;
 
     const res = await fetch("https://ktastwehnnqicriknewr.supabase.co/functions/v1/smart-task", {
       method: "POST",
@@ -406,6 +431,7 @@ RULES:
 
     return cleanAndParseJSON(rawText);
   }
+
 
   async function fetchSummaryOnly(params) {
     const { targetClass, stream, subject, langMode, chapter, years, extra } = params;
@@ -413,9 +439,16 @@ RULES:
     let prompt = `Generate Chapter Summary / Revision Notes for BSEB Class ${targetClass} ${targetClass === "12th" ? `(${stream})` : ''}, Subject: ${subject}, Chapter: ${chapter}, Years: ${years}, Language: ${langMode}.
 ${extra ? `Note: ${extra}` : ''}
 
-RULES:
-1. Return ONLY valid JSON format.
-2. Structure must be: {"chapter_summary": {"summary_en": "...", "summary_hi": "..."}}`;
+STRICT JSON RULES:
+1. Return ONLY a valid JSON object. No markdown backticks (like \`\`\`json), no introductory text, no conversational filler.
+2. The JSON structure MUST be precisely: 
+{
+  "chapter_summary": {
+    "summary_en": "Detailed English summary text here...",
+    "summary_hi": "Detailed Hindi summary text here..."
+  }
+}
+3. IMPORTANT: Ensure all string values use proper JSON escaping. Do not use raw unescaped line breaks inside strings; use \\n for line breaks. Do not break JSON syntax.`;
 
     const res = await fetch("https://ktastwehnnqicriknewr.supabase.co/functions/v1/smart-task", {
       method: "POST",
@@ -437,12 +470,111 @@ RULES:
     return cleanAndParseJSON(rawText);
   }
 
-  async function generateBSEBPYQs() {
+  async function handleMainAction() {
+    const qType = document.getElementById("qType").value;
+    
+    if (qType === "Summary" || !summaryGeneratedState) {
+      await generateSummaryStep();
+    } else {
+      await generateQuestionsStep();
+    }
+  }
+
+  async function generateSummaryStep() {
     const targetClass = document.getElementById("targetClass").value;
     const stream = targetClass === "12th" ? document.getElementById("streamSelect").value : "General";
     const subject = document.getElementById("subjectSelect").value;
     const langMode = document.getElementById("languageSelect").value;
-    
+    const chapter = document.getElementById("chapterName").value.trim();
+    const extra = document.getElementById("extraInstructions").value.trim();
+    const qType = document.getElementById("qType").value;
+
+    const yearSelectVal = document.getElementById("yearRange").value;
+    let years = yearSelectVal;
+    if (yearSelectVal === "custom") {
+      const fromYr = document.getElementById("customFromYear").value.trim() || "2018";
+      const toYr = document.getElementById("customToYear").value.trim() || "2026";
+      years = `${fromYr} - ${toYr}`;
+    }
+
+    const statusBox = document.getElementById("statusBox");
+    const btn = document.getElementById("genBtn");
+    const previewBox = document.getElementById("previewBox");
+    const uploadBtn = document.getElementById("uploadBtn");
+    const fileNameGroup = document.getElementById("fileNameGroup");
+    const fileTitleInput = document.getElementById("fileTitleInput");
+    const qCountGrp = document.getElementById("qCountGroup");
+
+    if (!chapter) {
+      alert("⚠️ Chapter / Topic Name bharna zaroori hai!");
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Creating Summary...`;
+
+    previewBox.style.display = "none";
+    uploadBtn.style.display = "none";
+    fileNameGroup.style.display = "none";
+    statusBox.style.display = "block";
+    statusBox.style.color = "#7c3aed";
+
+    const params = { targetClass, stream, subject, langMode, chapter, years, extra };
+
+    try {
+      statusBox.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i> AI Generating Chapter Summary Notes...";
+      const sumResult = await fetchSummaryOnly(params);
+      const aggregatedSummary = sumResult.chapter_summary || sumResult;
+
+      const generatedTitle = generateAutoFileTitle(targetClass, subject, chapter, qType);
+      fileTitleInput.value = generatedTitle;
+
+      pendingPayload = {
+        title: generatedTitle,
+        exam_target: `BSEB Class ${targetClass}`,
+        subject: subject,
+        topic: chapter,
+        years_range: years,
+        language_mode: langMode,
+        questions: [],
+        summary: {
+          summary_en: parseMarkdownToHTML(aggregatedSummary.summary_en || ""),
+          summary_hi: parseMarkdownToHTML(aggregatedSummary.summary_hi || "")
+        }
+      };
+
+      renderPreview(pendingPayload, langMode, true);
+
+      statusBox.style.color = "#10b981";
+      statusBox.innerHTML = `✅ Summary Successfully Created!`;
+      fileNameGroup.style.display = "block";
+      previewBox.style.display = "block";
+      uploadBtn.style.display = "flex";
+
+      if (qType !== "Summary") {
+        summaryGeneratedState = true;
+        qCountGrp.style.display = "block";
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i> Question Generate Karein`;
+      } else {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa-solid fa-book-open"></i> Create Summary`;
+      }
+
+    } catch (err) {
+      console.error(err);
+      statusBox.style.color = "#ef4444";
+      statusBox.innerHTML = "❌ Summary Generation Error: " + err.message;
+      btn.disabled = false;
+      btn.innerHTML = `<i class="fa-solid fa-book-open"></i> Create Summary`;
+    }
+  }
+
+  async function generateQuestionsStep() {
+    const targetClass = document.getElementById("targetClass").value;
+    const stream = targetClass === "12th" ? document.getElementById("streamSelect").value : "General";
+    const subject = document.getElementById("subjectSelect").value;
+    const langMode = document.getElementById("languageSelect").value;
     const qCount = parseInt(document.getElementById("qCountManual").value) || 6;
     const qType = document.getElementById("qType").value;
     const chapter = document.getElementById("chapterName").value.trim();
@@ -459,99 +591,62 @@ RULES:
     const statusBox = document.getElementById("statusBox");
     const btn = document.getElementById("genBtn");
     const previewBox = document.getElementById("previewBox");
-    const uploadBtn = document.getElementById("uploadBtn");
-    const fileNameGroup = document.getElementById("fileNameGroup");
-    const fileTitleInput = document.getElementById("fileTitleInput");
-
-    if (!chapter) {
-      alert("⚠️ Chapter / Topic Name bharna zaroori hai!");
-      return;
-    }
 
     btn.disabled = true;
-    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Generating...`;
-
-    previewBox.style.display = "none";
-    uploadBtn.style.display = "none";
-    fileNameGroup.style.display = "none";
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Generating Questions...`;
     statusBox.style.display = "block";
     statusBox.style.color = "#7c3aed";
 
-    const isSummaryOnly = (qType === "Summary");
     const params = { targetClass, stream, subject, langMode, qType, chapter, years, extra };
 
     try {
-      let aggregatedSummary = null;
       let aggregatedQuestions = [];
+      const BATCH_SIZE = (langMode === "Bilingual") ? 1 : 2;
+      const totalBatches = Math.ceil(qCount / BATCH_SIZE);
 
-      // Step 1: Summary Note Generation
-      statusBox.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i> AI Generating Chapter Summary Notes...";
-      try {
-        const sumResult = await fetchSummaryOnly(params);
-        aggregatedSummary = sumResult.chapter_summary || sumResult;
-      } catch (sumErr) {
-        console.warn("Summary generation skipped or failed:", sumErr);
-      }
+      for (let b = 0; b < totalBatches; b++) {
+        const currentChunkCount = Math.min(BATCH_SIZE, qCount - (b * BATCH_SIZE));
+        const startIndex = b * BATCH_SIZE;
 
-      // Step 2: Batching Question Generation (Chunks of 2 for stability)
-      if (!isSummaryOnly) {
-        const BATCH_SIZE = 2;
-        const totalBatches = Math.ceil(qCount / BATCH_SIZE);
+        statusBox.innerHTML = `<i class='fa-solid fa-spinner fa-spin'></i> AI Generating Batch ${b + 1} of ${totalBatches} (${aggregatedQuestions.length}/${qCount} Questions)...`;
 
-        for (let b = 0; b < totalBatches; b++) {
-          const currentChunkCount = Math.min(BATCH_SIZE, qCount - (b * BATCH_SIZE));
-          const startIndex = b * BATCH_SIZE;
+        const chunkResult = await fetchPYQChunk(currentChunkCount, startIndex, params);
 
-          statusBox.innerHTML = `<i class='fa-solid fa-spinner fa-spin'></i> AI Generating Batch ${b + 1} of ${totalBatches} (${aggregatedQuestions.length}/${qCount} Questions)...`;
+        let chunkQuestions = [];
+        if (Array.isArray(chunkResult)) {
+          chunkQuestions = chunkResult;
+        } else if (chunkResult && Array.isArray(chunkResult.questions)) {
+          chunkQuestions = chunkResult.questions;
+        }
 
-          const chunkResult = await fetchPYQChunk(currentChunkCount, startIndex, params);
-
-          if (chunkResult && chunkResult.questions && Array.isArray(chunkResult.questions)) {
-            aggregatedQuestions = aggregatedQuestions.concat(chunkResult.questions);
-          }
+        if (chunkQuestions.length > 0) {
+          aggregatedQuestions = aggregatedQuestions.concat(chunkQuestions);
         }
       }
 
-      const generatedTitle = generateAutoFileTitle(targetClass, subject, chapter, qType);
-      fileTitleInput.value = generatedTitle;
+      pendingPayload.questions = aggregatedQuestions.map(q => ({
+        question_en: q.question_en || "",
+        question_hi: q.question_hi || "",
+        year: q.year || q.year_tag || years,
+        year_tag: q.year_tag || q.year || years,
+        marks: q.marks || "2 Marks",
+        answer_en: parseMarkdownToHTML(q.answer_en || ""),
+        answer_hi: parseMarkdownToHTML(q.answer_hi || "")
+      }));
 
-      pendingPayload = {
-        title: generatedTitle,
-        exam_target: `BSEB Class ${targetClass}`,
-        subject: subject,
-        topic: chapter,
-        years_range: years,
-        language_mode: langMode,
-        questions: isSummaryOnly ? [] : aggregatedQuestions.map(q => ({
-          question_en: q.question_en || "",
-          question_hi: q.question_hi || "",
-          year_tag: q.year_tag || q.year || years,
-          year: q.year_tag || q.year || years,
-          marks: q.marks || "PYQ",
-          answer_en: parseMarkdownToHTML(q.answer_en || ""),
-          answer_hi: parseMarkdownToHTML(q.answer_hi || "")
-        })),
-        summary: aggregatedSummary ? {
-          summary_en: parseMarkdownToHTML(aggregatedSummary.summary_en || ""),
-          summary_hi: parseMarkdownToHTML(aggregatedSummary.summary_hi || "")
-        } : null
-      };
-
-      renderPreview(pendingPayload, langMode, isSummaryOnly);
+      renderPreview(pendingPayload, langMode, false);
 
       statusBox.style.color = "#10b981";
-      statusBox.innerHTML = `✅ Successfully generated (${isSummaryOnly ? 'Summary Only' : aggregatedQuestions.length + ' Questions'})!`;
-      fileNameGroup.style.display = "block";
+      statusBox.innerHTML = `✅ Successfully added ${aggregatedQuestions.length} Questions along with Summary!`;
       previewBox.style.display = "block";
-      uploadBtn.style.display = "flex";
 
     } catch (err) {
       console.error(err);
       statusBox.style.color = "#ef4444";
-      statusBox.innerHTML = "❌ Generation Error: " + err.message;
+      statusBox.innerHTML = "❌ Question Generation Error: " + err.message;
     } finally {
       btn.disabled = false;
-      btn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i> Generate Content`;
+      btn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i> Dobara Questions Generate Karein`;
     }
   }
 
@@ -584,7 +679,7 @@ RULES:
         const yearTagDisplay = q.year_tag || q.year || payload.years_range;
         
         html += `<div class="q-preview-card formatted-text">
-          <span class="tag">${q.marks || 'PYQ'}</span>
+          <span class="tag">${q.marks || '2 Marks'}</span>
           <span class="year-tag"><i class="fa-regular fa-calendar-days"></i> ${yearTagDisplay}</span>`;
 
         if (langMode === "Bilingual" || langMode === "English") {
@@ -654,7 +749,8 @@ RULES:
       } else {
         statusBox.style.color = "#10b981";
         statusBox.innerHTML = "✅ Successfully Saved to Database as: <b>" + finalTitle + "</b>";
-        setTimeout(() => location.href = "manage-pyqs.html", 1500);
+        uploadBtn.disabled = false;
+        uploadBtn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> Save to Database`;
       }
     } catch(err) {
       console.error("Exception:", err);
