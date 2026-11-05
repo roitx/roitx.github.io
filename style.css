@@ -69,55 +69,79 @@
     height: 420px !important;
   }
 }
-
 /* =========================================================
-   COMPACT MOBILE-OPTIMIZED WHY CHOOSE US STYLES
+   WHY CHOOSE US - PERFECT 3-COLUMN DESKTOP & RESPONSIVE CSS
    ========================================================= */
-.formal-snap-inner {
-  position: relative;
-  overflow: hidden;
-  background: radial-gradient(circle at 50% 0%, rgba(0, 240, 255, 0.08), rgba(10, 27, 61, 0.85) 70%) !important;
-  border: 1px solid rgba(0, 240, 255, 0.3) !important;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), inset 0 0 40px rgba(0, 240, 255, 0.05) !important;
+.formal-info-snap-section {
   width: 100%;
-  max-width: 1100px;
-  padding: 16px 12px !important;
-  border-radius: 20px !important;
+  min-height: 75vh;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  box-sizing: border-box;
 }
 
-.fluid-heading {
-  font-size: clamp(18px, 4vw, 28px) !important;
-  font-weight: 900 !important;
-  margin-top: 4px;
-  background: linear-gradient(135deg, #00f0ff, #7000ff, #ff007a);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  letter-spacing: -0.5px;
+.formal-snap-inner {
+  width: 100%;
+  max-width: 1150px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--glass);
+  backdrop-filter: blur(25px) saturate(180%);
+  -webkit-backdrop-filter: blur(25px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  border-radius: 24px;
+  padding: 24px 20px;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
 }
 
-.fluid-subheading {
-  font-size: clamp(11px, 1.5vw, 13.5px) !important;
-  color: var(--muted);
-  margin-top: 2px;
-}
-
-.formal-info-grid {
+/* Yeh hai main 3-column layout jo image ki tarah dikhega */
+.why-choose-center-layout {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  margin-top: 15px;
 }
 
-@media (max-width: 768px) {
-  .formal-info-grid {
-    grid-template-columns: 1fr;
-    gap: 8px;
-  }
+.why-column {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
+.why-center-img-box {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px;
+}
+
+.why-center-img-box img {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2.5px solid rgba(0, 240, 255, 0.6);
+  box-shadow: 0 0 30px rgba(0, 240, 255, 0.35);
+  transition: transform 0.4s ease, box-shadow 0.4s ease;
+}
+
+.why-center-img-box img:hover {
+  transform: scale(1.08) rotate(4deg);
+  box-shadow: 0 0 40px rgba(0, 240, 255, 0.6);
+}
+
+/* Formal Tilt Cards Style */
 .formal-info-card {
-  background: rgba(255, 255, 255, 0.025) !important;
+  background: rgba(255, 255, 255, 0.03) !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  padding: 10px 14px !important;
+  padding: 12px 14px !important;
   border-radius: 14px !important;
   display: flex;
   align-items: center;
@@ -125,7 +149,8 @@
   position: relative;
   overflow: hidden;
   cursor: pointer;
-  transition: all 0.3s ease;
+  will-change: transform;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .formal-info-card.reverse {
@@ -137,50 +162,35 @@
   align-items: flex-end;
 }
 
-.formal-card-glow {
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: radial-gradient(circle 180px at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(0, 240, 255, 0.15), transparent 80%);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.3s ease;
-}
-
-.formal-info-card:hover .formal-card-glow {
-  opacity: 1;
-}
-
 .formal-info-card:hover {
-  transform: translateY(-3px);
-  border-color: #00f0ff !important;
-  box-shadow: 0 10px 25px rgba(0, 240, 255, 0.2);
+  border-color: var(--gold-glow) !important;
+  box-shadow: 0 10px 25px var(--gold-shadow), 0 0 15px rgba(255, 215, 0, 0.2) !important;
 }
 
 .formal-icon-box {
-  width: 38px;
-  height: 38px;
-  min-width: 38px;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
   border-radius: 10px;
-  background: linear-gradient(135deg, rgba(0, 240, 255, 0.12), rgba(112, 0, 255, 0.12));
-  border: 1px solid rgba(0, 240, 255, 0.35);
+  background: rgba(58, 160, 255, 0.1);
+  border: 1px solid rgba(58, 160, 255, 0.25);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #00f0ff;
+  color: var(--accent);
   transition: all 0.3s ease;
 }
 
 .formal-icon-box svg {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
 }
 
 .formal-info-card:hover .formal-icon-box {
-  background: linear-gradient(135deg, #00f0ff, #7000ff);
-  border-color: #fff;
-  color: #050b18;
-  transform: scale(1.1) rotate(6deg);
+  background: rgba(255, 215, 0, 0.15);
+  border-color: var(--gold-glow);
+  color: var(--gold-glow);
+  transform: scale(1.06) rotate(4deg);
 }
 
 .formal-text-box {
@@ -189,20 +199,19 @@
 }
 
 .card-badge-top {
-  font-size: 8.5px;
+  font-size: 8px;
   font-weight: 800;
   text-transform: uppercase;
-  color: #00f0ff;
-  letter-spacing: 1px;
+  color: var(--accent);
+  letter-spacing: 0.8px;
   margin-bottom: 1px;
-  opacity: 0.85;
 }
 
 .fluid-card-title {
   color: var(--text);
   margin-bottom: 2px;
-  font-size: 13.5px !important;
-  font-weight: 800 !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
 }
 
 .fluid-card-desc {
@@ -211,6 +220,30 @@
   line-height: 1.35;
   margin: 0;
 }
+
+/* Mobile Screen ke liye Media Query taaki chote screen par bhi layout kharab na ho */
+@media (max-width: 768px) {
+  .why-choose-center-layout {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .why-center-img-box {
+    order: -1;
+    margin-bottom: 4px;
+  }
+  .why-center-img-box img {
+    width: 110px;
+    height: 110px;
+  }
+  .formal-info-card.reverse {
+    flex-direction: row;
+    text-align: left;
+  }
+  .formal-info-card.reverse .formal-text-box {
+    align-items: flex-start;
+  }
+}
+
 
 /* =========================================================
    DESKTOP WIDGET ENHANCEMENT (75% Screen Height)
