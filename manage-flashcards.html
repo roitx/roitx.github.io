@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Flashcards - Admin Panel Pro</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+  <script src="guard.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-user-select: none; user-select: none; }
+    input, textarea, select { -webkit-user-select: text !important; user-select: text !important; }
+    body { background: #e6ebf4; color: #334155; padding: 20px 15px; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; }
+    
+    .app-card { background: #e6ebf4; width: 100%; max-width: 620px; border-radius: 30px; padding: 24px 20px; box-shadow: 12px 12px 24px #c2c9d6, -12px -12px 24px #ffffff; }
+    .badge-top { background: #e6ebf4; padding: 10px 14px; border-radius: 20px; box-shadow: inset 3px 3px 6px #c2c9d6, inset -3px -3px 6px #ffffff; font-size: 11px; font-weight: 700; color: #7c3aed; text-align: center; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+
+    .action-bar { display: flex; gap: 10px; margin-bottom: 20px; }
+    .btn-pill { flex: 1; padding: 10px 14px; border-radius: 20px; background: #e6ebf4; border: none; box-shadow: 5px 5px 10px #c2c9d6, -5px -5px 10px #ffffff; font-size: 12px; font-weight: 700; color: #334155; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none; }
+    .btn-pill.purple { color: #7c3aed; box-shadow: inset 3px 3px 6px #c2c9d6, inset -3px -3px 6px #ffffff; }
+
+    .title-sec { margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+    .title-sec h1 { font-size: 20px; font-weight: 800; color: #1e293b; display: flex; align-items: center; gap: 8px; }
+    .counter-badge { font-size: 11px; font-weight: 800; background: #7c3aed; color: #fff; padding: 4px 10px; border-radius: 12px; }
+
+    .pyq-list { display: flex; flex-direction: column; gap: 16px; }
+    .pyq-item { background: #e6ebf4; border-radius: 24px; padding: 18px; box-shadow: 6px 6px 14px #c2c9d6, -6px -6px 14px #ffffff; display: flex; flex-direction: column; gap: 10px; }
+    .pyq-title { font-size: 14px; font-weight: 800; color: #1e293b; }
+    .pyq-meta { font-size: 11px; font-weight: 600; color: #64748b; }
+    
+    .pyq-actions { display: flex; gap: 8px; margin-top: 4px; }
+    .btn-action { flex: 1; padding: 10px; border-radius: 16px; border: none; background: #e6ebf4; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none; box-shadow: 4px 4px 8px #c2c9d6, -4px -4px 8px #ffffff; }
+    .btn-action.view { color: #0284c7; }
+    .btn-action.edit { color: #d97706; }
+    .btn-action.delete { color: #ef4444; }
+
+    /* MANAGE PYQ LIKE EDIT MODAL */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; padding: 15px; z-index: 999; }
+    .modal-card { background: #e6ebf4; width: 100%; max-width: 540px; border-radius: 28px; padding: 22px; box-shadow: 12px 12px 24px #1e293b; max-height: 90vh; overflow-y: auto; }
+    .modal-title { font-size: 16px; font-weight: 800; color: #1e293b; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; border-bottom: 2px dashed #cbd5e1; padding-bottom: 8px; }
+    
+    .form-group { margin-bottom: 12px; }
+    .form-group label { display: block; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 6px; }
+    .input-field { width: 100%; height: 42px; padding: 0 14px; border: none; outline: none; background: #e6ebf4; border-radius: 16px; box-shadow: inset 3px 3px 6px #c2c9d6, inset -3px -3px 6px #ffffff; font-size: 12px; font-weight: 600; color: #334155; }
+    textarea.input-field { height: 110px; padding: 12px; resize: vertical; font-family: monospace; font-size: 11px; }
+
+    .modal-btns { display: flex; gap: 10px; margin-top: 20px; }
+    .btn-save { flex: 1; padding: 12px; background: #7c3aed !important; color: #ffffff !important; border-radius: 16px; border: none; font-weight: 800; font-size: 12px; cursor: pointer; box-shadow: 4px 4px 8px #c2c9d6, -4px -4px 8px #ffffff; }
+    .btn-cancel { flex: 1; padding: 12px; background: #e6ebf4; color: #ef4444; border-radius: 16px; border: none; font-weight: 800; font-size: 12px; cursor: pointer; box-shadow: 4px 4px 8px #c2c9d6, -4px -4px 8px #ffffff; }
+  </style>
+</head>
+<body>
+
+  <div class="app-card">
+    <div class="badge-top"><i class="fa-solid fa-shield-halved"></i> SECURE ADMIN: MANAGE FLASHCARDS</div>
+
+    <div class="action-bar">
+      <a href="admin-flashcard-generator.html" class="btn-pill purple"><i class="fa-solid fa-plus"></i> Create Flashcard</a>
+      <button class="btn-pill" onclick="loadFlashcards()"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
+    </div>
+
+    <div class="title-sec">
+      <h1><i class="fa-solid fa-list-check"></i> Flashcard Sets</h1>
+      <span class="counter-badge" id="cardCounter">0 Sets</span>
+    </div>
+
+    <div id="flashcardContainer" class="pyq-list"></div>
+  </div>
+
+  <!-- EDIT MODAL (Manage-PYQ Style) -->
+  <div id="editModal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-title"><i class="fa-solid fa-pen-to-square"></i> Edit Flashcard Set</div>
+      <input type="hidden" id="editId">
+      
+      <div class="form-group">
+        <label>Flashcard Title</label>
+        <input type="text" id="editTitleInput" class="input-field">
+      </div>
+
+      <div class="form-group">
+        <label>Target Class (Exam Target)</label>
+        <input type="text" id="editExamTarget" class="input-field">
+      </div>
+
+      <div class="form-group">
+        <label>Cards Data (JSON Format)</label>
+        <textarea id="editCardsRaw" class="input-field" placeholder='[{"front":"...","back":"..."}]'></textarea>
+      </div>
+
+      <div class="modal-btns">
+        <button onclick="saveEdit()" class="btn-save"><i class="fa-solid fa-check"></i> Save Changes</button>
+        <button onclick="closeEditModal()" class="btn-cancel"><i class="fa-solid fa-xmark"></i> Cancel</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  let flashcardDataStore = [];
+
+  document.addEventListener("DOMContentLoaded", loadFlashcards);
+
+  async function loadFlashcards() {
+    const container = document.getElementById("flashcardContainer");
+    container.innerHTML = `<div style="text-align:center; font-size:12px; font-weight:bold; padding:20px; color:#7c3aed;"><i class="fa-solid fa-spinner fa-spin"></i> Loading Flashcards...</div>`;
+
+    const { data, error } = await window.supabaseClient
+      .from('flashcards_database')
+      .select('*')
+      .order('id', { ascending: false });
+
+    if (error) {
+      container.innerHTML = `<div style="text-align:center; font-size:12px; color:#ef4444; font-weight:bold;">Error: ${error.message}</div>`;
+      return;
+    }
+
+    flashcardDataStore = data || [];
+    document.getElementById("cardCounter").innerText = `${flashcardDataStore.length} Sets`;
+
+    if (flashcardDataStore.length === 0) {
+      container.innerHTML = `<div style="text-align:center; font-size:13px; font-weight:bold; color:#64748b; padding:30px;">Koi flashcard set nahi mila.</div>`;
+      return;
+    }
+
+    container.innerHTML = flashcardDataStore.map(item => `
+      <div class="pyq-item">
+        <div class="pyq-title">${item.title}</div>
+        <div class="pyq-meta">
+          <span><i class="fa-solid fa-graduation-cap"></i> ${item.exam_target || 'Class 12th'}</span> • 
+          <span><i class="fa-solid fa-layer-group"></i> ${item.cards ? item.cards.length : 0} Cards</span>
+        </div>
+        <div class="pyq-actions">
+          <a href="flashcard-reader.html?id=${item.id}" class="btn-action view"><i class="fa-solid fa-eye"></i> View</a>
+          <button onclick="openEditModal(${item.id})" class="btn-action edit"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
+          <button onclick="deleteFlashcard(${item.id})" class="btn-action delete"><i class="fa-solid fa-trash"></i> Delete</button>
+        </div>
+      </div>
+    `).join("");
+  }
+
+  function openEditModal(id) {
+    const item = flashcardDataStore.find(x => x.id === id);
+    if (!item) return;
+
+    document.getElementById("editId").value = item.id;
+    document.getElementById("editTitleInput").value = item.title || "";
+    document.getElementById("editExamTarget").value = item.exam_target || "";
+    document.getElementById("editCardsRaw").value = item.cards ? JSON.stringify(item.cards, null, 2) : "[]";
+    
+    document.getElementById("editModal").style.display = "flex";
+  }
+
+  function closeEditModal() {
+    document.getElementById("editModal").style.display = "none";
+  }
+
+  async function saveEdit() {
+    const id = document.getElementById("editId").value;
+    const newTitle = document.getElementById("editTitleInput").value.trim();
+    const exam_target = document.getElementById("editExamTarget").value.trim();
+
+    if (!newTitle) {
+      alert("Title khali nahi ho sakta!");
+      return;
+    }
+
+    let cards = [];
+    try {
+      cards = JSON.parse(document.getElementById("editCardsRaw").value || "[]");
+    } catch(e) {
+      alert("❌ Invalid JSON in Cards field!");
+      return;
+    }
+
+    const { error } = await window.supabaseClient
+      .from('flashcards_database')
+      .update({ title: newTitle, exam_target, cards })
+      .eq('id', id);
+
+    if (error) {
+      alert("Update Error: " + error.message);
+    } else {
+      closeEditModal();
+      loadFlashcards();
+    }
+  }
+
+  async function deleteFlashcard(id) {
+    if (!confirm("Kya aap is flashcard set ko delete karna chahte hain?")) return;
+    const { error } = await window.supabaseClient.from('flashcards_database').delete().eq('id', id);
+    if (!error) {
+      loadFlashcards();
+    } else {
+      alert("Delete Error: " + error.message);
+    }
+  }
+</script>
+
+</body>
+</html>

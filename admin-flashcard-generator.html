@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PM Roitx AI Flashcard Generator - Admin</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+  <script src="guard.js"></script>
+
+  <!-- MathJax CDN for Formula & Symbols -->
+  <script>
+  window.MathJax = {
+    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+    startup: {
+      pageReady: () => {
+        return MathJax.startup.defaultPageReady().then(() => {
+          console.log('MathJax initialised!');
+        });
+      }
+    }
+  };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-user-select: none; user-select: none; }
+    input, textarea, select { -webkit-user-select: text !important; user-select: text !important; }
+    body { background: #e6ebf4; color: #334155; padding: 20px 15px; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; }
+    
+    .app-card { background: #e6ebf4; width: 100%; max-width: 580px; border-radius: 30px; padding: 24px 20px; box-shadow: 12px 12px 24px #c2c9d6, -12px -12px 24px #ffffff; }
+    .badge-top { background: #e6ebf4; padding: 10px 14px; border-radius: 20px; box-shadow: inset 3px 3px 6px #c2c9d6, inset -3px -3px 6px #ffffff; font-size: 11px; font-weight: 700; color: #7c3aed; text-align: center; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    
+    .action-bar { display: flex; gap: 12px; margin-bottom: 24px; }
+    .btn-pill { flex: 1; padding: 10px 14px; border-radius: 20px; background: #e6ebf4; border: none; box-shadow: 5px 5px 10px #c2c9d6, -5px -5px 10px #ffffff; font-size: 12px; font-weight: 700; color: #334155; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none; }
+    .btn-pill.purple { color: #7c3aed; box-shadow: inset 3px 3px 6px #c2c9d6, inset -3px -3px 6px #ffffff; }
+
+    .title-sec { margin-bottom: 20px; }
+    .title-sec h1 { font-size: 22px; font-weight: 800; color: #1e293b; display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .title-sec p { font-size: 12px; color: #64748b; }
+    
+    .section-tag { font-size: 11px; font-weight: 800; color: #64748b; letter-spacing: 0.8px; margin-bottom: 16px; display: flex; align-items: center; gap: 6px; }
+    
+    .form-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+    .form-group label { display: block; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 8px; }
+    .input-field { width: 100%; height: 42px; padding: 0 14px; border: none; outline: none; background: #e6ebf4; border-radius: 20px; box-shadow: inset 3px 3px 6px #c2c9d6, inset -3px -3px 6px #ffffff; font-size: 12px; font-weight: 600; color: #334155; }
+    select.input-field { appearance: none; cursor: pointer; }
+    textarea.input-field { height: 70px; padding: 10px 14px; resize: vertical; }
+    
+    .btn-submit { width: 100%; height: 48px; margin-top: 20px; border: none; border-radius: 24px; background: #e6ebf4; box-shadow: 6px 6px 12px #c2c9d6, -6px -6px 12px #ffffff; font-size: 14px; font-weight: 800; color: #7c3aed; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .btn-submit:active { box-shadow: inset 4px 4px 8px #c2c9d6, inset -4px -4px 8px #ffffff; }
+    .btn-upload { background: #059669 !important; color: #ffffff !important; display: none; margin-top: 10px; }
+    
+    .status-msg { margin-top: 15px; font-size: 12px; font-weight: bold; text-align: center; display: none; padding: 10px; border-radius: 12px; box-shadow: inset 2px 2px 4px #c2c9d6, inset -2px -2px 4px #ffffff; }
+    
+    .preview-box { display: none; margin-top: 20px; background: #1e1b4b; border-radius: 20px; padding: 18px; color: #f1f5f9; box-shadow: inset 3px 3px 6px #0f172a, inset -3px -3px 6px #334155; max-height: 400px; overflow-y: auto; }
+  </style>
+</head>
+<body>
+
+  <div class="app-card">
+    <div class="badge-top"><i class="fa-solid fa-shield-halved"></i> SECURE ADMIN: AI FLASHCARD GENERATOR</div>
+
+    <div class="action-bar">
+      <a href="manage-flashcards.html" class="btn-pill"><i class="fa-solid fa-list-check"></i> Manage Cards</a>
+      <button class="btn-pill purple"><i class="fa-solid fa-bolt"></i> AI GENERATOR</button>
+    </div>
+
+    <div class="title-sec">
+      <h1><i class="fa-solid fa-wand-magic-sparkles"></i> AI Flashcard Engine</h1>
+      <p>Chapter ke concepts aur formulas ke liye AI flashcards banayein aur preview dekhein.</p>
+    </div>
+
+    <div class="section-tag"><i class="fa-solid fa-sliders"></i> TARGET PARAMETERS</div>
+
+    <div class="form-grid">
+      <div class="form-group">
+        <label><i class="fa-solid fa-school"></i> Target Class</label>
+        <select class="input-field" id="targetClass">
+          <option value="12th" selected>Class 12th (Inter)</option>
+          <option value="10th">Class 10th (Matric)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label><i class="fa-solid fa-book"></i> Subject Name</label>
+        <select class="input-field" id="subjectName">
+          <option value="" disabled selected>Select Subject</option>
+          <option value="Physics">Physics</option>
+          <option value="Chemistry">Chemistry</option>
+          <option value="Mathematics">Mathematics</option>
+          <option value="Biology">Biology</option>
+          <option value="Hindi">Hindi</option>
+          <option value="English">English</option>
+          <option value="Computer Science">Computer Science</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label><i class="fa-solid fa-heading"></i> Chapter / Topic Name</label>
+        <input type="text" class="input-field" id="chapterName" placeholder="Jaise: Electrostatics, Alcohols...">
+      </div>
+
+      <div class="form-group">
+        <label><i class="fa-solid fa-language"></i> Language Mode</label>
+        <select class="input-field" id="languageMode">
+          <option value="Bilingual" selected>Bilingual (English + Hinglish)</option>
+          <option value="English">Pure English</option>
+          <option value="Hindi">Pure Hindi </option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label><i class="fa-solid fa-hashtag"></i> Total Flashcards</label>
+        <select class="input-field" id="cardCount">
+          <option value="6">6 Flashcards</option>
+          <option value="10" selected>10 Flashcards</option>
+          <option value="15">15 Flashcards</option>
+        </select>
+      </div>
+    </div>
+
+    <button class="btn-submit" id="genBtn" onclick="generateFlashcards()">
+      <i class="fa-solid fa-wand-magic-sparkles"></i> Generate Flashcards
+    </button>
+
+    <div id="statusBox" class="status-msg"></div>
+    <div id="previewBox" class="preview-box"></div>
+
+    <button class="btn-submit btn-upload" id="uploadBtn" onclick="uploadToDatabase()">
+      <i class="fa-solid fa-cloud-arrow-up"></i> Save to Database
+    </button>
+  </div>
+
+<script>
+  let generatedPayload = null;
+
+  async function generateFlashcards() {
+    const targetClass = document.getElementById("targetClass").value;
+    const subject = document.getElementById("subjectName").value;
+    const chapter = document.getElementById("chapterName").value.trim();
+    const languageMode = document.getElementById("languageMode").value;
+    const count = document.getElementById("cardCount").value;
+    
+    const statusBox = document.getElementById("statusBox");
+    const btn = document.getElementById("genBtn");
+    const previewBox = document.getElementById("previewBox");
+    const uploadBtn = document.getElementById("uploadBtn");
+
+    if (!subject || !chapter) {
+      alert("⚠️ Subject select karein aur Chapter name bharna zaroori hai!");
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Generating AI Flashcards...`;
+    statusBox.style.display = "block";
+    statusBox.style.color = "#7c3aed";
+    statusBox.innerHTML = "AI flashcards taiyar kar raha hai...";
+
+    const prompt = `Generate exactly ${count} study flashcards for Class ${targetClass}, Subject: ${subject}, Chapter: ${chapter}.
+Language Mode required: ${languageMode}.
+IMPORTANT: Ensure all LaTeX formulas are enclosed in single dollar signs (e.g., $C_nH_{2n+1}OH$) and strings are safely closed.
+Return ONLY a valid JSON object in this exact format without any markdown backticks or extra text:
+{
+  "title": "Class ${targetClass} ${subject}: ${chapter}",
+  "exam_target": "Class ${targetClass}",
+  "language_mode": "${languageMode}",
+  "cards": [
+    {
+      "front": "Question or Concept term",
+      "back": "Detailed explanation with formulas"
+    }
+  ]
+}`;
+
+    try {
+      const res = await fetch("https://ktastwehnnqicriknewr.supabase.co/functions/v1/smart-task", {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "apikey": SUPABASE_ANON_KEY,
+          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+        },
+        body: JSON.stringify({ prompt })
+      });
+
+      const responseText = await res.text();
+      let data;
+      try { 
+        data = JSON.parse(responseText); 
+      } catch(e) { 
+        data = { result: responseText }; 
+      }
+
+      let rawText = data.choices?.[0]?.message?.content || data.candidates?.[0]?.content?.parts?.[0]?.text || data.result || responseText;
+      
+      rawText = String(rawText).trim();
+      rawText = rawText.replace(/^```json\s*([\s\S]*?)\s*```$/i, '$1');
+      rawText = rawText.replace(/^```\s*([\s\S]*?)\s*```$/i, '$1');
+      
+      const firstOpen = rawText.indexOf('{');
+      const lastClose = rawText.lastIndexOf('}');
+      if (firstOpen !== -1 && lastClose !== -1 && lastClose > firstOpen) {
+        rawText = rawText.substring(firstOpen, lastClose + 1);
+      }
+
+      try {
+        generatedPayload = JSON.parse(rawText);
+      } catch (jsonErr) {
+        console.warn("Standard JSON parse failed, trying sanitizer...", jsonErr);
+        try {
+          let sanitized = rawText.replace(/[\n\r\t]/g, " ");
+          generatedPayload = JSON.parse(sanitized);
+        } catch (err2) {
+          console.error("JSON Error:", err2, rawText);
+          throw new Error("AI response mein JSON format error aaya hai. Kripya dobara Generate par click karein.");
+        }
+      }
+
+                  previewBox.style.display = "block";
+      previewBox.innerHTML = `<div style="font-size:12px; font-weight:bold; color:#a7f3d0; margin-bottom:12px;">PREVIEW (${generatedPayload.cards.length} CARDS) - Math Rendered:</div>` +
+        generatedPayload.cards.map((c, i) => `
+          <div style="background:rgba(255,255,255,0.05); padding:14px; border-radius:12px; margin-bottom:12px; border:1px solid #334155;">
+            <div style="margin-bottom:8px; font-size:13px; color:#f8fafc;">
+              <span style="color:#a7f3d0; font-weight:bold;">Q${i+1} Front:</span><br>
+              <div style="margin-top:4px;">${c.front}</div>
+            </div>
+            <div style="font-size:13px; color:#f8fafc;">
+              <span style="color:#a7f3d0; font-weight:bold;">Ans Back:</span><br>
+              <div style="margin-top:4px;">${c.back}</div>
+            </div>
+          </div>
+        `).join("");
+
+      // MathJax ko call karein taaki sabhi cards ke formulas ek sath render ho jayein
+      setTimeout(() => {
+        if (window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
+          MathJax.typesetPromise([previewBox]).catch((err) => console.log(err));
+        }
+      }, 100);
+
+      if (window.MathJax && window.MathJax.typesetPromise) {
+        MathJax.typesetPromise();
+      } else if (window.MathJax) {
+        MathJax.typeset();
+      }
+
+      statusBox.style.color = "#10b981";
+      statusBox.innerHTML = "✅ Flashcards generate ho gaye! Preview check karke Save karein.";
+      uploadBtn.style.display = "flex";
+    } catch (err) {
+      statusBox.style.color = "#ef4444";
+      statusBox.innerHTML = "❌ Error: " + err.message;
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i> Generate Flashcards`;
+    }
+  }
+
+  function escapeHtml(str) {
+    return String(str).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  function updateCardData(index) {
+    if (!generatedPayload || !generatedPayload.cards[index]) return;
+    const fVal = document.getElementById(`front_${index}`).value;
+    const bVal = document.getElementById(`back_${index}`).value;
+    generatedPayload.cards[index].front = fVal;
+    generatedPayload.cards[index].back = bVal;
+  }
+
+  async function uploadToDatabase() {
+    if (!generatedPayload) return;
+    const uploadBtn = document.getElementById("uploadBtn");
+    const statusBox = document.getElementById("statusBox");
+
+    uploadBtn.disabled = true;
+    uploadBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Saving...`;
+
+    const { error } = await window.supabaseClient
+      .from('flashcards_database')
+      .insert([generatedPayload]);
+
+    if (error) {
+      statusBox.style.color = "#ef4444";
+      statusBox.innerHTML = "❌ Save Error: " + error.message;
+      uploadBtn.disabled = false;
+      uploadBtn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> Save to Database`;
+    } else {
+      statusBox.style.color = "#10b981";
+      statusBox.innerHTML = "✅ Successfully Saved to Database!";
+      setTimeout(() => { window.location.href = "manage-flashcards.html"; }, 1500);
+    }
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PM Roitx - AI Study Flashcards</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase.js"></script>
+
+    <style>
+      :root {
+        --bg-dark: #0a1b3d;
+        --card-bg: rgba(12, 22, 45, 0.85);
+        --card-border: rgba(0, 210, 255, 0.2);
+        --accent-cyan: #00d2ff;
+        --accent-purple: #3a7bd5;
+        --text-main: #f8fafc;
+        --text-muted: #94a3b8;
+        --glow-cyan: rgba(0, 210, 255, 0.35);
+      }
+
+      * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+
+      body { background: var(--bg-dark); color: var(--text-main); min-height: 100vh; overflow-x: hidden; padding-bottom: 60px; }
+
+      .bg-orbs { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: -1; overflow: hidden; }
+      .orb { position: absolute; border-radius: 50%; filter: blur(120px); opacity: 0.35; animation: floatOrb 18s infinite alternate ease-in-out; }
+      .orb-1 { width: 500px; height: 500px; background: #00d2ff; top: -100px; left: -100px; }
+      .orb-2 { width: 450px; height: 450px; background: #3a7bd5; bottom: -50px; right: -50px; animation-delay: -5s; }
+
+      @keyframes floatOrb {
+        0% { transform: translate(0, 0) scale(1); }
+        50% { transform: translate(60px, -80px) scale(1.15); }
+        100% { transform: translate(-50px, 50px) scale(0.9); }
+      }
+
+      .container { max-width: 1280px; margin: 0 auto; padding: 0 20px; }
+
+      .hero-sec { text-align: center; padding: 50px 15px 30px; position: relative; }
+      .hero-badge {
+        display: inline-flex; align-items: center; gap: 8px; padding: 8px 18px; border-radius: 30px;
+        background: rgba(0, 210, 255, 0.08); border: 1px solid rgba(0, 210, 255, 0.25);
+        font-size: 13px; font-weight: 700; color: var(--accent-cyan); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px;
+      }
+      .hero-title { font-family: 'Space Grotesk', sans-serif; font-size: clamp(28px, 4vw, 48px); font-weight: 800; color: #fff; margin-bottom: 12px; }
+      .hero-title span { color: var(--accent-cyan); }
+      .hero-sub { color: var(--text-muted); font-size: 14px; max-width: 580px; margin: 0 auto; line-height: 1.6; }
+
+      .controls-wrapper {
+        background: var(--card-bg); backdrop-filter: blur(20px); border: 1px solid var(--card-border);
+        border-radius: 24px; padding: 20px; margin-bottom: 30px; box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+      }
+      .search-box { position: relative; width: 100%; }
+      .search-box input {
+        width: 100%; height: 50px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 14px; padding: 0 20px 0 48px; color: #fff; font-size: 14px; outline: none; transition: 0.3s;
+      }
+      .search-box input:focus { border-color: var(--accent-cyan); box-shadow: 0 0 20px rgba(0,210,255,0.2); }
+      .search-icon { position: absolute; left: 18px; top: 16px; color: var(--accent-cyan); font-size: 16px; }
+
+      .pyq-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+
+      .pyq-card {
+        background: var(--card-bg); backdrop-filter: blur(16px); border: 1px solid var(--card-border);
+        border-radius: 22px; padding: 22px; display: flex; flex-direction: column; justify-content: space-between;
+        position: relative; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .pyq-card:hover { transform: translateY(-4px); border-color: var(--accent-cyan); box-shadow: 0 15px 30px var(--glow-cyan); }
+
+      /* Top-Left Language Mode Box */
+      .lang-badge {
+        position: absolute; top: 16px; left: 16px; font-size: 10px; font-weight: 800; padding: 4px 10px;
+        border-radius: 8px; background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3);
+      }
+
+      .card-top { display: flex; justify-content: flex-end; align-items: flex-start; margin-bottom: 16px; }
+      .badge-tag {
+        font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 20px;
+        background: rgba(0, 210, 255, 0.12); color: var(--accent-cyan); border: 1px solid rgba(0, 210, 255, 0.3);
+      }
+
+      .card-title { font-size: 16px; font-weight: 700; color: #fff; line-height: 1.4; margin-bottom: 16px; margin-top: 10px; }
+      
+      .btn-action-main {
+        width: 100%; height: 44px; background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+        border: none; border-radius: 12px; color: #050b18; font-weight: 800; font-size: 13px;
+        display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none;
+        transition: 0.3s; box-shadow: 0 4px 15px rgba(0, 210, 255, 0.3);
+      }
+      .btn-action-main:hover { opacity: 0.9; transform: translateY(-2px); }
+    </style>
+</head>
+<body>
+
+  <div class="bg-orbs"><div class="orb orb-1"></div><div class="orb orb-2"></div></div>
+
+  <div class="container">
+    <header class="hero-sec">
+      <div class="hero-badge"><i class="fa-solid fa-layer-group"></i> Smart Revision Hub</div>
+      <h1 class="hero-title">AI Study <span>Flashcards</span></h1>
+      <p class="hero-sub">Concepts aur formulas ko tezi se yaad karne ke liye interactive AI flashcards practice karein.</p>
+    </header>
+
+    <div class="controls-wrapper">
+      <div class="search-box">
+        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+        <input type="text" id="searchInput" placeholder="Search flashcard sets..." onkeyup="filterCards()">
+      </div>
+    </div>
+
+    <div id="flashcardGrid" class="pyq-grid">
+      <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-muted);">
+        <i class="fa-solid fa-spinner fa-spin" style="font-size: 28px;"></i>
+      </div>
+    </div>
+  </div>
+
+<script>
+  let rawFlashcards = [];
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    const { data, error } = await window.supabaseClient
+      .from('flashcards_database')
+      .select('*')
+      .order('id', { ascending: false });
+
+    const grid = document.getElementById("flashcardGrid");
+    if (error || !data || data.length === 0) {
+      grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-muted);">Koi flashcard set available nahi hai.</div>`;
+      return;
+    }
+
+    rawFlashcards = data;
+    renderGrid(rawFlashcards);
+  });
+
+  function renderGrid(list) {
+    const grid = document.getElementById("flashcardGrid");
+    grid.innerHTML = list.map(item => `
+      <div class="pyq-card">
+        <div class="lang-badge"><i class="fa-solid fa-language"></i> ${item.language_mode || 'Bilingual'}</div>
+        <div class="card-top">
+          <span class="badge-tag">${item.cards ? item.cards.length : 0} Cards</span>
+        </div>
+        <div class="card-title">${item.title}</div>
+        <div>
+          <a href="flashcard-reader.html?id=${item.id}" class="btn-action-main">
+            <i class="fa-solid fa-play"></i> Start Practice
+          </a>
+        </div>
+      </div>
+    `).join("");
+  }
+
+  function filterCards() {
+    const q = document.getElementById("searchInput").value.toLowerCase();
+    const filtered = rawFlashcards.filter(x => x.title && x.title.toLowerCase().includes(q));
+    renderGrid(filtered);
+  }
+</script>
+</body>
+</html>

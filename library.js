@@ -4,12 +4,14 @@ document.addEventListener("DOMContentLoaded", () => {
     renderActivityFeed();
 });
 
+// Auto-update UI when navigating BACK to library page
 window.addEventListener("pageshow", (event) => {
     renderActivityFeed();
 });
 
+// Auto-update UI if localStorage changes in another tab
 window.addEventListener("storage", (event) => {
-    if (event.key === "recentFiles" || event.key === "downloadedFiles" || event.key === "userPurchasedNotes" || (event.key && event.key.startsWith("test_draft_"))) {
+    if (event.key === "recentFiles" || event.key === "downloadedFiles" || event.key === "userPurchasedNotes") {
         renderActivityFeed();
     }
 });
@@ -31,6 +33,7 @@ function toggleFilter() {
     renderActivityFeed();
 }
 
+// Track Activity Function
 function trackActivityLocally(fileData, isDownloaded = false) {
     try {
         let recent = getData("recentFiles");
@@ -41,10 +44,13 @@ function trackActivityLocally(fileData, isDownloaded = false) {
         let cleanBaseUrl = rawUrl.split('?')[0];
         const isPurchased = fileData.isPurchased || false;
 
+        // PYQ / Test / Flashcard detection
         const isPyqItem = fileData.isPyq || rawUrl.toLowerCase().includes("pyq") || (fileData.meta && fileData.meta.toLowerCase().includes("pyq"));
         const isTestItem = fileData.isTest || cleanBaseUrl.toLowerCase().includes("take-test") || (fileData.meta && fileData.meta.toLowerCase().includes("test"));
+        const isFlashcardItem = rawUrl.toLowerCase().includes("flashcard-reader") || (fileData.meta && fileData.meta.toLowerCase().includes("flashcard"));
 
-        if (!isPyqItem && isDownloaded && !downloads.some(f => f.url && f.url.split('?')[0] === cleanBaseUrl)) {
+        // Only add to downloadedFiles if it is NOT a PYQ/Flashcard paper and explicitly marked downloaded
+        if (!isPyqItem && !isFlashcardItem && isDownloaded && !downloads.some(f => f.url && f.url.split('?')[0] === cleanBaseUrl)) {
             fileData.timeDownloaded = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             downloads.unshift(fileData);
             localStorage.setItem("downloadedFiles", JSON.stringify(downloads));
@@ -67,17 +73,19 @@ function trackActivityLocally(fileData, isDownloaded = false) {
         let defaultMeta = "Viewer";
         if (isPyqItem) defaultMeta = "PYQ Paper";
         else if (isTestItem) defaultMeta = "Mock Test";
+        else if (isFlashcardItem) defaultMeta = "Flashcard Set";
 
         recent.unshift({
             title: fileData.title,
-            url: fileData.url,
+            url: fileData.url, 
             meta: fileData.meta || defaultMeta,
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            downloaded: isPyqItem ? false : (downloads.some(f => f.url && f.url.split('?')[0] === cleanBaseUrl) || isDownloaded),
+            downloaded: (isPyqItem || isFlashcardItem) ? false : (downloads.some(f => f.url && f.url.split('?')[0] === cleanBaseUrl) || isDownloaded),
             isPurchased: isPurchased,
             isPremium: isCurrentPremium,
             isTest: isTestItem,
             isPyq: isPyqItem,
+            isFlashcard: isFlashcardItem,
             viewCount: viewCount
         });
 
@@ -101,19 +109,6 @@ async function renderActivityFeed() {
     let downloads = getData("downloadedFiles");
     let localPurchases = getData("userPurchasedNotes");
 
-    // Scan local drafts for tests to check Resume / Retake status in Library
-    let userDraftsMap = {};
-    for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith("test_draft_")) {
-            const testId = key.replace("test_draft_", "");
-            try {
-                const draftData = JSON.parse(localStorage.getItem(key));
-                if (draftData) userDraftsMap[testId] = draftData;
-            } catch (e) {}
-        }
-    }
-
     let supabaseApprovedTitles = [];
 
     try {
@@ -131,8 +126,13 @@ async function renderActivityFeed() {
                         if (o.note_title) {
                             const cleaned = cleanTitleString(o.note_title);
                             if (cleaned) supabaseApprovedTitles.push(cleaned);
+                            
+                            if (!localPurchases.some(lp => cleanTitleString(lp.title) === cleaned)) {
+                                localPurchases.push({ title: o.note_title });
+                            }
                         }
                     });
+                    localStorage.setItem("userPurchasedNotes", JSON.stringify(localPurchases));
                 }
             }
         }
@@ -144,7 +144,7 @@ async function renderActivityFeed() {
         recent = recent.filter(f => {
             let cleanPath = f.url ? f.url.split('?')[0] : "";
             let cleanedTitle = cleanTitleString(f.title);
-            return !f.isPyq && (downloads.some(item => (item.url && item.url.split('?')[0] === cleanPath) || cleanTitleString(item.title) === cleanedTitle) || f.downloaded);
+            return !f.isPyq && !f.isFlashcard && (downloads.some(item => (item.url && item.url.split('?')[0] === cleanPath) || cleanTitleString(item.title) === cleanedTitle) || f.downloaded);
         });
     }
 
@@ -164,12 +164,10 @@ async function renderActivityFeed() {
         let rawUrl = f.url || "";
         let cleanPath = rawUrl.split('?')[0];
 
+        // Type Detection
         let isPyqItem = f.isPyq || rawUrl.toLowerCase().includes("pyq") || (f.meta && f.meta.toLowerCase().includes("pyq"));
         let isTestItem = f.isTest || cleanPath.toLowerCase().includes("take-test.html");
-
-        let testIdMatch = rawUrl.match(/[?&]id=([^&]+)/);
-        let currentTestId = testIdMatch ? testIdMatch[1] : null;
-        let hasActiveDraft = currentTestId && userDraftsMap[currentTestId];
+        let isFlashcardItem = f.isFlashcard || rawUrl.toLowerCase().includes("flashcard-reader") || (f.meta && f.meta.toLowerCase().includes("flashcard"));
 
         let viewerPage = "notes-viewer.html";
         const cleanedFileTitle = cleanTitleString(f.title);
@@ -178,10 +176,18 @@ async function renderActivityFeed() {
                           || localPurchases.some(item => cleanTitleString(item.title) === cleanedFileTitle) 
                           || supabaseApprovedTitles.some(st => cleanedFileTitle.includes(st) || st.includes(cleanedFileTitle));
 
-        let isDownloaded = !isPyqItem && (downloads.some(item => (item.url && item.url.split('?')[0] === cleanPath) || cleanTitleString(item.title) === cleanedFileTitle) || f.downloaded);
+        let isDownloaded = !isPyqItem && !isFlashcardItem && (downloads.some(item => (item.url && item.url.split('?')[0] === cleanPath) || cleanTitleString(item.title) === cleanedFileTitle) || f.downloaded);
         let isFilePremium = f.isPremium || cleanPath.toLowerCase().includes("premium") || cleanPath.toLowerCase().includes("paid");
 
-        if (isPyqItem) {
+        // Target URL Logic
+        if (isFlashcardItem) {
+            if (rawUrl.includes("flashcard-reader.html")) {
+                viewTargetUrl = rawUrl;
+            } else if (rawUrl.includes("id=")) {
+                let idMatch = rawUrl.match(/id=([^&]+)/);
+                viewTargetUrl = `flashcard-reader.html?id=${idMatch ? idMatch[1] : ''}`;
+            }
+        } else if (isPyqItem) {
             if (rawUrl.includes("pyq-reader.html")) {
                 viewTargetUrl = rawUrl;
             } else if (rawUrl.includes("id=")) {
@@ -191,11 +197,7 @@ async function renderActivityFeed() {
                 viewTargetUrl = `pyq-reader.html?path=${encodeURIComponent(cleanPath)}&name=${encodeURIComponent(f.title)}`;
             }
         } else if (isTestItem) {
-            if (hasActiveDraft) {
-                viewTargetUrl = `${rawUrl}${rawUrl.includes('?') ? '&' : '?'}resume=true`;
-            } else {
-                viewTargetUrl = rawUrl;
-            }
+            viewTargetUrl = rawUrl;
         } else if (cleanPath.match(/\.(jpg|jpeg|png|webp|gif)$/i) || f.meta?.includes("Image")) {
             viewerPage = "image-viewer.html";
             if (!cleanPath.startsWith("formulas/") && !cleanPath.includes("/")) {
@@ -211,24 +213,30 @@ async function renderActivityFeed() {
             viewTargetUrl = `${viewerPage}?path=${encodeURIComponent(cleanPath)}&name=${encodeURIComponent(f.title)}${extraParams}`;
         }
 
-        // Action Button Text logic (Resume / Re-take / View)
-        let actionBtnText = "View File →";
-        if (isTestItem) {
-            if (hasActiveDraft) actionBtnText = "Resume Test ➔";
-            else actionBtnText = "Re-take Test ➔";
-        } else if (isPyqItem) {
-            actionBtnText = "Read PYQ →";
-        }
+        // Action Button Text
+        let actionBtnText = isTestItem ? "Re-take Test →" : (isPyqItem ? "Read PYQ →" : (isFlashcardItem ? "Read Flashcards →" : "View File →"));
 
+        // Badge & Access Status
+        let isPyqOrFlashcard = isPyqItem || isFlashcardItem;
+        let badgeHtml = "";
+        if (!isPyqOrFlashcard) {
+            let downloadBadgeClass = isDownloaded ? "downloaded" : "not-downloaded";
+            let downloadBadgeText = isTestItem ? "Attempted" : (isDownloaded ? "Downloaded" : "Not Downloaded");
+            badgeHtml = `<span class="badge ${downloadBadgeClass}">${downloadBadgeText}</span>`;
+        }
+        
         let accessTagHtml = "";
         let accessStatusText = "Free";
         
         if (isTestItem) {
             accessTagHtml = `<span class="access-tag purchased" title="Attempted">${checkSvg}</span>`;
-            accessStatusText = hasActiveDraft ? "Test In Progress" : "Test Attempted";
+            accessStatusText = "Test Attempted";
         } else if (isPyqItem) {
             accessTagHtml = `<span class="access-tag free" title="PYQ Paper">${checkSvg}</span>`;
             accessStatusText = "PYQ Available";
+        } else if (isFlashcardItem) {
+            accessTagHtml = `<span class="access-tag free" title="Flashcard Set">${checkSvg}</span>`;
+            accessStatusText = "Flashcard Available";
         } else if (isPurchased) {
             accessTagHtml = `<span class="access-tag purchased" title="Purchased">${checkSvg}</span>`;
             accessStatusText = "Purchased";
@@ -240,13 +248,6 @@ async function renderActivityFeed() {
             accessStatusText = "Free";
         }
 
-        let badgeHtml = "";
-        if (!isPyqItem) {
-            let downloadBadgeClass = isDownloaded ? "downloaded" : "not-downloaded";
-            let downloadBadgeText = isTestItem ? (hasActiveDraft ? "Unfinished" : "Attempted") : (isDownloaded ? "Downloaded" : "Not Downloaded");
-            badgeHtml = `<span class="badge ${downloadBadgeClass}">${downloadBadgeText}</span>`;
-        }
-
         const div = document.createElement("div");
         div.className = "activity-item";
 
@@ -255,9 +256,9 @@ async function renderActivityFeed() {
             title: f.title,
             time: f.time,
             views: f.viewCount || 1,
-            downloaded: isPyqItem ? "N/A (PYQ Paper)" : (isDownloaded ? "Yes (Downloaded)" : "No"),
+            downloaded: isPyqOrFlashcard ? "N/A" : (isDownloaded ? "Yes (Downloaded)" : "No"),
             access: accessStatusText,
-            type: isPyqItem ? "Previous Year Question (PYQ)" : (isTestItem ? "Online Test" : "Notes / Document")
+            type: isPyqItem ? "Previous Year Question (PYQ)" : (isFlashcardItem ? "Flashcard Set" : (isTestItem ? "Online Test" : "Notes / Document"))
         };
 
         div.innerHTML = `
@@ -269,7 +270,7 @@ async function renderActivityFeed() {
                         <button class="info-btn" onclick="openInfoModal(${index})" title="View Details">i</button>
                     </div>
                 </div>
-                <span>${isTestItem ? (hasActiveDraft ? 'In Progress' : 'Attempted') : (isPyqItem ? 'Read' : 'Viewed')} at ${f.time} • ${f.meta}</span>
+                <span>${isTestItem ? 'Attempted' : (isPyqOrFlashcard ? 'Read' : 'Viewed')} at ${f.time} • ${f.meta}</span>
             </div>
             <div class="badges-group">
                 ${badgeHtml}
@@ -290,7 +291,7 @@ function openInfoModal(index) {
         <div class="modal-row"><span>File Name:</span> <span>${data.title}</span></div>
         <div class="modal-row"><span>Item Type:</span> <span>${data.type}</span></div>
         <div class="modal-row"><span>Last Time:</span> <span>${data.time}</span></div>
-        <div class="icon-row"><span>Total Reads/Opens:</span> <span>${data.views} times</span></div>
+        <div class="modal-row"><span>Total Reads/Opens:</span> <span>${data.views} times</span></div>
         <div class="modal-row"><span>Download Status:</span> <span>${data.downloaded}</span></div>
         <div class="modal-row"><span>Access Type:</span> <span>${data.access}</span></div>
     `;
