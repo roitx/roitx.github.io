@@ -708,40 +708,39 @@ function addBotMsg(content, isHTML = false) {
       return;
     }
 
-    // 5. CALCULATOR ACTION INTEGRATION IN CHAT
-    if (cmd.includes('calc') || cmd.includes('hisab') || cmd.includes('ginti') || /^[\d\s+\-*/().^√πe×÷]+$/.test(cmd)) {
-      let mathExp = cmd.replace(/^(calc|calculator|solve|hisab|ginti|\/calc)\s*/i, '').trim();
-
-      if (mathExp) {
-        let result = evaluateMathExpression(mathExp);
-
-        if (result !== null && !isNaN(result)) {
-          addBotMsg(`
-            <div style="border: 1px solid #00ff9c; background: rgba(0, 255, 156, 0.08); padding: 10px 14px; border-radius: 10px; margin-top: 5px;">
-              <div style="font-size: 11px; color: #00ff9c; font-weight: bold; letter-spacing: 0.5px;">🧮 MATH RESULT</div>
-              <div style="font-family: monospace; font-size: 14px; color: #aaa; margin-top: 4px;">Exp: ${mathExp}</div>
-              <div style="font-family: 'Orbitron', monospace; font-size: 18px; font-weight: bold; color: #fff; margin-top: 2px;">= ${result}</div>
-              <div style="margin-top: 8px;">
-                <a href="calculator.html" style="display: inline-block; background: #00ff9c; color: #000; text-decoration: none; padding: 4px 10px; border-radius: 5px; font-size: 11px; font-weight: bold;">
-                  📱 Open Full Scientific Calculator
-                </a>
-              </div>
-            </div>
-          `);
-          return;
-        }
-      }
-
+        // 5. CALCULATOR ACTION INTEGRATION IN CHAT
+    if (cmd === 'calc' || cmd === 'calculator' || cmd === 'hisab' || cmd === 'ginti') {
       addBotMsg(`
         <div style="border: 1px solid rgba(255,255,255,0.15); background: #141414; padding: 12px; border-radius: 12px; margin-top: 5px;">
           <div style="font-size: 13px; font-weight: bold; color: #00ff9c; margin-bottom: 6px;">🧮 Quick Calculator</div>
-          <div style="font-size: 12px; color: #ccc; margin-bottom: 10px;">Chat me koi bhi math expression likhein (Jaise: <code>25 * 4 + 10</code> ya <code>√(144)</code>) ya Scientific UI kholein:</div>
+          <div style="font-size: 12px; color: #ccc; margin-bottom: 10px;">Chat me koi bhi math expression likhein (Jaise: <code>10 + 5</code>, <code>25 * 4</code> ya <code>√(144)</code>) ya Scientific UI kholein:</div>
           <a href="calculator.html" style="display: inline-block; background: #00ff9c; color: #000; text-decoration: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: bold;">
             🚀 Open Scientific Calculator Pro
           </a>
         </div>
       `);
       return;
+    }
+
+    // Direct Math Expression Evaluator (Jaise 10+5, 50*2, etc.)
+    if (/^[\d\s+\-*/().^√πe×÷]+$/.test(raw)) {
+      let result = evaluateMathExpression(raw);
+
+      if (result !== null && !isNaN(result)) {
+        addBotMsg(`
+          <div style="border: 1px solid #00ff9c; background: rgba(0, 255, 156, 0.08); padding: 10px 14px; border-radius: 10px; margin-top: 5px;">
+            <div style="font-size: 11px; color: #00ff9c; font-weight: bold; letter-spacing: 0.5px;">🧮 MATH RESULT</div>
+            <div style="font-family: monospace; font-size: 14px; color: #aaa; margin-top: 4px;">Exp: ${raw}</div>
+            <div style="font-family: 'Orbitron', monospace; font-size: 18px; font-weight: bold; color: #fff; margin-top: 2px;">= ${result}</div>
+            <div style="margin-top: 8px;">
+              <a href="calculator.html" style="display: inline-block; background: #00ff9c; color: #000; text-decoration: none; padding: 4px 10px; border-radius: 5px; font-size: 11px; font-weight: bold;">
+                📱 Open Full Scientific Calculator
+              </a>
+            </div>
+          </div>
+        `);
+        return;
+      }
     }
 
     // 6. CLASSES & STREAMS OVERVIEW
