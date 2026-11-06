@@ -188,7 +188,8 @@ function speakText(rawText, btnElement, forcePlay = false) {
   const chatWindow = document.getElementById('chatWindow');
   const input = document.getElementById('chatInput');
   const sendBtn = document.getElementById('sendBtn');
-  const micBtn = document.getElementById('micBtn'); // Mic button element
+  const mic = document.getElementById('micBtn');
+if (mic) mic.style.display = 'none';
   const modal = document.getElementById('modal');
   const modalContent = document.getElementById('modalContent');
   const notesCount = document.getElementById('notesCount');
@@ -307,17 +308,15 @@ async function initUserGreeting() {
       </div>
     `;
 
-    addBotMsg(greetingHTML, true);
-
-    // Thoda sa delay dekar greeting ko automatic speak trigger karein
-    setTimeout(() => {
-        if (isSpeechEnabledGlobally) {
-            const speakerBtn = document.querySelector('.msg.bot .msg-speaker-btn');
-            speakText(greetingHTML, speakerBtn, true);
-        }
-    }, 800);
+    // Direct element banakar 'first-greeting' class add karein
+    if (chatWindow) {
+        const d = document.createElement('div');
+        d.className = 'msg bot first-greeting'; // Ye pehle greeting par button ko chupayega
+        d.innerHTML = greetingHTML;
+        chatWindow.appendChild(d);
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
 }
-
 
   // ---- UI MESSAGING & MATH RENDERING HELPERS ----
   function addUserMsg(text) {
@@ -437,31 +436,6 @@ function addBotMsg(content, isHTML = false) {
   const d = document.createElement('div'); 
   d.className = 'msg bot'; 
 
-  // Speaker button logic (agar pehle se hai toh wahi rakhna)
-  const speakerOnSvg = `<svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5zM19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-  const speakerOffSvg = `<svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5zM23 9l-6 6M17 9l6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-  
-  const speakerBtn = document.createElement('button');
-  speakerBtn.className = 'msg-speaker-btn';
-  speakerBtn.title = "Toggle Voice Output";
-  speakerBtn.innerHTML = isSpeechEnabledGlobally ? speakerOnSvg : speakerOffSvg;
-
-  speakerBtn.onclick = (e) => {
-      e.stopPropagation();
-      if (window.speechSynthesis && window.speechSynthesis.speaking && window.activeSpeakerBtn === speakerBtn) {
-          stopCurrentSpeech();
-          isSpeechEnabledGlobally = false;
-          localStorage.setItem('roitx_speech_pref', 'false');
-          speakerBtn.innerHTML = speakerOffSvg;
-      } else {
-          isSpeechEnabledGlobally = true;
-          localStorage.setItem('roitx_speech_pref', 'true');
-          speakerBtn.innerHTML = speakerOnSvg;
-          speakText(contentDiv.innerText || content, speakerBtn, true);
-      }
-  };
-  d.appendChild(speakerBtn);
-
   const contentDiv = document.createElement('div');
   contentDiv.className = 'msg-content-body';
   d.appendChild(contentDiv);
@@ -469,12 +443,42 @@ function addBotMsg(content, isHTML = false) {
   chatWindow.appendChild(d); 
   chatWindow.scrollTop = chatWindow.scrollHeight;
 
-  // YAHAN MAIN CHANGE HAI: Agar isHTML true hai toh innerHTML use hoga
+  // Ye function typing ya render complete hone ke baad hi speaker button banayega
+  const attachSpeakerButton = (finalContentText) => {
+    const speakerOnSvg = `<svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5zM19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    const speakerOffSvg = `<svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5zM23 9l-6 6M17 9l6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    
+    const speakerBtn = document.createElement('button');
+    speakerBtn.className = 'msg-speaker-btn';
+    speakerBtn.title = "Toggle Voice Output";
+    speakerBtn.innerHTML = isSpeechEnabledGlobally ? speakerOnSvg : speakerOffSvg;
+
+    speakerBtn.onclick = (e) => {
+        e.stopPropagation();
+        if (window.speechSynthesis && window.speechSynthesis.speaking && window.activeSpeakerBtn === speakerBtn) {
+            stopCurrentSpeech();
+            isSpeechEnabledGlobally = false;
+            localStorage.setItem('roitx_speech_pref', 'false');
+            speakerBtn.innerHTML = speakerOffSvg;
+        } else {
+            isSpeechEnabledGlobally = true;
+            localStorage.setItem('roitx_speech_pref', 'true');
+            speakerBtn.innerHTML = speakerOnSvg;
+            speakText(finalContentText, speakerBtn, true);
+        }
+    };
+    d.appendChild(speakerBtn);
+
+    if (isSpeechEnabledGlobally) {
+        try { speakText(finalContentText, speakerBtn, true); } catch (e) {}
+    }
+  };
+
   if (isHTML) {
     contentDiv.innerHTML = content;
     renderMathSafely(d);
+    attachSpeakerButton(contentDiv.innerText || content);
   } else {
-    // Normal text ke liye typewriter ya direct text setter
     let charIndex = 0;
     contentDiv.innerHTML = ""; 
     function typeWriter() {
@@ -486,16 +490,14 @@ function addBotMsg(content, isHTML = false) {
         } else {
             contentDiv.innerHTML = content; 
             renderMathSafely(d);
+            // Typing complete hone ke baad yahan button appear hoga
+            attachSpeakerButton(content);
         }
     }
     typeWriter();
   }
-
-  // Speech output handle
-  if (isSpeechEnabledGlobally && !isHTML) {
-      try { speakText(content, speakerBtn, true); } catch (e) {}
-  }
 }
+
 
 
         function showTyping() {
@@ -1295,6 +1297,7 @@ You are 'Roitx AI', an advanced, highly intelligent study assistant built for Ro
 
 ### 🎯 CORE IDENTITY & TONE
 - REPETITION BAN: Never repeat words, phrases, or syllables endlessly (e.g., do not loop words like "kiya kiya kiya"). Keep responses concise, clean, and meaningful.
+- EMOJI RULE: Har AI jawab ke aakhri me uske tone ya emotion ke anusar ek relevant emoji full stop (.) se just pehle zaroor add karein (Jaise: "Ye rha aapka jawab 😊" ya "Sawal ka hal mil gaya 🚀").
 
 - Respond in clear, simple, and friendly **Hindi / Hinglish** (mix of English and Hindi script/Latin text).
 - Be encouraging, precise, and highly accurate with academic concepts.

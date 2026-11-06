@@ -73,6 +73,10 @@
     }
   };
 </script>
+<script src="https://code.responsivevoice.com/responsivevoice.js"></script>
+
+<!-- Math.js Library for calculation support -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
 <link rel="icon" href="profile.png" type="image/png">
@@ -260,7 +264,9 @@
   max-height: none !important;
 }
 
-
+.msg.bot.first-greeting .msg-speaker-btn {
+  display: none !important;
+}
 @keyframes pulseAi {
   0% { opacity: 0.6; }
   50% { opacity: 1; }
@@ -302,6 +308,8 @@
 }
 
 </style>
+
+
 </head>
 <body>
 
