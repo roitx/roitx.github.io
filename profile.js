@@ -231,6 +231,8 @@ function applyRoleBasedUI(role, permissions = {}) {
   const aiTestBtn = document.getElementById("aiTestBtn");
   const uploadPyqBtn = document.getElementById("uploadPyqBtn");
   const managePyqBtn = document.getElementById("managePyqBtn");
+  const uploadFlashcardBtn = document.getElementById("uploadFlashcardBtn");
+  const manageFlashcardBtn = document.getElementById("manageFlashcardBtn");
 
   // Reset Display
   if (adminBtn) adminBtn.style.display = "none";
@@ -240,27 +242,28 @@ function applyRoleBasedUI(role, permissions = {}) {
   if (aiTestBtn) aiTestBtn.style.display = "none";
   if (uploadPyqBtn) uploadPyqBtn.style.display = "none";
   if (managePyqBtn) managePyqBtn.style.display = "none";
+  if (uploadFlashcardBtn) uploadFlashcardBtn.style.display = "none";
+  if (manageFlashcardBtn) manageFlashcardBtn.style.display = "none";
 
   const isSuperAdmin = (currentUser && currentUser.email && currentUser.email.toLowerCase() === "rohitrajgoh91@gmail.com") || normalizedRole === "superadmin";
 
   if (isSuperAdmin) {
     if (userRoleBadge) userRoleBadge.innerHTML = '<i class="fa-solid fa-crown"></i> Platform Super Admin';
     
-    // Superadmin has permanent access to Admin Panel & Manage Team
     if (adminBtn) adminBtn.style.display = "flex";
     if (manageTeamBtn) manageTeamBtn.style.display = "flex";
 
-    // Other features follow DB permissions (Fallback to true if not specified)
     if (permissions.send_notif !== false && sendNotifBtn) sendNotifBtn.style.display = "flex";
     if (permissions.manage_test !== false && uploadTestBtn) uploadTestBtn.style.display = "flex";
     if (permissions.ai_test !== false && aiTestBtn) aiTestBtn.style.display = "flex";
     if (permissions.upload_pyq !== false && uploadPyqBtn) uploadPyqBtn.style.display = "flex";
     if (permissions.manage_pyq !== false && managePyqBtn) managePyqBtn.style.display = "flex";
+    if (uploadFlashcardBtn) uploadFlashcardBtn.style.display = "flex";
+    if (manageFlashcardBtn) manageFlashcardBtn.style.display = "flex";
 
   } else if (normalizedRole === "admin") {
     if (userRoleBadge) userRoleBadge.innerHTML = '<i class="fa-solid fa-user-gear"></i> Admin';
     
-    // Admin gets ALL permissions auto-unlocked/ON by default
     if (adminBtn) adminBtn.style.display = "flex";
     if (manageTeamBtn) manageTeamBtn.style.display = "flex";
     if (sendNotifBtn) sendNotifBtn.style.display = "flex";
@@ -268,25 +271,28 @@ function applyRoleBasedUI(role, permissions = {}) {
     if (aiTestBtn) aiTestBtn.style.display = "flex";
     if (uploadPyqBtn) uploadPyqBtn.style.display = "flex";
     if (managePyqBtn) managePyqBtn.style.display = "flex";
+    if (uploadFlashcardBtn) uploadFlashcardBtn.style.display = "flex";
+    if (manageFlashcardBtn) manageFlashcardBtn.style.display = "flex";
 
   } else if (normalizedRole === "teammate" || normalizedRole === "moderator") {
     if (userRoleBadge) userRoleBadge.innerHTML = '<i class="fa-solid fa-user-shield"></i> Official Teammate';
 
-    // Strict Rule: Teammate NEVER gets "Manage Teammates"
     if (manageTeamBtn) manageTeamBtn.style.display = "none";
 
-    // Strictly check DB permissions for Teammates
     if (permissions.admin_panel && adminBtn) adminBtn.style.display = "flex";
     if (permissions.send_notif && sendNotifBtn) sendNotifBtn.style.display = "flex";
     if (permissions.manage_test && uploadTestBtn) uploadTestBtn.style.display = "flex";
     if (permissions.ai_test && aiTestBtn) aiTestBtn.style.display = "flex";
     if (permissions.upload_pyq && uploadPyqBtn) uploadPyqBtn.style.display = "flex";
     if (permissions.manage_pyq && managePyqBtn) managePyqBtn.style.display = "flex";
+    if (uploadFlashcardBtn) uploadFlashcardBtn.style.display = "flex";
+    if (manageFlashcardBtn) manageFlashcardBtn.style.display = "flex";
 
   } else {
     if (userRoleBadge) userRoleBadge.innerHTML = '<i class="fa-solid fa-graduation-cap"></i> Active Student';
   }
 }
+
 
 // Load User Profile Data with Role Support
 async function loadUserProfile() {
@@ -682,6 +688,13 @@ function goToManageTeam() {
 
 function goToSendNotification() { 
   window.location.href = "admin-notifications.html"; 
+}
+function goToUploadFlashcard() { 
+  window.location.href = "admin-flashcard-generator.html"; 
+}
+
+function goToManageFlashcard() { 
+  window.location.href = "manage-flashcards.html"; 
 }
 
 function goToUploadTest() { 

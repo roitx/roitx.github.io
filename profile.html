@@ -170,7 +170,7 @@
       <i class="fa-solid fa-wand-magic-sparkles"></i> Create AI Test
     </button>
 
-    <!-- NEW: PYQ Generator & Management Action Buttons -->
+        <!-- NEW: PYQ Generator & Management Action Buttons -->
     <button class="btn btn-admin" id="uploadPyqBtn" style="display: none; margin-top: 8px; background: linear-gradient(135deg, #ff7e5f, #feb47b); color: #fff;" onclick="goToUploadPyq()">
       <i class="fa-solid fa-file-circle-plus"></i> Upload PYQ 
     </button>
@@ -178,6 +178,17 @@
     <button class="btn btn-admin" id="managePyqBtn" style="display: none; margin-top: 8px; background: linear-gradient(135deg, #ff4e50, #f9d423); color: #fff;" onclick="goToManagePyq()">
       <i class="fa-solid fa-list-check"></i> Manage PYQ
     </button>
+
+    <!-- NEW: Flashcard Generator & Management Action Buttons (Unique Color Themes) -->
+    <button class="btn btn-admin" id="uploadFlashcardBtn" style="display: none; margin-top: 8px; background: linear-gradient(135deg, #f2709c, #ff9472); color: #fff;" onclick="goToUploadFlashcard()">
+      <i class="fa-solid fa-bolt"></i> Upload Flashcard
+    </button>
+
+    <button class="btn btn-admin" id="manageFlashcardBtn" style="display: none; margin-top: 8px; background: linear-gradient(135deg, #7928ca, #ff0080); color: #fff;" onclick="goToManageFlashcard()">
+      <i class="fa-solid fa-clone"></i> Manage Flashcards
+    </button>
+
+
 
     <!-- General Action Buttons -->
     <div class="btn-group">
@@ -314,7 +325,6 @@
     }
   })();
 </script>
-
   <!-- Navigation Helper Functions -->
   <script>
     function goToAdminPanel() { window.location.href = "admin-panel.html"; }
@@ -324,7 +334,10 @@
     function goToAiTestCreator() { window.location.href = "admin-ai-test.html"; }
     function goToUploadPyq() { window.location.href = "admin-pyq-generator.html"; }
     function goToManagePyq() { window.location.href = "manage-pyqs.html"; }
+    function goToUploadFlashcard() { window.location.href = "admin-flashcard-generator.html"; }
+    function goToManageFlashcard() { window.location.href = "manage-flashcards.html"; }
     function goToHome() { window.location.href = "index.html"; }
   </script>
+
 </body>
 </html>

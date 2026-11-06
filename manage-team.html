@@ -227,7 +227,7 @@
       </select>
     </div>
 
-    <div class="toggles-list">
+        <div class="toggles-list">
       <div class="toggle-item">
         <span>Admin Panel Access</span>
         <label class="switch"><input type="checkbox" id="modalAdmin" onchange="handleToggleChange()"><span class="slider"></span></label>
@@ -244,7 +244,6 @@
         <span>AI Test Creator</span>
         <label class="switch"><input type="checkbox" id="modalAI" onchange="handleToggleChange()"><span class="slider"></span></label>
       </div>
-      <!-- NEW TOGGLES FOR PYQ MODULES -->
       <div class="toggle-item">
         <span>Upload PYQ (Generator)</span>
         <label class="switch"><input type="checkbox" id="modalUploadPyq" onchange="handleToggleChange()"><span class="slider"></span></label>
@@ -253,7 +252,17 @@
         <span>Manage PYQ</span>
         <label class="switch"><input type="checkbox" id="modalManagePyq" onchange="handleToggleChange()"><span class="slider"></span></label>
       </div>
+      <!-- NEW FLASHCARD TOGGLES -->
+      <div class="toggle-item">
+        <span>Upload Flashcards (AI)</span>
+        <label class="switch"><input type="checkbox" id="modalUploadFlashcard" onchange="handleToggleChange()"><span class="slider"></span></label>
+      </div>
+      <div class="toggle-item">
+        <span>Manage Flashcards</span>
+        <label class="switch"><input type="checkbox" id="modalManageFlashcard" onchange="handleToggleChange()"><span class="slider"></span></label>
+      </div>
     </div>
+
 
     <button class="btn-save-modal" onclick="saveModalPermissions()">Save Changes</button>
   </div>
@@ -417,51 +426,55 @@
     });
   }
 
-  function handleRoleDropdownChange(selectedRole) {
-    const adminToggle      = document.getElementById("modalAdmin");
-    const notifToggle      = document.getElementById("modalNotif");
-    const testToggle       = document.getElementById("modalTest");
-    const aiToggle         = document.getElementById("modalAI");
-    const uploadPyqToggle  = document.getElementById("modalUploadPyq");
-    const managePyqToggle  = document.getElementById("modalManagePyq");
+    function handleRoleDropdownChange(selectedRole) {
+    const adminToggle          = document.getElementById("modalAdmin");
+    const notifToggle          = document.getElementById("modalNotif");
+    const testToggle           = document.getElementById("modalTest");
+    const aiToggle             = document.getElementById("modalAI");
+    const uploadPyqToggle      = document.getElementById("modalUploadPyq");
+    const managePyqToggle      = document.getElementById("modalManagePyq");
+    const uploadFlashcardToggle = document.getElementById("modalUploadFlashcard");
+    const manageFlashcardToggle = document.getElementById("modalManageFlashcard");
 
     if (selectedRole === 'admin') {
-      adminToggle.checked     = true;
-      notifToggle.checked     = true;
-      testToggle.checked      = true;
-      aiToggle.checked        = true;
-      uploadPyqToggle.checked = true;
-      managePyqToggle.checked = true;
+      adminToggle.checked           = true;
+      notifToggle.checked           = true;
+      testToggle.checked            = true;
+      aiToggle.checked              = true;
+      uploadPyqToggle.checked       = true;
+      managePyqToggle.checked       = true;
+      uploadFlashcardToggle.checked = true;
+      manageFlashcardToggle.checked = true;
     } else if (selectedRole === 'student') {
-      adminToggle.checked     = false;
-      notifToggle.checked     = false;
-      testToggle.checked      = false;
-      aiToggle.checked        = false;
-      uploadPyqToggle.checked = false;
-      managePyqToggle.checked = false;
+      adminToggle.checked           = false;
+      notifToggle.checked           = false;
+      testToggle.checked            = false;
+      aiToggle.checked              = false;
+      uploadPyqToggle.checked       = false;
+      managePyqToggle.checked       = false;
+      uploadFlashcardToggle.checked = false;
+      manageFlashcardToggle.checked = false;
     }
   }
 
   function handleToggleChange() {
-    const adminToggle     = document.getElementById("modalAdmin").checked;
-    const notifToggle     = document.getElementById("modalNotif").checked;
-    const testToggle      = document.getElementById("modalTest").checked;
-    const aiToggle        = document.getElementById("modalAI").checked;
-    const uploadPyqToggle = document.getElementById("modalUploadPyq").checked;
-    const managePyqToggle = document.getElementById("modalManagePyq").checked;
+    const adminToken          = document.getElementById("modalAdmin").checked;
+    const notifToken          = document.getElementById("modalNotif").checked;
+    const testToken           = document.getElementById("modalTest").checked;
+    const aiToken             = document.getElementById("modalAI").checked;
+    const uploadPyqToken      = document.getElementById("modalUploadPyq").checked;
+    const managePyqToken      = document.getElementById("modalManagePyq").checked;
+    const uploadFlashcardToken = document.getElementById("modalUploadFlashcard").checked;
+    const manageFlashcardToken = document.getElementById("modalManageFlashcard").checked;
     
     const roleSelect = document.getElementById("modalRoleSelect");
 
-    const allChecked = adminToggle && notifToggle && testToggle && aiToggle && uploadPyqToggle && managePyqToggle;
-    const anyChecked = adminToggle || notifToggle || testToggle || aiToggle || uploadPyqToggle || managePyqToggle;
+    const allChecked = adminToken && notifToken && testToken && aiToken && uploadPyqToken && managePyqToken && uploadFlashcardToken && manageFlashcardToken;
+    const anyChecked = adminToken || notifToken || testToken || aiToken || uploadPyqToken || managePyqToken || uploadFlashcardToken || manageFlashcardToken;
 
-    if (allChecked) {
-      roleSelect.value = 'admin';
-    } else if (anyChecked) {
-      roleSelect.value = 'teammate';
-    } else {
-      roleSelect.value = 'student';
-    }
+    if (allChecked) roleSelect.value = 'admin';
+    else if (anyChecked) roleSelect.value = 'teammate';
+    else roleSelect.value = 'student';
   }
 
   function openPermissionsModal(userId) {
@@ -470,8 +483,6 @@
     if (!user) return;
 
     let currentRole = (user.role || 'student').toLowerCase();
-    if (currentRole === 'user') currentRole = 'student';
-
     const perms = user.permissions || {};
 
     document.getElementById("modalUserName").innerText = user.full_name || user.email;
@@ -484,6 +495,8 @@
       document.getElementById("modalAI").checked = true;
       document.getElementById("modalUploadPyq").checked = true;
       document.getElementById("modalManagePyq").checked = true;
+      document.getElementById("modalUploadFlashcard").checked = true;
+      document.getElementById("modalManageFlashcard").checked = true;
     } else {
       document.getElementById("modalAdmin").checked = !!perms.admin_panel;
       document.getElementById("modalNotif").checked = !!perms.send_notif;
@@ -491,6 +504,8 @@
       document.getElementById("modalAI").checked = !!perms.ai_test;
       document.getElementById("modalUploadPyq").checked = !!perms.upload_pyq;
       document.getElementById("modalManagePyq").checked = !!perms.manage_pyq;
+      document.getElementById("modalUploadFlashcard").checked = !!perms.upload_flashcard;
+      document.getElementById("modalManageFlashcard").checked = !!perms.manage_flashcard;
     }
 
     document.getElementById("permissionsModal").style.display = "flex";
@@ -500,29 +515,14 @@
     if (!activeEditingUserId) return;
 
     const selectedRole = document.getElementById("modalRoleSelect").value;
-    const isAdminRole = (selectedRole === 'admin');
-
     const adminPanel = document.getElementById("modalAdmin").checked;
     const sendNotif  = document.getElementById("modalNotif").checked;
     const manageTest = document.getElementById("modalTest").checked;
     const aiTest     = document.getElementById("modalAI").checked;
     const uploadPyq  = document.getElementById("modalUploadPyq").checked;
     const managePyq  = document.getElementById("modalManagePyq").checked;
-
-    const canManageTeam = isAdminRole;
-
-    // Dynamic Permission Badges list for alert
-    let allowedList = [];
-    if (adminPanel) allowedList.push("Admin Panel");
-    if (sendNotif) allowedList.push("Send Notifications");
-    if (manageTest) allowedList.push("Upload/Manage Tests");
-    if (aiTest) allowedList.push("AI Test Creator");
-    if (uploadPyq) allowedList.push("Upload PYQ");
-    if (managePyq) allowedList.push("Manage PYQ");
-
-    let accessDetailsText = allowedList.length > 0 
-      ? ` Ab aap ye features/pages access kar payenge: ${allowedList.join(", ")}.`
-      : ` Aapke sabhi extra permissions hata diye gaye hain.`;
+    const uploadFlashcard = document.getElementById("modalUploadFlashcard").checked;
+    const manageFlashcard = document.getElementById("modalManageFlashcard").checked;
 
     const { error } = await window.supabaseClient
       .from('profiles')
@@ -530,12 +530,14 @@
         role: selectedRole,
         permissions: { 
           admin_panel: adminPanel,
-          manage_team: canManageTeam,
+          manage_team: (selectedRole === 'admin'),
           send_notif: sendNotif,
           manage_test: manageTest, 
           ai_test: aiTest,
           upload_pyq: uploadPyq,
-          manage_pyq: managePyq
+          manage_pyq: managePyq,
+          upload_flashcard: uploadFlashcard,
+          manage_flashcard: manageFlashcard
         },
         updated_at: new Date().toISOString()
       })
@@ -544,32 +546,7 @@
     if (error) {
       alert("Save Failed: " + error.message);
     } else {
-      // Send dynamic update notification to user
-      const { data: notifData } = await window.supabaseClient
-        .from('notifications')
-        .insert([{
-          user_id: activeEditingUserId,
-          title: "🛡️ Account Role & Permissions Updated!",
-          message: `Your account role has been updated to ${selectedRole.toUpperCase()}.${accessDetailsText}`,
-          link: "profile.html",
-          created_at: new Date().toISOString()
-        }])
-        .select('id')
-        .single();
-
-      if (notifData && notifData.id) {
-        await window.supabaseClient
-          .from('user_notification_state')
-          .insert([{
-            user_id: activeEditingUserId,
-            notification_id: notifData.id,
-            is_read: false,
-            is_deleted: false,
-            updated_at: new Date().toISOString()
-          }]);
-      }
-
-      alert("Changes saved & user notified successfully!");
+      alert("Changes saved successfully!");
       closeModal('permissionsModal');
       loadRegisteredUsers();
     }
