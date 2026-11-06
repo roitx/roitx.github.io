@@ -404,9 +404,15 @@
     </svg> PYQ Analyzer
   </a>
   
-  <a href="solver.html">
-    <svg class="menu-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg> Ask Doubt
+   <a href="solver.html">
+    <svg class="menu-svg-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 2a10 10 0 1 0 10 10H12V2z"></path>
+      <path d="M12 12L2.5 7.5"></path>
+      <path d="M12 12v9.5"></path>
+      <circle cx="12" cy="12" r="3" fill="currentColor"></circle>
+    </svg> Ask Doubt
   </a>
+
   <a href="refbook.html">
     <svg class="menu-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg> Reference Book
   </a>
@@ -630,78 +636,99 @@
     </div>
   </section>
 
-       <!-- 7. WHY CHOOSE US DIVISION (Center Image + 4 Cards Layout) -->
+         <!-- 7. WHY CHOOSE US INDEPENDENT CARDS SECTION -->
   <section class="snap-section formal-info-snap-section" id="whyChooseUsSection">
-    <div class="slide-inner-card formal-snap-inner">
-      <div class="formal-header-wrapper" style="width: 100%; margin-bottom: 14px; text-align: center;">
+    <div class="why-choose-independent-wrapper">
+      
+      <div class="formal-header-wrapper" style="width: 100%; margin-bottom: 18px; text-align: center;">
         <span class="widget-tag" style="font-size: 10px; padding: 3px 10px;">CORE ADVANTAGES</span>
-        <h2 class="fluid-heading" style="font-size: clamp(20px, 3vw, 24px); margin-top: 4px;">Why Choose PM Roitx</h2>
-        <p class="fluid-subheading" style="font-size: 12px;">Engineered for absolute topper-level performance and smart study.</p>
+        <h2 class="fluid-heading" style="font-size: clamp(22px, 3vw, 28px); margin-top: 4px;">Why Choose PM Roitx</h2>
+        <p class="fluid-subheading" style="font-size: 12px; color: var(--muted);">Engineered for absolute topper-level performance and smart study.</p>
       </div>
 
-      <div class="why-choose-center-layout">
+      <div class="why-independent-list">
         
-        <!-- Left Side 2 Cards -->
-        <div class="why-column">
-          <div class="formal-info-card card-tilt">
-            <div class="formal-icon-box">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-              </svg>
-            </div>
-            <div class="formal-text-box">
-              <div class="card-badge-top">ARCHIVE ENGINE</div>
-              <h4 class="fluid-card-title">Chapterwise Notes</h4>
-              <p class="fluid-card-desc">High-topper verified digital notes for all subjects.</p>
-            </div>
+        <!-- Card 1: Chapterwise Notes -->
+        <div class="formal-info-card card-tilt" onclick="goto('classes.html')" style="animation-delay: 0.1s;">
+          <div class="formal-card-glow"></div>
+          <div class="formal-icon-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+            </svg>
           </div>
-
-          <div class="formal-info-card card-tilt">
-            <div class="formal-icon-box">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path>
-              </svg>
-            </div>
-            <div class="formal-text-box">
-              <div class="card-badge-top">AI ASSIST</div>
-              <h4 class="fluid-card-title">AI Doubt Solver</h4>
-              <p class="fluid-card-desc">Break through complex questions instantly.</p>
-            </div>
+          <div class="formal-text-box">
+            <div class="card-badge-top">ARCHIVE ENGINE</div>
+            <h4 class="fluid-card-title">Chapterwise Notes</h4>
+            <p class="fluid-card-desc">High-topper verified digital notes for all subjects.</p>
           </div>
         </div>
 
-        <!-- Center Image (1profile.jpg) -->
-        <div class="why-center-img-box">
-          <img src="1profile.jpg" alt="PM Roitx Center Profile" />
+        <!-- Card 2: AI Doubt Solver -->
+        <div class="formal-info-card card-tilt" onclick="goto('solver.html')" style="animation-delay: 0.2s;">
+          <div class="formal-card-glow"></div>
+          <div class="formal-icon-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2a10 10 0 1 0 10 10H12V2z"></path>
+              <path d="M12 12L2.5 7.5"></path>
+              <path d="M12 12v9.5"></path>
+              <circle cx="12" cy="12" r="3" fill="currentColor"></circle>
+            </svg>
+          </div>
+          <div class="formal-text-box">
+            <div class="card-badge-top">AI ASSIST</div>
+            <h4 class="fluid-card-title">AI Doubt Solver</h4>
+            <p class="fluid-card-desc">Break through complex questions instantly.</p>
+          </div>
         </div>
 
-        <!-- Right Side 2 Cards (Reversed for symmetry) -->
-        <div class="why-column">
-          <div class="formal-info-card reverse card-tilt">
-            <div class="formal-icon-box">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-              </svg>
-            </div>
-            <div class="formal-text-box">
-              <div class="card-badge-top">ANALYTICS</div>
-              <h4 class="fluid-card-title">Live Rank Mock Tests</h4>
-              <p class="fluid-card-desc">Evaluate your exam readiness with quizzes.</p>
-            </div>
+        <!-- Card 3: Live Rank Mock Tests -->
+        <div class="formal-info-card card-tilt" onclick="goto('tests.html')" style="animation-delay: 0.3s;">
+          <div class="formal-card-glow"></div>
+          <div class="formal-icon-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 20V10"></path>
+              <path d="M12 20V4"></path>
+              <path d="M6 20v-6"></path>
+            </svg>
           </div>
+          <div class="formal-text-box">
+            <div class="card-badge-top">ANALYTICS</div>
+            <h4 class="fluid-card-title">Live Rank Mock Tests</h4>
+            <p class="fluid-card-desc">Evaluate your exam readiness with quizzes.</p>
+          </div>
+        </div>
 
-          <div class="formal-info-card reverse card-tilt">
-            <div class="formal-icon-box">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
-              </svg>
-            </div>
-            <div class="formal-text-box">
-              <div class="card-badge-top">SYNC</div>
-              <h4 class="fluid-card-title">Offline Library</h4>
-              <p class="fluid-card-desc">Access saved study materials anytime offline.</p>
-            </div>
+        <!-- Card 4: Formula Sheets -->
+        <div class="formal-info-card card-tilt" onclick="goto('formulas.html')" style="animation-delay: 0.4s;">
+          <div class="formal-card-glow"></div>
+          <div class="formal-icon-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="8" y1="13" x2="16" y2="13"></line>
+              <line x1="8" y1="17" x2="12" y2="17"></line>
+            </svg>
+          </div>
+          <div class="formal-text-box">
+            <div class="card-badge-top">QUICK REVISION</div>
+            <h4 class="fluid-card-title">Formula Sheets</h4>
+            <p class="fluid-card-desc">Important formulas and shortcuts for quick exam revision.</p>
+          </div>
+        </div>
+
+        <!-- Card 5: Offline Library -->
+        <div class="formal-info-card card-tilt" onclick="goto('library.html')" style="animation-delay: 0.5s;">
+          <div class="formal-card-glow"></div>
+          <div class="formal-icon-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+            </svg>
+          </div>
+          <div class="formal-text-box">
+            <div class="card-badge-top">SYNC</div>
+            <h4 class="fluid-card-title">Offline Library</h4>
+            <p class="fluid-card-desc">Access saved study materials anytime offline.</p>
           </div>
         </div>
 

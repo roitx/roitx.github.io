@@ -1089,3 +1089,25 @@ function initCardTilt() {
     });
   });
 }
+// WHY CHOOSE US CARDS STAGGERED SCROLL OBSERVER
+document.addEventListener("DOMContentLoaded", () => {
+  const whySection = document.getElementById("whyChooseUsSection");
+  if (!whySection) return;
+
+  const observer = new IntersectionObserver((entries, observer) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const cards = whySection.querySelectorAll('.formal-info-card');
+        cards.forEach((card, index) => {
+          // Har card ko thode-thode delay ke sath active class dena
+          setTimeout(() => {
+            card.style.animationPlayState = 'running';
+          }, index * 120); // 120ms ka gap har card ke beech me
+        });
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.3 });
+
+  observer.observe(whySection);
+});
