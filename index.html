@@ -317,7 +317,18 @@
   </div>
 
   <div class="topbar-actions" style="display: flex; align-items: center; gap: 12px;">
+
+
+<!-- PM Style Round Topbar Streak Badge -->
+<div class="pm-top-streak-btn" id="streakBadgeTop" onclick="openPmStreakModal()" title="Study Streak">
+  <div class="pm-top-fire-circle">🔥</div>
+  <span id="streakCountVal" class="pm-top-count">1</span>
+</div>
+
+
     <div class="notif-wrapper" style="position: relative;">
+        
+
       <button class="notif-icon-btn" id="notifBtn" onclick="toggleNotif()" title="Notifications">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
@@ -804,6 +815,48 @@
       </div>
     </div>
   </div>
+<!-- PM Style Premium Streak Modal -->
+<div id="pmStreakModal" class="pm-modal-overlay" style="display: none;">
+  <div class="pm-streak-card">
+    
+    <!-- Top Close Button -->
+    <button class="pm-close-btn" onclick="closePmStreakModal()">&times;</button>
+
+    <!-- Main Streak Banner Box -->
+    <div class="pm-banner-box">
+      <div class="pm-banner-left">
+        <div class="pm-streak-number-wrap">
+          <span id="pmStreakNum" class="pm-big-number">1</span>
+          <span class="pm-fire-emoji">🔥</span>
+        </div>
+        <div class="pm-streak-title">Days Streak!!</div>
+        <div class="pm-streak-subtitle">Every day counts!<br>keep the momentum going!</div>
+      </div>
+      <button class="pm-share-icon-btn" onclick="shareStreakAchievement()" title="Share">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+      </button>
+    </div>
+
+    <!-- Weekly Tracker (M T W T F S S) -->
+    <div class="pm-week-tracker">
+      <div class="pm-day-col"><span class="pm-day-label">M</span><div class="pm-day-circle active">🔥</div></div>
+      <div class="pm-day-col"><span class="pm-day-label">T</span><div class="pm-day-circle"></div></div>
+      <div class="pm-day-col"><span class="pm-day-label">W</span><div class="pm-day-circle"></div></div>
+      <div class="pm-day-col"><span class="pm-day-label">T</span><div class="pm-day-circle"></div></div>
+      <div class="pm-day-col"><span class="pm-day-label">F</span><div class="pm-day-circle"></div></div>
+      <div class="pm-day-col"><span class="pm-day-label">S</span><div class="pm-day-circle"></div></div>
+      <div class="pm-day-col"><span class="pm-day-label">S</span><div class="pm-day-circle"></div></div>
+    </div>
+
+    <!-- Success Message -->
+    <div class="pm-success-text">You have successfully completed your streak!</div>
+
+    <!-- Action Buttons -->
+    <button class="pm-btn-primary" onclick="shareStreakAchievement()">Share Achievement</button>
+    <button class="pm-btn-secondary" onclick="openStreakInfo()">What's a Streak?</button>
+
+  </div>
+</div>
 
   <div id="offlineBanner" class="offline-banner-box" style="display: none !important;">
     <span class="status-dot"></span>

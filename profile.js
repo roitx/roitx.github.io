@@ -723,3 +723,70 @@ async function logoutUser() {
   // window.location.replace use karne se browser history mein page replace ho jayega aur back button kaam nahi karega
   window.location.replace("index.html");
 }
+async function checkAndSyncSecureStreak() {
+  if (typeof window.supabaseClient === 'undefined') return;
+
+  try {
+    const { data: { session } } = await window.supabaseClient.auth.getSession();
+    if (!session) return; // Agar user login nahi hai toh skip karein
+
+    const userId = session.user.id;
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    // 1. Database se current user ka streak data fetch karein
+    let { data: profile, error } = await window.supabaseClient
+      .from('profiles')
+      .select('current_streak, last_active_date')
+      .eq('id', userId)
+      .single();
+
+    if (error) {
+      console.warn("Streak fetch error:", error);
+      return;
+    }
+
+    let currentStreak = profile?.current_streak || 0;
+    let lastActive = profile?.last_active_date ? profile.last_active_date.split('T')[0] : null;
+
+    if (lastActive === todayStr) {
+      // Aaj already streak count ho chuki hai
+      return currentStreak;
+    }
+
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+    if (lastActive === yesterdayStr) {
+      // Streak continues! (+1)
+      currentStreak += 1;
+    } else if (!lastActive || lastActive < yesterdayStr) {
+      // Streak toot gayi ya pehla din hai
+      currentStreak = 1;
+    }
+
+    // 2. Securely Database me update karein (Console hack se safe)
+    const { error: updateErr } = await window.supabaseClient
+      .from('profiles')
+      .update({
+        current_streak: currentStreak,
+        last_active_date: todayStr
+      })
+      .eq('id', userId);
+
+    if (updateErr) {
+      console.warn("Streak update failed:", updateErr);
+    } else {
+      console.log(`Secure Streak Updated: 🔥 ${currentStreak} Days`);
+    }
+
+    return currentStreak;
+  } catch (err) {
+    console.warn("Streak sync error:", err);
+  }
+}
+
+// App load hone par call karein
+document.addEventListener('DOMContentLoaded', () => {
+  checkAndSyncSecureStreak();
+});

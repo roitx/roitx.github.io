@@ -1088,7 +1088,9 @@ function initCardTilt() {
       card.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px)`;
     });
   });
+ 
 }
+
 // WHY CHOOSE US CARDS STAGGERED SCROLL OBSERVER
 document.addEventListener("DOMContentLoaded", () => {
   const whySection = document.getElementById("whyChooseUsSection");
@@ -1110,4 +1112,146 @@ document.addEventListener("DOMContentLoaded", () => {
   }, { threshold: 0.3 });
 
   observer.observe(whySection);
+});
+
+
+async function checkAndSyncSecureStreak() {
+  if (typeof window.supabaseClient === 'undefined') return;
+
+  try {
+    const { data: { session } } = await window.supabaseClient.auth.getSession();
+    if (!session) return;
+
+    const userId = session.user.id;
+    const todayStr = new Date().toISOString().split('T')[0];
+    const todayDate = new Date(todayStr);
+
+    let { data: profile, error } = await window.supabaseClient
+      .from('profiles')
+      .select('current_streak, last_active_date, grace_leaves_left')
+      .eq('id', userId)
+      .single();
+
+    if (error) return;
+
+    let currentStreak = profile?.current_streak || 0;
+    let lastActive = profile?.last_active_date ? profile.last_active_date.split('T')[0] : null;
+    let graceLeaves = profile?.grace_leaves_left ?? 3; // Default 3 max gap allowed
+
+    if (lastActive === todayStr) {
+      updateUIStreak(currentStreak);
+      return;
+    }
+
+    if (lastActive) {
+      const lastDate = new Date(lastActive);
+      const diffTime = Math.abs(todayDate - lastDate);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+
+      if (diffDays === 1) {
+        // Perfect continuation next day
+        currentStreak += 1;
+        checkMilestoneAlert(currentStreak);
+      } else if (diffDays > 1 && diffDays <= 4 && graceLeaves > 0) {
+        // Grace period / Leave gap maintained (Max 3 days gap = diffDays <= 4)
+        graceLeaves -= (diffDays - 1);
+        if (graceLeaves < 0) graceLeaves = 0;
+        currentStreak += 1; // Streak saved!
+        showGraceWarningNotification(diffDays - 1);
+      } else {
+        // Bahut zyada din miss ho gaye -> Streak Reset + Red Warning!
+        currentStreak = 1;
+        graceLeaves = 3; // Reset grace leaves
+        showRedWarningNotification();
+      }
+    } else {
+      currentStreak = 1; // Pehla din
+    }
+
+    // Database update
+    await window.supabaseClient
+      .from('profiles')
+      .update({
+        current_streak: currentStreak,
+        last_active_date: todayStr,
+        grace_leaves_left: graceLeaves
+      })
+      .eq('id', userId);
+
+    updateUIStreak(currentStreak);
+
+  } catch (err) {
+    console.warn("Streak sync error:", err);
+  }
+}
+
+function updateUIStreak(streak) {
+  const countEl = document.getElementById('streakCountVal');
+  const badgeEl = document.getElementById('streakBadgeTop');
+  const weekLabelEl = document.getElementById('streakWeekLabel');
+  
+  if (!countEl || !badgeEl) return;
+  countEl.innerText = streak;
+
+  // Har 7 din par color aur week change hoga
+  badgeEl.className = "streak-badge-top";
+  if (streak <= 7) {
+    badgeEl.classList.add('week-1');
+    weekLabelEl.innerText = "Week 1";
+  } else if (streak <= 14) {
+    badgeEl.classList.add('week-2');
+    weekLabelEl.innerText = "Week 2";
+  } else if (streak <= 21) {
+    badgeEl.classList.add('week-3');
+    weekLabelEl.innerText = "Week 3";
+  } else {
+    badgeEl.classList.add('week-gold');
+    weekLabelEl.innerText = "Elite 🌟";
+  }
+}
+
+function checkMilestoneAlert(streak) {
+  if (streak === 7 || streak === 14 || streak === 21) {
+    showCustomModal(`🎉 Amazing Milestone!`, `Waaah! Aapne ${streak} din ka continuous streak achieve kar liya hai! Aapka dedication level next-level hai. Keep it up! 🔥`);
+  }
+}
+
+function showGraceWarningNotification(missedDays) {
+  showCustomModal(`🛡️ Streak Saved!`, `Aapne pichhle ${missedDays} din miss kiye the, lekin aapke 3-day grace allowance ki wajah se aapka streak tootne se bach gaya! Padhaai jaari rakhein!`);
+}
+
+function showRedWarningNotification() {
+  showCustomModal(`⚠️ Streak Reset Warning!`, `Aapne bahut lambe samay se app nahi khola, isliye aapka purana streak reset ho gaya hai. Aaj se nayi shuruat karein aur apna target achieve karein! 🚀`, true);
+}
+async function openPmStreakModal() {
+  // 1. Sabhi baaki modals ko close kar do taaki ek hi time par do modals open na rahein
+  if (typeof closeNotifModal === 'function') closeNotifModal();
+  if (typeof closeRateModal === 'function') closeRateModal();
+  const motPopup = document.getElementById("motivationPopup");
+  if (motPopup) motPopup.style.display = "none";
+
+  // 2. Streak modal open karne ka logic
+  const modal = document.getElementById('pmStreakModal');
+  const numElem = document.getElementById('pmStreakNum');
+  
+  const currentCount = document.getElementById('streakCountVal')?.innerText || '1';
+  if (numElem) numElem.innerText = currentCount;
+  
+  if (modal) modal.style.display = 'flex';
+}
+
+function closePmStreakModal() {
+  const modal = document.getElementById('pmStreakModal');
+  if (modal) modal.style.display = 'none';
+}
+// Modal ke baahar background (overlay) par click karne se bhi modal close ho jayega
+document.addEventListener("DOMContentLoaded", () => {
+  const pmStreakModal = document.getElementById("pmStreakModal");
+  if (pmStreakModal) {
+    pmStreakModal.addEventListener("click", (e) => {
+      if (e.target === pmStreakModal) {
+        closePmStreakModal();
+      }
+    });
+  }
 });
