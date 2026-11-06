@@ -261,11 +261,11 @@
   padding-right: 2px;
 }
 
-/* PM Modal Overlay */
+/* PM Style Premium Streak Modal & Theme Responsiveness */
 .pm-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(3, 7, 18, 0.85);
+  background: rgba(3, 7, 18, 0.75);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   z-index: 100000;
@@ -275,20 +275,96 @@
   padding: 16px;
 }
 
+/* Light Mode Support for Modal */
+body.light .pm-streak-card {
+  background: linear-gradient(145deg, #ffffff, #f1f5f9) !important;
+  border: 1.5px solid rgba(255, 183, 3, 0.6) !important;
+  color: #0f172a !important;
+  box-shadow: 0 25px 50px rgba(15, 23, 42, 0.15), 0 0 30px rgba(255, 183, 3, 0.2) !important;
+}
+
+body.light .pm-streak-card .pm-streak-subtitle {
+  color: #475569 !important;
+}
+
+body.light .pm-streak-card .pm-day-circle {
+  background: rgba(0, 0, 0, 0.04);
+  border: 2px dashed rgba(0, 0, 0, 0.15);
+}
+
+body.light .pm-streak-card .pm-progress-bar-bg {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+body.light .pm-streak-card .pm-progress-info {
+  color: #334155 !important;
+}
+
+body.light .pm-close-btn {
+  background: rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  color: #0f172a;
+}
+
+body.light .pm-share-icon-btn {
+  background: rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  color: #d97706;
+}
+
+body.light .pm-banner-box {
+  background: linear-gradient(135deg, rgba(255, 183, 3, 0.15), rgba(249, 115, 22, 0.08));
+  border-color: rgba(255, 183, 3, 0.4);
+}
+
+/* Enhanced Streak Modal Styles */
 .pm-streak-card {
   background: linear-gradient(145deg, #0d162d, #080e1a);
-  border: 1px solid rgba(255, 183, 3, 0.35);
+  border: 1.5px solid rgba(255, 183, 3, 0.4);
   border-radius: 28px;
   width: 100%;
-  max-width: 410px;
+  max-width: 420px;
   padding: 24px;
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 35px rgba(255, 183, 3, 0.1);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(255, 183, 3, 0.15);
   position: relative;
   box-sizing: border-box;
   color: #fff;
   font-family: 'Inter', system-ui, sans-serif;
   animation: modalPopUp 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
+
+.pm-streak-level-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 800;
+  color: #00d2ff;
+  background: rgba(0, 210, 255, 0.12);
+  border: 1px solid rgba(0, 210, 255, 0.3);
+  padding: 3px 10px;
+  border-radius: 20px;
+  margin-top: 6px;
+  letter-spacing: 0.5px;
+}
+
+.pm-day-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 2px dashed rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+
+.pm-day-circle.active {
+  background: linear-gradient(135deg, #ff7a00, #ffb703);
+  border: 2px solid #ffb703;
+  box-shadow: 0 0 12px rgba(255, 183, 3, 0.5);
+}
+
 
 @keyframes modalPopUp {
   0% { transform: scale(0.85); opacity: 0; }

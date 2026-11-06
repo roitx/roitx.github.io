@@ -1224,19 +1224,67 @@ function showRedWarningNotification() {
   showCustomModal(`⚠️ Streak Reset Warning!`, `Aapne bahut lambe samay se app nahi khola, isliye aapka purana streak reset ho gaya hai. Aaj se nayi shuruat karein aur apna target achieve karein! 🚀`, true);
 }
 async function openPmStreakModal() {
-  // 1. Sabhi baaki modals ko close kar do taaki ek hi time par do modals open na rahein
   if (typeof closeNotifModal === 'function') closeNotifModal();
   if (typeof closeRateModal === 'function') closeRateModal();
   const motPopup = document.getElementById("motivationPopup");
   if (motPopup) motPopup.style.display = "none";
 
-  // 2. Streak modal open karne ka logic
   const modal = document.getElementById('pmStreakModal');
   const numElem = document.getElementById('pmStreakNum');
+  const levelBadge = document.getElementById('pmStreakLevelBadge');
+  const progressFill = document.getElementById('pmProgressBarFill');
+  const progressText = document.getElementById('pmMilestoneProgressText');
+  const nextMilestoneEl = document.getElementById('pmNextMilestone');
   
-  const currentCount = document.getElementById('streakCountVal')?.innerText || '1';
+  // Get current streak count value safely
+  const currentCount = parseInt(document.getElementById('streakCountVal')?.innerText || '1', 10);
   if (numElem) numElem.innerText = currentCount;
+
+  // Dynamic Level Badge & Next Milestone Calculation
+  let nextTarget = 7;
+  let levelTitle = "Week 1 Beginner 🌱";
   
+  if (currentCount > 21) {
+    nextTarget = 30;
+    levelTitle = "Elite Legend 🌟";
+  } else if (currentCount > 14) {
+    nextTarget = 21;
+    levelTitle = "Week 3 Master 👑";
+  } else if (currentCount > 7) {
+    nextTarget = 14;
+    levelTitle = "Week 2 Pro 🔥";
+  } else {
+    nextTarget = 7;
+    levelTitle = "Week 1 Warrior ⚡";
+  }
+
+  if (levelBadge) levelBadge.innerText = levelTitle;
+  if (nextMilestoneEl) nextMilestoneEl.innerText = `${nextTarget} Days`;
+
+  // Progress Bar Percentage Calculation
+  const progressPercent = Math.min(Math.round((currentCount % nextTarget || nextTarget) / nextTarget * 100), 100);
+  if (progressFill) progressFill.style.width = `${progressPercent}%`;
+  if (progressText) progressText.innerText = `${currentCount % nextTarget || nextTarget} / ${nextTarget} Days`;
+
+  // Fix: Sirf utne hi din active honge jitna user ka current streak hai (maximum 7 days tak)
+  const todayDayIndex = (new Date().getDay() + 6) % 7; // 0 for Monday, 6 for Sunday
+  const dayCircles = document.querySelectorAll('#pmWeekTrackerContainer .pm-day-circle');
+  
+  dayCircles.forEach((circle, idx) => {
+    circle.innerHTML = '';
+    circle.classList.remove('active');
+    
+    // Calculate karein ki yeh din active streak ke andar aata hai ya nahi
+    // Jaise agar streak 1 hai, toh sirf aaj ka din active hoga.
+    const streakDaysActive = Math.min(currentCount, 7);
+    const startActiveIdx = Math.max(0, (todayDayIndex - streakDaysActive + 1));
+    
+    if (idx >= startActiveIdx && idx <= todayDayIndex) {
+      circle.classList.add('active');
+      circle.innerHTML = '🔥';
+    }
+  });
+
   if (modal) modal.style.display = 'flex';
 }
 
@@ -1244,7 +1292,47 @@ function closePmStreakModal() {
   const modal = document.getElementById('pmStreakModal');
   if (modal) modal.style.display = 'none';
 }
-// Modal ke baahar background (overlay) par click karne se bhi modal close ho jayega
+
+function openStreakInfo() {
+  showCustomModal("ℹ️ What is a Study Streak?", "Rozana PM Roitx par aakar padhaai karne ya notes/tests access karne par aapka streak count badhta hai. Lagataar padhne se aapka focus aur memory level boost hota hai! 🔥");
+}
+
+function shareStreakAchievement() {
+  const streakNum = document.getElementById('pmStreakNum')?.innerText || '1';
+  const shareText = `🔥 Mera PM Roitx Study Hub par ${streakNum} din ka continuous streak ho gaya hai! Aap bhi apni padhaai shuru karein: https://roitx.qd.je/`;
+  
+  if (navigator.share) {
+    navigator.share({
+      title: 'PM Roitx Streak Achievement',
+      text: shareText,
+      url: 'https://roitx.qd.je/'
+    }).catch(err => console.log('Share canceled', err));
+  } else {
+    navigator.clipboard.writeText(shareText);
+    alert('Streak achievement link copied to clipboard! 🎉');
+  }
+}
+// ---------------------------------------------------------
+// HELPER FUNCTIONS FOR MODALS & ALERTS
+// ---------------------------------------------------------
+function showCustomModal(title, message, isWarning = false) {
+  // Purana agar koi custom modal ho toh use hata dein
+  let existingModal = document.getElementById('customAlertModal');
+  if (existingModal) existingModal.remove();
+
+  const modalHtml = `
+    <div id="customAlertModal" class="pm-modal-overlay" style="display: flex; z-index: 99999;">
+      <div class="pm-streak-card" style="border-color: ${isWarning ? '#ff4757' : '#00d2ff'}; max-width: 380px; text-align: center;">
+        <div style="font-size: 36px; margin-bottom: 10px;">${isWarning ? '⚠️' : '🎉'}</div>
+        <h3 style="color: ${isWarning ? '#ff4757' : '#ffb703'}; font-size: 18px; margin-bottom: 10px; font-weight: 700;">${title}</h3>
+        <p style="color: #cbd5e1; font-size: 13.5px; line-height: 1.5; margin-bottom: 20px;">${message}</p>
+        <button class="pm-btn-primary" onclick="document.getElementById('customAlertModal').remove()" style="width: 100%;">Theek Hai</button>
+      </div>
+    </div>
+  `;
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+// Modal ke baahar background par click karne se modal close karne ka handler
 document.addEventListener("DOMContentLoaded", () => {
   const pmStreakModal = document.getElementById("pmStreakModal");
   if (pmStreakModal) {
