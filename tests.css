@@ -1091,6 +1091,21 @@ body.dark .mode-option-card, body.dark-mode .mode-option-card {
         align-items: stretch;
     }
 }
+/* Student name aur streak badge wali line ke liye */
+.leaderboard-name-container {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap; /* Isse badge niche wrap nahi hoga */
+    gap: 6px;
+}
+
+/* Agar naam lamba ho toh wo ellipsis (...) ho jaye ya flex properly adjust ho */
+.leaderboard-student-text {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
 /* Sticky User Rank Bottom Card */
 .user-rank-card {
     position: sticky;

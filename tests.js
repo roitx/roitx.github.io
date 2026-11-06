@@ -1172,20 +1172,19 @@ async function loadLeaderboardData() {
         }
 
         let query = window.supabaseClient
-            .from('test_results')
-            .select(`
-                id,
-                user_id,
-                score,
-                total_marks,
-                test_id,
-                created_at,
-                tests!inner ( title, subject, class_level ),
-                profiles!inner ( id, full_name, pincode, avatar_url, city )
-            `)
-            .eq('profiles.pincode', currentPincode)
-            .order('score', { ascending: false });
-
+    .from('test_results')
+    .select(`
+        id,
+        user_id,
+        score,
+        total_marks,
+        test_id,
+        created_at,
+        tests!inner ( title, subject, class_level ),
+        profiles!inner ( id, full_name, pincode, avatar_url, city, current_streak )
+    `)
+    .eq('profiles.pincode', currentPincode)
+    .order('score', { ascending: false });
         if (selectedLbTestId && selectedLbTestId !== "ALL") {
             query = query.eq('test_id', selectedLbTestId);
         }
@@ -1245,37 +1244,37 @@ async function loadLeaderboardData() {
         const crownSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="#f6e05e"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/></svg>`;
 
         top10Data.forEach((row, index) => {
-            // '#' ki jagah clean symbol/badge formatting
-            let rankDisplay = index === 0 ? crownSvg : (index === 1 ? '🥈' : (index === 2 ? '🥉' : `<span style="background:#edf2f7; color:#2d3748; padding:3px 8px; border-radius:6px; font-weight:700;">${index + 1}</span>`));
-            let userPhoto = row.profiles?.avatar_url || defaultAvatar;
-            let areaName = row.profiles?.city || 'Local Area';
-            let pincodeText = row.profiles?.pincode ? `<div style="font-size: 11px; color: #718096; margin-top: 2px;">${row.profiles.pincode}</div>` : '';
+    let rankDisplay = index === 0 ? crownSvg : (index === 1 ? '🥈' : (index === 2 ? '🥉' : `<span style="background:#edf2f7; color:#2d3748; padding:3px 8px; border-radius:6px; font-weight:700;">${index + 1}</span>`));
+    let userPhoto = row.profiles?.avatar_url || defaultAvatar;
+    let areaName = row.profiles?.city || 'Local Area';
+    
+    // User ka streak value (agar na ho toh default 1)
+    let userStreak = row.profiles?.current_streak || 1; 
 
-            let percentage = (row.total_marks && row.total_marks > 0) 
-                ? Math.round((row.score / row.total_marks) * 100) 
-                : 0;
+    let percentage = (row.total_marks && row.total_marks > 0) 
+        ? Math.round((row.score / row.total_marks) * 100) 
+        : 0;
 
-            html += `
-                <tr>
-                    <td><strong>${rankDisplay}</strong></td>
-                    <td>
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <img src="${userPhoto}" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover;" alt="profile" onerror="this.src='${defaultAvatar}'">
-                            <b>${row.profiles?.full_name || 'Student'}</b>
-                        </div>
-                    </td>
-                    <td>
-                        <div>${locationSvg}<span style="font-weight: 600;">${areaName}</span></div>
-                        ${pincodeText}
-                    </td>
-                    <td>${row.tests?.title || 'Test'}</td>
-                    <td>
-                        <span style="color:#007bff; font-weight:800;">${row.score}</span> / ${row.total_marks}
-                        <div style="font-size: 11px; color: #10b981; font-weight: bold; margin-top: 2px;">(${percentage}%)</div>
-                    </td>
-                </tr>
-            `;
-        });
+    html += `
+    <tr>
+        <td><strong>${rankDisplay}</strong></td>
+        <td>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <img src="${userPhoto}" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover; flex-shrink: 0;" onerror="this.src='${defaultAvatar}'">
+                <div style="display: flex; align-items: center; gap: 6px; flex-wrap: nowrap;">
+                    <b style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90px;">${row.profiles?.full_name || 'Student'}</b>
+                    <span style="font-size: 10px; background: rgba(255,183,3,0.15); color: #b45309; padding: 2px 5px; border-radius: 6px; font-weight: 700; white-space: nowrap; flex-shrink: 0;">🔥 ${userStreak}d</span>
+                </div>
+            </div>
+        </td>
+        <td>${areaName}</td>
+        <td>${row.tests?.title || 'Test'}</td>
+        <td><strong style="color:#007bff;">${row.score}</strong> / ${row.total_marks}</td>
+    </tr>
+`;
+
+});
+
 
         if (tbody) {
             tbody.innerHTML = html || `<tr><td colspan="5" style="text-align:center; padding:20px; color:#718096;">Is filter criteria ke liye koi leaderboard entries nahi mili.</td></tr>`;
@@ -1296,20 +1295,37 @@ async function loadLeaderboardData() {
         if (userRank && userRank > 10 && userData) {
             let uPct = userData.total_marks > 0 ? Math.round((userData.score / userData.total_marks) * 100) : 0;
             userRankCard.style.display = "flex";
-            userRankCard.innerHTML = `
-                <div class="user-rank-info">
-                    <span class="rank-badge-symbol"> ${userRank}</span>
-                    <img src="${userData.profiles?.avatar_url || defaultAvatar}" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;" onerror="this.src='${defaultAvatar}'">
-                    <div>
-                        <div style="font-size: 13px; font-weight: bold;">You</div>
-                        <div style="font-size: 11px; color: #94a3b8;">${userData.profiles?.full_name || 'Student'}</div>
-                    </div>
-                </div>
-                <div style="text-align: right;">
-                    <div style="font-weight: 800; color: #38bdf8; font-size: 14px;">${userData.score} / ${userData.total_marks}</div>
-                    <div style="font-size: 11px; color: #4ade80;">(${uPct}%)</div>
-                </div>
-            `;
+userRankCard.style.cssText = `
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(135deg, rgba(13, 22, 45, 0.95), rgba(8, 14, 26, 0.95));
+    border: 1.5px solid rgba(0, 210, 255, 0.4);
+    border-radius: 16px;
+    padding: 12px 18px;
+    margin-top: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), inset 0 0 15px rgba(0, 210, 255, 0.1);
+    color: #ffffff;
+    position: relative;
+    overflow: hidden;
+`;
+
+userRankCard.innerHTML = `
+    <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="background: linear-gradient(135deg, #00f0ff, #3a7bd5); color: #050b18; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 13px; box-shadow: 0 0 10px rgba(0,240,255,0.5);">
+            #${userRank}
+        </div>
+        <img src="${userData.profiles?.avatar_url || defaultAvatar}" style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 1.5px solid #00f0ff;" onerror="this.src='${defaultAvatar}'">
+        <div>
+            <div style="font-size: 14px; font-weight: 800; color: #fff; letter-spacing: 0.3px;">Aapka Current Rank</div>
+            <div style="font-size: 11px; color: #94a3b8; font-weight: 600;">${userData.profiles?.full_name || 'Student'} • 🔥 ${userData.profiles?.current_streak || 1}d</div>
+        </div>
+    </div>
+    <div style="text-align: right;">
+        <div style="font-weight: 900; font-size: 16px; background: linear-gradient(135deg, #00f0ff, #ffd700); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${userData.score} / ${userData.total_marks}</div>
+        <div style="font-size: 11px; color: #34d399; font-weight: 700;">(${uPct}% Accuracy)</div>
+    </div>
+`;
         } else {
             // Gar Top 10 me hai ya test nahi diya to card hide kar dein
             userRankCard.style.display = "none";

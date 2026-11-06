@@ -649,15 +649,30 @@
     }
 
     async function fetchUserProfileDetails(user) {
-        if (!window.supabaseClient || !user) return;
-        try {
-            const { data } = await window.supabaseClient.from('profiles').select('full_name, avatar_url').eq('id', user.id).maybeSingle();
-            if (data) {
-                if (data.full_name) document.getElementById("userName").innerText = data.full_name;
-                if (data.avatar_url) document.getElementById("userAvatar").src = data.avatar_url;
+    if (!window.supabaseClient || !user) return;
+    try {
+        // profiles table se full_name, avatar_url ke sath current_streak bhi select karein
+        const { data } = await window.supabaseClient
+            .from('profiles')
+            .select('full_name, avatar_url, current_streak')
+            .eq('id', user.id)
+            .maybeSingle();
+
+        if (data) {
+            if (data.full_name) document.getElementById("userName").innerText = data.full_name;
+            if (data.avatar_url) document.getElementById("userAvatar").src = data.avatar_url;
+            
+            // Agar profile-hero ya subtext ke paas streak dikhana ho:
+            const userSubtext = document.getElementById("userSubtext");
+            if (userSubtext && data.current_streak) {
+                userSubtext.innerHTML = `Streak: 🔥 ${data.current_streak} Days | Roitx Study Hub Analytics`;
             }
-        } catch(e) {}
+        }
+    } catch(e) { 
+        console.warn("Profile fetch error:", e); 
     }
+}
+
 
     async function loadAllTestDataAndProgress(userId) {
         if (!window.supabaseClient) return;
