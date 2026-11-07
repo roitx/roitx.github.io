@@ -764,7 +764,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   setupDynamicWatermark();
   initCardTilt();
   loadSupabaseNotifications();
-
+await checkAndSyncSecureStreak();
   // Close notification box on outside click
   document.addEventListener("click", (e) => {
     const notifWrapper = document.querySelector(".notif-wrapper");
@@ -1193,22 +1193,33 @@ function updateUIStreak(streak) {
   if (!countEl || !badgeEl) return;
   countEl.innerText = streak;
 
-  // Har 7 din par color aur week change hoga
-  badgeEl.className = "streak-badge-top";
+  // Original class name 'pm-top-streak-btn' ko barkarar rakhein taaki design na bigde
+  badgeEl.className = "pm-top-streak-btn";
+
   if (streak <= 7) {
     badgeEl.classList.add('week-1');
-    weekLabelEl.innerText = "Week 1";
   } else if (streak <= 14) {
     badgeEl.classList.add('week-2');
-    weekLabelEl.innerText = "Week 2";
   } else if (streak <= 21) {
     badgeEl.classList.add('week-3');
-    weekLabelEl.innerText = "Week 3";
   } else {
     badgeEl.classList.add('week-gold');
-    weekLabelEl.innerText = "Elite 🌟";
+  }
+
+  // Agar kabhi weekLabelEl page par hua tabhi text change hoga, warna error nahi aayega
+  if (weekLabelEl) {
+    if (streak <= 7) {
+      weekLabelEl.innerText = "Week 1";
+    } else if (streak <= 14) {
+      weekLabelEl.innerText = "Week 2";
+    } else if (streak <= 21) {
+      weekLabelEl.innerText = "Week 3";
+    } else {
+      weekLabelEl.innerText = "Elite 🌟";
+    }
   }
 }
+
 
 function checkMilestoneAlert(streak) {
   if (streak === 7 || streak === 14 || streak === 21) {
