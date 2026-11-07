@@ -13,6 +13,15 @@
   "lang": "en-IN",
   "dir": "ltr",
   "categories": ["education", "productivity"],
+  "share_target": {
+    "action": "/solver.html",
+    "method": "GET",
+    "params": {
+      "title": "name",
+      "text": "text",
+      "url": "url"
+    }
+  },
   "icons": [
     {
       "src": "icon-512.png",
