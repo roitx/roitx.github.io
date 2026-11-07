@@ -270,54 +270,6 @@ if (mic) mic.style.display = 'none';
 
   window.runCommand = (text) => { if (!input) return; input.value = text; onSend(); };
 
-  // ---- USER WELCOME GREETING ----
-  // Jab page load ho aur pehli baar bot message aaye
-async function initUserGreeting() {
-    let displayName = "Student";
-
-    try {
-      if (window.supabaseClient) {
-        const { data: { session }, error } = await window.supabaseClient.auth.getSession();
-        if (session && session.user && !error) {
-          const user = session.user;
-          const { data: profile } = await window.supabaseClient
-            .from('profiles')
-            .select('full_name')
-            .eq('id', user.id)
-            .maybeSingle();
-
-          if (profile && profile.full_name && profile.full_name.trim() !== "") {
-            displayName = profile.full_name.trim();
-          } else if (user.email) {
-            displayName = user.email.split('@')[0];
-          }
-        }
-      }
-    } catch (err) {
-      console.warn("User session greeting error:", err);
-    }
-
-    const greetingHTML = `
-      <div style="background: linear-gradient(135deg, rgba(6,182,212,0.1), rgba(59,130,246,0.1)); border: 1px solid rgba(6,182,212,0.3); border-radius: 10px; padding: 12px;">
-        <div style="font-weight: bold; color: #38bdf8; font-size: 14px; display: flex; align-items: center; gap: 6px;">
-          ${SVG.user} Namaste, ${escapeHtml(displayName)}!
-        </div>
-        <div style="font-size: 12px; color: #e2e8f0; margin-top: 6px;">
-          Main aapka <b>Roitx AI Assistant</b> hu. Books, PDF Notes, Formulas, Calculator, ya PDF Export tools accessibility active hain.
-        </div>
-      </div>
-    `;
-
-    // Direct element banakar 'first-greeting' class add karein
-    if (chatWindow) {
-        const d = document.createElement('div');
-        d.className = 'msg bot first-greeting'; // Ye pehle greeting par button ko chupayega
-        d.innerHTML = greetingHTML;
-        chatWindow.appendChild(d);
-        chatWindow.scrollTop = chatWindow.scrollHeight;
-    }
-}
-
   // ---- UI MESSAGING & MATH RENDERING HELPERS ----
   function addUserMsg(text) {
     if (!chatWindow) return;
@@ -388,46 +340,46 @@ function unlockAudioEngine() {
 });
 
 
-// ---- USER WELCOME GREETING ----
-async function initUserGreeting() {
-    let displayName = "Student";
+  // ---- USER WELCOME GREETING ----
+  async function initUserGreeting() {
+      let displayName = "Student";
 
-    try {
-      if (window.supabaseClient) {
-        const { data: { session }, error } = await window.supabaseClient.auth.getSession();
-        if (session && session.user && !error) {
-          const user = session.user;
-          const { data: profile } = await window.supabaseClient
-            .from('profiles')
-            .select('full_name')
-            .eq('id', user.id)
-            .maybeSingle();
+      try {
+        if (window.supabaseClient) {
+          const { data: { session }, error } = await window.supabaseClient.auth.getSession();
+          if (session && session.user && !error) {
+            const user = session.user;
+            const { data: profile } = await window.supabaseClient
+              .from('profiles')
+              .select('full_name')
+              .eq('id', user.id)
+              .maybeSingle();
 
-          if (profile && profile.full_name && profile.full_name.trim() !== "") {
-            displayName = profile.full_name.trim();
-          } else if (user.email) {
-            displayName = user.email.split('@')[0];
+            if (profile && profile.full_name && profile.full_name.trim() !== "") {
+              displayName = profile.full_name.trim();
+            } else if (user.email) {
+              displayName = user.email.split('@')[0];
+            }
           }
         }
+      } catch (err) {
+        console.warn("User session greeting error:", err);
       }
-    } catch (err) {
-      console.warn("User session greeting error:", err);
-    }
 
-    const greetingHTML = `
-      <div style="background: linear-gradient(135deg, rgba(6,182,212,0.1), rgba(59,130,246,0.1)); border: 1px solid rgba(6,182,212,0.3); border-radius: 10px; padding: 12px;">
-        <div style="font-weight: bold; color: #38bdf8; font-size: 14px; display: flex; align-items: center; gap: 6px;">
-          ${SVG.user} Namaste, ${escapeHtml(displayName)}!
+      const greetingHTML = `
+        <div style="background: linear-gradient(135deg, rgba(6,182,212,0.1), rgba(59,130,246,0.1)); border: 1px solid rgba(6,182,212,0.3); border-radius: 10px; padding: 12px;">
+          <div style="font-weight: bold; color: #38bdf8; font-size: 14px; display: flex; align-items: center; gap: 6px;">
+            ${SVG.user} Namaste, ${escapeHtml(displayName)}!
+          </div>
+          <div style="font-size: 12px; color: #e2e8f0; margin-top: 6px;">
+            Main aapka <b>Roitx AI Assistant</b> hu. Books, PDF Notes, Formulas, Calculator, ya PDF Export tools accessibility active hain.
+          </div>
         </div>
-        <div style="font-size: 12px; color: #e2e8f0; margin-top: 6px;">
-          Main aapka <b>Roitx AI Assistant</b> hu. Books, PDF Notes, Formulas, Calculator, ya PDF Export tools accessibility active hain.
-        </div>
-      </div>
-    `;
+      `;
 
-    // Greeting message ko bot chat me render karna
-    addBotMsg(greetingHTML, true); 
-}
+      // Ab greeting message bhi typewriter animation ke sath render hoga (`isHTML = false` pass kiya gaya hai taki HTML text par typewriter chal sake)
+      addBotMsg(greetingHTML, false); 
+  }
 
 // ---- UNIFIED BOT MESSAGE & TYPEWRITER FUNCTION ----
 // Function ko is tarah update karein taaki HTML allow ho sake
