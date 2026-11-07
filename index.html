@@ -524,7 +524,9 @@
   </a>
 
   <hr style="border: 0; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 12px 0;" />
-  <a href="https://roitx.xo.je" target="_blank" style="position: relative; overflow: hidden;">
+
+
+   <a href="javascript:void(0);" onclick="openMoreAppsModal()" style="position: relative; overflow: hidden;">
     <!-- Colorful SVG Icon matching your screenshot style -->
     <svg class="menu-svg-icon" viewBox="0 0 24 24" fill="none" style="width: 22px; height: 22px;">
       <defs>
@@ -534,26 +536,13 @@
           <stop offset="100%" stop-color="#ec4899" />
         </linearGradient>
       </defs>
-      <!-- Corner brackets matching the scan icon -->
       <path d="M4 8V5a1 1 0 0 1 1-1h3" stroke="url(#toolGrad)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
       <path d="M20 8V5a1 1 0 0 0-1-1h-3" stroke="url(#toolGrad)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
       <path d="M4 16v3a1 1 0 0 0 1 1h3" stroke="url(#toolGrad)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
       <path d="M20 16v3a1 1 0 0 1-1 1h-3" stroke="url(#toolGrad)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-      <!-- Inner plus / cross symbol with a glowing gradient -->
       <path d="M12 8v8M8 12h8" stroke="url(#toolGrad)" stroke-width="2.2" stroke-linecap="round"/>
     </svg> 
-    <span style="background: linear-gradient(135deg, #00f0ff, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700;">PM Roitx Tool</span>
-  </a>
-  
-
-  <a href="javascript:void(0);" onclick="shareApp()">
-    <svg class="menu-svg-icon" viewBox="0 0 24 24" fill="none" stroke="#93c5fd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <circle cx="18" cy="5" r="3"></circle>
-      <circle cx="6" cy="12" r="3"></circle>
-      <circle cx="18" cy="19" r="3"></circle>
-      <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
-      <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
-    </svg> App Share
+    <span style="background: linear-gradient(135deg, #00f0ff, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700;">More Apps</span>
   </a>
 
   <a href="javascript:void(0);" onclick="checkLoginAndOpenRateModal()">
@@ -1092,10 +1081,115 @@
     </div>
   </div>
 </div>
+<!-- More Apps Folder Style Popup Modal -->
+<div id="moreAppsModal" class="pm-modal-overlay" style="display: none; align-items: center; justify-content: center; position: fixed; inset: 0; background: rgba(5, 11, 24, 0.8); backdrop-filter: blur(12px); z-index: 10000; padding: 20px;">
+  <div class="more-apps-folder-card" style="width: 100%; max-width: 340px; background: rgba(18, 24, 38, 0.85); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 28px; padding: 28px 20px; box-shadow: 0 25px 50px rgba(0,0,0,0.7); text-align: center; position: relative; animation: folderPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+    
+    <!-- Close Button -->
+    <button onclick="closeMoreAppsModal()" style="position: absolute; top: 14px; right: 14px; background: rgba(255,255,255,0.06); border: none; color: #fff; width: 30px; height: 30px; border-radius: 50%; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center;">&times;</button>
+
+    <!-- Folder Title -->
+    <h3 style="color: #fff; font-size: 20px; font-weight: 700; margin-top: 0; margin-bottom: 24px; letter-spacing: -0.5px;">PM Roitx Apps</h3>
+
+    <!-- Apps Grid (Jaisa screenshot me hai)[span_1](start_span)[span_1](end_span) -->
+    <div id="moreAppsGrid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px 12px; justify-items: center;">
+      <!-- JavaScript yahan automatically apps inject karega -->
+    </div>
+
+  </div>
+</div>
+
+<style>
+@keyframes folderPop {
+  0% { transform: scale(0.85); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.app-item-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+.app-item-box:hover {
+  transform: scale(1.08);
+}
+.app-icon-circle {
+  width: 58px;
+  height: 58px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+  margin-bottom: 8px;
+  border: 1px solid rgba(255,255,255,0.12);
+  font-size: 26px;
+}
+.app-title-label {
+  font-size: 12px;
+  color: #cbd5e1;
+  font-weight: 500;
+  max-width: 70px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+</style>
+
 
 <script defer src="quotes.js"></script>
 <script defer src="script.js"></script>
 <script>
+  const myMoreAppsList = [
+  {
+    name: "PM Roitx Tool",
+    url: "https://roitx.xo.je",
+    iconImg: "https://roitx.xo.je/favicon-2.png", // Custom icon path
+    bg: "linear-gradient(135deg, #00f0ff, #3a7bd5)"
+  }
+  // Future me aur apps add karne ke liye niche aise likhein:
+  // { name: "App Name", url: "link.html", iconImg: "path/to/icon.png", bg: "linear-gradient(...)" }
+];
+
+function openMoreAppsModal() {
+  // Sidebar band kar dein agar khula ho
+  const sideMenu = document.getElementById("sideMenu");
+  const overlay = document.getElementById("overlay");
+  if (sideMenu) sideMenu.classList.remove("open");
+  if (overlay) overlay.classList.remove("show");
+
+  const gridContainer = document.getElementById("moreAppsGrid");
+  if (gridContainer) {
+    gridContainer.innerHTML = myMoreAppsList.map(app => `
+      <a href="${app.url}" class="app-item-box" target="${app.url.startsWith('http') ? '_blank' : '_self'}">
+        <div class="app-icon-circle" style="background: ${app.bg}; overflow: hidden;">
+          ${app.iconImg ? `<img src="${app.iconImg}" alt="${app.name}" style="width: 100%; height: 100%; object-fit: cover;">` : `<span>${app.icon || '📱'}</span>`}
+        </div>
+        <span class="app-title-label">${app.name}</span>
+      </a>
+    `).join('');
+  }
+
+  const modal = document.getElementById("moreAppsModal");
+  if (modal) modal.style.display = 'flex';
+}
+
+function closeMoreAppsModal() {
+  const modal = document.getElementById("moreAppsModal");
+  if (modal) modal.style.display = 'none';
+}
+
+// Modal ke baahar dark background par click karne se close ho jaye
+document.addEventListener("DOMContentLoaded", () => {
+  const modal = document.getElementById("moreAppsModal");
+  if (modal) {
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) closeMoreAppsModal();
+    });
+  }
+});
   // Global Audio Engine Unlocker for the entire site
   let isGlobalAudioUnlocked = false;
 
