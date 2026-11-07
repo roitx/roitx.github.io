@@ -7,6 +7,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase.js"></script>
+  <!-- Canvas Confetti for completion celebration -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
   <!-- MathJax CDN -->
   <script>
@@ -18,18 +20,28 @@
 
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; user-select: none; }
-    body { background: #0a1b3d; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; overflow: hidden; position: relative; }
+    body { background: #071124; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; overflow-x: hidden; position: relative; }
     
-    /* Bottom-Left List Button */
-    .home-list-btn {
+    /* Top Bar Controls */
+    .top-controls {
       position: fixed;
-      bottom: 25px;
+      top: 20px;
       left: 20px;
+      right: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 100;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .top-btn {
       background: rgba(255, 255, 255, 0.08);
       border: 1px solid rgba(255, 255, 255, 0.15);
       color: #00d2ff;
-      padding: 12px 18px;
-      border-radius: 16px;
+      padding: 10px 16px;
+      border-radius: 14px;
       font-size: 13px;
       font-weight: 700;
       cursor: pointer;
@@ -39,67 +51,43 @@
       text-decoration: none;
       transition: all 0.25s ease;
       box-shadow: 0 4px 15px rgba(0,0,0,0.4);
-      z-index: 100;
+      backdrop-filter: blur(10px);
     }
-    .home-list-btn:hover {
+    .top-btn:hover {
       background: rgba(0, 210, 255, 0.15);
       border-color: rgba(0, 210, 255, 0.4);
     }
-    .home-list-btn:active {
-      transform: scale(0.95);
-    }
+    .top-btn:active { transform: scale(0.95); }
 
-    /* Top-Right Language Toggle Button */
-    .google-lang-btn {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      color: #00d2ff;
-      width: 44px;
-      height: 44px;
-      border-radius: 14px;
-      cursor: pointer;
-      display: none;
-      align-items: center;
+    .top-right-group { display: flex; gap: 10px; }
+    
+    .icon-btn {
+      width: 42px;
+      height: 42px;
+      padding: 0;
       justify-content: center;
-      transition: all 0.25s ease;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.4);
-      z-index: 100;
+      border-radius: 14px;
     }
-    .google-lang-btn svg {
-      width: 22px;
-      height: 22px;
-      fill: currentColor;
-    }
-    .google-lang-btn:hover {
-      background: rgba(0, 210, 255, 0.15);
-      border-color: rgba(0, 210, 255, 0.4);
-    }
-    .google-lang-btn:active {
-      transform: scale(0.95);
-    }
+    .icon-btn.active-star { color: #facc15; border-color: rgba(250,204,21,0.5); background: rgba(250,204,21,0.1); }
 
-    .reader-card { width: 100%; max-width: 480px; display: flex; flex-direction: column; align-items: center; }
+    .reader-card { width: 100%; max-width: 480px; display: flex; flex-direction: column; align-items: center; margin-top: 40px; }
     
     .top-header { text-align: center; margin-bottom: 12px; width: 100%; }
-    .card-title { font-size: 16px; font-weight: 800; color: #00d2ff; margin-bottom: 6px; }
+    .card-title { font-size: 16px; font-weight: 800; color: #00d2ff; margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 10px; }
     
     /* Progress Bar */
-    .progress-bar-container { width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 4px; margin-bottom: 12px; overflow: hidden; }
+    .progress-bar-container { width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 4px; margin-bottom: 8px; overflow: hidden; }
     .progress-fill { height: 100%; background: linear-gradient(90deg, #00d2ff, #a855f7); width: 0%; transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
 
-    .card-counter { font-size: 12px; color: #94a3b8; font-weight: 600; margin-bottom: 20px; }
+    .sub-info-bar { display: flex; justify-content: space-between; width: 100%; font-size: 12px; color: #94a3b8; font-weight: 600; margin-bottom: 20px; padding: 0 4px; }
 
     /* Stacked Cards Container */
-    .flashcard-container { width: 100%; height: 320px; position: relative; perspective: 1200px; margin-bottom: 25px; display: flex; justify-content: center; align-items: center; }
+    .flashcard-container { width: 100%; height: 320px; position: relative; perspective: 1200px; margin-bottom: 20px; display: flex; justify-content: center; align-items: center; }
     
-    /* Background Stack Effect Cards */
     .stack-card-back-2 { position: absolute; width: 85%; height: 100%; background: #132247; border-radius: 24px; transform: scale(0.85) translateY(30px); z-index: 1; opacity: 0.4; border: 1px solid rgba(255,255,255,0.05); }
     .stack-card-back-1 { position: absolute; width: 92%; height: 100%; background: #172a54; border-radius: 24px; transform: scale(0.92) translateY(15px); z-index: 2; opacity: 0.7; border: 1px solid rgba(255,255,255,0.1); }
 
-    /* Main Active Flashcard with Directional Flip Support */
+    /* Main Active Flashcard */
     .flashcard { 
       width: 100%; 
       height: 100%; 
@@ -107,61 +95,120 @@
       transform-style: preserve-3d; 
       transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.35s ease; 
       border-radius: 24px; 
-      box-shadow: 0 25px 50px rgba(0,0,0,0.7); 
+      box-shadow: 0 20px 40px rgba(0,0,0,0.6); 
       z-index: 3; 
       cursor: pointer; 
       left: 0; 
     }
     
-    /* Flip Directions */
     .flashcard.flipped-right { transform: rotateY(180deg) scale(1.02); }
     .flashcard.flipped-left { transform: rotateY(-180deg) scale(1.02); }
 
-    /* High-Impact Swipe Animations */
-    .flashcard.swipe-left { 
-      transform: translateX(-130%) scale(1.2) rotate(-22deg); 
-      opacity: 0; 
-    }
-    .flashcard.swipe-right { 
-      transform: translateX(130%) scale(1.2) rotate(22deg); 
-      opacity: 0; 
-    }
+    .flashcard.swipe-left { transform: translateX(-130%) scale(1.2) rotate(-22deg); opacity: 0; }
+    .flashcard.swipe-right { transform: translateX(130%) scale(1.2) rotate(22deg); opacity: 0; }
     
-   
     .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 28px; box-sizing: border-box; border-radius: 24px; text-align: center; border: 1px solid rgba(0,210,255,0.25); }
     .card-front { background: #0c162d; color: #00d2ff; z-index: 2; }
     .card-back { background: #1e293b; color: #f1f5f9; transform: rotateY(180deg); border-color: rgba(168,85,247,0.4); z-index: 1; }
 
     .card-face .hint { font-size: 11px; opacity: 0.6; margin-top: 18px; text-transform: uppercase; letter-spacing: 0.5px; }
+    
+    /* Utility Action Buttons inside Card (Audio, etc.) */
+    .card-actions {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      display: flex;
+      gap: 8px;
+      z-index: 5;
+    }
+    .action-icon {
+      background: rgba(255,255,255,0.1);
+      border: none;
+      color: #fff;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      transition: 0.2s;
+    }
+    .action-icon:hover { background: rgba(0,210,255,0.3); color: #00d2ff; }
 
+    /* Spaced Repetition Rating Buttons */
+    .rating-container {
+      display: flex;
+      gap: 10px;
+      width: 100%;
+      margin-bottom: 15px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .rating-container.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .rate-btn {
+      flex: 1;
+      padding: 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.1);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .rate-hard { background: rgba(239, 68, 68, 0.15); color: #ef4444; border-color: rgba(239, 68, 68, 0.3); }
+    .rate-good { background: rgba(234, 179, 8, 0.15); color: #eab308; border-color: rgba(234, 179, 8, 0.3); }
+    .rate-easy { background: rgba(34, 197, 94, 0.15); color: #22c55e; border-color: rgba(34, 197, 94, 0.3); }
+    .rate-btn:hover { transform: translateY(-2px); filter: brightness(1.2); }
+
+    /* Navigation Buttons */
     .nav-btns { display: flex; gap: 12px; width: 100%; }
     .btn { flex: 1; padding: 14px; border-radius: 16px; border: none; background: linear-gradient(135deg, #00d2ff, #3a7bd5); color: #050b18; font-weight: 800; font-size: 13px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,210,255,0.3); transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; }
     .btn:active { transform: scale(0.97); }
     .btn.secondary { background: rgba(255,255,255,0.06); color: #fff; border: 1px solid rgba(255,255,255,0.12); box-shadow: none; }
-    
-    .btn.disabled {
-      opacity: 0.35;
-      cursor: not-allowed;
-      pointer-events: none;
-      box-shadow: none;
-    }
+    .btn.disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; box-shadow: none; }
 
     .shortcut-hint { font-size: 11px; color: #64748b; margin-top: 14px; text-align: center; }
+
+    /* Keyboard Shortcut Modal */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(5, 11, 24, 0.8); backdrop-filter: blur(5px);
+      display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px;
+    }
+    .modal-content {
+      background: #0c162d; border: 1px solid rgba(0,210,255,0.3); border-radius: 20px;
+      padding: 24px; max-width: 380px; width: 100%; box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+    }
+    .modal-content h3 { color: #00d2ff; margin-bottom: 14px; font-size: 16px; display: flex; justify-content: space-between; align-items: center; }
+    .shortcut-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 10px; color: #94a3b8; }
+    .shortcut-row kbd { background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 6px; color: #fff; font-family: monospace; border: 1px solid rgba(255,255,255,0.2); }
   </style>
 </head>
 <body>
 
-  <!-- Bottom-Left List Button -->
-  <a href="flashcard-list.html" class="home-list-btn" id="fixedListBtn">
-    <i class="fa-solid fa-arrow-left-long"></i> <i class="fa-solid fa-list"></i> List
-  </a>
-
-  <!-- Top-Right Language Toggle Button -->
-  <button class="google-lang-btn" id="langToggleBtn" onclick="toggleLanguage()" title="Change Language">
-    <svg viewBox="0 0 24 24">
-      <path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/>
-    </svg>
-  </button>
+  <!-- Top Fixed Controls -->
+  <div class="top-controls">
+    <a href="flashcard-list.html" class="top-btn" id="fixedListBtn" onclick="saveCurrentProgress()">
+      <i class="fa-solid fa-arrow-left-long"></i> List
+    </a>
+    <div class="top-right-group">
+      <button class="top-btn icon-btn" id="bookmarkBtn" onclick="toggleBookmark()" title="Bookmark Card">
+        <i class="fa-regular fa-star" id="bookmarkIcon"></i>
+      </button>
+      <button class="top-btn icon-btn" id="langToggleBtn" onclick="toggleLanguage()" title="Change Language" style="display: none;">
+        <svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:currentColor;"><path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg>
+      </button>
+      <button class="top-btn icon-btn" onclick="openShortcutModal()" title="Shortcuts">
+        <i class="fa-solid fa-keyboard"></i>
+      </button>
+    </div>
+  </div>
 
   <div class="reader-card">
     <div class="top-header">
@@ -171,7 +218,11 @@
     <div class="progress-bar-container">
       <div class="progress-fill" id="progressFill"></div>
     </div>
-    <div class="card-counter" id="cardCounter">Card 0 of 0</div>
+    
+    <div class="sub-info-bar">
+      <span id="cardCounter">Card 0 of 0</span>
+      <span id="streakCounter" style="color:#22c55e;"><i class="fa-solid fa-fire"></i> Streak: 0</span>
+    </div>
 
     <!-- Stacked Cards Layout -->
     <div class="flashcard-container" id="cardContainer">
@@ -180,14 +231,27 @@
 
       <div class="flashcard" id="flashcardElem" onclick="handleCardClick(event)">
         <div class="card-face card-front">
+          <div class="card-actions">
+            <button class="action-icon" onclick="event.stopPropagation(); speakText(currentFrontRaw)" title="Listen"><i class="fa-solid fa-volume-high"></i></button>
+          </div>
           <div id="cardFrontText" style="font-size: 15px; font-weight: 700; line-height: 1.6;">Tap to load...</div>
           <div class="hint"><i class="fa-solid fa-rotate"></i> Tap left/right to flip</div>
         </div>
         <div class="card-face card-back">
+          <div class="card-actions">
+            <button class="action-icon" onclick="event.stopPropagation(); speakText(currentBackRaw)" title="Listen"><i class="fa-solid fa-volume-high"></i></button>
+          </div>
           <div id="cardBackText" style="font-size: 14px; line-height: 1.6;">Answer here...</div>
           <div class="hint" style="color:#c084fc;"><i class="fa-solid fa-rotate"></i> Tap left/right to flip</div>
         </div>
       </div>
+    </div>
+
+    <!-- Spaced Repetition Self Rating Buttons -->
+    <div class="rating-container" id="ratingContainer">
+      <button class="rate-btn rate-hard" onclick="rateCard('hard')">Hard 🔴</button>
+      <button class="rate-btn rate-good" onclick="rateCard('good')">Good 🟡</button>
+      <button class="rate-btn rate-easy" onclick="rateCard('easy')">Easy 🟢</button>
     </div>
 
     <div class="nav-btns">
@@ -195,7 +259,18 @@
       <button class="btn" id="nextBtn" onclick="nextCard()">Agla <i class="fa-solid fa-arrow-right"></i></button>
     </div>
     
-    <div class="shortcut-hint">💡 Tip: Aap card ke left/right side tap karke flip kar sakte hain ya swipe/arrow keys use kar sakte hain.</div>
+    <div class="shortcut-hint">💡 Tip: Tap card sides to flip, swipe or use arrow keys. Press <kbd style="background:rgba(255,255,255,0.1);padding:2px 4px;border-radius:4px;">Space</kbd> to flip.</div>
+  </div>
+
+  <!-- Keyboard Shortcuts Modal -->
+  <div class="modal-overlay" id="shortcutModal" onclick="closeShortcutModal(event)">
+    <div class="modal-content">
+      <h3>Keyboard Shortcuts <i class="fa-solid fa-xmark" style="cursor:pointer;" onclick="closeShortcutModal()"></i></h3>
+      <div class="shortcut-row"><span>Flip Card</span><kbd>Space / Enter</kbd></div>
+      <div class="shortcut-row"><span>Next Card</span><kbd>→</kbd></div>
+      <div class="shortcut-row"><span>Previous Card</span><kbd>←</kbd></div>
+      <div class="shortcut-row"><span>Bookmark Card</span><kbd>B</kbd></div>
+    </div>
   </div>
 
 <script>
@@ -203,6 +278,10 @@
   let currentIndex = 0;
   let isBilingualSet = false;
   let currentLangMode = 'both';
+  let bookmarkedCards = new Set();
+  let currentFrontRaw = '';
+  let currentBackRaw = '';
+  let streakCount = 0;
 
   async function loadFlashcards() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -227,11 +306,32 @@
     document.getElementById('cardTitle').innerText = data.title;
     cardsList = data.cards || [];
     
-    // Yahan tracking function call karein
+    // Check URL for cardIndex first, otherwise fallback to saved progress
+    const urlCardIndex = urlParams.get('cardIndex');
+    if (urlCardIndex !== null && !isNaN(urlCardIndex)) {
+      currentIndex = parseInt(urlCardIndex);
+    } else {
+      let progressData = JSON.parse(localStorage.getItem("readingProgress") || "{}");
+      if (progressData[cardId] !== undefined) {
+        currentIndex = progressData[cardId];
+      }
+    }
+
+    if (currentIndex >= cardsList.length || currentIndex < 0) {
+      currentIndex = 0;
+    }
+
+    // Load local bookmarks for this set
+    const savedBookmarks = localStorage.getItem(`bookmarks_${cardId}`);
+    if(savedBookmarks) {
+      bookmarkedCards = new Set(JSON.parse(savedBookmarks));
+    }
+
     trackPYQActivityLocally({
       title: data.title,
-      meta: `${data.subject || 'Flashcard'} • ${data.cards ? data.cards.length : 0} Cards`
+      meta: `${data.subject || 'Flashcard'} • ${cardsList.length} Cards`
     });
+
     const mode = data.language_mode ? data.language_mode.toLowerCase() : '';
     if (mode === 'bilingual' || mode.includes('bilingual')) {
       isBilingualSet = true;
@@ -267,10 +367,12 @@
     renderCard(false);
   }
 
-    function renderCard(animate = true) {
+  function renderCard(animate = true) {
     if (cardsList.length === 0) return;
     const card = cardsList[currentIndex];
     
+    currentFrontRaw = card.front;
+    currentBackRaw = card.back;
     let frontText = card.front;
     let backText = card.back;
 
@@ -284,19 +386,30 @@
       } else if (currentLangMode === 'hi') {
         frontText = frontParsed.hi;
         backText = backParsed.hi;
-      } else {
-        frontText = card.front;
-        backText = card.back;
       }
     }
     
     document.getElementById('cardFrontText').innerHTML = frontText;
     document.getElementById('cardBackText').innerHTML = backText;
-    
     document.getElementById('cardCounter').innerText = `Card ${currentIndex + 1} of ${cardsList.length}`;
+    document.getElementById('streakCounter').innerHTML = `<i class="fa-solid fa-fire"></i> Streak: ${streakCount}`;
     
     const progressPercent = ((currentIndex + 1) / cardsList.length) * 100;
     document.getElementById('progressFill').style.width = `${progressPercent}%`;
+
+    // Save progress automatically whenever card changes
+    saveCurrentProgress();
+
+    // Update Bookmark Icon State
+    const bookmarkIcon = document.getElementById('bookmarkIcon');
+    const bookmarkBtn = document.getElementById('bookmarkBtn');
+    if(bookmarkedCards.has(currentIndex)) {
+      bookmarkIcon.className = "fa-solid fa-star";
+      bookmarkBtn.classList.add('active-star');
+    } else {
+      bookmarkIcon.className = "fa-regular fa-star";
+      bookmarkBtn.classList.remove('active-star');
+    }
 
     const prevBtn = document.getElementById('prevBtn');
     const nextBtn = document.getElementById('nextBtn');
@@ -309,26 +422,23 @@
     }
 
     if (currentIndex === cardsList.length - 1) {
-      nextBtn.classList.add('disabled');
-      fixedListBtn.style.opacity = '0';
-      fixedListBtn.style.pointerEvents = 'none';
-      
-      nextBtn.className = "btn";
-      nextBtn.classList.remove('disabled');
       nextBtn.innerHTML = `<i class="fa-solid fa-list"></i> List par jaye`;
-      nextBtn.onclick = () => { window.location.href = 'flashcard-list.html'; };
+      nextBtn.onclick = () => { 
+        saveCurrentProgress();
+        window.location.href = 'flashcard-list.html'; 
+      };
+      
+      if(animate) {
+        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+      }
     } else {
-      nextBtn.classList.remove('disabled');
       nextBtn.innerHTML = `Agla <i class="fa-solid fa-arrow-right"></i>`;
       nextBtn.onclick = nextCard;
-
-      fixedListBtn.style.opacity = '1';
-      fixedListBtn.style.pointerEvents = 'auto';
     }
 
-    // Sirf flip aur swipe classes remove karein, fade-in-entry hata diya gaya hai
     const cardElem = document.getElementById('flashcardElem');
     cardElem.classList.remove('flipped-right', 'flipped-left', 'swipe-left', 'swipe-right');
+    document.getElementById('ratingContainer').classList.remove('show');
 
     setTimeout(() => {
       if (window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
@@ -337,77 +447,96 @@
     }, 50);
   }
 
-    function handleCardClick(event) {
-    const cardElem = document.getElementById('flashcardElem');
+  function saveCurrentProgress() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const cardId = urlParams.get('id');
+    if (!cardId) return;
     
-    // Check if the card is currently swiping or animating
-    if (cardElem.classList.contains('swipe-left') || cardElem.classList.contains('swipe-right')) {
-      return;
-    }
+    let progressData = JSON.parse(localStorage.getItem("readingProgress") || "{}");
+    progressData[cardId] = currentIndex;
+    localStorage.setItem("readingProgress", JSON.stringify(progressData));
+  }
+
+  window.addEventListener("beforeunload", () => {
+    saveCurrentProgress();
+  });
+
+  function handleCardClick(event) {
+    const cardElem = document.getElementById('flashcardElem');
+    if (cardElem.classList.contains('swipe-left') || cardElem.classList.contains('swipe-right')) return;
 
     const rect = cardElem.getBoundingClientRect();
-    
-    // Safely get X coordinate for both mouse click and touch
-    let clientX = event.clientX;
-    if (!clientX && event.changedTouches && event.changedTouches.length > 0) {
-      clientX = event.changedTouches[0].clientX;
-    }
-    
-    // Fallback agar clientX na mile toh center maan lo
-    let isLeftHalf = true;
-    if (clientX !== undefined) {
-      const clickX = clientX - rect.left;
-      isLeftHalf = clickX < (rect.width / 2);
-    }
+    let clientX = event.clientX || (event.changedTouches && event.changedTouches[0].clientX);
+    let isLeftHalf = clientX !== undefined ? (clientX - rect.left) < (rect.width / 2) : true;
     
     const isCurrentlyFlipped = cardElem.classList.contains('flipped-right') || cardElem.classList.contains('flipped-left');
 
     if (!isCurrentlyFlipped) {
       cardElem.classList.remove('flipped-right', 'flipped-left');
-      if (isLeftHalf) {
-        cardElem.classList.add('flipped-left');
-      } else {
-        cardElem.classList.add('flipped-right');
-      }
+      if (isLeftHalf) cardElem.classList.add('flipped-left');
+      else cardElem.classList.add('flipped-right');
+      
+      document.getElementById('ratingContainer').classList.add('show');
     } else {
       cardElem.classList.remove('flipped-right', 'flipped-left');
+      document.getElementById('ratingContainer').classList.remove('show');
     }
   }
+
+  function rateCard(rating) {
+    if(rating === 'easy' || rating === 'good') streakCount++;
+    else streakCount = 0;
+    nextCard();
+  }
+
+  function toggleBookmark() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const cardId = urlParams.get('id');
+    if (!cardId) return;
+
+    if(bookmarkedCards.has(currentIndex)) {
+      bookmarkedCards.delete(currentIndex);
+    } else {
+      bookmarkedCards.add(currentIndex);
+    }
+    
+    localStorage.setItem(`bookmarks_${cardId}`, JSON.stringify([...bookmarkedCards]));
+    renderCard(false);
+  }
+
+  function speakText(text) {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const cleanText = text.replace(/<[^>]*>?/gm, '');
+      const utterance = new SpeechSynthesisUtterance(cleanText);
+      utterance.lang = 'hi-IN';
+      window.speechSynthesis.speak(utterance);
+    }
+  }
+
   function trackPYQActivityLocally(paperData) {
     try {
       let recent = JSON.parse(localStorage.getItem("recentFiles") || "[]");
-      let readerUrl = window.location.href; // Current page ka URL
-      
+      let readerUrl = window.location.href;
       let existingIndex = recent.findIndex(f => f.url === readerUrl || f.title === paperData.title);
-      let viewCount = 1;
-      if (existingIndex !== -1) {
-        viewCount = (recent[existingIndex].viewCount || 1) + 1;
-        recent.splice(existingIndex, 1);
-      }
+      let viewCount = existingIndex !== -1 ? (recent[existingIndex].viewCount || 1) + 1 : 1;
+      if (existingIndex !== -1) recent.splice(existingIndex, 1);
 
       recent.unshift({
         title: paperData.title || "Flashcard Reader",
         url: readerUrl,
         meta: paperData.meta || "Flashcards • Study Set",
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        downloaded: false,
-        isPurchased: true,
-        isTest: false,
         viewCount: viewCount
       });
 
-      recent = recent.slice(0, 15);
-      localStorage.setItem("recentFiles", JSON.stringify(recent));
-    } catch (e) {
-      console.error("Tracking Error: ", e);
-    }
+      localStorage.setItem("recentFiles", JSON.stringify(recent.slice(0, 15)));
+    } catch (e) { console.error(e); }
   }
-  
 
   function nextCard() {
     if (currentIndex < cardsList.length - 1) {
       const cardElem = document.getElementById('flashcardElem');
-      cardElem.classList.remove('fade-in-entry');
       cardElem.classList.add('swipe-left');
       setTimeout(() => {
         currentIndex++;
@@ -419,7 +548,6 @@
   function prevCard() {
     if (currentIndex > 0) {
       const cardElem = document.getElementById('flashcardElem');
-      cardElem.classList.remove('fade-in-entry');
       cardElem.classList.add('swipe-right');
       setTimeout(() => {
         currentIndex--;
@@ -428,43 +556,38 @@
     }
   }
 
-  let touchStartX = 0;
-  let touchEndX = 0;
-  const cardContainer = document.getElementById('cardContainer');
-
-  cardContainer.addEventListener('touchstart', (e) => {
-    touchStartX = e.changedTouches[0].screenX;
-  }, {passive: true});
-
-  cardContainer.addEventListener('touchend', (e) => {
-    touchEndX = e.changedTouches[0].screenX;
-    handleSwipe();
-  }, {passive: true});
-
-  function handleSwipe() {
-    const swipeThreshold = 50; 
-    if (touchEndX < touchStartX - swipeThreshold) {
-      nextCard(); 
-    }
-    if (touchEndX > touchStartX + swipeThreshold) {
-      prevCard(); 
-    }
-  }
-
   document.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowRight') nextCard();
     if (e.key === 'ArrowLeft') prevCard();
+    if (e.key === 'b' || e.key === 'B') toggleBookmark();
     if (e.key === ' ' || e.key === 'Enter') {
       e.preventDefault();
       const cardElem = document.getElementById('flashcardElem');
-      const isCurrentlyFlipped = cardElem.classList.contains('flipped-right') || cardElem.classList.contains('flipped-left');
-      if (!isCurrentlyFlipped) {
+      if (!cardElem.classList.contains('flipped-right') && !cardElem.classList.contains('flipped-left')) {
         cardElem.classList.add('flipped-right');
+        document.getElementById('ratingContainer').classList.add('show');
       } else {
         cardElem.classList.remove('flipped-right', 'flipped-left');
+        document.getElementById('ratingContainer').classList.remove('show');
       }
     }
   });
+
+  function openShortcutModal() { document.getElementById('shortcutModal').style.display = 'flex'; }
+  function closeShortcutModal(e) { 
+    if(!e || e.target.id === 'shortcutModal' || e.target.classList.contains('fa-xmark')) {
+      document.getElementById('shortcutModal').style.display = 'none'; 
+    }
+  }
+
+  let touchStartX = 0, touchEndX = 0;
+  const cardContainer = document.getElementById('cardContainer');
+  cardContainer.addEventListener('touchstart', (e) => touchStartX = e.changedTouches[0].screenX, {passive: true});
+  cardContainer.addEventListener('touchend', (e) => {
+    touchEndX = e.changedTouches[0].screenX;
+    if (touchEndX < touchStartX - 50) nextCard();
+    if (touchEndX > touchStartX + 50) prevCard();
+  }, {passive: true});
 
   window.onload = loadFlashcards;
 </script>

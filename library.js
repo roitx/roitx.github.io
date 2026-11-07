@@ -179,22 +179,41 @@ async function renderActivityFeed() {
         let isDownloaded = !isPyqItem && !isFlashcardItem && (downloads.some(item => (item.url && item.url.split('?')[0] === cleanPath) || cleanTitleString(item.title) === cleanedFileTitle) || f.downloaded);
         let isFilePremium = f.isPremium || cleanPath.toLowerCase().includes("premium") || cleanPath.toLowerCase().includes("paid");
 
-        // Target URL Logic
-        if (isFlashcardItem) {
-            if (rawUrl.includes("flashcard-reader.html")) {
-                viewTargetUrl = rawUrl;
-            } else if (rawUrl.includes("id=")) {
-                let idMatch = rawUrl.match(/id=([^&]+)/);
-                viewTargetUrl = `flashcard-reader.html?id=${idMatch ? idMatch[1] : ''}`;
+        // 🌟 Last Read Progress Fetching (LocalStorage se card index ya scroll position nikalna)
+        let savedProgressIndex = null;
+        try {
+            let progressData = JSON.parse(localStorage.getItem("readingProgress") || "{}");
+            // Unique key ya URL match karenge
+            if (progressData[cleanPath]) {
+                savedProgressIndex = progressData[cleanPath];
+            } else if (progressData[f.title]) {
+                savedProgressIndex = progressData[f.title];
             }
-        } else if (isPyqItem) {
-            if (rawUrl.includes("pyq-reader.html")) {
-                viewTargetUrl = rawUrl;
-            } else if (rawUrl.includes("id=")) {
+        } catch (err) {
+            console.error("Progress fetch error:", err);
+        }
+
+        // Target URL Logic with Last Card/Progress index injection
+        if (isFlashcardItem) {
+            let cardId = '';
+            if (rawUrl.includes("id=")) {
                 let idMatch = rawUrl.match(/id=([^&]+)/);
-                viewTargetUrl = `pyq-reader.html?id=${idMatch ? idMatch[1] : ''}`;
+                cardId = idMatch ? idMatch[1] : '';
+            }
+            // Agar saved progress index milti hai toh URL mein cardIndex add kar do
+            let indexQuery = (savedProgressIndex !== null && savedProgressIndex !== undefined) ? `&cardIndex=${savedProgressIndex}` : '';
+            viewTargetUrl = `flashcard-reader.html?id=${cardId}${indexQuery}`;
+        } else if (isPyqItem) {
+            let pyqId = '';
+            if (rawUrl.includes("id=")) {
+                let idMatch = rawUrl.match(/id=([^&]+)/);
+                pyqId = idMatch ? idMatch[1] : '';
+            }
+            let indexQuery = (savedProgressIndex !== null && savedProgressIndex !== undefined) ? `&cardIndex=${savedProgressIndex}` : '';
+            if (pyqId) {
+                viewTargetUrl = `pyq-reader.html?id=${pyqId}${indexQuery}`;
             } else {
-                viewTargetUrl = `pyq-reader.html?path=${encodeURIComponent(cleanPath)}&name=${encodeURIComponent(f.title)}`;
+                viewTargetUrl = `pyq-reader.html?path=${encodeURIComponent(cleanPath)}&name=${encodeURIComponent(f.title)}${indexQuery}`;
             }
         } else if (isTestItem) {
             viewTargetUrl = rawUrl;
@@ -210,7 +229,8 @@ async function renderActivityFeed() {
                 cleanPath = `notes/${cleanPath}`;
             }
             let extraParams = isPurchased ? "&purchased=true" : (isFilePremium ? "&type=premium&status=premium" : "");
-            viewTargetUrl = `${viewerPage}?path=${encodeURIComponent(cleanPath)}&name=${encodeURIComponent(f.title)}${extraParams}`;
+            let indexQuery = (savedProgressIndex !== null && savedProgressIndex !== undefined) ? `&scrollIndex=${savedProgressIndex}` : '';
+            viewTargetUrl = `${viewerPage}?path=${encodeURIComponent(cleanPath)}&name=${encodeURIComponent(f.title)}${extraParams}${indexQuery}`;
         }
 
         // Action Button Text
