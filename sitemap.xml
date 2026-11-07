@@ -53,6 +53,13 @@
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
+  <!-- Flashcards Hub -->
+  <url>
+    <loc>https://roitx.qd.je/flashcard-list.html</loc>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
 
   <!-- Class & Subject Specific Pages -->
   <url>

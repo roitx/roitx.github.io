@@ -2,142 +2,194 @@
 <xsl:stylesheet version="1.0" xmlns:html="http://www.w3.org/TR/REC-html40" xmlns:sitemap="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <xsl:output method="html" version="1.0" encoding="UTF-8" indent="yes"/>
   <xsl:template match="/">
-    <html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+    <html xmlns="http://www.w3.org/1999/xhtml" lang="hi">
       <head>
-        <title>XML Sitemap - RoitX</title>
+        <title>PM Roitx - XML Sitemap &amp; Directory</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
         <style type="text/css">
           :root {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
+            --bg-color: #071124;
+            --card-bg: rgba(12, 22, 45, 0.85);
+            --border-color: rgba(0, 210, 255, 0.2);
             --text-main: #f8fafc;
             --text-sub: #94a3b8;
-            --border-color: #334155;
-            --accent-color: #38bdf8;
-            --hover-bg: #1e293b;
+            --accent-cyan: #00d2ff;
+            --accent-purple: #a855f7;
+            --hover-bg: rgba(0, 210, 255, 0.06);
           }
-          @media (prefers-color-scheme: light) {
-            :root {
-              --bg-color: #f8fafc;
-              --card-bg: #ffffff;
-              --text-main: #0f172a;
-              --text-sub: #64748b;
-              --border-color: #e2e8f0;
-              --accent-color: #0284c7;
-              --hover-bg: #f1f5f9;
-            }
+          [data-theme="light"] {
+            --bg-color: #f1f5f9;
+            --card-bg: rgba(255, 255, 255, 0.9);
+            --border-color: rgba(2, 132, 199, 0.2);
+            --text-main: #0f172a;
+            --text-sub: #64748b;
+            --accent-cyan: #0284c7;
+            --accent-purple: #7c3aed;
+            --hover-bg: rgba(2, 132, 199, 0.06);
           }
+          * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; transition: background 0.3s ease, color 0.3s ease; }
           body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
             background-color: var(--bg-color); 
             color: var(--text-main); 
-            margin: 0; 
-            padding: 12px;
+            min-height: 100vh;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
           }
-          @media (min-width: 640px) {
-            body { padding: 24px; }
-          }
+          @media(min-width: 640px) { body { padding: 30px; } }
+          
           .container { 
+            width: 100%;
             max-width: 1000px; 
-            margin: 0 auto; 
             background: var(--card-bg); 
-            padding: 16px; 
-            border-radius: 16px; 
+            backdrop-filter: blur(20px);
+            padding: 20px; 
+            border-radius: 24px; 
             border: 1px solid var(--border-color);
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); 
+            box-shadow: 0 25px 50px rgba(0,0,0,0.15); 
+            margin-top: 10px;
+            margin-bottom: 40px;
           }
-          @media (min-width: 640px) {
-            .container { padding: 24px; }
-          }
+          @media(min-width: 640px) { .container { padding: 30px; } }
+
           .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             border-bottom: 1px solid var(--border-color);
-            padding-bottom: 16px;
-            margin-bottom: 16px;
+            padding-bottom: 20px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 15px;
           }
           h1 { 
             font-size: 20px; 
-            margin: 0 0 4px 0; 
-            background: linear-gradient(135deg, #38bdf8, #818cf8);
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+          }
+          @media(min-width: 640px) { h1 { font-size: 24px; } }
+
+          .header-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+          .total-badge {
+            background: var(--hover-bg);
+            border: 1px solid var(--border-color);
+            color: var(--accent-cyan);
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-size: 12px;
             font-weight: 700;
           }
-          @media (min-width: 640px) {
-            h1 { font-size: 24px; }
+          .theme-toggle-btn {
+            background: var(--hover-bg);
+            border: 1px solid var(--border-color);
+            color: var(--accent-cyan);
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
           }
-          p { 
-            color: var(--text-sub); 
-            font-size: 13px; 
-            margin: 0; 
-          }
+          .theme-toggle-btn:hover { transform: scale(1.05); }
+
           .table-wrapper {
             overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            border-radius: 8px;
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
           }
           table { 
             width: 100%; 
             border-collapse: collapse; 
             text-align: left;
-            min-width: 550px;
+            min-width: 600px;
           }
           th { 
             background-color: var(--hover-bg); 
             color: var(--text-sub); 
-            padding: 10px 12px; 
+            padding: 14px 18px; 
             font-size: 11px; 
             text-transform: uppercase;
-            letter-spacing: 0.05em;
-            font-weight: 600; 
-            border-bottom: 2px solid var(--border-color); 
+            letter-spacing: 0.08em;
+            font-weight: 700; 
+            border-bottom: 1px solid var(--border-color); 
           }
           td { 
-            padding: 12px; 
+            padding: 16px 18px; 
             font-size: 13px; 
             border-bottom: 1px solid var(--border-color); 
           }
+          tr:last-child td { border-bottom: none; }
           tr:hover td { 
             background-color: var(--hover-bg); 
           }
           a.page-title { 
-            color: var(--accent-color); 
+            color: var(--accent-cyan); 
             text-decoration: none; 
-            font-weight: 600; 
+            font-weight: 700; 
             font-size: 14px;
-            display: block;
+            transition: 0.2s;
+            display: inline-block;
           }
           a.page-title:hover { 
-            text-decoration: underline; 
+            text-shadow: 0 0 10px var(--accent-cyan);
           }
           .url-sub {
             color: var(--text-sub);
             font-size: 11px;
-            margin-top: 2px;
+            margin-top: 4px;
+            font-family: monospace;
             word-break: break-all;
           }
           .badge { 
-            background: rgba(56, 189, 248, 0.15); 
-            color: var(--accent-color); 
-            padding: 3px 8px; 
-            border-radius: 12px; 
+            background: rgba(168, 85, 247, 0.15); 
+            color: var(--accent-purple); 
+            border: 1px solid rgba(168, 85, 247, 0.3);
+            padding: 4px 10px; 
+            border-radius: 20px; 
             font-size: 11px; 
-            font-weight: 600; 
+            font-weight: 700; 
             display: inline-block;
+          }
+          .freq-text {
+            color: var(--text-sub);
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: capitalize;
+          }
+          .date-text {
+            color: var(--text-sub);
+            font-family: monospace;
+            font-size: 12px;
           }
         </style>
       </head>
       <body>
         <div class="container">
           <div class="header">
-            <h1>RoitX XML Sitemap</h1>
-            <p>Total Pages: <strong><xsl:value-of select="count(sitemap:urlset/sitemap:url)"/></strong></p>
+            <h1><i class="fa-solid fa-sitemap"></i> PM Roitx XML Sitemap</h1>
+            <div class="header-right">
+              <div class="total-badge">Total Pages: <xsl:value-of select="count(sitemap:urlset/sitemap:url)"/></div>
+              <button class="theme-toggle-btn" id="themeToggle" onclick="toggleTheme()" title="Toggle Theme">
+                <i class="fa-solid fa-moon" id="themeIcon"></i>
+              </button>
+            </div>
           </div>
           <div class="table-wrapper">
             <table>
               <thead>
                 <tr>
-                  <th>Page Title &amp; URL</th>
+                  <th>Page Title &amp; URL Link</th>
                   <th>Priority</th>
                   <th>Frequency</th>
                   <th>Last Modified</th>
@@ -147,10 +199,9 @@
                 <xsl:for-each select="sitemap:urlset/sitemap:url">
                   <tr>
                     <td>
-                      <!-- Display Clean Titles for All Pages -->
-                      <a class="page-title" href="{sitemap:loc}">
+                      <a class="page-title" href="{sitemap:loc}" target="_blank">
                         <xsl:choose>
-                          <xsl:when test="sitemap:loc = 'https://roitx.qd.je/'">Home</xsl:when>
+                          <xsl:when test="sitemap:loc = 'https://roitx.qd.je/'">Home / Main Portal</xsl:when>
                           <xsl:when test="contains(sitemap:loc, 'classes.html')">Classes &amp; Courses</xsl:when>
                           <xsl:when test="contains(sitemap:loc, 'premium-notes.html')">Premium Notes</xsl:when>
                           <xsl:when test="contains(sitemap:loc, 'formulas.html')">Important Formulas</xsl:when>
@@ -158,6 +209,7 @@
                           <xsl:when test="contains(sitemap:loc, 'pyq-list.html')">PYQ Bank</xsl:when>
                           <xsl:when test="contains(sitemap:loc, 'pyq-anylizer.html')">PYQ Analyzer</xsl:when>
                           <xsl:when test="contains(sitemap:loc, 'refbook.html')">Reference Books</xsl:when>
+                          <xsl:when test="contains(sitemap:loc, 'flashcard-list.html')">PM Roitx Flashcards Hub</xsl:when>
                           <xsl:when test="contains(sitemap:loc, 'subjects-9.html')">Class 9 Subjects</xsl:when>
                           <xsl:when test="contains(sitemap:loc, 'subjects-10.html')">Class 10 Subjects</xsl:when>
                           <xsl:when test="contains(sitemap:loc, 'subjects-11.html')">Class 11 Subjects</xsl:when>
@@ -186,14 +238,39 @@
                       <div class="url-sub"><xsl:value-of select="sitemap:loc"/></div>
                     </td>
                     <td><span class="badge"><xsl:value-of select="sitemap:priority"/></span></td>
-                    <td><xsl:value-of select="sitemap:changefreq"/></td>
-                    <td><xsl:value-of select="sitemap:lastmod"/></td>
+                    <td><span class="freq-text"><xsl:value-of select="sitemap:changefreq"/></span></td>
+                    <td><span class="date-text"><xsl:value-of select="sitemap:lastmod"/></span></td>
                   </tr>
                 </xsl:for-each>
               </tbody>
             </table>
           </div>
         </div>
+
+        <script type="text/javascript">
+          function toggleTheme() {
+            const html = document.documentElement;
+            const icon = document.getElementById("themeIcon");
+            if (html.getAttribute("data-theme") === "light") {
+              html.removeAttribute("data-theme");
+              icon.className = "fa-solid fa-moon";
+              localStorage.setItem("sitemap_theme", "dark");
+            } else {
+              html.setAttribute("data-theme", "light");
+              icon.className = "fa-solid fa-sun";
+              localStorage.setItem("sitemap_theme", "light");
+            }
+          }
+
+          // Initial theme load
+          (function() {
+            const savedTheme = localStorage.getItem("sitemap_theme");
+            if (savedTheme === "light") {
+              document.documentElement.setAttribute("data-theme", "light");
+              document.getElementById("themeIcon").className = "fa-solid fa-sun";
+            }
+          })();
+        </script>
       </body>
     </html>
   </xsl:template>
