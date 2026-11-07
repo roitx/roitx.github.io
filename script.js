@@ -1115,6 +1115,11 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
+// ---------------------------------------------------------
+// SECURE STREAK SYSTEM WITH SMART TOUCH/CLICK TRIGGER
+// ---------------------------------------------------------
+let isStreakTriggered = false;
+
 async function checkAndSyncSecureStreak() {
   if (typeof window.supabaseClient === 'undefined') return;
 
@@ -1136,7 +1141,10 @@ async function checkAndSyncSecureStreak() {
 
     let currentStreak = profile?.current_streak || 0;
     let lastActive = profile?.last_active_date ? profile.last_active_date.split('T')[0] : null;
-    let graceLeaves = profile?.grace_leaves_left ?? 3; // Default 3 max gap allowed
+    let graceLeaves = profile?.grace_leaves_left ?? 3; 
+
+    const lastFireAnimKey = `pm_fire_played_${userId}_${todayStr}`;
+    let isNewDayIncrement = false;
 
     if (lastActive === todayStr) {
       updateUIStreak(currentStreak);
@@ -1149,23 +1157,24 @@ async function checkAndSyncSecureStreak() {
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
 
       if (diffDays === 1) {
-        // Perfect continuation next day
         currentStreak += 1;
+        isNewDayIncrement = true;
         checkMilestoneAlert(currentStreak);
       } else if (diffDays > 1 && diffDays <= 4 && graceLeaves > 0) {
-        // Grace period / Leave gap maintained (Max 3 days gap = diffDays <= 4)
         graceLeaves -= (diffDays - 1);
         if (graceLeaves < 0) graceLeaves = 0;
-        currentStreak += 1; // Streak saved!
+        currentStreak += 1; 
+        isNewDayIncrement = true;
         showGraceWarningNotification(diffDays - 1);
       } else {
-        // Bahut zyada din miss ho gaye -> Streak Reset + Red Warning!
         currentStreak = 1;
-        graceLeaves = 3; // Reset grace leaves
+        graceLeaves = 3; 
+        isNewDayIncrement = true;
         showRedWarningNotification();
       }
     } else {
-      currentStreak = 1; // Pehla din
+      currentStreak = 1;
+      isNewDayIncrement = true;
     }
 
     // Database update
@@ -1180,10 +1189,67 @@ async function checkAndSyncSecureStreak() {
 
     updateUIStreak(currentStreak);
 
+    // Smart Play: Agar naya din hai aur abhi tak animation play nahi hua, toh user interaction ka wait karenge
+    if (isNewDayIncrement && !localStorage.getItem(lastFireAnimKey)) {
+      const handleFirstInteraction = () => {
+        if (isStreakTriggered) return;
+        isStreakTriggered = true;
+
+        triggerStreakFireEffect();
+        localStorage.setItem(lastFireAnimKey, 'true');
+
+        // Listeners remove kar dein taaki ek hi baar chale
+        window.removeEventListener('click', handleFirstInteraction);
+        window.removeEventListener('touchstart', handleFirstInteraction);
+        window.removeEventListener('keydown', handleFirstInteraction);
+      };
+
+      window.addEventListener('click', handleFirstInteraction);
+      window.addEventListener('touchstart', handleFirstInteraction);
+      window.addEventListener('keydown', handleFirstInteraction);
+    }
+
   } catch (err) {
     console.warn("Streak sync error:", err);
   }
 }
+
+function triggerStreakFireEffect() {
+  try {
+    const audio = new Audio('auth/fire.mp3'); // Fire sound
+    audio.volume = 0.7;
+    audio.play().catch(e => console.log("Audio autoplay blocked by browser:", e));
+  } catch (err) {
+    console.warn("Fire audio play error:", err);
+  }
+
+  const badgeEl = document.getElementById('streakBadgeTop');
+  if (badgeEl) {
+    const normalSpan = badgeEl.querySelector('.fire-normal');
+    const flippedSpan = badgeEl.querySelector('.fire-flipped');
+
+    if (normalSpan && flippedSpan) {
+      let count = 0;
+      // Har 150ms me seedha aur mirror emoji badlega (total 2 seconds tak)
+      const flameInterval = setInterval(() => {
+        if (normalSpan.style.display === 'none') {
+          normalSpan.style.display = 'inline';
+          flippedSpan.style.display = 'none';
+        } else {
+          normalSpan.style.display = 'none';
+          flippedSpan.style.display = 'inline';
+        }
+        count++;
+        if (count > 12) { // Lagbhag 2 second baad stop ho jayega
+          clearInterval(flameInterval);
+          normalSpan.style.display = 'inline';
+          flippedSpan.style.display = 'none';
+        }
+      }, 150);
+    }
+  }
+}
+
 
 function updateUIStreak(streak) {
   const countEl = document.getElementById('streakCountVal');
