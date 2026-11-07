@@ -222,6 +222,7 @@ function validateDeleteEmailInput() {
 function applyRoleBasedUI(role, permissions = {}) {
   const normalizedRole = (role || "student").toLowerCase();
   const userRoleBadge = document.getElementById("userRoleBadge");
+  const adminToolsSection = document.getElementById("adminToolsSection");
 
   // DOM Elements
   const adminBtn = document.getElementById("adminBtn");
@@ -235,6 +236,7 @@ function applyRoleBasedUI(role, permissions = {}) {
   const manageFlashcardBtn = document.getElementById("manageFlashcardBtn");
 
   // Reset Display
+  if (adminToolsSection) adminToolsSection.style.display = "none";
   if (adminBtn) adminBtn.style.display = "none";
   if (manageTeamBtn) manageTeamBtn.style.display = "none";
   if (sendNotifBtn) sendNotifBtn.style.display = "none";
@@ -247,12 +249,14 @@ function applyRoleBasedUI(role, permissions = {}) {
 
   const isSuperAdmin = (currentUser && currentUser.email && currentUser.email.toLowerCase() === "rohitrajgoh91@gmail.com") || normalizedRole === "superadmin";
 
+  let hasAnyAdminPrivilege = false;
+
   if (isSuperAdmin) {
     if (userRoleBadge) userRoleBadge.innerHTML = '<i class="fa-solid fa-crown"></i> Platform Super Admin';
+    hasAnyAdminPrivilege = true;
     
     if (adminBtn) adminBtn.style.display = "flex";
     if (manageTeamBtn) manageTeamBtn.style.display = "flex";
-
     if (permissions.send_notif !== false && sendNotifBtn) sendNotifBtn.style.display = "flex";
     if (permissions.manage_test !== false && uploadTestBtn) uploadTestBtn.style.display = "flex";
     if (permissions.ai_test !== false && aiTestBtn) aiTestBtn.style.display = "flex";
@@ -263,6 +267,7 @@ function applyRoleBasedUI(role, permissions = {}) {
 
   } else if (normalizedRole === "admin") {
     if (userRoleBadge) userRoleBadge.innerHTML = '<i class="fa-solid fa-user-gear"></i> Admin';
+    hasAnyAdminPrivilege = true;
     
     if (adminBtn) adminBtn.style.display = "flex";
     if (manageTeamBtn) manageTeamBtn.style.display = "flex";
@@ -277,7 +282,9 @@ function applyRoleBasedUI(role, permissions = {}) {
   } else if (normalizedRole === "teammate" || normalizedRole === "moderator") {
     if (userRoleBadge) userRoleBadge.innerHTML = '<i class="fa-solid fa-user-shield"></i> Official Teammate';
 
-    if (manageTeamBtn) manageTeamBtn.style.display = "none";
+    if (permissions.admin_panel || permissions.send_notif || permissions.manage_test || permissions.ai_test || permissions.upload_pyq || permissions.manage_pyq) {
+      hasAnyAdminPrivilege = true;
+    }
 
     if (permissions.admin_panel && adminBtn) adminBtn.style.display = "flex";
     if (permissions.send_notif && sendNotifBtn) sendNotifBtn.style.display = "flex";
@@ -291,9 +298,27 @@ function applyRoleBasedUI(role, permissions = {}) {
   } else {
     if (userRoleBadge) userRoleBadge.innerHTML = '<i class="fa-solid fa-graduation-cap"></i> Active Student';
   }
+
+  // Agar user admin/teammate hai tabhi toggle bar dikhega warna hide rahega
+  if (hasAnyAdminPrivilege && adminToolsSection) {
+    adminToolsSection.style.display = "block";
+  }
 }
 
+// Toggle Handler Function for Admin Menu
+function toggleAdminToolsMenu() {
+  const container = document.getElementById("adminToolsContainer");
+  const icon = document.getElementById("adminToolsToggleIcon");
+  if (!container) return;
 
+  if (container.style.display === "none" || container.style.display === "") {
+    container.style.display = "block";
+    if (icon) icon.style.transform = "rotate(180deg)";
+  } else {
+    container.style.display = "none";
+    if (icon) icon.style.transform = "rotate(0deg)";
+  }
+}
 // Load User Profile Data with Role Support
 async function loadUserProfile() {
   if (!window.supabaseClient) return;

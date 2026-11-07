@@ -1313,11 +1313,11 @@ userRankCard.style.cssText = `
 userRankCard.innerHTML = `
     <div style="display: flex; align-items: center; gap: 12px;">
         <div style="background: linear-gradient(135deg, #00f0ff, #3a7bd5); color: #050b18; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 13px; box-shadow: 0 0 10px rgba(0,240,255,0.5);">
-            #${userRank}
+            ${userRank}
         </div>
         <img src="${userData.profiles?.avatar_url || defaultAvatar}" style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 1.5px solid #00f0ff;" onerror="this.src='${defaultAvatar}'">
         <div>
-            <div style="font-size: 14px; font-weight: 800; color: #fff; letter-spacing: 0.3px;">Aapka Current Rank</div>
+            <div style="font-size: 14px; font-weight: 800; color: #fff; letter-spacing: 0.3px;">You</div>
             <div style="font-size: 11px; color: #94a3b8; font-weight: 600;">${userData.profiles?.full_name || 'Student'} • 🔥 ${userData.profiles?.current_streak || 1}d</div>
         </div>
     </div>

@@ -149,46 +149,58 @@
       </button>
     </div>
 
-    <!-- Admin & Teammate Dynamic Action Buttons -->
-    <button class="btn btn-admin" id="adminBtn" style="display: none;" onclick="goToAdminPanel()">
-      <i class="fa-solid fa-shield-halved"></i> Open Admin Panel
-    </button>
-    
-    <button class="btn btn-admin" id="manageTeamBtn" style="display: none; margin-top: 8px; background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff;" onclick="goToManageTeam()">
-      <i class="fa-solid fa-users-gear"></i> Manage Teammates
-    </button>
+        <!-- Admin & Teammate Action Buttons Toggle Section -->
+    <div id="adminToolsSection" style="display: none; margin-bottom: 15px;">
+      <div 
+        onclick="toggleAdminToolsMenu()" 
+        style="background: #e0e5ec; padding: 12px 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; box-shadow: 4px 4px 8px #b8bec7, -4px -4px 8px #ffffff; user-select: none;"
+        title="Click to toggle admin options"
+      >
+        <span style="font-size: 13px; font-weight: 700; color: #4a5568; display: flex; align-items: center; gap: 8px;">
+          <i class="fa-solid fa-toolbox" style="color: #5a2eff;"></i> Admin & Management Tools
+        </span>
+        <i class="fa-solid fa-chevron-down" id="adminToolsToggleIcon" style="font-size: 12px; color: #718096; transition: transform 0.3s ease;"></i>
+      </div>
 
-    <button class="btn btn-admin" id="sendNotifBtn" style="display: none; margin-top: 8px; background: linear-gradient(135deg, #00d2ff, #0072ff); color: #fff;" onclick="goToSendNotification()">
-      <i class="fa-solid fa-paper-plane"></i> Send Notification
-    </button>
+      <!-- Collapsible Container for Admin Buttons -->
+      <div id="adminToolsContainer" style="display: none; margin-top: 10px; padding-left: 5px; padding-right: 5px;">
+        <button class="btn btn-admin" id="adminBtn" style="display: none; margin-top: 8px;" onclick="goToAdminPanel()">
+          <i class="fa-solid fa-shield-halved"></i> Open Admin Panel
+        </button>
+        
+        <button class="btn btn-admin" id="manageTeamBtn" style="display: none; margin-top: 8px; background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff;" onclick="goToManageTeam()">
+          <i class="fa-solid fa-users-gear"></i> Manage Teammates
+        </button>
 
-    <button class="btn btn-admin" id="uploadTestBtn" style="display: none; margin-top: 8px; background: linear-gradient(135deg, #11998e, #38ef7d); color: #fff;" onclick="goToUploadTest()">
-      <i class="fa-solid fa-file-arrow-up"></i>  Manage Test
-    </button>
+        <button class="btn btn-admin" id="sendNotifBtn" style="display: none; margin-top: 8px; background: linear-gradient(135deg, #00d2ff, #0072ff); color: #fff;" onclick="goToSendNotification()">
+          <i class="fa-solid fa-paper-plane"></i> Send Notification
+        </button>
 
-    <button class="btn btn-admin" id="aiTestBtn" style="display: none; margin-top: 8px; background: linear-gradient(135deg, #8E2DE2, #4A00E0); color: #fff;" onclick="goToAiTestCreator()">
-      <i class="fa-solid fa-wand-magic-sparkles"></i> Create AI Test
-    </button>
+        <button class="btn btn-admin" id="uploadTestBtn" style="display: none; margin-top: 8px; background: linear-gradient(135deg, #11998e, #38ef7d); color: #fff;" onclick="goToUploadTest()">
+          <i class="fa-solid fa-file-arrow-up"></i> Manage Test
+        </button>
 
-        <!-- NEW: PYQ Generator & Management Action Buttons -->
-    <button class="btn btn-admin" id="uploadPyqBtn" style="display: none; margin-top: 8px; background: linear-gradient(135deg, #ff7e5f, #feb47b); color: #fff;" onclick="goToUploadPyq()">
-      <i class="fa-solid fa-file-circle-plus"></i> Upload PYQ 
-    </button>
+        <button class="btn btn-admin" id="aiTestBtn" style="display: none; margin-top: 8px; background: linear-gradient(135deg, #8E2DE2, #4A00E0); color: #fff;" onclick="goToAiTestCreator()">
+          <i class="fa-solid fa-wand-magic-sparkles"></i> Create AI Test
+        </button>
 
-    <button class="btn btn-admin" id="managePyqBtn" style="display: none; margin-top: 8px; background: linear-gradient(135deg, #ff4e50, #f9d423); color: #fff;" onclick="goToManagePyq()">
-      <i class="fa-solid fa-list-check"></i> Manage PYQ
-    </button>
+        <button class="btn btn-admin" id="uploadPyqBtn" style="display: none; margin-top: 8px; background: linear-gradient(135deg, #ff7e5f, #feb47b); color: #fff;" onclick="goToUploadPyq()">
+          <i class="fa-solid fa-file-circle-plus"></i> Upload PYQ 
+        </button>
 
-    <!-- NEW: Flashcard Generator & Management Action Buttons (Unique Color Themes) -->
-    <button class="btn btn-admin" id="uploadFlashcardBtn" style="display: none; margin-top: 8px; background: linear-gradient(135deg, #f2709c, #ff9472); color: #fff;" onclick="goToUploadFlashcard()">
-      <i class="fa-solid fa-bolt"></i> Upload Flashcard
-    </button>
+        <button class="btn btn-admin" id="managePyqBtn" style="display: none; margin-top: 8px; background: linear-gradient(135deg, #ff4e50, #f9d423); color: #fff;" onclick="goToManagePyq()">
+          <i class="fa-solid fa-list-check"></i> Manage PYQ
+        </button>
 
-    <button class="btn btn-admin" id="manageFlashcardBtn" style="display: none; margin-top: 8px; background: linear-gradient(135deg, #7928ca, #ff0080); color: #fff;" onclick="goToManageFlashcard()">
-      <i class="fa-solid fa-clone"></i> Manage Flashcards
-    </button>
+        <button class="btn btn-admin" id="uploadFlashcardBtn" style="display: none; margin-top: 8px; background: linear-gradient(135deg, #f2709c, #ff9472); color: #fff;" onclick="goToUploadFlashcard()">
+          <i class="fa-solid fa-bolt"></i> Upload Flashcard
+        </button>
 
-
+        <button class="btn btn-admin" id="manageFlashcardBtn" style="display: none; margin-top: 8px; background: linear-gradient(135deg, #7928ca, #ff0080); color: #fff;" onclick="goToManageFlashcard()">
+          <i class="fa-solid fa-clone"></i> Manage Flashcards
+        </button>
+      </div>
+    </div>
 
     <!-- General Action Buttons -->
     <div class="btn-group">
