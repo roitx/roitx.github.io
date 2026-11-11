@@ -24,7 +24,6 @@
 </script>
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
-
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-user-select: none; user-select: none; }
     input, textarea, select { -webkit-user-select: text !important; user-select: text !important; }
@@ -106,18 +105,20 @@
       <div class="form-group">
         <label><i class="fa-solid fa-language"></i> Language Mode</label>
         <select class="input-field" id="languageMode">
-          <option value="Bilingual" selected>Bilingual (English + Hinglish)</option>
+          <option value="Bilingual" selected>Bilingual (English + Hinglish/Hindi)</option>
           <option value="English">Pure English</option>
-          <option value="Hindi">Pure Hindi </option>
+          <option value="Hindi">Pure Hindi</option>
         </select>
       </div>
 
       <div class="form-group">
         <label><i class="fa-solid fa-hashtag"></i> Total Flashcards</label>
         <select class="input-field" id="cardCount">
-          <option value="6">6 Flashcards</option>
-          <option value="10" selected>10 Flashcards</option>
+          <option value="10">10 Flashcards</option>
           <option value="15">15 Flashcards</option>
+          <option value="20">20 Flashcards</option>
+          <option value="25" selected>25 Flashcards (Recommended)</option>
+          <option value="30">30 Flashcards</option>
         </select>
       </div>
     </div>
@@ -158,20 +159,23 @@
     btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Generating AI Flashcards...`;
     statusBox.style.display = "block";
     statusBox.style.color = "#7c3aed";
-    statusBox.innerHTML = "AI flashcards taiyar kar raha hai...";
+    statusBox.innerHTML = "AI ${count} flashcards taiyar kar raha hai...";
 
-    const prompt = `Generate exactly ${count} study flashcards for Class ${targetClass}, Subject: ${subject}, Chapter: ${chapter}.
+    const prompt = `Generate exactly ${count} comprehensive study flashcards for Class ${targetClass}, Subject: ${subject}, Chapter: ${chapter}.
 Language Mode required: ${languageMode}.
-IMPORTANT: Ensure all LaTeX formulas are enclosed in single dollar signs (e.g., $C_nH_{2n+1}OH$) and strings are safely closed.
+CRITICAL INSTRUCTIONS FOR BILINGUAL MODE:
+- If language is Bilingual, EVERY card front and back MUST include both formal English technical terms/formulas AND clear Hinglish/Hindi translation or explanation separated by a slash (e.g., "English text / हिन्दी या हिंग्लिश विवरण").
+- Ensure mathematical formulas and symbols are enclosed in single dollar signs (e.g., $C_nH_{2n+1}OH$ or $\\int u v \\, dx$).
 Return ONLY a valid JSON object in this exact format without any markdown backticks or extra text:
 {
   "title": "Class ${targetClass} ${subject}: ${chapter}",
   "exam_target": "Class ${targetClass}",
+  "subject": "${subject}",
   "language_mode": "${languageMode}",
   "cards": [
     {
-      "front": "Question or Concept term",
-      "back": "Detailed explanation with formulas"
+      "front": "English Question / हिंदी प्रश्न",
+      "back": "Detailed English explanation with formula / विस्तृत हिंदी विवरण"
     }
   ]
 }`;
@@ -220,7 +224,10 @@ Return ONLY a valid JSON object in this exact format without any markdown backti
         }
       }
 
-                  previewBox.style.display = "block";
+      // Ensure subject is included in payload
+      generatedPayload.subject = subject;
+
+      previewBox.style.display = "block";
       previewBox.innerHTML = `<div style="font-size:12px; font-weight:bold; color:#a7f3d0; margin-bottom:12px;">PREVIEW (${generatedPayload.cards.length} CARDS) - Math Rendered:</div>` +
         generatedPayload.cards.map((c, i) => `
           <div style="background:rgba(255,255,255,0.05); padding:14px; border-radius:12px; margin-bottom:12px; border:1px solid #334155;">
@@ -235,18 +242,11 @@ Return ONLY a valid JSON object in this exact format without any markdown backti
           </div>
         `).join("");
 
-      // MathJax ko call karein taaki sabhi cards ke formulas ek sath render ho jayein
       setTimeout(() => {
         if (window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
           MathJax.typesetPromise([previewBox]).catch((err) => console.log(err));
         }
       }, 100);
-
-      if (window.MathJax && window.MathJax.typesetPromise) {
-        MathJax.typesetPromise();
-      } else if (window.MathJax) {
-        MathJax.typeset();
-      }
 
       statusBox.style.color = "#10b981";
       statusBox.innerHTML = "✅ Flashcards generate ho gaye! Preview check karke Save karein.";
@@ -258,18 +258,6 @@ Return ONLY a valid JSON object in this exact format without any markdown backti
       btn.disabled = false;
       btn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i> Generate Flashcards`;
     }
-  }
-
-  function escapeHtml(str) {
-    return String(str).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-  }
-
-  function updateCardData(index) {
-    if (!generatedPayload || !generatedPayload.cards[index]) return;
-    const fVal = document.getElementById(`front_${index}`).value;
-    const bVal = document.getElementById(`back_${index}`).value;
-    generatedPayload.cards[index].front = fVal;
-    generatedPayload.cards[index].back = bVal;
   }
 
   async function uploadToDatabase() {

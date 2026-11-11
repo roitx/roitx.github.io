@@ -106,7 +106,6 @@
           <option value="Hindi">Hindi</option>
           <option value="English">English</option>
           <option value="Computer Science">Computer Science</option>
-          <option value="General">General / Other</option>
         </select>
       </div>
 
@@ -163,7 +162,7 @@
         <div class="pyq-title">${item.title}</div>
         <div class="pyq-meta">
           <span><i class="fa-solid fa-graduation-cap"></i> ${item.exam_target || 'Class 12th'}</span> • 
-          <span><i class="fa-solid fa-book"></i> ${item.subject || item.language_mode || 'Bilingual'}</span> • 
+          <span><i class="fa-solid fa-book"></i> ${item.subject || 'General'}</span> • 
           <span><i class="fa-solid fa-layer-group"></i> ${item.cards ? item.cards.length : 0} Cards</span>
         </div>
         <div class="pyq-actions">
