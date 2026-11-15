@@ -1191,22 +1191,27 @@ async function checkAndSyncSecureStreak() {
 
     // Smart Play: Agar naya din hai aur abhi tak animation play nahi hua, toh user interaction ka wait karenge
     if (isNewDayIncrement && !localStorage.getItem(lastFireAnimKey)) {
-      const handleFirstInteraction = () => {
-        if (isStreakTriggered) return;
-        isStreakTriggered = true;
+      const handleFirstInteraction = async () => {
+  if (isStreakTriggered) return;
+  isStreakTriggered = true;
 
-        triggerStreakFireEffect();
-        localStorage.setItem(lastFireAnimKey, 'true');
+  const played = await triggerStreakFireEffect();
 
-        // Listeners remove kar dein taaki ek hi baar chale
-        window.removeEventListener('click', handleFirstInteraction);
-        window.removeEventListener('touchstart', handleFirstInteraction);
-        window.removeEventListener('keydown', handleFirstInteraction);
-      };
+  if (played) {
+    // Sound chal gaya, ab hi "played" mark karo aur listeners hatao
+    localStorage.setItem(lastFireAnimKey, 'true');
+    window.removeEventListener('click', handleFirstInteraction);
+    window.removeEventListener('touchend', handleFirstInteraction);
+    window.removeEventListener('keydown', handleFirstInteraction);
+  } else {
+    // Block hua to agle gesture par dobara try karenge
+    isStreakTriggered = false;
+  }
+};
 
-      window.addEventListener('click', handleFirstInteraction);
-      window.addEventListener('touchstart', handleFirstInteraction);
-      window.addEventListener('keydown', handleFirstInteraction);
+window.addEventListener('click', handleFirstInteraction);
+window.addEventListener('touchend', handleFirstInteraction);  // touchstart nahi
+window.addEventListener('keydown', handleFirstInteraction);
     }
 
   } catch (err) {
@@ -1214,15 +1219,7 @@ async function checkAndSyncSecureStreak() {
   }
 }
 
-function triggerStreakFireEffect() {
-  try {
-    const audio = new Audio('auth/fire.mp3'); // Fire sound
-    audio.volume = 0.7;
-    audio.play().catch(e => console.log("Audio autoplay blocked by browser:", e));
-  } catch (err) {
-    console.warn("Fire audio play error:", err);
-  }
-
+function runFireAnimation() {
   const badgeEl = document.getElementById('streakBadgeTop');
   if (badgeEl) {
     const normalSpan = badgeEl.querySelector('.fire-normal');
@@ -1230,7 +1227,6 @@ function triggerStreakFireEffect() {
 
     if (normalSpan && flippedSpan) {
       let count = 0;
-      // Har 150ms me seedha aur mirror emoji badlega (total 2 seconds tak)
       const flameInterval = setInterval(() => {
         if (normalSpan.style.display === 'none') {
           normalSpan.style.display = 'inline';
@@ -1240,7 +1236,7 @@ function triggerStreakFireEffect() {
           flippedSpan.style.display = 'inline';
         }
         count++;
-        if (count > 12) { // Lagbhag 2 second baad stop ho jayega
+        if (count > 12) {
           clearInterval(flameInterval);
           normalSpan.style.display = 'inline';
           flippedSpan.style.display = 'none';
@@ -1250,6 +1246,20 @@ function triggerStreakFireEffect() {
   }
 }
 
+function triggerStreakFireEffect() {
+  runFireAnimation();
+
+  try {
+    const audio = new Audio('auth/fire.mp3');
+    audio.volume = 0.7;
+    return audio.play()
+      .then(() => true)
+      .catch(e => { console.warn("Fire sound blocked:", e); return false; });
+  } catch (err) {
+    console.warn("Fire audio error:", err);
+    return Promise.resolve(false);
+  }
+}
 
 function updateUIStreak(streak) {
   const countEl = document.getElementById('streakCountVal');
