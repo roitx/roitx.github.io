@@ -2,15 +2,19 @@
    PM ROITX - MAIN CONTROLLER SCRIPT (PART 1)
    ========================================================= */
 
-// Localhost par CORS error se bachne ke liye condition check
-if (!window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1')) {
+const isLocalHost = location.hostname.includes('localhost') || location.hostname.includes('127.0.0.1');
+
+function sendPageView() {
+  if (isLocalHost) return;
   fetch("https://analytics.digitalplat.org/a/collect", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({"property":"dpa_ljL0RgOwajacQYbgGjK2fheU5hfng00","event":"page_view","url":window.location.href})
-  }).catch(err => console.log("Analytics block or failed"));
+    body: JSON.stringify({"property":"dpa_ljL0RgOwajacQYbgGjK2fheU5hfng00","event":"page_view","url":location.href})
+  }).catch(() => {});
 }
 
+// Sirf tab jab user ne pehle Accept kiya ho
+if (localStorage.getItem("cookieConsent") === "accepted") sendPageView();
 // ---------------------------------------------------------
 // FUTURISTIC FADE SCROLL OBSERVER FOR WIDGETS & SECTIONS
 // ---------------------------------------------------------
@@ -839,9 +843,10 @@ await checkAndSyncSecureStreak();
 
     if (acceptBtn) {
       acceptBtn.addEventListener("click", () => {
-        localStorage.setItem("cookieConsent", "accepted");
-        cookieBanner.style.display = "none";
-      });
+  localStorage.setItem("cookieConsent", "accepted");
+  cookieBanner.style.display = "none";
+  sendPageView();   // <- ye nayi line
+});
     }
 
     if (declineBtn) {
