@@ -29,6 +29,7 @@ let renderedPagesMap = new Map();
 let globalFitScale = 1.0;
 let globalPageW = 0, globalPageH = 0;
 let isPinching = false;
+let lastTurningAt = 0;
 
 // Search & TTS State
 let searchMatches = [];
@@ -63,9 +64,6 @@ function enableContentProtection() {
             return false;
         }
     });
-
-    window.addEventListener('blur', () => { document.body.style.filter = "blur(25px)"; });
-    window.addEventListener('focus', () => { document.body.style.filter = "none"; });
     
     document.addEventListener("visibilitychange", () => {
         if (document.hidden) {
@@ -81,47 +79,23 @@ function cleanTitleString(str) {
     return str.replace(/[^\w\s]/gi, '').toLowerCase().trim();
 }
 
+let isPremiumDoc = false, isPurchasedDoc = false;
+function allowedPages() { return (isPremiumDoc && !isPurchasedDoc) ? 1 : (pdfDoc ? pdfDoc.numPages : 1); }
+
 async function verifyPurchaseStatusLocallyOrDB(rawPath, docName) {
-    let purchasedList = JSON.parse(localStorage.getItem("purchasedFiles") || "[]");
-    let userPurchases = JSON.parse(localStorage.getItem("userPurchasedNotes") || "[]");
-    
-    const cleanDoc = cleanTitleString(docName);
-
-    if (purchasedList.includes(rawPath) || userPurchases.some(lp => cleanTitleString(lp.title) === cleanDoc)) {
-        return true;
-    }
-
     try {
-        if (window.supabaseClient) {
-            const { data: { session } } = await window.supabaseClient.auth.getSession();
-            if (session && session.user && session.user.email) {
-                const { data: orders } = await window.supabaseClient
-                    .from('user_orders')
-                    .select('id, status, note_title')
-                    .eq('user_email', session.user.email)
-                    .eq('status', 'approved');
-
-                if (orders && orders.length > 0) {
-                    const isApprovedInDB = orders.some(o => {
-                        const cleanOrderTitle = cleanTitleString(o.note_title);
-                        return cleanOrderTitle && (cleanOrderTitle.includes(cleanDoc) || cleanDoc.includes(cleanOrderTitle));
-                    });
-
-                    if (isApprovedInDB) {
-                        if (!purchasedList.includes(rawPath)) {
-                            purchasedList.push(rawPath);
-                            localStorage.setItem("purchasedFiles", JSON.stringify(purchasedList));
-                        }
-                        return true;
-                    }
-                }
-            }
-        }
-    } catch (err) {
-        console.error("Purchase DB Verification Error:", err);
-    }
-
-    return false;
+        if (!window.supabaseClient) return false;
+        const { data: { session } } = await window.supabaseClient.auth.getSession();
+        const email = session && session.user && session.user.email;
+        if (!email) return false;
+        const { data: orders } = await window.supabaseClient.from('user_orders')
+            .select('id, status, note_title').eq('user_email', email).eq('status', 'approved');
+        const cleanDoc = cleanTitleString(docName);
+        return !!(orders && orders.some(o => {
+            const t = cleanTitleString(o.note_title);
+            return t && cleanDoc && (t.includes(cleanDoc) || cleanDoc.includes(t));
+        }));
+    } catch (err) { console.error("Purchase DB Verification Error:", err); return false; }
 }
 
 function showPurchaseRequiredModal() {
@@ -202,7 +176,7 @@ function updateProgressUI(pageNo) {
     
     const indicator = document.getElementById("page-indicator-top");
     if (indicator) {
-        const totalText = (isPremiumNote && !verifyPurchaseStatusLocallyOrDB(rawPath, docName || "")) ? "1 (Preview)" : pdfDoc.numPages;
+        const totalText = (isPremiumDoc && !isPurchasedDoc) ? "1 (Preview)" : pdfDoc.numPages;
         
         if (isDualPage && actualPage < pdfDoc.numPages) {
             const nextPairPage = actualPage + 1;
@@ -310,6 +284,7 @@ async function startEngine(blob) {
     const isInPaidFolder = rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium"));
     const isPremiumNote = isParamPremium || isInPaidFolder;
     const isPurchased = await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "");
+    isPremiumDoc = isPremiumNote; isPurchasedDoc = isPurchased;
 
     trackActivityLocally({
         title: docName || "PDF Document",
@@ -373,16 +348,21 @@ async function startEngine(blob) {
     loadTOC();
     document.getElementById("master-loader").style.display = "none";
     setupPinchAndPanEngine();
+    setupResizeRebuild();
+    setupSwipeFallback();
     setupHighlightSelectionListener();
 }
 
+function freshBookContainer() {
+    const old = $("#book-container");
+    try { if (old.length && old.data('turn')) old.turn('destroy'); } catch (e) { console.warn("turn destroy:", e); }
+    $("#canvas-stage").empty().append('<div id="book-container"></div>');
+    return $("#book-container");
+}
+
 async function setupTurnJSStructure(maxPages, isPremium, isPurchased) {
-    const bookContainer = $("#book-container");
-    
-    if (bookContainer.data('turn')) {
-        bookContainer.turn('destroy');
-    }
-    bookContainer.html('');
+    renderedPagesMap.clear();
+    const bookContainer = freshBookContainer();
 
     const vpElement = document.getElementById("viewport");
     const containerWidth = vpElement.clientWidth || window.innerWidth;
@@ -457,36 +437,20 @@ async function setupTurnJSStructure(maxPages, isPremium, isPurchased) {
         display: isDualPage ? 'double' : 'single',
         page: currentPage,
         when: {
-    turning: function(e, page, view) {
-        if (page < 1 || page > effectiveMaxPages) {
-            e.preventDefault();
-            return;
-        }
-        
-        // Manual drag/swipe ya turn par bhi strict block
-        const isParamPremium = params.get("type") === "premium";
-        const isInPaidFolder = rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium"));
-        
-        if ((isParamPremium || isInPaidFolder) && !isPurchased && page > 1) {
-            e.preventDefault();
-            showPurchaseRequiredModal();
-            return;
-        }
-
-        currentPage = page;
-        playPageTurnSound();
-        savePageProgress(currentPage);
-       
-
-                let turnPromises = [renderSingleCanvasPage(page)];
-                if (isDualPage && page > 1) {
-                    turnPromises.push(renderSingleCanvasPage(page - 1));
-                }
-                if (page < effectiveMaxPages) {
-                    turnPromises.push(renderSingleCanvasPage(page + 1));
-                }
-                Promise.all(turnPromises);
-                lazyRenderPagesAround(currentPage, effectiveMaxPages);
+            turning: function (e, page) {
+                try {
+                    lastTurningAt = Date.now();
+                    if (page < 1 || page > effectiveMaxPages) { e.preventDefault(); return; }
+                    if (isPremiumDoc && !isPurchasedDoc && page > 1) { e.preventDefault(); showPurchaseRequiredModal(); return; }
+                    currentPage = page;
+                    playPageTurnSound();
+                    savePageProgress(currentPage);
+                    const jobs = [renderSingleCanvasPage(page)];
+                    if (isDualPage && page > 1) jobs.push(renderSingleCanvasPage(page - 1));
+                    if (page < effectiveMaxPages) jobs.push(renderSingleCanvasPage(page + 1));
+                    Promise.all(jobs).catch(() => {});
+                    lazyRenderPagesAround(currentPage, effectiveMaxPages);
+                } catch (err) { console.warn("turning handler:", err); }
             }
         }
     });
@@ -497,41 +461,6 @@ async function setupTurnJSStructure(maxPages, isPremium, isPurchased) {
         slider.max = effectiveMaxPages;
         slider.value = currentPage;
     }
-}
-
-async function activateDualMode(targetPage) {
-    isDualPage = true;
-    const btn = document.getElementById("btn-spread-toggle");
-    if (btn) btn.innerText = "Single Page Mode";
-
-    const isParamPremium = params.get("type") === "premium";
-    const isInPaidFolder = rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium"));
-    let isPurchased = await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "");
-    
-    let maxPages = pdfDoc ? pdfDoc.numPages : 1;
-    if ((isParamPremium || isInPaidFolder) && !isPurchased) {
-        maxPages = 1;
-        targetPage = 1; // Forcefully restrict to page 1 preview
-    }
-
-    let safeTarget = Math.min(targetPage, maxPages);
-    if (safeTarget > 1 && safeTarget % 2 === 0) {
-        safeTarget = safeTarget - 1;
-    }
-
-    currentPage = safeTarget;
-
-    let renderPromises = [renderSingleCanvasPage(currentPage)];
-    if (currentPage > 1) {
-        renderPromises.pageDiv?.(renderSingleCanvasPage(currentPage - 1));
-    }
-    if (currentPage < maxPages) {
-        renderPromises.push(renderSingleCanvasPage(currentPage + 1));
-    }
-    await Promise.all(renderPromises);
-
-    setupTurnJSStructure(maxPages, (isParamPremium || isInPaidFolder), isPurchased);
-    showToast("📖 Dual Page Book Mode Activated");
 }
 
 async function renderSingleCanvasPage(pageNum) {
@@ -725,7 +654,7 @@ window.handleSearchKey = async (e) => {
         if (!query) return;
 
         searchMatches = [];
-        for (let i = 1; i <= pdfDoc.numPages; i++) {
+        for (let i = 1; i <= allowedPages(); i++) {
             const page = await pdfDoc.getPage(i);
             const textContent = await page.getTextContent();
             const pageText = textContent.items.map(item => item.str).join(" ").toLowerCase();
@@ -874,7 +803,7 @@ window.toggleThumbnailGrid = async (show = true) => {
     const grid = document.getElementById("thumbnail-grid");
     if (!grid || grid.children.length > 0) return;
 
-    for (let i = 1; i <= pdfDoc.numPages; i++) {
+    for (let i = 1; i <= allowedPages(); i++) {
         const card = document.createElement("div");
         card.className = "thumb-card";
         card.onclick = () => { jumpToPage(i); toggleThumbnailGrid(false); };
@@ -953,9 +882,13 @@ window.setViewMode = (mode) => {
     viewMode = mode;
     document.body.className = `theme-${document.body.className.split(' ')[0].replace('theme-', '')} ui-visible mode-${mode}`;
     if (mode === 'vertical') {
-        renderVerticalView();
+        const keepPage = currentPage;
+        renderVerticalView().then(() => {
+            const el = document.querySelector(`.v-page-wrapper[data-page-num="${keepPage}"]`);
+            if (el) { el.scrollIntoView({ block: 'start' }); currentPage = keepPage; }
+        });
     } else if (mode === 'flip') {
-        jumpToPage(currentPage);
+        if (pdfDoc) { savePageProgress(currentPage); setupTurnJSStructure(allowedPages(), isPremiumDoc, isPurchasedDoc); }
     }
     window.toggleSettings(false);
 };
@@ -968,7 +901,7 @@ async function renderVerticalView() {
         const isParamPremium = params.get("type") === "premium";
         const isInPaidFolder = rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium"));
         const isPremiumNote = isParamPremium || isInPaidFolder;
-        const isPurchased = await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "");
+        const isPurchased = isPurchasedDoc;
 
         let maxPagesToRender = pdfDoc.numPages;
         if (isPremiumNote && !isPurchased) {
@@ -1020,7 +953,7 @@ window.togglePageSpread = async () => {
     // Strict Security Check: Agar premium note hai aur purchased nahi hai, toh dual page mode enable mat hone do!
     const isParamPremium = params.get("type") === "premium";
     const isInPaidFolder = rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium"));
-    let isPurchased = await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "");
+    let isPurchased = isPurchasedDoc;
 
     if ((isParamPremium || isInPaidFolder) && !isPurchased) {
         showPurchaseRequiredModal();
@@ -1091,44 +1024,16 @@ async function activateDualMode(targetPage) {
     isDualPage = true;
     const btn = document.getElementById("btn-spread-toggle");
     if (btn) btn.innerText = "Single Page Mode";
-
-    const isParamPremium = params.get("type") === "premium";
-    const isInPaidFolder = rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium"));
-    let maxPages = pdfDoc ? pdfDoc.numPages : 1;
-    if ((isParamPremium || isInPaidFolder) && !verifyPurchaseStatusLocallyOrDB(rawPath, docName || "")) {
-        maxPages = 1;
-    }
-
-    let safeTarget = Math.min(targetPage, maxPages);
-    if (safeTarget > 1 && safeTarget % 2 === 0) {
-        safeTarget = safeTarget - 1;
-    }
-
-    currentPage = safeTarget;
-
-    let renderPromises = [renderSingleCanvasPage(currentPage)];
-    if (currentPage > 1) {
-        renderPromises.push(renderSingleCanvasPage(currentPage - 1));
-    }
-    if (currentPage < maxPages) {
-        renderPromises.push(renderSingleCanvasPage(currentPage + 1));
-    }
-    await Promise.all(renderPromises);
-
-    setupTurnJSStructure(maxPages, isParamPremium, verifyPurchaseStatusLocallyOrDB(rawPath, docName || ""));
+    let t = Math.min(targetPage, allowedPages());
+    if (t > 1 && t % 2 === 0) t--;
+    currentPage = t;
+    savePageProgress(t);
+    await setupTurnJSStructure(allowedPages(), isPremiumDoc, isPurchasedDoc);
     showToast("📖 Dual Page Book Mode Activated");
 }
-
 async function applyDualModeState() {
-    const isParamPremium = params.get("type") === "premium";
-    const isInPaidFolder = rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium"));
-    let maxPages = pdfDoc ? pdfDoc.numPages : 1;
-    if ((isParamPremium || isInPaidFolder) && !verifyPurchaseStatusLocallyOrDB(rawPath, docName || "")) {
-        maxPages = 1;
-    }
-    setupTurnJSStructure(maxPages, isParamPremium, verifyPurchaseStatusLocallyOrDB(rawPath, docName || ""));
+    await setupTurnJSStructure(allowedPages(), isPremiumDoc, isPurchasedDoc);
 }
-
 window.togglePageSound = () => {
     isSoundEnabled = !isSoundEnabled;
     localStorage.setItem('pageFlipSound', isSoundEnabled);
@@ -1140,68 +1045,34 @@ window.togglePageSound = () => {
     showToast(isSoundEnabled ? "🔊 Flip Sound Enabled" : "🔇 Flip Sound Muted");
 };
 
-// FULLY ROBUST JUMP TO PAGE FUNCTION FOR ALL MODES
 async function jumpToPage(pageNo) {
     if (!pdfDoc) return;
-    
-    const isParamPremium = params.get("type") === "premium";
-    const isInPaidFolder = rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium"));
-    let maxAllowed = pdfDoc.numPages;
-    
-    let isPurchased = await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "");
-    if ((isParamPremium || isInPaidFolder) && !isPurchased) {
-        maxAllowed = Math.min(maxAllowed, 1);
-    }
-
+    if (isPremiumDoc && !isPurchasedDoc && pageNo > 1) { showPurchaseRequiredModal(); return; }
+    const maxAllowed = allowedPages();
     let target = Math.min(Math.max(1, pageNo), maxAllowed);
-
-    if ((isParamPremium || isInPaidFolder) && !isPurchased && target > 1) {
-        showPurchaseRequiredModal();
-        return;
-    }
-
-    // 1. Vertical View handling
     if (viewMode === 'vertical') {
-        const container = document.getElementById("vertical-scroll-container");
-        if (container) {
-            const pageEl = container.querySelector(`.v-page-wrapper[data-page-num="${target}"]`);
-            if (pageEl) {
-                pageEl.scrollIntoView({ behavior: 'smooth' });
-                currentPage = target;
-                updateProgressUI(currentPage);
-            }
-        }
+        const el = document.querySelector(`.v-page-wrapper[data-page-num="${target}"]`);
+        if (el) { el.scrollIntoView({ behavior: 'smooth' }); currentPage = target; updateProgressUI(target); }
         return;
     }
-
-    // 2. 3D Flip / Dual Page View handling (Fixed with Proper Structure Rebuild)
+    if (isDualPage && target > 1 && target % 2 === 0) target--;
     try {
-        if (isDualPage && target > 1 && target % 2 === 0) {
-            target = target - 1; 
-        }
-        
-        currentPage = target;
-        savePageProgress(target); // Target page ko localStorage me save karein taaki setupTurnJSStructure ise pick kare
-
-        // Target page aur uske aas-paas ke pages ko render karein
         await renderSingleCanvasPage(target);
-        if (isDualPage && target > 1) {
-            await renderSingleCanvasPage(target - 1);
-        }
-        if (target < maxAllowed) {
-            await renderSingleCanvasPage(target + 1);
-        }
+        if (isDualPage && target > 1) await renderSingleCanvasPage(target - 1);
+        if (target < maxAllowed) await renderSingleCanvasPage(target + 1);
         lazyRenderPagesAround(target, maxAllowed);
-
-        // Turn.js ke saare DOM elements aur instance ko target page ke sath properly rebuild karein
-        await setupTurnJSStructure(maxAllowed, (isParamPremium || isInPaidFolder), isPurchased);
-        
+        const bc = $("#book-container");
+        const healthy = bc.length && bc.data('turn');
+        if (healthy && Math.abs(target - currentPage) <= 1) {
+            if (bc.turn('page') !== target) bc.turn('page', target);
+        } else {
+            savePageProgress(target);
+            await setupTurnJSStructure(maxAllowed, isPremiumDoc, isPurchasedDoc);
+        }
+        currentPage = target;
         updateProgressUI(target);
-    } catch (e) {
-        console.warn("Jump page error caught safely:", e);
-    }
+    } catch (e) { console.warn("Jump page error:", e); }
 }
-
 window.togglePresentationMode = () => {
     isPresentationMode = !isPresentationMode;
     document.body.classList.toggle("presentation-mode", isPresentationMode);
@@ -1299,84 +1170,72 @@ window.handleViewportClick = (e) => {
 };
 
 window.navPage = (dir) => {
-    if (isPinching || isAnimating) return;
-    
-    if (isDualPage && dir === 'next' && currentPage >= pdfDoc.numPages) {
-        showToast("📖 Ye aakhiri page hai.");
-        return;
-    }
-
+    if (isPinching || isAnimating || !pdfDoc) return;
     isAnimating = true;
     setTimeout(() => { isAnimating = false; }, 550);
-    
     if (zoomScale > 1.05) window.resetZoom();
-
-    if (viewMode === 'vertical') {
-        const step = dir === 'next' ? 1 : -1;
-        const target = Math.min(Math.max(1, currentPage + step), pdfDoc.numPages);
-        jumpToPage(target);
+    const atEnd = dir === 'next' && currentPage >= (isDualPage ? pdfDoc.numPages : allowedPages());
+    if (atEnd) {
+        if (isPremiumDoc && !isPurchasedDoc) showPurchaseRequiredModal();
+        else showToast("📖 Ye aakhiri page hai.");
+        if (isAutoScrolling) window.toggleAutoScroll();
         return;
     }
-
-    if (dir === 'next') {
-        const isParamPremium = params.get("type") === "premium";
-        const isInPaidFolder = rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium"));
-        const isPremiumNote = isParamPremium || isInPaidFolder;
-        
-        let purchasedList = JSON.parse(localStorage.getItem("purchasedFiles") || "[]");
-        let isPurchased = purchasedList.includes(rawPath);
-
-        if (isPremiumNote && !isPurchased && currentPage >= 1) {
-            showPurchaseRequiredModal();
-            return;
-        }
-
-        try {
-            $("#book-container").turn('next');
-        } catch(e) { console.warn(e); }
-    } else if (dir === 'prev') {
-        try {
-            $("#book-container").turn('previous');
-        } catch(e) { console.warn(e); }
+    if (viewMode === 'vertical') {
+        jumpToPage(Math.min(Math.max(1, currentPage + (dir === 'next' ? 1 : -1)), pdfDoc.numPages));
+        return;
     }
+    try { $("#book-container").turn(dir === 'next' ? 'next' : 'previous'); } catch (e) { console.warn(e); }
 };
-
 const pageSlider = document.getElementById("page-slider");
 if (pageSlider) {
     const bubble = document.getElementById("bubble-tip");
-    pageSlider.oninput = function() {
-        if (bubble) {
-            bubble.innerText = this.value;
-            bubble.style.display = "block";
-            bubble.style.left = `${(this.value / this.max) * 100}%`;
-        }
-        const targetPage = parseInt(this.value);
-        if (pdfDoc && targetPage >= 1 && targetPage <= pdfDoc.numPages) {
-            jumpToPage(targetPage);
-        }
+    pageSlider.oninput = function () {
+        if (!bubble) return;
+        bubble.innerText = this.value; bubble.style.display = "block";
+        bubble.style.left = `${(this.value / this.max) * 100}%`;
     };
-    pageSlider.onchange = function() {
+    pageSlider.onchange = function () {
         if (bubble) bubble.style.display = "none";
         if (zoomScale > 1.05) window.resetZoom();
-        const targetPage = parseInt(this.value);
-        
-        const isParamPremium = params.get("type") === "premium";
-        const isInPaidFolder = rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium"));
-        const isPremiumNote = isParamPremium || isInPaidFolder;
-        
-        let purchasedList = JSON.parse(localStorage.getItem("purchasedFiles") || "[]");
-        let isPurchased = purchasedList.includes(rawPath);
-
-        if (isPremiumNote && !isPurchased && targetPage > 1) {
-            showPurchaseRequiredModal();
-            this.value = 1;
-            jumpToPage(1);
-            return;
-        }
-        jumpToPage(targetPage);
+        const p = parseInt(this.value);
+        if (isPremiumDoc && !isPurchasedDoc && p > 1) { showPurchaseRequiredModal(); this.value = 1; jumpToPage(1); return; }
+        jumpToPage(p);
     };
 }
-
+// Phone rotate / window resize: rebuild book at new size (ignores small address-bar resizes)
+function setupSwipeFallback() {
+    const vp = document.getElementById("viewport");
+    let sx = 0, sy = 0, t0 = 0, multi = false;
+    vp.addEventListener('touchstart', (e) => {
+        multi = e.touches.length > 1;
+        if (e.touches.length === 1) { sx = e.touches[0].clientX; sy = e.touches[0].clientY; t0 = Date.now(); }
+    }, { passive: true });
+    vp.addEventListener('touchend', (e) => {
+        if (multi) { if (e.touches.length === 0) multi = false; return; }
+        if (viewMode !== 'flip' || zoomScale > 1.05 || isPinching) return;
+        const t = e.changedTouches[0], dx = t.clientX - sx, dy = t.clientY - sy;
+        if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5 || Date.now() - t0 > 800) return;
+        // let Turn.js handle it if its own drag already started a flip
+        setTimeout(() => { if (Date.now() - lastTurningAt > 700) window.navPage(dx < 0 ? 'next' : 'prev'); }, 80);
+    }, { passive: true });
+}
+function setupResizeRebuild() {
+    let lw = window.innerWidth, lh = window.innerHeight, t = null;
+    const onResize = () => {
+        clearTimeout(t);
+        t = setTimeout(() => {
+            if (Math.abs(window.innerWidth - lw) < 60 && Math.abs(window.innerHeight - lh) < 150) return;
+            lw = window.innerWidth; lh = window.innerHeight;
+            if (viewMode !== 'flip' || !pdfDoc) return;
+            savePageProgress(currentPage);
+            setupTurnJSStructure(allowedPages(), isPremiumDoc, isPurchasedDoc);
+        }, 350);
+    };
+    window.addEventListener('touchcancel', () => { isPinching = false; });
+    window.addEventListener('resize', onResize);
+    window.addEventListener('orientationchange', onResize);
+}
 window.adjustZoom = (delta) => {
     zoomScale = Math.min(Math.max(zoomScale + delta, 1.0), 4.0);
     if (zoomScale === 1.0) { panX = 0; panY = 0; }
