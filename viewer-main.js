@@ -29,6 +29,7 @@ let renderedPagesMap = new Map();
 let globalFitScale = 1.0;
 let globalPageW = 0, globalPageH = 0;
 let isPinching = false;
+let swipeDown = false, nativeDrag = false, lastTurnAt = 0;
 let lastTurningAt = 0;
 
 // Search & TTS State
@@ -349,13 +350,33 @@ async function startEngine(blob) {
     document.getElementById("master-loader").style.display = "none";
     setupPinchAndPanEngine();
     setupResizeRebuild();
+    setupSwipeFlip();
     setupSwipeFallback();
     setupHighlightSelectionListener();
 }
 
+function paintMirrorBack(page) {
+    const d = $("#book-container").data();
+    const back = d && d.pageObjs && d.pageObjs[0];
+    if (!back || back.data('mirrorOf') === page) return;
+    back.empty().css({ background: 'linear-gradient(90deg,#efece4,#faf9f5 55%,#f1eee6)' });
+    const src = document.querySelector(`.page-flip-page[data-page-num="${page}"] canvas`);
+    if (src) {
+        const c = document.createElement('canvas');
+        c.width = src.width; c.height = src.height;
+        c.style.cssText = 'display:block;width:100%;height:100%;opacity:.22;';
+        const x = c.getContext('2d');
+        x.translate(c.width, 0); x.scale(-1, 1);   // see-through print is left-right reversed
+        x.drawImage(src, 0, 0);
+        back.append(c);
+    }
+    back.data('mirrorOf', page);
+}
+
 function freshBookContainer() {
+    // Old instance is dropped with its node (no turn('destroy'): it left finger-drag dead on the next book)
     const old = $("#book-container");
-    try { if (old.length && old.data('turn')) old.turn('destroy'); } catch (e) { console.warn("turn destroy:", e); }
+    try { if (old.length && old.data('turn')) old.turn('stop'); } catch (e) {}
     $("#canvas-stage").empty().append('<div id="book-container"></div>');
     return $("#book-container");
 }
@@ -433,16 +454,25 @@ async function setupTurnJSStructure(maxPages, isPremium, isPurchased) {
         height: globalPageH,
         autoCenter: true,
         elevation: 80,
+        duration: 850,
         gradients: true,
         display: isDualPage ? 'double' : 'single',
         page: currentPage,
         when: {
+            start: function (e, opts) {
+                lastTurnAt = Date.now(); if (swipeDown) nativeDrag = true;
+                try { if (!isDualPage && opts) paintMirrorBack(opts.page); } catch (err) { console.warn(err); }
+            },
+            turned: function () { isAnimating = false; },
             turning: function (e, page) {
                 try {
                     lastTurningAt = Date.now();
                     if (page < 1 || page > effectiveMaxPages) { e.preventDefault(); return; }
                     if (isPremiumDoc && !isPurchasedDoc && page > 1) { e.preventDefault(); showPurchaseRequiredModal(); return; }
                     currentPage = page;
+                    lastTurnAt = Date.now();
+                    isAnimating = true;
+                    setTimeout(() => { isAnimating = false; }, 1200);
                     playPageTurnSound();
                     savePageProgress(currentPage);
                     const jobs = [renderSingleCanvasPage(page)];
@@ -1172,7 +1202,7 @@ window.handleViewportClick = (e) => {
 window.navPage = (dir) => {
     if (isPinching || isAnimating || !pdfDoc) return;
     isAnimating = true;
-    setTimeout(() => { isAnimating = false; }, 550);
+    setTimeout(() => { isAnimating = false; }, 1200);
     if (zoomScale > 1.05) window.resetZoom();
     const atEnd = dir === 'next' && currentPage >= (isDualPage ? pdfDoc.numPages : allowedPages());
     if (atEnd) {
@@ -1219,6 +1249,27 @@ function setupSwipeFallback() {
         // let Turn.js handle it if its own drag already started a flip
         setTimeout(() => { if (Date.now() - lastTurningAt > 700) window.navPage(dx < 0 ? 'next' : 'prev'); }, 80);
     }, { passive: true });
+}
+function setupSwipeFlip() {
+    const vp = document.getElementById("viewport");
+    let sx = 0, sy = 0, t0 = 0;
+    vp.addEventListener('pointerdown', (e) => {
+        if (e.pointerType === 'mouse' && e.button !== 0) return;
+        swipeDown = true; nativeDrag = false; sx = e.clientX; sy = e.clientY; t0 = Date.now();
+    });
+    vp.addEventListener('pointercancel', () => { swipeDown = false; });
+    vp.addEventListener('pointerup', (e) => {
+        if (!swipeDown) return;
+        swipeDown = false;
+        if (nativeDrag || viewMode !== 'flip' || isPinching || zoomScale > 1.05 || !pdfDoc) return;
+        const dx = e.clientX - sx, dy = e.clientY - sy;
+        if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5 && Date.now() - t0 < 900) {
+            setTimeout(() => {
+                if (nativeDrag || isAnimating || lastTurnAt >= t0) return;
+                window.navPage(dx < 0 ? 'next' : 'prev');
+            }, 160);
+        }
+    });
 }
 function setupResizeRebuild() {
     let lw = window.innerWidth, lh = window.innerHeight, t = null;
