@@ -454,7 +454,7 @@ async function setupTurnJSStructure(maxPages, isPremium, isPurchased) {
         height: globalPageH,
         autoCenter: true,
         elevation: 80,
-        duration: 850,
+        duration: 700,
         gradients: true,
         display: isDualPage ? 'double' : 'single',
         page: currentPage,
@@ -463,7 +463,18 @@ async function setupTurnJSStructure(maxPages, isPremium, isPurchased) {
                 lastTurnAt = Date.now(); if (swipeDown) nativeDrag = true;
                 try { if (!isDualPage && opts) paintMirrorBack(opts.page); } catch (err) { console.warn(err); }
             },
-            turned: function () { isAnimating = false; },
+            turned: function (e, page) {
+                isAnimating = false;
+                // Render AFTER the flip finishes so pdf.js doesn't block frames mid-animation
+                try {
+                    const pg = page || currentPage;
+                    const jobs = [renderSingleCanvasPage(pg)];
+                    if (isDualPage && pg > 1) jobs.push(renderSingleCanvasPage(pg - 1));
+                    if (pg < effectiveMaxPages) jobs.push(renderSingleCanvasPage(pg + 1));
+                    Promise.all(jobs).catch(() => {});
+                    lazyRenderPagesAround(pg, effectiveMaxPages);
+                } catch (err) { console.warn("turned handler:", err); }
+            },
             turning: function (e, page) {
                 try {
                     lastTurningAt = Date.now();
@@ -475,11 +486,6 @@ async function setupTurnJSStructure(maxPages, isPremium, isPurchased) {
                     setTimeout(() => { isAnimating = false; }, 1200);
                     playPageTurnSound();
                     savePageProgress(currentPage);
-                    const jobs = [renderSingleCanvasPage(page)];
-                    if (isDualPage && page > 1) jobs.push(renderSingleCanvasPage(page - 1));
-                    if (page < effectiveMaxPages) jobs.push(renderSingleCanvasPage(page + 1));
-                    Promise.all(jobs).catch(() => {});
-                    lazyRenderPagesAround(currentPage, effectiveMaxPages);
                 } catch (err) { console.warn("turning handler:", err); }
             }
         }
@@ -1247,7 +1253,7 @@ function setupSwipeFallback() {
         const t = e.changedTouches[0], dx = t.clientX - sx, dy = t.clientY - sy;
         if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5 || Date.now() - t0 > 800) return;
         // let Turn.js handle it if its own drag already started a flip
-        setTimeout(() => { if (Date.now() - lastTurningAt > 700) window.navPage(dx < 0 ? 'next' : 'prev'); }, 80);
+        setTimeout(() => { if (!isAnimating && Date.now() - lastTurningAt > 950) window.navPage(dx < 0 ? 'next' : 'prev'); }, 80);
     }, { passive: true });
 }
 function setupSwipeFlip() {
@@ -1265,7 +1271,7 @@ function setupSwipeFlip() {
         const dx = e.clientX - sx, dy = e.clientY - sy;
         if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5 && Date.now() - t0 < 900) {
             setTimeout(() => {
-                if (nativeDrag || isAnimating || lastTurnAt >= t0) return;
+                if (nativeDrag || isAnimating || lastTurnAt >= t0 || Date.now() - lastTurningAt < 950) return;
                 window.navPage(dx < 0 ? 'next' : 'prev');
             }, 160);
         }
