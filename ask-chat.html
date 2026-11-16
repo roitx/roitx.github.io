@@ -73,7 +73,6 @@
     }
   };
 </script>
-<script src="https://code.responsivevoice.com/responsivevoice.js"></script>
 
 <!-- Math.js Library for calculation support -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
@@ -264,9 +263,7 @@
   max-height: none !important;
 }
 
-.msg.bot.first-greeting .msg-speaker-btn {
-  display: none !important;
-}
+/* greeting par bhi speaker button dikhega */
 @keyframes pulseAi {
   0% { opacity: 0.6; }
   50% { opacity: 1; }
@@ -357,6 +354,7 @@
           <button type="button" class="toolBtn" onclick="showCalculatorModalDirect()">Calculator</button>
           <button type="button" class="toolBtn" onclick="promptCreateNote()">Create Note</button>
           <button type="button" class="toolBtn" onclick="downloadNotesFileDirect()">Download Notes</button>
+          <button type="button" class="toolBtn" onclick="runCommand('voice')">Voice</button>
         </div>
       </div>
 
