@@ -199,20 +199,33 @@ const observanceDays = {
 };
 
 
+// Local date -> "YYYY-MM-DD"
+function fmtDateKey(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function escapeHtml(str) {
+  return String(str == null ? "" : str)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+// Har calendar event ab apni alag notification banta hai (aaj + kal ke events).
+// Notification har page-load par drawer me add hoti hai (delete na ki ho to),
+// lekin toast sirf pehli baar dikhta hai.
 async function checkTodayCalendarNotifications() {
   const today = new Date();
-  const yyyy = today.getFullYear();
-  const mm = String(today.getMonth() + 1).padStart(2, '0');
-  const dd = String(today.getDate()).padStart(2, '0');
-  const todayKey = `${yyyy}-${mm}-${dd}`;
-  const monthDayKey = `${mm}-${dd}`;
+  const tomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+  const todayKey = fmtDateKey(today);
+  const tomorrowKey = fmtDateKey(tomorrow);
+  const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
 
   let fetchedHolidays = {};
   try {
+    const yyyy = today.getFullYear();
     const timeMin = new Date(`${yyyy}-01-01T00:00:00Z`).toISOString();
-    const timeMax = new Date(`${yyyy}-12-31T23:59:59Z`).toISOString();
+    const timeMax = new Date(`${yyyy + 1}-01-02T00:00:00Z`).toISOString();
     const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(INDIAN_HOLIDAY_CALENDAR_ID)}/events?key=${GOOGLE_API_KEY}&timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&maxResults=2500`;
-    
     const res = await fetch(url);
     const data = await res.json();
     if (data.items) {
@@ -233,69 +246,67 @@ async function checkTodayCalendarNotifications() {
         const user = await window.getCurrentUser();
         if (user) currentUserId = user.id;
       }
-
-      // Calendar.js ki tarah exact query filter: User ke personal events ya phir global/admin events
       let query = window.supabaseClient.from("events").select("*")
-        .eq("event_date", todayKey);
-
+        .in("event_date", [todayKey, tomorrowKey]);
       if (currentUserId) {
         query = query.or(`user_id.eq.${currentUserId},is_global.eq.true`);
       } else {
         query = query.eq("is_global", true);
       }
-
       const { data: evData, error: evErr } = await query;
-      if (!evErr && evData) {
-        dbEventsList = evData;
-      }
+      if (!evErr && evData) dbEventsList = evData;
     } catch (err) {
       console.warn("DB events fetch error:", err);
     }
   }
 
-  let activeEvents = [];
+  // ---- Saare calendar items ek list me ----
+  const items = [];
+  const pushDay = (dateKey, dateObj, label) => {
+    const prefix = label === "today" ? "" : "Kal: ";
+    const idBase = `cal-${dateKey}`;
+    const mmdd = `${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
 
-  // 1. Google Holiday check
-  if (fetchedHolidays[todayKey]) {
-    activeEvents.push(`🎉 Holiday: ${fetchedHolidays[todayKey]}`);
-  }
-  // 2. Observance check
-  if (observanceDays[monthDayKey]) {
-    activeEvents.push(`✨ Observance: ${observanceDays[monthDayKey]}`);
-  }
-  // 3. Sunday check
-  if (today.getDay() === 0) {
-    activeEvents.push(`☀️ Sunday (Weekly Off)`);
-  }
-  // 4. Filtered Database Events check (Admin 📢 & Personal 📌)
-  if (dbEventsList.length > 0) {
-    dbEventsList.forEach(ev => {
-      const icon = ev.is_global ? '📢' : '📌';
-      activeEvents.push(`${icon} ${ev.event_name}`);
-    });
-  }
-
-  if (activeEvents.length > 0) {
-    const notifId = `cal-today-${todayKey}`;
-    const expiryKey = `notif_expiry_${notifId}`;
-    const lastTriggered = localStorage.getItem(expiryKey);
-    const nowTime = new Date().getTime();
-    const twentyFourHours = 24 * 60 * 60 * 1000;
-
-    if (!lastTriggered || (nowTime - parseInt(lastTriggered)) > twentyFourHours) {
-      if (typeof addNotification === 'function') {
-        addNotification(
-          notifId, 
-          "📅 Aaj Ka Calendar Event & Wish", 
-          activeEvents.join(" | "), 
-          "calendar.html", 
-          true, 
-          new Date().toISOString(), 
-          "event"
-        );
-        localStorage.setItem(expiryKey, nowTime.toString());
-      }
+    if (fetchedHolidays[dateKey]) {
+      items.push({ id: `${idBase}-holiday`, title: `🎉 ${prefix}Holiday`, message: fetchedHolidays[dateKey] });
     }
+    if (observanceDays[mmdd]) {
+      items.push({ id: `${idBase}-observance`, title: `✨ ${prefix}Special Day`, message: observanceDays[mmdd] });
+    }
+    if (label === "today" && dateObj.getDay() === 0) {
+      items.push({ id: `${idBase}-sunday`, title: "☀️ Sunday", message: "Aaj weekly off hai." });
+    }
+    dbEventsList.filter(ev => ev.event_date === dateKey).forEach(ev => {
+      items.push({
+        id: `${idBase}-ev-${ev.id}`,
+        title: ev.is_global ? `📢 ${prefix}Announcement` : `📌 ${prefix}Your Event`,
+        message: ev.event_name
+      });
+    });
+  };
+  pushDay(todayKey, today, "today");
+  pushDay(tomorrowKey, tomorrow, "tomorrow");
+
+  // ---- Drawer me add karo; toast sirf naye ke liye ----
+  let toasted = [];
+  try { toasted = JSON.parse(localStorage.getItem("cal_toasted") || "[]"); } catch (e) {}
+  const newOnes = [];
+
+  items.forEach(it => {
+    addNotification(it.id, it.title, it.message, "calendar.html", false, startOfToday, "event");
+    if (!toasted.includes(it.id) && !deletedNotifIds.includes(it.id)) newOnes.push(it);
+  });
+
+  if (newOnes.length > 0) {
+    const first = newOnes[0];
+    showToastNotification(
+      newOnes.length === 1 ? first.title : `📅 ${newOnes.length} naye calendar updates`,
+      newOnes.length === 1 ? first.message : newOnes.map(n => n.message).slice(0, 2).join(" • ") + (newOnes.length > 2 ? " ..." : ""),
+      "calendar.html"
+    );
+    // purane keys hata kar sirf last ~60 rakho
+    toasted = toasted.concat(newOnes.map(n => n.id)).slice(-60);
+    localStorage.setItem("cal_toasted", JSON.stringify(toasted));
   }
 }
 
@@ -344,11 +355,13 @@ function updateUnreadCount() {
   if (countTag) {
     countTag.innerText = unreadCount > 0 ? `${unreadCount} New` : `${allItems.length} Items`;
   }
+  applyNotifFilter();
 }
 
 function toggleNotif() {
   const box = document.getElementById("notifBox");
   if (box) {
+    if (box.classList.contains("notif-fullscreen")) setNotifFullscreen(false);
     box.classList.toggle("show");
   } else {
     const notifModal = document.getElementById('notifModal');
@@ -358,6 +371,82 @@ function toggleNotif() {
     }
   }
 }
+
+// ---- Fullscreen notification view ----
+let currentNotifFilter = "all";
+
+function setNotifFullscreen(on) {
+  const box = document.getElementById("notifBox");
+  if (!box) return;
+  const wrapper = document.querySelector(".notif-wrapper");
+
+  if (on) {
+    // body me shift: taaki header ke transform/blur se fixed position na bigde
+    document.body.appendChild(box);
+    box.classList.add("show", "notif-fullscreen");
+    document.body.style.overflow = "hidden";
+  } else {
+    box.classList.remove("notif-fullscreen");
+    if (wrapper) wrapper.appendChild(box);
+    document.body.style.overflow = "";
+    setNotifFilter("all");
+  }
+
+  const btn = document.getElementById("notifFullscreenBtn");
+  if (btn) {
+    btn.title = on ? "Exit full screen" : "Full screen";
+    btn.querySelector(".ic-expand").style.display = on ? "none" : "block";
+    btn.querySelector(".ic-collapse").style.display = on ? "block" : "none";
+  }
+}
+
+function toggleNotifFullscreen() {
+  const box = document.getElementById("notifBox");
+  if (!box) return;
+  setNotifFullscreen(!box.classList.contains("notif-fullscreen"));
+}
+
+function setNotifFilter(filter) {
+  currentNotifFilter = filter;
+  document.querySelectorAll("#notifFilters .notif-filter-chip").forEach(c => {
+    c.classList.toggle("active", c.dataset.filter === filter);
+  });
+  applyNotifFilter();
+}
+
+function applyNotifFilter() {
+  const list = document.getElementById("notifList");
+  if (!list) return;
+  let visible = 0;
+  list.querySelectorAll(".notif-item").forEach(item => {
+    let show = true;
+    if (currentNotifFilter === "unread") show = item.classList.contains("unread");
+    else if (currentNotifFilter === "event") show = item.dataset.type === "event";
+    item.style.display = show ? "" : "none";
+    if (show) visible++;
+  });
+  let msg = document.getElementById("notifFilterEmpty");
+  if (!msg) {
+    msg = document.createElement("div");
+    msg.id = "notifFilterEmpty";
+    msg.className = "notif-empty";
+    msg.style.display = "none";
+    msg.textContent = "Is filter me koi notification nahi hai.";
+    list.appendChild(msg);
+  }
+  const total = list.querySelectorAll(".notif-item").length;
+  msg.style.display = (total > 0 && visible === 0) ? "block" : "none";
+}
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    const box = document.getElementById("notifBox");
+    const modal = document.getElementById("notifModal");
+    const modalOpen = modal && modal.style.display === "flex";
+    if (modalOpen) return; // pehle modal band hoga (existing behaviour)
+    if (box && box.classList.contains("notif-fullscreen")) setNotifFullscreen(false);
+  }
+});
 
 function markAllAsRead() {
   const allItems = document.querySelectorAll(".notif-item");
@@ -375,7 +464,7 @@ function markAllAsRead() {
 
 function openNotifModal(id, title, message, link, timestamp) {
   const notifBox = document.getElementById("notifBox");
-  if (notifBox) notifBox.classList.remove("show");
+  if (notifBox && !notifBox.classList.contains("notif-fullscreen")) notifBox.classList.remove("show");
 
   const modal = document.getElementById("notifModal");
   const modalTitle = document.getElementById("modalNotifTitle");
@@ -450,38 +539,54 @@ function deleteNotification(e, id) {
   }
 }
 
+const notifStore = {};
+
+function bindNotifListEvents(notifList) {
+  if (notifList.dataset.bound) return;
+  notifList.dataset.bound = "1";
+  notifList.addEventListener("click", (e) => {
+    const item = e.target.closest(".notif-item");
+    if (!item) return;
+    const id = item.getAttribute("data-id");
+    if (e.target.closest(".notif-delete-btn")) {
+      deleteNotification(e, id);
+      return;
+    }
+    const n = notifStore[id];
+    if (n) openNotifModal(id, n.title, n.message, n.link, n.time);
+  });
+}
+
 function addNotification(id, title, message, link = "#", isNew = false, createdAt = null, type = "info") {
   const notifList = document.getElementById("notifList");
 
   if (!notifList || deletedNotifIds.includes(String(id))) return;
   if (document.getElementById(`notif-item-${id}`)) return;
+  bindNotifListEvents(notifList);
 
   const emptyMsg = notifList.querySelector(".notif-empty");
-  if (emptyMsg) notifList.innerHTML = "";
+  if (emptyMsg && !notifList.querySelector(".notif-item")) notifList.innerHTML = "";
 
   const isRead = readNotifIds.includes(String(id));
-  const safeTitle = (title || '').replace(/"/g, '&quot;');
-  const safeMessage = (message || '').replace(/"/g, '&quot;');
-  const safeLink = link || "#";
   const timeStr = createdAt || new Date().toISOString();
   const formattedTime = timeAgo(timeStr);
+  notifStore[id] = { title: title || "", message: message || "", link: link || "#", time: timeStr };
 
   const itemHtml = `
-    <div class="notif-item ${isRead ? 'read' : 'unread'}" id="notif-item-${id}" data-id="${id}" data-time="${timeStr}"
-         onclick="openNotifModal('${id}', '${safeTitle}', '${safeMessage}', '${safeLink}', '${timeStr}')">
+    <div class="notif-item ${isRead ? 'read' : 'unread'}" id="notif-item-${escapeHtml(id)}" data-id="${escapeHtml(id)}" data-type="${escapeHtml(type)}" data-time="${escapeHtml(timeStr)}">
       <div>
-        <span class="notif-type-tag ${type}">${type}</span>
+        <span class="notif-type-tag ${escapeHtml(type)}">${escapeHtml(type)}</span>
         <div style="font-size: 13px; font-weight: 700; color: var(--text, #fff); display: flex; align-items: center; gap: 6px;">
           ${!isRead ? '<span style="width: 6px; height: 6px; background: #00c6ff; border-radius: 50%; display: inline-block;"></span>' : ''}
-          ${title}
+          ${escapeHtml(title)}
         </div>
-        <div style="font-size: 12px; color: var(--muted, #8a99ad); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${message}</div>
-        <div class="notif-time-ago">${formattedTime}</div>
+        <div class="notif-msg" style="font-size: 12px; color: var(--muted, #8a99ad); margin-top: 2px;">${escapeHtml(message)}</div>
+        <div class="notif-time-ago">${escapeHtml(formattedTime)}</div>
       </div>
-      <button class="notif-delete-btn" onclick="deleteNotification(event, '${id}')" title="Delete">✕</button>
+      <button class="notif-delete-btn" title="Delete">✕</button>
     </div>
   `;
-  
+
   notifList.insertAdjacentHTML("afterbegin", itemHtml);
   updateUnreadCount();
 
@@ -519,7 +624,12 @@ function showToastNotification(title, message, link) {
 }
 
 async function loadSupabaseNotifications() {
-  if (!window.supabaseClient) return;
+  if (!window.supabaseClient) {
+    // Supabase na ho tab bhi calendar/holiday notifications dikhne chahiye
+    await checkTodayCalendarNotifications();
+    cleanupOldNotifications();
+    return;
+  }
 
   const firstVisitTime = getOrCreateFirstVisitTime();
 
@@ -570,6 +680,9 @@ async function loadSupabaseNotifications() {
 
   } catch (err) {
     console.warn("Error fetching notifications:", err);
+    // DB fail ho to bhi calendar notifications dikhao
+    await checkTodayCalendarNotifications();
+    cleanupOldNotifications();
   }
 }
 
@@ -773,7 +886,8 @@ await checkAndSyncSecureStreak();
   document.addEventListener("click", (e) => {
     const notifWrapper = document.querySelector(".notif-wrapper");
     const notifBox = document.getElementById("notifBox");
-    if (notifWrapper && notifBox && !notifWrapper.contains(e.target)) {
+    if (notifWrapper && notifBox && !notifWrapper.contains(e.target) && !notifBox.contains(e.target)
+        && !e.target.closest(".notif-toast") && !notifBox.classList.contains("notif-fullscreen")) {
       notifBox.classList.remove("show");
     }
   });

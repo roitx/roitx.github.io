@@ -256,6 +256,7 @@
   transform: scaleX(-1); /* Ye ban gaya fire emoji ka mirror image */
 }
 
+
   </style>
   <link rel="stylesheet" href="style.css" />
 
@@ -390,7 +391,24 @@
             <span class="notif-title">Notifications</span>
             <span class="notif-count-tag" id="notifCountTag">0 New</span>
           </div>
-          <button class="mark-read-btn" onclick="markAllAsRead()">Mark all as read</button>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <button class="mark-read-btn" onclick="markAllAsRead()">Mark all as read</button>
+            <button class="notif-fs-btn" id="notifFullscreenBtn" onclick="toggleNotifFullscreen()" title="Full screen">
+              <svg class="ic-expand" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline>
+                <line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line>
+              </svg>
+              <svg class="ic-collapse" style="display:none" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="4 14 10 14 10 20"></polyline><polyline points="20 10 14 10 14 4"></polyline>
+                <line x1="14" y1="10" x2="21" y2="3"></line><line x1="3" y1="21" x2="10" y2="14"></line>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="notif-filters" id="notifFilters">
+          <button class="notif-filter-chip active" data-filter="all" onclick="setNotifFilter('all')">All</button>
+          <button class="notif-filter-chip" data-filter="unread" onclick="setNotifFilter('unread')">Unread</button>
+          <button class="notif-filter-chip" data-filter="event" onclick="setNotifFilter('event')">📅 Events</button>
         </div>
         <div class="notif-body" id="notifList">
           <div class="notif-empty">Koi naya notification nahi hai.</div>

@@ -2217,3 +2217,76 @@ footer {
     height: auto;
   }
 }
+
+
+/* ===== Notification: event tag + fullscreen view ===== */
+.notif-type-tag.event { background: rgba(255, 183, 0, 0.2); color: #ffb300; }
+body.light .notif-type-tag.event { color: #b45309; }
+
+.notif-fs-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--glass-border);
+  color: var(--text);
+  width: 30px; height: 30px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 0;
+  transition: background 0.2s ease;
+}
+.notif-fs-btn:hover { background: rgba(58, 160, 255, 0.15); border-color: var(--accent); }
+
+.notif-filters { display: none; gap: 8px; padding: 10px 16px 4px; }
+.notif-filter-chip {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--glass-border);
+  color: var(--text);
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.notif-filter-chip.active {
+  background: rgba(58, 160, 255, 0.18);
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.notif-dropdown-box.notif-fullscreen {
+  position: fixed !important;
+  inset: 0 !important;
+  top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
+  transform: none !important;
+  width: 100vw !important; max-width: none !important;
+  height: 100vh !important; height: 100dvh !important; max-height: none !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  border: none !important;
+  z-index: 9998 !important;
+  display: flex !important;
+  flex-direction: column;
+  opacity: 1 !important;
+  background: var(--bg-dark-1) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  overflow: hidden;
+}
+.notif-fullscreen .notif-header {
+  width: 100%; max-width: 860px; margin: 0 auto; box-sizing: border-box; padding: 16px;
+  background: transparent;
+}
+.notif-fullscreen .notif-filters {
+  display: flex; flex-wrap: wrap; width: 100%; max-width: 860px; margin: 0 auto; box-sizing: border-box;
+}
+.notif-fullscreen .notif-body {
+  flex: 1; max-height: none !important; overflow-y: auto;
+  width: 100%; max-width: 860px; margin: 0 auto; box-sizing: border-box; padding: 8px 16px 24px;
+}
+.notif-msg {
+  overflow: hidden; text-overflow: ellipsis;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+.notif-fullscreen .notif-msg {
+  display: block; -webkit-line-clamp: unset; overflow: visible; white-space: normal;
+}
