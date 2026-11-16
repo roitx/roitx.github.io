@@ -365,7 +365,6 @@ function showNotifHint(msg) {
   if (!h) {
     h = document.createElement("div");
     h.id = "notifPermHint";
-    h.style.cssText = "margin:10px 14px;padding:10px 12px;border-radius:12px;font-size:13px;line-height:1.4;background:rgba(255,193,7,.12);border:1px solid rgba(255,193,7,.35);color:#ffe08a;";
     box.insertBefore(h, box.children[1] || null);
   }
   h.innerHTML = msg;
@@ -376,7 +375,7 @@ window.askNotifPermission = function () {
   sessionStorage.setItem("notifAsked", "1");
   Notification.requestPermission().then(p => {
     if (p === "granted") { clearNotifHint(); subscribeUserToPushSilently(); }
-    else showNotifHint('🔔 Updates ke liye notifications <b>Allow</b> karein. <button onclick="askNotifPermission()" style="margin-top:6px;padding:6px 12px;border-radius:8px;border:0;background:#3b82f6;color:#fff">Allow karein</button>');
+    else showNotifHint('🔔 Updates ke liye notifications <b>Allow</b> karein. <button onclick="askNotifPermission()">Allow karein</button>');
   });
 };
 
