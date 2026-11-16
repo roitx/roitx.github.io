@@ -358,19 +358,47 @@ function updateUnreadCount() {
   applyNotifFilter();
 }
 
-function toggleNotif() {
+function showNotifHint(msg) {
   const box = document.getElementById("notifBox");
-  if (box) {
-    if (box.classList.contains("notif-fullscreen")) setNotifFullscreen(false);
-    box.classList.toggle("show");
-  } else {
-    const notifModal = document.getElementById('notifModal');
-    if (notifModal) {
-      notifModal.classList.add('active');
-      notifModal.style.display = 'flex';
-    }
+  if (!box) return;
+  let h = document.getElementById("notifPermHint");
+  if (!h) {
+    h = document.createElement("div");
+    h.id = "notifPermHint";
+    h.style.cssText = "margin:10px 14px;padding:10px 12px;border-radius:12px;font-size:13px;line-height:1.4;background:rgba(255,193,7,.12);border:1px solid rgba(255,193,7,.35);color:#ffe08a;";
+    box.insertBefore(h, box.children[1] || null);
   }
+  h.innerHTML = msg;
 }
+function clearNotifHint() { const h = document.getElementById("notifPermHint"); if (h) h.remove(); }
+
+window.askNotifPermission = function () {
+  sessionStorage.setItem("notifAsked", "1");
+  Notification.requestPermission().then(p => {
+    if (p === "granted") { clearNotifHint(); subscribeUserToPushSilently(); }
+    else showNotifHint('🔔 Updates ke liye notifications <b>Allow</b> karein. <button onclick="askNotifPermission()" style="margin-top:6px;padding:6px 12px;border-radius:8px;border:0;background:#3b82f6;color:#fff">Allow karein</button>');
+  });
+};
+
+window.toggleNotif = function () {
+  const box = document.getElementById("notifBox");
+  if (box) box.classList.toggle("show");
+  else {
+    const m = document.getElementById("notifModal");
+    if (m) { m.classList.add("active"); m.style.display = "flex"; }
+  }
+  if (box && !box.classList.contains("show")) return;   // panel band hua
+
+  if (typeof Notification === "undefined") {
+    showNotifHint("Is browser me notifications support nahi hain. iPhone par site ko <b>Add to Home Screen</b> karke kholein."); return;
+  }
+  if (Notification.permission === "granted") { clearNotifHint(); subscribeUserToPushSilently(); return; }
+  if (Notification.permission === "denied") {
+    showNotifHint("🔕 Notifications band hain. Chrome me <b>⋮ → Site settings → Notifications</b> me jaakar <b>Allow</b> karein."); return;
+  }
+  if (!sessionStorage.getItem("notifAsked")) askNotifPermission();      // pehli baar: seedha popup
+  else showNotifHint('🔔 Notifications abhi band hain. <button onclick="askNotifPermission()" style="margin-top:6px;padding:6px 12px;border-radius:8px;border:0;background:#3b82f6;color:#fff">Allow karein</button>');
+};
 
 // ---- Fullscreen notification view ----
 let currentNotifFilter = "all";
@@ -1146,30 +1174,6 @@ async function subscribeUserToPushSilently() {
   }
 }
 
-// Bell Icon Click Handler: Permission maangna aur dropdown/modal kholna
-window.toggleNotif = function() {
-  if (typeof Notification !== 'undefined') {
-    if (Notification.permission === 'default') {
-      Notification.requestPermission().then(permission => {
-        if (permission === 'granted') {
-          subscribeUserToPushSilently();
-        }
-      });
-    }
-  }
-
-  // Purana in-app notification dropdown / modal toggle logic
-  const box = document.getElementById("notifBox");
-  if (box) {
-    box.classList.toggle("show");
-  } else {
-    const notifModal = document.getElementById('notifModal');
-    if (notifModal) {
-      notifModal.classList.add('active');
-      notifModal.style.display = 'flex';
-    }
-  }
-};
 
 // App khulne par background me silent subscription sync
 document.addEventListener('DOMContentLoaded', () => {
