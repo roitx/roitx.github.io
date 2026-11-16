@@ -1702,7 +1702,7 @@ window.appendChatMessage = function (htmlContent, type = "ai", showTime = true, 
     record = {
       id: 'm' + Date.now() + Math.random().toString(36).slice(2, 6),
       type, html: stripBigImages(htmlContent),
-      time: getCurrentFormattedTime(), showTime, feedback: null
+      time: getCurrentFormattedTime(), showTime, feedback: null, meta: opts.meta || null
     };
     chatHistory.push(record);
     if (chatHistory.length > CHAT_MAX_MSGS) chatHistory.splice(0, chatHistory.length - CHAT_MAX_MSGS);
@@ -1734,7 +1734,7 @@ window.appendChatMessage = function (htmlContent, type = "ai", showTime = true, 
       if (!ok) return showToast("Copy nahi ho paya");
       copyBtn.innerHTML = ACT_ICONS.check;
       copyBtn.classList.add("done");
-      showToast("Copy ho gaya ✅");
+      showToast(t('toastCopy'));
       setTimeout(() => { copyBtn.innerHTML = ACT_ICONS.copy; copyBtn.classList.remove("done"); }, 1800);
     };
 
@@ -1748,8 +1748,9 @@ window.appendChatMessage = function (htmlContent, type = "ai", showTime = true, 
       record.feedback = (record.feedback === val) ? null : val;   // dobara tap = hata do
       paintFeedback();
       persistChat();
-      if (record.feedback === "up")   showToast("Shukriya! Feedback record ho gaya 👍");
-      if (record.feedback === "down") showToast("Feedback note kar liya, isme sudhar kiya jayega 👎");
+      sendFeedbackToServer(record, record.feedback);
+      if (record.feedback === "up")   showToast(t('toastUp'));
+      if (record.feedback === "down") showToast(t('toastDown'));
     };
     upBtn.onclick   = () => setFeedback("up");
     downBtn.onclick = () => setFeedback("down");
@@ -1859,7 +1860,7 @@ function applyTheme(t) {
 function toggleTheme() {
   const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
   applyTheme(next);
-  try { localStorage.setItem('theme', next); } catch (e) {}
+  try { localStorage.setItem('roitx_theme', next); } catch (e) {}
 }
 
 // Options card: tap karne par chosen option highlight, baaki dim (Claude question picker jaisa)
@@ -1884,7 +1885,7 @@ function autoGrowInput() {
   const el = document.getElementById('question');
   if (el) el.addEventListener('input', autoGrowInput);
   const _clear = clearQuestionInput;
-  window.clearQuestionInput = function () { _clear(); autoGrowInput(); };
+  window.clearQuestionInput = function () { _clear(); autoGrowInput(); if (typeof stopMic === 'function') stopMic(); };
 })();
 
 
@@ -1930,13 +1931,13 @@ function buildWorkCard(img) {
   wrap.className = 'chat-bubble ai';
   const lang = currentLanguage;
   const steps = [];
-  if (img) steps.push('Photo se question padh raha hoon');
-  steps.push('Sawaal samajh raha hoon', `${selectedSubject} ke concepts aur formulas dhoondh raha hoon`, 'Step-by-step solution bana raha hoon');
+  if (img) steps.push(t('s_img'));
+  steps.push(t('s_read'), t('s_find', subjLabel(selectedSubject)), t('s_solve'));
   wrap.innerHTML = `
     <div class="work-card">
       <button type="button" class="work-head">
         <span class="work-spinner"></span>
-        <span class="work-title">Soch raha hoon…</span>
+        <span class="work-title">${t('think')}</span>
         <span class="work-time">0s</span>
         <svg class="work-chev" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
       </button>
@@ -1972,9 +1973,9 @@ function buildWorkCard(img) {
     finish() {
       clearInterval(stepTimer); clearInterval(clock);
       while (i < steps.length) addStep(steps[i++]);
-      addStep('Answer verify kar raha hoon');
+      addStep(t('s_verify'));
       list.querySelectorAll('.work-step.run').forEach(s => s.classList.replace('run', 'ok'));
-      title.textContent = `Soch kar ${Math.max(secs, 1)}s me jawab diya`;
+      title.textContent = t('done', Math.max(secs, 1));
       card.classList.add('done');
       setTimeout(() => card.classList.add('collapsed'), 500);
     },
@@ -1984,12 +1985,8 @@ function buildWorkCard(img) {
 
 /* ---- Error card (high demand) + Retry ---- */
 function showErrorCard(kind, detail) {
-  const M = {
-    demand:  ['ROITX AI par abhi demand bahut zyada hai', 'Is waqt bahut saare students sawaal puchh rahe hain. Thodi der baad dobara try karein.'],
-    network: ['Internet connection me problem hai', 'Apna network check karke dobara try karein.'],
-    generic: ['Kuch gadbad ho gayi', 'Answer nahi ban paya. Dobara try karein.']
-  };
-  const [t, m] = M[kind] || M.generic;
+  const M = { demand: [t('errDemandT'), t('errDemandM')], network: [t('errNetT'), t('errNetM')], generic: [t('errGenT'), t('errGenM')] };
+  const [tt, m] = M[kind] || M.generic;
   const box = document.getElementById('answerHistory');
   const wrap = document.createElement('div');
   wrap.className = 'chat-bubble ai';
@@ -1997,12 +1994,12 @@ function showErrorCard(kind, detail) {
     <div class="err-card">
       <div class="err-title">
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-        ${t}
+        ${tt}
       </div>
       <div class="err-msg">${m}${kind === 'generic' && detail ? `<br><small>${escapeHtml(String(detail).slice(0, 140))}</small>` : ''}</div>
       <button type="button" class="retry-btn">
         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.5 15a9 9 0 1 1-2.1-9.4L23 10"></path></svg>
-        Retry
+        ${t('retry')}
       </button>
     </div>`;
   wrap.querySelector('.retry-btn').onclick = () => {
@@ -2060,7 +2057,7 @@ window.solveWithAI = async function (questionText, imageBase64 = null) {
     const clean = cleanAIResponse(raw);
     const html = typeof marked !== 'undefined' ? marked.parse(clean) : clean.replace(/\n/g, "<br>");
     playChime();
-    appendChatMessage(`<b>💡 Solution / Answer:</b><br><br>${html}`, "ai", true, true);
+    appendChatMessage(`<b>💡 Solution / Answer:</b><br><br>${html}`, "ai", true, true, { meta: { q: questionText || (imageBase64 ? '[photo question]' : ''), subject: selectedSubject, lang: currentLanguage } });
   } catch (err) {
     work.remove();
     const kind = err.kind || (err instanceof TypeError ? 'network' : 'generic');
@@ -2096,9 +2093,164 @@ function toggleSound() {
   localStorage.setItem('roitx_speech_pref', String(isSpeechEnabledGlobally));
   if (!isSpeechEnabledGlobally) stopCurrentSpeech(); else playChime();
   syncSoundBtn();
-  showToast(isSpeechEnabledGlobally ? 'Sound on 🔊' : 'Sound off 🔇');
+  showToast(t(isSpeechEnabledGlobally ? 'soundOn' : 'soundOff'));
 }
 document.addEventListener('click', (e) => {
   if (e.target.closest('.msg-speaker-btn')) setTimeout(syncSoundBtn, 60);
 });
 syncSoundBtn();
+
+
+/* =====================================================
+   LANGUAGE PACKS (Hindi = pura Devanagari, English = pure English)
+   ===================================================== */
+const I18N = {
+  hinglish: {
+    status:'Online · Saath me padhne ke liye taiyar', ph:'Apna sawaal ya equation likhein, bolein ya photo bhejein...',
+    subjQ:'Apna vishay / subject chunein:', math:'Mathematics', phys:'Physics', gen:'General Math & Science Doubt', genS:'General Doubt', menu:'Main Menu',
+    picked:f=>`Aapka vishay <b>${f}</b> select ho gaya hai! Neeche sawaal type karein, mic se bolein ya photo bhejein, main turant solution bhej dunga.`,
+    admin:'Admin ko doubt bhejein', change:'Subject badlein', qstat:'Queue status dekhein', qecho:'Queue Status', home:'Main Menu',
+    qPend:n=>`🕒 Aapke abhi <b>${n}</b> doubt admin queue me pending hain.`, qNone:'✅ Aapka koi doubt pending nahi hai!', qErr:'⚠️ Queue status check karne me error aaya.',
+    think:'Soch raha hoon…', s_img:'Photo se question padh raha hoon', s_read:'Sawaal samajh raha hoon', s_find:s=>`${s} ke concepts aur formulas dhoondh raha hoon`, s_solve:'Step-by-step solution bana raha hoon', s_verify:'Answer verify kar raha hoon', done:n=>`Soch kar ${n}s me jawab diya`,
+    errDemandT:'ROITX AI par abhi demand bahut zyada hai', errDemandM:'Is waqt bahut saare students sawaal puchh rahe hain. Thodi der baad dobara try karein.',
+    errNetT:'Internet connection me problem hai', errNetM:'Apna network check karke dobara try karein.', errGenT:'Kuch gadbad ho gayi', errGenM:'Answer nahi ban paya. Dobara try karein.', retry:'Retry',
+    toastCopy:'Copy ho gaya ✅', toastUp:'Shukriya! Feedback record ho gaya 👍', toastDown:'Feedback note kar liya, isme sudhar kiya jayega 👎', soundOn:'Sound on 🔊', soundOff:'Sound off 🔇',
+    micDenied:'Mic ki permission dein', micNo:'Is browser me mic support nahi hai', micOn:'Sun raha hoon…'
+  },
+  hi: {
+    status:'ऑनलाइन · साथ में पढ़ने के लिए तैयार', ph:'अपना सवाल या समीकरण लिखें, बोलें या फोटो भेजें...',
+    subjQ:'कृपया अपना विषय चुनें:', math:'गणित', phys:'भौतिक विज्ञान', gen:'सामान्य सवाल (गणित और विज्ञान)', genS:'सामान्य सवाल', menu:'मुख्य मेनू',
+    picked:f=>`आपका विषय <b>${f}</b> चुन लिया गया है! नीचे सवाल लिखें, माइक से बोलें या फोटो भेजें, मैं तुरंत हल बता दूँगा।`,
+    admin:'एडमिन को सवाल भेजें', change:'विषय बदलें', qstat:'कतार की स्थिति देखें', qecho:'कतार की स्थिति', home:'मुख्य मेनू',
+    qPend:n=>`🕒 आपके अभी <b>${n}</b> सवाल एडमिन की कतार में लंबित हैं।`, qNone:'✅ आपका कोई भी सवाल लंबित नहीं है!', qErr:'⚠️ कतार की स्थिति जाँचने में त्रुटि हुई।',
+    think:'सोच रहा हूँ…', s_img:'फोटो से सवाल पढ़ रहा हूँ', s_read:'सवाल समझ रहा हूँ', s_find:s=>`${s} की अवधारणाएँ और सूत्र खोज रहा हूँ`, s_solve:'चरण-दर-चरण हल तैयार कर रहा हूँ', s_verify:'उत्तर जाँच रहा हूँ', done:n=>`${n} सेकंड सोचकर उत्तर दिया`,
+    errDemandT:'ROITX AI पर अभी बहुत अधिक माँग है', errDemandM:'इस समय बहुत से विद्यार्थी सवाल पूछ रहे हैं। कुछ देर बाद फिर से प्रयास करें।',
+    errNetT:'इंटरनेट कनेक्शन में समस्या है', errNetM:'अपना नेटवर्क जाँचकर फिर से प्रयास करें।', errGenT:'कुछ गड़बड़ हो गई', errGenM:'उत्तर नहीं बन पाया। फिर से प्रयास करें।', retry:'फिर से प्रयास करें',
+    toastCopy:'कॉपी हो गया ✅', toastUp:'धन्यवाद! आपकी प्रतिक्रिया दर्ज हो गई 👍', toastDown:'प्रतिक्रिया दर्ज हो गई, इसमें सुधार किया जाएगा 👎', soundOn:'ध्वनि चालू 🔊', soundOff:'ध्वनि बंद 🔇',
+    micDenied:'कृपया माइक की अनुमति दें', micNo:'इस ब्राउज़र में माइक समर्थित नहीं है', micOn:'सुन रहा हूँ…'
+  },
+  en: {
+    status:'Online · Ready to study together', ph:'Type your question or equation, speak, or upload a photo...',
+    subjQ:'Please select your study subject:', math:'Mathematics', phys:'Physics', gen:'General Math & Science Doubt', genS:'General Doubt', menu:'Main Menu',
+    picked:f=>`Your subject <b>${f}</b> is selected! Type your question, use the mic, or upload a photo and I'll solve it instantly.`,
+    admin:'Send doubt to admin', change:'Change subject', qstat:'Check queue status', qecho:'Queue Status', home:'Main Menu',
+    qPend:n=>`🕒 You have <b>${n}</b> request(s) pending in the admin queue.`, qNone:'✅ You have no pending doubts in the queue!', qErr:'⚠️ Could not check the queue status.',
+    think:'Thinking…', s_img:'Reading the question from the photo', s_read:'Understanding the question', s_find:s=>`Looking up ${s} concepts and formulas`, s_solve:'Building the step-by-step solution', s_verify:'Verifying the answer', done:n=>`Thought for ${n}s`,
+    errDemandT:'ROITX AI is experiencing high demand', errDemandM:'Many students are asking questions right now. Please try again in a little while.',
+    errNetT:'There is a problem with your internet connection', errNetM:'Check your network and try again.', errGenT:'Something went wrong', errGenM:'Could not generate an answer. Please try again.', retry:'Retry',
+    toastCopy:'Copied ✅', toastUp:'Thanks! Your feedback was recorded 👍', toastDown:'Feedback noted, we will work on improving this 👎', soundOn:'Sound on 🔊', soundOff:'Sound off 🔇',
+    micDenied:'Please allow microphone access', micNo:'Microphone is not supported in this browser', micOn:'Listening…'
+  }
+};
+function t(k, ...a) {
+  const d = I18N[currentLanguage] || I18N.hinglish;
+  const v = d[k] !== undefined ? d[k] : I18N.hinglish[k];
+  return typeof v === 'function' ? v(...a) : v;
+}
+function subjLabel(s, short) { return s === 'Mathematics' ? t('math') : s === 'Physics' ? t('phys') : t(short ? 'genS' : 'gen'); }
+
+function applyUiLanguage() {
+  const st = document.querySelector('.online-status'); if (st) st.textContent = t('status');
+  const q = document.getElementById('question'); if (q) q.placeholder = t('ph');
+  const p = document.getElementById('ctxPill'); if (p) p.textContent = subjLabel(selectedSubject, true);
+  document.documentElement.lang = currentLanguage === 'en' ? 'en' : 'hi';
+}
+const _selectLanguageOrig = selectLanguage;
+window.selectLanguage = function (l, label) { _selectLanguageOrig(l, label); applyUiLanguage(); };
+
+/* ---- Options cards in chosen language ---- */
+function optionsCard(text, buttons) {
+  return `<div class="interactive-card"><div class="card-text">${text}</div><div class="interactive-btn-group">` +
+    buttons.map(([fn, label]) => `<button class="wa-action-btn" onclick="${fn}">${label}</button>`).join('') +
+    `</div></div>`;
+}
+window.renderFieldSelection = function () {
+  applyUiLanguage();
+  appendChatMessage(optionsCard(t('subjQ'), [
+    ["selectField('Mathematics')", t('math')],
+    ["selectField('Physics')", t('phys')],
+    ["selectField('General Doubt')", t('gen')],
+    ["renderMainMenu()", t('menu')]
+  ]), "ai", false);
+};
+window.selectField = function (field) {
+  selectedSubject = field;
+  const label = subjLabel(field);
+  appendChatMessage(label, "user");
+  applyUiLanguage();
+  setTimeout(() => appendChatMessage(optionsCard(t('picked', `${subjLabel(field, true)}`), [
+    ["openAdminDoubtModal()", t('admin')],
+    ["renderFieldSelection()", t('change')],
+    ["checkQueueStatus()", t('qstat')],
+    ["renderMainMenu()", t('home')]
+  ]), "ai", false), 200);
+};
+window.renderMainMenu = function () {
+  appendChatMessage(t('menu'), "user");
+  setTimeout(renderLanguageSelection, 200);
+};
+window.checkQueueStatus = async function () {
+  appendChatMessage(t('qecho'), "user");
+  try {
+    const { count, error } = await window.supabaseClient.from('doubts').select('*', { count: 'exact' }).eq('status', 'pending').eq('session_id', getSessionId());
+    if (error) return appendChatMessage(t('qErr'), "ai");
+    appendChatMessage(count > 0 ? t('qPend', count) : t('qNone'), "ai");
+  } catch (e) { appendChatMessage(t('qErr'), "ai"); }
+};
+
+/* =====================================================
+   FEEDBACK -> SUPABASE (sirf 👎 -> existing doubts queue)
+   ===================================================== */
+async function sendFeedbackToServer(record, rating) {
+  // Naya table nahi: sirf 👎 par, pehle se bani `doubts` queue me ek row jati hai
+  if (rating !== 'down' || record.fbSent || !window.supabaseClient) return;
+  try {
+    let user = null;
+    try {
+      user = window.getCurrentUser ? await window.getCurrentUser()
+           : ((await window.supabaseClient.auth.getSession()).data.session || {}).user;
+    } catch (e) {}
+    const m = record.meta || {};
+    const ans = htmlToPlainText(record.html).slice(0, 500);
+    const { error } = await window.supabaseClient.from('doubts').insert([{
+      question: `👎 AI answer galat/adhura laga\nSawaal: ${m.q || '(photo)'}\nAI ka answer: ${ans}`,
+      status: 'pending',
+      session_id: getSessionId(),
+      user_id: (user && user.id) || null,
+      user_email: (user && user.email) || null,
+      user_name: user && user.email ? user.email.split('@')[0] : 'Guest'
+    }]);
+    if (error) return console.warn('Feedback save error:', error.message);
+    record.fbSent = true;
+    persistChat();
+  } catch (e) { console.warn('Feedback save failed', e); }
+}
+
+/* =====================================================
+   MIC (voice input) — Web Speech API
+   ===================================================== */
+let recog = null, micActive = false;
+function stopMic() { if (recog && micActive) { try { recog.stop(); } catch (e) {} } }
+function toggleMic() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return showToast(t('micNo'));
+  if (micActive) return stopMic();
+  stopCurrentSpeech();
+  const ta = document.getElementById('question'), btn = document.getElementById('micBtn');
+  const base = ta.value.trim() ? ta.value.trim() + ' ' : '';
+  recog = new SR();
+  recog.lang = currentLanguage === 'en' ? 'en-IN' : 'hi-IN';
+  recog.interimResults = true;
+  recog.continuous = false;
+  recog.onstart = () => { micActive = true; btn.classList.add('listening'); ta.placeholder = t('micOn'); };
+  recog.onresult = (e) => {
+    let txt = '';
+    for (let i = 0; i < e.results.length; i++) txt += e.results[i][0].transcript;
+    ta.value = base + txt; autoGrowInput();
+  };
+  recog.onerror = (e) => { if (e.error === 'not-allowed' || e.error === 'service-not-allowed') showToast(t('micDenied')); };
+  recog.onend = () => { micActive = false; btn.classList.remove('listening'); applyUiLanguage(); };
+  try { recog.start(); } catch (e) {}
+}
+
+applyUiLanguage();

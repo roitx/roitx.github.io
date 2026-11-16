@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="theme-color" content="#080f19">
-  <script>(function(){try{var t=localStorage.getItem('theme')||(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark');document.documentElement.setAttribute('data-theme',t);var m=document.querySelector('meta[name=theme-color]');if(m)m.content=t==='dark'?'#080f19':'#f5f8fd';}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+  <script>(function(){try{var t=localStorage.getItem('roitx_theme')||(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark');document.documentElement.setAttribute('data-theme',t);var m=document.querySelector('meta[name=theme-color]');if(m)m.content=t==='dark'?'#080f19':'#f5f8fd';}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
   <title>ROITX AI Tutor & Instant Math Doubt Solver</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
@@ -70,7 +70,7 @@
         </div>
         <div>
           <h3>ROITX AI Tutor</h3>
-          <span class="online-status"> Online</span>
+          <span class="online-status">🟢 Online | Saath Me Padhne Ke Liye Taiyar</span>
         </div>
       </div>
 <div class="header-actions">
@@ -102,29 +102,32 @@
     </div>
 
     <div class="input-group">
-      <label for="solverImageInput" class="attach-btn" title="Photo Bhejen">
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-          <circle cx="12" cy="13" r="4"></circle>
-        </svg>
-      </label>
-      <input type="file" id="solverImageInput" accept="image/*" style="display:none;" onchange="handleSolverImagePreview(event)">
-
       <textarea
         id="question"
+        rows="1"
         placeholder="Apna sawaal, equation type karein ya photo upload karein..."
         onkeydown="if(event.key === 'Enter' && !event.shiftKey){ event.preventDefault(); solve(); }"
       ></textarea>
-      
-      <button id="solveBtn" onclick="solve()">
-        Bhejen 
-        <svg class="send-btn-svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="22" y1="2" x2="11" y2="13"></line>
-          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-        </svg>
-      </button>
-    </div>
 
+      <div class="composer-row">
+        <label for="solverImageInput" class="attach-btn" title="Photo / Attach">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        </label>
+        <input type="file" id="solverImageInput" accept="image/*" style="display:none;" onchange="handleSolverImagePreview(event)">
+
+        <button type="button" id="ctxPill" class="ctx-pill" title="Subject" onclick="renderFieldSelection()">General Doubt</button>
+
+        <span class="composer-spacer"></span>
+
+        <button type="button" id="micBtn" class="mic-btn" title="Mic" aria-label="Voice input" onclick="toggleMic()">
+          <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0"></path><line x1="12" y1="18" x2="12" y2="22"></line></svg>
+        </button>
+
+        <button id="solveBtn" type="button" title="Send" aria-label="Send" onclick="solve()">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
+        </button>
+      </div>
+    </div>
 
     <!-- FLOATING MY FEEDBACKS BUTTON -->
     <button class="doubt-fab" title="Mere Feedbacks" onclick="toggleMyDoubt()">

@@ -1,4 +1,4 @@
-/* ROITX AI Tutor — Claude-style layout, ROITX blue palette, Dark/Light toggle */
+/* ROITX AI  Tutor — Claude-style layout, ROITX blue palette, Dark/Light toggle */
 :root,[data-theme="dark"]{
   --bg:#080f19; --surface:#0f1c2e; --text:#e9f2ff; --muted:#8ea3bf;
   --border:#1f3554; --user:#14284a; --hover:#172a45;
@@ -181,3 +181,17 @@ button#solveBtn svg{width:17px;height:17px}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes blink{50%{opacity:0}}
 @keyframes shimmer{from{background-position:200% 0}to{background-position:-200% 0}}
+
+/* ---------- Claude-style composer: textarea on top, controls row below ---------- */
+.input-group{flex-direction:column;align-items:stretch;gap:2px;padding:12px 10px 10px 16px;border-radius:26px}
+textarea{width:100%;min-height:44px;height:44px;padding:6px 6px 6px 0;font-size:16px}
+.composer-row{display:flex;align-items:center;gap:8px}
+.composer-spacer{flex:1}
+.attach-btn{width:38px;height:38px;border:1px solid var(--border);color:var(--text)}
+.ctx-pill{background:var(--hover);color:var(--text);border:none;border-radius:999px;padding:0 16px;height:38px;font-size:14px;font-family:var(--sans);cursor:pointer;max-width:46vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ctx-pill:hover{background:var(--border)}
+.mic-btn{width:38px;height:38px;border-radius:50%;border:none;background:var(--hover);color:var(--text);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:background .15s,color .15s}
+.mic-btn:hover{background:var(--border)}
+.mic-btn.listening{background:var(--accent-soft);color:var(--accent);animation:micPulse 1.3s infinite}
+button#solveBtn{width:38px;height:38px}
+@keyframes micPulse{0%{box-shadow:0 0 0 0 var(--accent-soft)}70%{box-shadow:0 0 0 10px transparent}100%{box-shadow:0 0 0 0 transparent}}
