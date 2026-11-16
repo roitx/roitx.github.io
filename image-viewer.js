@@ -315,15 +315,12 @@ function getCanvasRelativeCoords(e) {
     let normX = (clientX - (rect.left + rect.width / 2)) / zoomScale;
     let normY = (clientY - (rect.top + rect.height / 2)) / zoomScale;
 
-    normX *= flipH;
-    normY *= flipV;
-
     const rad = (-rotation * Math.PI) / 180;
     const rotX = normX * Math.cos(rad) - normY * Math.sin(rad);
     const rotY = normX * Math.sin(rad) + normY * Math.cos(rad);
 
-    const finalX = rotX + canvas.width / 2;
-    const finalY = rotY + canvas.height / 2;
+    const finalX = rotX * flipH + canvas.width / 2;
+    const finalY = rotY * flipV + canvas.height / 2;
 
     return { x: finalX, y: finalY };
 }
@@ -435,47 +432,100 @@ window.toggleMagnifierMode = async () => {
         showToast("Magnifier Active");
     } else {
         btn.classList.remove("active");
-        if (magnifierLens) magnifierLens.remove();
+        destroyMagnifierLens();
         showToast("Magnifier Deactivated");
     }
 };
 
+const LENS_SIZE = 150, LENS_MAG = 2.5;
+let lensPt = null, lensRAF = 0, lensHandlers = null;
+
+// Screen point -> point inside #imageWrapper (layout px), using the wrapper's live CSS transform
+function screenToLocal(cx, cy) {
+    const wrap = document.getElementById("imageWrapper");
+    const m = new DOMMatrixReadOnly(getComputedStyle(wrap).transform);
+    const r = wrap.getBoundingClientRect();
+    const det = (m.a * m.d - m.b * m.c) || 1;
+    const vx = cx - (r.left + r.width / 2), vy = cy - (r.top + r.height / 2);
+    return { m, W: wrap.offsetWidth, H: wrap.offsetHeight,
+             x: wrap.offsetWidth / 2 + (m.d * vx - m.c * vy) / det,
+             y: wrap.offsetHeight / 2 + (m.a * vy - m.b * vx) / det };
+}
+
+function renderLens() {
+    lensRAF = 0;
+    if (!isMagnifierActive || !magnifierLens || !lensPt) return;
+    const cv = magnifierLens, c = cv.getContext("2d"), dpr = cv.width / LENS_SIZE;
+    const p = screenToLocal(lensPt.x, lensPt.y), m = p.m, k = LENS_MAG * dpr, mid = cv.width / 2;
+    c.setTransform(1, 0, 0, 1, 0, 0);
+    c.fillStyle = "#12161f";
+    c.fillRect(0, 0, cv.width, cv.height);
+    c.imageSmoothingQuality = "high";
+    // lens pixel = centre + MAG * (same linear transform as the page: zoom, rotate, flip) * (local - touched point)
+    c.setTransform(k * m.a, k * m.b, k * m.c, k * m.d, mid - k * (m.a * p.x + m.c * p.y), mid - k * (m.b * p.x + m.d * p.y));
+    c.filter = img.style.filter || "none";      // brightness/contrast sliders
+    c.drawImage(img, 0, 0, p.W, p.H);
+    c.filter = "none";
+    drawingHistory.forEach(item => drawSingleStroke(item.points, item.color, c));   // highlights, vector = sharp
+    lensRAF = requestAnimationFrame(renderLens); // keeps following pan / zoom / rotate animations
+}
+
 function createMagnifierLens() {
     if (document.getElementById("magnifier-glass")) return;
-    magnifierLens = document.createElement("div");
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    magnifierLens = document.createElement("canvas");
     magnifierLens.id = "magnifier-glass";
-    magnifierLens.style.cssText = `
-        position: fixed; width: 140px; height: 140px; border-radius: 50%;
-        border: 3px solid var(--accent, #007aff); box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-        pointer-events: none; display: none; z-index: 99999; background-repeat: no-repeat; background-color: #12161f;
-    `;
+    magnifierLens.width = magnifierLens.height = LENS_SIZE * dpr;
+    magnifierLens.style.cssText = `position:fixed;width:${LENS_SIZE}px;height:${LENS_SIZE}px;border-radius:50%;
+        box-shadow:0 0 0 3px var(--accent,#007aff),0 10px 25px rgba(0,0,0,.5);pointer-events:none;display:none;z-index:99999;`;
     document.body.appendChild(magnifierLens);
 
     const viewport = document.getElementById("viewport");
-    
-    const updateMagnifier = (e) => {
+    viewport.style.touchAction = "none";
+
+    const move = (e) => {
         if (!isMagnifierActive) return;
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-
+        const t = e.touches ? e.touches[0] : e;
+        if (!t) return;
+        if (e.touches && e.cancelable) e.preventDefault();
+        lensPt = { x: t.clientX, y: t.clientY };
+        let lx = t.clientX - LENS_SIZE / 2;
+        let ly = e.touches ? t.clientY - LENS_SIZE - 28 : t.clientY - LENS_SIZE / 2;   // above the finger
+        if (e.touches && ly < 8) ly = t.clientY + 28;
+        lx = Math.max(4, Math.min(window.innerWidth - LENS_SIZE - 4, lx));
+        magnifierLens.style.left = lx + "px";
+        magnifierLens.style.top = ly + "px";
         magnifierLens.style.display = "block";
-        magnifierLens.style.left = `${clientX - 70}px`;
-        magnifierLens.style.top = `${clientY - 70}px`;
-
-        const zoomLevel = 2.5;
-        magnifierLens.style.backgroundImage = `url('${img.src}')`;
-        magnifierLens.style.backgroundSize = `${img.clientWidth * zoomLevel}px ${img.clientHeight * zoomLevel}px`;
-        
-        const rect = img.getBoundingClientRect();
-        const posX = (clientX - rect.left) * zoomLevel - 70;
-        const posY = (clientY - rect.top) * zoomLevel - 70;
-
-        magnifierLens.style.backgroundPosition = `-${posX}px -${posY}px`;
+        if (!lensRAF) lensRAF = requestAnimationFrame(renderLens);
     };
+    const hide = () => {
+        lensPt = null;
+        if (magnifierLens) magnifierLens.style.display = "none";
+        if (lensRAF) { cancelAnimationFrame(lensRAF); lensRAF = 0; }
+    };
+    lensHandlers = { move, hide };
+    viewport.addEventListener("mousemove", move);
+    viewport.addEventListener("mouseleave", hide);
+    viewport.addEventListener("touchstart", move, { passive: false });
+    viewport.addEventListener("touchmove", move, { passive: false });
+    viewport.addEventListener("touchend", hide);
+    viewport.addEventListener("touchcancel", hide);
+}
 
-    viewport.addEventListener("mousemove", updateMagnifier);
-    viewport.addEventListener("touchmove", updateMagnifier);
-    viewport.addEventListener("mouseleave", () => { if(magnifierLens) magnifierLens.style.display = "none"; });
+function destroyMagnifierLens() {
+    const viewport = document.getElementById("viewport");
+    if (lensHandlers && viewport) {
+        viewport.removeEventListener("mousemove", lensHandlers.move);
+        viewport.removeEventListener("mouseleave", lensHandlers.hide);
+        viewport.removeEventListener("touchstart", lensHandlers.move);
+        viewport.removeEventListener("touchmove", lensHandlers.move);
+        viewport.removeEventListener("touchend", lensHandlers.hide);
+        viewport.removeEventListener("touchcancel", lensHandlers.hide);
+        viewport.style.touchAction = "";
+    }
+    lensHandlers = null; lensPt = null;
+    if (lensRAF) { cancelAnimationFrame(lensRAF); lensRAF = 0; }
+    if (magnifierLens) { magnifierLens.remove(); magnifierLens = null; }
 }
 
 function setupKeyboardShortcuts() {
@@ -634,24 +684,20 @@ function setupCanvasEvents() {
     canvas.addEventListener("touchend", stopDrawing);
 }
 
-function drawSingleStroke(stroke, color) {
+function drawSingleStroke(stroke, color, target) {
+    const g = target || ctx;
     if (stroke.length < 2) return;
-
-    ctx.save();
-    ctx.beginPath();
-    ctx.moveTo(stroke[0].x, stroke[0].y);
-
-    for (let i = 1; i < stroke.length; i++) {
-        ctx.lineTo(stroke[i].x, stroke[i].y);
-    }
-
-    ctx.globalAlpha = 0.4;
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 14;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    ctx.stroke();
-    ctx.restore();
+    g.save();
+    g.beginPath();
+    g.moveTo(stroke[0].x, stroke[0].y);
+    for (let i = 1; i < stroke.length; i++) g.lineTo(stroke[i].x, stroke[i].y);
+    g.globalAlpha = 0.4;
+    g.strokeStyle = color;
+    g.lineWidth = 14;
+    g.lineCap = "round";
+    g.lineJoin = "round";
+    g.stroke();
+    g.restore();
 }
 
 function redrawCanvas() {
