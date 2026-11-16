@@ -461,7 +461,6 @@
   const input = document.getElementById('chatInput');
   const sendBtn = document.getElementById('sendBtn');
   const mic = document.getElementById('micBtn');
-if (mic) mic.style.display = 'none';
   const modal = document.getElementById('modal');
   const modalContent = document.getElementById('modalContent');
   const notesCount = document.getElementById('notesCount');
