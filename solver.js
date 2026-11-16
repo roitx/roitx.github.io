@@ -127,7 +127,7 @@ function showToast(message) {
     toast.id = "roitxToastPopup";
     toast.style.cssText = `
       position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px);
-      background: rgba(15, 23, 42, 0.95); border: 1px solid #38bdf8; color: #fff;
+      background: var(--surface); border: 1px solid var(--border); color: var(--text);
       padding: 10px 20px; border-radius: 30px; font-size: 13px; font-weight: 600;
       box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 100000; opacity: 0;
       transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); backdrop-filter: blur(6px);
@@ -203,17 +203,17 @@ window.appendChatMessage = function(htmlContent, type = "ai", showTime = true, e
     const upBtn = document.createElement("button");
     upBtn.title = "Helpful";
     upBtn.innerHTML = thumbsUpSvg;
-    upBtn.style.cssText = "background:transparent; border:none; color:#94a3b8; cursor:pointer; display:flex; align-items:center; transition:color 0.2s;";
+    upBtn.style.cssText = "background:transparent; border:none; color:var(--muted); cursor:pointer; display:flex; align-items:center; transition:color 0.2s;";
     upBtn.onmouseover = () => upBtn.style.color = "#4ade80";
-    upBtn.onmouseout = () => upBtn.style.color = "#94a3b8";
+    upBtn.onmouseout = () => upBtn.style.color = "var(--muted)";
     upBtn.onclick = () => showToast("Aapka bahut-bahut shukriya! Feedback recorded 👍");
 
     const downBtn = document.createElement("button");
     downBtn.title = "Not Helpful";
     downBtn.innerHTML = thumbsDownSvg;
-    downBtn.style.cssText = "background:transparent; border:none; color:#94a3b8; cursor:pointer; display:flex; align-items:center; transition:color 0.2s;";
+    downBtn.style.cssText = "background:transparent; border:none; color:var(--muted); cursor:pointer; display:flex; align-items:center; transition:color 0.2s;";
     downBtn.onmouseover = () => downBtn.style.color = "#f87171";
-    downBtn.onmouseout = () => downBtn.style.color = "#94a3b8";
+    downBtn.onmouseout = () => downBtn.style.color = "var(--muted)";
     downBtn.onclick = () => showToast("Feedback note kar liya gaya hai. Isme sudhar kiya jayega 👎");
 
     feedbackBar.appendChild(upBtn);
@@ -437,7 +437,7 @@ async function solve() {
   userMsgCount++; 
   let userHtml = escapeHtml(qRaw);
   if (currentImg) {
-    userHtml = `<div style="margin-bottom:6px;"><img src="${currentImg}" style="max-width:180px; max-height:140px; border-radius:8px; border:1px solid #334155;"></div>` + userHtml;
+    userHtml = `<div style="margin-bottom:6px;"><img src="${currentImg}" style="max-width:180px; max-height:140px; border-radius:8px; border:1px solid var(--border);"></div>` + userHtml;
   }
 
   appendChatMessage(userHtml, "user");
@@ -469,16 +469,16 @@ function triggerImagePicker() {
       justify-content: center; z-index: 10000; backdrop-filter: blur(4px);
     `;
     modal.innerHTML = `
-      <div style="background: #1e293b; border: 1px solid #334155; border-radius: 14px; width: 90%; max-width: 340px; padding: 20px; text-align: center; color: #fff; font-family: system-ui, sans-serif; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
-        <h4 style="margin: 0 0 14px 0; font-size: 16px; color: #60a5fa;">📸 Image Source Chunein</h4>
+      <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 14px; width: 90%; max-width: 340px; padding: 20px; text-align: center; color: var(--text); font-family: system-ui, sans-serif; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+        <h4 style="margin: 0 0 14px 0; font-size: 16px; color: var(--accent);">📸 Image Source Chunein</h4>
         <div style="display: flex; flex-direction: column; gap: 10px;">
-          <button onclick="openCameraInput()" style="background: #2563eb; color: #fff; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+          <button onclick="openCameraInput()" style="background: var(--accent); color: #fff; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px;">
             📷 Direct Camera Kholein
           </button>
-          <button onclick="openGalleryInput()" style="background: #334155; color: #fff; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+          <button onclick="openGalleryInput()" style="background: var(--hover); color: var(--text); border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px;">
             📁 File Manager / Gallery
           </button>
-          <button onclick="closeImageSourceModal()" style="background: transparent; color: #94a3b8; border: none; padding: 8px; font-size: 13px; cursor: pointer;">
+          <button onclick="closeImageSourceModal()" style="background: transparent; color: var(--muted); border: none; padding: 8px; font-size: 13px; cursor: pointer;">
             ✖ Cancel
           </button>
         </div>
@@ -557,7 +557,7 @@ function handleSolverImagePreview(event) {
             overflow-y: auto !important;
             box-sizing: border-box !important;
             padding: 16px !important;
-            background: #1e293b !important;
+            background: var(--surface) !important;
             border-radius: 12px !important;
           `;
         }
@@ -652,9 +652,9 @@ function setupPencilCanvas(croppedCanvas) {
     display: block !important;
     margin: 0 auto 12px auto !important;
     object-fit: contain;
-    background: #0f172a;
+    background: var(--bg);
     box-sizing: border-box;
-    border: 1px solid #334155;
+    border: 1px solid var(--border);
   `;
 
   drawCanvas.width = croppedCanvas.width;
@@ -689,20 +689,20 @@ function setupPencilCanvas(croppedCanvas) {
 
   actionBtnGroup.innerHTML = `
     <!-- Color Palette & Tools Bar -->
-    <div style="display: flex; gap: 8px; align-items: center; justify-content: center; background: #0f172a; padding: 8px 12px; border-radius: 20px; border: 1px solid #334155; width: 100%; max-width: 100%; box-sizing: border-box; flex-wrap: wrap;">
-      <span style="font-size: 12px; color: #cbd5e1; font-weight: bold; white-space: nowrap;">Color:</span>
+    <div style="display: flex; gap: 8px; align-items: center; justify-content: center; background: var(--bg); padding: 8px 12px; border-radius: 20px; border: 1px solid var(--border); width: 100%; max-width: 100%; box-sizing: border-box; flex-wrap: wrap;">
+      <span style="font-size: 12px; color: var(--muted); font-weight: bold; white-space: nowrap;">Color:</span>
       <button type="button" onclick="setDrawColor('#ef4444')" style="width:24px; height:24px; border-radius:50%; background:#ef4444; border:2px solid #fff; cursor:pointer; flex-shrink:0;"></button>
       <button type="button" onclick="setDrawColor('#f59e0b')" style="width:24px; height:24px; border-radius:50%; background:#f59e0b; border:2px solid #fff; cursor:pointer; flex-shrink:0;"></button>
       <button type="button" onclick="setDrawColor('#10b981')" style="width:24px; height:24px; border-radius:50%; background:#10b981; border:2px solid #fff; cursor:pointer; flex-shrink:0;"></button>
-      <div style="width: 1px; height: 16px; background: #334155; margin: 0 4px;"></div>
-      <button type="button" onclick="undoLastStroke()" style="background:#334155; border:none; color:#f8fafc; padding:6px 12px; border-radius:6px; font-size:12px; cursor:pointer; font-weight:bold; white-space:nowrap;">↩️ Undo</button>
-      <button type="button" onclick="clearCanvasStrokes()" style="background:#334155; border:none; color:#f8fafc; padding:6px 12px; border-radius:6px; font-size:12px; cursor:pointer; font-weight:bold; white-space:nowrap;">🗑️ Reset</button>
+      <div style="width: 1px; height: 16px; background: var(--border); margin: 0 4px;"></div>
+      <button type="button" onclick="undoLastStroke()" style="background:var(--border); border:none; color:var(--text); padding:6px 12px; border-radius:6px; font-size:12px; cursor:pointer; font-weight:bold; white-space:nowrap;">↩️ Undo</button>
+      <button type="button" onclick="clearCanvasStrokes()" style="background:var(--border); border:none; color:var(--text); padding:6px 12px; border-radius:6px; font-size:12px; cursor:pointer; font-weight:bold; white-space:nowrap;">🗑️ Reset</button>
     </div>
 
     <!-- Action Buttons Row -->
     <div style="display: flex; gap: 10px; width: 100%; justify-content: space-between; box-sizing: border-box;">
-      <button type="button" onclick="saveHighlightedImage()" style="flex: 1; background: #2563eb; color: #fff; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; text-align: center;">✅ Done & Send</button>
-      <button type="button" onclick="closeCropperModal()" style="background: #475569; color: #fff; border: none; padding: 12px 18px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: bold;">✖ Cancel</button>
+      <button type="button" onclick="saveHighlightedImage()" style="flex: 1; background: var(--accent); color: #fff; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; text-align: center;">✅ Done & Send</button>
+      <button type="button" onclick="closeCropperModal()" style="background: var(--hover); color: var(--text); border: none; padding: 12px 18px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: bold;">✖ Cancel</button>
     </div>
   `;
 
@@ -1194,20 +1194,20 @@ async function openAdminDoubtModal() {
       justify-content: center; z-index: 9999; backdrop-filter: blur(4px);
     `;
     modal.innerHTML = `
-      <div style="background: #1e293b; border: 1px solid #3b82f6; border-radius: 12px; width: 90%; max-width: 420px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); color: #f8fafc; font-family: sans-serif;">
+      <div style="background: var(--surface); border: 1px solid var(--accent); border-radius: 12px; width: 90%; max-width: 420px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); color: var(--text); font-family: sans-serif;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
-          <h3 style="margin: 0; font-size: 16px; color: #60a5fa; display: flex; align-items: center; gap: 6px;">
+          <h3 style="margin: 0; font-size: 16px; color: var(--accent); display: flex; align-items: center; gap: 6px;">
             ${SVG_ICONS.admin} Send Doubt to Admin
           </h3>
-          <button onclick="closeAdminDoubtModal()" style="background:none; border:none; color:#94a3b8; font-size: 18px; cursor:pointer;">✖</button>
+          <button onclick="closeAdminDoubtModal()" style="background:none; border:none; color:var(--muted); font-size: 18px; cursor:pointer;">✖</button>
         </div>
-        <p style="font-size: 12px; color: #cbd5e1; margin-bottom: 12px;">
+        <p style="font-size: 12px; color: var(--muted); margin-bottom: 12px;">
           Apna doubt niche likhein. Humara tutor real-time verification ke baad aapki help karega:
         </p>
-        <textarea id="adminDoubtInput" rows="4" style="width: 100%; background: #0f172a; border: 1px solid #334155; color: #fff; border-radius: 8px; padding: 10px; font-size: 13px; box-sizing: border-box; outline: none;" placeholder="Apna sawaal detail me likhein..."></textarea>
+        <textarea id="adminDoubtInput" rows="4" style="width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 10px; font-size: 13px; box-sizing: border-box; outline: none;" placeholder="Apna sawaal detail me likhein..."></textarea>
         <div style="display: flex; gap: 8px; margin-top: 14px; justify-content: flex-end;">
-          <button onclick="closeAdminDoubtModal()" style="background: #334155; border: none; color: #cbd5e1; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 12px;">Cancel</button>
-          <button onclick="submitAdminDoubtModal()" style="background: #2563eb; border: none; color: #fff; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px;">Submit Request</button>
+          <button onclick="closeAdminDoubtModal()" style="background: var(--border); border: none; color: var(--muted); padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 12px;">Cancel</button>
+          <button onclick="submitAdminDoubtModal()" style="background: var(--accent); border: none; color: #fff; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px;">Submit Request</button>
         </div>
       </div>
     `;
@@ -1530,7 +1530,7 @@ async function solve() {
 
   let userHtml = escapeHtml(qRaw);
   if (currentImg) {
-    userHtml = `<div style="margin-bottom:6px;"><img src="${currentImg}" style="max-width:180px; max-height:140px; border-radius:8px; border:1px solid #334155;"></div>` + userHtml;
+    userHtml = `<div style="margin-bottom:6px;"><img src="${currentImg}" style="max-width:180px; max-height:140px; border-radius:8px; border:1px solid var(--border);"></div>` + userHtml;
   }
 
   appendChatMessage(userHtml, "user");
@@ -1588,3 +1588,517 @@ async function checkSolvedNotification() {
   const { data } = await window.supabaseClient.from("doubts").select("id").eq("session_id", getSessionId()).eq("status", "solved");
   if (data && data.length > 0) dot.style.display = "block";
 }
+
+
+/* =====================================================
+   CLAUDE-STYLE CHAT: LOCAL STORAGE HISTORY + ACTION BAR
+   (Copy / Like / Dislike / Share / Speaker) — yeh block
+   purane appendChatMessage ko override karta hai.
+   ===================================================== */
+const CHAT_STORE_KEY = 'roitx_chat_history_v1';
+const CHAT_STATE_KEY = 'roitx_chat_state_v1';
+const CHAT_MAX_MSGS  = 100;
+let chatHistory = [];
+
+const ACT_ICONS = {
+  copy:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`,
+  check: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`,
+  up:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>`,
+  down:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"></path></svg>`,
+  share: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"></line><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"></line></svg>`
+};
+
+/* ---------- Storage helpers ---------- */
+function loadChatStore() {
+  try {
+    const arr = JSON.parse(localStorage.getItem(CHAT_STORE_KEY) || '[]');
+    return Array.isArray(arr) ? arr : [];
+  } catch (e) { return []; }
+}
+
+function persistChat() {
+  for (let tries = 0; tries < 6; tries++) {
+    try {
+      localStorage.setItem(CHAT_STORE_KEY, JSON.stringify(chatHistory));
+      localStorage.setItem(CHAT_STATE_KEY, JSON.stringify({ currentLanguage, selectedSubject }));
+      return;
+    } catch (e) {
+      // Quota full: sabse purane messages hata kar dobara try
+      chatHistory.splice(0, 10);
+    }
+  }
+}
+
+// Base64 photo localStorage bhar deti hai, isliye save karte waqt hata dete hain
+function stripBigImages(html) {
+  return String(html).replace(/<img[^>]*src="data:[^"]*"[^>]*>/gi, '<span style="opacity:.7">📷 [Photo]</span>');
+}
+
+/* ---------- Text / clipboard / share helpers ---------- */
+function htmlToPlainText(html) {
+  const prepared = String(html)
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/(p|div|li|h[1-6]|tr)>/gi, '$&\n');
+  const d = document.createElement('div');
+  d.innerHTML = prepared;
+  return (d.textContent || '').replace(/\n{3,}/g, '\n\n').trim();
+}
+
+async function copyTextToClipboard(text) {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch (e) {}
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;';
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand('copy');
+    ta.remove();
+    return ok;
+  } catch (e) { return false; }
+}
+
+async function shareMessage(text) {
+  const url = location.href;
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: 'ROITX AI Tutor', text: text.slice(0, 3000), url });
+      return;
+    } catch (e) {
+      if (e && e.name === 'AbortError') return; // user ne cancel kiya
+    }
+  }
+  const ok = await copyTextToClipboard(`${text}\n\n— ROITX AI Tutor\n${url}`);
+  showToast(ok ? 'Share ke liye text copy ho gaya 📋' : 'Share nahi ho paya');
+}
+
+function makeActBtn(extraClass, title, svg) {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'msg-act-btn ' + extraClass;
+  b.title = title;
+  b.innerHTML = svg;
+  return b;
+}
+
+/* ---------- Main: appendChatMessage (override) ---------- */
+window.appendChatMessage = function (htmlContent, type = "ai", showTime = true, enableTypewriter = false, opts = {}) {
+  const container = document.getElementById("answerHistory");
+  if (!container) return;
+
+  const isTyping = String(htmlContent).includes("typing-indicator");
+  const isCard   = String(htmlContent).includes("interactive-card");
+  const hasActions = type === "ai" && !isTyping && !isCard;
+  const restoring = !!opts.restoring;
+
+  // ---- Save to localStorage (loading / error bubbles save nahi hote) ----
+  let record = opts.record || null;
+  if (!record && type !== "system-error" && !isTyping) {
+    record = {
+      id: 'm' + Date.now() + Math.random().toString(36).slice(2, 6),
+      type, html: stripBigImages(htmlContent),
+      time: getCurrentFormattedTime(), showTime, feedback: null
+    };
+    chatHistory.push(record);
+    if (chatHistory.length > CHAT_MAX_MSGS) chatHistory.splice(0, chatHistory.length - CHAT_MAX_MSGS);
+    persistChat();
+  }
+
+  const msgDiv = document.createElement("div");
+  msgDiv.className = `chat-bubble ${type}`;
+
+  const contentDiv = document.createElement("div");
+  contentDiv.className = "msg-content-body";
+  msgDiv.appendChild(contentDiv);
+
+  // ---- Action bar: Copy | Like | Dislike | Share | Speaker ----
+  let actionBar = null, speakerBtn = null;
+  const plainText = hasActions ? htmlToPlainText(htmlContent) : "";
+
+  if (hasActions) {
+    actionBar = document.createElement("div");
+    actionBar.className = "msg-actions";
+
+    const copyBtn  = makeActBtn("copy",  "Copy",        ACT_ICONS.copy);
+    const upBtn    = makeActBtn("up",    "Helpful",     ACT_ICONS.up);
+    const downBtn  = makeActBtn("down",  "Not helpful", ACT_ICONS.down);
+    const shareBtn = makeActBtn("share", "Share",       ACT_ICONS.share);
+
+    copyBtn.onclick = async () => {
+      const ok = await copyTextToClipboard(plainText);
+      if (!ok) return showToast("Copy nahi ho paya");
+      copyBtn.innerHTML = ACT_ICONS.check;
+      copyBtn.classList.add("done");
+      showToast("Copy ho gaya ✅");
+      setTimeout(() => { copyBtn.innerHTML = ACT_ICONS.copy; copyBtn.classList.remove("done"); }, 1800);
+    };
+
+    const paintFeedback = () => {
+      const fb = record ? record.feedback : null;
+      upBtn.classList.toggle("active", fb === "up");
+      downBtn.classList.toggle("active", fb === "down");
+    };
+    const setFeedback = (val) => {
+      if (!record) return;
+      record.feedback = (record.feedback === val) ? null : val;   // dobara tap = hata do
+      paintFeedback();
+      persistChat();
+      if (record.feedback === "up")   showToast("Shukriya! Feedback record ho gaya 👍");
+      if (record.feedback === "down") showToast("Feedback note kar liya, isme sudhar kiya jayega 👎");
+    };
+    upBtn.onclick   = () => setFeedback("up");
+    downBtn.onclick = () => setFeedback("down");
+    shareBtn.onclick = () => shareMessage(plainText);
+    paintFeedback();
+
+    // Speaker (pehle jaisa hi logic, ab action bar ke andar)
+    const speakerOnSvg  = `<svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5zM19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    const speakerOffSvg = `<svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5zM23 9l-6 6M17 9l6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    speakerBtn = document.createElement("button");
+    speakerBtn.type = "button";
+    speakerBtn.className = "msg-speaker-btn";
+    speakerBtn.title = "Toggle Voice Output";
+    speakerBtn.innerHTML = isSpeechEnabledGlobally ? speakerOnSvg : speakerOffSvg;
+    speakerBtn.onclick = (e) => {
+      e.stopPropagation();
+      if (window.speechSynthesis && window.speechSynthesis.speaking && window.activeSpeakerBtn === speakerBtn) {
+        stopCurrentSpeech();
+        isSpeechEnabledGlobally = false;
+        localStorage.setItem('roitx_speech_pref', 'false');
+        speakerBtn.innerHTML = speakerOffSvg;
+      } else {
+        isSpeechEnabledGlobally = true;
+        localStorage.setItem('roitx_speech_pref', 'true');
+        speakerBtn.innerHTML = speakerOnSvg;
+        speakText(plainText, speakerBtn, true);
+      }
+    };
+
+    [copyBtn, upBtn, downBtn, shareBtn, speakerBtn].forEach(b => actionBar.appendChild(b));
+    msgDiv.appendChild(actionBar);
+  }
+
+  if (showTime) {
+    const timeDiv = document.createElement("div");
+    timeDiv.innerHTML = `<span class="chat-time">${(record && record.time) || getCurrentFormattedTime()}</span>`;
+    msgDiv.appendChild(timeDiv);
+  }
+
+  container.appendChild(msgDiv);
+  if (!restoring) scrollToBottom();
+
+  // ---- Typewriter (sirf naye AI answers par) ----
+  if (enableTypewriter && type === "ai" && !restoring) {
+    if (actionBar) actionBar.style.display = "none";   // text poora hone ke baad dikhega
+    typeHTML(contentDiv, htmlContent, () => {
+      renderMathSafely(msgDiv);
+      if (actionBar) actionBar.style.display = "flex";
+      scrollToBottom();
+      if (isSpeechEnabledGlobally && speakerBtn) speakText(plainText, speakerBtn, true);
+    });
+  } else {
+    contentDiv.innerHTML = htmlContent;
+    renderMathSafely(msgDiv);
+  }
+};
+
+/* ---------- Nayi chat ---------- */
+function startNewChat() {
+  if (chatHistory.length > 1 && !confirm("Poori chat history delete karke nayi chat shuru karein?")) return;
+  stopCurrentSpeech();
+  chatHistory = [];
+  localStorage.removeItem(CHAT_STORE_KEY);
+  localStorage.removeItem(CHAT_STATE_KEY);
+  currentLanguage = 'hinglish';
+  selectedSubject = 'General';
+  const c = document.getElementById("answerHistory");
+  if (c) c.innerHTML = "";
+  renderLanguageSelection();
+}
+
+/* ---------- Page load par purani chat wapas laao ---------- */
+(function restoreChat() {
+  try {
+    const st = JSON.parse(localStorage.getItem(CHAT_STATE_KEY) || '{}');
+    if (st.currentLanguage) currentLanguage = st.currentLanguage;
+    if (st.selectedSubject) selectedSubject = st.selectedSubject;
+  } catch (e) {}
+
+  chatHistory = loadChatStore();
+  const container = document.getElementById("answerHistory");
+  if (!container || !chatHistory.length) return;
+
+  chatHistory.forEach(r => window.appendChatMessage(r.html, r.type, r.showTime !== false, false, { restoring: true, record: r }));
+  container.scrollTop = container.scrollHeight;
+
+  // MathJax async load hota hai, isliye page load ke baad poori history ka math render karo
+  window.addEventListener('load', () => {
+    if (window.MathJax && MathJax.startup && MathJax.startup.promise) {
+      MathJax.startup.promise
+        .then(() => MathJax.typesetPromise([container]))
+        .then(() => { container.scrollTop = container.scrollHeight; })
+        .catch(() => {});
+    }
+  });
+})();
+
+
+/* =====================================================
+   THEME TOGGLE (Dark / Light) + CLAUDE-LIKE EXTRAS
+   ===================================================== */
+function applyTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  const m = document.querySelector('meta[name=theme-color]');
+  if (m) m.content = t === 'dark' ? '#080f19' : '#f5f8fd';
+}
+function toggleTheme() {
+  const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  applyTheme(next);
+  try { localStorage.setItem('theme', next); } catch (e) {}
+}
+
+// Options card: tap karne par chosen option highlight, baaki dim (Claude question picker jaisa)
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('.wa-action-btn');
+  if (!btn) return;
+  const card = btn.closest('.interactive-card');
+  if (card && !card.classList.contains('answered')) {
+    btn.classList.add('selected');
+    card.classList.add('answered');
+  }
+}, true);
+
+// Textarea auto-grow (multi-line sawaal par box badhta hai)
+function autoGrowInput() {
+  const el = document.getElementById('question');
+  if (!el) return;
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 140) + 'px';
+}
+(function () {
+  const el = document.getElementById('question');
+  if (el) el.addEventListener('input', autoGrowInput);
+  const _clear = clearQuestionInput;
+  window.clearQuestionInput = function () { _clear(); autoGrowInput(); };
+})();
+
+
+/* =====================================================
+   CLAUDE-STYLE: THINKING PANEL, TYPING, ERROR+RETRY, SOUND
+   ===================================================== */
+let lastRequest = null;
+
+/* ---- Typing animation: tags safe, blinking cursor ---- */
+function typeHTML(el, html, onDone) {
+  el.innerHTML = html;
+  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+  const nodes = []; let n;
+  while ((n = walker.nextNode())) if (n.nodeValue.length) nodes.push({ n, full: n.nodeValue });
+  nodes.forEach(o => o.n.nodeValue = '');
+  const total = nodes.reduce((a, o) => a + o.full.length, 0);
+  const step = Math.max(2, Math.ceil(total / 350));
+  const cursor = document.createElement('span');
+  cursor.className = 'type-cursor';
+  const box = document.getElementById('answerHistory');
+  let ni = 0, ci = 0;
+  (function tick() {
+    let left = step;
+    while (left > 0 && ni < nodes.length) {
+      const o = nodes[ni], take = Math.min(left, o.full.length - ci);
+      ci += take; left -= take;
+      o.n.nodeValue = o.full.slice(0, ci);
+      if (ci >= o.full.length) { ni++; ci = 0; }
+    }
+    if (ni < nodes.length) {
+      const cur = nodes[ni];
+      cur.n.parentNode.insertBefore(cursor, cur.n.nextSibling);
+      if (box) box.scrollTop = box.scrollHeight;
+      setTimeout(tick, 16);
+    } else { cursor.remove(); onDone && onDone(); }
+  })();
+}
+
+/* ---- Thinking / working panel (Claude jaisa) ---- */
+function buildWorkCard(img) {
+  const box = document.getElementById('answerHistory');
+  const wrap = document.createElement('div');
+  wrap.className = 'chat-bubble ai';
+  const lang = currentLanguage;
+  const steps = [];
+  if (img) steps.push('Photo se question padh raha hoon');
+  steps.push('Sawaal samajh raha hoon', `${selectedSubject} ke concepts aur formulas dhoondh raha hoon`, 'Step-by-step solution bana raha hoon');
+  wrap.innerHTML = `
+    <div class="work-card">
+      <button type="button" class="work-head">
+        <span class="work-spinner"></span>
+        <span class="work-title">Soch raha hoon…</span>
+        <span class="work-time">0s</span>
+        <svg class="work-chev" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      </button>
+      <div class="work-body">
+        <div class="work-cmd"><b>›</b> solve --subject="${escapeHtml(selectedSubject)}" --lang=${lang}${img ? ' --image' : ''}</div>
+        <div class="work-steps"></div>
+      </div>
+    </div>`;
+  box.appendChild(wrap);
+  box.scrollTop = box.scrollHeight;
+
+  const card = wrap.querySelector('.work-card');
+  const list = wrap.querySelector('.work-steps');
+  const title = wrap.querySelector('.work-title');
+  const timeEl = wrap.querySelector('.work-time');
+  wrap.querySelector('.work-head').onclick = () => card.classList.toggle('collapsed');
+
+  const addStep = (text) => {
+    list.querySelectorAll('.work-step.run').forEach(s => s.classList.replace('run', 'ok'));
+    const s = document.createElement('div');
+    s.className = 'work-step run';
+    s.innerHTML = `<span class="dot"></span><span>${text}</span>`;
+    list.appendChild(s);
+    box.scrollTop = box.scrollHeight;
+  };
+
+  let i = 0, secs = 0;
+  addStep(steps[i++]);
+  const stepTimer = setInterval(() => { if (i < steps.length) addStep(steps[i++]); }, 1300);
+  const clock = setInterval(() => { secs++; timeEl.textContent = secs + 's'; }, 1000);
+
+  return {
+    finish() {
+      clearInterval(stepTimer); clearInterval(clock);
+      while (i < steps.length) addStep(steps[i++]);
+      addStep('Answer verify kar raha hoon');
+      list.querySelectorAll('.work-step.run').forEach(s => s.classList.replace('run', 'ok'));
+      title.textContent = `Soch kar ${Math.max(secs, 1)}s me jawab diya`;
+      card.classList.add('done');
+      setTimeout(() => card.classList.add('collapsed'), 500);
+    },
+    remove() { clearInterval(stepTimer); clearInterval(clock); wrap.remove(); }
+  };
+}
+
+/* ---- Error card (high demand) + Retry ---- */
+function showErrorCard(kind, detail) {
+  const M = {
+    demand:  ['ROITX AI par abhi demand bahut zyada hai', 'Is waqt bahut saare students sawaal puchh rahe hain. Thodi der baad dobara try karein.'],
+    network: ['Internet connection me problem hai', 'Apna network check karke dobara try karein.'],
+    generic: ['Kuch gadbad ho gayi', 'Answer nahi ban paya. Dobara try karein.']
+  };
+  const [t, m] = M[kind] || M.generic;
+  const box = document.getElementById('answerHistory');
+  const wrap = document.createElement('div');
+  wrap.className = 'chat-bubble ai';
+  wrap.innerHTML = `
+    <div class="err-card">
+      <div class="err-title">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        ${t}
+      </div>
+      <div class="err-msg">${m}${kind === 'generic' && detail ? `<br><small>${escapeHtml(String(detail).slice(0, 140))}</small>` : ''}</div>
+      <button type="button" class="retry-btn">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.5 15a9 9 0 1 1-2.1-9.4L23 10"></path></svg>
+        Retry
+      </button>
+    </div>`;
+  wrap.querySelector('.retry-btn').onclick = () => {
+    wrap.remove();
+    if (lastRequest) solveWithAI(lastRequest.q, lastRequest.img);
+  };
+  box.appendChild(wrap);
+  box.scrollTop = box.scrollHeight;
+}
+
+/* ---- Main solve engine (override) ---- */
+window.solveWithAI = async function (questionText, imageBase64 = null) {
+  lastRequest = { q: questionText, img: imageBase64 };
+  const sendBtn = document.getElementById('solveBtn');
+  if (sendBtn) sendBtn.disabled = true;
+  const work = buildWorkCard(imageBase64);
+
+  const URL_ = window.SUPABASE_FUNCTION_URL || "https://ktastwehnnqicriknewr.supabase.co/functions/v1/smart-task";
+  const KEY_ = window.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0YXN0d2Vobm5xaWNyaWtuZXdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyNTk5NTEsImV4cCI6MjA4MDgzNTk1MX0.5_UvwaG0X8k_Emj-cMC0KjEqlvU6hgAt5IsHJdgARvk";
+  const styleLine = {
+    en: 'Solve the question step-by-step in English.',
+    hi: 'Solve in clear Hindi Devanagari script. Put English terms in brackets next to Hindi terms.',
+    hinglish: 'Solve in clean Hinglish (Roman Hindi + English).'
+  }[currentLanguage] || 'Solve in clean Hinglish.';
+  const PROMPT = `You are an expert tutor for Class 9-12. Subject: ${selectedSubject}. ${styleLine} Use LaTeX for math ($...$ inline, $$...$$ display). Direct answer only, no meta chatter.`;
+  const demandRe = /quota|rate.?limit|overload|busy|capacity|too many|unavailable|429|503|529/i;
+
+  try {
+    const res = await fetch(URL_, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "apikey": KEY_, "Authorization": `Bearer ${KEY_}` },
+      body: JSON.stringify({
+        prompt: `${PROMPT}\n\nQuery: ${questionText || "Solve the attached question/image"}`,
+        language: currentLanguage,
+        image: imageBase64
+      })
+    });
+    if ([429, 502, 503, 504, 529].includes(res.status)) { const e = new Error('demand'); e.kind = 'demand'; throw e; }
+
+    let data = {};
+    try { data = await res.json(); } catch (e) {}
+
+    let raw = "";
+    if (data.choices && data.choices[0]?.message?.content) raw = data.choices[0].message.content;
+    else if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) raw = data.candidates[0].content.parts[0].text;
+    else if (data.content) raw = data.content;
+    else if (data.result || data.response || data.output || data.message) raw = data.result || data.response || data.output || data.message;
+    else if (data.error) {
+      const msg = typeof data.error === 'string' ? data.error : (data.error.message || JSON.stringify(data.error));
+      const e = new Error(msg); e.kind = demandRe.test(msg) ? 'demand' : 'generic'; throw e;
+    }
+    if (!raw) { const e = new Error('Invalid response from server'); e.kind = 'generic'; throw e; }
+
+    work.finish();
+    const clean = cleanAIResponse(raw);
+    const html = typeof marked !== 'undefined' ? marked.parse(clean) : clean.replace(/\n/g, "<br>");
+    playChime();
+    appendChatMessage(`<b>💡 Solution / Answer:</b><br><br>${html}`, "ai", true, true);
+  } catch (err) {
+    work.remove();
+    const kind = err.kind || (err instanceof TypeError ? 'network' : 'generic');
+    showErrorCard(kind, err.message);
+  } finally {
+    if (sendBtn) sendBtn.disabled = false;
+  }
+};
+
+/* ---- Sound: header toggle + soft chime ---- */
+let _audioCtx = null;
+function playChime() {
+  if (!isSpeechEnabledGlobally) return;
+  try {
+    _audioCtx = _audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const t = _audioCtx.currentTime;
+    [660, 880].forEach((f, i) => {
+      const o = _audioCtx.createOscillator(), g = _audioCtx.createGain(), s = t + i * 0.09;
+      o.type = 'sine'; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, s);
+      g.gain.exponentialRampToValueAtTime(0.08, s + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, s + 0.25);
+      o.connect(g); g.connect(_audioCtx.destination);
+      o.start(s); o.stop(s + 0.28);
+    });
+  } catch (e) {}
+}
+function syncSoundBtn() {
+  document.documentElement.setAttribute('data-sound', isSpeechEnabledGlobally ? 'on' : 'off');
+}
+function toggleSound() {
+  isSpeechEnabledGlobally = !isSpeechEnabledGlobally;
+  localStorage.setItem('roitx_speech_pref', String(isSpeechEnabledGlobally));
+  if (!isSpeechEnabledGlobally) stopCurrentSpeech(); else playChime();
+  syncSoundBtn();
+  showToast(isSpeechEnabledGlobally ? 'Sound on 🔊' : 'Sound off 🔇');
+}
+document.addEventListener('click', (e) => {
+  if (e.target.closest('.msg-speaker-btn')) setTimeout(syncSoundBtn, 60);
+});
+syncSoundBtn();

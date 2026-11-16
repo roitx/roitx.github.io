@@ -2,6 +2,8 @@
 <html lang="hi">
 <head>
   <meta charset="UTF-8">
+  <meta name="theme-color" content="#080f19">
+  <script>(function(){try{var t=localStorage.getItem('theme')||(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark');document.documentElement.setAttribute('data-theme',t);var m=document.querySelector('meta[name=theme-color]');if(m)m.content=t==='dark'?'#080f19':'#f5f8fd';}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
   <title>ROITX AI Tutor & Instant Math Doubt Solver</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
@@ -68,8 +70,24 @@
         </div>
         <div>
           <h3>ROITX AI Tutor</h3>
-          <span class="online-status">🟢 Online | Saath Me Padhne Ke Liye Taiyar</span>
+          <span class="online-status"> Online</span>
         </div>
+      </div>
+<div class="header-actions">
+        <button type="button" class="sound-toggle" title="Sound on / off" aria-label="Toggle sound" onclick="toggleSound()">
+          <svg class="icon-on" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"></path><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"></path></svg>
+          <svg class="icon-off" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"></path><line x1="22" y1="9" x2="16" y2="15"></line><line x1="16" y1="9" x2="22" y2="15"></line></svg>
+        </button>
+        <button type="button" class="theme-toggle" title="Dark / Light mode" aria-label="Toggle theme" onclick="toggleTheme()">
+          <svg class="icon-moon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.5"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>
+        </button>
+        <button type="button" class="new-chat-btn" title="Nayi chat" onclick="startNewChat()">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 20h9"></path>
+          <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"></path>
+        </svg>
+      </button>
       </div>
     </div>
 
@@ -133,19 +151,19 @@
   </div>
 <!-- IMAGE CROPPER MODAL -->
 <div id="cropperModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.85); z-index:10000; align-items:center; justify-content:center; backdrop-filter:blur(5px);">
-  <div style="background:#1e293b; border:1px solid #3b82f6; border-radius:12px; width:90%; max-width:500px; padding:15px; color:#fff; display:flex; flex-direction:column; gap:12px;">
+  <div style="background:var(--surface); border:1px solid var(--accent); border-radius:12px; width:90%; max-width:500px; padding:15px; color:var(--text); display:flex; flex-direction:column; gap:12px;">
     <div style="display:flex; justify-content:space-between; align-items:center;">
-      <h3 style="margin:0; font-size:15px; color:#60a5fa;">✂️ Question Crop / Highlight Karein</h3>
-      <button onclick="closeCropperModal()" style="background:none; border:none; color:#94a3b8; font-size:18px; cursor:pointer;">✖</button>
+      <h3 style="margin:0; font-size:15px; color:var(--accent);">✂️ Question Crop / Highlight Karein</h3>
+      <button onclick="closeCropperModal()" style="background:none; border:none; color:var(--muted); font-size:18px; cursor:pointer;">✖</button>
     </div>
     
-    <div id="cropperWrapper" style="max-height:55vh; overflow:hidden; background:#0f172a; border-radius:8px; display:flex; justify-content:center; align-items:center;">
+    <div id="cropperWrapper" style="max-height:55vh; overflow:hidden; background:var(--bg); border-radius:8px; display:flex; justify-content:center; align-items:center;">
       <img id="cropperImageSrc" src="" style="max-width:100%; display:block;">
     </div>
 
     <div id="cropperDefaultFooter" style="display:flex; gap:10px; justify-content:flex-end;">
-      <button onclick="closeCropperModal()" style="background:#334155; border:none; color:#cbd5e1; padding:8px 14px; border-radius:6px; cursor:pointer; font-size:12px;">Cancel</button>
-      <button onclick="applyImageCrop()" style="background:#2563eb; border:none; color:#fff; padding:8px 16px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:12px;">Crop & Highlight</button>
+      <button onclick="closeCropperModal()" style="background:var(--border); border:none; color:var(--muted); padding:8px 14px; border-radius:6px; cursor:pointer; font-size:12px;">Cancel</button>
+      <button onclick="applyImageCrop()" style="background:var(--accent); border:none; color:#fff; padding:8px 16px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:12px;">Crop & Highlight</button>
     </div>
   </div>
 </div>
