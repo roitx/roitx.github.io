@@ -118,3 +118,9 @@ body.tk-gfs-lock{overflow:hidden}
 .rx-about-body p,.rx-about-body li{font-size:13px;line-height:1.65;margin:4px 0;color:#d5e3db}
 .rx-about-body ul{padding-left:18px;margin:4px 0}
 @media(prefers-reduced-motion:reduce){.rx-about,.rx-about-card{transition:none}}
+
+/* three-dot button: no box, just centred dots with a soft glow */
+.tk-dots{font-size:0!important;line-height:0!important;padding:0!important;display:grid!important;place-items:center!important;background:none!important;box-shadow:none!important;border-radius:50%!important;-webkit-tap-highlight-color:transparent}
+.tk-dots::before{content:"";width:4px;height:4px;border-radius:50%;background:currentColor;box-shadow:0 -7px 0 currentColor,0 7px 0 currentColor;filter:drop-shadow(0 0 3px currentColor) drop-shadow(0 0 8px currentColor);opacity:.9;transition:opacity .2s,filter .2s}
+.tk-dots:hover::before,.tk-dots:active::before{opacity:1;filter:drop-shadow(0 0 4px currentColor) drop-shadow(0 0 12px currentColor)}
+.tk-dots:active{transform:none!important;background:none!important;box-shadow:none!important}

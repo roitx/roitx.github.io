@@ -61,20 +61,24 @@ body.theme-retro{background-repeat:repeat;background-image:repeating-linear-grad
   -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 2.5px));
   mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 2.5px))}
 .replayer.rx-glow .rx-orbit{animation:rxSpin 1.05s cubic-bezier(.4,.1,.3,1) both}
+/* math error: red light, anticlockwise */
+.replayer.rx-err .rx-orbit{--accent:#ff2b2b;animation:rxSpinR 1.05s cubic-bezier(.4,.1,.3,1) both}
+.replayer.rx-err .rx-orbit::before{transform:scaleX(-1)}
+@keyframes rxSpinR{0%{opacity:0;transform:rotate(0)}15%{opacity:1}80%{opacity:1}100%{opacity:0;transform:rotate(-540deg)}}
 @keyframes rxSpin{0%{opacity:0;transform:rotate(0)}15%{opacity:1}80%{opacity:1}100%{opacity:0;transform:rotate(540deg)}}
 
-@media (prefers-reduced-motion:reduce){.replayer.rx-glow .rx-orbit{animation:none}.calculator-frame button,.rx-themes{transition:none;animation:none}.rx-theming,.rx-theming *{transition:none!important}}
+@media (prefers-reduced-motion:reduce){.replayer.rx-glow .rx-orbit,.replayer.rx-err .rx-orbit{animation:none}.calculator-frame button,.rx-themes{transition:none;animation:none}.rx-theming,.rx-theming *{transition:none!important}}
 `;
 { const st = document.createElement("style"); st.id = "rx-wow-css"; st.textContent = css; document.head.append(st); }
 
 /* ---------- 0b. Ring pulse (power ON, theme change, "=", angle/mode change) ---------- */
 let ringTimer = null;
-function ring() {
+function ring(isErr) {
   const el = $(".replayer"); if (!el) return;
   if (getComputedStyle(el).position === "static") el.style.position = "relative";
   if (!$(".rx-orbit", el)) { const o = document.createElement("span"); o.className = "rx-orbit"; o.setAttribute("aria-hidden", "true"); el.append(o); }
-  el.classList.remove("rx-glow"); void el.offsetWidth; el.classList.add("rx-glow");
-  clearTimeout(ringTimer); ringTimer = setTimeout(() => el.classList.remove("rx-glow"), 1150);
+  el.classList.remove("rx-glow", "rx-err"); void el.offsetWidth; el.classList.add(isErr ? "rx-err" : "rx-glow");
+  clearTimeout(ringTimer); ringTimer = setTimeout(() => el.classList.remove("rx-glow", "rx-err"), 1150);
 }
 
 /* ---------- 1. Theme: remembered + smooth switch ---------- */
@@ -180,7 +184,12 @@ function schedule() {
 const _updateDisplay = window.updateDisplay;
 window.updateDisplay = function () { _updateDisplay.apply(this, arguments); schedule(); };
 const _calculate = window.calculate;
-window.calculate = function () { ring(); clearTimeout(timer); shown = null; if (resEl) resEl.classList.remove("rx-prev"); return _calculate.apply(this, arguments); };
+window.calculate = function () {
+  clearTimeout(timer); shown = null; if (resEl) resEl.classList.remove("rx-prev");
+  const r = _calculate.apply(this, arguments);
+  ring(!!resEl && /ERROR/i.test(resEl.innerText)); // red + anticlockwise on math error
+  return r;
+};
 
 /* ---------- 5b. More ring triggers: ON key, DEG/RAD, MODE sheet options ---------- */
 {
