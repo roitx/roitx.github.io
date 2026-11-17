@@ -103,24 +103,77 @@ body {
 
 .eye-container {
   position: absolute;
-  top: 55px;
+  top: 50px;
   left: 0;
   width: 100%;
   display: flex;
   justify-content: space-around;
   padding: 0 38px;
-  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease;
 }
 
 .eye {
-  width: 14px;
-  height: 14px;
-  background: #333;
+  width: 22px;
+  height: 22px;
+  background: radial-gradient(circle at 50% 40%, #fff 55%, #e6e9ef 100%);
   border-radius: 50%;
   position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,.28), 0 1px 0 #fff;
   transition: transform 0.3s ease, background 0.3s ease, border 0.3s ease, height 0.3s ease;
   animation: blink 4.5s infinite;
 }
+/* Iris + pupil + light reflections */
+.iris {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 14px; height: 14px;
+  margin: -7px 0 0 -7px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #0b0b0d 0 28%, #3b2417 31%, #7a4a2b 64%, #2a1a10 100%);
+  transition: transform 0.12s ease-out;
+}
+.iris::after {
+  content: "";
+  position: absolute;
+  top: 2px; left: 3px;
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 4px 5px 0 -1px rgba(255,255,255,.55);
+}
+/* Lower lid: rises when smiling => "eye smile" */
+.eye::before {
+  content: "";
+  position: absolute;
+  left: -20%; right: -20%; bottom: -2px;
+  height: 10%;
+  background: #e0e5ec;
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  box-shadow: 0 -1px 2px rgba(0,0,0,.12);
+  transition: height 0.35s ease;
+  z-index: 2;
+}
+/* Upper lid */
+.eye::after {
+  content: "";
+  position: absolute;
+  left: -5%; right: -5%; top: -2px;
+  height: 22%;
+  background: #e0e5ec;
+  border-radius: 0 0 50% 50% / 0 0 100% 100%;
+  box-shadow: 0 1px 2px rgba(0,0,0,.2);
+  transition: height 0.35s ease;
+  z-index: 2;
+}
+.character.happy .eye::before,
+.character.expr-blush .eye::before,
+.character.expr-star .eye::before,
+.character.expr-wink .eye.left::before { height: 48%; }
+.character.happy .eye::after { height: 28%; }
+.character.expr-sleep .iris,
+.character.expr-dizzy .iris,
+.character.expr-star .iris { display: none; }
 
 @keyframes blink {
   0%, 94%, 100% { transform: scaleY(1); }
@@ -157,15 +210,23 @@ body {
   overflow: visible;
 }
 .mouth path {
-  stroke: #333;
-  stroke-width: 3.5;
+  stroke: #7a3b36;
+  stroke-width: 2.6;
   stroke-linecap: round;
   fill: none;
   transition: stroke 0.3s ease;
 }
 
-.character.happy .mouth path {
-  stroke: #28a745;
+.mouth .lip { fill: #e8918c; stroke: none; opacity: .9; }
+.character[class*="expr-"]:not(.expr-blush):not(.expr-wink):not(.expr-star) .mouth .lip,
+.wrong .mouth .lip { opacity: 0; }
+
+/* Happy: bigger smile, raised cheeks (eye-smile handled above) */
+.character.happy .mouth .line { d: path("M1 3 Q 18 21 35 3"); }
+.character.happy .mouth .lip { d: path("M1 3 Q 18 21 35 3 Q 18 12 1 3 Z"); }
+.character.happy .cheek {
+  background: rgba(255, 110, 110, 0.38);
+  transform: translateY(-3px) scale(1.15);
 }
 
 /* Zzz Animation for Sleep Mode */
@@ -284,18 +345,22 @@ body {
 .character.expr-shush .mouth path { d: path("M14 7 A 3 3 0 1 1 20 7 A 3 3 0 1 1 14 7"); fill: #333; stroke: none; }
 
 .hand {
-  width: 50px;
-  height: 20px;
-  background: #e0e5ec;
-  border-radius: 20px;
   position: absolute;
-  top: 60px;
+  width: 60px;
+  height: 64px;
+  top: 38px;
   opacity: 0;
-  box-shadow: 4px 4px 8px #b8bec7, -4px -4px 8px #fff;
-  transition: .3s;
+  pointer-events: none;
+  z-index: 12;
+  filter: drop-shadow(2px 4px 4px rgba(90, 60, 40, .35));
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease;
 }
-.hand.left { left: -5px; transform: rotate(-25deg); }
-.hand.right { right: -5px; transform: rotate(25deg); }
+.hand svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.hand.right svg { transform: scaleX(-1); }
+.hand.left  { left: 6px;  transform: translate(-14px, 60px) rotate(-6deg); }
+.hand.right { right: 6px; transform: translate(14px, 60px) rotate(6deg); }
+.cover .hand.left  { transform: translate(0, 0) rotate(7deg); }
+.cover .hand.right { transform: translate(0, 0) rotate(-7deg); }
 
 /* ANIMATION STATES (EYE COVER LOGIC) */
 .cover .eye-container { opacity: 0; }
@@ -467,18 +532,63 @@ button.primary-btn:active {
     </div>
 
     <div class="eye-container">
-      <div class="eye left" id="leftEye"></div>
-      <div class="eye right" id="rightEye"></div>
+      <div class="eye left" id="leftEye"><div class="iris"></div></div>
+      <div class="eye right" id="rightEye"><div class="iris"></div></div>
     </div>
     <div class="cheek left"></div>
     <div class="cheek right"></div>
     <div class="mouth">
       <svg viewBox="0 0 36 14">
-        <path d="M2 4 Q 18 16 34 4" />
+        <path class="line" d="M2 4 Q 18 16 34 4" />
+        <path class="lip" d="M3 5 Q 18 17 33 5 Q 18 11 3 5 Z" />
       </svg>
     </div>
-    <div class="hand left"></div>
-    <div class="hand right"></div>
+    <div class="hand left">
+      <svg viewBox="0 0 60 64" aria-hidden="true">
+        <defs><linearGradient id="skin" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe3c9"/><stop offset="1" stop-color="#eeb28a"/></linearGradient></defs>
+        <g fill="url(#skin)" stroke="#d99a72" stroke-width=".8">
+          <rect x="47" y="32" width="11" height="26" rx="5.5" transform="rotate(25 52 45)"/>
+          <rect x="3" y="15" width="10" height="34" rx="5"/>
+          <rect x="14" y="7" width="10" height="42" rx="5"/>
+          <rect x="25" y="3" width="10" height="46" rx="5"/>
+          <rect x="36" y="8" width="10" height="41" rx="5"/>
+        </g>
+        <rect x="3" y="28" width="46" height="34" rx="15" fill="url(#skin)"/>
+        <g fill="#ffd9d0" opacity=".9">
+          <rect x="4.5" y="16.5" width="7" height="8" rx="3.5"/>
+          <rect x="15.5" y="8.5" width="7" height="8" rx="3.5"/>
+          <rect x="26.5" y="4.5" width="7" height="8" rx="3.5"/>
+          <rect x="37.5" y="9.5" width="7" height="8" rx="3.5"/>
+        </g>
+        <g fill="none" stroke="#c9885f" stroke-width=".9" stroke-linecap="round" opacity=".5">
+          <path d="M5 36h6M16 34h6M27 33h6M38 34h6"/>
+          <path d="M14 50q8 5 20 0"/>
+        </g>
+      </svg>
+    </div>
+    <div class="hand right">
+      <svg viewBox="0 0 60 64" aria-hidden="true">
+        
+        <g fill="url(#skin)" stroke="#d99a72" stroke-width=".8">
+          <rect x="47" y="32" width="11" height="26" rx="5.5" transform="rotate(25 52 45)"/>
+          <rect x="3" y="15" width="10" height="34" rx="5"/>
+          <rect x="14" y="7" width="10" height="42" rx="5"/>
+          <rect x="25" y="3" width="10" height="46" rx="5"/>
+          <rect x="36" y="8" width="10" height="41" rx="5"/>
+        </g>
+        <rect x="3" y="28" width="46" height="34" rx="15" fill="url(#skin)"/>
+        <g fill="#ffd9d0" opacity=".9">
+          <rect x="4.5" y="16.5" width="7" height="8" rx="3.5"/>
+          <rect x="15.5" y="8.5" width="7" height="8" rx="3.5"/>
+          <rect x="26.5" y="4.5" width="7" height="8" rx="3.5"/>
+          <rect x="37.5" y="9.5" width="7" height="8" rx="3.5"/>
+        </g>
+        <g fill="none" stroke="#c9885f" stroke-width=".9" stroke-linecap="round" opacity=".5">
+          <path d="M5 36h6M16 34h6M27 33h6M38 34h6"/>
+          <path d="M14 50q8 5 20 0"/>
+        </g>
+      </svg>
+    </div>
   </aside>
 
   <section class="card" id="authCard">
@@ -582,12 +692,13 @@ document.addEventListener("mousemove", (e) => {
     const eyeCenterY = rect.top + rect.height / 2;
     
     const angle = Math.atan2(e.clientY - eyeCenterY, e.clientX - eyeCenterX);
-    const distance = Math.min(3.5, Math.hypot(e.clientX - eyeCenterX, e.clientY - eyeCenterY) / 25);
+    const distance = Math.min(3.2, Math.hypot(e.clientX - eyeCenterX, e.clientY - eyeCenterY) / 25);
     
     const x = Math.cos(angle) * distance;
     const y = Math.sin(angle) * distance;
     
-    eye.style.transform = `translate(${x}px, ${y}px)`;
+    const iris = eye.querySelector('.iris');
+    if (iris) iris.style.transform = `translate(${x}px, ${y}px)`;
   });
 });
 
