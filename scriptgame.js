@@ -40,6 +40,7 @@ function resize() {
 
 window.addEventListener("resize", resize);
 
+const LEVEL_STEP = 1750; // pehle 350 tha -> ab 5x (har 1750 score par level up)
 let game = false, paused = false, score = 0, coins = 0, lives = 12, level = 1;
 let bullets = [], missiles = [], enemies = [], asteroids = [], particles = [], stars = [], enemyBullets = [], powerups = [], floatingTexts = [], coinDrops = [], shockwaves = [], trails = [];
 let controlMode = "buttons", screenShake = 0, combo = 1, comboTimer = 0;
@@ -54,7 +55,7 @@ const scoreEl = document.getElementById("score"), coinsEl = document.getElementB
 const startScreen = document.getElementById("start-screen"), gameOverScreen = document.getElementById("game-over"), shopModal = document.getElementById("shop-modal");
 const finalScore = document.getElementById("final-score"), monsterAlert = document.getElementById("monster-alert"), shopCoins = document.getElementById("shop-coins");
 const toggleBtn = document.getElementById("toggleControl"), pauseBtn = document.getElementById("pauseBtn"), shopBtn = document.getElementById("shopBtn"), audioBtn = document.getElementById("audioBtn");
-const ultiBtn = document.getElementById("ultimateBtn"), dashBtn = document.getElementById("dashBtn");
+const ultiBtn = document.getElementById("ultimateBtn"), gravityBtn = document.getElementById("gravityBtn");
 const shipCards = document.querySelectorAll(".ship-card");
 
 const leaderboardScreen = document.getElementById("leaderboard-screen");
@@ -206,6 +207,10 @@ function playSynthSound(type) {
         osc.type = 'square'; osc.frequency.setValueAtTime(200, now); osc.frequency.exponentialRampToValueAtTime(10, now + 0.3);
         gain.gain.setValueAtTime(0.18, now); gain.gain.linearRampToValueAtTime(0, now + 0.3);
         osc.start(now); osc.stop(now + 0.3);
+    } else if (type === 'gravity') {
+        osc.type = 'sine'; osc.frequency.setValueAtTime(420, now); osc.frequency.exponentialRampToValueAtTime(55, now + 0.55);
+        gain.gain.setValueAtTime(0.22, now); gain.gain.linearRampToValueAtTime(0, now + 0.55);
+        osc.start(now); osc.stop(now + 0.55);
     } else if (type === 'ulti') {
         osc.type = 'sine'; osc.frequency.setValueAtTime(80, now); osc.frequency.exponentialRampToValueAtTime(1800, now + 0.7);
         gain.gain.setValueAtTime(0.3, now); gain.gain.linearRampToValueAtTime(0, now + 0.7);
@@ -224,7 +229,7 @@ const svgIcons = {
 if (audioBtn) {
     audioBtn.onclick = () => {
         audioEnabled = !audioEnabled;
-        audioBtn.innerText = audioEnabled ? "🔊 Audio" : "🔇 Muted";
+        const l = audioBtn.querySelector(".lbl"); if (l) l.textContent = audioEnabled ? "Audio" : "Muted"; audioBtn.classList.toggle("off", !audioEnabled);
     };
 }
 
@@ -242,7 +247,7 @@ for(let i = 0; i < 60; i++) {
 const player = { 
     x: 0, y: 0, w: 56, h: 56, 
     speed: 8, cooldown: 0, missileCooldown: 0, shield: false, 
-    ultiCooldown: 0, dashCooldown: 0, isDashing: false, triplePower: false 
+    ultiCooldown: 0, gravityCooldown: 0, triplePower: false 
 };
 const keys = {};
 
@@ -318,7 +323,7 @@ async function loadNextQuestion() {
 window.addEventListener("keydown", e => {
     keys[e.key] = true;
     if (e.key === "e" || e.key === "E") triggerUltimate();
-    if (e.key === "Shift") triggerDash();
+    if (e.key === "g" || e.key === "G" || e.key === "Shift") triggerGravity();
 });
 window.addEventListener("keyup", e => keys[e.key] = false);
 
@@ -450,7 +455,7 @@ if (leftBtn && rightBtn) {
 }
 
 if (ultiBtn) ultiBtn.onclick = triggerUltimate;
-if (dashBtn) dashBtn.onclick = triggerDash;
+if (gravityBtn) gravityBtn.onclick = () => triggerGravity();
 
 if (canvas) {
     canvas.addEventListener("touchmove", (e) => {
@@ -464,9 +469,15 @@ if (canvas) {
 }
 
 if (toggleBtn) {
-    toggleBtn.onclick = () => {
-        controlMode = controlMode === "buttons" ? "tilt" : "buttons";
-        toggleBtn.innerText = controlMode === "buttons" ? "🕹️ Buttons" : "📱 Tilt";
+    toggleBtn.onclick = async () => {
+        const next = controlMode === "buttons" ? "tilt" : "buttons";
+        if (next === "tilt" && window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === "function") {
+            try { if (await DeviceOrientationEvent.requestPermission() !== "granted") return; } catch (e) { return; }
+        }
+        controlMode = next;
+        const l = toggleBtn.querySelector(".lbl"); if (l) l.textContent = controlMode === "buttons" ? "Buttons" : "Tilt";
+        const mc = document.getElementById("manual-controls");
+        if (mc) mc.classList.toggle("tilt-mode", controlMode === "tilt");
     };
 }
 
@@ -576,11 +587,65 @@ if (homeBtn) {
 // 6. GAME MECHANICS & SPAWN LOGIC
 // ==========================================
 function updateHUD() {
-    if (scoreEl) scoreEl.textContent = score;
-    if (coinsEl) coinsEl.textContent = coins;
-    if (livesEl) livesEl.textContent = lives;
-    if (levelEl) levelEl.textContent = level;
-    if (comboEl) comboEl.textContent = "x" + combo;
+    const setV = (el, val) => { if (!el) return; const v = el.querySelector(".v"); (v || el).textContent = val; };
+    setV(scoreEl, score); setV(coinsEl, coins); setV(livesEl, lives);
+    setV(levelEl, level); setV(comboEl, "x" + combo);
+
+    // Ring progress for side orbs
+    const ring = (el, pct) => { if (el) el.style.setProperty("--p", Math.max(0, Math.min(100, pct))); };
+    const maxHp = (typeof shipTypes !== "undefined" && shipTypes[selectedShip]) ? shipTypes[selectedShip].hp : 12;
+    const hpPct = (lives / maxHp) * 100;
+    ring(livesEl, hpPct);
+    if (livesEl) livesEl.dataset.low = hpPct <= 35 ? "1" : "0";
+    ring(levelEl, ((score % LEVEL_STEP) / LEVEL_STEP) * 100);
+    ring(comboEl, combo * 20);
+}
+
+
+// ==========================================
+// LEVEL UP CELEBRATION (banner + reward + sound + orb pop)
+// ==========================================
+const LEVELUP_REWARD = { coins: 15, hp: 1 };   // <- yahan se reward badal sakte ho
+
+function playLevelUpJingle() {
+    if (!audioEnabled) return;
+    try {
+        if (audioCtx.state === "suspended") audioCtx.resume();
+        const now = audioCtx.currentTime;
+        [659.25, 880].forEach((f, i) => {           // do halke notes, low volume
+            const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+            o.type = "sine"; o.frequency.setValueAtTime(f, now + i * 0.12);
+            g.gain.setValueAtTime(0.0001, now + i * 0.12);
+            g.gain.exponentialRampToValueAtTime(0.04, now + i * 0.12 + 0.04);
+            g.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.12 + 0.35);
+            o.connect(g); g.connect(audioCtx.destination);
+            o.start(now + i * 0.12); o.stop(now + i * 0.12 + 0.4);
+        });
+    } catch (e) {}
+}
+
+function showLevelUp(lv) {
+    // Reward
+    coins += LEVELUP_REWARD.coins;
+    const maxHp = shipTypes[selectedShip] ? shipTypes[selectedShip].hp : 12;
+    let gotHp = 0;
+    if (lives < maxHp) { const before = lives; lives = Math.min(maxHp, lives + LEVELUP_REWARD.hp); gotHp = lives - before; }
+    updateHUD();
+
+    // Soft banner (no shake / flash / vibration)
+    let b = document.getElementById("levelup-banner");
+    if (!b) { b = document.createElement("div"); b.id = "levelup-banner"; document.body.appendChild(b); }
+    b.innerHTML =
+        '<span class="lu-lv">LEVEL ' + lv + '</span>' +
+        '<span class="lu-chip coin">+' + LEVELUP_REWARD.coins + '</span>' +
+        (gotHp > 0 ? '<span class="lu-chip hp">+' + (Math.round(gotHp * 10) / 10) + ' HP</span>' : '');
+    b.classList.remove("show"); void b.offsetWidth; b.classList.add("show");
+    clearTimeout(showLevelUp._t);
+    showLevelUp._t = setTimeout(() => b.classList.remove("show"), 2600);
+
+    // Gentle orb pulse + quiet sound
+    if (levelEl) { levelEl.classList.remove("pop"); void levelEl.offsetWidth; levelEl.classList.add("pop"); }
+    playLevelUpJingle();
 }
 
 function addFloatingText(x, y, text, color = "#facc15") {
@@ -591,13 +656,149 @@ function addShockwave(x, y, color = "#06b6d4", maxR = 90) {
     shockwaves.push({ x, y, r: 5, maxR, color, alpha: 1 });
 }
 
-function triggerDash() {
-    if (player.dashCooldown > 0 || !game) return;
-    player.isDashing = true;
-    player.dashCooldown = 110;
-    addShockwave(player.x + player.w/2, player.y + player.h/2, "#06b6d4", 70);
-    addFloatingText(player.x, player.y, "TACTICAL DASH!", "#06b6d4");
-    setTimeout(() => player.isDashing = false, 320);
+// ---------- GRAVITY WELL (NEW ABILITY) ----------
+const GRAVITY_COOLDOWN = 620;   // frames (~10s)
+const GRAVITY_DURATION = 200;   // frames (~3.3s)
+let gravityWell = null;
+
+function showGameToast(html, ms = 4500) {
+    const t = document.createElement("div");
+    t.className = "game-toast";
+    t.innerHTML = html;
+    document.body.appendChild(t);
+    requestAnimationFrame(() => t.classList.add("show"));
+    setTimeout(() => { t.classList.remove("show"); setTimeout(() => t.remove(), 400); }, ms);
+}
+
+function triggerGravity() {
+    if (!game || paused || player.gravityCooldown > 0 || gravityWell) return;
+    const R = Math.min(240, canvas.width * 0.55);
+    const cx = Math.max(R * 0.4, Math.min(canvas.width - R * 0.4, player.x + player.w / 2));
+    const cy = Math.max(130, player.y - 250);
+    gravityWell = { x: cx, y: cy, R, life: GRAVITY_DURATION, max: GRAVITY_DURATION, rot: 0, eaten: 0 };
+    player.gravityCooldown = GRAVITY_COOLDOWN;
+
+    playSynthSound('gravity');
+    addShockwave(cx, cy, "#a855f7", R * 0.6);
+    addFloatingText(cx - 55, cy - 30, "GRAVITY WELL!", "#c084fc");
+    if (navigator.vibrate) navigator.vibrate([20, 30, 20]);
+
+    store.set("gravitySeen", true);
+    if (gravityBtn) gravityBtn.classList.remove("is-new");
+}
+
+// Ek enemy kheench liya gaya: score + combo + kabhi kabhi coin
+function absorbEnemy(e, w) {
+    comboTimer = 130; combo = Math.min(5, combo + 1);
+    const pts = 12 * combo;
+    score += pts; w.eaten++;
+    addFloatingText(e.x, e.y, "+" + pts, "#c084fc");
+    if (Math.random() < 0.5) coinDrops.push({ x: w.x - 14, y: w.y, w: 28, h: 28, size: 28 });
+    updateHUD();
+}
+
+function updateGravityWell() {
+    if (!gravityWell) return;
+    const w = gravityWell;
+    w.life--; w.rot += 0.12;
+    const open = Math.min(1, (w.max - w.life) / 20);
+    const R = w.R * open;
+
+    // objects ko center ki taraf kheencho; return distance
+    const tug = (o, cx, cy, mult) => {
+        const dx = w.x - cx, dy = w.y - cy, d = Math.hypot(dx, dy) || 1;
+        if (d > R) return d;
+        const f = (1.5 + 5 * (1 - d / R)) * mult;
+        o.x += dx / d * f; o.y += dy / d * f;
+        return d;
+    };
+
+    for (let i = enemies.length - 1; i >= 0; i--) {
+        const e = enemies[i];
+        if (tug(e, e.x + e.w / 2, e.y + e.h / 2, 1) < 28) { absorbEnemy(e, w); enemies.splice(i, 1); }
+    }
+    for (let i = asteroids.length - 1; i >= 0; i--) {
+        const a = asteroids[i];
+        if (tug(a, a.x + a.w / 2, a.y + a.h / 2, 1) < 30) { explode(a.x + a.w / 2, a.y + a.h / 2, "#a855f7", 6); asteroids.splice(i, 1); }
+    }
+    for (let i = enemyBullets.length - 1; i >= 0; i--) {
+        const b = enemyBullets[i];
+        if (tug(b, b.x + (b.w || 6) / 2, b.y + (b.h || 14) / 2, 1.4) < 24) { enemyBullets.splice(i, 1); score += 1; }
+    }
+
+    // spiral particles andar ki taraf
+    if (particles.length < 160) {
+        for (let i = 0; i < 2; i++) {
+            const ang = Math.random() * Math.PI * 2, r = R * (0.6 + Math.random() * 0.4);
+            particles.push({
+                x: w.x + Math.cos(ang) * r, y: w.y + Math.sin(ang) * r,
+                vx: -Math.cos(ang) * 3 - Math.sin(ang) * 1.6, vy: -Math.sin(ang) * 3 + Math.cos(ang) * 1.6,
+                l: r / 3.2, c: Math.random() < 0.5 ? "#c084fc" : "#22d3ee", s: 2 + Math.random() * 2
+            });
+        }
+    }
+
+    // collapse: aakhir me chhota dhamaka
+    if (w.life <= 0) {
+        const cr = w.R * 0.8;
+        addShockwave(w.x, w.y, "#a855f7", cr * 1.3);
+        explode(w.x, w.y, "#a855f7", 40);
+        for (let i = enemies.length - 1; i >= 0; i--) {
+            const e = enemies[i];
+            if (Math.hypot(e.x + e.w / 2 - w.x, e.y + e.h / 2 - w.y) < cr) { absorbEnemy(e, w); enemies.splice(i, 1); }
+        }
+        enemyBullets = enemyBullets.filter(b => Math.hypot(b.x - w.x, b.y - w.y) > cr);
+        asteroids = asteroids.filter(a => Math.hypot(a.x + a.w / 2 - w.x, a.y + a.h / 2 - w.y) > cr);
+        const bonus = w.eaten * 5;
+        score += bonus;
+        addFloatingText(w.x - 45, w.y - 10, w.eaten ? "SINGULARITY! +" + bonus : "SINGULARITY!", "#facc15");
+        screenShake = Math.max(screenShake, 14);
+        updateHUD();
+        gravityWell = null;
+    }
+}
+
+function drawGravityWell() {
+    if (!gravityWell || !ctx) return;
+    const w = gravityWell;
+    const k = Math.min((w.max - w.life) / 20, w.life / 20, 1);
+    ctx.save();
+    ctx.translate(w.x, w.y);
+
+    // pull range (dashed ring)
+    ctx.globalAlpha = 0.2 * k; ctx.strokeStyle = "#a855f7"; ctx.lineWidth = 1.5;
+    ctx.setLineDash([6, 10]); ctx.lineDashOffset = -w.rot * 20;
+    ctx.beginPath(); ctx.arc(0, 0, w.R * k, 0, Math.PI * 2); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // purple glow
+    const g = ctx.createRadialGradient(0, 0, 8 * k, 0, 0, 80 * k + 1);
+    g.addColorStop(0, "rgba(0,0,0,1)"); g.addColorStop(0.45, "rgba(88,28,135,0.75)"); g.addColorStop(1, "rgba(88,28,135,0)");
+    ctx.globalAlpha = 1; ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(0, 0, 80 * k, 0, Math.PI * 2); ctx.fill();
+
+    // spinning accretion arcs
+    ctx.lineWidth = 3; ctx.strokeStyle = "#22d3ee"; ctx.shadowColor = "#c084fc"; ctx.shadowBlur = 16;
+    for (let i = 0; i < 3; i++) {
+        ctx.globalAlpha = (0.9 - i * 0.25) * k;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, (38 + i * 14) * k, (14 + i * 5) * k, w.rot * 0.6 + i * 1.1, 0, Math.PI * 1.4);
+        ctx.stroke();
+    }
+
+    // event horizon
+    ctx.shadowBlur = 0; ctx.globalAlpha = 1; ctx.fillStyle = "#000";
+    ctx.beginPath(); ctx.arc(0, 0, 20 * k, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+}
+
+function updateGravityButton() {
+    if (!gravityBtn) return;
+    const pct = player.gravityCooldown <= 0 ? 100 : Math.round((1 - player.gravityCooldown / GRAVITY_COOLDOWN) * 100);
+    gravityBtn.style.setProperty("--ready", pct);
+    gravityBtn.classList.toggle("ready", player.gravityCooldown <= 0);
+    gravityBtn.classList.toggle("active-hole", !!gravityWell);
+    gravityBtn.style.opacity = player.gravityCooldown <= 0 || gravityWell ? "1" : "0.6";
 }
 
 function triggerUltimate() {
@@ -752,7 +953,6 @@ function explode(x, y, color, count = 18) {
 }
 
 function hitPlayer() {
-    if (player.isDashing) return;
     if (player.shield) {
         player.shield = false;
         addFloatingText(player.x, player.y, "SHIELD BROKEN!", "#38bdf8");
@@ -760,6 +960,7 @@ function hitPlayer() {
     }
     lives--;
     screenShake = 15;
+    if (navigator.vibrate) navigator.vibrate(60);
     updateHUD();
     explode(player.x + player.w/2, player.y + player.h/2, "#ef4444", 12);
     if (lives <= 0) gameOver();
@@ -767,7 +968,7 @@ function hitPlayer() {
 
 async function gameOver() {
     game = false;
-    if (finalScore) finalScore.textContent = score;
+    onRunEnd();
     if (gameOverScreen) gameOverScreen.classList.add("show");
     
     if (currentUser) {
@@ -787,6 +988,8 @@ async function startGame() {
     lives = shipTypes[selectedShip].hp;
     bullets = []; missiles = []; enemies = []; asteroids = [];
     particles = []; enemyBullets = []; powerups = []; coinDrops = []; mathDrones = [];
+    gravityWell = null; player.gravityCooldown = 0;
+    if (!store.get("gravitySeen", false)) setTimeout(() => showGameToast("🌀 <b>NEW · GRAVITY WELL</b><br><small>Enemies, asteroids &amp; bullets get sucked in. Tap ◉ or press G</small>", 5000), 1200);
     monsterActive = false; monster = null; 
     
     // Yahan reset karein
@@ -826,6 +1029,11 @@ async function startGame() {
 }
 
 if(startBtn) startBtn.onclick = startGame;
+const menuBtnOver = document.getElementById("menuBtnOver");
+if (menuBtnOver) menuBtnOver.onclick = () => {
+    if (gameOverScreen) gameOverScreen.classList.remove("show");
+    if (startScreen) startScreen.classList.add("show");
+};
 if(restartBtn) restartBtn.onclick = startGame;
 
 // ==========================================
@@ -1007,7 +1215,7 @@ function update() {
     ctx.globalAlpha = 1.0;
 
     if (controlMode === "buttons") {
-        let speedMultiplier = player.isDashing ? 2.3 : 1;
+        let speedMultiplier = 1;
         if (keys["ArrowLeft"] && player.x > 0) player.x -= player.speed * speedMultiplier;
         if (keys["ArrowRight"] && player.x + player.w < canvas.width) player.x += player.speed * speedMultiplier;
     }
@@ -1016,11 +1224,13 @@ function update() {
     if (player.cooldown > 0) player.cooldown--;
     if (player.missileCooldown > 0) player.missileCooldown--;
     if (player.ultiCooldown > 0) player.ultiCooldown--;
-    if (player.dashCooldown > 0) player.dashCooldown--;
+    if (player.gravityCooldown > 0) player.gravityCooldown--;
 
     if (ultiBtn) ultiBtn.style.opacity = player.ultiCooldown <= 0 ? "1" : "0.4";
-    if (dashBtn) dashBtn.style.opacity = player.dashCooldown <= 0 ? "1" : "0.4";
+    updateGravityButton();
 
+    updateGravityWell();
+    drawGravityWell();
     if (typeof drawPlayerShip === "function") {
         drawPlayerShip(ctx, player, shipTypes, selectedShip, trails);
     }
@@ -1196,7 +1406,8 @@ if (monster && monster.hp <= 0) {
 }
 
 
-if (score % 350 === 0) level++;
+const newLvl = 1 + Math.floor(score / LEVEL_STEP);
+if (newLvl > level) { level = newLvl; showLevelUp(level); }
 break;
 
             }
@@ -1398,3 +1609,63 @@ async function loadNextQuestion() {
         setupMathDrones();
     }
 }
+
+
+// ==========================================
+// 9. PRO LAYER: persistence, stats, auto-pause
+// ==========================================
+const store = {
+    get(k, d) { try { const v = localStorage.getItem("co_" + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
+    set(k, v) { try { localStorage.setItem("co_" + k, JSON.stringify(v)); } catch (e) {} }
+};
+
+function onRunEnd() {
+    const prev = store.get("best", 0);
+    const isBest = score > prev;
+    if (isBest) store.set("best", score);
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    set("final-score", score); set("best-score", Math.max(prev, score)); set("final-level", level); set("start-best", Math.max(prev, score));
+    const badge = document.getElementById("newBestBadge");
+    if (badge) badge.style.display = isBest && score > 0 ? "inline-block" : "none";
+    if (gameOverScreen) gameOverScreen.classList.add("show");
+}
+
+// Restore saved settings by replaying the same clicks a user would make
+(function restoreSettings() {
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    set("start-best", store.get("best", 0));
+
+    audioEnabled = store.get("audio", true);
+    if (audioBtn) {
+        const l = audioBtn.querySelector(".lbl"); if (l) l.textContent = audioEnabled ? "Audio" : "Muted";
+        audioBtn.classList.toggle("off", !audioEnabled);
+        const orig = audioBtn.onclick;
+        audioBtn.onclick = (e) => { orig && orig(e); store.set("audio", audioEnabled); };
+    }
+
+    const clickCard = (sel) => { const c = document.querySelector(sel); if (c) c.click(); };
+    const ship = store.get("ship", null); if (ship) clickCard('.ship-card[data-ship="' + ship + '"]');
+    const subj = store.get("subject", null); if (subj) clickCard('.subject-card[data-subject="' + subj + '"]');
+    const med = store.get("medium", null); if (med) clickCard('.subject-card[data-medium="' + med + '"]');
+    if (store.get("studyMode", false) && mathModeCheckbox) {
+        mathModeCheckbox.checked = true; mathModeCheckbox.dispatchEvent(new Event("change"));
+    }
+    document.querySelectorAll(".ship-card").forEach(c => c.addEventListener("click", () => store.set("ship", c.dataset.ship)));
+    document.querySelectorAll(".subject-card[data-subject]").forEach(c => c.addEventListener("click", () => store.set("subject", c.dataset.subject)));
+    document.querySelectorAll(".subject-card[data-medium]").forEach(c => c.addEventListener("click", () => store.set("medium", c.dataset.medium)));
+    if (mathModeCheckbox) mathModeCheckbox.addEventListener("change", () => store.set("studyMode", mathModeCheckbox.checked));
+})();
+
+// Auto-pause when the tab/app goes to background
+document.addEventListener("visibilitychange", () => {
+    if (document.hidden && game && !paused) {
+        paused = true;
+        if (pauseModal) pauseModal.classList.add("show");
+    }
+});
+
+
+// "NEW" badge jab tak user ne Gravity Well use nahi kiya
+(function markNewAbility() {
+    if (gravityBtn && !store.get("gravitySeen", false)) gravityBtn.classList.add("is-new");
+})();
