@@ -44,46 +44,63 @@ const alphaInd = document.getElementById("alphaIndicator");
 const degInd = document.getElementById("degIndicator");
 const radInd = document.getElementById("radIndicator");
 
-// --- CANVAS DRAWING ENGINE ---
-let canvas, ctx, isDrawing = false;
+// --- CANVAS DRAWING ENGINE (pointer + size aware: works in normal and fullscreen) ---
+let canvas, ctx, isDrawing = false, strokes = [], padBound = false;
+
+function fitCanvas() {
+  if (!canvas) return;
+  const r = canvas.getBoundingClientRect();
+  if (!r.width || !r.height) return;
+  const d = window.devicePixelRatio || 1, w = Math.round(r.width * d), h = Math.round(r.height * d);
+  if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+  ctx = canvas.getContext("2d");
+  redrawPad();
+}
+
+function redrawPad() {
+  if (!ctx) return;
+  const d = window.devicePixelRatio || 1;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.setTransform(d, 0, 0, d, 0, 0);
+  ctx.strokeStyle = "#00ff9c"; ctx.lineWidth = 3; ctx.lineCap = "round"; ctx.lineJoin = "round";
+  strokes.forEach((s) => {
+    ctx.beginPath();
+    s.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+    if (s.length === 1) ctx.lineTo(s[0][0] + .1, s[0][1]);
+    ctx.stroke();
+  });
+}
+
+// pointer position in CSS pixels, relative to the canvas (independent of its internal size)
+function padPoint(e) {
+  const r = canvas.getBoundingClientRect();
+  return [e.clientX - r.left, e.clientY - r.top];
+}
 
 function initCanvas() {
   canvas = document.getElementById("mathCanvas");
   if (!canvas) return;
-  ctx = canvas.getContext("2d");
-  ctx.strokeStyle = "#00ff9c";
-  ctx.lineWidth = 3;
-  ctx.lineCap = "round";
-
-  canvas.addEventListener("mousedown", startDrawing);
-  canvas.addEventListener("mousemove", draw);
-  canvas.addEventListener("mouseup", stopDrawing);
-  canvas.addEventListener("mouseleave", stopDrawing);
-
-  canvas.addEventListener("touchstart", (e) => { e.preventDefault(); startDrawing(e.touches[0]); });
-  canvas.addEventListener("touchmove", (e) => { e.preventDefault(); draw(e.touches[0]); });
-  canvas.addEventListener("touchend", stopDrawing);
+  fitCanvas();
+  if (padBound) return;
+  padBound = true;
+  canvas.addEventListener("pointerdown", (e) => {
+    canvas.setPointerCapture(e.pointerId);
+    isDrawing = true;
+    strokes.push([padPoint(e)]);
+    redrawPad();
+  });
+  canvas.addEventListener("pointermove", (e) => {
+    if (!isDrawing) return;
+    const s = strokes[strokes.length - 1], p = padPoint(e), q = s[s.length - 1];
+    s.push(p);
+    ctx.beginPath(); ctx.moveTo(q[0], q[1]); ctx.lineTo(p[0], p[1]); ctx.stroke();
+  });
+  ["pointerup", "pointercancel", "pointerleave"].forEach((t) => canvas.addEventListener(t, () => { isDrawing = false; }));
+  window.addEventListener("resize", fitCanvas);
 }
 
-function startDrawing(e) {
-  isDrawing = true;
-  const rect = canvas.getBoundingClientRect();
-  ctx.beginPath();
-  ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
-}
-
-function draw(e) {
-  if (!isDrawing) return;
-  const rect = canvas.getBoundingClientRect();
-  ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
-  ctx.stroke();
-}
-
-function stopDrawing() { isDrawing = false; }
-
-function clearCanvas() {
-  if (ctx && canvas) ctx.clearRect(0, 0, canvas.width, canvas.height);
-}
+function clearCanvas() { strokes = []; redrawPad(); }
 
 function getCompressedCanvasImage() {
   if (!canvas) return null;
@@ -106,6 +123,7 @@ function toggleAISolverFullscreen() {
   const content = document.getElementById("aiContent");
   if (content) {
     content.classList.toggle("fullscreen");
+    setTimeout(fitCanvas, 60); // re-measure the pad after the layout changes
   }
 }
 

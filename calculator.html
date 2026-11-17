@@ -35,6 +35,7 @@
   </script>
   <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
   <link rel="stylesheet" href="calculator.css">
+  <link rel="stylesheet" href="calc-tools.css">
 </head>
 <body class="theme-dark">
 
@@ -86,7 +87,31 @@
           <b>6. Logarithm & Exponents</b><br>
           • <b>log / ln:</b> Base-10 aur Natural logarithm.<br><br>
 
-          <b>7. Algebra & Calculus</b><br>
+          <b>7. Calculus, Sum & Solve</b><br>
+          • <b>∫(f, a, b):</b> Definite integral, variable X. Jaise <code>∫(X², 0, 3)</code>.<br>
+          • <b>d/dx(f, a):</b> <code>SHIFT</code> + <code>∫</code>. Derivative at point a.<br>
+          • <b>Σ(f, a, b) / Π(f, a, b):</b> Sum aur Product, variable X.<br>
+          • <b>CALC:</b> Expression me A-F, X, Y, M ho to unki values puchta hai.<br>
+          • <b>SOLVE:</b> <code>SHIFT</code> + <code>CALC</code> (ya "=" wali equation par <code>=</code> dabayein). Real roots deta hai.<br><br>
+
+          <b>8. Special Keys</b><br>
+          • <b>(−) / ∠:</b> Negative sign / polar form (r∠θ). <b>° ′ ″:</b> Baar baar dabane par degree, minute, second.<br>
+          • <b>FACT:</b> Prime factors. <b>÷R:</b> Quotient aur remainder. <b>PreAns:</b> Pichla answer.<br>
+          • <b>ENG:</b> Engineering notation. <b>S⇔D:</b> Fraction ↔ decimal. <b>i:</b> Complex number.<br>
+          • <b>Pol( / Rec(:</b> Polar ↔ rectangular (X aur Y me store). <b>Ceil / Intg / Round:</b> Rounding.<br>
+          • <b>RanInt(a,b):</b> Random integer. <b>Rnd:</b> Ran# (0.000-0.999). <b>ⁿ√(n, a):</b> n-th root.<br>
+          • <b>ab/c:</b> Mixed fraction, jaise 2⌟1⌟3. <b>STO / RCL:</b> Pehle STO phir variable key (ALPHA wali).<br><br>
+
+          <b>9. Menus (Part 2)</b><br>
+          • <b>CONST:</b> 30 physical constants, search karke insert karein.<br>
+          • <b>CONV:</b> Unit conversion (length, mass, temperature…), result calculator me insert hota hai.<br>
+          • <b>MATRIX:</b> MatA, MatB, MatC (4×4 tak). <code>MatA × MatB</code>, <code>Det(MatA)</code>, <code>Inv(MatA)</code>, <code>Trn(MatA)</code>, <code>Ident(3)</code>.<br>
+          • <b>CMPLX:</b> Abs, Arg, Conj, Re, Im, aur r∠θ ↔ a+bi conversion.<br>
+          • <b>MODE:</b> Degree/Radian, Norm/Fix/Sci (digits), fraction style. Settings save rehti hain.<br>
+          • <b>CLR / SHIFT + AC:</b> Memory, variables, matrices, history ya sab kuch clear.<br>
+          • <b>SHIFT + DEL (INS):</b> Overwrite mode on/off.<br><br>
+
+          <b>10. Algebra</b><br>
           • <b>x! (Factorial):</b> <code>SHIFT</code> + <code>x²</code>.<br>
           • <b>gcd / lcm:</b> Greatest Common Divisor aur Least Common Multiple.
         </div>
@@ -233,6 +258,36 @@
       <button class="btn-ctrl on" onclick="powerOn()">ON</button>
     </div>
 
+    <!-- NEW KEYS ROW A -->
+    <div class="button-grid scientific">
+      <div class="btn-wrapper has-shift"><span class="shift-label">SOLVE</span><button onclick="btnPress('CALC')">CALC</button></div>
+      <div class="btn-wrapper has-shift"><span class="shift-label">d/dx</span><button onclick="btnPress('INTG')">∫</button></div>
+      <div class="btn-wrapper has-shift"><span class="shift-label">Π</span><button onclick="btnPress('SIGMA')">Σ</button></div>
+      <div class="btn-wrapper has-shift"><span class="shift-label">Ceil</span><button onclick="btnPress('LOGAB')">logₐb</button></div>
+      <div class="btn-wrapper has-shift"><span class="shift-label">Intg</span><button onclick="btnPress('XINV')">x⁻¹</button></div>
+      <div class="btn-wrapper has-shift"><span class="shift-label">cot⁻¹</span><button onclick="btnPress('COT')">cot</button></div>
+    </div>
+
+    <!-- NEW KEYS ROW B -->
+    <div class="button-grid scientific">
+      <div class="btn-wrapper has-shift"><span class="shift-label">∠</span><button onclick="btnPress('NEG')">(−)</button></div>
+      <div class="btn-wrapper has-shift"><span class="shift-label">FACT</span><button onclick="btnPress('DMS')">° ′ ″</button></div>
+      <div class="btn-wrapper has-shift"><span class="shift-label">PreAns</span><button onclick="btnPress('DIVR')">÷R</button></div>
+      <div class="btn-wrapper has-shift"><span class="shift-label">i</span><button onclick="btnPress('ENG')">ENG</button></div>
+      <div class="btn-wrapper"><span class="shift-label"></span><button onclick="btnPress('SD')">S⇔D</button></div>
+      <div class="btn-wrapper has-shift"><span class="shift-label">Round</span><button onclick="btnPress('RANINT')">RanInt</button></div>
+    </div>
+
+    <!-- NEW KEYS ROW C -->
+    <div class="button-grid scientific">
+      <div class="btn-wrapper"><span class="shift-label"></span><button onclick="btnPress('CONST')">CONST</button></div>
+      <div class="btn-wrapper"><span class="shift-label"></span><button onclick="btnPress('CONV')">CONV</button></div>
+      <div class="btn-wrapper"><span class="shift-label"></span><button onclick="btnPress('MATRIX')">MATRIX</button></div>
+      <div class="btn-wrapper"><span class="shift-label"></span><button onclick="btnPress('CMPLX')">CMPLX</button></div>
+      <div class="btn-wrapper"><span class="shift-label"></span><button onclick="btnPress('MODE')">MODE</button></div>
+      <div class="btn-wrapper"><span class="shift-label"></span><button onclick="btnPress('CLR')">CLR</button></div>
+    </div>
+
     <!-- SCIENTIFIC MATRIX ROW 1 -->
     <div class="button-grid scientific">
       <div class="btn-wrapper has-shift"><span class="shift-label">d/c</span><button onclick="btnPress('FRAC')">ab/c</button></div>
@@ -303,5 +358,9 @@
 
   <!-- CORRECT SCRIPT FILE NAME LINKED HERE -->
   <script src="calculator.js"></script>
+  <script src="calc-ext.js"></script>
+  <script src="calc-tools.js"></script>
+  <script src="calc-plus.js"></script>
+  <script src="calc-more.js"></script>
 </body>
 </html>
