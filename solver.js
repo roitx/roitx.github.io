@@ -2111,21 +2111,38 @@ window.solveWithAI = async function (questionText, imageBase64 = null) {
     if (steps) work.plan(steps);
 
     const planBlock = steps
-      ? `\n\nA fast assistant already planned this answer. Follow the plan EXACTLY, in this order. Write each step as its own section: a bold heading with the exact step title, then the explanation below it (formulas in LaTeX; give a worked example wherever a step asks for one). Do not skip any step.\nPLAN:\n${steps.map((s, i) => `${i + 1}. ${s}`).join('\n')}`
+      ? `\n\nA fast assistant already planned this answer. Follow the plan in this order. Write each step as its own short section: a bold heading with the step title, then a concise explanation (formulas in LaTeX; one short worked example where a step asks for it). Keep the whole answer compact.\nPLAN:\n${steps.map((s, i) => `${i + 1}. ${s}`).join('\n')}`
       : '';
-    let raw = await callAI(MAIN + planBlock, imageBase64, false);
+    const mainPrompt = MAIN + planBlock;
+    const MAIN_TIMEOUT_MS = 25000;   // bada AI itne ms me na de to chhote AI ka jawab dikhega
 
-    if (steps) {
-      // Jawab ko plan se milao; koi hissa chhut gaya ho to bada AI sirf wahi jodta hai
-      const missing = steps.filter(s => !covers(raw, s));
-      if (missing.length) {
-        work.log(t('l_fix', missing.length));
-        try {
-          const extra = await callAI(`${MAIN}\n\nDRAFT ANSWER:\n${raw}\n\nThe draft is missing these planned sections: ${missing.join('; ')}.\nWrite ONLY those missing sections, each with a bold heading using the exact title. Do not repeat the draft.`, imageBase64, false);
-          raw = raw + '\n\n' + extra;
-        } catch (e) { /* draft jaisa hi dikha do */ }
-      } else work.log(t('l_ok'));
-    } else work.log(t('l_got'));
+    // Dono ek saath: bada AI (quality) + Groq backup (speed), dono ko wahi plan
+    const mainP = callAI(mainPrompt, imageBase64, false);
+    const backupP = imageBase64 ? null : callAI(mainPrompt, null, true);
+    mainP.catch(() => {});
+    if (backupP) backupP.catch(() => {});
+
+    const first = await Promise.race([
+      mainP.catch((e) => ({ err: e })),
+      new Promise((r) => setTimeout(() => r({ timeout: true }), MAIN_TIMEOUT_MS))
+    ]);
+
+    let raw;
+    if (typeof first === 'string') {
+      raw = first; work.log(t('l_got'));
+    } else if (backupP) {
+      work.log(t('l_slow'));
+      try {
+        raw = await backupP;
+        if (looped(raw)) throw new Error('loop');
+      } catch (e) {
+        if (first.err) throw first.err;          // bada AI bhi fail tha
+        raw = await mainP; work.log(t('l_got'));  // backup kharab nikla, bade AI ka intezaar
+      }
+    } else {
+      if (first.err) throw first.err;
+      raw = await mainP; work.log(t('l_got'));
+    }
     work.finish(); show(raw);
   } catch (err) {
     work.remove();
@@ -2416,3 +2433,7 @@ Object.assign(I18N.en,       { l_direct:'Short question, answering directly' });
 Object.assign(I18N.hinglish, { l_ok:'Jawab ko plan se milaya: saare hisse maujood hain', l_fix:n=>`Jawab ko plan se milaya: ${n} hissa chhut gaya tha, jodh raha hoon` });
 Object.assign(I18N.hi,       { l_ok:'उत्तर को योजना से मिलाया: सभी हिस्से मौजूद हैं', l_fix:n=>`उत्तर को योजना से मिलाया: ${n} हिस्सा छूट गया था, जोड़ रहा हूँ` });
 Object.assign(I18N.en,       { l_ok:'Checked the answer against the plan: every step is covered', l_fix:n=>`Checked the answer against the plan: ${n} step(s) missing, adding them` });
+
+Object.assign(I18N.hinglish, { l_slow:'Bada AI abhi dheere chal raha hai, chhote AI ka jawab dikha raha hoon' });
+Object.assign(I18N.hi,       { l_slow:'बड़ा AI अभी धीमा चल रहा है, छोटे AI का उत्तर दिखा रहा हूँ' });
+Object.assign(I18N.en,       { l_slow:'The main AI is slow right now, showing the fast AI\'s answer' });
