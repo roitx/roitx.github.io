@@ -11,13 +11,20 @@ const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<
 const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
 
 const PRESETS = [
-  { bg: "linear-gradient(135deg,#ff7e5f,#feb47b)", tilt: "-4deg", rb: "#ff4757" },
-  { bg: "linear-gradient(135deg,#00c6ff,#0072ff)", tilt: "3deg", rb: "#2ed573" },
-  { bg: "linear-gradient(135deg,#f7971e,#db36a4)", tilt: "-2deg", rb: "#ffa502" },
-  { bg: "linear-gradient(135deg,#b224ef,#7579ff)", tilt: "5deg", rb: null },
-  { bg: "linear-gradient(135deg,#11998e,#38ef7d)", tilt: "-5deg", rb: "#ff6b81" },
-  { bg: "linear-gradient(135deg,#fc4a1a,#f7b733)", tilt: "2deg", rb: "#48dbfb" }
+  { bg: "linear-gradient(160deg,#a63446,#5a1426)", rb: "#e8b44a" },
+  { bg: "linear-gradient(160deg,#17808a,#0a3a45)", rb: "#f2cf8a" },
+  { bg: "linear-gradient(160deg,#4254b8,#1c2160)", rb: "#e87a5d" },
+  { bg: "linear-gradient(160deg,#33854f,#14402a)", rb: "#f2cf8a" },
+  { bg: "linear-gradient(160deg,#c98a1e,#7a4a0c)", rb: "#7a1f2b" },
+  { bg: "linear-gradient(160deg,#7b3f8f,#3d1a52)", rb: "#f0b27a" }
 ];
+
+/* ---------- Shelf order (saved in localStorage) ---------- */
+const ORD_K = "roitx_ref_order", HINT = " Hold and drag a book to arrange your shelf.";
+const pick = (k) => PRESETS[[...String(k)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % 6];
+const getOrd = () => { try { return JSON.parse(localStorage.getItem(ORD_K) || "{}"); } catch (e) { return {}; } };
+const okey = () => `${level()}|${S.a}|${S.c}`;
+function ordered(arr) { const o = (getOrd()[okey()] || []).map(String), ix = (v) => { const n = o.indexOf(String(v)); return n < 0 ? 1e9 : n; }; return [...arr].sort((x, y) => ix(x) - ix(y)); }
 
 /* ---------- Theme (same key as AI Tutor) ---------- */
 function toggleTheme() {
@@ -43,11 +50,17 @@ qInput.oninput = () => {
 /* ---------- Render ---------- */
 function render() {
   const lv = level();
-  grid.className = "grid" + (lv === "chapter" ? " list" : "");
+  grid.className = "grid" + (lv === "chapter" ? " list" : " case");
   backBtn.disabled = lv === "author";
   qInput.value = ""; $("none").hidden = true; $("resume").innerHTML = "";
   qInput.placeholder = { author: "Search authors…", class: "Search classes…", subject: "Search subjects…", chapter: "Search chapters…" }[lv];
   topTitle.textContent = { author: "Reference Library", class: S.a, subject: `${S.a} • ${clsLabel(S.c)}`, chapter: S.s }[lv];
+
+  const HERO = { author: ["Every reference book, on one shelf.", "Choose an author, then a class, subject and chapter." + HINT], class: [S.a, "Choose a class or part." + HINT], subject: [clsLabel(S.c), `${S.a}: pick a subject.` + HINT], chapter: [S.s, `${S.a}, ${clsLabel(S.c)}. Select a chapter to read.`] }[lv];
+  $("heroT").innerHTML = HERO[0].split(" ").map((w, i) => `<span style="--d:${i * 70}ms">${esc(w)}</span> `).join("");
+  $("heroP").textContent = HERO[1];
+  $("heroP").style.animation = "none"; void $("heroP").offsetWidth; $("heroP").style.animation = "";
+  scrollTo({ top: 0, behavior: "instant" });
 
   // breadcrumbs
   const trail = [["Library", () => go()]];
@@ -66,21 +79,21 @@ function render() {
   grid.innerHTML = "";
   let n = 0, noun = "";
   if (lv === "author") {
-    const authors = [...new Set(books.map((b) => b.author))].filter(Boolean);
+    const authors = ordered([...new Set(books.map((b) => b.author))].filter(Boolean));
     authors.forEach((a, i) => {
       const k = new Set(books.filter((b) => b.author === a).map((b) => b.class_no)).size;
       card(a, a.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase(), plural(k, "section"), i, PRESETS[i % 6], () => go(a));
     });
     n = authors.length; noun = "authors"; showResume();
   } else if (lv === "class") {
-    const cs = [...new Set(books.filter((b) => b.author === S.a).map((b) => b.class_no))].sort((a, b) => a - b);
+    const cs = ordered([...new Set(books.filter((b) => b.author === S.a).map((b) => b.class_no))].sort((a, b) => a - b));
     cs.forEach((c, i) => {
       const k = new Set(books.filter((b) => b.author === S.a && b.class_no == c).map((b) => b.subject)).size;
-      card(clsLabel(c), clsBadge(c), plural(k, "subject"), i, { bg: "linear-gradient(135deg,#2af598,#009efd)", tilt: i % 2 ? "3deg" : "-3deg", rb: "#ff4757" }, () => go(S.a, c));
+      card(clsLabel(c), clsBadge(c), plural(k, "subject"), i, PRESETS[(i + 2) % 6], () => go(S.a, c), String(c));
     });
     n = cs.length; noun = "classes & parts";
   } else if (lv === "subject") {
-    const ss = [...new Set(books.filter((b) => b.author === S.a && b.class_no == S.c).map((b) => b.subject))].filter(Boolean);
+    const ss = ordered([...new Set(books.filter((b) => b.author === S.a && b.class_no == S.c).map((b) => b.subject))].filter(Boolean));
     ss.forEach((s, i) => {
       const k = books.filter((b) => b.author === S.a && b.class_no == S.c && b.subject === s).length;
       card(s, s.slice(0, 2).toUpperCase(), plural(k, "chapter"), i, PRESETS[i % 6], () => go(S.a, S.c, s));
@@ -92,14 +105,18 @@ function render() {
     n = chs.length; noun = "chapters";
   }
   $("meta").textContent = `${n} ${noun}`;
+  $("resetOrd").hidden = lv === "chapter" || !getOrd()[okey()];
   if (!n) grid.innerHTML = `<div class="state"><b>Nothing here yet</b><p>No ${noun} available.</p></div>`;
 }
 
-function card(title, badge, sub, i, p, fn) {
+function card(title, badge, sub, i, p, fn, k = title) {
+  p = pick(k);
   const el = document.createElement("button");
-  el.className = "book"; el.style.setProperty("--i", i); el.dataset.t = title.toLowerCase();
-  el.innerHTML = `<div class="cover-wrap"><div class="cover" style="background:${p.bg}">${p.rb ? `<i style="background:${p.rb}"></i>` : ""}<b>${esc(badge)}</b><em></em></div></div><div class="t">${esc(title)}</div><div class="s">${esc(sub)}</div>`;
-  el.onclick = fn;
+  el.className = "book"; el.style.setProperty("--i", i); el.dataset.t = title.toLowerCase(); el.dataset.k = k;
+  el.innerHTML = `<div class="cover-wrap"><div class="bk"><div class="cover" style="background:${p.bg}"><span class="tx"></span><i style="background:${p.rb}"></i><b>${esc(badge)}</b><span class="orn"></span><em></em><span class="imp">Roitx</span><s></s></div></div></div><div class="plate"><div class="t">${esc(title)}</div><div class="s">${esc(sub)}</div></div>`;
+  el.onclick = () => { if (Date.now() > noClick) fn(); };
+  el.addEventListener("pointermove", (e) => { if (e.pointerType !== "mouse" || D) return; const r = el.getBoundingClientRect(); el.style.setProperty("--px", ((e.clientX - r.left) / r.width - .5).toFixed(2)); el.style.setProperty("--py", ((e.clientY - r.top) / r.height - .5).toFixed(2)); });
+  el.addEventListener("pointerleave", () => { el.style.removeProperty("--px"); el.style.removeProperty("--py"); });
   grid.append(el);
 }
 
@@ -146,3 +163,70 @@ async function loadRefBooks() {
   }
 }
 document.addEventListener("DOMContentLoaded", loadRefBooks);
+
+addEventListener("scroll", () => document.body.classList.toggle("scrolled", scrollY > 120), { passive: true });
+addEventListener("keydown", (e) => { if (e.key === "/" && document.activeElement !== qInput) { e.preventDefault(); qInput.focus(); } });
+
+/* ---------- Drag to rearrange: mouse (drag) + touch (press & hold), keyboard (Alt + arrows) ---------- */
+let noClick = 0, D = null, P = null, toastT;
+const cells = () => [...grid.querySelectorAll(".book")];
+const orderStr = () => cells().map((b) => b.dataset.k).join("|");
+function toast(msg) {
+  let t = $("toast"); if (!t) { t = document.createElement("div"); t.id = "toast"; t.className = "toast"; t.setAttribute("role", "status"); document.body.append(t); }
+  t.textContent = msg; t.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("on"), 1800);
+}
+function saveOrder() {
+  const all = getOrd(); all[okey()] = cells().map((b) => b.dataset.k);
+  try { localStorage.setItem(ORD_K, JSON.stringify(all)); } catch (e) {}
+  $("resetOrd").hidden = false; toast("Shelf order saved");
+}
+$("resetOrd").onclick = () => { const o = getOrd(); delete o[okey()]; try { localStorage.setItem(ORD_K, JSON.stringify(o)); } catch (e) {} render(); toast("Shelf order reset"); };
+function flip(fn) { // books glide to their new slots; shelf boards stay put
+  const els = cells(), first = els.map((e) => e.getBoundingClientRect()); fn();
+  els.forEach((e, i) => { const r = e.getBoundingClientRect(), dx = first[i].left - r.left, dy = first[i].top - r.top; if (dx || dy) e.querySelectorAll(".bk,.plate").forEach((x) => x.animate([{ transform: `translate(${dx}px,${dy}px)` }, { transform: "none" }], { duration: 420, easing: "cubic-bezier(.2,.8,.2,1)" })); });
+}
+function startDrag(el, e) {
+  const bk = el.querySelector(".bk"), r = bk.getBoundingClientRect(), g = document.createElement("div"), c = bk.cloneNode(true);
+  c.style.animation = "none"; g.className = "ghost"; g.style.cssText = `width:${r.width}px;height:${r.height}px;transform:translate3d(${r.left}px,${r.top}px,0)`; g.append(c); document.body.append(g);
+  D = { el, g, ox: e.clientX - r.left, oy: e.clientY - r.top, x: e.clientX, y: e.clientY, lock: 0, from: orderStr() };
+  el.classList.remove("press"); el.classList.add("ghosted"); document.body.classList.add("dragging");
+  requestAnimationFrame(() => g.classList.add("lift")); navigator.vibrate && navigator.vibrate(14); tick();
+}
+function tick() {
+  if (!D) return;
+  D.g.style.transform = `translate3d(${D.x - D.ox}px,${D.y - D.oy - 12}px,0)`;
+  if (D.y < 90) scrollBy(0, -Math.min(18, (90 - D.y) / 4)); else if (D.y > innerHeight - 90) scrollBy(0, Math.min(18, (D.y - innerHeight + 90) / 4));
+  if (performance.now() > D.lock) {
+    const t = document.elementFromPoint(D.x, D.y)?.closest(".book");
+    if (t && t !== D.el && grid.contains(t)) { flip(() => (cells().indexOf(D.el) < cells().indexOf(t) ? D.el.before(t) : D.el.after(t))); D.lock = performance.now() + 280; }
+  }
+  D.raf = requestAnimationFrame(tick);
+}
+function endDrag() {
+  const { el, g, raf, from } = D; D = null; cancelAnimationFrame(raf); noClick = Date.now() + 450;
+  document.body.classList.remove("dragging"); g.classList.remove("lift");
+  const r = el.querySelector(".bk").getBoundingClientRect();
+  const done = () => { g.remove(); el.classList.remove("ghosted"); el.querySelector(".bk").animate([{ transform: "translateY(-12px)" }, { transform: "none" }], { duration: 450, easing: "cubic-bezier(.3,1.5,.5,1)" }); };
+  g.animate([{ transform: g.style.transform }, { transform: `translate3d(${r.left}px,${r.top}px,0)` }], { duration: 340, easing: "cubic-bezier(.3,1.3,.5,1)", fill: "forwards" }).finished.then(done, done);
+  if (orderStr() !== from) saveOrder();
+}
+const cancelP = () => { if (!P) return; clearTimeout(P.t); P.el.classList.remove("press"); P = null; };
+grid.addEventListener("pointerdown", (e) => {
+  const el = e.target.closest(".book"); if (!el || D || e.button > 0 || grid.classList.contains("list")) return;
+  P = { el, id: e.pointerId, x: e.clientX, y: e.clientY, touch: e.pointerType !== "mouse" };
+  if (P.touch) { el.classList.add("press"); P.t = setTimeout(() => { const p = P; P = null; p.el.classList.remove("press"); startDrag(p.el, { clientX: p.x, clientY: p.y }); }, 320); }
+});
+addEventListener("pointermove", (e) => {
+  if (D) { D.x = e.clientX; D.y = e.clientY; return; }
+  if (!P || e.pointerId !== P.id) return;
+  const d = Math.hypot(e.clientX - P.x, e.clientY - P.y);
+  if (P.touch) { if (d > 9) cancelP(); } else if (d > 6) { const p = P; cancelP(); startDrag(p.el, e); }
+});
+["pointerup", "pointercancel"].forEach((t) => addEventListener(t, () => { if (D) endDrag(); else cancelP(); }));
+addEventListener("touchmove", (e) => { if (D) e.preventDefault(); }, { passive: false });
+grid.addEventListener("contextmenu", (e) => { if (e.target.closest(".book")) e.preventDefault(); });
+grid.addEventListener("keydown", (e) => {
+  const el = e.target.closest?.(".book"); if (!el || !e.altKey || !/^Arrow(Left|Right)$/.test(e.key)) return;
+  const left = e.key === "ArrowLeft", t = left ? el.previousElementSibling : el.nextElementSibling; if (!t || !t.classList.contains("book")) return;
+  e.preventDefault(); flip(() => (left ? t.after(el) : t.before(el))); el.focus(); saveOrder();
+});
