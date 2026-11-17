@@ -1,4 +1,4 @@
-/* ROITX AI  Tutor — Claude-style layout, ROITX blue palette, Dark/Light toggle */
+/* ROITX AI Tutor — Claude-style layout, ROITX blue palette, Dark/Light toggle */
 :root,[data-theme="dark"]{
   --bg:#080f19; --surface:#0f1c2e; --text:#e9f2ff; --muted:#8ea3bf;
   --border:#1f3554; --user:#14284a; --hover:#172a45;
@@ -195,3 +195,31 @@ textarea{width:100%;min-height:44px;height:44px;padding:6px 6px 6px 0;font-size:
 .mic-btn.listening{background:var(--accent-soft);color:var(--accent);animation:micPulse 1.3s infinite}
 button#solveBtn{width:38px;height:38px}
 @keyframes micPulse{0%{box-shadow:0 0 0 0 var(--accent-soft)}70%{box-shadow:0 0 0 10px transparent}100%{box-shadow:0 0 0 0 transparent}}
+
+/* ---------- Feedback sheet (Claude-style bottom sheet) ---------- */
+.fb-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;display:flex;align-items:flex-end;justify-content:center;animation:fadeIn .2s}
+.fb-sheet{width:100%;max-width:560px;max-height:90vh;overflow-y:auto;background:var(--surface);color:var(--text);border:1px solid var(--border);border-bottom:none;border-radius:22px 22px 0 0;padding:20px 18px calc(16px + env(safe-area-inset-bottom));font-family:var(--sans);animation:slideUp .25s ease-out}
+.fb-title{font-family:var(--serif);font-size:20px;font-weight:500}
+.fb-sub{color:var(--muted);font-size:13.5px;margin:2px 0 8px}
+.fb-opt{display:flex;align-items:center;gap:14px;padding:11px 2px;cursor:pointer;font-size:15px;line-height:1.35}
+.fb-opt input{position:absolute;opacity:0;pointer-events:none}
+.fb-opt .box{width:22px;height:22px;flex-shrink:0;border:2px solid var(--muted);border-radius:5px;position:relative;transition:background .15s,border-color .15s}
+.fb-opt input:checked+.box{background:var(--accent);border-color:var(--accent)}
+.fb-opt input:checked+.box::after{content:'';position:absolute;left:6px;top:2px;width:6px;height:11px;border:solid #fff;border-width:0 2.4px 2.4px 0;transform:rotate(45deg)}
+.fb-sheet textarea{width:100%;height:92px;min-height:92px;margin-top:6px;padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:12px;font-size:15px;color:var(--text);resize:none}
+.fb-sheet textarea:focus{border-color:var(--accent)}
+.fb-count{display:flex;justify-content:space-between;gap:10px;margin-top:6px;font-size:12px;color:var(--muted)}
+.fb-hint.bad{color:#e0564a}
+.fb-actions{display:flex;gap:10px;margin-top:16px}
+.fb-actions button{flex:1;height:44px;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;border:1px solid var(--border);font-family:var(--sans)}
+.fb-cancel{background:transparent;color:var(--text)}
+.fb-send{background:var(--accent);color:#fff;border-color:var(--accent)!important}
+.fb-send:disabled{opacity:.4;cursor:not-allowed}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideUp{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+
+.work-step .tm{margin-left:auto;padding-left:10px;font-size:11px;opacity:.6;font-family:ui-monospace,Menlo,monospace}
+.bot-info{min-width:0;flex:1}
+.bot-info>div:last-child{min-width:0}
+.online-status{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.header-actions{flex-shrink:0}

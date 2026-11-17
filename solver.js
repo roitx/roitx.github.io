@@ -1745,12 +1745,14 @@ window.appendChatMessage = function (htmlContent, type = "ai", showTime = true, 
     };
     const setFeedback = (val) => {
       if (!record) return;
+      if (val === 'down' && record.feedback !== 'down' && !record.fbSent) {
+        openFeedbackSheet(record, () => { record.feedback = 'down'; paintFeedback(); persistChat(); });
+        return;
+      }
       record.feedback = (record.feedback === val) ? null : val;   // dobara tap = hata do
       paintFeedback();
       persistChat();
-      sendFeedbackToServer(record, record.feedback);
       if (record.feedback === "up")   showToast(t('toastUp'));
-      if (record.feedback === "down") showToast(t('toastDown'));
     };
     upBtn.onclick   = () => setFeedback("up");
     downBtn.onclick = () => setFeedback("down");
@@ -1926,15 +1928,12 @@ function typeHTML(el, html, onDone) {
 
 /* ---- Thinking / working panel (Claude jaisa) ---- */
 function buildWorkCard(img) {
+  // Sirf asli events dikhte hain: request gayi, jawab aaya. Koi nakli step nahi.
   const box = document.getElementById('answerHistory');
   const wrap = document.createElement('div');
   wrap.className = 'chat-bubble ai';
-  const lang = currentLanguage;
-  const steps = [];
-  if (img) steps.push(t('s_img'));
-  steps.push(t('s_read'), t('s_find', subjLabel(selectedSubject)), t('s_solve'));
   wrap.innerHTML = `
-    <div class="work-card">
+    <div class="work-card collapsed">
       <button type="button" class="work-head">
         <span class="work-spinner"></span>
         <span class="work-title">${t('think')}</span>
@@ -1942,7 +1941,7 @@ function buildWorkCard(img) {
         <svg class="work-chev" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
       </button>
       <div class="work-body">
-        <div class="work-cmd"><b>›</b> solve --subject="${escapeHtml(selectedSubject)}" --lang=${lang}${img ? ' --image' : ''}</div>
+        <div class="work-cmd"><b>›</b> solve --subject="${escapeHtml(selectedSubject)}" --lang=${currentLanguage}${img ? ' --image' : ''}</div>
         <div class="work-steps"></div>
       </div>
     </div>`;
@@ -1955,31 +1954,35 @@ function buildWorkCard(img) {
   const timeEl = wrap.querySelector('.work-time');
   wrap.querySelector('.work-head').onclick = () => card.classList.toggle('collapsed');
 
-  const addStep = (text) => {
-    list.querySelectorAll('.work-step.run').forEach(s => s.classList.replace('run', 'ok'));
+  const t0 = Date.now();
+  const markDone = () => list.querySelectorAll('.work-step.run').forEach(s => s.classList.replace('run', 'ok'));
+  const log = (text) => {
+    markDone();
     const s = document.createElement('div');
     s.className = 'work-step run';
-    s.innerHTML = `<span class="dot"></span><span>${text}</span>`;
+    s.innerHTML = `<span class="dot"></span><span>${text}</span><span class="tm">${((Date.now() - t0) / 1000).toFixed(1)}s</span>`;
     list.appendChild(s);
-    box.scrollTop = box.scrollHeight;
   };
-
-  let i = 0, secs = 0;
-  addStep(steps[i++]);
-  const stepTimer = setInterval(() => { if (i < steps.length) addStep(steps[i++]); }, 1300);
+  let secs = 0;
   const clock = setInterval(() => { secs++; timeEl.textContent = secs + 's'; }, 1000);
+  log(t(img ? 'l_waitimg' : 'l_wait'));
 
+  let planTimer = null, planned = false;
   return {
+    log,
+    plan(steps) {
+      planned = true; list.innerHTML = ''; card.classList.remove('collapsed');
+      let i = 0;
+      const next = () => { if (i < steps.length) { log(escapeHtml(String(steps[i++]))); box.scrollTop = box.scrollHeight; } };
+      next(); planTimer = setInterval(next, 2500);
+    },
     finish() {
-      clearInterval(stepTimer); clearInterval(clock);
-      while (i < steps.length) addStep(steps[i++]);
-      addStep(t('s_verify'));
-      list.querySelectorAll('.work-step.run').forEach(s => s.classList.replace('run', 'ok'));
+      clearInterval(planTimer); clearInterval(clock); markDone();
       title.textContent = t('done', Math.max(secs, 1));
       card.classList.add('done');
-      setTimeout(() => card.classList.add('collapsed'), 500);
+      if (planned) setTimeout(() => card.classList.add('collapsed'), 700);
     },
-    remove() { clearInterval(stepTimer); clearInterval(clock); wrap.remove(); }
+    remove() { clearInterval(planTimer); clearInterval(clock); wrap.remove(); }
   };
 }
 
@@ -2011,57 +2014,86 @@ function showErrorCard(kind, detail) {
 }
 
 /* ---- Main solve engine (override) ---- */
+/* ---- AI calls ---- */
+async function callAI(prompt, imageBase64, fast) {
+  const URL_ = window.SUPABASE_FUNCTION_URL || "https://ktastwehnnqicriknewr.supabase.co/functions/v1/smart-task";
+  const KEY_ = window.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0YXN0d2Vobm5xaWNyaWtuZXdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyNTk5NTEsImV4cCI6MjA4MDgzNTk1MX0.5_UvwaG0X8k_Emj-cMC0KjEqlvU6hgAt5IsHJdgARvk";
+  const demandRe = /quota|rate.?limit|overload|busy|capacity|too many|unavailable|429|503|529/i;
+  const res = await fetch(URL_, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "apikey": KEY_, "Authorization": `Bearer ${KEY_}` },
+    body: JSON.stringify({ prompt, language: currentLanguage, image: imageBase64, tier: fast ? 'fast' : 'main' })
+  });
+  if ([429, 502, 503, 504, 529].includes(res.status)) { const e = new Error('demand'); e.kind = 'demand'; throw e; }
+  let data = {};
+  try { data = await res.json(); } catch (e) {}
+  let raw = "";
+  if (data.choices && data.choices[0]?.message?.content) raw = data.choices[0].message.content;
+  else if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) raw = data.candidates[0].content.parts[0].text;
+  else if (data.content) raw = data.content;
+  else if (data.result || data.response || data.output || data.message) raw = data.result || data.response || data.output || data.message;
+  else if (data.error) {
+    const msg = typeof data.error === 'string' ? data.error : (data.error.message || JSON.stringify(data.error));
+    const e = new Error(msg); e.kind = demandRe.test(msg) ? 'demand' : 'generic'; throw e;
+  }
+  if (!raw) { const e = new Error('Invalid response from server'); e.kind = 'generic'; throw e; }
+  return raw;
+}
+
+function parseRoute(raw) {
+  try {
+    const o = JSON.parse(String(raw).match(/\{[\s\S]*\}/)[0]);
+    if (o.mode === 'direct' && typeof o.answer === 'string' && o.answer.trim()) return o;
+    if (o.mode === 'deep' && Array.isArray(o.steps) && o.steps.length) { o.steps = o.steps.slice(0, 6); return o; }
+  } catch (e) {}
+  return null;
+}
+
+/* ---- Main flow: chhota AI aage (direct jawab ya plan), bada AI peeche ---- */
 window.solveWithAI = async function (questionText, imageBase64 = null) {
   lastRequest = { q: questionText, img: imageBase64 };
   const sendBtn = document.getElementById('solveBtn');
   if (sendBtn) sendBtn.disabled = true;
   const work = buildWorkCard(imageBase64);
 
-  const URL_ = window.SUPABASE_FUNCTION_URL || "https://ktastwehnnqicriknewr.supabase.co/functions/v1/smart-task";
-  const KEY_ = window.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0YXN0d2Vobm5xaWNyaWtuZXdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyNTk5NTEsImV4cCI6MjA4MDgzNTk1MX0.5_UvwaG0X8k_Emj-cMC0KjEqlvU6hgAt5IsHJdgARvk";
+  const q = questionText || "Solve the attached question/image";
+  const langName = { en: 'English', hi: 'Hindi (Devanagari script)', hinglish: 'Hinglish (Roman Hindi + English)' }[currentLanguage] || 'Hinglish';
   const styleLine = {
     en: 'Solve the question step-by-step in English.',
     hi: 'Solve in clear Hindi Devanagari script. Put English terms in brackets next to Hindi terms.',
     hinglish: 'Solve in clean Hinglish (Roman Hindi + English).'
   }[currentLanguage] || 'Solve in clean Hinglish.';
-  const PROMPT = `You are an expert tutor for Class 9-12. Subject: ${selectedSubject}. ${styleLine} Use LaTeX for math ($...$ inline, $$...$$ display). Direct answer only, no meta chatter.`;
-  const demandRe = /quota|rate.?limit|overload|busy|capacity|too many|unavailable|429|503|529/i;
+  const MAIN = `You are an expert tutor for Class 9-12. Subject: ${selectedSubject}. ${styleLine} Use LaTeX for math ($...$ inline, $$...$$ display). Direct answer only, no meta chatter.\n\nQuery: ${q}`;
+  const ROUTER = `You are a fast front-desk assistant of a Class 9-12 tutor (subject: ${selectedSubject}). Write in ${langName}. Decide:\n- If the message is a greeting, small talk, or a short/simple question answerable in 1-3 lines, reply ONLY with JSON: {"mode":"direct","answer":"<final answer in markdown, LaTeX $...$ for math>"}\n- Otherwise (multi-step solving, derivation, calculation, long explanation, or an image), reply ONLY with JSON: {"mode":"deep","steps":["<3 to 5 short action labels specific to this exact question>"]}\nNo text outside the JSON.\n\nMessage: ${q}`;
 
-  try {
-    const res = await fetch(URL_, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "apikey": KEY_, "Authorization": `Bearer ${KEY_}` },
-      body: JSON.stringify({
-        prompt: `${PROMPT}\n\nQuery: ${questionText || "Solve the attached question/image"}`,
-        language: currentLanguage,
-        image: imageBase64
-      })
-    });
-    if ([429, 502, 503, 504, 529].includes(res.status)) { const e = new Error('demand'); e.kind = 'demand'; throw e; }
-
-    let data = {};
-    try { data = await res.json(); } catch (e) {}
-
-    let raw = "";
-    if (data.choices && data.choices[0]?.message?.content) raw = data.choices[0].message.content;
-    else if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) raw = data.candidates[0].content.parts[0].text;
-    else if (data.content) raw = data.content;
-    else if (data.result || data.response || data.output || data.message) raw = data.result || data.response || data.output || data.message;
-    else if (data.error) {
-      const msg = typeof data.error === 'string' ? data.error : (data.error.message || JSON.stringify(data.error));
-      const e = new Error(msg); e.kind = demandRe.test(msg) ? 'demand' : 'generic'; throw e;
-    }
-    if (!raw) { const e = new Error('Invalid response from server'); e.kind = 'generic'; throw e; }
-
-    work.finish();
+  const show = (raw) => {
     const clean = cleanAIResponse(raw);
     const html = typeof marked !== 'undefined' ? marked.parse(clean) : clean.replace(/\n/g, "<br>");
     playChime();
-    appendChatMessage(`<b>💡 Solution / Answer:</b><br><br>${html}`, "ai", true, true, { meta: { q: questionText || (imageBase64 ? '[photo question]' : ''), subject: selectedSubject, lang: currentLanguage } });
+    appendChatMessage(`<b>💡 Solution / Answer:</b><br><br>${html}`, "ai", true, true,
+      { meta: { q: questionText || (imageBase64 ? '[photo question]' : ''), subject: selectedSubject, lang: currentLanguage } });
+  };
+
+  try {
+    // Lagta hai bada sawaal? To main AI turant peeche start, router sirf steps batayega
+    const likelyDeep = !!imageBase64 || q.length > 80 || /[\d=+^√∫∑]|solve|prove|derive|calculate|find|हल|सिद्ध|निकाल/i.test(q);
+    let mainPromise = null;
+    if (likelyDeep) { mainPromise = callAI(MAIN, imageBase64, false); mainPromise.catch(() => {}); }
+
+    const route = await callAI(ROUTER, imageBase64, true).then(parseRoute).catch(() => null);
+
+    if (route && route.mode === 'direct') {
+      work.log(t('l_direct')); work.finish(); show(route.answer);
+      return;
+    }
+    if (route && route.mode === 'deep') work.plan(route.steps);
+
+    if (!mainPromise) mainPromise = callAI(MAIN, imageBase64, false);
+    const raw = await mainPromise;
+    work.log(t('l_got')); work.finish(); show(raw);
   } catch (err) {
     work.remove();
-    const kind = err.kind || (err instanceof TypeError ? 'network' : 'generic');
-    showErrorCard(kind, err.message);
+    showErrorCard(err.kind || (err instanceof TypeError ? 'network' : 'generic'), err.message);
   } finally {
     if (sendBtn) sendBtn.disabled = false;
   }
@@ -2201,9 +2233,9 @@ window.checkQueueStatus = async function () {
 /* =====================================================
    FEEDBACK -> SUPABASE (sirf 👎 -> existing doubts queue)
    ===================================================== */
-async function sendFeedbackToServer(record, rating) {
-  // Naya table nahi: sirf 👎 par, pehle se bani `doubts` queue me ek row jati hai
-  if (rating !== 'down' || record.fbSent || !window.supabaseClient) return;
+async function sendFeedbackToServer(record, reasons, other) {
+  // Naya table nahi: pehle se bani `doubts` queue me ek row jati hai
+  if (!window.supabaseClient) return false;
   try {
     let user = null;
     try {
@@ -2211,19 +2243,22 @@ async function sendFeedbackToServer(record, rating) {
            : ((await window.supabaseClient.auth.getSession()).data.session || {}).user;
     } catch (e) {}
     const m = record.meta || {};
-    const ans = htmlToPlainText(record.html).slice(0, 500);
+    const lines = [`👎 Feedback: ${reasons.join(', ')}`];
+    if (other) lines.push(`Details: ${other}`);
+    lines.push(`Sawaal: ${m.q || '(photo)'}`, `AI ka answer: ${htmlToPlainText(record.html).slice(0, 500)}`);
     const { error } = await window.supabaseClient.from('doubts').insert([{
-      question: `👎 AI answer galat/adhura laga\nSawaal: ${m.q || '(photo)'}\nAI ka answer: ${ans}`,
+      question: lines.join('\n'),
       status: 'pending',
       session_id: getSessionId(),
       user_id: (user && user.id) || null,
       user_email: (user && user.email) || null,
       user_name: user && user.email ? user.email.split('@')[0] : 'Guest'
     }]);
-    if (error) return console.warn('Feedback save error:', error.message);
+    if (error) { console.warn('Feedback save error:', error.message); return false; }
     record.fbSent = true;
     persistChat();
-  } catch (e) { console.warn('Feedback save failed', e); }
+    return true;
+  } catch (e) { console.warn('Feedback save failed', e); return false; }
 }
 
 /* =====================================================
@@ -2254,3 +2289,90 @@ function toggleMic() {
 }
 
 applyUiLanguage();
+
+
+/* =====================================================
+   👎 FEEDBACK FORM (checkbox options + Other: 20–100 chars)
+   ===================================================== */
+Object.assign(I18N.hinglish, {
+  fbTitle:'Kya galat laga?', fbSub:'Ek ya zyada option chunein',
+  fbOpts:['Galat answer / jaankari','Bahut zyada time laga','Formatting issue (formula / equation)','Voice ki problem','Sawaal samajh nahi aaya','Other'],
+  fbOtherPh:'Apna feedback yahan likhein...', fbRange:'Kam se kam 20 aur zyada se zyada 100 characters', fbCancel:'Cancel', fbSend:'Send', fbFail:'Feedback nahi bhej paya, dobara try karein'
+});
+Object.assign(I18N.hi, {
+  fbTitle:'क्या गलत लगा?', fbSub:'एक या अधिक विकल्प चुनें',
+  fbOpts:['गलत उत्तर / जानकारी','बहुत ज़्यादा समय लगा','फ़ॉर्मेटिंग की समस्या (सूत्र / समीकरण)','आवाज़ की समस्या','सवाल समझ नहीं आया','अन्य'],
+  fbOtherPh:'अपनी बात यहाँ लिखें...', fbRange:'कम से कम 20 और अधिकतम 100 अक्षर', fbCancel:'रद्द करें', fbSend:'भेजें', fbFail:'प्रतिक्रिया नहीं भेज पाए, फिर से प्रयास करें'
+});
+Object.assign(I18N.en, {
+  fbTitle:'What went wrong?', fbSub:'Select one or more options',
+  fbOpts:['Incorrect answer/information','Too much time','Formatting issue (formula/equation)','Voice issue',"Couldn't understand the question",'Other'],
+  fbOtherPh:'Write your feedback here...', fbRange:'Minimum 20 and maximum 100 characters', fbCancel:'Cancel', fbSend:'Send', fbFail:'Could not send feedback, please try again'
+});
+const FB_EN = ['Incorrect answer/information','Too much time','Formatting issue (formula/equation)','Voice issue',"Couldn't understand the question",'Other'];
+
+function openFeedbackSheet(record, onSent) {
+  if (document.querySelector('.fb-overlay')) return;
+  const ov = document.createElement('div');
+  ov.className = 'fb-overlay';
+  ov.innerHTML = `
+    <div class="fb-sheet" role="dialog" aria-modal="true">
+      <div class="fb-title">${t('fbTitle')}</div>
+      <div class="fb-sub">${t('fbSub')}</div>
+      <div class="fb-list">
+        ${t('fbOpts').map((x, i) => `<label class="fb-opt"><input type="checkbox" value="${i}"><span class="box"></span><span class="lbl">${x}</span></label>`).join('')}
+      </div>
+      <div class="fb-otherwrap" style="display:none">
+        <textarea maxlength="100" placeholder="${t('fbOtherPh')}"></textarea>
+        <div class="fb-count"><span class="fb-hint">${t('fbRange')}</span><span class="fb-n">0/100</span></div>
+      </div>
+      <div class="fb-actions">
+        <button type="button" class="fb-cancel">${t('fbCancel')}</button>
+        <button type="button" class="fb-send" disabled>${t('fbSend')}</button>
+      </div>
+    </div>`;
+  document.body.appendChild(ov);
+
+  const boxes = [...ov.querySelectorAll('input[type=checkbox]')];
+  const wrap = ov.querySelector('.fb-otherwrap'), ta = ov.querySelector('textarea');
+  const nEl = ov.querySelector('.fb-n'), hint = ov.querySelector('.fb-hint');
+  const send = ov.querySelector('.fb-send');
+  const OTHER = boxes.length - 1;
+
+  const lenOf = () => Array.from(ta.value.trim()).length;
+  function validate() {
+    const picked = boxes.filter(b => b.checked);
+    const other = boxes[OTHER].checked;
+    wrap.style.display = other ? 'block' : 'none';
+    const len = lenOf();
+    nEl.textContent = `${len}/100`;
+    const badLen = other && (len < 20 || len > 100);
+    hint.classList.toggle('bad', badLen && len > 0);
+    send.disabled = !(picked.length > 0 && (!other || (len >= 20 && len <= 100)));
+  }
+  boxes.forEach(b => b.addEventListener('change', validate));
+  ta.addEventListener('input', validate);
+
+  const close = () => ov.remove();
+  ov.addEventListener('click', (e) => { if (e.target === ov) close(); });
+  ov.querySelector('.fb-cancel').onclick = close;
+
+  send.onclick = async () => {
+    send.disabled = true;
+    const label = send.textContent; send.textContent = '…';
+    const reasons = boxes.filter(b => b.checked).map(b => FB_EN[+b.value]);
+    const other = boxes[OTHER].checked ? ta.value.trim() : '';
+    const ok = await sendFeedbackToServer(record, reasons, other);
+    if (ok) { close(); onSent && onSent(); showToast(t('toastDown')); }
+    else { send.textContent = label; send.disabled = false; showToast(t('fbFail')); }
+  };
+}
+
+
+Object.assign(I18N.hinglish, { l_wait:'Sawaal server ko bhej diya, jawab ka intezaar', l_waitimg:'Sawaal aur photo server ko bhej di, jawab ka intezaar', l_got:'Jawab mil gaya, dikha raha hoon' });
+Object.assign(I18N.hi,       { l_wait:'सवाल सर्वर को भेज दिया, उत्तर की प्रतीक्षा', l_waitimg:'सवाल और फोटो सर्वर को भेज दी, उत्तर की प्रतीक्षा', l_got:'उत्तर मिल गया, दिखा रहा हूँ' });
+Object.assign(I18N.en,       { l_wait:'Question sent to the server, waiting for the answer', l_waitimg:'Question and photo sent to the server, waiting for the answer', l_got:'Answer received, displaying it' });
+
+Object.assign(I18N.hinglish, { l_direct:'Chhota sawaal hai, seedha jawab de raha hoon' });
+Object.assign(I18N.hi,       { l_direct:'छोटा सवाल है, सीधे उत्तर दे रहा हूँ' });
+Object.assign(I18N.en,       { l_direct:'Short question, answering directly' });

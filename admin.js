@@ -1097,7 +1097,6 @@ window.publishAnswer = async function(id) {
     .update({
       greeting: greetVal,
       answer: ansVal,
-      solution: ansVal,
       status: "solved"
     })
     .eq("id", id);
