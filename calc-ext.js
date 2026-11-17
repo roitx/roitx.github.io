@@ -64,6 +64,62 @@ function factorize(n) {
   return out;
 }
 
+/* ---------- symbolic  d(f)/dx  and  ∫(f)dx  (used when no point / no limits are given) ---------- */
+function prettySym(node) {
+  return M.simplify(node).toString()
+    .replace(/\bpi\b/g, "π").replace(/\blog\(/g, "ln(")
+    .replace(/(\d) \* ([a-zA-Zπ(])/g, "$1$2").replace(/ \* /g, "·").replace(/ \^ /g, "^");
+}
+function sym(id, kind) {
+  const v = TK() ? TK().vals() : {};
+  const src = LZ[id].replace(/[A-FXYM]/g, (m) => (m === "X" ? "x" : m in v ? `(${v[m]})` : m));
+  try {
+    if (kind === "diff") return { _t: "S", text: prettySym(M.derivative(src, "x")) };
+    const has = (n) => n.filter((m) => m.isSymbolNode && m.name === "x").length > 0;
+    const slope = (u) => { const a = M.simplify(M.derivative(u, "x")); if (has(a)) throw 0; return `(${a.toString()})`; };
+    const FN = {
+      sin: (u, a) => `-cos(${u})/${a}`, cos: (u, a) => `sin(${u})/${a}`, tan: (u, a) => `-log(abs(cos(${u})))/${a}`,
+      cot: (u, a) => `log(abs(sin(${u})))/${a}`, sec: (u, a) => `log(abs(sec(${u})+tan(${u})))/${a}`,
+      exp: (u, a) => `exp(${u})/${a}`, sinh: (u, a) => `cosh(${u})/${a}`, cosh: (u, a) => `sinh(${u})/${a}`,
+      sqrt: (u, a) => `2*(${u})^(3/2)/(3*${a})`, log: (u, a) => `((${u})*log(${u})-(${u}))/${a}`
+    };
+    const I = (n) => {
+      while (n.isParenthesisNode) n = n.content;
+      if (!has(n)) return `(${n})*x`;
+      if (n.isSymbolNode) return "x^2/2";
+      if (n.isOperatorNode) {
+        const [p, q] = n.args;
+        switch (n.fn) {
+          case "unaryMinus": return `-(${I(p)})`;
+          case "unaryPlus": return I(p);
+          case "add": return `(${I(p)})+(${I(q)})`;
+          case "subtract": return `(${I(p)})-(${I(q)})`;
+          case "multiply":
+            if (!has(p)) return `(${p})*(${I(q)})`;
+            if (!has(q)) return `(${q})*(${I(p)})`;
+            break;
+          case "divide":
+            if (!has(q)) return `(${I(p)})/(${q})`;
+            if (!has(p)) return `(${p})*log(abs(${q}))/${slope(q)}`;
+            break;
+          case "pow":
+            if (!has(q)) {
+              const a = slope(p); let k; try { k = Number(M.evaluate(q.toString())); } catch (er) { k = NaN; }
+              return k === -1 ? `log(abs(${p}))/${a}` : `(${p})^(${q}+1)/((${q}+1)*${a})`;
+            }
+            if (!has(p)) { const a = slope(q); return p.isSymbolNode && p.name === "e" ? `e^(${q})/${a}` : `(${p})^(${q})/(${a}*log(${p}))`; }
+            break;
+        }
+        throw 0;
+      }
+      if (n.isFunctionNode && FN[n.fn.name] && n.args.length === 1) return FN[n.fn.name](n.args[0], slope(n.args[0]));
+      throw 0;
+    };
+    let r; try { r = I(M.parse(src)); } catch (e1) { r = I(M.rationalize(src)); } // second try: expand products like x(x+1)
+    return { _t: "S", text: prettySym(M.parse(r)) + " + C" };
+  } catch (err) { throw new Error(kind === "int" ? "symbolic-int" : "symbolic-diff"); }
+}
+
 /* ---------- evaluation scope (angle mode lives here, so nested brackets work) ---------- */
 function makeScope() {
   const deg = isDeg;
@@ -85,8 +141,9 @@ function makeScope() {
     polar: (r, t) => M.complex({ r, phi: tR(t) }),
     fact: (n) => { if (!Number.isInteger(n) || n < 2 || n > 1e13) throw new Error("fact"); return { _t: "F", n, f: factorize(n) }; },
     zeta, arg: (x) => fR(M.arg(x)),
-    integral: (id, a, b) => simpson(inner(id), a, b),
+    integral: (id, a, b) => (a === undefined ? sym(id, "int") : simpson(inner(id), a, b)),
     deriv: (id, x0) => {
+      if (x0 === undefined) return sym(id, "diff");
       const f = inner(id), D = (h) => (f(x0 + h) - f(x0 - h)) / (2 * h), h = 1e-3 * Math.max(1, Math.abs(x0));
       const r1 = (4 * D(h / 2) - D(h)) / 3, r2 = (4 * D(h / 4) - D(h / 2)) / 3;
       return (16 * r2 - r1) / 15;
@@ -110,10 +167,16 @@ function inner(id) {
 }
 
 /* ---------- display text → math.js text ---------- */
-const LZT = [["∫(", "integral"], ["Σ(", "sumx"], ["Π(", "prodx"], ["d/dx(", "deriv"]];
+// [opening text, function, optional closing text that follows the bracket]
+const LZT = [["∫(", "integral", "dx"], ["Σ(", "sumx", ""], ["Π(", "prodx", ""], ["d/dx(", "deriv", ""], ["d(", "deriv", "/dx"]];
 function lazyfy(s) {
   let best = null;
-  for (const [t, fn] of LZT) { const i = s.indexOf(t); if (i >= 0 && (!best || i < best.i)) best = { i, t, fn }; }
+  for (const [t, fn, tail] of LZT) {
+    let i = s.indexOf(t);
+    // "d(" must stand alone: skip the d inside mod( gcd( Round( …
+    while (i > 0 && t === "d(" && /[A-Za-z0-9_]/.test(s[i - 1])) i = s.indexOf(t, i + 1);
+    if (i >= 0 && (!best || i < best.i)) best = { i, t, fn, tail };
+  }
   if (!best) return s;
   const start = best.i + best.t.length, args = []; let depth = 1, k = start, cur = start;
   for (; k < s.length; k++) {
@@ -124,7 +187,9 @@ function lazyfy(s) {
   }
   args.push(s.slice(cur, k));
   const pa = args.map(lazyfy), id = lazy(pa[0]);
-  return s.slice(0, best.i) + best.fn + "(" + [id, ...pa.slice(1)].join(",") + ")" + lazyfy(s.slice(k + 1));
+  let rest = s.slice(k + 1);
+  if (best.tail && rest.startsWith(best.tail)) rest = rest.slice(best.tail.length); // ∫(…)dx  and  d(…)/dx
+  return s.slice(0, best.i) + best.fn + "(" + [id, ...pa.slice(1)].join(",") + ")" + lazyfy(rest);
 }
 
 function convert(raw) {
@@ -183,6 +248,7 @@ function fmtResult(raw) {
   if (Array.isArray(raw) && window.ROITX_MORE && window.ROITX_MORE.showMatrix) return window.ROITX_MORE.showMatrix(raw);
   if (Array.isArray(raw)) { const t = JSON.stringify(raw).replace(/,/g, ", "); return { text: t, machine: "0" }; }
   if (raw && raw._t) {
+    if (raw._t === "S") return { text: raw.text, machine: "0" };
     if (raw._t === "R") return { text: `${raw.q} R ${raw.r}`, machine: String(raw.q) };
     if (raw._t === "P") { setVar("X", +baseFmt(raw.r)); setVar("Y", +baseFmt(raw.t)); return { text: `r=${formatFinal(raw.r)} θ=${formatFinal(raw.t)}`, machine: String(baseFmt(raw.r)) }; }
     if (raw._t === "X") { setVar("X", +baseFmt(raw.x)); setVar("Y", +baseFmt(raw.y)); return { text: `x=${formatFinal(raw.x)} y=${formatFinal(raw.y)}`, machine: String(baseFmt(raw.x)) }; }
@@ -201,10 +267,11 @@ function reformat() { if (lastRaw === null) return; try { resDiv.innerText = fmt
 
 /* ---------- equals / solve ---------- */
 const evalExp = (e) => { resetLZ(); return M.evaluate(preprocess(e), makeScope()); };
-const errText = (e) => (e instanceof SyntaxError ? "Syntax ERROR" : "Math ERROR");
+const errText = (e) => (e && e.message === "symbolic-int" ? "Add limits a, b" : e instanceof SyntaxError ? "Syntax ERROR" : "Math ERROR");
 
 function finish(raw, shownExp) {
   const r = fmtResult(raw);
+  if (raw && raw._t === "S") { lastRaw = raw; resDiv.innerText = r.text; saveHistory(shownExp + "=" + r.text); return r; } // symbolic answers never become Ans
   prevAnswer = lastAnswer; lastAnswer = r.machine; lastRaw = raw;
   resDiv.innerText = r.text; saveHistory(shownExp + "=" + r.machine);
   return r;
@@ -308,7 +375,15 @@ const $q = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 /* ---------- key handling ---------- */
-const ins = (val) => { insertAtCursor(val); if (val.endsWith("(")) { insertAtCursor(")"); cursorPos++; } };
+const CLOSERS = { "∫(": ")dx", "d(": ")/dx" }; // what follows the cursor after the bracket opens
+const ins = (val) => {
+  insertAtCursor(val);
+  if (!val.endsWith("(")) return;
+  const tail = CLOSERS[val] || ")";
+  if (tail === ")") { insertAtCursor(")"); cursorPos++; return; }
+  const pos = exp.length - cursorPos; // add the closing part directly so INS/overwrite mode cannot eat text
+  exp = exp.slice(0, pos) + tail + exp.slice(pos); cursorPos += tail.length; updateDisplay();
+};
 
 const NORMAL = {
   LOG: "log10(", LN: "log(", SQRT: "√(", X2: "²", X3: "³", POW: "^", PI: "π", NCR: "C", ANS: "Ans", MOD: "%", EXP: "×10^(",
@@ -318,7 +393,7 @@ const NORMAL = {
 const SHIFTED = {
   SIN: "sin⁻¹(", COS: "cos⁻¹(", TAN: "tan⁻¹(", SQRT: "∛(", LOG: "10^(", LN: "e^(", X2: "!", X3: "^(-1)", POW: "ⁿ√(", NCR: "P",
   POL: "Rec(", PI: "e", ABS: "erf(", HYP: "gamma(", COMMA: "zeta(", LCM: "gcd(", MOD: "mod(",
-  INTG: "d/dx(", SIGMA: "Π(", LOGAB: "Ceil(", XINV: "Intg(", COT: "cot⁻¹(", NEG: "∠", DMS: "Fact(", DIVR: "PreAns", ENG: "i", RANINT: "Round("
+  INTG: "d(", SIGMA: "Π(", LOGAB: "Ceil(", XINV: "Intg(", COT: "cot⁻¹(", NEG: "∠", DMS: "Fact(", DIVR: "PreAns", ENG: "i", RANINT: "Round("
 };
 const ALPHA = { "7": "A", "8": "B", "9": "C", "4": "D", "5": "E", "6": "F", "1": "X", "2": "Y", "3": "M" };
 const OPS = ["+", "-", "*", "/", "POW", "X2", "X3", "XINV"];
