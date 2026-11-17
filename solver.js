@@ -2022,7 +2022,9 @@ async function callAI(prompt, imageBase64, fast) {
   const res = await fetch(URL_, {
     method: "POST",
     headers: { "Content-Type": "application/json", "apikey": KEY_, "Authorization": `Bearer ${KEY_}` },
-    body: JSON.stringify({ prompt, language: currentLanguage, image: imageBase64, tier: fast ? 'fast' : 'main' })
+    body: JSON.stringify(fast
+      ? { prompt, language: currentLanguage, provider: 'groq' }          // chhota AI: Groq (ask-chat.js jaisa)
+      : { prompt, language: currentLanguage, image: imageBase64 })       // bada AI: pehle jaisa
   });
   if ([429, 502, 503, 504, 529].includes(res.status)) { const e = new Error('demand'); e.kind = 'demand'; throw e; }
   let data = {};
@@ -2040,11 +2042,23 @@ async function callAI(prompt, imageBase64, fast) {
   return raw;
 }
 
+function cleanSteps(arr) {
+  let items = arr.map(String);
+  // Agar model ne poora numbered jawab ek hi string me daal diya ho to use todo
+  if (items.length < 2 && /\d+[.)]\s/.test(items[0] || '')) items = items[0].split(/\s*\b\d{1,2}[.)]\s+/);
+  const seen = new Set();
+  return items
+    .map(s => s.replace(/^\s*(?:\d+[.)]|[-*•])\s*/, '').replace(/[*_`#]/g, '').split(/[:：]/)[0].split(/\.\s/)[0].trim())
+    .map(s => s.length > 60 ? s.slice(0, 57).trim() + '…' : s)
+    .filter(s => s.length >= 3 && !seen.has(s.toLowerCase()) && seen.add(s.toLowerCase()))
+    .slice(0, 5);
+}
+
 function parseRoute(raw) {
   try {
     const o = JSON.parse(String(raw).match(/\{[\s\S]*\}/)[0]);
     if (o.mode === 'direct' && typeof o.answer === 'string' && o.answer.trim()) return o;
-    if (o.mode === 'deep' && Array.isArray(o.steps) && o.steps.length) { o.steps = o.steps.slice(0, 6); return o; }
+    if (o.mode === 'deep' && Array.isArray(o.steps)) { o.steps = cleanSteps(o.steps); return o.steps.length >= 2 ? o : null; }
   } catch (e) {}
   return null;
 }
@@ -2064,7 +2078,7 @@ window.solveWithAI = async function (questionText, imageBase64 = null) {
     hinglish: 'Solve in clean Hinglish (Roman Hindi + English).'
   }[currentLanguage] || 'Solve in clean Hinglish.';
   const MAIN = `You are an expert tutor for Class 9-12. Subject: ${selectedSubject}. ${styleLine} Use LaTeX for math ($...$ inline, $$...$$ display). Direct answer only, no meta chatter.\n\nQuery: ${q}`;
-  const ROUTER = `You are a fast front-desk assistant of a Class 9-12 tutor (subject: ${selectedSubject}). Write in ${langName}. Decide:\n- If the message is a greeting, small talk, or a short/simple question answerable in 1-3 lines, reply ONLY with JSON: {"mode":"direct","answer":"<final answer in markdown, LaTeX $...$ for math>"}\n- Otherwise (multi-step solving, derivation, calculation, long explanation, or an image), reply ONLY with JSON: {"mode":"deep","steps":["<3 to 5 short action labels specific to this exact question>"]}\nNo text outside the JSON.\n\nMessage: ${q}`;
+  const ROUTER = `You are a fast front-desk assistant of a Class 9-12 tutor (subject: ${selectedSubject}). Write in ${langName}. Decide:\n- If the message is a greeting, small talk, or a short/simple question answerable in 1-3 lines, reply ONLY with JSON: {"mode":"direct","answer":"<final answer in markdown, LaTeX $...$ for math>"}\n- Otherwise (multi-step solving, derivation, calculation, long explanation, or an image), reply ONLY with JSON: {"mode":"deep","steps":["<title 1>","<title 2>","<title 3>"]} with exactly 3 to 5 SEPARATE strings, each a short title of at most 8 words specific to this question (example: "Define projectile motion", "Write the key formulas"). Titles only: no explanations, no formulas, no numbering, and never solve the question inside the steps.\nNo text outside the JSON.\n\nMessage: ${q}`;
 
   const show = (raw) => {
     const clean = cleanAIResponse(raw);
@@ -2075,22 +2089,44 @@ window.solveWithAI = async function (questionText, imageBase64 = null) {
   };
 
   try {
-    // Lagta hai bada sawaal? To main AI turant peeche start, router sirf steps batayega
-    const likelyDeep = !!imageBase64 || q.length > 80 || /[\d=+^√∫∑]|solve|prove|derive|calculate|find|हल|सिद्ध|निकाल/i.test(q);
-    let mainPromise = null;
-    if (likelyDeep) { mainPromise = callAI(MAIN, imageBase64, false); mainPromise.catch(() => {}); }
+    // Chhota AI pehle plan banata hai, phir bada AI usi plan par jawab likhta hai
+    const looped = (s) => /(.)\1{5,}|(.{2,6})(?:\2){4,}|(\b\w+\b)(?:\s+\3){4,}/i.test(s);
+    const norm = (s) => String(s).toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, ' ').replace(/\s+/g, ' ').trim();
+    const covers = (ans, title) => {
+      const a = norm(ans), tt = norm(title);
+      if (a.includes(tt)) return true;
+      const w = tt.split(' ').filter(x => x.length > 3).slice(0, 4);
+      return w.length > 0 && w.filter(x => a.includes(x)).length >= Math.ceil(w.length * 0.6);
+    };
 
-    const route = await callAI(ROUTER, imageBase64, true).then(parseRoute).catch(() => null);
+    let route = imageBase64 ? null : await callAI(ROUTER, null, true).then(parseRoute).catch(() => null);
+    if (route && route.mode === 'direct' && looped(route.answer)) route = null;
 
     if (route && route.mode === 'direct') {
       work.log(t('l_direct')); work.finish(); show(route.answer);
       return;
     }
-    if (route && route.mode === 'deep') work.plan(route.steps);
 
-    if (!mainPromise) mainPromise = callAI(MAIN, imageBase64, false);
-    const raw = await mainPromise;
-    work.log(t('l_got')); work.finish(); show(raw);
+    const steps = route && route.mode === 'deep' ? route.steps : null;
+    if (steps) work.plan(steps);
+
+    const planBlock = steps
+      ? `\n\nA fast assistant already planned this answer. Follow the plan EXACTLY, in this order. Write each step as its own section: a bold heading with the exact step title, then the explanation below it (formulas in LaTeX; give a worked example wherever a step asks for one). Do not skip any step.\nPLAN:\n${steps.map((s, i) => `${i + 1}. ${s}`).join('\n')}`
+      : '';
+    let raw = await callAI(MAIN + planBlock, imageBase64, false);
+
+    if (steps) {
+      // Jawab ko plan se milao; koi hissa chhut gaya ho to bada AI sirf wahi jodta hai
+      const missing = steps.filter(s => !covers(raw, s));
+      if (missing.length) {
+        work.log(t('l_fix', missing.length));
+        try {
+          const extra = await callAI(`${MAIN}\n\nDRAFT ANSWER:\n${raw}\n\nThe draft is missing these planned sections: ${missing.join('; ')}.\nWrite ONLY those missing sections, each with a bold heading using the exact title. Do not repeat the draft.`, imageBase64, false);
+          raw = raw + '\n\n' + extra;
+        } catch (e) { /* draft jaisa hi dikha do */ }
+      } else work.log(t('l_ok'));
+    } else work.log(t('l_got'));
+    work.finish(); show(raw);
   } catch (err) {
     work.remove();
     showErrorCard(err.kind || (err instanceof TypeError ? 'network' : 'generic'), err.message);
@@ -2376,3 +2412,7 @@ Object.assign(I18N.en,       { l_wait:'Question sent to the server, waiting for 
 Object.assign(I18N.hinglish, { l_direct:'Chhota sawaal hai, seedha jawab de raha hoon' });
 Object.assign(I18N.hi,       { l_direct:'छोटा सवाल है, सीधे उत्तर दे रहा हूँ' });
 Object.assign(I18N.en,       { l_direct:'Short question, answering directly' });
+
+Object.assign(I18N.hinglish, { l_ok:'Jawab ko plan se milaya: saare hisse maujood hain', l_fix:n=>`Jawab ko plan se milaya: ${n} hissa chhut gaya tha, jodh raha hoon` });
+Object.assign(I18N.hi,       { l_ok:'उत्तर को योजना से मिलाया: सभी हिस्से मौजूद हैं', l_fix:n=>`उत्तर को योजना से मिलाया: ${n} हिस्सा छूट गया था, जोड़ रहा हूँ` });
+Object.assign(I18N.en,       { l_ok:'Checked the answer against the plan: every step is covered', l_fix:n=>`Checked the answer against the plan: ${n} step(s) missing, adding them` });
