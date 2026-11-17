@@ -257,6 +257,7 @@ function drawCoin(ctx, c){
 
 // 🔋 6. POWERUP
 function drawPowerup(ctx, p){
+    if(p.type==="magnet"){ drawMagnetItem(ctx,p); return; }
     ctx.save(); const pw=p.w||36, ph=p.h||42, cx=p.x+pw/2, cy=p.y+ph/2; const bob=Math.sin(Date.now()*0.003+p.x)*4; ctx.translate(cx, cy+bob);
     let col=p.type==="shield"?"#06b6d4":p.type==="health"?"#10b981":"#f59e0b"; let liquidCol=p.type==="shield"?"#22d3ee":p.type==="health"?"#34d399":"#fbbf24";
     ctx.fillStyle=col; ctx.globalAlpha=0.25; ctx.shadowBlur=30; ctx.shadowColor=col; ctx.beginPath(); ctx.arc(0,8,pw*0.6,0,Math.PI*2); ctx.fill(); ctx.shadowBlur=0; ctx.globalAlpha=1;
@@ -286,4 +287,143 @@ function drawStudyBlock(ctx, b, ok){
     ctx.roundRect ? ctx.roundRect(b.x, b.y, b.w, b.h, 14) : ctx.rect(b.x, b.y, b.w, b.h); 
     ctx.fill(); 
     ctx.restore(); 
+}
+
+
+// =========================================================================
+// ⚡ NOVA (ULTI REPLACEMENT) - AURA + SCREEN FLASH
+// =========================================================================
+function drawOverdriveAura(ctx, player, ship){
+    if(!player || (player.overdrive <= 0 && player.invuln <= 0)) return;
+    const cx = player.x + player.w/2, cy = player.y + player.h/2;
+    const t = Date.now() * 0.006;
+    const col = (ship && ship.color) || "#facc15";
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+
+    // Invulnerable bubble (pehle 2s)
+    if(player.invuln > 0){
+        const fade = Math.min(1, player.invuln / 30);
+        const pulse = 1 + Math.sin(t * 3) * 0.05;
+        let g = createSafeRadialGradient(ctx, cx, cy, 20, cx, cy, 62 * pulse);
+        g.addColorStop(0, "rgba(255,255,255,0)");
+        g.addColorStop(0.75, "rgba(250,204,21,0.18)");
+        g.addColorStop(1, "rgba(255,255,255,0.65)");
+        ctx.globalAlpha = 0.85 * fade;
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(cx, cy, 62 * pulse, 0, Math.PI*2); ctx.fill();
+        ctx.strokeStyle = "#fde047"; ctx.lineWidth = 2; ctx.globalAlpha = 0.9 * fade;
+        ctx.beginPath(); ctx.arc(cx, cy, 62 * pulse, 0, Math.PI*2); ctx.stroke();
+    }
+
+    // Overdrive: ghoomte energy sparks + neeche flame glow
+    if(player.overdrive > 0){
+        const fade = Math.min(1, player.overdrive / 40);
+        ctx.globalAlpha = 0.9 * fade;
+        for(let i = 0; i < 6; i++){
+            const a = t * 2 + i * (Math.PI * 2 / 6);
+            const rx = 46, ry = 30;
+            const sx = cx + Math.cos(a) * rx, sy = cy + Math.sin(a) * ry;
+            ctx.fillStyle = i % 2 ? "#facc15" : col;
+            ctx.shadowBlur = 14; ctx.shadowColor = ctx.fillStyle;
+            ctx.beginPath(); ctx.arc(sx, sy, 3.2, 0, Math.PI*2); ctx.fill();
+        }
+        ctx.shadowBlur = 0;
+        let fg = createSafeRadialGradient(ctx, cx, player.y + player.h + 8, 2, cx, player.y + player.h + 8, 38);
+        fg.addColorStop(0, "rgba(250,204,21,0.7)"); fg.addColorStop(1, "rgba(250,204,21,0)");
+        ctx.globalAlpha = 0.8 * fade; ctx.fillStyle = fg;
+        ctx.beginPath(); ctx.arc(cx, player.y + player.h + 8, 38, 0, Math.PI*2); ctx.fill();
+    }
+    ctx.restore();
+}
+
+function drawNovaFlash(ctx, canvas, alpha){
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.globalAlpha = Math.max(0, Math.min(1, alpha)) * 0.7;
+    ctx.fillStyle = "#fffbeb";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.restore();
+}
+
+
+// =========================================================================
+// 🧲 MAGNET - ITEM + FIELD
+// =========================================================================
+function drawMagnetItem(ctx, p){
+    const cx = p.x + 18, cy = p.y + 21;
+    const bob = Math.sin(Date.now()*0.003 + p.x) * 4;
+    const sway = Math.sin(Date.now()*0.004 + p.x) * 0.12;
+    ctx.save();
+    ctx.translate(cx, cy + bob); ctx.rotate(sway);
+
+    // glow
+    ctx.globalAlpha = 0.28; ctx.shadowBlur = 30; ctx.shadowColor = "#f43f5e"; ctx.fillStyle = "#f43f5e";
+    ctx.beginPath(); ctx.arc(0, 4, 24, 0, Math.PI*2); ctx.fill();
+    ctx.shadowBlur = 0; ctx.globalAlpha = 1;
+
+    // horseshoe body (U shape)
+    const R = 13, T = 8;
+    const arm = (side, col1, col2) => {
+        let g = createSafeLinearGradient(ctx, side*R-T/2, -14, side*R+T/2, -14);
+        g.addColorStop(0, col1); g.addColorStop(0.5, "#ffffff"); g.addColorStop(1, col2);
+        ctx.fillStyle = g;
+        ctx.fillRect(side*R - T/2, -14, T, 14);
+        // silver tip
+        let tg = createSafeLinearGradient(ctx, 0, -17, 0, -10);
+        tg.addColorStop(0, "#f8fafc"); tg.addColorStop(1, "#94a3b8");
+        ctx.fillStyle = tg; ctx.fillRect(side*R - T/2, -17, T, 6);
+    };
+    // curve
+    ctx.lineWidth = T; ctx.lineCap = "butt";
+    let cg = createSafeLinearGradient(ctx, -R-T, 0, R+T, 0);
+    cg.addColorStop(0, "#ef4444"); cg.addColorStop(0.5, "#be123c"); cg.addColorStop(1, "#3b82f6");
+    ctx.strokeStyle = cg;
+    ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI); ctx.stroke();
+    arm(-1, "#7f1d1d", "#ef4444");
+    arm(1, "#3b82f6", "#1e3a8a");
+
+    // highlight
+    ctx.strokeStyle = "rgba(255,255,255,0.55)"; ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.arc(0, 0, R+1, Math.PI*0.55, Math.PI*0.9); ctx.stroke();
+
+    // spark between tips
+    const t = Date.now()*0.01;
+    ctx.strokeStyle = "rgba(250,204,21,0.9)"; ctx.lineWidth = 1.4; ctx.shadowBlur = 8; ctx.shadowColor = "#facc15";
+    ctx.beginPath(); ctx.moveTo(-R, -19);
+    for(let i=1;i<=4;i++) ctx.lineTo(-R + (R*2/4)*i, -19 - Math.sin(t+i*1.7)*4);
+    ctx.stroke();
+    ctx.restore();
+}
+
+function drawMagnetField(ctx, player, timeLeft, range){
+    const cx = player.x + player.w/2, cy = player.y + player.h/2;
+    const fade = Math.min(1, timeLeft / 60);
+    const blink = timeLeft < 90 && Math.floor(timeLeft/8)%2 === 0 ? 0.4 : 1;
+    const now = Date.now();
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    // inward moving rings
+    for(let i=0;i<3;i++){
+        const ph = ((now*0.0007) + i/3) % 1;
+        const r = range*(1-ph)*0.9 + 20;
+        ctx.globalAlpha = 0.5*ph*fade*blink;
+        ctx.strokeStyle = i%2 ? "#60a5fa" : "#fb7185";
+        ctx.lineWidth = 2; ctx.setLineDash([8,10]); ctx.lineDashOffset = -now*0.03;
+        ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    // soft core glow
+    let g = createSafeRadialGradient(ctx, cx, cy, 10, cx, cy, 70);
+    g.addColorStop(0,"rgba(244,63,94,0.18)"); g.addColorStop(1,"rgba(59,130,246,0)");
+    ctx.globalAlpha = fade*blink; ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(cx, cy, 70, 0, Math.PI*2); ctx.fill();
+    // field arcs
+    ctx.lineWidth = 2; ctx.globalAlpha = 0.6*fade*blink;
+    for(let i=0;i<4;i++){
+        const a = now*0.003 + i*Math.PI/2;
+        ctx.strokeStyle = i%2 ? "#60a5fa" : "#fb7185";
+        ctx.beginPath(); ctx.arc(cx, cy, 44, a, a+0.9); ctx.stroke();
+    }
+    ctx.restore();
 }

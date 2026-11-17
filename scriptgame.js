@@ -212,9 +212,13 @@ function playSynthSound(type) {
         gain.gain.setValueAtTime(0.22, now); gain.gain.linearRampToValueAtTime(0, now + 0.55);
         osc.start(now); osc.stop(now + 0.55);
     } else if (type === 'ulti') {
-        osc.type = 'sine'; osc.frequency.setValueAtTime(80, now); osc.frequency.exponentialRampToValueAtTime(1800, now + 0.7);
-        gain.gain.setValueAtTime(0.3, now); gain.gain.linearRampToValueAtTime(0, now + 0.7);
-        osc.start(now); osc.stop(now + 0.7);
+        // NOVA: low charge-up sweep + bright burst
+        osc.type = 'sawtooth'; osc.frequency.setValueAtTime(60, now);
+        osc.frequency.exponentialRampToValueAtTime(220, now + 0.25);
+        osc.frequency.exponentialRampToValueAtTime(2200, now + 0.55);
+        gain.gain.setValueAtTime(0.0, now); gain.gain.linearRampToValueAtTime(0.28, now + 0.25);
+        gain.gain.linearRampToValueAtTime(0, now + 0.75);
+        osc.start(now); osc.stop(now + 0.75);
     }
 }
 
@@ -247,7 +251,8 @@ for(let i = 0; i < 60; i++) {
 const player = { 
     x: 0, y: 0, w: 56, h: 56, 
     speed: 8, cooldown: 0, missileCooldown: 0, shield: false, 
-    ultiCooldown: 0, gravityCooldown: 0, triplePower: false 
+    ultiCooldown: 0, gravityCooldown: 0, triplePower: false,
+    invuln: 0, overdrive: 0, magnet: 0 
 };
 const keys = {};
 
@@ -636,9 +641,7 @@ function showLevelUp(lv) {
     let b = document.getElementById("levelup-banner");
     if (!b) { b = document.createElement("div"); b.id = "levelup-banner"; document.body.appendChild(b); }
     b.innerHTML =
-        '<span class="lu-lv">LEVEL ' + lv + '</span>' +
-        '<span class="lu-chip coin">+' + LEVELUP_REWARD.coins + '</span>' +
-        (gotHp > 0 ? '<span class="lu-chip hp">+' + (Math.round(gotHp * 10) / 10) + ' HP</span>' : '');
+        '<span class="lu-lv">LEVEL ' + lv + ' UP!</span>';
     b.classList.remove("show"); void b.offsetWidth; b.classList.add("show");
     clearTimeout(showLevelUp._t);
     showLevelUp._t = setTimeout(() => b.classList.remove("show"), 2600);
@@ -801,30 +804,84 @@ function updateGravityButton() {
     gravityBtn.style.opacity = player.gravityCooldown <= 0 || gravityWell ? "1" : "0.6";
 }
 
-function triggerUltimate() {
-    if (player.ultiCooldown > 0 || !game) return;
-    playSynthSound('ulti');
-    player.ultiCooldown = 380;
-    screenShake = 30;
-    addShockwave(player.x + player.w/2, player.y + player.h/2, "#f43f5e", 220);
+// ---------- NOVA (replaces old ULTI) ----------
+const MAGNET_DURATION = 480;   // frames (~8s)
+const MAGNET_RANGE = 300;
+const NOVA_COOLDOWN = 480;      // frames (~8s)
+const NOVA_INVULN   = 120;      // 2s safe
+const NOVA_OVERDRIVE = 360;     // 6s double fire + triple shot
+let novaFlash = 0;
 
-    if (selectedShip === "pulse") {
-        addFloatingText(player.x, player.y, "HYPER BEAM MATRIX!", "#10b981");
-        for (let i = -100; i <= 100; i += 10) {
-            bullets.push({ x: player.x + player.w / 2 + i, y: player.y, vx: 0, vy: -18, c: "#10b981", size: 6 });
-        }
-    } else if (selectedShip === "titan") {
-        addFloatingText(player.x, player.y, "EMP NUKE!", "#f97316");
-        enemyBullets = [];
-        enemies.forEach(e => explode(e.x + e.w/2, e.y + e.h/2, "#f97316", 12));
-        enemies = [];
-        if (monster) monster.hp -= 45;
-        explode(player.x + player.w/2, player.y + player.h/2, "#f97316", 90);
-    } else if (selectedShip === "phantom") {
-        addFloatingText(player.x, player.y, "CHRONO WARP!", "#a855f7");
-        timeFreeze = true;
-        setTimeout(() => timeFreeze = false, 5500);
+function magnetPull(o, w, h, strength) {
+    if (player.magnet <= 0) return;
+    const dx = (player.x + player.w / 2) - (o.x + w / 2);
+    const dy = (player.y + player.h / 2) - (o.y + h / 2);
+    const d = Math.hypot(dx, dy);
+    if (d > MAGNET_RANGE || d < 1) return;
+    const pull = strength * (1 + (MAGNET_RANGE - d) / MAGNET_RANGE * 2.2);
+    o.x += dx / d * pull; o.y += dy / d * pull;
+}
+
+function triggerUltimate() {
+    if (player.ultiCooldown > 0 || !game || paused) return;
+    playSynthSound('ulti');
+    player.ultiCooldown = NOVA_COOLDOWN;
+    player.invuln = NOVA_INVULN;
+    player.overdrive = NOVA_OVERDRIVE;
+    screenShake = 34;
+    novaFlash = 1;
+
+    const px = player.x + player.w / 2, py = player.y + player.h / 2;
+    const col = shipTypes[selectedShip].color;
+    addShockwave(px, py, "#ffffff", 300);
+    addShockwave(px, py, col, 260);
+    addShockwave(px, py, "#facc15", 220);
+    addFloatingText(player.x - 20, player.y - 20, "⚡ SUPERNOVA!", "#facc15");
+
+    // 1) Saare enemy bullets saaf
+    enemyBullets = [];
+
+    // 2) Saare enemies destroy -> score + drops
+    let kills = 0;
+    for (let i = enemies.length - 1; i >= 0; i--) {
+        const e = enemies[i];
+        explode(e.x + e.w / 2, e.y + e.h / 2, "#facc15", 10);
+        spawnPowerup(e.x, e.y);
+        kills++;
     }
+    enemies = [];
+    if (kills) {
+        score += kills * 10 * combo;
+        comboTimer = 130; combo = Math.min(5, combo + 1);
+        addFloatingText(px - 30, py - 70, "+" + (kills * 10 * combo) + " NOVA", "#facc15");
+    }
+
+    // 3) Asteroids bhi destroy (+ coin)
+    asteroids.forEach(a => {
+        explode(a.x + a.w / 2, a.y + a.h / 2, "#fb923c", 8);
+        coinDrops.push({ x: a.x, y: a.y, w: 28, h: 28, size: 28 });
+    });
+    asteroids = [];
+    if (window.asteroids) window.asteroids.length = 0;
+
+    // 4) Monster ko heavy damage
+    if (monster) { monster.hp -= 60; explode(monster.x + monster.w / 2, monster.y + monster.h / 2, "#facc15", 25); }
+
+    // 5) Ship-specific bonus
+    if (selectedShip === "pulse") {
+        for (let i = -100; i <= 100; i += 12) {
+            bullets.push({ x: px + i, y: player.y, vx: 0, vy: -18, c: "#10b981", size: 6 });
+        }
+        addFloatingText(player.x, player.y - 45, "BEAM MATRIX", "#10b981");
+    } else if (selectedShip === "titan") {
+        lives = Math.min(shipTypes.titan.hp + 10, lives + 2);
+        addFloatingText(player.x, player.y - 45, "+2 HP REPAIR", "#f97316");
+    } else if (selectedShip === "phantom") {
+        timeFreeze = true;
+        setTimeout(() => timeFreeze = false, 2500);
+        addFloatingText(player.x, player.y - 45, "CHRONO FREEZE", "#a855f7");
+    }
+    updateHUD();
 }
 
 function shoot() {
@@ -832,14 +889,14 @@ function shoot() {
         const ship = shipTypes[selectedShip];
         playSynthSound('laser');
 
-        if (ship.triple || player.triplePower) {
+        if (ship.triple || player.triplePower || player.overdrive > 0) {
             bullets.push({ x: player.x + player.w / 2, y: player.y, vx: 0, vy: -15, c: ship.color, size: 4 });
             bullets.push({ x: player.x + player.w / 2, y: player.y, vx: -3.8, vy: -14, c: ship.color, size: 4 });
             bullets.push({ x: player.x + player.w / 2, y: player.y, vx: 3.8, vy: -14, c: ship.color, size: 4 });
         } else {
             bullets.push({ x: player.x + player.w / 2, y: player.y, vx: 0, vy: -15, c: ship.color, size: 4 });
         }
-        player.cooldown = ship.fireRate;
+        player.cooldown = player.overdrive > 0 ? Math.max(2, Math.floor(ship.fireRate / 2)) : ship.fireRate;
     }
 
     if (player.missileCooldown <= 0) {
@@ -885,7 +942,7 @@ function spawnAsteroid() {
 
 function spawnPowerup(x, y) {
     if (Math.random() < 0.28) {
-        const types = ["shield", "health", "triple"];
+        const types = ["shield", "health", "triple", "magnet"];
         powerups.push({ x, y, type: types[Math.floor(Math.random() * types.length)], size: 24 });
     }
     if (Math.random() < 0.75) {
@@ -953,6 +1010,7 @@ function explode(x, y, color, count = 18) {
 }
 
 function hitPlayer() {
+    if (player.invuln > 0) return;
     if (player.shield) {
         player.shield = false;
         addFloatingText(player.x, player.y, "SHIELD BROKEN!", "#38bdf8");
@@ -989,6 +1047,7 @@ async function startGame() {
     bullets = []; missiles = []; enemies = []; asteroids = [];
     particles = []; enemyBullets = []; powerups = []; coinDrops = []; mathDrones = [];
     gravityWell = null; player.gravityCooldown = 0;
+    player.ultiCooldown = 0; player.invuln = 0; player.overdrive = 0; player.magnet = 0; novaFlash = 0;
     if (!store.get("gravitySeen", false)) setTimeout(() => showGameToast("🌀 <b>NEW · GRAVITY WELL</b><br><small>Enemies, asteroids &amp; bullets get sucked in. Tap ◉ or press G</small>", 5000), 1200);
     monsterActive = false; monster = null; 
     
@@ -1225,6 +1284,9 @@ function update() {
     if (player.missileCooldown > 0) player.missileCooldown--;
     if (player.ultiCooldown > 0) player.ultiCooldown--;
     if (player.gravityCooldown > 0) player.gravityCooldown--;
+    if (player.invuln > 0) player.invuln--;
+    if (player.overdrive > 0) player.overdrive--;
+    if (player.magnet > 0) player.magnet--;
 
     if (ultiBtn) ultiBtn.style.opacity = player.ultiCooldown <= 0 ? "1" : "0.4";
     updateGravityButton();
@@ -1234,6 +1296,8 @@ function update() {
     if (typeof drawPlayerShip === "function") {
         drawPlayerShip(ctx, player, shipTypes, selectedShip, trails);
     }
+    if (player.magnet > 0 && typeof drawMagnetField === "function") drawMagnetField(ctx, player, player.magnet, MAGNET_RANGE);
+    if (typeof drawOverdriveAura === "function") drawOverdriveAura(ctx, player, shipTypes[selectedShip]);
 
     bullets.forEach((b, i) => {
         b.y += b.vy; b.x += b.vx || 0;
@@ -1266,6 +1330,7 @@ function update() {
 
             coinDrops.forEach((c, i) => {
         c.y += 2.2;
+        magnetPull(c, c.w || 28, c.h || 28, 5);
         
         // 🪙 Yahan hum ensure kar rahe hain ki renderers.js ka 3D function call ho
         if (typeof drawCoin === "function") {
@@ -1295,6 +1360,7 @@ function update() {
 
         powerups.forEach((p, i) => {
         p.y += 1.8;
+        magnetPull(p, p.size || 24, p.size || 24, 4);
         if (typeof drawPowerup === "function") {
             drawPowerup(ctx, p);
         } else {
@@ -1304,6 +1370,10 @@ function update() {
         if (p.x < player.x + player.w && p.x + p.size > player.x && p.y < player.y + player.h && p.y + p.size > player.y) {
             if (p.type === "shield") player.shield = true;
             if (p.type === "health") lives = Math.min(shipTypes[selectedShip].hp + 10, lives + 4);
+            if (p.type === "magnet") {
+                player.magnet = MAGNET_DURATION;
+                addFloatingText(player.x, player.y - 20, "🧲 MAGNET!", "#f43f5e");
+            }
             if (p.type === "triple") {
                 player.triplePower = true;
                 setTimeout(() => player.triplePower = false, 7500);
@@ -1327,7 +1397,7 @@ function update() {
             enemyBullets.splice(i, 1);
             if (eb.isYellowEnemy) {
                 // Yellow goli kam damage degi: Sirf shield ya choti life ghatayegi bina heavy screen shake ke
-                lives = Math.max(0, lives - 0.5); 
+                if (player.invuln <= 0) lives = Math.max(0, lives - 0.5); 
                 updateHUD();
                 if (lives <= 0) gameOver();
             } else {
@@ -1560,6 +1630,10 @@ break;
     });
     ctx.globalAlpha = 1.0;
 
+    if (novaFlash > 0) {
+        if (typeof drawNovaFlash === "function") drawNovaFlash(ctx, canvas, novaFlash);
+        novaFlash = Math.max(0, novaFlash - 0.05);
+    }
     ctx.restore();
     requestAnimationFrame(update);
 }
