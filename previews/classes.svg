@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="100%" height="100%">
+  <defs>
+    <linearGradient id="fabGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7c4dff" />
+      <stop offset="100%" stop-color="#3d5afe" />
+    </linearGradient>
+    <filter id="cardShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#101828" flood-opacity="0.08" />
+    </filter>
+  </defs>
+
+  <!-- Light Background matching site.css -->
+  <rect width="1200" height="800" fill="#f5f7ff" />
+
+  <!-- Container Topbar -->
+  <g transform="translate(80, 40)">
+    <circle cx="28" cy="28" r="24" fill="#4f8cff" fill-opacity="0.15" />
+    <circle cx="28" cy="28" r="14" fill="#4f8cff" />
+    <rect x="68" y="16" width="210" height="22" rx="6" fill="#112222" />
+
+    <!-- Contact Button -->
+    <rect x="930" y="8" width="110" height="40" rx="8" fill="#4f8cff" />
+    <rect x="955" y="23" width="60" height="10" rx="4" fill="#ffffff" />
+
+    <!-- Section Heading: Choose Class -->
+    <rect x="0" y="95" width="180" height="24" rx="6" fill="#112222" />
+
+    <!-- 4 Class Cards Grid (Class 9, 10, 11, 12) -->
+    <g transform="translate(0, 145)">
+      <!-- Card 1: Class 9 -->
+      <rect x="0" y="0" width="245" height="130" rx="12" fill="#ffffff" filter="url(#cardShadow)" />
+      <rect x="20" y="26" width="90" height="18" rx="5" fill="#112222" />
+      <rect x="20" y="58" width="185" height="11" rx="4" fill="#5a6b84" opacity="0.7" />
+      <rect x="20" y="78" width="130" height="11" rx="4" fill="#5a6b84" opacity="0.5" />
+
+      <!-- Card 2: Class 10 -->
+      <rect x="265" y="0" width="245" height="130" rx="12" fill="#ffffff" filter="url(#cardShadow)" />
+      <rect x="285" y="26" width="100" height="18" rx="5" fill="#112222" />
+      <rect x="285" y="58" width="185" height="11" rx="4" fill="#5a6b84" opacity="0.7" />
+      <rect x="285" y="78" width="140" height="11" rx="4" fill="#5a6b84" opacity="0.5" />
+
+      <!-- Card 3: Class 11 -->
+      <rect x="530" y="0" width="245" height="130" rx="12" fill="#ffffff" filter="url(#cardShadow)" />
+      <rect x="550" y="26" width="95" height="18" rx="5" fill="#112222" />
+      <rect x="550" y="58" width="195" height="11" rx="4" fill="#5a6b84" opacity="0.7" />
+      <rect x="550" y="78" width="150" height="11" rx="4" fill="#5a6b84" opacity="0.5" />
+
+      <!-- Card 4: Class 12 -->
+      <rect x="795" y="0" width="245" height="130" rx="12" fill="#ffffff" filter="url(#cardShadow)" />
+      <rect x="815" y="26" width="100" height="18" rx="5" fill="#112222" />
+      <rect x="815" y="58" width="190" height="11" rx="4" fill="#5a6b84" opacity="0.7" />
+      <rect x="815" y="78" width="135" height="11" rx="4" fill="#5a6b84" opacity="0.5" />
+    </g>
+  </g>
+
+  <!-- Floating Home Button (Bottom Right) -->
+  <circle cx="1135" cy="735" r="28" fill="url(#fabGrad)" />
+  <path d="M1125 734 l10 -8 l10 8 v11 h-6 v-6 h-8 v6 h-6 z" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linejoin="round" />
+</svg>
