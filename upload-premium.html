@@ -12,6 +12,8 @@
     <!-- Supabase CDN + Central Config -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <script src="premium-preview.js"></script>
 
     <style>
         :root {
@@ -211,7 +213,10 @@
                 <h1><i class="fa-solid fa-cloud-arrow-up" style="color: var(--accent-cyan);"></i> Admin Panel</h1>
                 <p>Upload premium notes (PDFs & High-Res Images) & manage assets</p>
             </div>
-            <span><i class="fa-solid fa-shield-halved"></i> Uploader Hub</span>
+            <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                <a id="previewMakerLink" href="preview-maker.html" style="display:none; text-decoration:none; background: rgba(0,210,255,.15); color: var(--accent-cyan); border: 1px solid rgba(0,210,255,.35); padding: 7px 14px; border-radius: 10px; font-size: .78rem; font-weight: 700;"><i class="fa-solid fa-image"></i> Preview Maker</a>
+                <span><i class="fa-solid fa-shield-halved"></i> Uploader Hub</span>
+            </div>
         </header>
 
         <!-- Upload Form Card -->
@@ -330,6 +335,13 @@
                 await window.requireAdminAuth();
             }
             autoGeneratePath();
+            try {
+                const { data: { session } } = await window.supabaseClient.auth.getSession();
+                const em = ((session && session.user && session.user.email) || "").toLowerCase();
+                if (em === "rohitrajgoh91@gmail.com") {
+                    document.getElementById("previewMakerLink").style.display = "inline-flex";
+                }
+            } catch (e) {}
             await fetchUploadedNotes();
         };
 
@@ -376,15 +388,28 @@
 
             const btn = document.getElementById('uploadBtn');
             btn.disabled = true;
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Uploading to Storage...`;
+            let uploadedPrivate = false, uploadedPreviewPath = "";
 
             try {
+                // 1) Pehle preview banao (fail ho to kuch upload nahi hoga)
+                btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Creating Preview...`;
+                const pv = await window.PremiumPreview.build(file, filePath);
+
+                btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Uploading to Storage...`;
                 // Yahan naya private bucket name set kiya gaya hai
                 const { data: storageData, error: storageError } = await window.supabaseClient.storage
                     .from('private-premium-files')
                     .upload(filePath, file, { cacheControl: '3600', upsert: true });
 
                 if (storageError) throw new Error("Storage Upload Failed: " + storageError.message);
+                uploadedPrivate = true;
+
+                // 2) Public preview upload (admin-files/previews/)
+                const { error: pvErr } = await window.supabaseClient.storage
+                    .from('admin-files')
+                    .upload(pv.path, pv.blob, { upsert: true, contentType: pv.contentType, cacheControl: '3600' });
+                if (pvErr) throw new Error("Preview Upload Failed: " + pvErr.message);
+                uploadedPreviewPath = pv.path;
 
                 btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Saving to Database...`;
 
@@ -397,6 +422,7 @@
     file_path: filePath, // Yeh wahi unique timestamp wala path hai jo bucket me upload hua hai
     demo_pdf_url: filePath,
     full_pdf_url: filePath,
+    preview_path: pv.path,
     type: 'premium'
 };
 
@@ -418,6 +444,11 @@
                 await fetchUploadedNotes();
 
             } catch (err) {
+                // Adhura upload ho gaya ho to safai (best effort)
+                try {
+                    if (uploadedPrivate) await window.supabaseClient.storage.from('private-premium-files').remove([filePath]);
+                    if (uploadedPreviewPath) await window.supabaseClient.storage.from('admin-files').remove([uploadedPreviewPath]);
+                } catch (e) {}
                 alert("❌ Error: " + err.message);
             } finally {
                 btn.disabled = false;
@@ -496,7 +527,7 @@ const viewerUrl = isImg
                         <td>
                             <div class="action-btns">
                                 <a href="${viewerUrl}" class="btn-view-sm" target="_blank"><i class="fa-solid fa-eye"></i> View</a>
-                                <button class="btn-danger-sm" onclick="deleteNote(${note.id}, '${note.file_path || ''}')"><i class="fa-solid fa-trash"></i> Delete</button>
+                                <button class="btn-danger-sm" onclick="deleteNote(${note.id}, '${note.file_path || ''}', '${note.preview_path || ''}')"><i class="fa-solid fa-trash"></i> Delete</button>
                             </div>
                         </td>
                     </tr>
@@ -504,7 +535,7 @@ const viewerUrl = isImg
             });
         }
 
-        async function deleteNote(id, filePath) {
+        async function deleteNote(id, filePath, previewPath) {
     if (!confirm("Kya aap sach mein is file ko delete karna chahte hain?")) return;
 
     try {
@@ -518,6 +549,9 @@ const viewerUrl = isImg
         if (filePath) {
             // Yahan 'admin-files' ki jagah 'private-premium-files' hona chahiye
             await window.supabaseClient.storage.from('private-premium-files').remove([filePath]);
+        }
+        if (previewPath) {
+            await window.supabaseClient.storage.from('admin-files').remove([previewPath]);
         }
 
         alert("File successfully delete ho gayi! 🗑️");

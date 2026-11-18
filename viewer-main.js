@@ -89,6 +89,8 @@ async function verifyPurchaseStatusLocallyOrDB(rawPath, docName) {
         const { data: { session } } = await window.supabaseClient.auth.getSession();
         const email = session && session.user && session.user.email;
         if (!email) return false;
+        // Owner ke liye asli file try hogi (asli roka-tok server RLS karta hai)
+        if (email.toLowerCase() === "rohitrajgoh91@gmail.com") return true;
         const { data: orders } = await window.supabaseClient.from('user_orders')
             .select('id, status, note_title').eq('user_email', email).eq('status', 'approved');
         const cleanDoc = cleanTitleString(docName);
@@ -222,6 +224,18 @@ function playPageTurnSound() {
     }
 }
 
+// 🔓 Premium PREVIEW (public, bina login ke bhi): asli file private bucket me rehti hai,
+// preview ek alag chhoti file hai jo 'admin-files/previews/' me hoti hai (preview-maker.html se banti hai)
+async function fetchPremiumPreview(premiumKey) {
+    const { data: row, error: rowErr } = await window.supabaseClient
+        .from('premium_notes').select('preview_path').eq('file_path', premiumKey).maybeSingle();
+    if (rowErr || !row || !row.preview_path) throw new Error("Preview not available");
+    const { data, error } = await window.supabaseClient.storage.from('admin-files').download(row.preview_path);
+    if (error) throw error;
+    return data;
+}
+window.__previewOnly = false;
+
 async function initReader() {
     enableContentProtection();
 
@@ -250,28 +264,32 @@ async function initReader() {
     const isInPaidFolder = rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium") || rawPath.toLowerCase().includes("pre_"));
     const isPremiumNote = isParamPremium || isInPaidFolder;
     
-    // Agar premium hai, toh bucket 'private-premium-files' hoga aur path direct rawPath hoga (kyunki root me hai)
-    // Agar normal hai, toh bucket 'admin-files' hoga aur path me folder hoga agar nahi hai toh notes/ jidega
-    const targetBucket = isPremiumNote ? "private-premium-files" : "admin-files";
-    let finalPath = rawPath;
-    
-    if (!isPremiumNote && !rawPath.includes("/")) {
-        finalPath = `notes/${rawPath}`;
-    }
-
     try {
-        let { data, error } = await window.supabaseClient.storage.from(targetBucket).download(finalPath);
-        // Self-heal: purane recent links me premium path ke aage galti se "notes/" lag gaya tha
-        if (error && isPremiumNote && finalPath.startsWith("notes/")) {
-            finalPath = finalPath.replace(/^notes\//, "");
-            rawPath = finalPath;
-            ({ data, error } = await window.supabaseClient.storage.from(targetBucket).download(finalPath));
+        let blob = null;
+
+        if (isPremiumNote) {
+            const premiumKey = rawPath.replace(/^(notes|formulas)\//, "");
+            const bought = await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "");
+            if (bought) {
+                const r = await window.supabaseClient.storage.from("private-premium-files").download(premiumKey);
+                if (!r.error) blob = r.data;
+            }
+            if (!blob) {
+                blob = await fetchPremiumPreview(premiumKey);   // login ho ya na ho, preview milega
+                window.__previewOnly = true;
+            }
+        } else {
+            let finalPath = rawPath;
+            if (!rawPath.includes("/")) finalPath = `notes/${rawPath}`;
+            const { data, error } = await window.supabaseClient.storage.from("admin-files").download(finalPath);
+            if (error) { showError(finalPath); return; }
+            blob = data;
         }
-        if (error) throw error;
-        startEngine(data);
+
+        startEngine(blob);
     } catch (err) {
         console.error("Storage download error:", err);
-        showError(finalPath);
+        showError(rawPath);
     }
 }
 
@@ -290,7 +308,8 @@ async function startEngine(blob) {
     const isParamPremium = params.get("type") === "premium";
     const isInPaidFolder = rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium"));
     const isPremiumNote = isParamPremium || isInPaidFolder;
-    const isPurchased = await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "");
+    // Preview file dikh rahi ho to kabhi "purchased" mat maano
+    const isPurchased = window.__previewOnly ? false : await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "");
     isPremiumDoc = isPremiumNote; isPurchasedDoc = isPurchased;
 
     trackActivityLocally({

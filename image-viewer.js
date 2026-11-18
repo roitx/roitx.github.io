@@ -2,7 +2,7 @@
    ROITX IMAGE ELITE ENGINE — SECURE DB & LOCAL PURCHASE CHECK
    ===================================================== */
 
-function trackActivityLocally(fileData, isDownloaded = false, isUserPurchased = false) {
+function trackActivityLocally(fileData, isDownloaded = false) {
     try {
         let recent = JSON.parse(localStorage.getItem("recentFiles") || "[]");
         let downloads = JSON.parse(localStorage.getItem("downloadedFiles") || "[]");
@@ -29,8 +29,6 @@ function trackActivityLocally(fileData, isDownloaded = false, isUserPurchased = 
             meta: fileData.meta || "Image Viewer",
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             downloaded: alreadyDownloaded,
-            isPremium: !!fileData.isPremium,
-            isPurchased: !!isUserPurchased,
             viewCount: viewCount
         });
 
@@ -48,32 +46,51 @@ function cleanTitleString(str) {
 }
 
 async function verifyPurchaseStatusLocallyOrDB(rawPath, docName) {
-    // 🔒 DB-ONLY check: localStorage par bharosa nahi (user usse edit kar sakta hai)
+    let purchasedList = JSON.parse(localStorage.getItem("purchasedFiles") || "[]");
+    let userPurchases = JSON.parse(localStorage.getItem("userPurchasedNotes") || "[]");
+    
+    const cleanDoc = cleanTitleString(docName);
+
+    // 1. Local Storage Check
+    if (purchasedList.includes(rawPath) || userPurchases.some(lp => cleanTitleString(lp.title) === cleanDoc)) {
+        return true;
+    }
+
+    // 2. Direct Supabase Database & Orders Verification (URL tampering bypass proof)
     try {
-        if (!window.supabaseClient) return false;
-        const { data: { session } } = await window.supabaseClient.auth.getSession();
-        const email = session && session.user && session.user.email;
-        if (!email) return false;
+        if (window.supabaseClient) {
+            const { data: { session } } = await window.supabaseClient.auth.getSession();
+            if (session && session.user && session.user.email) {
+                // Owner ke liye asli file try hogi (asli roka-tok server RLS karta hai)
+                if (session.user.email.toLowerCase() === "rohitrajgoh91@gmail.com") return true;
+                const { data: orders } = await window.supabaseClient
+                    .from('user_orders')
+                    .select('id, status, note_title')
+                    .eq('user_email', session.user.email)
+                    .eq('status', 'approved');
 
-        const { data: orders } = await window.supabaseClient
-            .from('user_orders')
-            .select('id, status, note_title')
-            .eq('user_email', email)
-            .eq('status', 'approved');
+                if (orders && orders.length > 0) {
+                    const isApprovedInDB = orders.some(o => {
+                        const cleanOrderTitle = cleanTitleString(o.note_title);
+                        return cleanOrderTitle && (cleanOrderTitle.includes(cleanDoc) || cleanDoc.includes(cleanOrderTitle));
+                    });
 
-        const cleanDoc = cleanTitleString(docName);
-        return !!(orders && orders.some(o => {
-            const t = cleanTitleString(o.note_title);
-            return t && cleanDoc && (t.includes(cleanDoc) || cleanDoc.includes(t));
-        }));
+                    if (isApprovedInDB) {
+                        if (!purchasedList.includes(rawPath)) {
+                            purchasedList.push(rawPath);
+                            localStorage.setItem("purchasedFiles", JSON.stringify(purchasedList));
+                        }
+                        return true;
+                    }
+                }
+            }
+        }
     } catch (err) {
         console.error("Purchase DB Verification Error:", err);
-        return false;
     }
-}
 
-// Purane insecure local flags hata do
-try { localStorage.removeItem("purchasedFiles"); } catch (e) {}
+    return false;
+}
 
 function showPurchaseRequiredModal() {
     let existingModal = document.getElementById("purchaseRequiredModal");
@@ -123,13 +140,14 @@ let currentStroke = [];
 let rawPath = "";
 let docName = "";
 
-// Ek baar init me nikal kar cache karte hain (har touch/key pe DB call nahi hoga)
-let isPremiumDoc = false, isPurchasedDoc = false;
-
-function detectPremium(path, params) {
-    const p = (path || "").toLowerCase();
-    return params.get("type") === "premium" ||
-        p.includes("paid") || p.includes("locked") || p.includes("premium") || p.includes("pre_");
+// 🔓 Premium PREVIEW (public): asli image private bucket me, preview 'admin-files/previews/' me
+async function fetchPremiumPreview(premiumKey) {
+    const { data: row, error: rowErr } = await window.supabaseClient
+        .from('premium_notes').select('preview_path').eq('file_path', premiumKey).maybeSingle();
+    if (rowErr || !row || !row.preview_path) throw new Error("Preview not available");
+    const { data, error } = await window.supabaseClient.storage.from('admin-files').download(row.preview_path);
+    if (error) throw error;
+    return data;
 }
 
 async function initImageViewer() {
@@ -146,10 +164,9 @@ async function initImageViewer() {
         return;
     }
 
-    const isParamPremium = detectPremium(rawPath, params);
-    isPremiumDoc = isParamPremium;
-
-    // Bucket aur path determination (premium = private bucket, path EXACT jaisa DB me hai)
+    const isParamPremium = params.get("type") === "premium" || (rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium") || rawPath.toLowerCase().includes("pre_")));
+    
+    // Bucket aur path determination
     const targetBucket = isParamPremium ? "private-premium-files" : "admin-files";
     let finalPath = rawPath;
 
@@ -159,19 +176,27 @@ async function initImageViewer() {
 
     document.getElementById("doc-title").innerText = docName || "Image Viewer";
     const isPurchased = await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "");
-    isPurchasedDoc = isPurchased;
 
+    let previewOnly = false;
     try {
-        let { data, error } = await window.supabaseClient.storage.from(targetBucket).download(finalPath);
-        // Self-heal: purane recent links me premium path ke aage galti se "formulas/" ya "notes/" lag gaya tha
-        if (error && isParamPremium && /^(formulas|notes)\//.test(finalPath)) {
-            finalPath = finalPath.replace(/^(formulas|notes)\//, "");
-            rawPath = finalPath;
-            ({ data, error } = await window.supabaseClient.storage.from(targetBucket).download(finalPath));
+        let blob = null;
+        if (isParamPremium) {
+            const premiumKey = rawPath.replace(/^(notes|formulas)\//, "");
+            if (isPurchased) {
+                const r = await window.supabaseClient.storage.from("private-premium-files").download(premiumKey);
+                if (!r.error) blob = r.data;
+            }
+            if (!blob) {
+                blob = await fetchPremiumPreview(premiumKey);   // login ho ya na ho, preview milega
+                previewOnly = true;
+            }
+        } else {
+            const r = await window.supabaseClient.storage.from(targetBucket).download(finalPath);
+            if (r.error) throw r.error;
+            blob = r.data;
         }
-        if (error) throw error;
 
-        const url = URL.createObjectURL(data);
+        const url = URL.createObjectURL(blob);
         img.src = url;
 
         img.onload = () => {
@@ -185,7 +210,7 @@ async function initImageViewer() {
             setupKeyboardShortcuts();
             checkBookmarkState();
 
-            if (isParamPremium && !isPurchased) {
+            if (isParamPremium && (!isPurchased || previewOnly)) {
                 img.style.filter = "none"; 
                 previewTimer = setTimeout(async () => {
                     const doubleCheckPurchased = await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "");
@@ -201,9 +226,8 @@ async function initImageViewer() {
             trackActivityLocally({
                 title: docName || "Image Asset",
                 url: rawPath,
-                meta: "Image Viewer",
-                isPremium: isParamPremium
-            }, false, isPurchased);
+                meta: "Image Viewer"
+            }, false);
         };
     } catch (err) {
         showError(finalPath);
@@ -215,8 +239,8 @@ window.addEventListener('beforeunload', () => {
 });
 
 window.handleViewportClick = async (e) => {
-    const isParamPremium = isPremiumDoc;
-    const isPurchased = isPurchasedDoc;
+    const isParamPremium = new URLSearchParams(location.search).get("type") === "premium" || (rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium")));
+    const isPurchased = await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "");
 
     if (isParamPremium && !isPurchased) {
         showPurchaseRequiredModal();
@@ -249,8 +273,8 @@ function updateTransform() {
 }
 
 window.adjustZoom = async (delta) => {
-    const isParamPremium = isPremiumDoc;
-    const isPurchased = isPurchasedDoc;
+    const isParamPremium = new URLSearchParams(location.search).get("type") === "premium" || (rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium")));
+    const isPurchased = await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "");
 
     if (isParamPremium && !isPurchased) {
         showPurchaseRequiredModal();
@@ -262,8 +286,8 @@ window.adjustZoom = async (delta) => {
 };
 
 window.resetZoom = async () => {
-    const isParamPremium = isPremiumDoc;
-    const isPurchased = isPurchasedDoc;
+    const isParamPremium = new URLSearchParams(location.search).get("type") === "premium" || (rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium")));
+    const isPurchased = await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "");
 
     if (isParamPremium && !isPurchased) {
         showPurchaseRequiredModal();
@@ -295,13 +319,15 @@ window.flipImage = (axis) => {
 };
 
 window.applyImageFilters = () => {
-    const isParamPremium = isPremiumDoc;
+    const isParamPremium = new URLSearchParams(location.search).get("type") === "premium" || (rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium")));
     
-    if (isParamPremium && !isPurchasedDoc) {
-        img.style.filter = "none";
-        return;
-    }
-    
+    if (isParamPremium) {
+        let purchasedList = JSON.parse(localStorage.getItem("purchasedFiles") || "[]");
+        if (!purchasedList.includes(rawPath)) {
+            img.style.filter = "none";
+            return; 
+        }
+    } 
 
     const b = document.getElementById("brightnessSlider").value;
     const c = document.getElementById("contrastSlider").value;
@@ -331,8 +357,8 @@ function getImageBookmarks() {
 }
 
 window.toggleCurrentBookmark = async () => {
-    const isParamPremium = isPremiumDoc;
-    const isPurchased = isPurchasedDoc;
+    const isParamPremium = new URLSearchParams(location.search).get("type") === "premium" || (rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium")));
+    const isPurchased = await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "");
 
     // Agar premium hai aur purchase nahi kiya, toh bookmark save nahi hoga aur popup aa jayega
     if (isParamPremium && !isPurchased) {
@@ -350,7 +376,6 @@ window.toggleCurrentBookmark = async () => {
         bookmarks.push({
             title: docName || "Image Document",
             url: rawPath,
-            premium: isParamPremium,
             date: new Date().toLocaleDateString()
         });
         showToast("Bookmark saved!");
@@ -385,13 +410,13 @@ window.showSavedBookmarks = () => {
         display: flex; align-items: center; justify-content: center; z-index: 999999;
     `;
 
-    const bookmarkButtonsHTML = bookmarks.map((bm, bmIdx) => `
+    const bookmarkButtonsHTML = bookmarks.map(bm => `
         <div style="background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12); padding: 12px 14px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
             <div style="text-align: left; overflow: hidden;">
                 <div style="font-weight: 600; font-size: 13px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px;">📌 ${bm.title}</div>
                 <div style="font-size: 10px; color: #a0aec0;">Saved: ${bm.date}</div>
             </div>
-            <button onclick="openBookmarkedImage(${bmIdx})" style="background: var(--accent, #007aff); border: none; color: #fff; padding: 6px 12px; border-radius: 8px; font-size: 11px; cursor: pointer; font-weight: 600;">Open</button>
+            <button onclick="openBookmarkedImage('${bm.url}', '${bm.title}')" style="background: var(--accent, #007aff); border: none; color: #fff; padding: 6px 12px; border-radius: 8px; font-size: 11px; cursor: pointer; font-weight: 600;">Open</button>
         </div>
     `).join('');
 
@@ -411,17 +436,13 @@ window.showSavedBookmarks = () => {
     window.toggleSettings(false);
 };
 
-window.openBookmarkedImage = (idx) => {
-    const bm = getImageBookmarks()[idx];
-    if (!bm) return;
-    // Premium bookmark ho to type=premium zaroor jaye (warna galat bucket me dhoondhega)
-    const premiumParam = (bm.premium || detectPremium(bm.url, new URLSearchParams())) ? "&type=premium" : "";
-    window.location.href = `?path=${encodeURIComponent(bm.url)}&name=${encodeURIComponent(bm.title)}${premiumParam}`;
+window.openBookmarkedImage = (url, name) => {
+    window.location.href = `?path=${encodeURIComponent(url)}&name=${encodeURIComponent(name)}`;
 };
 
 window.toggleMagnifierMode = async () => {
-    const isParamPremium = isPremiumDoc;
-    const isPurchased = isPurchasedDoc;
+    const isParamPremium = new URLSearchParams(location.search).get("type") === "premium" || (rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium")));
+    const isPurchased = await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "");
 
     if (isParamPremium && !isPurchased) {
         showPurchaseRequiredModal();
@@ -538,8 +559,8 @@ function setupKeyboardShortcuts() {
     window.addEventListener("keydown", async (e) => {
         if (e.target.tagName === "INPUT") return;
         
-        const isParamPremium = isPremiumDoc;
-        const isPurchased = isPurchasedDoc;
+        const isParamPremium = new URLSearchParams(location.search).get("type") === "premium" || (rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium")));
+        const isPurchased = await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "");
 
         switch (e.key.toLowerCase()) {
             case "+": case "=": 
@@ -574,8 +595,8 @@ function setupPinchAndPanEngine() {
     let dragStart = { x: 0, y: 0 };
 
     viewport.addEventListener('touchstart', async (e) => {
-        const isParamPremium = isPremiumDoc;
-        const isPurchased = isPurchasedDoc;
+        const isParamPremium = new URLSearchParams(location.search).get("type") === "premium" || (rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium")));
+        const isPurchased = await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "");
 
         if (isParamPremium && !isPurchased) {
             e.preventDefault();
@@ -597,8 +618,8 @@ function setupPinchAndPanEngine() {
     }, { passive: false });
 
     viewport.addEventListener('touchmove', async (e) => {
-        const isParamPremium = isPremiumDoc;
-        const isPurchased = isPurchasedDoc;
+        const isParamPremium = new URLSearchParams(location.search).get("type") === "premium" || (rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium")));
+        const isPurchased = await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "");
 
         if (isParamPremium && !isPurchased) {
             e.preventDefault();
@@ -647,8 +668,8 @@ function toggleHighlightMode() {
 
 function setupCanvasEvents() {
     const startDrawing = async (e) => {
-        const isParamPremium = isPremiumDoc;
-        const isPurchased = isPurchasedDoc;
+        const isParamPremium = new URLSearchParams(location.search).get("type") === "premium" || (rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium")));
+        const isPurchased = await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "");
         if (isParamPremium && !isPurchased) {
             showPurchaseRequiredModal();
             return;
@@ -731,8 +752,8 @@ window.clearCanvasAnnotations = () => {
 async function downloadImage() {
     if (!window.supabaseClient) return;
 
-    const isParamPremium = isPremiumDoc;
-    const isPurchased = isPurchasedDoc;
+    const isParamPremium = new URLSearchParams(location.search).get("type") === "premium" || (rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium")));
+    const isPurchased = await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "");
 
     if (isParamPremium && !isPurchased) {
         showPurchaseRequiredModal();
@@ -768,9 +789,8 @@ async function downloadImage() {
     trackActivityLocally({
         title: docName || "Image Asset",
         url: rawPath,
-        meta: "Image Viewer",
-        isPremium: isParamPremium
-    }, true, isPurchased);
+        meta: "Image Viewer"
+    }, true);
 }
 
 function showToast(message) {

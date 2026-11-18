@@ -562,6 +562,10 @@
   })();
 </script>
     <script>
+        // 🔒 XSS protection: user ka koi bhi text innerHTML me jaane se pehle esc() se guzre
+        const esc = s => String(s ?? '').replace(/[&<>"']/g, c =>
+            ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
         let cachedOrders = [];
         let currentStatusFilter = 'pending';
 
@@ -676,24 +680,24 @@
                 
                 let actionButtons = `
                     <div class="action-btns">
-                        <button class="btn-info" title="View Profile Info" onclick='viewUserProfile(${JSON.stringify(order)})'>
+                        <button class="btn-info" title="View Profile Info" onclick="viewUserProfile(${Number(order.id)})">
                             <i class="fa-solid fa-user"></i>
                         </button>
-                        ${order.receipt_url ? `<button class="btn-receipt" title="View Payment Screenshot" onclick='viewReceipt(${JSON.stringify(order.receipt_url)})'><i class="fa-solid fa-receipt"></i></button>` : ''}
+                        ${order.receipt_url ? `<button class="btn-receipt" title="View Payment Screenshot" onclick="viewReceipt(${Number(order.id)})"><i class="fa-solid fa-receipt"></i></button>` : ''}
                     </div>
                 `;
                 
                 if (order.status === 'pending') {
                     actionButtons = `
                         <div class="action-btns">
-                            <button class="btn-info" title="View Profile Info" onclick='viewUserProfile(${JSON.stringify(order)})'>
+                            <button class="btn-info" title="View Profile Info" onclick="viewUserProfile(${Number(order.id)})">
                                 <i class="fa-solid fa-user"></i>
                             </button>
-                            ${order.receipt_url ? `<button class="btn-receipt" title="View Payment Screenshot" onclick='viewReceipt(${JSON.stringify(order.receipt_url)})'><i class="fa-solid fa-receipt"></i></button>` : ''}
-                            <button class="btn-approve" onclick="approveOrder(${order.id}, '${displayEmail}', ${order.note_id})">
+                            ${order.receipt_url ? `<button class="btn-receipt" title="View Payment Screenshot" onclick="viewReceipt(${Number(order.id)})"><i class="fa-solid fa-receipt"></i></button>` : ''}
+                            <button class="btn-approve" onclick="approveOrder(${Number(order.id)})">
                                 <i class="fa-solid fa-check"></i> Approve
                             </button>
-                            <button class="btn-reject" onclick="rejectOrder(${order.id})">
+                            <button class="btn-reject" onclick="rejectOrder(${Number(order.id)})">
                                 <i class="fa-solid fa-xmark"></i> Reject
                             </button>
                         </div>
@@ -702,10 +706,10 @@
 
                 tbody.innerHTML += `
                     <tr>
-                        <td><strong style="color:#fff;"><i class="fa-regular fa-envelope" style="color:#8a99ad; margin-right:5px;"></i>${displayEmail}</strong></td>
-                        <td style="color:#d1d5db;">${order.note_title}</td>
-                        <td style="color:#2ed573; font-weight:bold;">₹${order.amount}</td>
-                        <td style="font-family:monospace; color:var(--accent-cyan); font-weight:bold; font-size: 0.88rem;">${order.utr_code}</td>
+                        <td><strong style="color:#fff;"><i class="fa-regular fa-envelope" style="color:#8a99ad; margin-right:5px;"></i>${esc(displayEmail)}</strong></td>
+                        <td style="color:#d1d5db;">${esc(order.note_title)}</td>
+                        <td style="color:#2ed573; font-weight:bold;">₹${esc(order.amount)}</td>
+                        <td style="font-family:monospace; color:var(--accent-cyan); font-weight:bold; font-size: 0.88rem;">${esc(order.utr_code)}</td>
                         <td>${statusBadge}</td>
                         <td>${actionButtons}</td>
                     </tr>
@@ -713,7 +717,9 @@
             });
         }
 
-        function viewUserProfile(order) {
+        function viewUserProfile(orderId) {
+            const order = cachedOrders.find(o => o.id === orderId);
+            if (!order) return;
             const modal = document.getElementById('userProfileModal');
             const content = document.getElementById('modalContent');
             modal.style.display = 'flex';
@@ -729,73 +735,90 @@
             const stateToShow = profile.state || order.state || 'N/A';
             const avatarUrl = profile.avatar_url || order.avatar_url || '';
 
-            const initial = nameToShow !== 'N/A' ? nameToShow.charAt(0).toUpperCase() : 'U';
-            const avatarHtml = avatarUrl ? `<img src="${avatarUrl}" alt="Profile">` : initial;
+            const initial = nameToShow !== 'N/A' ? esc(nameToShow.charAt(0).toUpperCase()) : 'U';
+            const safeAvatar = /^https:\/\//i.test(avatarUrl) ? avatarUrl : '';
+            const avatarHtml = safeAvatar ? `<img src="${esc(safeAvatar)}" alt="Profile">` : initial;
 
             content.innerHTML = `
                 <div style="text-align:center;">
                     <div class="user-profile-avatar">${avatarHtml}</div>
-                    <h3 style="margin: 0; font-size: 1.15rem; color:#fff;">${nameToShow}</h3>
-                    <span style="font-size: 0.78rem; color:var(--text-muted);"><i class="fa-solid fa-envelope"></i> ${emailToShow}</span>
+                    <h3 style="margin: 0; font-size: 1.15rem; color:#fff;">${esc(nameToShow)}</h3>
+                    <span style="font-size: 0.78rem; color:var(--text-muted);"><i class="fa-solid fa-envelope"></i> ${esc(emailToShow)}</span>
                 </div>
 
                 <div class="profile-field-grid">
                     <div class="profile-field">
                         <label><i class="fa-solid fa-phone"></i> Phone</label>
-                        <span>${phoneToShow}</span>
+                        <span>${esc(phoneToShow)}</span>
                     </div>
                     <div class="profile-field">
                         <label><i class="fa-solid fa-graduation-cap"></i> Class</label>
-                        <span>${classToShow}</span>
+                        <span>${esc(classToShow)}</span>
                     </div>
                     <div class="profile-field">
                         <label><i class="fa-solid fa-book-open"></i> Stream</label>
-                        <span>${streamToShow}</span>
+                        <span>${esc(streamToShow)}</span>
                     </div>
                     <div class="profile-field">
                         <label><i class="fa-solid fa-building-columns"></i> Institution</label>
-                        <span>${institutionToShow}</span>
+                        <span>${esc(institutionToShow)}</span>
                     </div>
                     <div class="profile-field">
                         <label><i class="fa-solid fa-city"></i> City</label>
-                        <span>${cityToShow}</span>
+                        <span>${esc(cityToShow)}</span>
                     </div>
                     <div class="profile-field">
                         <label><i class="fa-solid fa-map-location-dot"></i> State</label>
-                        <span>${stateToShow}</span>
+                        <span>${esc(stateToShow)}</span>
                     </div>
                 </div>
                 <div style="margin-top: 14px; text-align: center;">
-                    <span style="font-size: 0.78rem; color:var(--accent-cyan); font-family:monospace;">UTR: ${order.utr_code || 'N/A'}</span>
+                    <span style="font-size: 0.78rem; color:var(--accent-cyan); font-family:monospace;">UTR: ${esc(order.utr_code || 'N/A')}</span>
                 </div>
             `;
         }
 
-        function viewReceipt(receiptContent) {
+        function viewReceipt(orderId) {
+            const order = cachedOrders.find(o => o.id === orderId);
+            if (!order) return;
             const modal = document.getElementById('userProfileModal');
             const content = document.getElementById('modalContent');
             modal.style.display = 'flex';
 
-            let displayHtml = receiptContent;
-            if (!receiptContent.includes('<img') && receiptContent.startsWith('http')) {
-                displayHtml = `<img src="${receiptContent}" alt="Payment Receipt" style="width: 100%; max-height: 380px; object-fit: contain; border-radius: 8px; display: block;">`;
-            }
+            // receipt_url me kabhi <img src="data:..."> HTML hota hai, kabhi sirf URL.
+            // Raw HTML render nahi karte: bas src nikal kar validate karte hain.
+            const raw = String(order.receipt_url || '');
+            const m = raw.match(/src=["']([^"']+)["']/i);
+            const src = (m ? m[1] : raw).trim();
+            const isSafe = /^data:image\/(png|jpe?g|webp|gif);base64,[A-Za-z0-9+\/=]+$/i.test(src) || /^https:\/\//i.test(src);
 
             content.innerHTML = `
                 <div style="text-align:center;">
                     <h3 style="margin: 0 0 12px 0; font-size: 1.1rem; color:#fff;"><i class="fa-solid fa-receipt" style="color:var(--accent-cyan);"></i> Payment Receipt Screenshot</h3>
-                    <div style="background: #090d16; padding: 10px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); display: inline-block; max-width: 100%;">
-                        ${displayHtml}
-                    </div>
+                    <div id="receiptBox" style="background: #090d16; padding: 10px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); display: inline-block; max-width: 100%;"></div>
                 </div>
             `;
+            const box = document.getElementById('receiptBox');
+            if (isSafe) {
+                const img = document.createElement('img');
+                img.src = src;
+                img.alt = 'Payment Receipt';
+                img.style.cssText = 'width:100%;max-height:380px;object-fit:contain;border-radius:8px;display:block;';
+                box.appendChild(img);
+            } else {
+                box.textContent = 'Invalid receipt data';
+            }
         }
 
         function closeProfileModal() {
             document.getElementById('userProfileModal').style.display = 'none';
         }
 
-        async function approveOrder(orderId, userEmail, noteId) {
+        async function approveOrder(orderId) {
+            const cached = cachedOrders.find(o => o.id === orderId);
+            if (!cached) return;
+            const userEmail = cached.user_email || cached.profiles?.email || '';
+            const noteId = cached.note_id;
             if (!confirm(`Confirm payment approval for ${userEmail}?`)) return;
 
             try {
@@ -806,6 +829,11 @@
                     .single();
 
                 if (fetchErr) throw fetchErr;
+                if (orderDetails.status !== 'pending') {
+                    alert("Ye order pehle hi process ho chuka hai.");
+                    await fetchOrders();
+                    return;
+                }
 
                 let userId = orderDetails.user_id;
                 if (!userId) {
@@ -823,18 +851,20 @@
                         status: 'approved',
                         updated_at: new Date().toISOString()
                     })
-                    .eq('id', orderId);
+                    .eq('id', orderId)
+                    .eq('status', 'pending');
 
                 if (orderErr) throw orderErr;
 
                 if (userId && noteId) {
-                    await window.supabaseClient
+                    const { error: purchErr } = await window.supabaseClient
                         .from('user_purchases')
-                        .insert([{
+                        .upsert([{
                             user_id: userId,
                             note_id: noteId,
                             txn_id: `MANUAL_UTR_${orderId}`
-                        }]);
+                        }], { onConflict: 'user_id,note_id', ignoreDuplicates: true });
+                    if (purchErr) console.error("user_purchases error:", purchErr);
                 }
 
                 const { data: notifData } = await window.supabaseClient
