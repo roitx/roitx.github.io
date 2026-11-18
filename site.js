@@ -23,6 +23,13 @@ function param(name) {
   return new URLSearchParams(window.location.search).get(name); 
 }
 
+// ---- safety helpers (user-uploaded naam / path ko safe banane ke liye) ----
+function escHtml(v) {
+  return String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+function encAttr(v) { return encodeURIComponent(v).replace(/'/g, '%27'); }   // onclick='...' ke andar safe
+function isSafePath(p) { p = String(p || ''); return p.length > 0 && !/['"\\<>`\r\n]/.test(p); }   // quote/backslash/tag wale path rok do (purani Hindi/space wali filenames chalti rahengi)
+
 /* =====================================================
    UNIVERSAL SUBJECT NOTES CHECKER & CENTER POPUP SYSTEM
    ===================================================== */
@@ -73,12 +80,18 @@ async function openSubject(subjectName) {
     await new Promise(resolve => setTimeout(resolve, 500));
 
     // 2. Supabase Database me Search
-    const { data: notes, error } = await window.supabaseClient
+    const { data: allNotes, error } = await window.supabaseClient
       .from("notes")
       .select("*")
       .eq("class", String(CURRENT_CLASS))
       .eq("subject", subjectName.toLowerCase().trim())
       .order("chapter_number", { ascending: true });
+
+    // Sirf approved notes sabko; pending sirf uske uploader ko (apna note, badge ke saath)
+    let uid = null;
+    try { uid = (await window.supabaseClient.auth.getUser()).data?.user?.id || null; } catch (e) {}
+    const notes = (allNotes || []).filter(n =>
+      !n.status || n.status === 'approved' || (n.status === 'pending' && uid && n.uploaded_by === uid));
 
     // Popup ko hata dein
     modal.remove();
@@ -97,6 +110,8 @@ async function openSubject(subjectName) {
       notes.forEach(note => {
         const finalFileName = `${note.file_name || (CURRENT_CLASS + '_' + subjectName + '_' + note.chapter_number + '.pdf')}`;
         const fullPath = note.file_path ? note.file_path : `notes/${finalFileName}`;
+        if (!isSafePath(fullPath)) return;                       // galat/khatarnak path skip
+        const isPending = note.status === 'pending';
         
         // Proper Descriptive Name banana jisme chapter name priority par ho
         const className = `Class ${CURRENT_CLASS}`;
@@ -110,9 +125,10 @@ async function openSubject(subjectName) {
         row.innerHTML = `
           <div>
             <span style="font-size:11px; background:#3aa0ff; color:#081226; padding:3px 8px; border-radius:4px; font-weight:bold; text-transform:uppercase;">Chapter ${note.chapter_number}</span>
-            <h4 style="margin:8px 0 0 0; color:#fff; font-size: 16px;">${note.chapter_name || ('Chapter ' + note.chapter_number)}</h4>
+            ${isPending ? '<span style="font-size:11px; background:#f5a524; color:#2b1a00; padding:3px 8px; border-radius:4px; font-weight:bold; margin-left:6px;">Approval pending</span>' : ''}
+            <h4 style="margin:8px 0 0 0; color:#fff; font-size: 16px;">${escHtml(note.chapter_name || ('Chapter ' + note.chapter_number))}</h4>
           </div>
-          <button class="btn" style="padding:8px 16px; cursor:pointer; display:inline-flex; align-items:center; gap:6px;" onclick="openCustomViewer('${fullPath}', '${encodeURIComponent(descriptiveName)}')">
+          <button class="btn" style="padding:8px 16px; cursor:pointer; display:inline-flex; align-items:center; gap:6px;" onclick="openCustomViewer('${fullPath}', '${encAttr(descriptiveName)}')">
             <svg style="width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;" viewBox="0 0 24 24">
               <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
               <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>

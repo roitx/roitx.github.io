@@ -260,7 +260,13 @@ async function initReader() {
     }
 
     try {
-        const { data, error } = await window.supabaseClient.storage.from(targetBucket).download(finalPath);
+        let { data, error } = await window.supabaseClient.storage.from(targetBucket).download(finalPath);
+        // Self-heal: purane recent links me premium path ke aage galti se "notes/" lag gaya tha
+        if (error && isPremiumNote && finalPath.startsWith("notes/")) {
+            finalPath = finalPath.replace(/^notes\//, "");
+            rawPath = finalPath;
+            ({ data, error } = await window.supabaseClient.storage.from(targetBucket).download(finalPath));
+        }
         if (error) throw error;
         startEngine(data);
     } catch (err) {

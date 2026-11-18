@@ -217,6 +217,15 @@ async function renderActivityFeed() {
             }
         } else if (isTestItem) {
             viewTargetUrl = rawUrl;
+        } else if (isFilePremium && !rawUrl.includes("viewer.html")) {
+            // 💎 PREMIUM: bilkul premium-notes.html ki tarah link.
+            // Path ko EXACT waisa hi bhejo jaisa DB me hai (koi "notes/" ya "formulas/" prefix nahi),
+            // kyunki premium files 'private-premium-files' bucket ke root me hoti hain.
+            const isPremiumImg = /\.(jpg|jpeg|png|webp|gif)$/i.test(cleanPath);
+            let premUrl = `${isPremiumImg ? "image-viewer.html" : "notes-viewer.html"}?path=${encodeURIComponent(cleanPath)}&name=${encodeURIComponent(f.title)}&type=premium`;
+            if (!isPremiumImg) premUrl += "&status=premium";
+            if (isPurchased) premUrl += "&purchased=true";
+            viewTargetUrl = premUrl;
         } else if (cleanPath.match(/\.(jpg|jpeg|png|webp|gif)$/i) || f.meta?.includes("Image")) {
             viewerPage = "image-viewer.html";
             if (!cleanPath.startsWith("formulas/") && !cleanPath.includes("/")) {

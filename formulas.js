@@ -11,6 +11,20 @@ const formulaList = document.getElementById("formulaList");
 
 let searchDebounceTimer = null;
 
+// Logged-in user ki id: uski apni pending upload bhi (badge ke saath) usi ko dikhe
+let _uid;
+async function getUid() {
+  if (_uid !== undefined) return _uid;
+  try { _uid = (await window.supabaseClient.auth.getUser()).data?.user?.id || null; } catch (e) { _uid = null; }
+  return _uid;
+}
+const pubVis = () => _uid ? `publish.eq.true,and(status.eq.pending,user_id.eq.${_uid})` : 'publish.eq.true';
+
+// safety helpers
+const escHtml = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const encAttr = v => encodeURIComponent(v).replace(/'/g, '%27');
+const isSafePath = p => { p = String(p || ''); return p.length > 0 && !/['"\\<>`\r\n]/.test(p); };
+
 // Initialization: Fetch available options from Database
 document.addEventListener("DOMContentLoaded", () => {
   loadClasses();
@@ -22,10 +36,11 @@ document.addEventListener("DOMContentLoaded", () => {
 // 1. Fetch Unique Classes
 async function loadClasses() {
   if (!fClass) return;
+  await getUid();
   const { data, error } = await window.supabaseClient
     .from("formulas")
     .select("class")
-    .eq("publish", true);
+    .or(pubVis());
 
   if (error || !data) return;
 
@@ -42,6 +57,7 @@ async function loadClasses() {
 
 // 2. Class Changed -> Fetch Subjects for selected Class
 async function onClassChange() {
+  await getUid();
   const selectedClass = fClass.value;
   
   // Reset downstream filters
@@ -57,7 +73,7 @@ async function onClassChange() {
     const { data } = await window.supabaseClient
       .from("formulas")
       .select("subject")
-      .eq("publish", true)
+      .or(pubVis())
       .eq("class", selectedClass);
 
     if (data) {
@@ -76,6 +92,7 @@ async function onClassChange() {
 
 // 3. Subject Changed -> Fetch Chapters for selected Class & Subject
 async function onSubjectChange() {
+  await getUid();
   const selectedClass = fClass.value;
   const selectedSubject = fSubject.value;
 
@@ -89,7 +106,7 @@ async function onSubjectChange() {
     const { data } = await window.supabaseClient
       .from("formulas")
       .select("chapter, chapter_name")
-      .eq("publish", true)
+      .or(pubVis())
       .eq("class", selectedClass)
       .eq("subject", selectedSubject);
 
@@ -116,6 +133,7 @@ async function onSubjectChange() {
 
 // 4. Chapter Changed -> Fetch Categories for selected Class, Subject & Chapter
 async function onChapterChange() {
+  await getUid();
   const selectedClass = fClass.value;
   const selectedSubject = fSubject.value;
   const selectedChapter = fChapter.value;
@@ -127,7 +145,7 @@ async function onChapterChange() {
     const { data } = await window.supabaseClient
       .from("formulas")
       .select("category")
-      .eq("publish", true)
+      .or(pubVis())
       .eq("class", selectedClass)
       .eq("subject", selectedSubject)
       .eq("chapter", selectedChapter);
@@ -157,12 +175,13 @@ function handleSearchInput() {
 /* ---------- MAIN FORMULA FETCHING FUNCTION ---------- */
 async function loadFormulas() {
   if (!formulaList) return;
+  await getUid();
   formulaList.innerHTML = "<div style='text-align:center; padding:25px; color:#94a3b8;'>⏳ Loading formulas...</div>";
 
   let query = window.supabaseClient
     .from("formulas")
     .select("*")
-    .eq("publish", true)
+    .or(pubVis())
     .order("created_at", { ascending: false })
     .limit(40);
 
@@ -194,6 +213,7 @@ async function loadFormulas() {
   formulaList.innerHTML = "";
 
   for (const f of data) {
+    if ((f.type === 'pdf' || f.type === 'image') && !isSafePath(f.file_path)) continue;
     const card = document.createElement("div");
     card.className = "formula-card";
 
@@ -208,38 +228,39 @@ async function loadFormulas() {
     let content = "";
 
     if (f.type === "text") {
-      const cleanText = encodeURIComponent(f.formula_text);
+      const cleanText = encAttr(f.formula_text);
       content = `
         <div class="formula-text" onclick="openTextViewer('${cleanText}')">
-          <span class="box-title">📝 ${f.formula_text}</span>
+          <span class="box-title">📝 ${escHtml(f.formula_text)}</span>
           <span class="click-hint">➔</span>
         </div>`;
     }
 
     if (f.type === "image") {
-      const viewerUrl = `image-viewer.html?path=${encodeURIComponent(f.file_path)}&name=${encodeURIComponent(fullViewerName)}`;
+      const viewerUrl = `image-viewer.html?path=${encodeURIComponent(f.file_path)}&name=${encAttr(fullViewerName)}`;
       content = `
         <div class="formula-media-box" onclick="window.location.href='${viewerUrl}'">
-          <span class="box-title">🖼️ ${mainTitle}</span>
+          <span class="box-title">🖼️ ${escHtml(mainTitle)}</span>
           <span class="btn-action">➔</span>
         </div>`;
     }
 
     if (f.type === "pdf") {
-      const viewerUrl = `notes-viewer.html?path=${encodeURIComponent(f.file_path)}&name=${encodeURIComponent(fullViewerName)}`;
+      const viewerUrl = `notes-viewer.html?path=${encodeURIComponent(f.file_path)}&name=${encAttr(fullViewerName)}`;
       content = `
         <button class="pdf-btn" onclick="window.location.href='${viewerUrl}'">
-          <span class="box-title">📄 ${mainTitle}</span>
+          <span class="box-title">📄 ${escHtml(mainTitle)}</span>
           <span class="btn-action">➔</span>
         </button>`;
     }
 
-    const categoryBadge = f.category ? `<span class="cat-tag">${f.category.replace('_', ' ').toUpperCase()}</span>` : '';
+    const categoryBadge = f.category ? `<span class="cat-tag">${escHtml(f.category.replace('_', ' ').toUpperCase())}</span>` : '';
+    const pendingBadge = f.status === 'pending' ? `<span class="cat-tag" style="background:#f5a524;color:#2b1a00">APPROVAL PENDING</span>` : '';
 
     card.innerHTML = `
       <div class="card-top-bar">
-        <span class="card-info-left">${leftHeaderText}</span>
-        ${categoryBadge}
+        <span class="card-info-left">${escHtml(leftHeaderText)}</span>
+        ${pendingBadge}${categoryBadge}
       </div>
       ${content}
     `;
