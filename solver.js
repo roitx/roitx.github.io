@@ -1742,14 +1742,24 @@ window.appendChatMessage = function (htmlContent, type = "ai", showTime = true, 
       const fb = record ? record.feedback : null;
       upBtn.classList.toggle("active", fb === "up");
       downBtn.classList.toggle("active", fb === "down");
+      // Feedback ek baar de diya to lock: dono buttons disable
+      const locked = !!fb;
+      [upBtn, downBtn].forEach(b => {
+        b.disabled = locked;
+        b.style.cursor = locked ? "default" : "";
+      });
+      if (locked) {
+        (fb === "up" ? downBtn : upBtn).style.opacity = "0.35";
+      }
     };
     const setFeedback = (val) => {
       if (!record) return;
-      if (val === 'down' && record.feedback !== 'down' && !record.fbSent) {
+      if (record.feedback) return;   // feedback final hai, change/undo allowed nahi
+      if (val === 'down' && !record.fbSent) {
         openFeedbackSheet(record, () => { record.feedback = 'down'; paintFeedback(); persistChat(); });
         return;
       }
-      record.feedback = (record.feedback === val) ? null : val;   // dobara tap = hata do
+      record.feedback = val;   // ek baar set hone ke baad badal nahi sakta
       paintFeedback();
       persistChat();
       if (record.feedback === "up")   showToast(t('toastUp'));

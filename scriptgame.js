@@ -68,16 +68,72 @@ const restartBtn = document.getElementById("restartBtn");
 const mathModeCheckbox = document.getElementById("mathModeCheckbox");
 const subjectOverrideContainer = document.getElementById("subjectOverrideContainer");
 
+// ==========================================
+// DEVANAGARI -> ROMAN (HINGLISH) TRANSLITERATOR
+// ==========================================
+const DEV_INDEP_VOWELS = {'अ':'a','आ':'a','इ':'i','ई':'i','उ':'u','ऊ':'u','ऋ':'ri','ए':'e','ऐ':'ai','ओ':'o','औ':'au','ऑ':'o','ऍ':'e'};
+const DEV_MATRAS = {'ा':'a','ि':'i','ी':'i','ु':'u','ू':'u','ृ':'ri','े':'e','ै':'ai','ो':'o','ौ':'au','ॉ':'o','ॅ':'e'};
+const DEV_CONSONANTS = {
+    'क':'k','ख':'kh','ग':'g','घ':'gh','ङ':'n','च':'ch','छ':'chh','ज':'j','झ':'jh','ञ':'n',
+    'ट':'t','ठ':'th','ड':'d','ढ':'dh','ण':'n','त':'t','थ':'th','द':'d','ध':'dh','न':'n',
+    'प':'p','फ':'f','ब':'b','भ':'bh','म':'m','य':'y','र':'r','ल':'l','व':'v','श':'sh','ष':'sh','स':'s','ह':'h',
+    'क़':'q','ख़':'kh','ग़':'g','ज़':'z','ड़':'r','ढ़':'rh','फ़':'f','य़':'y','ळ':'l'
+};
+const DEV_DIGITS = {'०':'0','१':'1','२':'2','३':'3','४':'4','५':'5','६':'6','७':'7','८':'8','९':'9'};
+
+function devanagariWordToRoman(word) {
+    // nukta wale precomposed forms ko normalize karo (क + ़ = क़)
+    word = word.normalize("NFC").replace(/\u093C/g, "");
+    const units = [];   // { c: consonant, v: vowel, schwa: inherent 'a' (deletable) }
+    const chars = Array.from(word);
+    for (let i = 0; i < chars.length; i++) {
+        const ch = chars[i];
+        if (DEV_CONSONANTS[ch] !== undefined) {
+            const next = chars[i + 1];
+            if (next === '्') { units.push({ c: DEV_CONSONANTS[ch], v: '', schwa: false }); i++; }
+            else if (next && DEV_MATRAS[next] !== undefined) { units.push({ c: DEV_CONSONANTS[ch], v: DEV_MATRAS[next], schwa: false }); i++; }
+            else units.push({ c: DEV_CONSONANTS[ch], v: 'a', schwa: true });
+        } else if (DEV_INDEP_VOWELS[ch] !== undefined) {
+            units.push({ c: '', v: DEV_INDEP_VOWELS[ch], schwa: false });
+        } else if (ch === 'ं' || ch === 'ँ') {
+            if (units.length) units[units.length - 1].tail = (units[units.length - 1].tail || '') + 'n';
+        } else if (ch === 'ः') {
+            if (units.length) units[units.length - 1].tail = (units[units.length - 1].tail || '') + 'h';
+        } else if (DEV_DIGITS[ch] !== undefined) {
+            units.push({ c: DEV_DIGITS[ch], v: '', schwa: false });
+        } else if (ch === '।' || ch === '॥') {
+            units.push({ c: '.', v: '', schwa: false });
+        } else {
+            units.push({ c: ch, v: '', schwa: false });
+        }
+    }
+    // Schwa deletion: word ke end me 'a' hatao, beech me bhi (kamal, rajdhani jaisa)
+    const n = units.length;
+    if (n > 1 && units[n - 1].schwa) { units[n - 1].v = ''; units[n - 1].schwa = false; }
+    for (let i = 1; i < n - 1; i++) {
+        const u = units[i], prev = units[i - 1], next = units[i + 1];
+        if (u.schwa && prev.v !== '' && next.v !== '') { u.v = ''; u.schwa = false; }
+    }
+    return units.map(u => u.c + u.v + (u.tail || '')).join('');
+}
+
+function devanagariToRoman(text) {
+    // sirf Devanagari shabdon ko badlo, baaki (English words, numbers, symbols) jaise ke taise
+    return text.replace(/[\u0900-\u097F]+/g, w => devanagariWordToRoman(w));
+}
+
 // Google Translate API Helper Function
 async function translateText(text, targetLang) {
     if (targetLang === "english" || !text) return text;
     try {
-        let tlCode = "hi"; 
+        // english -> hindi; Hinglish ke liye ye Hindi Roman letters me convert hoga
+        let tlCode = "hi";
         let url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${tlCode}&dt=t&q=${encodeURIComponent(text)}`;
         let res = await fetch(url);
         let data = await res.json();
         if (data && data[0]) {
-            return data[0].map(item => item[0]).join('');
+            let translated = data[0].map(item => item[0]).join('');
+            return targetLang === "hinglish" ? devanagariToRoman(translated) : translated;
         }
     } catch (e) {
         console.error("Translation error:", e);
