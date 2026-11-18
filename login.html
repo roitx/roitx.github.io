@@ -90,7 +90,7 @@ body {
   top: -70px; 
   z-index: 10;
   box-shadow: 8px 8px 16px #b8bec7, -8px -8px 16px #fff;
-  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), rotate 0.25s ease-out, translate 0.25s ease-out;
   transform-origin: center bottom;
   cursor: pointer;
   animation: breathing 4s ease-in-out infinite;
@@ -346,9 +346,9 @@ body {
 
 .hand {
   position: absolute;
-  width: 60px;
-  height: 64px;
-  top: 38px;
+  width: 40px;
+  height: 43px;
+  top: 40px;
   opacity: 0;
   pointer-events: none;
   z-index: 12;
@@ -357,10 +357,84 @@ body {
 }
 .hand svg { width: 100%; height: 100%; display: block; overflow: visible; }
 .hand.right svg { transform: scaleX(-1); }
-.hand.left  { left: 6px;  transform: translate(-14px, 60px) rotate(-6deg); }
-.hand.right { right: 6px; transform: translate(14px, 60px) rotate(6deg); }
+.hand.left  { left: 30px;  transform: translate(-10px, 40px) rotate(-6deg); }
+.hand.right { right: 30px; transform: translate(10px, 40px) rotate(6deg); }
 .cover .hand.left  { transform: translate(0, 0) rotate(7deg); }
 .cover .hand.right { transform: translate(0, 0) rotate(-7deg); }
+
+/* 👋 Welcome wave (page load par right hand side se hilta hai) */
+.hand.right.wave-hi {
+  opacity: 1;
+  transform-origin: 50% 90%;
+  animation: handWave 0.45s ease-in-out 0s 6 alternate;
+}
+@keyframes handWave {
+  from { transform: translate(52px, 6px) rotate(-10deg); }
+  to   { transform: translate(56px, 2px) rotate(24deg); }
+}
+
+/* ✨ Click par sparkles / hearts */
+.spark {
+  position: absolute;
+  left: 50%; top: 42%;
+  font-size: 16px;
+  line-height: 1;
+  pointer-events: none;
+  z-index: 20;
+  animation: sparkFly 0.9s ease-out forwards;
+}
+@keyframes sparkFly {
+  0%   { transform: translate(-50%, -50%) scale(0.4); opacity: 1; }
+  100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.2); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hand.right.wave-hi { animation: none; }
+  .spark { display: none; }
+}
+
+/* 😟 Worried (weak password) */
+.character.worried .mouth path { d: path("M5 9 Q 11 3 18 8 T 31 8"); }
+.character.worried .eye { transform: scale(1.08); }
+
+/* 👍 😰 🎉 Reaction badge (character ke upar pop hota hai) */
+.react-badge {
+  position: absolute;
+  top: -8px; right: -14px;
+  font-size: 28px;
+  line-height: 1;
+  pointer-events: none;
+  z-index: 25;
+  animation: badgePop 1.7s ease forwards;
+}
+@keyframes badgePop {
+  0%   { transform: scale(0) rotate(-25deg); opacity: 0; }
+  18%  { transform: scale(1.3) rotate(8deg); opacity: 1; }
+  32%  { transform: scale(1) rotate(0deg); }
+  80%  { opacity: 1; }
+  100% { transform: translateY(-16px) scale(1); opacity: 0; }
+}
+
+/* 🎊 Login success confetti */
+.confetti-piece {
+  position: fixed;
+  top: -14px;
+  left: var(--x);
+  width: 8px; height: 12px;
+  background: var(--c);
+  border-radius: 2px;
+  pointer-events: none;
+  z-index: 9999;
+  animation: confettiFall var(--dur) linear forwards;
+}
+@keyframes confettiFall {
+  0%   { transform: translate3d(0, 0, 0) rotate(0deg); opacity: 1; }
+  85%  { opacity: 1; }
+  100% { transform: translate3d(var(--drift), 105vh, 0) rotate(var(--rot)); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .confetti-piece, .react-badge { display: none; }
+  .character { transition: none; }
+}
 
 /* ANIMATION STATES (EYE COVER LOGIC) */
 .cover .eye-container { opacity: 0; }
@@ -510,6 +584,9 @@ button.primary-btn:active {
 @media (max-width: 400px) {
   .card { padding: 80px 20px 25px; }
   .character { width: 120px; height: 120px; top: -60px; }
+  .hand { width: 34px; height: 36px; top: 38px; }
+  .hand.left  { left: 32px; }
+  .hand.right { right: 32px; }
 }
 </style>
 </head>
@@ -715,8 +792,24 @@ function clearAllExpressions() {
 }
 
 /* Tap / Click Reactions */
+function sparkBurst() {
+  const icons = ["✨", "💖", "⭐", "✨", "💫", "💖"];
+  icons.forEach((icon, i) => {
+    const el = document.createElement("span");
+    el.className = "spark";
+    el.textContent = icon;
+    const angle = (-90 + (i - 2.5) * 32) * Math.PI / 180;   // upar ki taraf pankhe jaisa
+    const dist = 55 + Math.random() * 25;
+    el.style.setProperty("--dx", Math.cos(angle) * dist + "px");
+    el.style.setProperty("--dy", Math.sin(angle) * dist + "px");
+    char.appendChild(el);
+    el.addEventListener("animationend", () => el.remove());
+  });
+}
+
 char.addEventListener("click", () => {
   if (char.classList.contains("cover")) return;
+  sparkBurst();
   clearAllExpressions();
   const randomExpr = allExpressions[Math.floor(Math.random() * allExpressions.length)];
   void char.offsetWidth; 
@@ -819,6 +912,40 @@ function togglePassVisibility(inputId, btnEl) {
   btnEl.innerHTML = isPassword ? eyeClosed : eyeOpen;
 }
 
+/* ---- Reaction helpers: badge + jump ---- */
+function showBadge(emoji) {
+  const old = char.querySelector(".react-badge");
+  if (old) old.remove();
+  const el = document.createElement("span");
+  el.className = "react-badge";
+  el.textContent = emoji;
+  char.appendChild(el);
+  el.addEventListener("animationend", () => el.remove());
+}
+function jumpOnce() {
+  char.classList.remove("jump");
+  void char.offsetWidth;
+  char.classList.add("jump");
+  setTimeout(() => char.classList.remove("jump"), 520);
+}
+
+/* Password strength -> character reaction (weak: chinta 😰, strong: thumbs-up 👍) */
+let lastStrengthLevel = null;
+function reactToStrength(strengthClass, len) {
+  let level = null;
+  if (strengthClass === "strength-strong") level = "strong";
+  else if (strengthClass === "strength-good") level = "good";
+  else if (strengthClass === "strength-weak" && len >= 3) level = "weak";
+
+  char.classList.toggle("worried", level === "weak");
+
+  if (level !== lastStrengthLevel) {
+    if (level === "weak") showBadge("😰");
+    if (level === "strong") { showBadge("👍"); jumpOnce(); }
+    lastStrengthLevel = level;
+  }
+}
+
 /* Password Strength & Character Happiness */
 function handlePasswordTyping() {
   const val = passwordInput.value;
@@ -856,6 +983,7 @@ function handlePasswordTyping() {
       }
       passwordStrengthEl.innerText = strengthText;
       passwordStrengthEl.className = "password-strength-indicator " + strengthClass;
+      reactToStrength(strengthClass, val.length);
 
     } else {
       confirmPassWrapper.classList.remove("visible");
@@ -863,6 +991,7 @@ function handlePasswordTyping() {
       passwordStrengthEl.style.display = "none";
       passwordStrengthEl.innerText = "";
       char.classList.remove("happy");
+      reactToStrength(null, 0);
     }
   }
 }
@@ -883,6 +1012,7 @@ function switchMode(mode) {
   clearTimeout(rotateInterval);
   clearAllExpressions();
   char.classList.remove("happy");
+  reactToStrength(null, 0);
   resetIdleTimer();
 
   if (mode === "login") {
@@ -1014,6 +1144,7 @@ window.triggerErrorAnim = () => {
 async function handleAuthSubmit() {
   if (currentMode === "login") {
     await window.loginUser();
+    await celebrateIfLoggedIn();
   } else if (currentMode === "signup") {
     const fullName = fullNameInput.value.trim();
     const phone = phoneInput.value.trim();
@@ -1068,6 +1199,91 @@ async function handleAuthSubmit() {
 }
 
 window.switchMode = switchMode;
+
+/* 🎉 LOGIN SUCCESS: jump + confetti, phir redirect */
+let isCelebrating = false;
+
+function launchConfetti(count = 60) {
+  const colors = ["#ff5c7a", "#ffc83d", "#4ade80", "#38bdf8", "#a78bfa", "#fb923c"];
+  for (let i = 0; i < count; i++) {
+    const el = document.createElement("span");
+    el.className = "confetti-piece";
+    el.style.setProperty("--x", (Math.random() * 100) + "vw");
+    el.style.setProperty("--c", colors[i % colors.length]);
+    el.style.setProperty("--dur", (1.6 + Math.random() * 1.2) + "s");
+    el.style.setProperty("--drift", ((Math.random() - 0.5) * 160) + "px");
+    el.style.setProperty("--rot", ((Math.random() - 0.5) * 900) + "deg");
+    el.style.animationDelay = (Math.random() * 0.35) + "s";
+    document.body.appendChild(el);
+    el.addEventListener("animationend", () => el.remove());
+  }
+}
+
+window.celebrateLogin = function (done) {
+  if (isCelebrating) return;
+  isCelebrating = true;
+  clearTimeout(idleTimer);
+  clearTimeout(rotateInterval);
+  clearAllExpressions();
+  char.classList.remove("cover", "worried");
+  char.classList.add("happy");
+  showBadge("🎉");
+  jumpOnce();
+  setTimeout(jumpOnce, 600);
+  launchConfetti();
+  const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  setTimeout(() => { if (typeof done === "function") done(); }, reduce ? 500 : 1700);
+};
+
+function goAfterLogin() {
+  const redirectTarget = sessionStorage.getItem("redirect_after_login");
+  if (redirectTarget) {
+    sessionStorage.removeItem("redirect_after_login");
+    window.location.href = redirectTarget;
+  } else {
+    window.location.href = window.getPageUrl ? window.getPageUrl("profile.html") : "profile.html";
+  }
+}
+
+async function celebrateIfLoggedIn() {
+  try {
+    const user = await window.getCurrentUser();
+    if (user && !isCelebrating) window.celebrateLogin(goAfterLogin);
+  } catch (e) { /* login fail / session nahi: kuch nahi karna */ }
+}
+
+/* 🙂 Head tilt: cursor ki taraf halka sa sir ka jhukav + shift */
+function resetTilt() {
+  char.style.rotate = "0deg";
+  char.style.translate = "0px 0px";
+}
+document.addEventListener("mousemove", (e) => {
+  if (char.classList.contains("cover") || isCelebrating) { resetTilt(); return; }
+  const r = char.getBoundingClientRect();
+  const dx = (e.clientX - (r.left + r.width / 2)) / Math.max(window.innerWidth / 2, 1);
+  const dy = (e.clientY - (r.top + r.height / 2)) / Math.max(window.innerHeight / 2, 1);
+  const cx = Math.max(-1, Math.min(1, dx));
+  const cy = Math.max(-1, Math.min(1, dy));
+  char.style.rotate = (cx * 7) + "deg";
+  char.style.translate = (cx * 4) + "px " + (cy * 3) + "px";
+});
+document.addEventListener("mouseleave", resetTilt);
+
+/* 👋 Page khulte hi character hello bolta hai (sirf tab jab user typing/cover me nahi) */
+window.addEventListener("load", () => {
+  setTimeout(() => {
+    const active = document.activeElement;
+    if (char.classList.contains("cover") || (active && active.tagName === "INPUT")) return;
+    const waveHand = char.querySelector(".hand.right");
+    if (!waveHand) return;
+    waveHand.classList.add("wave-hi");
+    char.classList.add("happy");
+    setTimeout(() => {
+      waveHand.classList.remove("wave-hi");
+      char.classList.remove("happy");
+    }, 2800);
+  }, 700);
+});
 </script>
 
 </body>

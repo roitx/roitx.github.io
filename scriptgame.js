@@ -1024,7 +1024,9 @@ function setupMathDrones() {
             h: 36,
             baseY: 190,
             floatOffset: index * 0.8,
-            dir: 1
+            dir: 1,
+            hits: 0,
+            solved: false
         });
     });
 }
@@ -1275,6 +1277,19 @@ window.addEventListener('DOMContentLoaded', async () => {
 // ==========================================
 // 8. MAIN GAME LOOP (RENDER & UPDATE)
 // ==========================================
+// ==========================================
+// 🐢 STUDY SLOW-MOTION (jab sawaal screen par ho)
+// ==========================================
+const STUDY_BULLET_SLOW = 0.22;   // fighter ki bullet speed (bahut kam)
+const STUDY_DRONE_SLOW  = 0.45;   // option blocks ki chaal
+const STUDY_FX_SLOW     = 0.5;    // particles / effects
+const CORRECT_HITS_NEEDED = 3;    // sahi option kitni hit me khatm hoga
+const WRONG_ANSWER_SHAKE  = 3;    // galat answer par halka shake
+
+function isStudySlowMo() {
+    return !!(isMathMode && currentMathQuestion && mathDrones.length > 0);
+}
+
 function update() {
     if (!game || paused || !ctx) return;
 
@@ -1355,8 +1370,9 @@ function update() {
     if (player.magnet > 0 && typeof drawMagnetField === "function") drawMagnetField(ctx, player, player.magnet, MAGNET_RANGE);
     if (typeof drawOverdriveAura === "function") drawOverdriveAura(ctx, player, shipTypes[selectedShip]);
 
+    const bulletSlow = isStudySlowMo() ? STUDY_BULLET_SLOW : 1;
     bullets.forEach((b, i) => {
-        b.y += b.vy; b.x += b.vx || 0;
+        b.y += b.vy * bulletSlow; b.x += (b.vx || 0) * bulletSlow;
         if (typeof drawLaser === "function") {
             drawLaser(ctx, { x: b.x - b.size/2, y: b.y, w: b.size, h: 16, isEnemy: false });
         } else {
@@ -1583,7 +1599,7 @@ break;
                 monster.hp = Math.max(0, monster.hp - 2);
                 
                 // 💥 Monster ko goli lagne par screen shake aur particles (khoon/explosion)
-                screenShake = 6;
+                screenShake = isStudySlowMo() ? 1.5 : 6;
                 explode(b.x, b.y, "#ef4444", 6);
                 
                 // 🔊 Sound effect
@@ -1617,9 +1633,10 @@ break;
 
                 if (isMathMode && currentMathQuestion && mathDrones.length > 0) {
             mathDrones.forEach((drone) => {
-                drone.x += drone.dir * 1.5;
+                if (drone.solved) return;   // 3 hit me khatm ho chuka option
+                drone.x += drone.dir * 1.5 * STUDY_DRONE_SLOW;
                 if (drone.x < 20 || drone.x + drone.w > canvas.width - 20) drone.dir *= -1;
-                drone.floatOffset += 0.04;
+                drone.floatOffset += 0.04 * STUDY_DRONE_SLOW;
                 drone.y = drone.baseY + Math.sin(drone.floatOffset) * 5;
 
                 if (typeof drawStudyBlock === "function") {
@@ -1637,19 +1654,23 @@ break;
                     if (b.x > drone.x && b.x < drone.x + drone.w && b.y > drone.y && b.y < drone.y + drone.h) {
                         bullets.splice(j, 1);
                         if (drone.index === currentMathQuestion.correctIndex) {
-                            explode(drone.x + drone.w / 2, drone.y + drone.h / 2, "#22c55e", 20);
-                            
-                            let monsterReward = Math.floor(10 * combo * 1.5);
-                            addFloatingText(drone.x, drone.y, `CORRECT! +${monsterReward} ⚡`, "#22c55e");
-                            
-                            monster.hp = Math.max(0, monster.hp - 40);
-                            score += monsterReward;
-                            updateHUD();
-                            loadNextQuestion();
+                            drone.hits = (drone.hits || 0) + 1;
+                            if (drone.hits < CORRECT_HITS_NEEDED) {
+                                // Abhi option zinda hai: sirf hit count dikhao
+                                explode(b.x, b.y, "#22c55e", 6);
+                                addFloatingText(drone.x, drone.y, `HIT ${drone.hits}/${CORRECT_HITS_NEEDED}`, "#22c55e");
+                            } else {
+                                // 3rd hit: sahi option khatm (is par koi score nahi)
+                                drone.solved = true;
+                                explode(drone.x + drone.w / 2, drone.y + drone.h / 2, "#22c55e", 20);
+                                addFloatingText(drone.x, drone.y, "CORRECT! ✅", "#22c55e");
+                                monster.hp = Math.max(0, monster.hp - 40);
+                                loadNextQuestion();
+                            }
                         } else {
-                            explode(drone.x + drone.w / 2, drone.y + drone.h / 2, "#ef4444", 15);
+                            explode(drone.x + drone.w / 2, drone.y + drone.h / 2, "#ef4444", 8);
                             addFloatingText(drone.x, drone.y, "WRONG! ❌", "#ef4444");
-                            screenShake = 14;
+                            screenShake = WRONG_ANSWER_SHAKE;
                         }
                         break;
                     }
@@ -1670,7 +1691,8 @@ break;
     }
 
     particles.forEach((p, i) => {
-        p.x += p.vx; p.y += p.vy; p.l--;
+        const fxSlow = isStudySlowMo() ? STUDY_FX_SLOW : 1;
+        p.x += p.vx * fxSlow; p.y += p.vy * fxSlow; p.l--;
         ctx.fillStyle = p.c;
         ctx.fillRect(p.x, p.y, p.s, p.s);
         if (p.l <= 0) particles.splice(i, 1);

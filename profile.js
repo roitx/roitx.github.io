@@ -723,11 +723,11 @@ function goToManageFlashcard() {
 }
 
 function goToUploadTest() { 
-  window.location.href = "admin-mange-tests.html"; 
+  window.location.href = "admin-manage-tests.html"; 
 }
 
 function goToAiTestCreator() { 
-  window.location.href = "admin-ai-tests.html"; 
+  window.location.href = "admin-ai-test.html"; 
 }
 
 function goToUploadPyq() { 
@@ -741,6 +741,42 @@ function goToManagePyq() {
 function goToHome() { 
   window.location.href = "index.html"; 
 }
+
+// ---- Password section: default hidden, user tap kare tab dikhe ----
+function togglePasswordSection() {
+  const body = document.getElementById("passwordBody");
+  const head = document.getElementById("passwordToggleHead");
+  const icon = document.getElementById("passwordToggleIcon");
+  const input = document.getElementById("newPasswordInput");
+  if (!body) return;
+
+  const willOpen = body.style.display === "none";
+  body.style.display = willOpen ? "block" : "none";
+  if (head) head.setAttribute("aria-expanded", String(willOpen));
+  if (icon) icon.className = willOpen ? "fa-solid fa-chevron-up" : "fa-solid fa-chevron-down";
+  if (willOpen && input) input.focus();
+  if (!willOpen && input) input.value = "";
+}
+
+// ---- Logout: confirmation ke baad hi hoga (galti se tap par logout nahi) ----
+function openLogoutConfirm() {
+  const modal = document.getElementById("logoutConfirmModal");
+  if (modal) modal.style.display = "flex";
+}
+
+function closeLogoutConfirm() {
+  const modal = document.getElementById("logoutConfirmModal");
+  if (modal) modal.style.display = "none";
+}
+
+function confirmLogout() {
+  closeLogoutConfirm();
+  logoutUser();
+}
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeLogoutConfirm();
+});
 
 async function logoutUser() {
   try {

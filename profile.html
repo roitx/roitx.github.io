@@ -18,6 +18,29 @@
 
   <!-- Custom External CSS -->
   <link rel="stylesheet" href="profile.css">
+
+  <!-- Profile page layout helpers (animation nahi) -->
+  <style>
+    .collapsible { margin: 0 0 12px; text-align: left; }
+    .collapsible-head {
+      background: #e0e5ec; padding: 12px 15px; border-radius: 12px;
+      display: flex; justify-content: space-between; align-items: center;
+      cursor: pointer; user-select: none;
+      box-shadow: 4px 4px 8px #b8bec7, -4px -4px 8px #ffffff;
+      font-size: 13px; font-weight: 700; color: #4a5568;
+    }
+    .collapsible-head span { display: flex; align-items: center; gap: 8px; }
+    .collapsible-head span i { color: #5a2eff; }
+    .collapsible-head > i { font-size: 12px; color: #718096; }
+    .collapsible-head:focus-visible { outline: 2px solid #5a2eff; outline-offset: 2px; }
+    .collapsible-body {
+      margin-top: 10px; padding: 15px; border-radius: 14px; background: #e0e5ec;
+      box-shadow: inset 4px 4px 8px #b8bec7, inset -4px -4px 8px #ffffff;
+    }
+    .btn-password-save { background: #e0e5ec; color: #5a2eff; font-size: 13px; padding: 10px; }
+    .btn-cache { background: #e0e5ec; color: #d97706; margin-bottom: 4px; }
+    .logout-area { margin-top: 28px; padding-top: 18px; border-top: 1px solid rgba(113, 128, 150, 0.25); }
+  </style>
 </head>
 
 <body>
@@ -138,18 +161,17 @@
 
     <p id="statusMsg" class="status-msg"></p>
 
-    <!-- Password Section -->
-    <div id="passwordSection" style="margin: 10px 0; text-align: left; background: #e0e5ec; padding: 15px; border-radius: 14px; box-shadow: inset 4px 4px 8px #b8bec7, inset -4px -4px 8px #ffffff;">
-      <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #4a5568; font-weight: 600; margin-bottom: 6px;">
-        <i class="fa-solid fa-key"></i> Set / Change Password
-      </label>
-      <input type="password" id="newPasswordInput" class="input-box" placeholder="Enter new password (min 6 chars)" style="margin-bottom: 10px;">
-      <button class="btn" onclick="setGoogleUserPassword()" style="background: #e0e5ec; color: #5a2eff; font-size: 13px; padding: 10px;">
-        <i class="fa-solid fa-lock"></i> Save New Password
+    <!-- ===== Primary actions ===== -->
+    <div class="btn-group">
+      <button class="btn btn-save" onclick="saveProfileDetails()">
+        <i class="fa-solid fa-floppy-disk"></i> Save Profile Info
+      </button>
+      <button class="btn btn-explore" onclick="goToHome()">
+        <i class="fa-solid fa-compass"></i> Explore Notes &amp; Formulas
       </button>
     </div>
 
-        <!-- Admin & Teammate Action Buttons Toggle Section -->
+    <!-- Admin & Teammate Tools (sirf privileged users ko dikhega) -->
     <div id="adminToolsSection" style="display: none; margin-bottom: 15px;">
       <div 
         onclick="toggleAdminToolsMenu()" 
@@ -202,19 +224,30 @@
       </div>
     </div>
 
-    <!-- General Action Buttons -->
-    <div class="btn-group">
-      <button class="btn btn-save" onclick="saveProfileDetails()">
-        <i class="fa-solid fa-floppy-disk"></i> Save Profile Info
-      </button>
-      <button class="btn btn-explore" onclick="goToHome()">
-        <i class="fa-solid fa-compass"></i> Explore Notes & Formulas
-      </button>
-      <button class="btn btn-logout" onclick="logoutUser()">
+    <!-- ===== Account Settings (collapsed by default) ===== -->
+    <div class="section-title"><i class="fa-solid fa-sliders"></i> Account Settings</div>
+
+    <div class="collapsible">
+      <div class="collapsible-head" id="passwordToggleHead" role="button" tabindex="0" aria-expanded="false" aria-controls="passwordBody" onclick="togglePasswordSection()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();togglePasswordSection();}">
+        <span><i class="fa-solid fa-key"></i> Set / Change Password</span>
+        <i class="fa-solid fa-chevron-down" id="passwordToggleIcon"></i>
+      </div>
+      <div class="collapsible-body" id="passwordBody" style="display: none;">
+        <input type="password" id="newPasswordInput" class="input-box" placeholder="Enter new password (min 6 chars)" autocomplete="new-password" style="margin-bottom: 10px;">
+        <button class="btn btn-password-save" onclick="setGoogleUserPassword()">
+          <i class="fa-solid fa-lock"></i> Save New Password
+        </button>
+      </div>
+    </div>
+
+    <button class="btn btn-cache" onclick="clearAppCache()">
+      <i class="fa-solid fa-broom"></i> Clear App Cache &amp; Reload
+    </button>
+
+    <!-- ===== Session (Logout alag, Explore se door, confirmation ke saath) ===== -->
+    <div class="logout-area">
+      <button class="btn btn-logout" onclick="openLogoutConfirm()">
         <i class="fa-solid fa-right-from-bracket"></i> Logout Account
-      </button>
-      <button class="btn" onclick="clearAppCache()" style="background: #e0e5ec; color: #d97706; margin-top: 10px;">
-        <i class="fa-solid fa-broom"></i> Clear App Cache & Reload
       </button>
     </div>
 
@@ -287,6 +320,23 @@
     </div>
   </div>
 
+  <!-- Logout Confirmation Modal -->
+  <div class="crop-modal-overlay" id="logoutConfirmModal" onclick="closeLogoutConfirm()">
+    <div class="crop-modal-card" onclick="event.stopPropagation()">
+      <div style="font-size: 34px; color: #5a2eff; margin-bottom: 8px;">
+        <i class="fa-solid fa-right-from-bracket"></i>
+      </div>
+      <h3 style="color: #2d3748; font-size: 18px; margin-bottom: 8px;">Logout karna hai?</h3>
+      <p style="font-size: 13px; color: #718096; margin-bottom: 16px; line-height: 1.5;">
+        Logout ke baad dobara login karna padega.
+      </p>
+      <div style="display: flex; gap: 10px;">
+        <button class="btn btn-save" onclick="closeLogoutConfirm()" style="padding: 12px; font-size: 13px; flex: 1;">Nahi, Rukein</button>
+        <button class="btn btn-logout" onclick="confirmLogout()" style="padding: 12px; font-size: 13px; flex: 1;">Haan, Logout</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Account Delete Confirmation Modal -->
   <div class="crop-modal-overlay" id="deleteConfirmModal">
     <div class="crop-modal-card">
@@ -337,19 +387,5 @@
     }
   })();
 </script>
-  <!-- Navigation Helper Functions -->
-  <script>
-    function goToAdminPanel() { window.location.href = "admin-panel.html"; }
-    function goToManageTeam() { window.location.href = "manage-team.html"; }
-    function goToSendNotification() { window.location.href = "admin-notifications.html"; }
-    function goToUploadTest() { window.location.href = "admin-manage-tests.html"; }
-    function goToAiTestCreator() { window.location.href = "admin-ai-test.html"; }
-    function goToUploadPyq() { window.location.href = "admin-pyq-generator.html"; }
-    function goToManagePyq() { window.location.href = "manage-pyqs.html"; }
-    function goToUploadFlashcard() { window.location.href = "admin-flashcard-generator.html"; }
-    function goToManageFlashcard() { window.location.href = "manage-flashcards.html"; }
-    function goToHome() { window.location.href = "index.html"; }
-  </script>
-
 </body>
 </html>

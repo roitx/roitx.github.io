@@ -227,10 +227,14 @@ select.input-box { cursor: pointer; }
 /* BUTTONS */
 .btn-group {
   margin-top: 25px;
+  margin-bottom: 22px;   /* neeche wale section (admin tools) se jagah, taaki Explore button overlap na kare */
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;             /* Save aur Explore ke beech bhi shake ke liye jagah */
 }
+
+/* Explore ke neeche aane wala admin tools block */
+#adminToolsSection { margin-top: 0; clear: both; position: relative; z-index: 0; }
 
 button.btn {
   width: 100%;
@@ -266,19 +270,21 @@ button.btn-explore {
   box-shadow: 0 6px 20px rgba(0, 198, 255, 0.45), 6px 6px 14px #b8bec7, -6px -6px 14px #ffffff;
   animation: exploreShake 2.5s infinite ease-in-out, pulseGlow 2s infinite alternate ease-in-out;
   position: relative;
+  z-index: 1;
   overflow: hidden;
 }
 
 button.btn-explore:hover {
-  transform: translateY(-2px) scale(1.02);
+  transform: translateY(-1px);
   box-shadow: 0 8px 25px rgba(0, 198, 255, 0.65), 6px 6px 14px #b8bec7, -6px -6px 14px #ffffff;
 }
 
 @keyframes exploreShake {
-  0%, 100% { transform: rotate(0deg) scale(1); }
-  10%, 30%, 50% { transform: rotate(-3deg) scale(1.02); }
-  20%, 40% { transform: rotate(3deg) scale(1.02); }
-  60% { transform: rotate(0deg) scale(1); }
+  /* halka shake: rotate kam aur scale nahi, taaki button apni jagah se bahar na nikle */
+  0%, 100% { transform: rotate(0deg); }
+  10%, 30%, 50% { transform: rotate(-1deg); }
+  20%, 40% { transform: rotate(1deg); }
+  60% { transform: rotate(0deg); }
 }
 
 @keyframes pulseGlow {
