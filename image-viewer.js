@@ -27,6 +27,7 @@ function trackActivityLocally(fileData, isDownloaded = false) {
             title: fileData.title,
             url: fileData.url,
             meta: fileData.meta || "Image Viewer",
+            isPremium: !!fileData.isPremium,
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             downloaded: alreadyDownloaded,
             viewCount: viewCount
@@ -175,7 +176,8 @@ async function initImageViewer() {
     }
 
     document.getElementById("doc-title").innerText = docName || "Image Viewer";
-    const isPurchased = await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "");
+    // ?preview=1 => owner/buyer ko bhi wahi dikhao jo public ko dikhta hai
+    const isPurchased = params.get("preview") === "1" ? false : await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "");
 
     let previewOnly = false;
     try {
@@ -213,7 +215,8 @@ async function initImageViewer() {
             if (isParamPremium && (!isPurchased || previewOnly)) {
                 img.style.filter = "none"; 
                 previewTimer = setTimeout(async () => {
-                    const doubleCheckPurchased = await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "");
+                    // Preview file dikh rahi ho to local flags par bharosa nahi: hamesha blur + purchase popup
+                    const doubleCheckPurchased = previewOnly ? false : await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "");
                     if (!doubleCheckPurchased) {
                         img.style.filter = "blur(25px)";
                         showPurchaseRequiredModal();
@@ -226,7 +229,8 @@ async function initImageViewer() {
             trackActivityLocally({
                 title: docName || "Image Asset",
                 url: rawPath,
-                meta: "Image Viewer"
+                meta: "Image Viewer",
+                isPremium: isParamPremium
             }, false);
         };
     } catch (err) {

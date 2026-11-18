@@ -2290,3 +2290,14 @@ body.light .notif-type-tag.event { color: #b45309; }
 .notif-fullscreen .notif-msg {
   display: block; -webkit-line-clamp: unset; overflow: visible; white-space: normal;
 }
+
+/* Popups / overlays: scrollbar chhupa do, scroll (touch/wheel) normal chalta rahe */
+#rateModal *, #moreAppsModal *, .notif-modal-overlay *, .notif-modal-card, .notif-body, .notif-dropdown-box, .notif-dropdown-box *, .pm-modal-overlay, .pm-modal-overlay *, .popup, .popup * {
+  scrollbar-width: none;            /* Firefox */
+  -ms-overflow-style: none;         /* old Edge */
+}
+#rateModal *::-webkit-scrollbar, #moreAppsModal *::-webkit-scrollbar, .notif-modal-overlay *::-webkit-scrollbar,
+.notif-modal-card::-webkit-scrollbar, .notif-body::-webkit-scrollbar, .notif-dropdown-box::-webkit-scrollbar, .notif-dropdown-box *::-webkit-scrollbar,
+.pm-modal-overlay::-webkit-scrollbar, .pm-modal-overlay *::-webkit-scrollbar, .popup *::-webkit-scrollbar {
+  display: none; width: 0; height: 0;
+}

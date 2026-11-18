@@ -218,40 +218,6 @@ function validateDeleteEmailInput() {
   }
 }
 
-// 🖼️ Super Admin ke liye "Preview Maker" button (manage-team button ko clone karke, same style me)
-function ensurePreviewMakerBtn() {
-  let btn = document.getElementById("previewMakerBtn");
-  if (btn) return btn;
-  const tpl = document.getElementById("manageTeamBtn");
-  if (!tpl || !tpl.parentNode) return null;
-
-  btn = tpl.cloneNode(true);
-  btn.id = "previewMakerBtn";
-  btn.removeAttribute("onclick");
-  btn.removeAttribute("href");
-  btn.removeAttribute("target");
-
-  // Icon badlo
-  const icon = btn.querySelector("i");
-  if (icon) icon.className = "fa-solid fa-image";
-
-  // Text badlo (pehla non-empty text node)
-  const walker = document.createTreeWalker(btn, NodeFilter.SHOW_TEXT);
-  let node, replaced = false;
-  while ((node = walker.nextNode())) {
-    if (node.nodeValue.trim()) { node.nodeValue = " Preview Maker"; replaced = true; break; }
-  }
-  if (!replaced) btn.appendChild(document.createTextNode(" Preview Maker"));
-
-  btn.addEventListener("click", (e) => {
-    e.preventDefault();
-    window.location.href = "preview-maker.html";
-  });
-  tpl.parentNode.insertBefore(btn, tpl.nextSibling);
-  btn.style.display = "none";
-  return btn;
-}
-
 // Dynamic Action Buttons Visibility Toggler
 function applyRoleBasedUI(role, permissions = {}) {
   const normalizedRole = (role || "student").toLowerCase();
@@ -268,13 +234,11 @@ function applyRoleBasedUI(role, permissions = {}) {
   const managePyqBtn = document.getElementById("managePyqBtn");
   const uploadFlashcardBtn = document.getElementById("uploadFlashcardBtn");
   const manageFlashcardBtn = document.getElementById("manageFlashcardBtn");
-  const previewMakerBtn = ensurePreviewMakerBtn();
 
   // Reset Display
   if (adminToolsSection) adminToolsSection.style.display = "none";
   if (adminBtn) adminBtn.style.display = "none";
   if (manageTeamBtn) manageTeamBtn.style.display = "none";
-  if (previewMakerBtn) previewMakerBtn.style.display = "none";
   if (sendNotifBtn) sendNotifBtn.style.display = "none";
   if (uploadTestBtn) uploadTestBtn.style.display = "none";
   if (aiTestBtn) aiTestBtn.style.display = "none";
@@ -293,7 +257,6 @@ function applyRoleBasedUI(role, permissions = {}) {
     
     if (adminBtn) adminBtn.style.display = "flex";
     if (manageTeamBtn) manageTeamBtn.style.display = "flex";
-    if (previewMakerBtn) previewMakerBtn.style.display = "flex";   // sirf Super Admin
     if (permissions.send_notif !== false && sendNotifBtn) sendNotifBtn.style.display = "flex";
     if (permissions.manage_test !== false && uploadTestBtn) uploadTestBtn.style.display = "flex";
     if (permissions.ai_test !== false && aiTestBtn) aiTestBtn.style.display = "flex";

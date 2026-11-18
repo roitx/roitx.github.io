@@ -269,7 +269,8 @@ async function initReader() {
 
         if (isPremiumNote) {
             const premiumKey = rawPath.replace(/^(notes|formulas)\//, "");
-            const bought = await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "");
+            // ?preview=1 => owner/buyer ko bhi wahi dikhao jo public ko dikhta hai
+            const bought = params.get("preview") === "1" ? false : await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "");
             if (bought) {
                 const r = await window.supabaseClient.storage.from("private-premium-files").download(premiumKey);
                 if (!r.error) blob = r.data;
@@ -306,7 +307,7 @@ async function startEngine(blob) {
     }
 
     const isParamPremium = params.get("type") === "premium";
-    const isInPaidFolder = rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium"));
+    const isInPaidFolder = rawPath && (rawPath.toLowerCase().includes("paid") || rawPath.toLowerCase().includes("locked") || rawPath.toLowerCase().includes("premium") || rawPath.toLowerCase().includes("pre_"));
     const isPremiumNote = isParamPremium || isInPaidFolder;
     // Preview file dikh rahi ho to kabhi "purchased" mat maano
     const isPurchased = window.__previewOnly ? false : await verifyPurchaseStatusLocallyOrDB(rawPath, docName || "");

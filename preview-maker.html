@@ -164,6 +164,10 @@
                 <button class="btn-primary" id="allBtn" onclick="generateAllMissing()">
                     <i class="fa-solid fa-bolt"></i> Generate all missing
                 </button>
+                <button class="btn-primary" id="redoBtn" onclick="regenerateAll()"
+                        style="margin-top:8px; background: rgba(255,255,255,.08); box-shadow:none; border:1px solid rgba(255,255,255,.14);">
+                    <i class="fa-solid fa-rotate"></i> Regenerate all (naye watermark ke saath)
+                </button>
                 <div class="progress" id="progress"><div id="progressBar"></div></div>
                 <div class="progress-text" id="progressText"></div>
             </div>
@@ -231,6 +235,7 @@ function updateStats() {
     document.getElementById("statOk").textContent = ready;
     document.getElementById("statMissing").textContent = notes.length - ready;
     document.getElementById("allBtn").disabled = bulkRunning || (notes.length - ready) === 0;
+    document.getElementById("redoBtn").disabled = bulkRunning || notes.length === 0;
 }
 
 function render() {
@@ -275,9 +280,11 @@ function render() {
         actions.appendChild(gen);
 
         if (n.preview_path) {
-            const { data } = sb().storage.from("admin-files").getPublicUrl(n.preview_path);
+            // Raw storage URL par mobile me PDF khulta nahi (sandbox header), isliye apne viewer se kholte hain
+            const isImg = /\.(png|jpe?g|webp|gif)$/i.test(n.file_path || "");
+            const viewer = isImg ? "image-viewer.html" : "notes-viewer.html";
             const view = el("a", "btn-sm ghost");
-            view.href = data.publicUrl + "?t=" + Date.now();
+            view.href = `${viewer}?path=${encodeURIComponent(n.file_path)}&name=${encodeURIComponent(n.title || "Preview")}&type=premium&preview=1`;
             view.target = "_blank";
             view.rel = "noopener";
             view.innerHTML = '<i class="fa-solid fa-eye"></i> View preview';
@@ -318,9 +325,8 @@ async function generatePreview(n) {
     }
 }
 
-async function generateAllMissing() {
-    const todo = notes.filter(n => !n.preview_path);
-    if (!todo.length) { toast("Sab previews ready hain ✅"); return; }
+async function runBulk(todo) {
+    if (!todo.length) { toast("Kuch banana baaki nahi ✅"); return; }
 
     bulkRunning = true;
     const bar = document.getElementById("progressBar");
@@ -342,6 +348,13 @@ async function generateAllMissing() {
     txt.textContent = `Complete: ${done} ready` + (failed ? `, ${failed} fail` : "");
     toast(failed ? `${done} ready, ${failed} fail ⚠️` : `Sab ${done} previews ban gaye ✅`);
     render();
+}
+
+function generateAllMissing() { return runBulk(notes.filter(n => !n.preview_path)); }
+
+function regenerateAll() {
+    if (!confirm("Saare previews dobara banenge (naye watermark ke saath). Continue?")) return;
+    return runBulk(notes.slice());
 }
 </script>
 </body>

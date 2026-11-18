@@ -399,7 +399,7 @@
                 // Yahan naya private bucket name set kiya gaya hai
                 const { data: storageData, error: storageError } = await window.supabaseClient.storage
                     .from('private-premium-files')
-                    .upload(filePath, file, { cacheControl: '3600', upsert: true });
+                    .upload(filePath, file, { cacheControl: '3600', upsert: false });  // path unique timestamp wala hai, upsert ki zaroorat nahi
 
                 if (storageError) throw new Error("Storage Upload Failed: " + storageError.message);
                 uploadedPrivate = true;
