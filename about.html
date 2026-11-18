@@ -512,6 +512,11 @@ function validateCharCount() {
 function previewFeedbackImage(event) {
     const file = event.target.files[0];
     if (file) {
+        if (!/^image\/(png|jpeg|webp|gif)$/.test(file.type)) {
+            alert("❌ Sirf PNG / JPG / WEBP / GIF image allowed hai!");
+            event.target.value = '';
+            return;
+        }
         // 2MB Size Limit Check (2 * 1024 * 1024 bytes)
         const maxSize = 2 * 1024 * 1024; 
         if (file.size > maxSize) {
@@ -585,8 +590,24 @@ async function handleFeedback(event) {
         other: "Other"
     };
 
-    let fullMessage = `[FEEDBACK - ${topicNames[topic] || topic}]:\n${text}`;
+    // XSS-safe: text escape hota hai aur image sirf strict base64 image data-URL ho tabhi jati hai
+    const escapeHtml = (v) => String(v == null ? "" : v)
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    const SAFE_IMG = /^data:image\/(png|jpeg|webp|gif);base64,[A-Za-z0-9+\/]+=*$/;
+
+    const topicLabel = topicNames[topic];
+    if (!topicLabel) {                       // select ki value tamper hui ho to reject
+        alert('Kripya valid topic select karein!');
+        return;
+    }
+
+    let fullMessage = `[FEEDBACK - ${topicLabel}]:\n${escapeHtml(text)}`;
     if (attachedBase64Image) {
+        if (!SAFE_IMG.test(attachedBase64Image)) {
+            alert('❌ Sirf PNG / JPG / WEBP / GIF image allowed hai!');
+            return;
+        }
         fullMessage = `<div style="margin-bottom:8px;"><img src="${attachedBase64Image}" style="max-width:200px; max-height:150px; border-radius:8px; border:1px solid #334155;"></div>` + fullMessage;
     }
 

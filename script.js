@@ -634,8 +634,8 @@ function showToastNotification(title, message, link) {
     cursor: pointer; transition: all 0.3s ease;
   `;
   toast.innerHTML = `
-    <div style="font-size: 13px; font-weight: 700; color: #00c6ff;">🔔 ${title}</div>
-    <div style="font-size: 12px; margin-top: 2px; color: #cbd5e0;">${message}</div>
+    <div style="font-size: 13px; font-weight: 700; color: #00c6ff;">🔔 ${escapeHtml(title)}</div>
+    <div style="font-size: 12px; margin-top: 2px; color: #cbd5e0;">${escapeHtml(message)}</div>
   `;
   
   if (link && link !== "#" && link !== "null") {
@@ -1533,8 +1533,8 @@ function showCustomModal(title, message, isWarning = false) {
     <div id="customAlertModal" class="pm-modal-overlay" style="display: flex; z-index: 99999;">
       <div class="pm-streak-card" style="border-color: ${isWarning ? '#ff4757' : '#00d2ff'}; max-width: 380px; text-align: center;">
         <div style="font-size: 36px; margin-bottom: 10px;">${isWarning ? '⚠️' : '🎉'}</div>
-        <h3 style="color: ${isWarning ? '#ff4757' : '#ffb703'}; font-size: 18px; margin-bottom: 10px; font-weight: 700;">${title}</h3>
-        <p style="color: #cbd5e1; font-size: 13.5px; line-height: 1.5; margin-bottom: 20px;">${message}</p>
+        <h3 style="color: ${isWarning ? '#ff4757' : '#ffb703'}; font-size: 18px; margin-bottom: 10px; font-weight: 700;">${escapeHtml(title)}</h3>
+        <p style="color: #cbd5e1; font-size: 13.5px; line-height: 1.5; margin-bottom: 20px;">${escapeHtml(message)}</p>
         <button class="pm-btn-primary" onclick="document.getElementById('customAlertModal').remove()" style="width: 100%;">Theek Hai</button>
       </div>
     </div>
