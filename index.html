@@ -417,6 +417,17 @@
   <link rel="stylesheet" href="style.css" />
 
   <!-- Analytics & Scripts -->
+  <script>
+    /* Splash: repeat visitors get a class before first paint, so the splash never flashes.
+       The flag itself is written by script.js once the first-visit splash has finished. */
+    (function () {
+      try {
+        if (localStorage.getItem('hasVisitedBefore') === '1') {
+          document.documentElement.classList.add('repeat-visit');
+        }
+      } catch (e) { /* storage blocked: treat as first visit */ }
+    })();
+  </script>
   <script defer src="https://analytics.digitalplat.org/static/analytics.js" data-property="dpa_3jDPRMI_D8o4t9AkhveSsfHcTI8TuMU"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script defer src="supabase.js"></script>
@@ -805,8 +816,9 @@
   <!-- 3. WIDGET 1 -->
   <section class="snap-section snap-widget-slide" id="widget1">
     <div class="slide-inner-card">
-      <div class="widget-mini-screen">
-        <iframe src="classes.html" title="Classes Preview" loading="lazy"></iframe>
+      <div class="widget-mini-screen" data-src="classes.html" data-title="Classes Preview">
+        <img class="mini-preview-img" data-src="previews/classes.svg" alt="Classes Preview" width="1200" height="800" loading="lazy" decoding="async">
+        <button type="button" class="mini-play-btn" aria-label="Load live preview: Classes Preview"><span class="mini-play-icon" aria-hidden="true">▶</span><span class="mini-play-text">Tap to open preview</span></button>
       </div>
       <div class="widget-description">
         <span class="widget-tag">01 / MODULE</span>
@@ -820,8 +832,9 @@
   <!-- 4. WIDGET 2 -->
   <section class="snap-section snap-widget-slide" id="widget2">
     <div class="slide-inner-card reverse">
-      <div class="widget-mini-screen">
-        <iframe src="study-timer.html" title="Study Timer Preview" loading="lazy"></iframe>
+      <div class="widget-mini-screen" data-src="study-timer.html" data-title="Study Timer Preview">
+        <img class="mini-preview-img" data-src="previews/study-timer.svg" alt="Study Timer Preview" width="1200" height="800" loading="lazy" decoding="async">
+        <button type="button" class="mini-play-btn" aria-label="Load live preview: Study Timer Preview"><span class="mini-play-icon" aria-hidden="true">▶</span><span class="mini-play-text">Tap to open preview</span></button>
       </div>
       <div class="widget-description">
         <span class="widget-tag">02 / PRODUCTIVITY</span>
@@ -835,8 +848,9 @@
   <!-- 5. WIDGET 3 -->
   <section class="snap-section snap-widget-slide" id="widget3">
     <div class="slide-inner-card">
-      <div class="widget-mini-screen">
-        <iframe src="view.html" title="Notes Hub Preview" loading="lazy"></iframe>
+      <div class="widget-mini-screen" data-src="view.html" data-title="Notes Hub Preview">
+        <img class="mini-preview-img" data-src="previews/notes.svg" alt="Notes Hub Preview" width="1200" height="800" loading="lazy" decoding="async">
+        <button type="button" class="mini-play-btn" aria-label="Load live preview: Notes Hub Preview"><span class="mini-play-icon" aria-hidden="true">▶</span><span class="mini-play-text">Tap to open preview</span></button>
       </div>
       <div class="widget-description">
         <span class="widget-tag">03 / ARCHIVE</span>
@@ -850,8 +864,9 @@
   <!-- 5. WIDGET CALENDAR -->
   <section class="snap-section snap-widget-slide" id="widgetCalendar">
     <div class="slide-inner-card">
-      <div class="widget-mini-screen">
-        <iframe src="calendar.html" title="Calendar & Schedule Preview" loading="lazy"></iframe>
+      <div class="widget-mini-screen" data-src="calendar.html" data-title="Calendar & Schedule Preview">
+        <img class="mini-preview-img" data-src="previews/calendar.svg" alt="Calendar & Schedule Preview" width="1200" height="800" loading="lazy" decoding="async">
+        <button type="button" class="mini-play-btn" aria-label="Load live preview: Calendar & Schedule Preview"><span class="mini-play-icon" aria-hidden="true">▶</span><span class="mini-play-text">Tap to open preview</span></button>
       </div>
       <div class="widget-description">
         <span class="widget-tag">04 / SCHEDULE</span>
@@ -865,8 +880,9 @@
   <!-- 6. WIDGET 4 -->
   <section class="snap-section snap-widget-slide" id="widget4">
     <div class="slide-inner-card reverse">
-      <div class="widget-mini-screen">
-        <iframe src="tests.html" title="Practice Tests Preview" loading="lazy"></iframe>
+      <div class="widget-mini-screen" data-src="tests.html" data-title="Practice Tests Preview">
+        <img class="mini-preview-img" data-src="previews/tests.svg" alt="Practice Tests Preview" width="1200" height="800" loading="lazy" decoding="async">
+        <button type="button" class="mini-play-btn" aria-label="Load live preview: Practice Tests Preview"><span class="mini-play-icon" aria-hidden="true">▶</span><span class="mini-play-text">Tap to open preview</span></button>
       </div>
       <div class="widget-description">
         <span class="widget-tag">05 / ASSESSMENT</span>
@@ -1387,25 +1403,6 @@ document.addEventListener("DOMContentLoaded", () => {
 </script>
 
 <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const sections = document.querySelectorAll(".snap-section");
-
-      const observerOptions = {
-        root: null,
-        threshold: 0.15
-      };
-
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("active-snap");
-          }
-        });
-      }, observerOptions);
-
-      sections.forEach(section => observer.observe(section));
-    });
-
     async function renderSidebarProfile() {
       const container = document.getElementById("navAuthContainer");
       if (!container) return;

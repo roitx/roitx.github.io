@@ -130,29 +130,10 @@ document.addEventListener("touchmove", (e) => {
   }
 });
 
-function initCardTilt() {
-  document.querySelectorAll('.card').forEach(card => {
-    card.addEventListener('mousemove', (e) => {
-      const rect = card.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-
-      card.style.setProperty('--card-x', `${x}px`);
-      card.style.setProperty('--card-y', `${y}px`);
-
-      const centerX = rect.width / 2;
-      const centerY = rect.height / 2;
-      const rotateX = -((y - centerY) / 12);
-      const rotateY = (x - centerX) / 12;
-
-      card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-4px)`;
-    });
-
-    card.addEventListener('mouseleave', () => {
-      card.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px)`;
-    });
-  });
-}
+/**
+ * Card tilt effect (single definition).
+ * Applies a subtle 3D tilt on mouse move for .card and .card-tilt elements.
+ */
 
 // ---------------------------------------------------------
 // 3. NOTIFICATION & TODAY'S CALENDAR SYSTEM
@@ -1029,27 +1010,124 @@ await checkAndSyncSecureStreak();
     updateOnlineStatus();
   }
 
-  // Splash Screen Animation Delay
-  const letters = document.querySelectorAll('.splash-text .letter');
-  letters.forEach((letter, idx) => {
-    letter.style.animationDelay = `${0.6 + (idx * 0.08)}s`;
-  });
+  // Splash screen: full 2.6s branding on first visit only.
+  // Repeat visitors skip it (the `repeat-visit` class is set in <head> before paint).
+  const splash = document.getElementById('splashScreen');
+  const isRepeatVisit = document.documentElement.classList.contains('repeat-visit');
 
-  setTimeout(() => {
-    const splash = document.getElementById('splashScreen');
-    if (splash) {
+  if (splash && isRepeatVisit) {
+    splash.remove();
+  } else if (splash) {
+    document.querySelectorAll('.splash-text .letter').forEach((letter, idx) => {
+      letter.style.animationDelay = `${0.6 + (idx * 0.08)}s`;
+    });
+
+    setTimeout(() => {
       splash.classList.add('fade-out');
       setTimeout(() => splash.remove(), 800);
-    }
-  }, 2600);
+      // Mark as visited only after the branding was actually shown.
+      try { localStorage.setItem('hasVisitedBefore', '1'); } catch (e) { /* ignore */ }
+    }, 2600);
+  }
 });
 
-// Shortcuts & Service Worker Handlers
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
+// ---------------------------------------------------------
+// SERVICE WORKER UPDATE HANDLER (no surprise reloads)
+// ---------------------------------------------------------
+(function initServiceWorkerUpdateHandler() {
+  if (!('serviceWorker' in navigator)) return;
+
+  const IDLE_MS = 30000;   // reload automatically only after 30s of inactivity
+  const CHECK_MS = 5000;   // how often we re-check the idle conditions
+  const FIELD_SELECTOR = 'input, textarea, select, [contenteditable=""], [contenteditable="true"]';
+
+  // On a first-ever install there is no old controller, so nothing to refresh.
+  const hadController = !!navigator.serviceWorker.controller;
+  let updateShown = false;
+  let reloading = false;
+  let lastActivity = Date.now();
+  const dirtyFields = new Set();
+
+  // --- Activity + dirty form tracking -----------------------------------
+  const markActive = () => { lastActivity = Date.now(); };
+  ['keydown', 'input', 'focusin'].forEach(evt => document.addEventListener(evt, markActive, true));
+
+  document.addEventListener('input', (e) => {
+    if (e.target && e.target.matches && e.target.matches(FIELD_SELECTOR)) dirtyFields.add(e.target);
+  }, true);
+
+  // A submitted / reset form no longer holds unsaved input.
+  const clearFormFields = (e) => {
+    if (e.target && e.target.elements) Array.from(e.target.elements).forEach(el => dirtyFields.delete(el));
+  };
+  document.addEventListener('submit', clearFormFields, true);
+  document.addEventListener('reset', clearFormFields, true);
+
+  function hasFocusedField() {
+    const el = document.activeElement;
+    return !!(el && el !== document.body && el.matches && el.matches(FIELD_SELECTOR));
+  }
+
+  function hasUnsavedInput() {
+    for (const el of dirtyFields) {
+      if (!el.isConnected) { dirtyFields.delete(el); continue; }
+      if (el.type === 'checkbox' || el.type === 'radio') {
+        if (el.checked !== el.defaultChecked) return true;
+      } else if (el.isContentEditable) {
+        if (el.textContent.trim() !== '') return true;
+      } else if (el.value !== (el.defaultValue || '')) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function isSafeToReload() {
+    return !hasFocusedField()
+      && !hasUnsavedInput()
+      && (Date.now() - lastActivity) >= IDLE_MS;
+  }
+
+  function reloadNow() {
+    if (reloading) return;
+    reloading = true;
     window.location.reload();
+  }
+
+  // --- Non-intrusive toast ------------------------------------------------
+  function showUpdateToast() {
+    if (updateShown) return;
+    updateShown = true;
+
+    const toast = document.createElement('div');
+    toast.className = 'sw-update-toast';
+    toast.setAttribute('role', 'status');
+    toast.setAttribute('aria-live', 'polite');
+
+    const text = document.createElement('span');
+    text.className = 'sw-update-text';
+    text.textContent = 'Update Available';
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'sw-update-btn';
+    btn.textContent = 'Refresh';
+    btn.addEventListener('click', reloadNow);
+
+    toast.append(text, btn);
+    document.body.appendChild(toast);
+
+    // Auto-refresh only once the user is idle and has no unsaved input.
+    setInterval(() => { if (isSafeToReload()) reloadNow(); }, CHECK_MS);
+  }
+
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadController) return;
+    showUpdateToast();
   });
-}
+})();
+
+// Keyboard shortcuts
 
 document.addEventListener("keydown", (e) => {
   if (e.altKey) {
@@ -1102,30 +1180,84 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-// Dynamic Iframe Auto-Scaling for Mini Screens
+// ---------------------------------------------------------
+// MINI PREVIEWS: lightweight image first, real <iframe> only on tap
+// ---------------------------------------------------------
+const MINI_BASE_WIDTH = 1200;
+const MINI_BASE_HEIGHT = 800;
+
+// Scales the container (and a live iframe, if loaded) to the available width.
 function autoFitMiniIframes() {
   document.querySelectorAll('.widget-mini-screen').forEach(container => {
+    const scale = container.clientWidth / MINI_BASE_WIDTH;
+    container.style.height = `${MINI_BASE_HEIGHT * scale}px`;
+
     const iframe = container.querySelector('iframe');
     if (!iframe) return;
 
-    const baseWidth = 1200; 
-    const containerWidth = container.clientWidth;
-    const scale = containerWidth / baseWidth;
-
-    iframe.style.width = `${baseWidth}px`;
-    iframe.style.height = `${800}px`; 
+    iframe.style.width = `${MINI_BASE_WIDTH}px`;
+    iframe.style.height = `${MINI_BASE_HEIGHT}px`;
     iframe.style.transform = `scale(${scale})`;
     iframe.style.transformOrigin = 'top left';
-    
-    container.style.height = `${800 * scale}px`;
   });
 }
 
+// Replaces the preview image + button with the real page (once, on user action).
+function loadMiniIframe(container) {
+  if (container.querySelector('iframe')) return;
+
+  const iframe = document.createElement('iframe');
+  iframe.src = container.dataset.src;
+  iframe.title = container.dataset.title || 'Preview';
+  iframe.loading = 'lazy';
+  container.appendChild(iframe);
+
+  container.querySelectorAll('.mini-preview-img, .mini-play-btn').forEach(el => el.remove());
+  autoFitMiniIframes();
+}
+
+function initLazyMiniPreviews() {
+  const containers = document.querySelectorAll('.widget-mini-screen[data-src]');
+  if (!containers.length) return;
+
+  // Load the preview image only when its card is close to the viewport.
+  const loadImage = (img) => {
+    if (img.dataset.src) {
+      img.src = img.dataset.src;
+      img.removeAttribute('data-src');
+    }
+  };
+  const images = Array.from(containers, c => c.querySelector('.mini-preview-img')).filter(Boolean);
+
+  if ('IntersectionObserver' in window) {
+    const imgObserver = new IntersectionObserver((entries, obs) => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        loadImage(entry.target);
+        obs.unobserve(entry.target);
+      });
+    }, { rootMargin: '300px 0px' });
+    images.forEach(img => imgObserver.observe(img));
+  } else {
+    images.forEach(loadImage); // very old browsers: just load them
+  }
+
+  // The real iframe loads ONLY after the user taps the preview.
+  containers.forEach(container => {
+    const btn = container.querySelector('.mini-play-btn');
+    const img = container.querySelector('.mini-preview-img');
+    if (btn) btn.addEventListener('click', () => loadMiniIframe(container));
+    if (img) img.addEventListener('click', () => loadMiniIframe(container));
+  });
+}
+
+document.addEventListener('DOMContentLoaded', initLazyMiniPreviews);
 window.addEventListener('load', autoFitMiniIframes);
 window.addEventListener('resize', autoFitMiniIframes);
 window.addEventListener('orientationchange', () => {
   setTimeout(autoFitMiniIframes, 200);
 });
+
 // --- NATIVE NOTIFICATION PERMISSION & PUSH SETUP ---
 const VAPID_PUBLIC_KEY = 'BMYEkoJeS0XfUioxCbOxw74ZpQmow8-OaGLrYiB3Bolh2Fl4U5AXNFA-5QJ16skwIMxlc2ZzsAi9XenHbfyivEs';
 

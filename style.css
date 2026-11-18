@@ -2301,3 +2301,90 @@ body.light .notif-type-tag.event { color: #b45309; }
 .pm-modal-overlay::-webkit-scrollbar, .pm-modal-overlay *::-webkit-scrollbar, .popup *::-webkit-scrollbar {
   display: none; width: 0; height: 0;
 }
+
+
+/* =========================================================
+   PERF: Splash skip for repeat visitors (class set in <head>)
+   ========================================================= */
+html.repeat-visit #splashScreen {
+  display: none !important;
+}
+
+/* =========================================================
+   PERF: Lightweight mini previews (image + play button)
+   Real iframe is injected only after the user taps.
+   ========================================================= */
+.mini-preview-img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  cursor: pointer;
+  background: var(--bg-dark-1);
+}
+
+.mini-play-btn {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  border: 1px solid rgba(0, 240, 255, 0.45);
+  border-radius: 999px;
+  background: rgba(5, 11, 24, 0.72);
+  color: #fff;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1;
+  font-family: inherit;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.mini-play-btn:hover,
+.mini-play-btn:focus-visible {
+  transform: translate(-50%, -50%) scale(1.05);
+  background: rgba(0, 240, 255, 0.2);
+}
+
+.mini-play-icon {
+  color: #00f0ff;
+}
+
+/* =========================================================
+   PERF: Service worker "Update Available" toast
+   ========================================================= */
+.sw-update-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 20px;
+  transform: translateX(-50%);
+  z-index: 10001;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: #0c1427;
+  color: #e9f2ff;
+  border: 1px solid rgba(0, 210, 255, 0.3);
+  border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  font-size: 14px;
+}
+
+.sw-update-btn {
+  padding: 6px 14px;
+  border: 0;
+  border-radius: 10px;
+  background: #3aa0ff;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
