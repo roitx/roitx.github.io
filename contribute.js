@@ -111,6 +111,23 @@
   .cx-empty{grid-column:1/-1;text-align:center;color:#9fb0cc;padding:50px 10px;font-size:14px}
   .cx-busy{position:absolute;inset:0;background:rgba(5,8,18,.75);display:none;align-items:center;justify-content:center;font-size:15px;z-index:3}
   .cx-tip{font-size:12px;color:#9fb0cc;text-align:center;padding:6px 10px 0}
+  .cx-pg{cursor:pointer}
+  .cx-pg{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+  .cx-pg img{pointer-events:none;-webkit-user-drag:none}
+  .cx-pg.lift{opacity:.28;outline:2px dashed #7c4dff;outline-offset:-2px}
+  .cx-pg.fl{transition:transform .17s ease}
+  .cx-pages{overscroll-behavior:contain;grid-auto-rows:max-content;-webkit-overflow-scrolling:touch}
+  .cx-pages .cx-pg{width:100%;height:auto;min-height:0;box-sizing:border-box}
+  .cx-ghost{position:fixed;left:0;top:0;z-index:10300;pointer-events:none;margin:0;opacity:.95;will-change:transform;box-shadow:0 12px 30px rgba(0,0,0,.6);border-color:#7c4dff!important}
+  .cx-pg b{width:28px;height:28px;line-height:28px;font-size:16px}
+  .cx-mv{position:absolute;bottom:4px;width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,.65);border:0;color:#fff;font-size:18px;line-height:26px;padding:0;text-align:center}
+  .cx-mv.l{right:36px}.cx-mv.r{right:4px}.cx-mv:disabled{display:none}
+  .cx-sub{display:flex;align-items:center;justify-content:space-between;padding:8px 14px 0;font-size:12px;color:#9fb0cc}
+  .cx-sub button{background:none;border:0;color:#ff7b8a;font-size:12px;padding:4px 0}
+  .cx-big{display:flex;gap:10px;justify-content:center;margin-top:18px}
+  .cx-big .cx-btn{flex:1;max-width:160px}
+  .cx-toast{position:absolute;left:14px;right:14px;bottom:200px;background:#262d4a;border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;font-size:13px;z-index:5;box-shadow:0 6px 20px rgba(0,0,0,.4)}
+  .cx-toast button{background:none;border:0;color:#9fb0ff;font-weight:700;font-size:13px;padding:2px 6px}
   `;
   const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
 
@@ -431,28 +448,166 @@
       camIn.onchange = async () => { const f = [...camIn.files]; camIn.value = ''; if (f.length) await handleFiles(f); };
       galIn.onchange = async () => { const f = [...galIn.files]; galIn.value = ''; if (f.length) await handleFiles(f); };
 
+      let dragging = false;
+      function refreshTiles(grid) {            // drag ke baad: numbers + ‹ › states, bina poori list dobara banaye
+        const kids = [...grid.querySelectorAll('.cx-pg')], n = kids.length;
+        kids.forEach((c, k) => {
+          c.querySelector('i').textContent = k + 1;
+          c.querySelector('.cx-mv.l').disabled = k === 0;
+          c.querySelector('.cx-mv.r').disabled = k === n - 1;
+        });
+        const top = root.querySelector('.cx-top span'); if (top) top.textContent = 'Scan (' + n + ' page)';
+      }
+      function attachDrag(d, p, grid) {
+        let timer = null, sx = 0, sy = 0, ghost = null, ox = 0, oy = 0, raf = 0, dir = 0, lastX = 0, lastY = 0, pid = -1;
+        let slots = [], cur = 0, from = 0, gw = 0;
+        const stop = () => { clearTimeout(timer); timer = null; };
+
+        function measure() {                     // har slot ki jagah (grid ke andar) - ek baar
+          const gr = grid.getBoundingClientRect(), st = grid.scrollTop;
+          slots = [...grid.querySelectorAll('.cx-pg')].map(c => { const r = c.getBoundingClientRect(); return { x: r.left - gr.left + grid.scrollLeft, y: r.top - gr.top + st, w: r.width, h: r.height }; });
+          gw = gr.width;
+        }
+        function slotAt(x, y) {                  // finger kis slot par hai (pure math, DOM read nahi)
+          const gr = grid.getBoundingClientRect();
+          const gx = x - gr.left + grid.scrollLeft, gy = y - gr.top + grid.scrollTop;
+          let best = -1, bd = 1e12;
+          for (let k = 0; k < slots.length; k++) {
+            const s = slots[k];
+            const dx = gx - (s.x + s.w / 2), dy = gy - (s.y + s.h / 2);
+            const dd = dx * dx + dy * dy;
+            if (dd < bd) { bd = dd; best = k; }
+          }
+          return best;
+        }
+        function moveTo(k) {
+          if (k < 0 || k === cur) return;
+          const kids = [...grid.querySelectorAll('.cx-pg')];
+          const before = new Map(kids.map((c, idx) => [c, idx]));
+          const ref = kids[k];
+          grid.insertBefore(d, cur < k ? ref.nextSibling : ref);
+          cur = k;
+          const after = [...grid.querySelectorAll('.cx-pg')];
+          const moved = [];
+          after.forEach((c, idx) => {            // FLIP: purani slot se nayi slot tak smooth slide
+            const o = before.get(c);
+            if (c === d || o === idx) return;
+            const a = slots[o], b = slots[idx];
+            c.classList.remove('fl'); c.style.transform = `translate(${a.x - b.x}px,${a.y - b.y}px)`; moved.push(c);
+          });
+          if (moved.length) {
+            void grid.offsetWidth;
+            moved.forEach(c => { c.classList.add('fl'); c.style.transform = ''; });
+            setTimeout(() => moved.forEach(c => c.classList.remove('fl')), 220);
+          }
+        }
+        function tick() {
+          raf = 0; if (!dragging) return;
+          if (ghost) ghost.style.transform = `translate3d(${lastX - ox}px,${lastY - oy}px,0) scale(1.06)`;
+          if (dir) { grid.scrollTop += dir * 10; }
+          moveTo(slotAt(lastX, lastY));
+          if (dir) raf = requestAnimationFrame(tick);
+        }
+        const kick = () => { if (!raf) raf = requestAnimationFrame(tick); };
+
+        function onMove(e) {
+          if (e.pointerId !== pid) return;
+          lastX = e.clientX; lastY = e.clientY;
+          const gr = grid.getBoundingClientRect();
+          dir = lastY < gr.top + 56 ? -1 : lastY > gr.bottom - 56 ? 1 : 0;
+          kick();
+        }
+        function onUp(e) { if (e.pointerId === pid) end(); }
+        function end() {
+          stop(); cancelAnimationFrame(raf); raf = 0;
+          document.removeEventListener('pointermove', onMove, true);
+          document.removeEventListener('pointerup', onUp, true);
+          document.removeEventListener('pointercancel', onUp, true);
+          if (!dragging) return;
+          dragging = false;
+          if (ghost) { ghost.remove(); ghost = null; }
+          d.classList.remove('lift');
+          d._justDragged = true; setTimeout(() => { d._justDragged = false; }, 150);
+          const to = [...grid.querySelectorAll('.cx-pg')].indexOf(d);
+          if (to !== from && to >= 0) { const [it] = pages.splice(from, 1); pages.splice(to, 0, it); }
+          refreshTiles(grid);
+        }
+        d.addEventListener('pointerdown', e => {
+          if (e.target.closest('b,.cx-mv') || (e.pointerType === 'mouse' && e.button !== 0) || dragging) return;
+          sx = lastX = e.clientX; sy = lastY = e.clientY; pid = e.pointerId;
+          stop();
+          timer = setTimeout(() => {
+            timer = null; dragging = true;
+            measure();
+            from = cur = pages.indexOf(p);
+            const r = d.getBoundingClientRect(); ox = sx - r.left; oy = sy - r.top;
+            ghost = d.cloneNode(true); ghost.classList.add('cx-ghost');
+            ghost.style.width = r.width + 'px'; ghost.style.height = r.height + 'px';
+            ghost.style.transform = `translate3d(${r.left}px,${r.top}px,0) scale(1.06)`;
+            root.appendChild(ghost);                 // root ke andar: font/colour wahi rahe
+            d.classList.add('lift');
+            if (navigator.vibrate) navigator.vibrate(12);
+            document.addEventListener('pointermove', onMove, true);     // document par: element hilne se bhi event nahi rukte
+            document.addEventListener('pointerup', onUp, true);
+            document.addEventListener('pointercancel', onUp, true);
+            ghost.style.transform = `translate3d(${lastX - ox}px,${lastY - oy}px,0) scale(1.06)`;
+          }, 260);
+        });
+        d.addEventListener('pointermove', e => { if (timer && Math.hypot(e.clientX - sx, e.clientY - sy) > 8) stop(); });
+        d.addEventListener('pointerup', stop);
+        d.addEventListener('pointercancel', stop);
+        d.addEventListener('contextmenu', e => e.preventDefault());
+      }
+
+      let lockTimer = null;
+      function showUndo(item, idx) {
+        const old = root.querySelector('.cx-toast'); if (old) old.remove();
+        const t = document.createElement('div'); t.className = 'cx-toast';
+        t.innerHTML = '<span>Page hata diya</span><button>UNDO</button>';
+        t.querySelector('button').onclick = () => { pages.splice(Math.min(idx, pages.length), 0, item); t.remove(); renderList(); };
+        root.appendChild(t); setTimeout(() => t.remove(), 4500);
+      }
+
       function renderList() {
         let list = root.querySelector('.cx-list'); if (list) list.remove();
+        const n = pages.length;
         const wrap = document.createElement('div'); wrap.className = 'cx-list'; wrap.style.cssText = 'display:flex;flex-direction:column;flex:1;min-height:0';
         wrap.innerHTML = `
-          <div class="cx-top"><button id="cxX">${ICON.close} Band</button><span>Scan (${pages.length} page)</span><span style="width:60px"></span></div>
+          <div class="cx-top"><button id="cxX">${ICON.close} Band</button><span>Scan (${n} page)</span><span style="width:60px"></span></div>
+          ${n ? `<div class="cx-sub"><span>${n}/${CFG.maxPages} pages \u00b7 page ko dabakar pakdo, khischo</span><button id="cxClr">Sab hatao</button></div>` : ''}
           <div class="cx-pages"></div>
-          <div class="cx-tip">Tip: page ko tap karke dobara edit kar sakte ho</div>
-          <div class="cx-bar">
-            <button class="cx-btn sec" id="cxCam">${ICON.camera} Camera</button>
-            <button class="cx-btn sec" id="cxGal">${ICON.image} Gallery</button>
-            <button class="cx-btn" id="cxMk" ${pages.length ? '' : 'disabled'}>${ICON.check} PDF banao</button>
+          ${n ? '<div class="cx-tip">Tip: page ko tap karke dobara edit kar sakte ho</div>' : ''}
+          <div class="cx-bar" style="flex-direction:column;flex-wrap:nowrap;align-items:stretch;gap:10px">
+            <div style="font-size:12px;color:#9fb0cc;text-align:center">+ Aur page add karna hai?</div>
+            <div style="display:flex;gap:8px">
+              <button class="cx-btn sec" id="cxCam" style="flex:1">${ICON.camera} Camera</button>
+              <button class="cx-btn sec" id="cxGal" style="flex:1">${ICON.image} Gallery</button>
+            </div>
+            <div style="border-top:1px dashed rgba(255,255,255,.18);margin:6px 0 0"></div>
+            <div style="font-size:12px;color:#9fb0cc;text-align:center">Sab pages ho gaye? Tab hi neeche dabao</div>
+            <button class="cx-btn" id="cxMk" style="width:100%" disabled>${ICON.check} PDF banao (${n} page)</button>
           </div>`;
         root.appendChild(wrap);
+        // galti se tap na ho: naya page aane ke baad 0.8s tak PDF button locked
+        const mk0 = wrap.querySelector('#cxMk');
+        clearTimeout(lockTimer);
+        if (n) lockTimer = setTimeout(() => { if (mk0.isConnected) mk0.disabled = false; }, 800);
         const grid = wrap.querySelector('.cx-pages');
-        if (!pages.length) grid.innerHTML = '<div class="cx-empty">Abhi koi page nahi.<br>Neeche se camera ya gallery chuno.<br><br>Acchi quality ke liye: roshni me, page ko seedha rakhkar photo lo.</div>';
+        if (!n) grid.innerHTML = `<div class="cx-empty">Abhi koi page nahi.<br>Neeche se camera ya gallery chuno.<br><br>Acchi quality ke liye: roshni me, page ko seedha rakhkar photo lo.</div>`;
+        grid.addEventListener('touchmove', e => { if (dragging) e.preventDefault(); }, { passive: false });
         pages.forEach((p, i) => {
           const d = document.createElement('div'); d.className = 'cx-pg';
-          d.innerHTML = `<img src="${p.thumb}"><i>${i + 1}</i><b>×</b>`;
-          d.querySelector('b').onclick = e => { e.stopPropagation(); pages.splice(i, 1); renderList(); };
-          d.onclick = async () => { const r = await editPage(root, p.file, p); if (r) pages[i] = r; renderList(); };
+          d.innerHTML = `<img src="${p.thumb}" draggable="false"><i>${i + 1}</i><b>\u00d7</b><button class="cx-mv l" ${i === 0 ? 'disabled' : ''}>\u2039</button><button class="cx-mv r" ${i === n - 1 ? 'disabled' : ''}>\u203a</button>`;
+          const idx = () => pages.indexOf(p);
+          d.querySelector('b').onclick = e => { e.stopPropagation(); const k = idx(); if (k < 0) return; const [it] = pages.splice(k, 1); renderList(); showUndo(it, k); };
+          d.querySelector('.cx-mv.l').onclick = e => { e.stopPropagation(); const k = idx(); if (k > 0) { [pages[k - 1], pages[k]] = [pages[k], pages[k - 1]]; renderList(); } };
+          d.querySelector('.cx-mv.r').onclick = e => { e.stopPropagation(); const k = idx(); if (k >= 0 && k < pages.length - 1) { [pages[k + 1], pages[k]] = [pages[k], pages[k + 1]]; renderList(); } };
+          d.onclick = async () => { if (d._justDragged) return; const k = idx(); if (k < 0) return; const r = await editPage(root, p.file, p); if (r) pages[k] = r; renderList(); };
           grid.appendChild(d);
+          attachDrag(d, p, grid);
         });
+        const clr = wrap.querySelector('#cxClr');
+        if (clr) clr.onclick = () => { if (confirm('Saare ' + n + ' pages hata dein?')) { pages.length = 0; renderList(); } };
         wrap.querySelector('#cxX').onclick = () => { if (!pages.length || confirm('Scan cancel karein? Pages hat jayenge.')) finish(null); };
         wrap.querySelector('#cxCam').onclick = () => camIn.click();
         wrap.querySelector('#cxGal').onclick = () => galIn.click();
@@ -467,7 +622,7 @@
             }
             if (pdf.size > CFG.maxPdfMB * 1048576) throw new Error('PDF ' + mb(pdf.size) + ' hai, limit ' + CFG.maxPdfMB + ' MB. Pages kam karo.');
             finish(pdf);
-          } catch (e) { alert('' + e.message); btn.disabled = false; btn.innerHTML = ICON.check + ' PDF banao'; }
+          } catch (e) { alert('' + e.message); btn.disabled = false; btn.innerHTML = ICON.check + ' PDF banao (' + pages.length + ' page)'; }
         };
       }
       renderList();
