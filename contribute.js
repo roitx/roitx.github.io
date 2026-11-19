@@ -1,5 +1,5 @@
 /* =====================================================================
-   contribute.js — User Upload (Notes + Formulas) with HIGH-QUALITY SCAN
+   contribute.js - User Upload (Notes + Formulas) with HIGH-QUALITY SCAN
    Har page par bas ek line:  <script src="contribute.js"></script>
    (site.js ke BAAD, </body> se pehle)
    ===================================================================== */
@@ -89,6 +89,19 @@
   .cx-sl{display:flex;align-items:center;gap:8px;font-size:12px;color:#9fb0cc;padding:5px 4px 0}
   .cx-sl span{width:62px}.cx-sl input{flex:1;min-width:0;accent-color:#7c4dff}.cx-sl b{width:30px;text-align:right;color:#fff;font-weight:600}
   .cx-sl button{background:#1a2038;border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:8px;padding:5px 7px;display:inline-flex}
+  .cx-th{display:flex;gap:8px;overflow-x:auto;padding:8px 10px 4px;scrollbar-width:none}
+  .cx-th::-webkit-scrollbar{display:none}
+  .cx-th button{flex:none;width:64px;background:none;border:0;color:#9fb0cc;font-size:11px;padding:0;text-align:center}
+  .cx-th img{display:block;width:64px;height:84px;object-fit:cover;border-radius:9px;border:2px solid transparent;background:#fff}
+  .cx-th button.on{color:#fff}.cx-th button.on img{border-color:#7c4dff}
+  .cx-th span{display:block;margin-top:3px}
+  .cx-tools{display:flex;justify-content:space-around;padding:6px 6px 2px}
+  .cx-tools button{background:none;border:0;color:#cfd8ee;font-size:11px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 10px;border-radius:10px}
+  .cx-tools button.on{background:#1f2748;color:#fff}
+  .cx-brush{display:flex;justify-content:space-around;align-items:center;background:#1a2038;border-radius:30px;margin:8px 14px 0;padding:6px 8px}
+  .cx-brush button{width:46px;height:46px;padding:0;border-radius:50%;border:2px solid transparent;background:none;display:flex;align-items:center;justify-content:center}
+  .cx-brush button.on{border-color:#fff}.cx-brush i{display:block;flex:none;border-radius:50%;background:#e2e6f3}
+  .cx-bar .cx-btn:disabled{opacity:.35}
   .cx-chips button.on{background:#3d5afe;border-color:#7c4dff}
   .cx-pages{flex:1;overflow:auto;padding:14px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;align-content:start}
   .cx-pg{position:relative;background:#151a2b;border-radius:8px;overflow:hidden;aspect-ratio:3/4;border:1px solid rgba(255,255,255,.12)}
@@ -138,10 +151,10 @@
   }
 
   /* =====================================================================
-     SCAN ENGINE — perspective fix + shadow removal + document filters
+     SCAN ENGINE - perspective fix + shadow removal + document filters
      ===================================================================== */
 
-  // 4 corner (TL,TR,BR,BL) se seedha (flat) page banata hai — real perspective warp
+  // 4 corner (TL,TR,BR,BL) se seedha (flat) page banata hai - real perspective warp
   function warp(src, c) {
     const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
     let W = Math.max(dist(c[0], c[1]), dist(c[3], c[2]));
@@ -196,11 +209,8 @@
     return r;
   }
 
-  // Paper ka background estimate (block-wise 70th percentile) -> shadow/pila-pan hatata hai,
-  // pen ka rang (neela/kala) waisa hi rehta hai.
-  function cleanFilter(srcC, bw) {
-    const W = srcC.width, H = srcC.height;
-    const ctx = srcC.getContext('2d'); const img = ctx.getImageData(0, 0, W, H); const d = img.data;
+  /* ---------- Paper (background) estimate: block-wise 70th percentile ---------- */
+  function estimateBg(d, W, H) {
     const Bk = Math.max(24, Math.round(Math.max(W, H) / 36));
     const gx = Math.ceil(W / Bk), gy = Math.ceil(H / Bk);
     const bg = [new Float32Array(gx * gy), new Float32Array(gx * gy), new Float32Array(gx * gy)];
@@ -219,38 +229,58 @@
         bg[ch][by * gx + bx] = Math.max(v, 40);
       }
     }
-    // bilinear interpolation weights (precomputed)
+    return { bg, gx, gy, Bk };
+  }
+  // y-th row ka smooth (bilinear) background, 3 channel
+  function makeBgRows(est, W) {
+    const { bg, gx, gy, Bk } = est;
     const ix0 = new Int32Array(W), ix1 = new Int32Array(W), wx = new Float32Array(W);
     for (let x = 0; x < W; x++) {
       let f = x / Bk - 0.5; if (f < 0) f = 0; if (f > gx - 1) f = gx - 1;
       const a = f | 0; ix0[x] = a; ix1[x] = Math.min(gx - 1, a + 1); wx[x] = f - a;
     }
-    const LO = 45, HI = 225, sc = 255 / (HI - LO);
-    for (let y = 0; y < H; y++) {
+    const rows = [new Float32Array(W), new Float32Array(W), new Float32Array(W)];
+    return function (y) {
       let f = y / Bk - 0.5; if (f < 0) f = 0; if (f > gy - 1) f = gy - 1;
-      const ya = f | 0, yb = Math.min(gy - 1, ya + 1), wy = f - ya;
-      for (let x = 0; x < W; x++) {
-        const i = (y * W + x) * 4, a = ix0[x], b = ix1[x], w = wx[x];
-        const r0 = ya * gx, r1 = yb * gx;
-        let r = 0, g = 0, bl = 0;
-        for (let ch = 0; ch < 3; ch++) {
-          const t = bg[ch];
-          const top = t[r0 + a] * (1 - w) + t[r0 + b] * w;
-          const bot = t[r1 + a] * (1 - w) + t[r1 + b] * w;
-          const bgv = top * (1 - wy) + bot * wy;
-          let v = d[i + ch] * 255 / bgv;                 // paper -> 255
-          v = (v - LO) * sc;                               // levels
-          if (ch === 0) r = v; else if (ch === 1) g = v; else bl = v;
+      const ya = f | 0, yb = Math.min(gy - 1, ya + 1), wy = f - ya, r0 = ya * gx, r1 = yb * gx;
+      for (let ch = 0; ch < 3; ch++) {
+        const t = bg[ch], row = rows[ch];
+        for (let x = 0; x < W; x++) {
+          const a = ix0[x], b = ix1[x], w = wx[x];
+          row[x] = (t[r0 + a] * (1 - w) + t[r0 + b] * w) * (1 - wy) + (t[r1 + a] * (1 - w) + t[r1 + b] * w) * wy;
         }
-        if (bw) {
-          let L = 0.299 * r + 0.587 * g + 0.114 * bl;
-          L = (L - 95) / (190 - 95); L = L < 0 ? 0 : L > 1 ? 1 : L;
-          L = L * L * (3 - 2 * L) * 255;
-          d[i] = d[i + 1] = d[i + 2] = L;
+      }
+      return rows;
+    };
+  }
+
+  /* ---------- Filters (Google scanner jaise) ---------- */
+  const FILTERS = [['orig', 'Original'], ['auto', 'Auto'], ['color', 'Color'], ['gray', 'Grayscale'], ['bw', 'B&W'], ['shadows', 'Shadows']];
+  const PRESET = {
+    auto:    { mode: 'color', lo: 45, hi: 225, sat: 1 },
+    color:   { mode: 'color', lo: 35, hi: 215, sat: 1.3 },
+    gray:    { mode: 'gray',  lo: 45, hi: 225, sat: 1 },
+    bw:      { mode: 'bw',    lo: 45, hi: 225, sat: 1 },
+    shadows: { mode: 'color', lo: 0,  hi: 250, sat: 1 }      // sirf parchhai hatao, baaki jaisa hai waisa
+  };
+
+  function enhance(srcC, o) {
+    const W = srcC.width, H = srcC.height;
+    const img = srcC.getContext('2d').getImageData(0, 0, W, H), d = img.data;
+    const rowsOf = makeBgRows(estimateBg(d, W, H), W);
+    const lo = o.lo, sc = 255 / (o.hi - o.lo), sat = o.sat || 1;
+    for (let y = 0; y < H; y++) {
+      const rows = rowsOf(y), R = rows[0], G = rows[1], B = rows[2];
+      for (let x = 0, i = y * W * 4; x < W; x++, i += 4) {
+        let r = (d[i] * 255 / R[x] - lo) * sc, g = (d[i + 1] * 255 / G[x] - lo) * sc, b = (d[i + 2] * 255 / B[x] - lo) * sc;
+        if (o.mode === 'color') {
+          if (sat !== 1) { const L = 0.299 * r + 0.587 * g + 0.114 * b; r = L + (r - L) * sat; g = L + (g - L) * sat; b = L + (b - L) * sat; }
+          d[i] = r < 0 ? 0 : r > 255 ? 255 : r; d[i + 1] = g < 0 ? 0 : g > 255 ? 255 : g; d[i + 2] = b < 0 ? 0 : b > 255 ? 255 : b;
         } else {
-          d[i] = r < 0 ? 0 : r > 255 ? 255 : r;
-          d[i + 1] = g < 0 ? 0 : g > 255 ? 255 : g;
-          d[i + 2] = bl < 0 ? 0 : bl > 255 ? 255 : bl;
+          let L = 0.299 * r + 0.587 * g + 0.114 * b;
+          if (o.mode === 'bw') { L = (L - 95) / 95; L = L < 0 ? 0 : L > 1 ? 1 : L; L = L * L * (3 - 2 * L) * 255; }
+          else L = L < 0 ? 0 : L > 255 ? 255 : L;
+          d[i] = d[i + 1] = d[i + 2] = L;
         }
       }
     }
@@ -258,10 +288,97 @@
     out.getContext('2d').putImageData(img, 0, 0);
     return out;
   }
-
   function applyFilter(base, mode) {
-    if (mode === 'orig') return base;
-    return cleanFilter(base, mode === 'bw');
+    if (mode === 'orig' || !PRESET[mode]) return base;
+    return enhance(base, PRESET[mode]);
+  }
+
+  // Clean (eraser) ke liye: paper ka rang har jagah ka (smooth) - isse daag "paper" se dhak jata hai
+  function paperBg(c) {
+    const W = c.width, H = c.height;
+    const d = c.getContext('2d').getImageData(0, 0, W, H).data;
+    const rowsOf = makeBgRows(estimateBg(d, W, H), W);
+    const out = document.createElement('canvas'); out.width = W; out.height = H;
+    const x = out.getContext('2d'), id = x.createImageData(W, H), o = id.data;
+    for (let y = 0; y < H; y++) {
+      const r = rowsOf(y); let k = y * W * 4;
+      for (let xx = 0; xx < W; xx++, k += 4) { o[k] = r[0][xx]; o[k + 1] = r[1][xx]; o[k + 2] = r[2][xx]; o[k + 3] = 255; }
+    }
+    x.putImageData(id, 0, 0);
+    return out;
+  }
+
+  // Brightness/Contrast (256-entry table)
+  function lutInto(srcC, dst, b, k) {
+    const x = dst.getContext('2d'); x.drawImage(srcC, 0, 0);
+    const id = x.getImageData(0, 0, dst.width, dst.height), d = id.data;
+    const lut = new Uint8ClampedArray(256);
+    for (let v = 0; v < 256; v++) lut[v] = (v - 128) * k + 128 + b;
+    for (let i = 0; i < d.length; i += 4) { d[i] = lut[d[i]]; d[i + 1] = lut[d[i + 1]]; d[i + 2] = lut[d[i + 2]]; }
+    x.putImageData(id, 0, 0);
+  }
+  function lutCopy(srcC, b, k) { const o = document.createElement('canvas'); o.width = srcC.width; o.height = srcC.height; lutInto(srcC, o, b, k); return o; }
+
+  /* ---------- Automatic crop: paper ko background se alag karke 4 kone dhoondta hai ---------- */
+  function boxBlur(g, w, h, r) {                      // patli lines / likhawat ko "paper" me ghol do
+    const t = new Float32Array(w * h), o = new Uint8Array(w * h), n = 2 * r + 1;
+    for (let y = 0; y < h; y++) { let s = 0; for (let x = -r; x <= r; x++) s += g[y * w + Math.min(w - 1, Math.max(0, x))];
+      for (let x = 0; x < w; x++) { t[y * w + x] = s / n; s += g[y * w + Math.min(w - 1, x + r + 1)] - g[y * w + Math.max(0, x - r)]; } }
+    for (let x = 0; x < w; x++) { let s = 0; for (let y = -r; y <= r; y++) s += t[Math.min(h - 1, Math.max(0, y)) * w + x];
+      for (let y = 0; y < h; y++) { o[y * w + x] = s / n; s += t[Math.min(h - 1, y + r + 1) * w + x] - t[Math.max(0, y - r) * w + x]; } }
+    return o;
+  }
+  function detectQuad(g0, w, h) {
+    const g = boxBlur(g0, w, h, 3);
+    const hist = new Uint32Array(256); for (let i = 0; i < g.length; i++) hist[g[i]]++;
+    let sum = 0; for (let i = 0; i < 256; i++) sum += i * hist[i];
+    let wB = 0, sB = 0, best = -1, thr = 128;
+    for (let t = 0; t < 256; t++) {
+      wB += hist[t]; if (!wB) continue; const wF = g.length - wB; if (!wF) break;
+      sB += t * hist[t]; const mB = sB / wB, mF = (sum - sB) / wF, v = wB * wF * (mB - mF) * (mB - mF);
+      if (v > best) { best = v; thr = t; }
+    }
+    // centre ke aas-paas jo zyada hai wahi "paper" maano
+    const cx = w >> 1, cy = h >> 1, rad = Math.max(3, Math.round(Math.min(w, h) * 0.1));
+    let bright = 0, tot = 0;
+    for (let y = cy - rad; y <= cy + rad; y++) for (let x = cx - rad; x <= cx + rad; x++) { tot++; if (g[y * w + x] > thr) bright++; }
+    const paper = bright * 2 >= tot ? 1 : 0;
+    const isP = i => (g[i] > thr ? 1 : 0) === paper;
+    let seed = -1;
+    for (let r = 0; r <= rad && seed < 0; r++) for (let y = cy - r; y <= cy + r && seed < 0; y++) for (let x = cx - r; x <= cx + r; x++) { if (isP(y * w + x)) { seed = y * w + x; break; } }
+    if (seed < 0) return null;
+    const seen = new Uint8Array(w * h), q = new Int32Array(w * h); let qh = 0, qt = 0;
+    q[qt++] = seed; seen[seed] = 1;
+    let area = 0, tl = null, br = null, tr = null, bl = null, mnS = 1e9, mxS = -1e9, mnD = 1e9, mxD = -1e9;
+    while (qh < qt) {
+      const i = q[qh++], x = i % w, y = (i / w) | 0; area++;
+      const s = x + y, dd = x - y;
+      if (s < mnS) { mnS = s; tl = [x, y]; } if (s > mxS) { mxS = s; br = [x, y]; }
+      if (dd > mxD) { mxD = dd; tr = [x, y]; } if (dd < mnD) { mnD = dd; bl = [x, y]; }
+      if (x > 0 && !seen[i - 1] && isP(i - 1)) { seen[i - 1] = 1; q[qt++] = i - 1; }
+      if (x < w - 1 && !seen[i + 1] && isP(i + 1)) { seen[i + 1] = 1; q[qt++] = i + 1; }
+      if (y > 0 && !seen[i - w] && isP(i - w)) { seen[i - w] = 1; q[qt++] = i - w; }
+      if (y < h - 1 && !seen[i + w] && isP(i + w)) { seen[i + w] = 1; q[qt++] = i + w; }
+    }
+    const ratio = area / (w * h);
+    if (ratio < 0.12 || ratio > 0.97) return null;
+    const pts = [tl, tr, br, bl];
+    for (let a = 0; a < 4; a++) for (let b = a + 1; b < 4; b++) if (Math.hypot(pts[a][0] - pts[b][0], pts[a][1] - pts[b][1]) < Math.min(w, h) * 0.1) return null;
+    return pts;
+  }
+  function autoCorners(src) {
+    const k = 320 / Math.max(src.width, src.height);
+    const w = Math.max(40, Math.round(src.width * k)), h = Math.max(40, Math.round(src.height * k));
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    const x = c.getContext('2d'); x.drawImage(src, 0, 0, w, h);
+    const d = x.getImageData(0, 0, w, h).data, g = new Uint8Array(w * h);
+    for (let i = 0; i < g.length; i++) g[i] = (d[i * 4] * 299 + d[i * 4 + 1] * 587 + d[i * 4 + 2] * 114) / 1000;
+    const q = detectQuad(g, w, h);
+    return q ? q.map(p => ({ x: Math.min(src.width, p[0] / k), y: Math.min(src.height, p[1] / k) })) : null;
+  }
+  function defaultCorners(src) {
+    const a = 0.06, W = src.width, H = src.height;
+    return [{ x: W * a, y: H * a }, { x: W * (1 - a), y: H * a }, { x: W * (1 - a), y: H * (1 - a) }, { x: W * a, y: H * (1 - a) }];
   }
 
   async function recompress(blob, scale, q) {
@@ -340,7 +457,7 @@
         wrap.querySelector('#cxCam').onclick = () => camIn.click();
         wrap.querySelector('#cxGal').onclick = () => galIn.click();
         wrap.querySelector('#cxMk').onclick = async () => {
-          const btn = wrap.querySelector('#cxMk'); btn.disabled = true; btn.textContent = 'PDF ban rahi hai…';
+          const btn = wrap.querySelector('#cxMk'); btn.disabled = true; btn.textContent = 'PDF ban rahi hai...';
           try {
             let use = pages.map(p => ({ blob: p.blob, w: p.w, h: p.h }));
             let pdf = await buildPdf(use);
@@ -358,137 +475,256 @@
     });
   }
 
-  // ---- ek page ka editor: crop (4 corners) -> filter ----
+  // ---- ek page ka editor: crop (auto-detect, 4 corners, loupe) -> filters / adjust / clean ----
+  const IC2 = {
+    auto: I('<path d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9z"/><path d="M19 15l.8 1.9 1.9.8-1.9.8L19 20.4l-.8-1.9-1.9-.8 1.9-.8z"/>'),
+    full: I('<path d="M3 8V5a2 2 0 0 1 2-2h3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M21 16v3a2 2 0 0 1-2 2h-3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/>'),
+    eraser: I('<path d="M7 21h10"/><path d="M5.5 14.5l8-8a2 2 0 0 1 2.8 0l3 3a2 2 0 0 1 0 2.8L12.8 18.5H9z"/>'),
+    sliders: I('<line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>'),
+    undo: I('<path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-15-6.7L3 13"/>'),
+    redo: I('<path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 15-6.7L21 13"/>')
+  };
+  const BRUSH = [0.5, 1, 1.8, 3, 4.5];                   // brush size (image width ka %)
+
+  function makeThumbs(b) {
+    const k = 150 / Math.max(b.width, b.height), t = document.createElement('canvas');
+    t.width = Math.max(24, Math.round(b.width * k)); t.height = Math.max(24, Math.round(b.height * k));
+    t.getContext('2d').drawImage(b, 0, 0, t.width, t.height);
+    const o = {}; FILTERS.forEach(f => { o[f[0]] = applyFilter(t, f[0]).toDataURL('image/jpeg', 0.6); });
+    return o;
+  }
+
   function editPage(root, file, prev) {
     return new Promise(async resolve => {
-      const ed = document.createElement('div'); ed.style.cssText = 'position:absolute;inset:0;background:#0b0e18;display:flex;flex-direction:column;z-index:5';
+      const ed = document.createElement('div');
+      ed.style.cssText = 'position:absolute;inset:0;background:#0b0e18;display:flex;flex-direction:column;z-index:5';
       ed.innerHTML = `<div class="cx-top"><button id="eBack">${ICON.back} Wapas</button><span id="eTitle">Page kaato</span><span style="width:60px"></span></div>
-        <div class="cx-stage" id="eStage"><canvas id="eCv"></canvas><div class="cx-busy" id="eBusy">Processing…</div></div>
+        <div class="cx-stage" id="eStage"><canvas id="eCv"></canvas><div class="cx-busy" id="eBusy">Processing...</div></div>
         <div id="eBar"></div>`;
       root.appendChild(ed);
       const stage = ed.querySelector('#eStage'), cv = ed.querySelector('#eCv'), busy = ed.querySelector('#eBusy'), bar = ed.querySelector('#eBar');
-      const setBusy = b => busy.style.display = b ? 'flex' : 'none';
+      const title = t => { ed.querySelector('#eTitle').textContent = t; };
+      const setBusy = b => { busy.style.display = b ? 'flex' : 'none'; };
       const close = v => { ed.remove(); resolve(v); };
-      ed.querySelector('#eBack').onclick = () => close(null);
+      let mode = 'crop';
+      ed.querySelector('#eBack').onclick = () => { if (mode === 'clean') cancelClean(); else close(null); };
 
       setBusy(true);
       let src;
-      try { src = await loadSourceCanvas(file); }
-      catch (e) { alert('Photo load nahi hui'); return close(null); }
+      try { src = await loadSourceCanvas(file); } catch (e) { alert('Photo load nahi hui'); return close(null); }
+      let srot = prev ? (prev.srot || 0) : 0;
+      for (let i = 0; i < srot; i++) src = rotate90(src);
+      let corners, autoNote = '';
+      if (prev) corners = prev.corners.map(c => ({ x: c.x * src.width, y: c.y * src.height }));
+      else { const ac = autoCorners(src); corners = ac || defaultCorners(src); if (!ac) autoNote = 'Page apne aap nahi mila - kone khud kheencho'; }
       setBusy(false);
 
-      let corners = prev ? prev.corners.map(c => ({ x: c.x * src.width, y: c.y * src.height }))
-        : [0.06, 0.06, 0.94, 0.06, 0.94, 0.94, 0.06, 0.94].reduce((a, v, i, arr) => (i % 2 ? a : a.concat({ x: arr[i] * src.width, y: arr[i + 1] * src.height })), []);
       let scale = 1, active = -1;
 
-      /* ---------- STEP 1 : CROP ---------- */
+      /* ============ STEP 1 : CROP ============ */
+      const DPR = Math.min(window.devicePixelRatio || 1, 3);   // phone ki screen ke hisaab se saaf preview
+      const PAD = 18 * DPR;                                    // kinare ke handles kate na dikhein
       function layoutCrop() {
-        const aw = stage.clientWidth - 24, ah = stage.clientHeight - 24;
-        scale = Math.min(aw / src.width, ah / src.height);
-        cv.width = Math.round(src.width * scale); cv.height = Math.round(src.height * scale);
+        const aw = stage.clientWidth - 24 - 36, ah = stage.clientHeight - 24 - 36;
+        scale = Math.min(aw / src.width, ah / src.height) * DPR;
+        cv.width = Math.round(src.width * scale) + 2 * PAD; cv.height = Math.round(src.height * scale) + 2 * PAD;
+        cv.style.width = (cv.width / DPR) + 'px'; cv.style.height = (cv.height / DPR) + 'px';
         drawCrop();
       }
       function drawCrop() {
         const x = cv.getContext('2d');
         x.clearRect(0, 0, cv.width, cv.height);
-        x.drawImage(src, 0, 0, cv.width, cv.height);
+        x.drawImage(src, PAD, PAD, cv.width - 2 * PAD, cv.height - 2 * PAD);
         x.save(); x.fillStyle = 'rgba(0,0,0,.55)'; x.beginPath(); x.rect(0, 0, cv.width, cv.height);
-        corners.forEach((c, i) => i ? x.lineTo(c.x * scale, c.y * scale) : x.moveTo(c.x * scale, c.y * scale)); x.closePath();
+        corners.forEach((c, i) => i ? x.lineTo(c.x * scale + PAD, c.y * scale + PAD) : x.moveTo(c.x * scale + PAD, c.y * scale + PAD)); x.closePath();
         x.fill('evenodd'); x.restore();
-        x.lineWidth = 2; x.strokeStyle = '#7c4dff'; x.beginPath();
-        corners.forEach((c, i) => i ? x.lineTo(c.x * scale, c.y * scale) : x.moveTo(c.x * scale, c.y * scale)); x.closePath(); x.stroke();
-        corners.forEach(c => { x.beginPath(); x.arc(c.x * scale, c.y * scale, 13, 0, 7); x.fillStyle = 'rgba(255,255,255,.9)'; x.fill(); x.lineWidth = 3; x.strokeStyle = '#3d5afe'; x.stroke(); });
+        x.lineWidth = 2 * DPR; x.strokeStyle = '#7c4dff'; x.beginPath();
+        corners.forEach((c, i) => i ? x.lineTo(c.x * scale + PAD, c.y * scale + PAD) : x.moveTo(c.x * scale + PAD, c.y * scale + PAD)); x.closePath(); x.stroke();
+        corners.forEach(c => { x.beginPath(); x.arc(c.x * scale + PAD, c.y * scale + PAD, 13 * DPR, 0, 7); x.fillStyle = 'rgba(255,255,255,.9)'; x.fill(); x.lineWidth = 3 * DPR; x.strokeStyle = '#3d5afe'; x.stroke(); });
+        if (active >= 0) {                                       // loupe: ungli ke neeche kona dikhe
+          const R = 52 * DPR, z = 2.6, c = corners[active], left = c.x * scale + PAD > cv.width / 2, lx = left ? 10 * DPR : cv.width - R * 2 - 10 * DPR, ly = 10 * DPR, sw = 2 * R / (scale * z);
+          x.save(); x.beginPath(); x.arc(lx + R, ly + R, R, 0, 7); x.clip(); x.fillStyle = '#000'; x.fillRect(lx, ly, 2 * R, 2 * R);
+          x.drawImage(src, c.x - sw / 2, c.y - sw / 2, sw, sw, lx, ly, 2 * R, 2 * R); x.restore();
+          x.beginPath(); x.arc(lx + R, ly + R, R, 0, 7); x.lineWidth = 3 * DPR; x.strokeStyle = '#fff'; x.stroke();
+          x.lineWidth = 1.5 * DPR; x.strokeStyle = '#7c4dff'; const ch = 9 * DPR; x.beginPath(); x.moveTo(lx + R - ch, ly + R); x.lineTo(lx + R + ch, ly + R); x.moveTo(lx + R, ly + R - ch); x.lineTo(lx + R, ly + R + ch); x.stroke();
+        }
       }
-      const pos = e => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) * (cv.width / r.width) / scale, y: (e.clientY - r.top) * (cv.height / r.height) / scale }; };
+      const pos = e => { const r = cv.getBoundingClientRect(); return { x: ((e.clientX - r.left) * (cv.width / r.width) - PAD) / scale, y: ((e.clientY - r.top) * (cv.height / r.height) - PAD) / scale }; };
+      const imgPos = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * (cv.width / r.width), (e.clientY - r.top) * (cv.height / r.height)]; };
+
       cv.onpointerdown = e => {
-        if (mode !== 'crop') return;
-        const p = pos(e); let best = -1, bd = 1e9;
-        corners.forEach((c, i) => { const d = Math.hypot(c.x - p.x, c.y - p.y) * scale; if (d < bd) { bd = d; best = i; } });
-        if (bd < 55) { active = best; cv.setPointerCapture(e.pointerId); }
+        if (mode === 'crop') {
+          const p = pos(e); let best = -1, bd = 1e9;
+          corners.forEach((c, i) => { const d = Math.hypot(c.x - p.x, c.y - p.y) * scale; if (d < bd) { bd = d; best = i; } });
+          if (bd < 60 * DPR) { active = best; cv.setPointerCapture(e.pointerId); drawCrop(); }
+        } else if (mode === 'clean') startStroke(e);
       };
       cv.onpointermove = e => {
-        if (active < 0 || mode !== 'crop') return;
-        const p = pos(e); corners[active] = { x: Math.max(0, Math.min(src.width, p.x)), y: Math.max(0, Math.min(src.height, p.y)) }; drawCrop();
+        if (mode === 'crop') {
+          if (active < 0) return;
+          const p = pos(e); corners[active] = { x: Math.max(0, Math.min(src.width, p.x)), y: Math.max(0, Math.min(src.height, p.y)) }; drawCrop();
+        } else if (mode === 'clean' && cur) moveStroke(e);
       };
-      cv.onpointerup = cv.onpointercancel = () => { active = -1; };
+      cv.onpointerup = cv.onpointercancel = () => {
+        if (mode === 'crop') { active = -1; drawCrop(); } else if (mode === 'clean') endStroke();
+      };
 
-      let mode = 'crop', base = null, result = null, filter = prev ? prev.filter : 'clean', rot = prev ? prev.rot : 0;
-      let filtered = null, work = null, bright = prev ? (prev.bright || 0) : 0, contrast = prev ? (prev.contrast || 1) : 1;
+      let base = null, filter = (prev && FILTERS.some(f => f[0] === prev.filter)) ? prev.filter : 'auto';
+      let rot = prev ? (prev.rot || 0) : 0, bright = prev ? (prev.bright || 0) : 0, contrast = prev ? (prev.contrast || 1) : 1;
+      let filtered = null, result = null, work = null, thumbs = null;
+      let strokes = [], redo = [], erasedCv = null, bgCv = null, bgFor = null, erasePat = null, brush = 2, cur = null, snapshot = null;
 
       function showCropBar() {
-        mode = 'crop'; ed.querySelector('#eTitle').textContent = 'Page kaato';
-        bar.innerHTML = `<div class="cx-tip">Kone (corners) kheench kar page ke kinaron par lao</div>
-          <div class="cx-bar"><button class="cx-btn sec" id="bFull">${ICON.crop} Poora page</button><button class="cx-btn" id="bNext">Aage ${ICON.next}</button></div>`;
+        mode = 'crop'; title('Page kaato');
+        bar.innerHTML = `<div class="cx-tip" id="cTip">${autoNote || 'Kone kheench kar page ke kinaron par lao'}<br><b style="color:#cfd8ee;font-weight:500">Preview thoda blur dikh sakta hai - ye normal hai. Kone select karke Aage dabao, final page saaf aayega.</b></div>
+          <div class="cx-bar"><button class="cx-btn sec" id="bAuto">${IC2.auto} Auto crop</button><button class="cx-btn sec" id="bFull">${IC2.full} No crop</button><button class="cx-btn sec" id="bRotS">${ICON.rotate} Rotate</button></div>
+          <div class="cx-bar" style="border:0;padding-top:0"><button class="cx-btn full" style="width:100%" id="bNext">Aage ${ICON.next}</button></div>`;
+        const tip = t => { bar.querySelector('#cTip').innerHTML = t + '<br><b style="color:#cfd8ee;font-weight:500">Preview thoda blur dikh sakta hai - ye normal hai. Kone select karke Aage dabao, final page saaf aayega.</b>'; };
+        bar.querySelector('#bAuto').onclick = () => {
+          const ac = autoCorners(src);
+          if (ac) { corners = ac; drawCrop(); tip('Page mil gaya - zarurat ho to kone adjust karo'); } else tip('Page apne aap nahi mila - kone khud kheencho');
+        };
         bar.querySelector('#bFull').onclick = () => { corners = [{ x: 0, y: 0 }, { x: src.width, y: 0 }, { x: src.width, y: src.height }, { x: 0, y: src.height }]; drawCrop(); };
+        bar.querySelector('#bRotS').onclick = () => {
+          const oh = src.height; src = rotate90(src); srot = (srot + 1) % 4;
+          corners = corners.map(c => ({ x: oh - c.y, y: c.x })); layoutCrop();
+        };
         bar.querySelector('#bNext').onclick = async () => {
           setBusy(true); await tick();
           try { base = warp(src, corners); for (let i = 0; i < rot; i++) base = rotate90(base); }
           catch (e) { setBusy(false); return alert('Error: ' + e.message); }
+          thumbs = null; filtered = null; strokes = []; redo = []; erasedCv = null; bgCv = null;
           await showEnhance();
         };
         layoutCrop();
       }
 
-      /* ---------- STEP 2 : FILTER ---------- */
-      // Brightness/Contrast: sirf 256-entry table se (filter dobara nahi chalta, isliye slider smooth rehta hai)
+      /* ============ STEP 2 : FILTER / ADJUST / CLEAN ============ */
       function paint() {
         if (!filtered) return;
-        if (bright === 0 && contrast === 1) result = filtered;
+        const s = strokes.length ? erasedCv : filtered;
+        if (mode === 'clean' || (bright === 0 && contrast === 1)) result = s;
         else {
-          if (!work || work.width !== filtered.width || work.height !== filtered.height) {
-            work = document.createElement('canvas'); work.width = filtered.width; work.height = filtered.height;
-          }
-          const wx = work.getContext('2d'); wx.drawImage(filtered, 0, 0);
-          const id = wx.getImageData(0, 0, work.width, work.height), d = id.data;
-          const lut = new Uint8ClampedArray(256);
-          for (let v = 0; v < 256; v++) lut[v] = (v - 128) * contrast + 128 + bright;
-          for (let k = 0; k < d.length; k += 4) { d[k] = lut[d[k]]; d[k + 1] = lut[d[k + 1]]; d[k + 2] = lut[d[k + 2]]; }
-          wx.putImageData(id, 0, 0); result = work;
+          if (!work || work.width !== s.width || work.height !== s.height) { work = document.createElement('canvas'); work.width = s.width; work.height = s.height; }
+          lutInto(s, work, bright, contrast); result = work;
         }
+        cv.style.width = cv.style.height = '';
         cv.width = result.width; cv.height = result.height;
         cv.getContext('2d').drawImage(result, 0, 0);
-        cv.style.maxWidth = '100%'; cv.style.maxHeight = '100%';
       }
       async function renderResult() {
         setBusy(true); await tick();
         filtered = applyFilter(base, filter);
-        paint();
-        setBusy(false);
+        strokes = []; redo = []; erasedCv = null; bgCv = null;
+        paint(); setBusy(false);
       }
+      function bake() {                                   // Roshni/Contrast ko pakka kar do (Clean se pehle)
+        if (bright === 0 && contrast === 1) return;
+        filtered = lutCopy(strokes.length ? erasedCv : filtered, bright, contrast);
+        strokes = []; redo = []; erasedCv = null; bgCv = null; bright = 0; contrast = 1;
+      }
+
       async function showEnhance() {
-        mode = 'enh'; ed.querySelector('#eTitle').textContent = 'Quality / Filter';
-        bar.innerHTML = `<div class="cx-bar" style="flex-direction:column;align-items:stretch">
-            <div class="cx-chips" id="chips"><button data-f="orig">Original</button><button data-f="clean">Saaf (Best)</button><button data-f="bw">B&amp;W</button></div>
+        mode = 'enh'; title('Filter / Edit');
+        setBusy(true); await tick();
+        if (!thumbs) thumbs = makeThumbs(base);
+        bar.innerHTML = `<div class="cx-th" id="ths">${FILTERS.map(f => `<button data-f="${f[0]}"><img src="${thumbs[f[0]]}"><span>${f[1]}</span></button>`).join('')}</div>
+          <div id="adj" style="display:none">
             <div class="cx-sl"><span>Roshni</span><input type="range" id="slB" min="-60" max="60" step="1" value="${bright}"><b id="vB">${bright}</b></div>
             <div class="cx-sl"><span>Contrast</span><input type="range" id="slC" min="70" max="190" step="1" value="${Math.round(contrast * 100)}"><b id="vC">${Math.round(contrast * 100)}</b><button id="slR" title="Reset" aria-label="Reset">${ICON.rotate}</button></div>
-            <div style="display:flex;gap:8px;margin-top:8px"><button class="cx-btn sec" id="bCrop" style="flex:1">${ICON.back} Crop</button><button class="cx-btn sec" id="bRot" style="flex:1">${ICON.rotate} Ghumao</button><button class="cx-btn" id="bSave" style="flex:1.4">${ICON.check} Page save</button></div></div>`;
-        const mark = () => bar.querySelectorAll('#chips button').forEach(b => b.classList.toggle('on', b.dataset.f === filter));
+          </div>
+          <div class="cx-tools"><button id="bCrop">${IC2.full}<span>Crop</span></button><button id="bRot">${ICON.rotate}<span>Rotate</span></button><button id="bClean">${IC2.eraser}<span>Clean</span></button><button id="bAdj">${IC2.sliders}<span>Adjust</span></button></div>
+          <div class="cx-bar" style="border:0;padding-top:0"><button class="cx-btn" style="width:100%" id="bSave">${ICON.check} Page save</button></div>`;
+        const mark = () => bar.querySelectorAll('#ths button').forEach(b => b.classList.toggle('on', b.dataset.f === filter));
         mark();
-        bar.querySelectorAll('#chips button').forEach(b => b.onclick = async () => { filter = b.dataset.f; mark(); await renderResult(); });
+        bar.querySelectorAll('#ths button').forEach(b => b.onclick = async () => { if (b.dataset.f === filter && filtered) return; filter = b.dataset.f; mark(); await renderResult(); });
         let raf = 0; const sched = () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; paint(); }); };
         const slB = bar.querySelector('#slB'), slC = bar.querySelector('#slC');
         slB.oninput = () => { bright = +slB.value; bar.querySelector('#vB').textContent = bright; sched(); };
         slC.oninput = () => { contrast = +slC.value / 100; bar.querySelector('#vC').textContent = slC.value; sched(); };
         bar.querySelector('#slR').onclick = () => { bright = 0; contrast = 1; slB.value = 0; slC.value = 100; bar.querySelector('#vB').textContent = 0; bar.querySelector('#vC').textContent = 100; paint(); };
-        bar.querySelector('#bCrop').onclick = () => { base = null; result = null; filtered = null; work = null; rot = 0; showCropBar(); };
-        bar.querySelector('#bRot').onclick = async () => { base = rotate90(base); rot = (rot + 1) % 4; await renderResult(); };
+        bar.querySelector('#bAdj').onclick = e => { const a = bar.querySelector('#adj'); const on = a.style.display === 'none'; a.style.display = on ? 'block' : 'none'; e.currentTarget.classList.toggle('on', on); };
+        bar.querySelector('#bCrop').onclick = () => { base = null; filtered = null; result = null; work = null; thumbs = null; strokes = []; redo = []; erasedCv = null; bgCv = null; rot = 0; showCropBar(); };
+        bar.querySelector('#bRot').onclick = async () => {
+          setBusy(true); await tick(); base = rotate90(base); rot = (rot + 1) % 4; thumbs = makeThumbs(base);
+          bar.querySelectorAll('#ths button').forEach(b => { b.querySelector('img').src = thumbs[b.dataset.f]; });
+          await renderResult();
+        };
+        bar.querySelector('#bClean').onclick = enterClean;
         bar.querySelector('#bSave').onclick = async () => {
-          setBusy(true); await tick();
+          setBusy(true); await tick(); paint();
           const blob = await canvasToBlob(result, CFG.jpegQ);
-          const t = document.createElement('canvas'); const k = 240 / Math.max(result.width, result.height);
+          const t = document.createElement('canvas'), k = 240 / Math.max(result.width, result.height);
           t.width = Math.round(result.width * k); t.height = Math.round(result.height * k);
           t.getContext('2d').drawImage(result, 0, 0, t.width, t.height);
-          const out = { blob, w: result.width, h: result.height, thumb: t.toDataURL('image/jpeg', 0.7), file,
-            corners: corners.map(c => ({ x: c.x / src.width, y: c.y / src.height })), filter, rot, bright, contrast };
-          close(out);
+          close({ blob, w: result.width, h: result.height, thumb: t.toDataURL('image/jpeg', 0.7), file,
+            corners: corners.map(c => ({ x: c.x / src.width, y: c.y / src.height })), filter, rot, bright, contrast, srot });
         };
-        await renderResult();
+        if (!filtered) await renderResult(); else { paint(); setBusy(false); }
+        setBusy(false);
       }
 
+      /* ============ CLEAN (eraser): daag / pen ke nishaan mitao ============ */
+      const brushPx = () => Math.max(4, BRUSH[brush] * filtered.width / 100);
+      function strokePath(ex, s) {
+        ex.save(); ex.lineCap = 'round'; ex.lineJoin = 'round'; ex.lineWidth = s.w; ex.strokeStyle = erasePat; ex.beginPath();
+        ex.moveTo(s.p[0][0], s.p[0][1]);
+        if (s.p.length === 1) ex.lineTo(s.p[0][0] + 0.01, s.p[0][1]); else for (let i = 1; i < s.p.length; i++) ex.lineTo(s.p[i][0], s.p[i][1]);
+        ex.stroke(); ex.restore();
+      }
+      function rebuildErased() {
+        if (!erasedCv || erasedCv.width !== filtered.width || erasedCv.height !== filtered.height) { erasedCv = document.createElement('canvas'); erasedCv.width = filtered.width; erasedCv.height = filtered.height; }
+        const ex = erasedCv.getContext('2d'); ex.drawImage(filtered, 0, 0);
+        erasePat = ex.createPattern(bgCv, 'no-repeat');
+        strokes.forEach(s => strokePath(ex, s));
+      }
+      const showErased = () => { cv.style.width = cv.style.height = ''; cv.width = erasedCv.width; cv.height = erasedCv.height; cv.getContext('2d').drawImage(erasedCv, 0, 0); };
+      function drawSeg(a, b, w) {
+        const ex = erasedCv.getContext('2d');
+        ex.save(); ex.lineCap = 'round'; ex.lineJoin = 'round'; ex.lineWidth = w; ex.strokeStyle = erasePat; ex.beginPath();
+        ex.moveTo(a[0], a[1]); ex.lineTo(a === b ? b[0] + 0.01 : b[0], b[1]); ex.stroke(); ex.restore();
+        const m = w / 2 + 3, x0 = Math.max(0, Math.min(a[0], b[0]) - m), y0 = Math.max(0, Math.min(a[1], b[1]) - m);
+        const x1 = Math.min(cv.width, Math.max(a[0], b[0]) + m), y1 = Math.min(cv.height, Math.max(a[1], b[1]) + m);
+        cv.getContext('2d').drawImage(erasedCv, x0, y0, x1 - x0, y1 - y0, x0, y0, x1 - x0, y1 - y0);
+      }
+      function startStroke(e) { cv.setPointerCapture(e.pointerId); const p = imgPos(e); cur = { w: brushPx(), p: [p] }; drawSeg(p, p, cur.w); }
+      function moveStroke(e) {
+        const p = imgPos(e), l = cur.p[cur.p.length - 1];
+        if (Math.hypot(p[0] - l[0], p[1] - l[1]) < 1) return;
+        cur.p.push(p); drawSeg(l, p, cur.w);
+      }
+      function endStroke() { if (cur) { strokes.push(cur); redo = []; cur = null; updUR(); } }
+      function updUR() {
+        const u = bar.querySelector('#cUndo'), r = bar.querySelector('#cRedo');
+        if (u) u.disabled = !strokes.length; if (r) r.disabled = !redo.length;
+      }
+      async function enterClean() {
+        setBusy(true); await tick();
+        bake();
+        if (!bgCv || bgFor !== filtered) { bgCv = paperBg(filtered); bgFor = filtered; }
+        rebuildErased(); snapshot = strokes.slice();
+        mode = 'clean'; title('Clean');
+        showErased(); showCleanBar(); setBusy(false);
+      }
+      function showCleanBar() {
+        const sz = [10, 15, 21, 28, 36];
+        bar.innerHTML = `<div class="cx-tip">Daag / nishaan par ungli ghumao - wo paper ke rang se dhak jayega</div>
+          <div class="cx-brush">${sz.map((s, i) => `<button data-b="${i}" class="${i === brush ? 'on' : ''}"><i style="width:${s}px;height:${s}px"></i></button>`).join('')}</div>
+          <div class="cx-bar" style="border:0;padding-top:4px"><button class="cx-btn sec" id="cUndo">${IC2.undo}</button><button class="cx-btn sec" id="cRedo">${IC2.redo}</button></div>
+          <div class="cx-bar" style="border:0;padding-top:0"><button class="cx-btn sec" id="cReset" style="flex:1">Reset</button><button class="cx-btn" id="cApply" style="flex:1.6">${ICON.check} Apply</button></div>`;
+        bar.querySelectorAll('.cx-brush button').forEach(b => b.onclick = () => { brush = +b.dataset.b; bar.querySelectorAll('.cx-brush button').forEach(x => x.classList.toggle('on', x === b)); });
+        bar.querySelector('#cUndo').onclick = () => { if (!strokes.length) return; redo.push(strokes.pop()); rebuildErased(); showErased(); updUR(); };
+        bar.querySelector('#cRedo').onclick = () => { if (!redo.length) return; strokes.push(redo.pop()); rebuildErased(); showErased(); updUR(); };
+        bar.querySelector('#cReset').onclick = () => { strokes = []; redo = []; rebuildErased(); showErased(); updUR(); };
+        bar.querySelector('#cApply').onclick = async () => { redo = []; await showEnhance(); };
+        updUR();
+      }
+      async function cancelClean() { strokes = snapshot || []; redo = []; if (strokes.length) rebuildErased(); await showEnhance(); }
+
       showCropBar();
-      if (prev) { /* re-edit: seedha crop se shuru */ }
     });
   }
+
 
   /* =====================================================================
      UPLOAD SHEET  (login check -> source choice -> details -> upload)
@@ -522,7 +758,7 @@
     const accept = IS_FORMULAS ? '.pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png' : '.pdf,application/pdf';
     const sh = openSheet(`<h3>${what} add karo</h3><p class="cx-sub">Kaise upload karna hai?</p>
       <button class="cx-opt" id="cxStore"><span class="ic">${ICON.upload}</span><span><b>Storage se upload</b><small>${IS_FORMULAS ? 'PDF ya photo (JPG/PNG)' : 'Sirf PDF'} phone se chuno</small></span></button>
-      <button class="cx-opt" id="cxScan"><span class="ic">${ICON.scan}</span><span><b>Scan karo</b><small>Camera se copy scan — saaf, seedha PDF banega</small></span></button>
+      <button class="cx-opt" id="cxScan"><span class="ic">${ICON.scan}</span><span><b>Scan karo</b><small>Camera se copy scan - saaf, seedha PDF banega</small></span></button>
       <input type="file" id="cxFile" accept="${accept}" style="display:none">`);
     const inp = $('#cxFile', sh);
     $('#cxStore', sh).onclick = () => inp.click();
@@ -593,7 +829,7 @@
     const ch = v('cxCh'), name = v('cxName'), cat = v('cxCat');
     if (!cls || !sub || !ch || !name || (IS_FORMULAS && !cat)) { msg.className = 'cx-msg'; msg.textContent = 'Saari details bharo'; return; }
 
-    go.disabled = true; msg.className = 'cx-msg'; msg.style.color = '#9fb0cc'; msg.textContent = 'Upload ho raha hai…';
+    go.disabled = true; msg.className = 'cx-msg'; msg.style.color = '#9fb0cc'; msg.textContent = 'Upload ho raha hai...';
     try {
       const user = (await sb().auth.getUser()).data?.user;
       if (!user) throw new Error('Login expire ho gaya, dobara login karein');
@@ -631,7 +867,7 @@
   }
 
   /* =====================================================================
-     MOUNT — menu me "Add Notes" jodo (ya formulas page par button)
+     MOUNT - menu me "Add Notes" jodo (ya formulas page par button)
      ===================================================================== */
   const plus = '<svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>';
   function mount() {
