@@ -471,7 +471,7 @@
 
 </head>
 
-<body style="display: flex; flex-direction: column; min-height: 100vh; margin: 0; padding: 0;">
+<body class="app-body">
 
 
 <div id="splashScreen">
@@ -512,19 +512,19 @@
     </div>
   </div>
 
-  <div class="topbar-actions" style="display: flex; align-items: center; gap: 12px;">
+  <div class="topbar-actions topbar-actions--fixed-gap">
 
 <div class="pm-top-streak-btn" id="streakBadgeTop" onclick="openPmStreakModal()" title="Study Streak">
   <div class="pm-top-fire-circle">
     <span class="fire-normal">🔥</span>
-    <span class="fire-flipped" style="display:none;">🔥</span>
+    <span class="fire-flipped is-hidden">🔥</span>
   </div>
   <span id="streakCountVal" class="pm-top-count">1</span>
 </div>
 
 
 
-    <div class="notif-wrapper" style="position: relative;">
+    <div class="notif-wrapper pos-relative">
         
 
       <button class="notif-icon-btn" id="notifBtn" onclick="toggleNotif()" title="Notifications">
@@ -541,14 +541,14 @@
             <span class="notif-title">Notifications</span>
             <span class="notif-count-tag" id="notifCountTag">0 New</span>
           </div>
-          <div style="display:flex; align-items:center; gap:8px;">
+          <div class="flex-row-gap-8">
             <button class="mark-read-btn" onclick="markAllAsRead()">Mark all as read</button>
             <button class="notif-fs-btn" id="notifFullscreenBtn" onclick="toggleNotifFullscreen()" title="Full screen">
               <svg class="ic-expand" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline>
                 <line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line>
               </svg>
-              <svg class="ic-collapse" style="display:none" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <svg class="ic-collapse is-hidden" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="4 14 10 14 10 20"></polyline><polyline points="20 10 14 10 14 4"></polyline>
                 <line x1="14" y1="10" x2="21" y2="3"></line><line x1="3" y1="21" x2="10" y2="14"></line>
               </svg>
@@ -691,12 +691,12 @@
     </svg> Recently Viewed
   </a>
 
-  <hr style="border: 0; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 12px 0;" />
+  <hr class="menu-divider" />
 
 
-   <a href="javascript:void(0);" onclick="openMoreAppsModal()" style="position: relative; overflow: hidden;">
+   <a class="menu-link-clip" href="javascript:void(0);" onclick="openMoreAppsModal()">
     <!-- Colorful SVG Icon matching your screenshot style -->
-    <svg class="menu-svg-icon" viewBox="0 0 24 24" fill="none" style="width: 22px; height: 22px;">
+    <svg class="menu-svg-icon menu-svg-icon--lg" viewBox="0 0 24 24" fill="none">
       <defs>
         <linearGradient id="toolGrad" x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stop-color="#00f0ff" />
@@ -710,7 +710,7 @@
       <path d="M20 16v3a1 1 0 0 1-1 1h-3" stroke="url(#toolGrad)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
       <path d="M12 8v8M8 12h8" stroke="url(#toolGrad)" stroke-width="2.2" stroke-linecap="round"/>
     </svg> 
-    <span style="background: linear-gradient(135deg, #00f0ff, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700;">More Apps</span>
+    <span class="more-apps-label-gradient">More Apps</span>
   </a>
 
   <a href="javascript:void(0);" onclick="checkLoginAndOpenRateModal()">
@@ -738,18 +738,18 @@
 
 <div id="overlay"></div>
 
-<canvas id="bgCanvas" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:-3;"></canvas>
+<canvas class="bg-canvas" id="bgCanvas"></canvas>
 
-<svg id="waveSVG" style="position:fixed;bottom:0;left:0;width:100%;height:240px;z-index:-2;pointer-events:none;">
+<svg class="wave-svg" id="waveSVG">
   <path id="waveBottomPath" fill="rgba(58,160,255,0.2)"></path>
 </svg>
 
-<main style="flex: 1; display: flex; flex-direction: column;">
+<main class="page-main">
 
    <!-- 1. HERO SECTION -->
   <section class="hero snap-section" id="heroSection">
     <h1>Power <span class="accent">∝</span> Work</h1>
-    <h2 class="reveal-watermark visually-hidden" style="position:absolute;left:-9999px;">PM Roitx</h2>
+    <h2 class="reveal-watermark visually-hidden watermark-offscreen">PM Roitx</h2>
     <p>Welcome to <strong>PM Roitx Study Hub</strong>. Find the best <strong>PM Roitx notes</strong> and tools here.</p>
 
     <div class="hero-buttons">
@@ -897,16 +897,16 @@
   <section class="snap-section formal-info-snap-section" id="whyChooseUsSection">
     <div class="why-choose-independent-wrapper">
       
-      <div class="formal-header-wrapper" style="width: 100%; margin-bottom: 18px; text-align: center;">
-        <span class="widget-tag" style="font-size: 10px; padding: 3px 10px;">CORE ADVANTAGES</span>
-        <h2 class="fluid-heading" style="font-size: clamp(22px, 3vw, 28px); margin-top: 4px;">Why Choose PM Roitx</h2>
-        <p class="fluid-subheading" style="font-size: 12px; color: var(--muted);">Engineered for absolute topper-level performance and smart study.</p>
+      <div class="formal-header-wrapper formal-header-wrapper--compact">
+        <span class="widget-tag widget-tag--compact">CORE ADVANTAGES</span>
+        <h2 class="fluid-heading fluid-heading--compact">Why Choose PM Roitx</h2>
+        <p class="fluid-subheading fluid-subheading--compact">Engineered for absolute topper-level performance and smart study.</p>
       </div>
 
       <div class="why-independent-list">
         
         <!-- Card 1: Chapterwise Notes (Yellow/Gold book style) -->
-        <div class="formal-info-card card-tilt" onclick="goto('classes.html')" style="animation-delay: 0.1s;">
+        <div class="formal-info-card card-tilt card-delay-1" onclick="goto('classes.html')">
           <div class="formal-card-glow"></div>
           <div class="formal-icon-box">
             <svg viewBox="0 0 24 24" fill="none" stroke="#facc15" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -922,7 +922,7 @@
         </div>
 
        <!-- Card 2: AI Doubt Solver -->
-        <div class="formal-info-card card-tilt" onclick="goto('solver.html')" style="animation-delay: 0.2s;">
+        <div class="formal-info-card card-tilt card-delay-2" onclick="goto('solver.html')">
           <div class="formal-card-glow"></div>
           <div class="formal-icon-box">
             <svg class="menu-svg-icon" viewBox="0 0 24 24" fill="none" stroke="#c084fc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -941,7 +941,7 @@
 
 
         <!-- Card 3: Live Rank Mock Tests (Green performance graph style) -->
-        <div class="formal-info-card card-tilt" onclick="goto('tests.html')" style="animation-delay: 0.3s;">
+        <div class="formal-info-card card-tilt card-delay-3" onclick="goto('tests.html')">
           <div class="formal-card-glow"></div>
           <div class="formal-icon-box">
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -959,7 +959,7 @@
         </div>
 
         <!-- Card 4: Formula Sheets (Sky Blue document style) -->
-        <div class="formal-info-card card-tilt" onclick="goto('formulas.html')" style="animation-delay: 0.4s;">
+        <div class="formal-info-card card-tilt card-delay-4" onclick="goto('formulas.html')">
           <div class="formal-card-glow"></div>
           <div class="formal-icon-box">
             <svg viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -977,7 +977,7 @@
         </div>
 
         <!-- Card 5: Offline Library (Pink/Rose bookmark style) -->
-        <div class="formal-info-card card-tilt" onclick="goto('library.html')" style="animation-delay: 0.5s;">
+        <div class="formal-info-card card-tilt card-delay-5" onclick="goto('library.html')">
           <div class="formal-card-glow"></div>
           <div class="formal-icon-box">
             <svg viewBox="0 0 24 24" fill="none" stroke="#fda4af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1000,13 +1000,13 @@
 
 
 <!-- Footer integrated in the last scroll section -->
-  <div class="bottom-wave-section" style="width: 100%; margin-top: 8px;">
-    <section class="motivation" style="padding: 8px 16px;">
+  <div class="bottom-wave-section bottom-wave-section--tight">
+    <section class="motivation motivation--compact">
       <button class="mot-btn" onclick="showMotivation()">✨ Generate Quote</button>
     </section>
 
     <footer>
-      <div class="footer-class-links" style="margin-bottom:4px; margin-top:2px;">
+      <div class="footer-class-links footer-class-links--tight">
         <a href="subjects-9.html">Class 9</a>
         <a href="subjects-10.html">Class 10</a>
         <a href="subjects-11.html">Class 11</a>
@@ -1015,34 +1015,34 @@
 
       <div>© <span id="year"></span> PM ROITX — Your Personal Study Hub</div>
       
-      <div style="margin-top: 3px; font-size: 11.5px; opacity: 0.8;">
-        <a href="aboutus.html" style="color: #3aa0ff; text-decoration: none; margin: 0 6px;">About Us</a> • 
-        <a href="aboutus.html#privacy" style="color: #3aa0ff; text-decoration: none; margin: 0 6px;">Privacy Policy</a> • 
-        <a href="aboutus.html#terms" style="color: #3aa0ff; text-decoration: none; margin: 0 6px;">Terms</a>
+      <div class="footer-legal-links">
+        <a class="footer-legal-link" href="aboutus.html">About Us</a> • 
+        <a class="footer-legal-link" href="aboutus.html#privacy">Privacy Policy</a> • 
+        <a class="footer-legal-link" href="aboutus.html#terms">Terms</a>
       </div>
     </footer>
   </div>
   </section>
 
   <div id="motivationPopup" class="popup">
-    <div class="popup-content" style="position: relative;">
-      <button id="langToggleBtn" onclick="toggleMotivationLanguage()" title="Translate Language" style="position: absolute; top: 14px; right: 14px; background: rgba(58, 160, 255, 0.15); border: 1px solid rgba(58, 160, 255, 0.4); color: #00d2ff; width: 34px; height: 34px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease;">
+    <div class="popup-content pos-relative">
+      <button class="lang-toggle-btn" id="langToggleBtn" onclick="toggleMotivationLanguage()" title="Translate Language">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8l6 6"></path><path d="M4 14l6-6 2-3"></path><path d="M2 5h12"></path><path d="M7 2h1"></path><path d="M22 22l-5-10-5 10"></path><path d="M14 18h6"></path></svg>
       </button>
 
-      <h3 style="margin-top: 10px;">✨ Daily Motivation</h3>
+      <h3 class="reviews-list">✨ Daily Motivation</h3>
       <p id="motivationText">Stay focused. Stay unstoppable.</p>
     </div>
   </div>
 
-  <div id="installContainer" style="display:none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; background: #0c1427; border: 1px solid rgba(0, 210, 255, 0.3); padding: 10px 16px; border-radius: 14px; box-shadow: 0 8px 32px rgba(0,0,0,0.5);">
-    <button id="installApp" aria-label="Install PM Roitx Hub App" style="background: transparent; border: none; color: white; display: flex; align-items: center; gap: 12px; cursor: pointer; width: 100%;">
-      <img src="1profile.jpg" alt="PM Roitx Hub App Logo" style="width: 40px; height: 40px; border-radius: 10px;" />
-      <div style="text-align: left;">
-        <div style="font-weight: bold; font-size: 15px; color: #3aa0ff;">Install PM Roitx Hub</div>
-        <div style="font-size: 12px; opacity: 0.8;">Smart Study Tools & Notes</div>
+  <div class="is-hidden install-prompt" id="installContainer">
+    <button class="install-btn" id="installApp" aria-label="Install PM Roitx Hub App">
+      <img class="install-logo" src="1profile.jpg" alt="PM Roitx Hub App Logo" />
+      <div class="text-left">
+        <div class="install-title">Install PM Roitx Hub</div>
+        <div class="install-subtitle">Smart Study Tools & Notes</div>
       </div>
-      <span style="margin-left: auto; display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; background: rgba(0, 210, 255, 0.12); border-radius: 50%; border: 1px solid rgba(0, 210, 255, 0.25);">
+      <span class="install-icon-badge">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00d2ff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
           <polyline points="7 10 12 15 17 10"></polyline>
@@ -1052,13 +1052,13 @@
     </button>
   </div>
 
-  <div id="cookieBanner" class="cookie-banner" style="display: none;">
+  <div id="cookieBanner" class="cookie-banner is-hidden">
     <div class="cookie-content">
-      <div style="display: flex; align-items: center; gap: 8px;">
+      <div class="flex-row-gap-8">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3aa0ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5zm-2 7a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm5 5a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm-8 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"></path>
         </svg>
-        <p style="margin: 0;">Hum aapke study session ko behtar banane ke liye cookies ka istemal karte hain.</p>
+        <p class="no-margin">Hum aapke study session ko behtar banane ke liye cookies ka istemal karte hain.</p>
       </div>
       <div class="cookie-buttons">
         <button id="acceptCookies" class="cookie-btn accept">Accept All</button>
@@ -1067,7 +1067,7 @@
     </div>
   </div>
 <!-- PM Style Premium Streak Modal -->
-<div id="pmStreakModal" class="pm-modal-overlay" style="display: none;">
+<div id="pmStreakModal" class="pm-modal-overlay is-hidden">
   <div class="pm-streak-card">
     
     <!-- Top Close Button -->
@@ -1106,7 +1106,7 @@
         <span id="pmMilestoneProgressText">1 / 7 Days</span>
       </div>
       <div class="pm-progress-bar-bg">
-        <div id="pmProgressBarFill" class="pm-progress-bar-fill" style="width: 14%;"></div>
+        <div id="pmProgressBarFill" class="pm-progress-bar-fill pm-progress-fill--initial"></div>
       </div>
     </div>
 
@@ -1121,15 +1121,15 @@
 </div>
 
 
-  <div id="offlineBanner" class="offline-banner-box" style="display: none !important;">
+  <div id="offlineBanner" class="offline-banner-box is-hidden-important">
     <span class="status-dot"></span>
     <span id="bannerText">No internet connection • Offline mode</span>
   </div>
 
-  <div id="notifModal" class="notif-modal-overlay" style="display: none;">
+  <div id="notifModal" class="notif-modal-overlay is-hidden">
     <div class="notif-modal-card">
       <div class="notif-modal-header">
-        <span class="notif-modal-tag" style="display: flex; align-items: center; gap: 6px;">
+        <span class="notif-modal-tag flex-row-gap-6">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00c6ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
             <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
@@ -1147,11 +1147,11 @@
       <div class="notif-modal-body" id="notifListContainer">
         <h3 id="modalNotifTitle">Notification Title</h3>
         <p id="modalNotifMessage">Detailed notification message content goes here...</p>
-        <div id="modalNotifTime" style="font-size: 11px; opacity: 0.6; margin-top: 10px;"></div>
+        <div class="modal-notif-time" id="modalNotifTime"></div>
       </div>
 
       <div class="notif-modal-footer">
-        <button id="modalNotifLinkBtn" class="btn-modal-action" style="display: none; align-items: center; gap: 6px;">
+        <button id="modalNotifLinkBtn" class="btn-modal-action is-hidden align-center-gap-6">
           <span>Open Link</span>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
@@ -1159,7 +1159,7 @@
             <line x1="10" y1="14" x2="21" y2="3"></line>
           </svg>
         </button>
-        <button id="modalDeleteBtn" class="btn-modal-delete" style="display: inline-flex; align-items: center; gap: 6px;">
+        <button id="modalDeleteBtn" class="btn-modal-delete inline-flex-row-gap-6">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="3 6 5 6 21 6"></polyline>
             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -1188,7 +1188,7 @@
       <div class="rm-actions">
         <button id="modalExpandBtn" class="rm-icon-btn" type="button" onclick="toggleRateModalFullscreen()" title="Full screen" aria-label="Toggle full screen">
           <svg id="expandIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/></svg>
-          <svg id="collapseIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><path d="M8 3v3a2 2 0 0 1-2 2H3"/><path d="M21 8h-3a2 2 0 0 1-2-2V3"/><path d="M3 16h3a2 2 0 0 1 2 2v3"/><path d="M16 21v-3a2 2 0 0 1 2-2h3"/></svg>
+          <svg class="is-hidden" id="collapseIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3"/><path d="M21 8h-3a2 2 0 0 1-2-2V3"/><path d="M3 16h3a2 2 0 0 1 2 2v3"/><path d="M16 21v-3a2 2 0 0 1 2-2h3"/></svg>
         </button>
         <button class="rm-icon-btn close notif-modal-close" type="button" onclick="closeRateModal()" title="Close" aria-label="Close">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
@@ -1199,7 +1199,7 @@
     <div class="rm-scroll">
       <div class="rm-form">
         <div class="rm-score">
-          <div style="display:flex;align-items:center;gap:12px;position:relative;z-index:1;">
+          <div class="rate-header-row">
             <div id="ratingEmoji" class="rm-emoji" aria-hidden="true">
               <svg id="rfSvg" viewBox="0 0 100 100" width="100%" height="100%">
                 <defs>
@@ -1236,11 +1236,11 @@
             </div>
           </div>
           <div id="starContainer" class="rm-stars">
-            <span class="star-fill" style="--fill: 100%;">★</span>
-            <span class="star-fill" style="--fill: 100%;">★</span>
-            <span class="star-fill" style="--fill: 100%;">★</span>
-            <span class="star-fill" style="--fill: 100%;">★</span>
-            <span class="star-fill" style="--fill: 100%;">★</span>
+            <span class="star-fill star-fill--full">★</span>
+            <span class="star-fill star-fill--full">★</span>
+            <span class="star-fill star-fill--full">★</span>
+            <span class="star-fill star-fill--full">★</span>
+            <span class="star-fill star-fill--full">★</span>
           </div>
         </div>
 
@@ -1266,7 +1266,7 @@
           <span>Recent Student Feedback</span>
           <span class="rm-count" id="totalReviewsCount">Loading...</span>
         </div>
-        <div id="reviewsList" style="margin-top:10px;">
+        <div class="reviews-list" id="reviewsList">
           <div class="rm-empty">Fetching reviews from database...</div>
         </div>
       </div>
@@ -1274,17 +1274,17 @@
   </div>
 </div>
 <!-- More Apps Folder Style Popup Modal -->
-<div id="moreAppsModal" class="pm-modal-overlay" style="display: none; align-items: center; justify-content: center; position: fixed; inset: 0; background: rgba(5, 11, 24, 0.8); backdrop-filter: blur(12px); z-index: 10000; padding: 20px;">
-  <div class="more-apps-folder-card" style="width: 100%; max-width: 340px; background: rgba(18, 24, 38, 0.85); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 28px; padding: 28px 20px; box-shadow: 0 25px 50px rgba(0,0,0,0.7); text-align: center; position: relative; animation: folderPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+<div id="moreAppsModal" class="pm-modal-overlay is-hidden more-apps-overlay">
+  <div class="more-apps-folder-card more-apps-card">
     
     <!-- Close Button -->
-    <button onclick="closeMoreAppsModal()" style="position: absolute; top: 14px; right: 14px; background: rgba(255,255,255,0.06); border: none; color: #fff; width: 30px; height: 30px; border-radius: 50%; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center;">&times;</button>
+    <button class="more-apps-close-btn" onclick="closeMoreAppsModal()">&times;</button>
 
     <!-- Folder Title -->
-    <h3 style="color: #fff; font-size: 20px; font-weight: 700; margin-top: 0; margin-bottom: 24px; letter-spacing: -0.5px;">PM Roitx Apps</h3>
+    <h3 class="more-apps-title">PM Roitx Apps</h3>
 
     <!-- Apps Grid (Jaisa screenshot me hai)[span_1](start_span)[span_1](end_span) -->
-    <div id="moreAppsGrid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px 12px; justify-items: center;">
+    <div class="more-apps-grid" id="moreAppsGrid">
       <!-- JavaScript yahan automatically apps inject karega -->
     </div>
 
@@ -1356,12 +1356,15 @@ function openMoreAppsModal() {
   if (gridContainer) {
     gridContainer.innerHTML = myMoreAppsList.map(app => `
       <a href="${safeUrl(app.url) || '#'}" class="app-item-box" rel="noopener noreferrer" target="${/^https?:/.test(app.url) ? '_blank' : '_self'}">
-        <div class="app-icon-circle" style="background: ${app.bg}; overflow: hidden;">
-          ${app.iconImg ? `<img src="${safeUrl(app.iconImg)}" alt="${safeText(app.name)}" style="width: 100%; height: 100%; object-fit: cover;">` : `<span>${safeText(app.icon || '📱')}</span>`}
+        <div class="app-icon-circle app-icon-circle--clip" data-bg="${safeText(app.bg)}">
+          ${app.iconImg ? `<img src="${safeUrl(app.iconImg)}" alt="${safeText(app.name)}" class="app-icon-img">` : `<span>${safeText(app.icon || '📱')}</span>`}
         </div>
         <span class="app-title-label">${safeText(app.name)}</span>
       </a>
     `).join('');
+
+    // Per-app background is dynamic data, so it is applied via JS (not an inline attribute).
+    gridContainer.querySelectorAll('[data-bg]').forEach(el => { el.style.background = el.dataset.bg; });
   }
 
   const modal = document.getElementById("moreAppsModal");
@@ -1414,16 +1417,16 @@ document.addEventListener("DOMContentLoaded", () => {
           const firstLetter = profile.displayName ? profile.displayName.charAt(0).toUpperCase() : "U";
 
           container.innerHTML = `
-            <a href="profile.html" style="display: flex; align-items: center; gap: 12px; padding: 10px 14px; color: #fff; text-decoration: none; background: rgba(255, 255, 255, 0.08); border-radius: 14px; margin: 10px 0; border: 1px solid rgba(255, 255, 255, 0.15); transition: all 0.2s ease;">
+            <a href="profile.html" class="sidebar-profile-link">
               ${safeUrl(profile.avatarUrl) 
-                ? `<img src="${safeUrl(profile.avatarUrl)}" referrerpolicy="no-referrer" alt="" style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2px solid #5a2eff; flex-shrink: 0;">`
-                : `<div style="width: 38px; height: 38px; border-radius: 50%; background: #5a2eff; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; flex-shrink: 0;">${safeText(firstLetter)}</div>`
+                ? `<img src="${safeUrl(profile.avatarUrl)}" referrerpolicy="no-referrer" alt="" class="sidebar-profile-avatar">`
+                : `<div class="sidebar-profile-avatar-fallback">${safeText(firstLetter)}</div>`
               }
-              <div style="overflow: hidden; text-align: left;">
-                <div style="font-weight: 700; font-size: 14px; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px;">
+              <div class="sidebar-profile-info">
+                <div class="sidebar-profile-name">
                   ${safeText(profile.displayName)}
                 </div>
-                <div style="font-size: 11px; color: #3aa0ff; font-weight: 600;">My Account →</div>
+                <div class="sidebar-profile-sub">My Account →</div>
               </div>
             </a>
           `;
@@ -1432,9 +1435,9 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
              container.innerHTML = `
-        <a href="login.html" id="loginBtn" class="menu-item" style="display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: linear-gradient(135deg, #fff1f2, #ffe4e6); border: 1px solid #fecdd3; border-radius: 12px; text-decoration: none; margin-bottom: 8px;">
-          <span class="icon-box" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #fb7185, #f43f5e); border-radius: 8px; box-shadow: 0 4px 10px rgba(244,63,94,.35); flex-shrink: 0;">
-            <svg viewBox="0 0 24 24" fill="none" style="width: 20px; height: 20px;">
+        <a href="login.html" id="loginBtn" class="menu-item sidebar-login-link">
+          <span class="icon-box sidebar-login-icon">
+            <svg viewBox="0 0 24 24" fill="none" class="sidebar-login-svg">
                 <!-- Head - Yellow -->
                 <circle cx="12" cy="8" r="3.5" fill="#fde68a" stroke="#fff" stroke-width="1.2"/>
                 <!-- Body - White -->
@@ -1444,7 +1447,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <path d="M18.5 4.2V6.8M17.2 5.5H19.8" stroke="#fff" stroke-width="1.4" stroke-linecap="round"/>
             </svg>
           </span>
-          <span class="label" style="color:#be123c; font-weight: 700; font-size: 14px;">Login</span>
+          <span class="label sidebar-login-label">Login</span>
         </a>
       `;
     }

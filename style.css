@@ -2388,3 +2388,465 @@ html.repeat-visit #splashScreen {
   font-weight: 700;
   cursor: pointer;
 }
+
+/* =========================================================
+   INLINE STYLES -> CLASSES (moved out of index.html)
+   Selectors are prefixed with `html body` so they keep the same
+   priority the old inline style="" attributes had.
+   ========================================================= */
+/* State helpers. JS can still show/hide via element.style.display (inline wins). */
+html body .is-hidden {
+  display: none;
+}
+html body .is-hidden-important {
+  display: none !important;
+}
+
+html body.app-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+html body .topbar-actions--fixed-gap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+html body .pos-relative {
+  position: relative;
+}
+
+html body .flex-row-gap-8 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+html body .menu-divider {
+  border: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin: 12px 0;
+}
+
+html body .menu-link-clip {
+  position: relative;
+  overflow: hidden;
+}
+
+html body .menu-svg-icon--lg {
+  width: 22px;
+  height: 22px;
+}
+
+html body .more-apps-label-gradient {
+  background: linear-gradient(135deg, #00f0ff, #ec4899);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 700;
+}
+
+html body .bg-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -3;
+}
+
+html body .wave-svg {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 240px;
+  z-index: -2;
+  pointer-events: none;
+}
+
+html body .page-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+html body .watermark-offscreen {
+  position: absolute;
+  left: -9999px;
+}
+
+html body .formal-header-wrapper--compact {
+  width: 100%;
+  margin-bottom: 18px;
+  text-align: center;
+}
+
+html body .widget-tag--compact {
+  font-size: 10px;
+  padding: 3px 10px;
+}
+
+html body .fluid-heading--compact {
+  font-size: clamp(22px, 3vw, 28px);
+  margin-top: 4px;
+}
+
+html body .fluid-subheading--compact {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+html body .why-choose-independent-wrapper .formal-info-card.card-delay-1 {
+  animation-delay: 0.1s;
+}
+
+html body .why-choose-independent-wrapper .formal-info-card.card-delay-2 {
+  animation-delay: 0.2s;
+}
+
+html body .why-choose-independent-wrapper .formal-info-card.card-delay-3 {
+  animation-delay: 0.3s;
+}
+
+html body .why-choose-independent-wrapper .formal-info-card.card-delay-4 {
+  animation-delay: 0.4s;
+}
+
+html body .why-choose-independent-wrapper .formal-info-card.card-delay-5 {
+  animation-delay: 0.5s;
+}
+
+html body .bottom-wave-section--tight {
+  width: 100%;
+  margin-top: 8px;
+}
+
+html body .motivation--compact {
+  padding: 8px 16px;
+}
+
+html body .footer-class-links--tight {
+  margin-bottom: 4px;
+  margin-top: 2px;
+}
+
+html body .footer-legal-links {
+  margin-top: 3px;
+  font-size: 11.5px;
+  opacity: 0.8;
+}
+
+html body .footer-legal-link {
+  color: #3aa0ff;
+  text-decoration: none;
+  margin: 0 6px;
+}
+
+html body .lang-toggle-btn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: rgba(58, 160, 255, 0.15);
+  border: 1px solid rgba(58, 160, 255, 0.4);
+  color: #00d2ff;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+html body .popup-title--tight {
+  margin-top: 10px;
+}
+
+html body #installContainer.install-prompt {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  background: #0c1427;
+  border: 1px solid rgba(0, 210, 255, 0.3);
+  padding: 10px 16px;
+  border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+
+html body #installApp.install-btn {
+  background: transparent;
+  border: none;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  width: 100%;
+}
+
+html body #installApp .install-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+}
+
+html body .text-left {
+  text-align: left;
+}
+
+html body .install-title {
+  font-weight: bold;
+  font-size: 15px;
+  color: #3aa0ff;
+}
+
+html body .install-subtitle {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+html body .install-icon-badge {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  background: rgba(0, 210, 255, 0.12);
+  border-radius: 50%;
+  border: 1px solid rgba(0, 210, 255, 0.25);
+}
+
+html body .no-margin {
+  margin: 0;
+}
+
+html body .pm-progress-fill--initial {
+  width: 14%;
+}
+
+html body .is-hidden-important {
+  display: none !important;
+}
+
+html body .flex-row-gap-6 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+html body .modal-notif-time {
+  font-size: 11px;
+  opacity: 0.6;
+  margin-top: 10px;
+}
+
+html body .align-center-gap-6 {
+  align-items: center;
+  gap: 6px;
+}
+
+html body .inline-flex-row-gap-6 {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+html body .rate-header-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+  z-index: 1;
+}
+
+html body .star-fill--full {
+  --fill: 100%;
+}
+
+html body .reviews-list {
+  margin-top: 10px;
+}
+
+html body .more-apps-overlay {
+  align-items: center;
+  justify-content: center;
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 11, 24, 0.8);
+  backdrop-filter: blur(12px);
+  z-index: 10000;
+  padding: 20px;
+}
+
+html body .more-apps-card {
+  width: 100%;
+  max-width: 340px;
+  background: rgba(18, 24, 38, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 28px;
+  padding: 28px 20px;
+  box-shadow: 0 25px 50px rgba(0,0,0,0.7);
+  text-align: center;
+  position: relative;
+  animation: folderPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+html body .more-apps-close-btn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: rgba(255,255,255,0.06);
+  border: none;
+  color: #fff;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+html body .more-apps-title {
+  color: #fff;
+  font-size: 20px;
+  font-weight: 700;
+  margin-top: 0;
+  margin-bottom: 24px;
+  letter-spacing: -0.5px;
+}
+
+html body .more-apps-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px 12px;
+  justify-items: center;
+}
+
+/* Sidebar profile / login card (rendered by JS) */
+html body a.sidebar-profile-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  color: #fff;
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  margin: 10px 0;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  transition: all 0.2s ease;
+}
+
+html body .sidebar-profile-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #5a2eff;
+  flex-shrink: 0;
+}
+
+html body .sidebar-profile-avatar-fallback {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #5a2eff;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+html body .sidebar-profile-info {
+  overflow: hidden;
+  text-align: left;
+}
+
+html body .sidebar-profile-name {
+  font-weight: 700;
+  font-size: 14px;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 130px;
+}
+
+html body .sidebar-profile-sub {
+  font-size: 11px;
+  color: #3aa0ff;
+  font-weight: 600;
+}
+
+html body a.sidebar-login-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, #fff1f2, #ffe4e6);
+  border: 1px solid #fecdd3;
+  border-radius: 12px;
+  text-decoration: none;
+  margin-bottom: 8px;
+}
+
+html body .sidebar-login-icon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #fb7185, #f43f5e);
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(244,63,94,.35);
+  flex-shrink: 0;
+}
+
+html body .sidebar-login-svg {
+  width: 20px;
+  height: 20px;
+}
+
+html body .sidebar-login-label {
+  color: #be123c;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+html body .app-icon-circle--clip {
+  overflow: hidden;
+}
+
+html body .app-icon-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Keep these two links looking the same on hover (inline styles used to win here) */
+html body a.sidebar-profile-link:hover,
+html body.light a.sidebar-profile-link:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+
+html body a.sidebar-login-link:hover,
+html body.light a.sidebar-login-link:hover {
+  background: linear-gradient(135deg, #fff1f2, #ffe4e6);
+  border: 1px solid #fecdd3;
+}
+
