@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0f1022">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Rohit Kumar | Developer, Editor, Artist</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -82,6 +83,25 @@ footer{text-align:center;color:var(--mute);font-size:.85rem;padding:60px 5% 40px
 .rv{opacity:0;transform:translateY(24px);transition:opacity .7s,transform .7s}.rv.on{opacity:1;transform:none}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}.rv{opacity:1;transform:none}}
 @media (max-width:600px){.links a{display:none}.stat{border-right:0;border-bottom:1px solid var(--line)}.nv{display:none}}
+/* upgrades */
+.reelnav{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:-6px}
+.dots{display:flex;gap:8px}
+.dots i{width:8px;height:8px;border-radius:8px;background:var(--line);transition:width .3s,background .3s;cursor:pointer}
+.dots i.on{background:var(--saf);width:24px}
+.rarr{display:flex;gap:8px}
+.rarr button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:none;color:var(--ink);font-size:1.3rem;cursor:pointer;transition:border-color .2s,color .2s}
+.rarr button:hover{border-color:var(--saf);color:var(--saf)}
+.chips{display:flex;flex-wrap:wrap;gap:10px}
+.chip{border:1px solid var(--line);background:var(--bg2);padding:8px 16px;border-radius:30px;font-weight:600;font-size:.88rem}
+.skills{margin-bottom:64px}
+.it{position:relative;transition:transform .3s,border-color .3s}.it:hover{transform:translateY(-4px);border-color:var(--saf)}
+.it .m{overflow:hidden}.it .m img{transition:transform .5s}.it:hover .m img{transform:scale(1.04)}
+.badge{position:absolute;left:10px;top:10px;background:var(--saf);color:#1a1100;font-size:.72rem;font-weight:800;padding:4px 10px;border-radius:20px;z-index:2;pointer-events:none}
+.totop{position:fixed;right:18px;bottom:24px;width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:var(--bg2);color:var(--ink);cursor:pointer;z-index:60;opacity:0;pointer-events:none;transform:translateY(12px);transition:.3s;font-size:1.2rem}
+.totop.on{opacity:1;pointer-events:auto;transform:none}
+.links a.act{color:var(--saf)}
+.empty{color:var(--mute);padding:20px 0}
+.f small{opacity:.6;margin-left:4px}
 </style>
 </head>
 <body id="app-body">
@@ -97,11 +117,13 @@ footer{text-align:center;color:var(--mute);font-size:.85rem;padding:60px 5% 40px
 
   <div class="stats rv"><div class="stat"><strong data-n="95">0</strong><small>% Full-stack development</small></div><div class="stat"><strong data-n="92">0</strong><small>% Video editing</small></div><div class="stat"><strong data-n="90">0</strong><small>% Fine arts</small></div><div class="stat"><strong data-n="67">0</strong><small>Gaming level</small></div></div>
 
+  <section class="skills rv"><div class="sec"><h2>Tools jo main use karta hu</h2></div><div class="chips"><span class="chip">HTML5</span><span class="chip">CSS</span><span class="chip">JavaScript</span><span class="chip">Supabase</span><span class="chip">PWA</span></div></section>
+
   <section class="story rv"><h2>Jis site par aap padh rahe ho, wo ek student ne banayi hai.</h2><p>Notes, formulas aur test series tak, har cheez PM Roitx me maine khud design aur code ki hai. Aap bhi apne notes upload karke dusre students ki madad kar sakte ho.</p><div class="cta"><a class="btn main" href="classes.html">Notes padhna shuru karo</a></div></section>
 
-  <section id="reel"><div class="sec"><h2>Video reel</h2><p>Side me ghumao, beech wala chalega</p></div><div class="reel" id="reelBox"></div></section>
+  <section id="reel"><div class="sec"><h2>Video reel</h2><p>Side me ghumao, beech wala chalega</p></div><div class="reel" id="reelBox"></div><div class="reelnav"><div class="dots" id="dots"></div><div class="rarr"><button id="rprev" aria-label="Pichla video">&lsaquo;</button><button id="rnext" aria-label="Agla video">&rsaquo;</button></div></div></section>
 
-  <section id="work" style="margin-top:50px" class="rv"><div class="sec"><h2>Mera kaam</h2><div class="filters" id="filters"><button class="f on" data-f="all">Sab</button><button class="f" data-f="art">Fine arts</button><button class="f" data-f="gaming">Gaming</button><button class="f" data-f="life">Lifestyle</button></div></div><div class="grid" id="grid"></div></section>
+  <section id="work" style="margin-top:50px" class="rv"><div class="sec"><h2>Mera kaam</h2><div class="filters" id="filters"><button class="f on" data-f="all">Sab</button><button class="f" data-f="art">Fine arts</button><button class="f" data-f="gaming">Gaming</button><button class="f" data-f="life">Lifestyle</button></div></div><div class="grid" id="grid"></div><p class="empty hide" id="empty">Is category me abhi kuch nahi hai.</p></section>
 
   <section id="news" class="rv" style="margin-top:70px"><div class="sec"><h2>Akhbaar me</h2></div><div class="grid" id="newsGrid"></div></section>
   <section class="story rv" id="connect" style="margin-top:76px"><h2>Kuch poochna hai?</h2><p>Padhai, notes ya kisi project ke baare me likho. Main akela student hu, to jawab dene me thoda time lag sakta hai.</p><div class="cta"><a class="btn main" id="mailBtn" href="#connect">Email bhejo</a><button class="btn" id="copyMail">Email copy karo</button></div><p id="mailTxt" style="font-size:.85rem"></p></section>
@@ -109,6 +131,7 @@ footer{text-align:center;color:var(--mute);font-size:.85rem;padding:60px 5% 40px
 <footer>Code, cuts aur colours: Rohit Kumar. &copy; 2026</footer>
 
 <div id="modal" role="dialog" aria-modal="true" aria-label="Media viewer"><div id="mh"><span id="mt"></span><span><span id="mn" style="font-size:.85rem;opacity:.7"></span> <button onclick="closeViewer()" aria-label="Band karo">&times;</button></span></div><div id="mb"></div><button class="nv" id="pv" onclick="step(-1)" aria-label="Pichla">&lsaquo;</button><button class="nv" id="nx" onclick="step(1)" aria-label="Agla">&rsaquo;</button><div id="ma"></div></div>
+<button class="totop" id="toTop" aria-label="Upar jao">&uarr;</button>
 <div id="toast"></div>
 
 <script>
@@ -156,7 +179,7 @@ const ic = {heart:S('<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.
 const likeBtn = (it, cls = '') => `<button class="ab like ${liked[it.id] ? 'liked' : ''}" data-lk="${it.id}" aria-pressed="${!!liked[it.id]}" aria-label="Like" onclick="toggleLike('${it.id}')">${ic.heart}<span>${cnt[it.id] || 0}</span></button>`;
 const acts = it => `<div class="acts">${likeBtn(it)}<button class="ab" onclick="viewMedia('${it.id}')" aria-label="Dekho">${ic.eye}</button><button class="ab" onclick="shareItem('${it.id}')" aria-label="Share">${ic.share}</button><button class="ab" onclick="dl('${it.id}')" aria-label="Download">${ic.dl}</button></div>`;
 document.getElementById('reelBox').innerHTML = ITEMS.filter(i => i.t === 'video').map(i => `<div class="rc" tabindex="0" role="button" aria-label="${esc(i.title)}" onclick="viewMedia('${i.id}')" onkeydown="if(event.key==='Enter')viewMedia('${i.id}')"><video src="${i.src}" muted loop playsinline preload="metadata"></video><button class="snd" onclick="toggleAudio(this,event)" aria-label="Sound">${ic.mute}</button><div class="cap">${esc(i.title)}</div></div>`).join('');
-const imgCard = i => `<article class="it" data-c="${i.c}"><div class="m" tabindex="0" role="button" aria-label="${esc(i.title)}" onclick="viewMedia('${i.id}')" onkeydown="if(event.key==='Enter')viewMedia('${i.id}')"><img src="${i.src}" alt="${esc(i.title)}" loading="lazy" onload="this.classList.add('ld')"></div><div class="cap2">${esc(i.title)}</div>${acts(i)}</article>`;
+const imgCard = i => `<article class="it" data-c="${i.c}" data-id="${i.id}"><div class="m" tabindex="0" role="button" aria-label="${esc(i.title)}" onclick="viewMedia('${i.id}')" onkeydown="if(event.key==='Enter')viewMedia('${i.id}')"><img src="${i.src}" alt="${esc(i.title)}" loading="lazy" onload="this.classList.add('ld')"></div><div class="cap2">${esc(i.title)}</div>${acts(i)}</article>`;
 document.getElementById('grid').innerHTML = ITEMS.filter(i => i.t === 'image' && i.c !== 'news').map(imgCard).join('');
 document.getElementById('newsGrid').innerHTML = ITEMS.filter(i => i.c === 'news').map(imgCard).join('');
 
@@ -276,6 +299,55 @@ const rio = new IntersectionObserver(es => es.forEach(en => { if (!en.isIntersec
   en.target.querySelectorAll('[data-n]').forEach(el => { const n = +el.dataset.n; let c = 0; const s = setInterval(() => { c += Math.ceil(n / 30); if (c >= n) { c = n; clearInterval(s); } el.textContent = c; }, 30); }); }), { threshold: .12 });
 document.querySelectorAll('.rv').forEach(el => rio.observe(el));
 addEventListener('scroll', () => { const h = document.documentElement.scrollHeight - innerHeight; document.getElementById('bar').style.width = (h > 0 ? scrollY / h * 100 : 0) + '%'; }, { passive: true });
+/* ---- Upgrades ---- */
+/* Reel: arrows + dots */
+const dotsBox = document.getElementById('dots'); let reelIdx = 0;
+dotsBox.innerHTML = rcs.map((_, i) => `<i data-i="${i}" role="button" aria-label="Video ${i + 1}"></i>`).join('');
+const goReel = i => { const c = rcs[Math.max(0, Math.min(rcs.length - 1, i))]; reel.scrollTo({ left: c.offsetLeft + c.offsetWidth / 2 - reel.clientWidth / 2, behavior: 'smooth' }); };
+function markDots() {
+  const mid = reel.scrollLeft + reel.clientWidth / 2; let bi = 0, bd = 1e9;
+  rcs.forEach((c, i) => { const d = Math.abs(c.offsetLeft + c.offsetWidth / 2 - mid); if (d < bd) { bd = d; bi = i; } });
+  reelIdx = bi; [...dotsBox.children].forEach((d, i) => d.classList.toggle('on', i === bi));
+}
+reel.addEventListener('scroll', markDots, { passive: true }); addEventListener('load', markDots); markDots();
+document.getElementById('rprev').onclick = () => goReel(reelIdx - 1);
+document.getElementById('rnext').onclick = () => goReel(reelIdx + 1);
+dotsBox.addEventListener('click', e => { const d = e.target.closest('i'); if (d) goReel(+d.dataset.i); });
+
+/* Filters: counts + empty state */
+document.querySelectorAll('.f').forEach(b => {
+  const f = b.dataset.f, n = ITEMS.filter(i => i.t === 'image' && i.c !== 'news' && (f === 'all' || i.c === f)).length;
+  b.insertAdjacentHTML('beforeend', `<small>${n}</small>`);
+});
+document.getElementById('filters').addEventListener('click', () => {
+  const any = [...document.querySelectorAll('#grid .it')].some(c => !c.classList.contains('hide'));
+  document.getElementById('empty').classList.toggle('hide', any);
+});
+
+/* Sabse pasand kiya gaya badge (asli like counts se) */
+function markTop() {
+  document.querySelectorAll('.badge').forEach(b => b.remove());
+  let bid = null, bn = 2;
+  ITEMS.forEach(it => { if ((cnt[it.id] || 0) > bn) { bn = cnt[it.id]; bid = it.id; } });
+  if (!bid) return;
+  const card = document.querySelector(`.it[data-id="${bid}"]`);
+  if (card) card.insertAdjacentHTML('afterbegin', '<span class="badge">&#10084; Sabse pasand</span>');
+}
+const _paintLike = paintLike;
+paintLike = function (id) { _paintLike(id); markTop(); };
+markTop();
+
+/* Viewer: agli image pehle se load */
+const _showAt = showAt;
+showAt = function (i) { _showAt(i); const n = ITEMS[(cur + 1) % ITEMS.length]; if (n.t === 'image') new Image().src = n.src; };
+
+/* Back to top + nav highlight */
+const toTop = document.getElementById('toTop');
+toTop.onclick = () => scrollTo({ top: 0, behavior: 'smooth' });
+addEventListener('scroll', () => toTop.classList.toggle('on', scrollY > 700), { passive: true });
+const navLinks = [...document.querySelectorAll('.links a')];
+const spy = new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting) navLinks.forEach(a => a.classList.toggle('act', a.getAttribute('href') === '#' + en.target.id)); }), { rootMargin: '-45% 0px -50% 0px' });
+['reel', 'work', 'news', 'connect'].forEach(id => { const el = document.getElementById(id); if (el) spy.observe(el); });
 </script>
 </body>
 </html>
