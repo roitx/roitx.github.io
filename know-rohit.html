@@ -1,644 +1,281 @@
 <!DOCTYPE html>
-<html lang="hi" dir="ltr" data-theme="dark">
+<html lang="hi" data-theme="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="robots" content="noindex, nofollow">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rohit Kumar | Secured Mind_Palace</title>
-    <!-- Supabase Dependencies (Agar pehle se nahi hain toh yeh add karein) -->
+<meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rohit Kumar | Developer, Editor, Artist</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js"></script>
-
-<!-- Bulletproof Gateway Guard Script -->
 <script>
   (async function checkGatewayAccess() {
-    // Thoda wait karein taaki supabaseClient properly initialize ho jaye
     let retries = 0;
-    while (!window.supabaseClient && retries < 10) {
-      await new Promise(resolve => setTimeout(resolve, 100));
-      retries++;
-    }
-
+    while (!window.supabaseClient && retries < 10) { await new Promise(r => setTimeout(r, 100)); retries++; }
     if (window.supabaseClient) {
       const { data: { session }, error } = await window.supabaseClient.auth.getSession();
-      
-      // Agar session nahi hai, toh turant login/gateway par redirect kar dein
-      if (error || !session) {
-        window.location.replace("login.html"); // Yahan apna login ya gateway page ka naam likhein
-      }
-    } else {
-      // Fallback agar supabase load hi na ho paye
-      console.warn("Supabase client failed to load for security check.");
-    }
+      if (error || !session) window.location.replace("login.html");
+    } else { console.warn("Supabase client failed to load for security check."); }
   })();
 </script>
-
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
-
-    <style>
-        :root {
-            --bg-main: #0B0F17;
-            --bg-nav: rgba(11, 15, 23, 0.9);
-            --card-bg: rgba(22, 31, 48, 0.65);
-            --card-border: rgba(255, 255, 255, 0.08);
-            --text-primary: #F8FAFC;
-            --text-secondary: #94A3B8;
-            --accent-1: #38BDF8;
-            --accent-2: #C084FC;
-            --accent-3: #FBBF24;
-            --glow: rgba(56, 189, 248, 0.15);
-        }
-
-        [data-theme="light"] {
-            --bg-main: #F8FAFC;
-            --bg-nav: rgba(248, 250, 252, 0.9);
-            --card-bg: rgba(255, 255, 255, 0.85);
-            --card-border: rgba(0, 0, 0, 0.08);
-            --text-primary: #0F172A;
-            --text-secondary: #475569;
-            --accent-1: #0284C7;
-            --accent-2: #9333EA;
-            --accent-3: #D97706;
-            --glow: rgba(2, 132, 199, 0.1);
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        @media (min-width: 1024px) { * { cursor: none; } }
-        
-        body {
-            background-color: var(--bg-main); color: var(--text-primary);
-            font-family: 'Plus Jakarta Sans', sans-serif; 
-            overflow-x: hidden; 
-            transition: background-color 0.5s ease, color 0.5s ease;
-            -webkit-user-select: none; user-select: none;
-        }
-
-        .security-shield-active {
-            filter: blur(30px) contrast(200%);
-            pointer-events: none;
-            transition: filter 0.3s ease;
-        }
-
-        .ambient-bg {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: radial-gradient(circle at 15% 15%, var(--glow) 0%, transparent 40%),
-                        radial-gradient(circle at 85% 85%, rgba(192, 132, 252, 0.08) 0%, transparent 40%);
-            z-index: -1; pointer-events: none;
-        }
-
-        #scroll-progress {
-            position: fixed; top: 0; left: 0; width: 0%; height: 4px;
-            background: linear-gradient(90deg, var(--accent-1), var(--accent-2));
-            z-index: 100002; transition: width 0.1s ease-out;
-        }
-
-        .cursor-dot, .cursor-outline {
-            position: fixed; top: 0; left: 0; transform: translate(-50%, -50%);
-            border-radius: 50%; z-index: 100001; pointer-events: none; display: none;
-        }
-        @media (min-width: 1024px) {
-            .cursor-dot, .cursor-outline { display: block; }
-        }
-        .cursor-dot { width: 8px; height: 8px; background-color: var(--accent-1); }
-        .cursor-outline { width: 40px; height: 40px; border: 2px solid var(--accent-2); transition: width 0.2s, height 0.2s; }
-        
-        /* FIXED HEADER - CONTENT NEVER OVERLAPS */
-        nav {
-            position: fixed; top: 0; left: 0; width: 100%; height: 75px; z-index: 10000;
-            background: var(--bg-nav); backdrop-filter: blur(16px); border-bottom: 1px solid var(--card-border);
-            padding: 0 5%; display: flex; justify-content: space-between; align-items: center;
-        }
-        .logo { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.3rem; letter-spacing: -1px; }
-        .logo span { color: var(--accent-1); }
-        
-        .nav-links { display: flex; gap: 15px; align-items: center; }
-        .nav-links a { color: var(--text-primary); text-decoration: none; font-weight: 500; font-size: 0.9rem; transition: color 0.3s; }
-        .nav-links a:hover { color: var(--accent-1); }
-        
-        .theme-toggle { background: none; border: 1px solid var(--card-border); padding: 6px 12px; border-radius: 20px; color: var(--text-primary); outline: none; transition: all 0.3s; font-size: 0.85rem; cursor: pointer; }
-        .theme-toggle:hover { border-color: var(--accent-1); color: var(--accent-1); }
-
-        .container { max-width: 1100px; margin: 0 auto; padding: 100px 15px 40px 15px; display: flex; flex-direction: column; gap: 30px; }
-        .card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 20px; padding: 25px; backdrop-filter: blur(16px); box-shadow: 0 10px 30px rgba(0,0,0,0.2); transition: transform 0.4s ease, border-color 0.4s ease; }
-        .card:hover { border-color: rgba(56, 189, 248, 0.4); transform: translateY(-3px); }
-
-        .section-title { font-family: 'Space Grotesk', sans-serif; font-size: 1.8rem; margin-bottom: 25px; display: inline-block; background: linear-gradient(90deg, var(--accent-1), var(--accent-2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-
-        .hero { text-align: center; padding: 40px 10px; }
-        .hero h1 { font-family: 'Space Grotesk', sans-serif; font-size: 2.8rem; font-weight: 800; line-height: 1.1; margin-bottom: 15px; }
-        .typewriter { font-family: 'Fira Code', monospace; color: var(--accent-1); font-size: 1.2rem; margin-bottom: 15px; height: 30px;}
-        
-        .terminal { background: #0f111a; border-radius: 12px; overflow-x: auto; font-family: 'Fira Code', monospace; font-size: 0.85rem; border: 1px solid #292d3e; text-align: left; }
-        .terminal-header { background: #1a1c25; padding: 10px 15px; display: flex; gap: 8px; border-bottom: 1px solid #292d3e; }
-        .dot { width: 10px; height: 10px; border-radius: 50%; }
-        .dot.r { background: #ff5f56; } .dot.y { background: #ffbd2e; } .dot.g { background: #27c93f; }
-        .terminal-body { padding: 15px; color: #a6accd; line-height: 1.6; white-space: pre-wrap; word-break: break-all; }
-        .cmd { color: #82aaff; } .str { color: #c3e88d; } .func { color: #ffcb6b; }
-
-        .skills-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-top: 25px; }
-        .skill-bar { width: 100%; background: rgba(255,255,255,0.05); border-radius: 10px; height: 8px; overflow: hidden; position: relative; }
-        .skill-fill { height: 100%; background: linear-gradient(90deg, var(--accent-1), var(--accent-2)); width: 0; transition: width 1.5s cubic-bezier(0.22, 1, 0.36, 1); }
-
-        .filter-btns { display: flex; gap: 8px; justify-content: center; margin-bottom: 25px; flex-wrap: wrap; }
-        .f-btn { background: transparent; border: 1px solid var(--card-border); color: var(--text-primary); padding: 6px 16px; border-radius: 30px; transition: all 0.3s; font-weight: 600; font-size: 0.85rem; cursor: pointer; }
-        .f-btn.active, .f-btn:hover { background: var(--accent-1); color: #0B0F17; border-color: var(--accent-1); }
-
-        .gallery-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
-        .gallery-item { position: relative; border-radius: 16px; overflow: hidden; background: #000; aspect-ratio: 4/5; }
-        .gallery-item img, .gallery-item video { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s ease, filter 0.6s ease; filter: brightness(0.85); }
-        .gallery-item:hover img, .gallery-item:hover video { transform: scale(1.05); filter: brightness(1.05); }
-
-        /* VIDEO SOUND BUTTON */
-        .vid-audio-btn {
-            position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.7); border: 1px solid rgba(255,255,255,0.2);
-            color: #fff; padding: 5px 10px; border-radius: 15px; font-size: 0.7rem; font-family: 'Fira Code', monospace;
-            cursor: pointer; z-index: 10; display: flex; align-items: center; gap: 4px; backdrop-filter: blur(4px);
-        }
-        .vid-audio-btn:hover { background: var(--accent-1); color: #000; }
-        
-        .gallery-overlay { position: absolute; bottom: -70px; left: 0; right: 0; background: linear-gradient(0deg, rgba(0,0,0,0.95), transparent); padding: 25px 15px 15px; text-align: center; transition: bottom 0.4s ease; }
-        .gallery-item:hover .gallery-overlay { bottom: 0; }
-        .gallery-overlay h3 { color: #fff; font-size: 0.95rem; margin-bottom: 8px; font-family: 'Space Grotesk', sans-serif; }
-
-        .action-btns { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
-        .act-btn { background: rgba(255,255,255,0.15); border: none; padding: 6px 10px; border-radius: 6px; color: #fff; font-size: 0.75rem; font-weight: 500; transition: all 0.3s; backdrop-filter: blur(5px); cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
-        .act-btn:hover { background: var(--accent-1); color: #000; }
-        .act-btn.liked { background: #ef4444 !important; color: #fff !important; }
-        .act-btn.liked svg { fill: #fff; stroke: #fff; }
-        .act-btn span { font-size: 0.75rem; font-weight: 600; }
-
-        /* MODAL VIEWER */
-        .image-modal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(4, 9, 20, 0.95); backdrop-filter: blur(20px); z-index: 200000; justify-content: center; align-items: center; padding: 20px; }
-        .image-modal.active { display: flex; }
-        .modal-card { background: #0b1329; border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 16px; max-width: 850px; width: 100%; overflow: hidden; box-shadow: 0 0 40px rgba(0,0,0,0.8); display: flex; flex-direction: column; max-height: 90vh; }
-        .modal-header { padding: 12px 20px; background: #0f172a; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; }
-        .modal-header h4 { font-family: 'Space Grotesk', sans-serif; color: var(--accent-1); }
-        .close-modal { background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 1.2rem; }
-        .close-modal:hover { color: #fff; }
-        .modal-body-img { flex: 1; overflow: auto; display: flex; justify-content: center; align-items: center; padding: 20px; background: #04060a; }
-        .modal-body-img img, .modal-body-img video { max-width: 100%; max-height: 75vh; object-fit: contain; border-radius: 8px; }
-
-        .reveal { opacity: 0; transform: translateY(30px); transition: all 0.8s ease-out; }
-        .reveal.active { opacity: 1; transform: translateY(0); }
-        .tilt-card { transform-style: preserve-3d; transform: perspective(1000px); }
-
-        @media (max-width: 768px) {
-            .container { padding-top: 90px; gap: 20px; }
-            .card { padding: 20px; }
-            .hero h1 { font-size: 2.2rem; }
-        }
-    </style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0f1022;--bg2:#171936;--ink:#f5f1e8;--mute:#a4a8c6;--line:rgba(255,255,255,.1);--saf:#ffa51f;--teal:#35d6c4;--r:22px}
+[data-theme=light]{--bg:#f6f1e6;--bg2:#fff;--ink:#161733;--mute:#5b5e7e;--line:rgba(22,23,51,.12);--saf:#d9780a;--teal:#0c9a8b}
+*{margin:0;padding:0;box-sizing:border-box}html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:'Plus Jakarta Sans',sans-serif;line-height:1.6;-webkit-user-select:none;user-select:none;overflow-x:hidden;transition:background .4s,color .4s}
+body.shield{filter:blur(30px) contrast(200%);pointer-events:none}
+h1,h2,h3{font-family:'Bricolage Grotesque',sans-serif;line-height:1.05}a{color:inherit}
+:focus-visible{outline:3px solid var(--saf);outline-offset:3px}
+#bar{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,var(--saf),var(--teal));z-index:99}
+nav{position:sticky;top:0;z-index:50;display:flex;justify-content:space-between;align-items:center;padding:12px 5%;background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.logo{font-family:'Bricolage Grotesque';font-weight:800;font-size:1.35rem;text-decoration:none}.logo i{color:var(--saf);font-style:normal}
+.links{display:flex;gap:18px;align-items:center;font-size:.92rem;font-weight:500}.links a{text-decoration:none;color:var(--mute)}.links a:hover{color:var(--ink)}
+.tbtn{border:1px solid var(--line);background:none;color:var(--ink);width:38px;height:38px;border-radius:50%;cursor:pointer;display:grid;place-items:center}
+.wrap{max-width:1140px;margin:0 auto;padding:0 5%}
+.hero{position:relative;height:clamp(360px,88vw,640px)}
+#pc{width:100%;height:100%;display:block;touch-action:pan-y}
+.hint{position:absolute;left:0;right:0;bottom:6px;text-align:center;color:var(--mute);font-size:.8rem}
+.swap{font-family:'Bricolage Grotesque';font-size:clamp(1.4rem,4.4vw,2.4rem);font-weight:500;min-height:1.3em;margin-top:6px}.swap b{color:var(--saf);font-weight:800}
+.lead{max-width:34rem;color:var(--mute);font-size:1.05rem;margin:16px 0 22px}
+.cta{display:flex;gap:12px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;padding:13px 22px;border-radius:40px;font-weight:600;text-decoration:none;border:1px solid var(--line);background:none;color:var(--ink);cursor:pointer;font-size:.95rem;transition:transform .2s}
+.btn.main{background:var(--saf);color:#1a1100;border-color:var(--saf)}.btn:hover{transform:translateY(-2px)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin:44px 0}
+.stat{padding:22px 4px;border-right:1px solid var(--line)}.stat:last-child{border:0}
+.stat strong{font-family:'Bricolage Grotesque';font-size:2.6rem;display:block;line-height:1}.stat small{color:var(--mute);font-size:.85rem}
+.story{background:var(--bg2);border:1px solid var(--line);border-radius:var(--r);padding:clamp(24px,5vw,48px);display:grid;gap:14px;margin-bottom:76px}
+.story h2{font-size:clamp(1.8rem,5vw,3rem)}.story p{color:var(--mute);max-width:40rem}
+.sec{display:flex;justify-content:space-between;align-items:end;gap:16px;flex-wrap:wrap;margin-bottom:22px}.sec h2{font-size:clamp(2rem,6vw,3.6rem)}
+.sec p{color:var(--mute);font-size:.9rem}
+/* Reel: videos ki horizontal film-strip, beech wala bada aur chalta hua */
+.reel{display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;padding:10px 14vw 26px;margin:0 -5vw;scrollbar-width:none}
+.reel::-webkit-scrollbar{display:none}
+.rc{flex:0 0 min(70vw,330px);scroll-snap-align:center;border-radius:var(--r);overflow:hidden;background:#000;position:relative;aspect-ratio:4/5;cursor:pointer;transform:scale(var(--s,.88));opacity:var(--o,.55);transition:transform .25s,opacity .25s;border:1px solid var(--line)}
+.rc video{width:100%;height:100%;object-fit:cover;display:block}
+.rc .cap{position:absolute;left:0;right:0;bottom:0;padding:40px 16px 14px;background:linear-gradient(0deg,rgba(0,0,0,.85),transparent);color:#fff;font-weight:600}
+.snd{position:absolute;right:10px;top:10px;background:rgba(0,0,0,.65);color:#fff;border:0;width:36px;height:36px;border-radius:50%;cursor:pointer;display:grid;place-items:center;z-index:2}
+.filters{display:flex;gap:8px;flex-wrap:wrap}
+.f{border:1px solid var(--line);background:none;color:var(--ink);padding:8px 16px;border-radius:30px;font-weight:500;cursor:pointer;font-size:.88rem}.f.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.grid{columns:3 260px;column-gap:16px}
+.it{break-inside:avoid;margin-bottom:16px;border-radius:var(--r);overflow:hidden;background:var(--bg2);border:1px solid var(--line)}
+.it .m{cursor:pointer;background:#000}.it img{display:block;width:100%;height:auto;min-height:160px;object-fit:cover}
+.it img:not(.ld){background:linear-gradient(110deg,var(--bg2) 30%,rgba(255,255,255,.07) 50%,var(--bg2) 70%);background-size:200% 100%;animation:sh 1.4s linear infinite}@keyframes sh{to{background-position:-200% 0}}
+.it .cap2{padding:12px 14px 6px;font-weight:600}
+.acts{display:flex;gap:6px;padding:4px 10px 12px}
+.ab{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:none;color:var(--ink);padding:7px 12px;border-radius:30px;cursor:pointer;font-size:.8rem;font-weight:600}
+.ab svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2}.ab.liked{background:#ef4444;border-color:#ef4444;color:#fff}.ab.liked svg{fill:#fff}.ab.like{margin-right:auto}
+.hide{display:none}
+footer{text-align:center;color:var(--mute);font-size:.85rem;padding:60px 5% 40px}
+/* Viewer: swipe karo ya arrow dabao */
+#modal{position:fixed;inset:0;background:rgba(5,6,16,.96);display:none;flex-direction:column;z-index:200;padding:14px;touch-action:pan-y}
+#modal.on{display:flex}
+#mh{display:flex;justify-content:space-between;align-items:center;color:#fff;font-weight:600;gap:10px}
+#mh button{background:none;border:0;color:#fff;font-size:1.7rem;cursor:pointer}
+#mb{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;transition:transform .25s}
+#mb img,#mb video{max-width:100%;max-height:100%;border-radius:12px}
+.nv{position:absolute;top:50%;transform:translateY(-50%);width:46px;height:46px;border-radius:50%;border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.5);color:#fff;font-size:1.4rem;cursor:pointer}
+#pv{left:10px}#nx{right:10px}
+#ma{display:flex;gap:8px;justify-content:center;padding-top:10px}#ma .ab{color:#fff;border-color:rgba(255,255,255,.25)}
+#toast{position:fixed;bottom:24px;left:50%;transform:translate(-50%,30px);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:30px;font-size:.88rem;opacity:0;transition:.3s;z-index:300;pointer-events:none}#toast.on{opacity:1;transform:translate(-50%,0)}
+.rv{opacity:0;transform:translateY(24px);transition:opacity .7s,transform .7s}.rv.on{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}.rv{opacity:1;transform:none}}
+@media (max-width:600px){.links a{display:none}.stat{border-right:0;border-bottom:1px solid var(--line)}.nv{display:none}}
+</style>
 </head>
 <body id="app-body">
+<div id="bar"></div>
+<nav><a class="logo" href="#top">ROHIT<i>.</i></a>
+<div class="links"><a href="#reel">Reel</a><a href="#work">Work</a><a href="#news">Press</a><a href="#connect">Connect</a><button class="tbtn" id="theme" aria-label="Theme badlo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button></div></nav>
 
-    <div id="scroll-progress"></div>
-    <div class="ambient-bg"></div>
-    <div class="cursor-dot" id="cursor-dot"></div>
-    <div class="cursor-outline" id="cursor-outline"></div>
+<main class="wrap" id="top">
+  <section class="hero"><canvas id="pc" aria-label="Rohit Kumar"></canvas><div class="hint">Naam ko chhuo ya ghumao</div></section>
+  <div class="swap">Main <b id="sw"></b></div>
+  <p class="lead">Class 9-12 ke students ke liye PM Roitx maine akele banaya. Code likhta hu, video edit karta hu, sketch banata hu aur esports khelta hu.</p>
+  <div class="cta"><a class="btn main" href="#reel">Mera kaam dekho</a><a class="btn" href="index.html">PM Roitx par wapas</a></div>
 
-    <!-- MAIN PORTFOLIO CONTENT (NO GATEWAY) -->
-    <div id="main-content" style="opacity: 1; filter: blur(0); transform: scale(1); pointer-events: auto;">
-        <nav>
-            <div class="logo">ROHIT<span>.</span></div>
-            <div class="nav-links">
-                <a href="#about">About</a>
-                <a href="#skills">Skills</a>
-                <a href="#portfolio">Portfolio</a>
-                <button class="theme-toggle" id="theme-btn">☀️ Light Mode</button>
-            </div>
-        </nav>
+  <div class="stats rv"><div class="stat"><strong data-n="95">0</strong><small>% Full-stack development</small></div><div class="stat"><strong data-n="92">0</strong><small>% Video editing</small></div><div class="stat"><strong data-n="90">0</strong><small>% Fine arts</small></div><div class="stat"><strong data-n="67">0</strong><small>Gaming level</small></div></div>
 
-        <div class="container">
-            <section class="card hero reveal tilt-card" id="about">
-                <h1>Rohit Kumar</h1>
-                <div class="typewriter" id="typewriter"></div>
-                <p style="color: var(--text-secondary); max-width: 600px; margin: 0 auto; line-height: 1.6; font-size: 0.95rem;">
-                    Bridging the gap between flawless logic, cinematic video editing, competitive esports, and traditional fine arts.
-                </p>
-            </section>
+  <section class="story rv"><h2>Jis site par aap padh rahe ho, wo ek student ne banayi hai.</h2><p>Notes, formulas aur test series tak, har cheez PM Roitx me maine khud design aur code ki hai. Aap bhi apne notes upload karke dusre students ki madad kar sakte ho.</p><div class="cta"><a class="btn main" href="classes.html">Notes padhna shuru karo</a></div></section>
 
-            <section class="card reveal" id="skills">
-                <h2 class="section-title">Technical Arsenal</h2>
-                <div class="terminal tilt-card">
-                    <div class="terminal-header">
-                        <div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
-                    </div>
-                    <div class="terminal-body"><span class="cmd">const</span> developer = {
-  name: <span class="str">'Rohit Kumar'</span>,
-  stack: [<span class="str">'React'</span>, <span class="str">'Node.js'</span>, <span class="str">'Video Editing'</span>, <span class="str">'Fine Arts'</span>],
-  speciality: <span class="str">'Unified UI/UX & Cinematics'</span>,
-  execute: <span class="cmd">() =></span> { <span class="func">buildMasterpiece</span>(); }
-};</div>
-                </div>
+  <section id="reel"><div class="sec"><h2>Video reel</h2><p>Side me ghumao, beech wala chalega</p></div><div class="reel" id="reelBox"></div></section>
 
-                <div class="skills-grid" id="skill-container">
-                    <div>
-                        <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size: 0.9rem;">
-                            <span>Full-Stack Development</span><span style="color:var(--accent-1)">95%</span>
-                        </div>
-                        <div class="skill-bar"><div class="skill-fill" data-width="95%"></div></div>
-                    </div>
-                    <div>
-                        <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size: 0.9rem;">
-                            <span>Cinematics & Video Editing</span><span style="color:var(--accent-2)">92%</span>
-                        </div>
-                        <div class="skill-bar"><div class="skill-fill" data-width="92%"></div></div>
-                    </div>
-                    <div>
-                        <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size: 0.9rem;">
-                            <span>Fine Arts & Sketching</span><span style="color:var(--accent-3)">90%</span>
-                        </div>
-                        <div class="skill-bar"><div class="skill-fill" data-width="90%"></div></div>
-                    </div>
-                </div>
-            </section>
+  <section id="work" style="margin-top:50px" class="rv"><div class="sec"><h2>Mera kaam</h2><div class="filters" id="filters"><button class="f on" data-f="all">Sab</button><button class="f" data-f="art">Fine arts</button><button class="f" data-f="gaming">Gaming</button><button class="f" data-f="life">Lifestyle</button></div></div><div class="grid" id="grid"></div></section>
 
-            <section class="card reveal" id="portfolio">
-                <h2 class="section-title">Master Gallery & Cinematics</h2>
-                
-                <div class="filter-btns">
-                    <button class="f-btn active" data-filter="all">All Work</button>
-                    <button class="f-btn" data-filter="videos">Video Edits</button>
-                    <button class="f-btn" data-filter="art">Fine Arts</button>
-                    <button class="f-btn" data-filter="gaming">Gaming</button>
-                    <button class="f-btn" data-filter="life">Lifestyle</button>
-                    <button class="f-btn" data-filter="news">Press & News</button>
-                </div>
+  <section id="news" class="rv" style="margin-top:70px"><div class="sec"><h2>Akhbaar me</h2></div><div class="grid" id="newsGrid"></div></section>
+  <section class="story rv" id="connect" style="margin-top:76px"><h2>Kuch poochna hai?</h2><p>Padhai, notes ya kisi project ke baare me likho. Main akela student hu, to jawab dene me thoda time lag sakta hai.</p><div class="cta"><a class="btn main" id="mailBtn" href="#connect">Email bhejo</a><button class="btn" id="copyMail">Email copy karo</button></div><p id="mailTxt" style="font-size:.85rem"></p></section>
+</main>
+<footer>Code, cuts aur colours: Rohit Kumar. &copy; 2026</footer>
 
-                <div class="gallery-grid">
-                    <!-- VIDEO 1: Rainbow without rain -->
-                    <div class="gallery-item videos tilt-card">
-                        <video src="auth/rainbow_withoutrain.mp4" autoplay muted loop playsinline></video>
-                        <button class="vid-audio-btn" onclick="toggleAudio(this, event)">
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg> Muted
-                        </button>
-                        <div class="gallery-overlay">
-                            <h3>Rainbow Without Rain</h3>
-                            <div class="action-btns">
-                                <button class="act-btn like-btn" onclick="toggleLike('vid1')">❤️ <span id="like-vid1">142</span></button>
-                                <button class="act-btn" onclick="triggerView('vid1', 'auth/Rainbow_withoutrain.mp4', 'Rainbow Without Rain', 'video')">🔍 View</button>
-                                <button class="act-btn" onclick="triggerShare('vid1', 'auth/Rainbow_withoutrain.mp4', 'Rainbow Without Rain')">🔗 Share</button>
-                                <button class="act-btn" onclick="dlMedia('auth/Rainbow_withoutrain.mp4', 'rainbow_without_rain.mp4')">📥 DL</button>
-                            </div>
-                        </div>
-                    </div>
+<div id="modal" role="dialog" aria-modal="true" aria-label="Media viewer"><div id="mh"><span id="mt"></span><span><span id="mn" style="font-size:.85rem;opacity:.7"></span> <button onclick="closeViewer()" aria-label="Band karo">&times;</button></span></div><div id="mb"></div><button class="nv" id="pv" onclick="step(-1)" aria-label="Pichla">&lsaquo;</button><button class="nv" id="nx" onclick="step(1)" aria-label="Agla">&rsaquo;</button><div id="ma"></div></div>
+<div id="toast"></div>
 
-                    <!-- VIDEO 2: Geometry box -->
-                    <div class="gallery-item videos tilt-card">
-                        <video src="auth/geometry_box.mp4" autoplay muted loop playsinline></video>
-                        <button class="vid-audio-btn" onclick="toggleAudio(this, event)">
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg> Muted
-                        </button>
-                        <div class="gallery-overlay">
-                            <h3>Geometry Box Edit</h3>
-                            <div class="action-btns">
-                                <button class="act-btn like-btn" onclick="toggleLike('vid2')">❤️ <span id="like-vid2">98</span></button>
-                                <button class="act-btn" onclick="triggerView('vid2', 'auth/geometry_box.mp4', 'Geometry Box Edit', 'video')">🔍 View</button>
-                                <button class="act-btn" onclick="triggerShare('vid2', 'auth/geometry_box.mp4', 'Geometry Box Edit')">🔗 Share</button>
-                                <button class="act-btn" onclick="dlMedia('auth/geometry_box.mp4', 'geometry_box.mp4')">📥 DL</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- VIDEO 3: 8 years celebration -->
-                    <div class="gallery-item videos tilt-card">
-                        <video src="auth/8_years_celebration.mp4" autoplay muted loop playsinline></video>
-                        <button class="vid-audio-btn" onclick="toggleAudio(this, event)">
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg> Muted
-                        </button>
-                        <div class="gallery-overlay">
-                            <h3>8 Years Celebration Montage</h3>
-                            <div class="action-btns">
-                                <button class="act-btn like-btn" onclick="toggleLike('vid3')">❤️ <span id="like-vid3">215</span></button>
-                                <button class="act-btn" onclick="triggerView('vid3', 'auth/8_years_celebration.mp4', '8 Years Celebration', 'video')">🔍 View</button>
-                                <button class="act-btn" onclick="triggerShare('vid3', 'auth/8_years_celebration.mp4', '8 Years Celebration')">🔗 Share</button>
-                                <button class="act-btn" onclick="dlMedia('auth/8_years_celebration.mp4', '8_years_celebration.mp4')">📥 DL</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- VIDEO 4: Battery experiment -->
-                    <div class="gallery-item videos tilt-card">
-                        <video src="auth/battery_experiment.mp4" autoplay muted loop playsinline></video>
-                        <button class="vid-audio-btn" onclick="toggleAudio(this, event)">
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg> Muted
-                        </button>
-                        <div class="gallery-overlay">
-                            <h3>Battery Science Experiment</h3>
-                            <div class="action-btns">
-                                <button class="act-btn like-btn" onclick="toggleLike('vid4')">❤️ <span id="like-vid4">176</span></button>
-                                <button class="act-btn" onclick="triggerView('vid4', 'auth/battery_experiment.mp4', 'Battery Experiment', 'video')">🔍 View</button>
-                                <button class="act-btn" onclick="triggerShare('vid4', 'auth/battery_experiment.mp4', 'Battery Experiment')">🔗 Share</button>
-                                <button class="act-btn" onclick="dlMedia('auth/battery_experiment.mp4', 'battery_experiment.mp4')">📥 DL</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Art Items (Original 4) -->
-                    <div class="gallery-item art tilt-card">
-                        <img src="auth/sivaji.jpg" alt="Shivaji Maharaj" loading="lazy">
-                        <div class="gallery-overlay">
-                            <h3>Chhatrapati Shivaji Maharaj</h3>
-                            <div class="action-btns">
-                                <button class="act-btn like-btn" onclick="toggleLike('sivaji')">❤️ <span id="like-sivaji">142</span></button>
-                                <button class="act-btn" onclick="triggerView('sivaji', 'auth/sivaji.jpg', 'Chhatrapati Shivaji Maharaj', 'image')">🔍 View</button>
-                                <button class="act-btn" onclick="triggerShare('sivaji', 'auth/sivaji.jpg', 'Chhatrapati Shivaji Maharaj')">🔗 Share</button>
-                                <button class="act-btn" onclick="dlImage('auth/sivaji.jpg', 'sivaji_maharaj.jpg')">📥 DL</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="gallery-item art tilt-card">
-                        <img src="auth/maharna.jpg" alt="Maharana Pratap" loading="lazy">
-                        <div class="gallery-overlay">
-                            <h3>Maharana Pratap</h3>
-                            <div class="action-btns">
-                                <button class="act-btn like-btn" onclick="toggleLike('maharna')">❤️ <span id="like-maharna">98</span></button>
-                                <button class="act-btn" onclick="triggerView('maharna', 'auth/maharna.jpg', 'Maharana Pratap', 'image')">🔍 View</button>
-                                <button class="act-btn" onclick="triggerShare('maharna', 'auth/maharna.jpg', 'Maharana Pratap')">🔗 Share</button>
-                                <button class="act-btn" onclick="dlImage('auth/maharna.jpg', 'maharana_pratap.jpg')">📥 DL</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="gallery-item art tilt-card">
-                        <img src="auth/radhakrisnan.jpg" alt="Dr. Radhakrishnan" loading="lazy">
-                        <div class="gallery-overlay">
-                            <h3>Dr. S. Radhakrishnan</h3>
-                            <div class="action-btns">
-                                <button class="act-btn like-btn" onclick="toggleLike('radhakrisnan')">❤️ <span id="like-radhakrisnan">76</span></button>
-                                <button class="act-btn" onclick="triggerView('radhakrisnan', 'auth/radhakrisnan.jpg', 'Dr. S. Radhakrishnan', 'image')">🔍 View</button>
-                                <button class="act-btn" onclick="triggerShare('radhakrisnan', 'auth/radhakrisnan.jpg', 'Dr. S. Radhakrishnan')">🔗 Share</button>
-                                <button class="act-btn" onclick="dlImage('auth/radhakrisnan.jpg', 'dr_radhakrishnan.jpg')">📥 DL</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="gallery-item art tilt-card">
-                        <img src="auth/image.jpg" alt="Lion Logo" loading="lazy">
-                        <div class="gallery-overlay">
-                            <h3>Crowned Lion Concept</h3>
-                            <div class="action-btns">
-                                <button class="act-btn like-btn" onclick="toggleLike('image')">❤️ <span id="like-image">110</span></button>
-                                <button class="act-btn" onclick="triggerView('image', 'auth/image.jpg', 'Crowned Lion Concept', 'image')">🔍 View</button>
-                                <button class="act-btn" onclick="triggerShare('image', 'auth/image.jpg', 'Crowned Lion Concept')">🔗 Share</button>
-                                <button class="act-btn" onclick="dlImage('auth/image.jpg', 'lion_concept.jpg')">📥 DL</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Gaming -->
-                    <div class="gallery-item gaming tilt-card">
-                        <img src="auth/game.jpg" alt="Esports Profile" loading="lazy">
-                        <div class="gallery-overlay">
-                            <h3>NAUGHTYBOY | Lvl 67</h3>
-                            <div class="action-btns">
-                                <button class="act-btn like-btn" onclick="toggleLike('game')">❤️ <span id="like-game">215</span></button>
-                                <button class="act-btn" onclick="triggerView('game', 'auth/game.jpg', 'Esports Profile', 'image')">🔍 View</button>
-                                <button class="act-btn" onclick="triggerShare('game', 'auth/game.jpg', 'Esports Profile')">🔗 Share</button>
-                                <button class="act-btn" onclick="dlImage('auth/game.jpg', 'gaming_profile.jpg')">📥 DL</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Lifestyle -->
-                    <div class="gallery-item life tilt-card">
-                        <img src="auth/physique.jpg" alt="Fitness" loading="lazy">
-                        <div class="gallery-overlay">
-                            <h3>Discipline & Aesthetics</h3>
-                            <div class="action-btns">
-                                <button class="act-btn like-btn" onclick="toggleLike('physique')">❤️ <span id="like-physique">189</span></button>
-                                <button class="act-btn" onclick="triggerView('physique', 'auth/physique.jpg', 'Fitness', 'image')">🔍 View</button>
-                                <button class="act-btn" onclick="triggerShare('physique', 'auth/physique.jpg', 'Fitness')">🔗 Share</button>
-                                <button class="act-btn" onclick="dlImage('auth/physique.jpg', 'physique.jpg')">📥 DL</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Press & News (All 3 Included) -->
-                    <div class="gallery-item news tilt-card">
-                        <img src="auth/news1.jpg" alt="Dainik Bhaskar News" loading="lazy">
-                        <div class="gallery-overlay">
-                            <h3>दैनिक भास्कर - सम्मान समारोह</h3>
-                            <div class="action-btns">
-                                <button class="act-btn like-btn" onclick="toggleLike('news1')">❤️ <span id="like-news1">84</span></button>
-                                <button class="act-btn" onclick="triggerView('news1', 'auth/news1.jpg', 'दैनिक भास्कर - सम्मान समारोह', 'image')">🔍 View</button>
-                                <button class="act-btn" onclick="triggerShare('news1', 'auth/news1.jpg', 'दैनिक भास्कर')">🔗 Share</button>
-                                <button class="act-btn" onclick="dlImage('auth/news1.jpg', 'dainik_bhaskar_news1.jpg')">📥 DL</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="gallery-item news tilt-card">
-                        <img src="auth/news2.jpg" alt="News Coverage 2" loading="lazy">
-                        <div class="gallery-overlay">
-                            <h3>प्रजापति समन्वय समिति सम्मान</h3>
-                            <div class="action-btns">
-                                <button class="act-btn like-btn" onclick="toggleLike('news2')">❤️ <span id="like-news2">62</span></button>
-                                <button class="act-btn" onclick="triggerView('news2', 'auth/news2.jpg', 'प्रजापति समन्वय समिति सम्मान', 'image')">🔍 View</button>
-                                <button class="act-btn" onclick="triggerShare('news2', 'auth/news2.jpg', 'प्रजापति समन्वय समिति सम्मान')">🔗 Share</button>
-                                <button class="act-btn" onclick="dlImage('auth/news2.jpg', 'news_coverage_2.jpg')">📥 DL</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="gallery-item news tilt-card">
-                        <img src="auth/news3.jpg" alt="News Coverage 3" loading="lazy">
-                        <div class="gallery-overlay">
-                            <h3>प्रतिभा सम्मान एवं कार्यालय उद्घाटन</h3>
-                            <div class="action-btns">
-                                <button class="act-btn like-btn" onclick="toggleLike('news3')">❤️ <span id="like-news3">91</span></button>
-                                <button class="act-btn" onclick="triggerView('news3', 'auth/news3.jpg', 'प्रतिभा सम्मान एवं कार्यालय उद्घाटन', 'image')">🔍 View</button>
-                                <button class="act-btn" onclick="triggerShare('news3', 'auth/news3.jpg', 'प्रतिभा सम्मान')">🔗 Share</button>
-                                <button class="act-btn" onclick="dlImage('auth/news3.jpg', 'news_coverage_3.jpg')">📥 DL</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <footer style="text-align: center; color: var(--text-secondary); margin-top: 20px; padding-bottom: 20px; font-size: 0.85rem; font-weight: 500;">
-                Code Compiled with Absolute Precision. © 2026 Rohit Kumar.
-            </footer>
-        </div>
-    </div>
-
-    <!-- MEDIA VIEWER MODAL CONTAINER -->
-    <div class="image-modal" id="imageViewerModal">
-        <div class="modal-card">
-            <div class="modal-header">
-                <h4 id="modalImageTitle">Media Viewer</h4>
-                <button class="close-modal" onclick="closeViewer()">✕</button>
-            </div>
-            <div class="modal-body-img" id="modalBodyContent">
-                <img id="modalImgSource" src="" alt="Preview" style="display:none;">
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // Protected Page Guard Script
+<script>
 (async () => {
   if (window.supabaseClient) {
     const { data: { session } } = await window.supabaseClient.auth.getSession();
-    
-    // Agar user logged-in nahi hai, toh access deny karke login/gateway par bhej dein
-    if (!session) {
-      alert("⚠️ Access Denied: Kripya pehle gateway/login karke aayein!");
-      window.location.replace("login.html"); // Ya apna gateway page URL
-    }
+    if (!session) { alert("Access Denied: Kripya pehle login karke aayein!"); window.location.replace("login.html"); }
   }
 })();
-        // ANTI-SCREENSHOT
-        const bodyEl = document.getElementById('app-body');
-        document.addEventListener('contextmenu', e => e.preventDefault());
-        document.addEventListener('keydown', e => {
-            if (e.keyCode === 44 || (e.ctrlKey && (e.key === 'p' || e.key === 's' || e.key === 'u' || e.key === 'Shift')) ) {
-                e.preventDefault();
-                bodyEl.classList.add('security-shield-active');
-                setTimeout(() => bodyEl.classList.remove('security-shield-active'), 1500);
-            }
-        });
+const body = document.getElementById('app-body');
+document.addEventListener('contextmenu', e => e.preventDefault());
+document.addEventListener('keydown', e => {
+  if (e.keyCode === 44 || (e.ctrlKey && ['p','s','u'].includes(e.key))) { e.preventDefault(); body.classList.add('shield'); setTimeout(() => body.classList.remove('shield'), 1500); }
+  if (!document.getElementById('modal').classList.contains('on')) return;
+  if (e.key === 'Escape') closeViewer(); if (e.key === 'ArrowRight') step(1); if (e.key === 'ArrowLeft') step(-1);
+});
 
-        window.addEventListener('scroll', () => {
-            const winScroll = document.documentElement.scrollTop || document.body.scrollTop;
-            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-            document.getElementById('scroll-progress').style.width = (winScroll / height) * 100 + '%';
-        });
+/* ---- Data: ek jagah badlo, poora page update ---- */
+const ITEMS = [
+ {id:'vid1',t:'video',c:'videos',src:'auth/rainbow_withoutrain.mp4',title:'Rainbow Without Rain',l:0,dl:'rainbow_without_rain.mp4'},
+ {id:'vid2',t:'video',c:'videos',src:'auth/geometry_box.mp4',title:'Geometry Box Edit',l:0,dl:'geometry_box.mp4'},
+ {id:'vid3',t:'video',c:'videos',src:'auth/8_years_celebration.mp4',title:'8 Years Celebration Montage',l:0,dl:'8_years_celebration.mp4'},
+ {id:'vid4',t:'video',c:'videos',src:'auth/battery_experiment.mp4',title:'Battery Science Experiment',l:0,dl:'battery_experiment.mp4'},
+ {id:'sivaji',t:'image',c:'art',src:'auth/sivaji.jpg',title:'Chhatrapati Shivaji Maharaj',l:0,dl:'sivaji_maharaj.jpg'},
+ {id:'maharna',t:'image',c:'art',src:'auth/maharna.jpg',title:'Maharana Pratap',l:0,dl:'maharana_pratap.jpg'},
+ {id:'radhakrisnan',t:'image',c:'art',src:'auth/radhakrisnan.jpg',title:'Dr. S. Radhakrishnan',l:0,dl:'dr_radhakrishnan.jpg'},
+ {id:'image',t:'image',c:'art',src:'auth/image.jpg',title:'Crowned Lion Concept',l:0,dl:'lion_concept.jpg'},
+ {id:'game',t:'image',c:'gaming',src:'auth/game.jpg',title:'NAUGHTYBOY | Lvl 67',l:0,dl:'gaming_profile.jpg'},
+ {id:'physique',t:'image',c:'life',src:'auth/physique.jpg',title:'Discipline & Aesthetics',l:0,dl:'physique.jpg'},
+ {id:'news1',t:'image',c:'news',src:'auth/news1.jpg',title:'दैनिक भास्कर - सम्मान समारोह',l:0,dl:'dainik_bhaskar_news1.jpg'},
+ {id:'news2',t:'image',c:'news',src:'auth/news2.jpg',title:'प्रजापति समन्वय समिति सम्मान',l:0,dl:'news_coverage_2.jpg'},
+ {id:'news3',t:'image',c:'news',src:'auth/news3.jpg',title:'प्रतिभा सम्मान एवं कार्यालय उद्घाटन',l:0,dl:'news_coverage_3.jpg'}
+];
+const LK = 'https://script.google.com/macros/s/AKfycbx3J-cD11nDcUjdunWCM4YQhG-WVCz5XnDRJ1rrm4qWXOxqydwG6vtJhQrGZcjhXAks/exec', cnt = {};   // Google Apps Script web app (Google Sheet me counts)
+const LK_OK = /^https:\/\/script\.google\.com\/macros\/s\/.+\/exec$/.test(LK);
+let liked = {}; try { liked = JSON.parse(localStorage.getItem('rk_likes2') || '{}'); } catch (e) {}
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const find = id => ITEMS.find(x => x.id === id);
+const S = (d, w) => `<svg viewBox="0 0 24 24" ${w ? 'width="16" height="16" ' : ''}fill="none" stroke="currentColor" stroke-width="2">${d}</svg>`;
+const ic = {heart:S('<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z"/>'),
+ eye:S('<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>'),
+ share:S('<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/>'),
+ dl:S('<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>'),
+ mute:S('<path d="M11 5 6 9H2v6h4l5 4zM23 9l-6 6M17 9l6 6"/>', 1), sound:S('<path d="M11 5 6 9H2v6h4l5 4zM19 4.9a10 10 0 0 1 0 14.2M15.5 8.5a5 5 0 0 1 0 7"/>', 1)};
+const likeBtn = (it, cls = '') => `<button class="ab like ${liked[it.id] ? 'liked' : ''}" data-lk="${it.id}" aria-pressed="${!!liked[it.id]}" aria-label="Like" onclick="toggleLike('${it.id}')">${ic.heart}<span>${cnt[it.id] || 0}</span></button>`;
+const acts = it => `<div class="acts">${likeBtn(it)}<button class="ab" onclick="viewMedia('${it.id}')" aria-label="Dekho">${ic.eye}</button><button class="ab" onclick="shareItem('${it.id}')" aria-label="Share">${ic.share}</button><button class="ab" onclick="dl('${it.id}')" aria-label="Download">${ic.dl}</button></div>`;
+document.getElementById('reelBox').innerHTML = ITEMS.filter(i => i.t === 'video').map(i => `<div class="rc" tabindex="0" role="button" aria-label="${esc(i.title)}" onclick="viewMedia('${i.id}')" onkeydown="if(event.key==='Enter')viewMedia('${i.id}')"><video src="${i.src}" muted loop playsinline preload="metadata"></video><button class="snd" onclick="toggleAudio(this,event)" aria-label="Sound">${ic.mute}</button><div class="cap">${esc(i.title)}</div></div>`).join('');
+const imgCard = i => `<article class="it" data-c="${i.c}"><div class="m" tabindex="0" role="button" aria-label="${esc(i.title)}" onclick="viewMedia('${i.id}')" onkeydown="if(event.key==='Enter')viewMedia('${i.id}')"><img src="${i.src}" alt="${esc(i.title)}" loading="lazy" onload="this.classList.add('ld')"></div><div class="cap2">${esc(i.title)}</div>${acts(i)}</article>`;
+document.getElementById('grid').innerHTML = ITEMS.filter(i => i.t === 'image' && i.c !== 'news').map(imgCard).join('');
+document.getElementById('newsGrid').innerHTML = ITEMS.filter(i => i.c === 'news').map(imgCard).join('');
 
-        const dot = document.getElementById("cursor-dot");
-        const outline = document.getElementById("cursor-outline");
-        window.addEventListener("mousemove", (e) => {
-            dot.style.left = outline.style.left = `${e.clientX}px`;
-            dot.style.top = outline.style.top = `${e.clientY}px`;
-        });
-        document.querySelectorAll('a, button, .gallery-item, input').forEach(el => {
-            el.addEventListener('mouseenter', () => { outline.style.width = '55px'; outline.style.height = '55px'; outline.style.backgroundColor = 'rgba(56, 189, 248, 0.1)'; });
-            el.addEventListener('mouseleave', () => { outline.style.width = '40px'; outline.style.height = '40px'; outline.style.backgroundColor = 'transparent'; });
-        });
+function toast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('on'); setTimeout(() => t.classList.remove('on'), 2200); }
+function paintLike(id) { document.querySelectorAll(`[data-lk="${id}"]`).forEach(b => { b.classList.toggle('liked', !!liked[id]); b.setAttribute('aria-pressed', !!liked[id]); b.setAttribute('aria-label', 'Like, ' + (cnt[id] || 0)); b.querySelector('span').textContent = cnt[id] || 0; }); }
+async function toggleLike(id) {
+  if (liked[id]) { toast('Aap ye pehle hi like kar chuke ho'); return; }      // ek device se ek like
+  if (!LK_OK) { toast('Likes abhi setup nahi hue'); return; }
+  liked[id] = true; cnt[id] = (cnt[id] || 0) + 1; paintLike(id);
+  try { localStorage.setItem('rk_likes2', JSON.stringify(liked)); } catch (e) {}
+  try {
+    const r = await fetch(`${LK}?a=hit&id=${encodeURIComponent(id)}`); if (!r.ok) throw 0;
+    const j = await r.json(); if (typeof j.value !== 'number') throw 0; cnt[id] = j.value;
+  } catch (e) {
+    liked[id] = false; cnt[id] = Math.max(0, cnt[id] - 1);
+    try { localStorage.setItem('rk_likes2', JSON.stringify(liked)); } catch (_) {}
+    toast('Like save nahi hua, internet check karo');
+  }
+  paintLike(id);
+}
+/* Saare counts ek hi request me */
+async function loadCounts() {
+  if (!LK_OK) return;
+  try {
+    const r = await fetch(`${LK}?a=all`); if (!r.ok) throw 0; const o = await r.json();
+    ITEMS.forEach(it => { if (typeof o[it.id] === 'number') { cnt[it.id] = o[it.id]; paintLike(it.id); } });
+  } catch (e) {}
+}
+loadCounts();
+function dl(id) { const it = find(id), a = document.createElement('a'); a.href = it.src; a.download = it.dl; document.body.appendChild(a); a.click(); a.remove(); }
+async function shareItem(id) {
+  const it = find(id), url = new URL(it.src, location.href).href;
+  if (navigator.share) { try { await navigator.share({ title: it.title, url }); } catch (e) {} }
+  else { try { await navigator.clipboard.writeText(url); toast('Link copy ho gaya'); } catch (e) { toast('Link copy nahi hua'); } }
+}
+function toggleAudio(btn, ev) { ev.stopPropagation(); const v = btn.parentElement.querySelector('video'); v.muted = !v.muted; btn.innerHTML = v.muted ? ic.mute : ic.sound; }
+document.getElementById('filters').addEventListener('click', e => {
+  const b = e.target.closest('.f'); if (!b) return;
+  document.querySelectorAll('.f').forEach(x => x.classList.toggle('on', x === b));
+  document.querySelectorAll('#grid .it').forEach(c => c.classList.toggle('hide', b.dataset.f !== 'all' && c.dataset.c !== b.dataset.f));
+});
 
-        const themeBtn = document.getElementById('theme-btn');
-        const htmlElement = document.documentElement;
-        themeBtn.addEventListener('click', () => {
-            const isDark = htmlElement.getAttribute('data-theme') === 'dark';
-            htmlElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
-            themeBtn.innerHTML = isDark ? '🌙 Dark Mode' : '☀️ Light Mode';
-        });
+/* ---- Viewer: swipe / arrows, saare items ke beech ---- */
+let cur = 0, sx = null; const modal = document.getElementById('modal'), mb = document.getElementById('mb');
+function showAt(i) {
+  cur = (i + ITEMS.length) % ITEMS.length; const it = ITEMS[cur];
+  document.getElementById('mt').textContent = it.title; document.getElementById('mn').textContent = (cur + 1) + ' / ' + ITEMS.length;
+  mb.innerHTML = it.t === 'video' ? `<video src="${it.src}" controls autoplay playsinline></video>` : `<img src="${it.src}" alt="${esc(it.title)}">`;
+  document.getElementById('ma').innerHTML = likeBtn(it) + `<button class="ab" onclick="shareItem('${it.id}')">${ic.share}Share</button><button class="ab" onclick="dl('${it.id}')">${ic.dl}Save</button>`;
+}
+let lastFocus = null;
+function viewMedia(id) { lastFocus = document.activeElement; showAt(ITEMS.findIndex(x => x.id === id)); modal.classList.add('on'); document.body.style.overflow = 'hidden'; rcs.forEach(c => c.querySelector('video').pause()); const cb = document.querySelector('#mh button'); if (cb) cb.focus(); }
+function step(d) { mb.style.transform = `translateX(${d * -30}px)`; setTimeout(() => { showAt(cur + d); mb.style.transform = ''; }, 120); }
+function closeViewer() { modal.classList.remove('on'); mb.innerHTML = ''; document.body.style.overflow = ''; if (lastFocus && lastFocus.focus) lastFocus.focus(); focusReel(); }
+modal.addEventListener('pointerdown', e => { sx = e.clientX; });
+modal.addEventListener('pointerup', e => { if (sx !== null && Math.abs(e.clientX - sx) > 60) step(e.clientX < sx ? 1 : -1); sx = null; });
+modal.addEventListener('click', e => { if (e.target === modal || e.target === mb) closeViewer(); });
 
-        const textArray = ["Full-Stack Developer.", "Cinematic Video Editor.", "Fine Artist.", "Esports Strategist."];
-        let tIdx = 0, cIdx = 0;
-        const typewriterEl = document.getElementById("typewriter");
+/* ---- Reel: beech wala bada + sirf wahi chale ---- */
+const reel = document.getElementById('reelBox'), rcs = [...reel.children];
+let reelVis = true;
+function focusReel() {
+  const mid = reel.scrollLeft + reel.clientWidth / 2; let best = null, bd = 1e9;
+  rcs.forEach(c => { const d = Math.abs(c.offsetLeft + c.offsetWidth / 2 - mid); if (d < bd) { bd = d; best = c; } const k = Math.max(0, 1 - d / (reel.clientWidth * .6)); c.style.setProperty('--s', (.86 + .14 * k).toFixed(3)); c.style.setProperty('--o', (.5 + .5 * k).toFixed(3)); });
+  rcs.forEach(c => { const v = c.querySelector('video'); if (c === best && reelVis && !document.hidden && !modal.classList.contains('on')) v.play().catch(() => {}); else v.pause(); });
+}
+let rraf = 0; reel.addEventListener('scroll', () => { cancelAnimationFrame(rraf); rraf = requestAnimationFrame(focusReel); }, { passive: true });
+addEventListener('load', focusReel); addEventListener('resize', focusReel);
+new IntersectionObserver(es => { reelVis = es[0].isIntersecting; focusReel(); }, { threshold: .25 }).observe(reel);
+document.addEventListener('visibilitychange', focusReel);
 
-        function startTypewriter() {
-            if (cIdx < textArray[tIdx].length) {
-                typewriterEl.innerHTML += textArray[tIdx].charAt(cIdx++);
-                setTimeout(startTypewriter, 90);
-            } else { setTimeout(erase, 2000); }
-        }
-        function erase() {
-            if (cIdx > 0) {
-                typewriterEl.innerHTML = textArray[tIdx].substring(0, --cIdx);
-                setTimeout(erase, 40);
-            } else {
-                tIdx = (tIdx + 1) % textArray.length;
-                setTimeout(startTypewriter, 500);
-            }
-        }
-        startTypewriter();
+/* ---- Hero: naam particles se bana hai, ungli se bikharta hai ---- */
+const cv = document.getElementById('pc'), cx = cv.getContext('2d'); let P = [], W = 0, H = 0, mx = -999, my = -999, live = true;
+function build() {
+  const dpr = Math.min(devicePixelRatio || 1, 2), r = cv.getBoundingClientRect(); W = r.width; H = r.height;
+  cv.width = W * dpr; cv.height = H * dpr; cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const o = document.createElement('canvas'); o.width = W; o.height = H; const x = o.getContext('2d');
+  const font = s => `800 ${s}px "Bricolage Grotesque",Impact,sans-serif`; let fs = 100; x.font = font(fs);
+  fs = Math.min(210, fs * (W * .9) / Math.max(x.measureText('ROHIT').width, x.measureText('KUMAR').width)); x.font = font(fs);
+  x.fillStyle = '#fff'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('ROHIT', W / 2, H / 2 - fs * .5); x.fillText('KUMAR', W / 2, H / 2 + fs * .5);
+  const d = x.getImageData(0, 0, W, H).data, g = Math.max(3, Math.round(fs / 26)), old = P.length; P = [];
+  for (let y = 0; y < H; y += g) for (let xx = 0; xx < W; xx += g) if (d[((y | 0) * (W | 0) + (xx | 0)) * 4 + 3] > 128) {
+    const k = xx / W, c = `rgb(${255 + (53 - 255) * k | 0},${165 + (214 - 165) * k | 0},${31 + (196 - 31) * k | 0})`;
+    P.push({ hx: xx, hy: y, x: old ? xx : Math.random() * W, y: old ? y : Math.random() * H, vx: 0, vy: 0, c });
+  }
+  if (matchMedia('(prefers-reduced-motion:reduce)').matches) P.forEach(p => { p.x = p.hx; p.y = p.hy; });
+}
+function loop() {
+  requestAnimationFrame(loop); if (!live) return; cx.clearRect(0, 0, W, H); const R = 80, sz = Math.max(2, W / 190);
+  for (const p of P) {
+    const dx = p.x - mx, dy = p.y - my, dd = dx * dx + dy * dy;
+    if (dd < R * R) { const f = (1 - Math.sqrt(dd) / R) * 7, a = Math.atan2(dy, dx); p.vx += Math.cos(a) * f; p.vy += Math.sin(a) * f; }
+    p.vx += (p.hx - p.x) * .07; p.vy += (p.hy - p.y) * .07; p.vx *= .84; p.vy *= .84; p.x += p.vx; p.y += p.vy;
+    cx.fillStyle = p.c; cx.fillRect(p.x, p.y, sz, sz);
+  }
+}
+const pt = e => { const r = cv.getBoundingClientRect(); mx = e.clientX - r.left; my = e.clientY - r.top; };
+cv.addEventListener('pointermove', pt); cv.addEventListener('pointerdown', e => { pt(e); P.forEach(p => { p.vx += (Math.random() - .5) * 26; p.vy += (Math.random() - .5) * 26; }); });
+cv.addEventListener('pointerleave', () => { mx = my = -999; });
+new IntersectionObserver(es => { live = es[0].isIntersecting; }).observe(cv);
+(document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(() => { build(); loop(); });
+let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(build, 200); });
 
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('active');
-                    if (entry.target.id === 'skills') {
-                        document.querySelectorAll('.skill-fill').forEach(bar => bar.style.width = bar.getAttribute('data-width'));
-                    }
-                }
-            });
-        }, { threshold: 0.1 });
-        document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+/* ---- Email: address HTML me seedha nahi likha, taaki bots na utha sakein ---- */
+const MAIL = ['masumboy141', 'gmail.com'].join('@');
+document.getElementById('mailBtn').href = 'mailto:' + MAIL + '?subject=' + encodeURIComponent('PM Roitx se hello');
+document.getElementById('mailTxt').textContent = MAIL;
+document.getElementById('copyMail').onclick = async () => { try { await navigator.clipboard.writeText(MAIL); toast('Email copy ho gaya'); } catch (e) { toast(MAIL); } };
 
-        const filterBtns = document.querySelectorAll('.f-btn');
-        const galleryItems = document.querySelectorAll('.gallery-item');
-        filterBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                filterBtns.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                const filterValue = btn.getAttribute('data-filter');
-                galleryItems.forEach(item => {
-                    item.style.display = 'none';
-                    if (filterValue === 'all' || item.classList.contains(filterValue)) {
-                        setTimeout(() => { item.style.display = 'block'; }, 50);
-                    }
-                });
-            });
-        });
-
-        // VIDEO SOUND TOGGLE
-        function toggleAudio(btn, event) {
-            event.stopPropagation();
-            const video = btn.parentElement.querySelector('video');
-            if (video.muted) {
-                video.muted = false;
-                btn.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg> Sound On`;
-                btn.style.background = "var(--accent-1)";
-                btn.style.color = "#0B0F17";
-            } else {
-                video.muted = true;
-                btn.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg> Muted`;
-                btn.style.background = "rgba(0,0,0,0.7)";
-                btn.style.color = "#fff";
-            }
-        }
-
-        // VIEWER MODAL
-        function viewMedia(path, name, type) {
-            document.getElementById('modalImageTitle').innerText = name;
-            const container = document.getElementById('modalBodyContent');
-            if(type === 'video') {
-                container.innerHTML = `<video src="${path}" controls autoplay playsinline style="max-width:100%; max-height:75vh; border-radius:8px;"></video>`;
-            } else {
-                container.innerHTML = `<img src="${path}" alt="${name}" style="max-width:100%; max-height:75vh; border-radius:8px;">`;
-            }
-            document.getElementById('imageViewerModal').classList.add('active');
-        }
-
-        function closeViewer() {
-            document.getElementById('imageViewerModal').classList.remove('active');
-            document.getElementById('modalBodyContent').innerHTML = '';
-        }
-
-        function dlImage(url, filename) {
-            const a = document.createElement('a');
-            a.href = url; a.download = filename;
-            document.body.appendChild(a); a.click(); a.remove();
-        }
-
-        async function shareImage(path, title) {
-            const fullUrl = window.location.origin + '/' + path;
-            if (navigator.share) {
-                try { await navigator.share({ title: title, url: fullUrl }); } catch (err) {}
-            } else {
-                navigator.clipboard.writeText(fullUrl);
-                alert("Link copied to clipboard!");
-            }
-        }
-
-        function toggleLike(id) {
-            const span = document.getElementById('like-' + id);
-            if(span) span.innerText = parseInt(span.innerText) + 1;
-        }
-
-        function triggerView(id, path, title, type = 'image') {
-            viewMedia(path, title, type);
-        }
-
-        function triggerShare(id, path, title) {
-            shareImage(path, title);
-        }
-    </script>
+/* ---- Theme, hero words, counters, reveal, progress ---- */
+const root = document.documentElement; try { const s = localStorage.getItem('rk_theme'); if (s) root.dataset.theme = s; } catch (e) {}
+document.getElementById('theme').onclick = () => { const d = root.dataset.theme === 'dark' ? 'light' : 'dark'; root.dataset.theme = d; try { localStorage.setItem('rk_theme', d); } catch (e) {} };
+const words = ['developer hu.', 'video editor hu.', 'artist hu.', 'gamer hu.']; let wi = 0, ci = 0, del = false; const sw = document.getElementById('sw');
+(function tick() { const w = words[wi]; sw.textContent = w.slice(0, ci);
+  if (!del && ci < w.length) { ci++; setTimeout(tick, 90); } else if (!del) { del = true; setTimeout(tick, 1600); } else if (ci > 0) { ci--; setTimeout(tick, 40); } else { del = false; wi = (wi + 1) % words.length; setTimeout(tick, 300); } })();
+const rio = new IntersectionObserver(es => es.forEach(en => { if (!en.isIntersecting) return; en.target.classList.add('on'); rio.unobserve(en.target);
+  en.target.querySelectorAll('[data-n]').forEach(el => { const n = +el.dataset.n; let c = 0; const s = setInterval(() => { c += Math.ceil(n / 30); if (c >= n) { c = n; clearInterval(s); } el.textContent = c; }, 30); }); }), { threshold: .12 });
+document.querySelectorAll('.rv').forEach(el => rio.observe(el));
+addEventListener('scroll', () => { const h = document.documentElement.scrollHeight - innerHeight; document.getElementById('bar').style.width = (h > 0 ? scrollY / h * 100 : 0) + '%'; }, { passive: true });
+</script>
 </body>
 </html>
