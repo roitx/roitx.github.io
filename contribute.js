@@ -86,6 +86,9 @@
   .cx-bar .cx-btn{padding:11px 14px;font-size:14px}
   .cx-chips{display:flex;gap:8px;justify-content:center;padding:8px 0 0;width:100%}
   .cx-chips button{flex:1;max-width:120px;padding:9px 6px;border-radius:20px;border:1px solid rgba(255,255,255,.2);background:#1a2038;color:#fff;font-size:13px}
+  .cx-sl{display:flex;align-items:center;gap:8px;font-size:12px;color:#9fb0cc;padding:5px 4px 0}
+  .cx-sl span{width:62px}.cx-sl input{flex:1;min-width:0;accent-color:#7c4dff}.cx-sl b{width:30px;text-align:right;color:#fff;font-weight:600}
+  .cx-sl button{background:#1a2038;border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:8px;padding:5px 7px;display:inline-flex}
   .cx-chips button.on{background:#3d5afe;border-color:#7c4dff}
   .cx-pages{flex:1;overflow:auto;padding:14px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;align-content:start}
   .cx-pg{position:relative;background:#151a2b;border-radius:8px;overflow:hidden;aspect-ratio:3/4;border:1px solid rgba(255,255,255,.12)}
@@ -410,6 +413,7 @@
       cv.onpointerup = cv.onpointercancel = () => { active = -1; };
 
       let mode = 'crop', base = null, result = null, filter = prev ? prev.filter : 'clean', rot = prev ? prev.rot : 0;
+      let filtered = null, work = null, bright = prev ? (prev.bright || 0) : 0, contrast = prev ? (prev.contrast || 1) : 1;
 
       function showCropBar() {
         mode = 'crop'; ed.querySelector('#eTitle').textContent = 'Page kaato';
@@ -426,23 +430,47 @@
       }
 
       /* ---------- STEP 2 : FILTER ---------- */
-      async function renderResult() {
-        setBusy(true); await tick();
-        result = applyFilter(base, filter);
+      // Brightness/Contrast: sirf 256-entry table se (filter dobara nahi chalta, isliye slider smooth rehta hai)
+      function paint() {
+        if (!filtered) return;
+        if (bright === 0 && contrast === 1) result = filtered;
+        else {
+          if (!work || work.width !== filtered.width || work.height !== filtered.height) {
+            work = document.createElement('canvas'); work.width = filtered.width; work.height = filtered.height;
+          }
+          const wx = work.getContext('2d'); wx.drawImage(filtered, 0, 0);
+          const id = wx.getImageData(0, 0, work.width, work.height), d = id.data;
+          const lut = new Uint8ClampedArray(256);
+          for (let v = 0; v < 256; v++) lut[v] = (v - 128) * contrast + 128 + bright;
+          for (let k = 0; k < d.length; k += 4) { d[k] = lut[d[k]]; d[k + 1] = lut[d[k + 1]]; d[k + 2] = lut[d[k + 2]]; }
+          wx.putImageData(id, 0, 0); result = work;
+        }
         cv.width = result.width; cv.height = result.height;
         cv.getContext('2d').drawImage(result, 0, 0);
         cv.style.maxWidth = '100%'; cv.style.maxHeight = '100%';
+      }
+      async function renderResult() {
+        setBusy(true); await tick();
+        filtered = applyFilter(base, filter);
+        paint();
         setBusy(false);
       }
       async function showEnhance() {
         mode = 'enh'; ed.querySelector('#eTitle').textContent = 'Quality / Filter';
         bar.innerHTML = `<div class="cx-bar" style="flex-direction:column;align-items:stretch">
             <div class="cx-chips" id="chips"><button data-f="orig">Original</button><button data-f="clean">Saaf (Best)</button><button data-f="bw">B&amp;W</button></div>
+            <div class="cx-sl"><span>Roshni</span><input type="range" id="slB" min="-60" max="60" step="1" value="${bright}"><b id="vB">${bright}</b></div>
+            <div class="cx-sl"><span>Contrast</span><input type="range" id="slC" min="70" max="190" step="1" value="${Math.round(contrast * 100)}"><b id="vC">${Math.round(contrast * 100)}</b><button id="slR" title="Reset" aria-label="Reset">${ICON.rotate}</button></div>
             <div style="display:flex;gap:8px;margin-top:8px"><button class="cx-btn sec" id="bCrop" style="flex:1">${ICON.back} Crop</button><button class="cx-btn sec" id="bRot" style="flex:1">${ICON.rotate} Ghumao</button><button class="cx-btn" id="bSave" style="flex:1.4">${ICON.check} Page save</button></div></div>`;
         const mark = () => bar.querySelectorAll('#chips button').forEach(b => b.classList.toggle('on', b.dataset.f === filter));
         mark();
         bar.querySelectorAll('#chips button').forEach(b => b.onclick = async () => { filter = b.dataset.f; mark(); await renderResult(); });
-        bar.querySelector('#bCrop').onclick = () => { base = null; result = null; rot = 0; showCropBar(); };
+        let raf = 0; const sched = () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; paint(); }); };
+        const slB = bar.querySelector('#slB'), slC = bar.querySelector('#slC');
+        slB.oninput = () => { bright = +slB.value; bar.querySelector('#vB').textContent = bright; sched(); };
+        slC.oninput = () => { contrast = +slC.value / 100; bar.querySelector('#vC').textContent = slC.value; sched(); };
+        bar.querySelector('#slR').onclick = () => { bright = 0; contrast = 1; slB.value = 0; slC.value = 100; bar.querySelector('#vB').textContent = 0; bar.querySelector('#vC').textContent = 100; paint(); };
+        bar.querySelector('#bCrop').onclick = () => { base = null; result = null; filtered = null; work = null; rot = 0; showCropBar(); };
         bar.querySelector('#bRot').onclick = async () => { base = rotate90(base); rot = (rot + 1) % 4; await renderResult(); };
         bar.querySelector('#bSave').onclick = async () => {
           setBusy(true); await tick();
@@ -451,7 +479,7 @@
           t.width = Math.round(result.width * k); t.height = Math.round(result.height * k);
           t.getContext('2d').drawImage(result, 0, 0, t.width, t.height);
           const out = { blob, w: result.width, h: result.height, thumb: t.toDataURL('image/jpeg', 0.7), file,
-            corners: corners.map(c => ({ x: c.x / src.width, y: c.y / src.height })), filter, rot };
+            corners: corners.map(c => ({ x: c.x / src.width, y: c.y / src.height })), filter, rot, bright, contrast };
           close(out);
         };
         await renderResult();
@@ -569,6 +597,12 @@
     try {
       const user = (await sb().auth.getUser()).data?.user;
       if (!user) throw new Error('Login expire ho gaya, dobara login karein');
+      const MSG_DUP = 'Aap is class/subject/chapter ke liye pehle hi note upload kar chuke ho. Dobara add nahi kar sakte.';
+      if (!IS_FORMULAS) {                                   // file upload se PEHLE check, taaki bekaar file na bache
+        const chk = await sb().from('notes').select('id', { count: 'exact', head: true })
+          .eq('uploaded_by', user.id).eq('class', cls).eq('subject', sub.toLowerCase()).eq('chapter_number', parseInt(ch, 10));
+        if (!chk.error && chk.count > 0) throw new Error(MSG_DUP);
+      }
       const f = state.file;
       const isPdf = f.type === 'application/pdf' || /\.pdf$/i.test(f.name);
       const ext = isPdf ? 'pdf' : (f.type === 'image/png' ? 'png' : 'jpg');
@@ -586,7 +620,7 @@
         ins = await sb().from('notes').insert([{ class: cls, subject: sub.toLowerCase(), chapter_number: parseInt(ch, 10), chapter_name: name,
           file_path: path, status: 'pending', uploaded_by: user.id }]);
       }
-      if (ins.error) throw new Error('Save fail: ' + ins.error.message);
+      if (ins.error) throw new Error(ins.error.code === '23505' && !IS_FORMULAS ? MSG_DUP : 'Save fail: ' + ins.error.message);
 
       openSheet(`<div class="cx-ok">${ICON.checkCircle}</div><h3 style="text-align:center">Upload ho gaya</h3><p class="cx-sub" style="text-align:center">Admin ki approval ke baad ye site par dikhega. Shukriya!</p>
         <button class="cx-btn full" id="cxOk">Theek hai</button>`);
