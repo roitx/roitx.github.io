@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="robots" content="noindex, nofollow">
-<meta name="theme-color" content="#0f1022">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Rohit Kumar | Developer, Editor, Artist</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -62,7 +61,6 @@ nav{position:sticky;top:0;z-index:50;display:flex;justify-content:space-between;
 .grid{columns:3 260px;column-gap:16px}
 .it{break-inside:avoid;margin-bottom:16px;border-radius:var(--r);overflow:hidden;background:var(--bg2);border:1px solid var(--line)}
 .it .m{cursor:pointer;background:#000}.it img{display:block;width:100%;height:auto;min-height:160px;object-fit:cover}
-.it img:not(.ld){background:linear-gradient(110deg,var(--bg2) 30%,rgba(255,255,255,.07) 50%,var(--bg2) 70%);background-size:200% 100%;animation:sh 1.4s linear infinite}@keyframes sh{to{background-position:-200% 0}}
 .it .cap2{padding:12px 14px 6px;font-weight:600}
 .acts{display:flex;gap:6px;padding:4px 10px 12px}
 .ab{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:none;color:var(--ink);padding:7px 12px;border-radius:30px;cursor:pointer;font-size:.8rem;font-weight:600}
@@ -81,27 +79,8 @@ footer{text-align:center;color:var(--mute);font-size:.85rem;padding:60px 5% 40px
 #ma{display:flex;gap:8px;justify-content:center;padding-top:10px}#ma .ab{color:#fff;border-color:rgba(255,255,255,.25)}
 #toast{position:fixed;bottom:24px;left:50%;transform:translate(-50%,30px);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:30px;font-size:.88rem;opacity:0;transition:.3s;z-index:300;pointer-events:none}#toast.on{opacity:1;transform:translate(-50%,0)}
 .rv{opacity:0;transform:translateY(24px);transition:opacity .7s,transform .7s}.rv.on{opacity:1;transform:none}
-@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}.rv{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}.rv{opacity:1;transform:none}}
 @media (max-width:600px){.links a{display:none}.stat{border-right:0;border-bottom:1px solid var(--line)}.nv{display:none}}
-/* upgrades */
-.reelnav{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:-6px}
-.dots{display:flex;gap:8px}
-.dots i{width:8px;height:8px;border-radius:8px;background:var(--line);transition:width .3s,background .3s;cursor:pointer}
-.dots i.on{background:var(--saf);width:24px}
-.rarr{display:flex;gap:8px}
-.rarr button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:none;color:var(--ink);font-size:1.3rem;cursor:pointer;transition:border-color .2s,color .2s}
-.rarr button:hover{border-color:var(--saf);color:var(--saf)}
-.chips{display:flex;flex-wrap:wrap;gap:10px}
-.chip{border:1px solid var(--line);background:var(--bg2);padding:8px 16px;border-radius:30px;font-weight:600;font-size:.88rem}
-.skills{margin-bottom:64px}
-.it{position:relative;transition:transform .3s,border-color .3s}.it:hover{transform:translateY(-4px);border-color:var(--saf)}
-.it .m{overflow:hidden}.it .m img{transition:transform .5s}.it:hover .m img{transform:scale(1.04)}
-.badge{position:absolute;left:10px;top:10px;background:var(--saf);color:#1a1100;font-size:.72rem;font-weight:800;padding:4px 10px;border-radius:20px;z-index:2;pointer-events:none}
-.totop{position:fixed;right:18px;bottom:24px;width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:var(--bg2);color:var(--ink);cursor:pointer;z-index:60;opacity:0;pointer-events:none;transform:translateY(12px);transition:.3s;font-size:1.2rem}
-.totop.on{opacity:1;pointer-events:auto;transform:none}
-.links a.act{color:var(--saf)}
-.empty{color:var(--mute);padding:20px 0}
-.f small{opacity:.6;margin-left:4px}
 </style>
 </head>
 <body id="app-body">
@@ -117,13 +96,11 @@ footer{text-align:center;color:var(--mute);font-size:.85rem;padding:60px 5% 40px
 
   <div class="stats rv"><div class="stat"><strong data-n="95">0</strong><small>% Full-stack development</small></div><div class="stat"><strong data-n="92">0</strong><small>% Video editing</small></div><div class="stat"><strong data-n="90">0</strong><small>% Fine arts</small></div><div class="stat"><strong data-n="67">0</strong><small>Gaming level</small></div></div>
 
-  <section class="skills rv"><div class="sec"><h2>Tools jo main use karta hu</h2></div><div class="chips"><span class="chip">HTML5</span><span class="chip">CSS</span><span class="chip">JavaScript</span><span class="chip">Supabase</span><span class="chip">PWA</span></div></section>
-
   <section class="story rv"><h2>Jis site par aap padh rahe ho, wo ek student ne banayi hai.</h2><p>Notes, formulas aur test series tak, har cheez PM Roitx me maine khud design aur code ki hai. Aap bhi apne notes upload karke dusre students ki madad kar sakte ho.</p><div class="cta"><a class="btn main" href="classes.html">Notes padhna shuru karo</a></div></section>
 
-  <section id="reel"><div class="sec"><h2>Video reel</h2><p>Side me ghumao, beech wala chalega</p></div><div class="reel" id="reelBox"></div><div class="reelnav"><div class="dots" id="dots"></div><div class="rarr"><button id="rprev" aria-label="Pichla video">&lsaquo;</button><button id="rnext" aria-label="Agla video">&rsaquo;</button></div></div></section>
+  <section id="reel"><div class="sec"><h2>Video reel</h2><p>Side me ghumao, beech wala chalega</p></div><div class="reel" id="reelBox"></div></section>
 
-  <section id="work" style="margin-top:50px" class="rv"><div class="sec"><h2>Mera kaam</h2><div class="filters" id="filters"><button class="f on" data-f="all">Sab</button><button class="f" data-f="art">Fine arts</button><button class="f" data-f="gaming">Gaming</button><button class="f" data-f="life">Lifestyle</button></div></div><div class="grid" id="grid"></div><p class="empty hide" id="empty">Is category me abhi kuch nahi hai.</p></section>
+  <section id="work" style="margin-top:50px" class="rv"><div class="sec"><h2>Mera kaam</h2><div class="filters" id="filters"><button class="f on" data-f="all">Sab</button><button class="f" data-f="art">Fine arts</button><button class="f" data-f="gaming">Gaming</button><button class="f" data-f="life">Lifestyle</button></div></div><div class="grid" id="grid"></div></section>
 
   <section id="news" class="rv" style="margin-top:70px"><div class="sec"><h2>Akhbaar me</h2></div><div class="grid" id="newsGrid"></div></section>
   <section class="story rv" id="connect" style="margin-top:76px"><h2>Kuch poochna hai?</h2><p>Padhai, notes ya kisi project ke baare me likho. Main akela student hu, to jawab dene me thoda time lag sakta hai.</p><div class="cta"><a class="btn main" id="mailBtn" href="#connect">Email bhejo</a><button class="btn" id="copyMail">Email copy karo</button></div><p id="mailTxt" style="font-size:.85rem"></p></section>
@@ -131,7 +108,6 @@ footer{text-align:center;color:var(--mute);font-size:.85rem;padding:60px 5% 40px
 <footer>Code, cuts aur colours: Rohit Kumar. &copy; 2026</footer>
 
 <div id="modal" role="dialog" aria-modal="true" aria-label="Media viewer"><div id="mh"><span id="mt"></span><span><span id="mn" style="font-size:.85rem;opacity:.7"></span> <button onclick="closeViewer()" aria-label="Band karo">&times;</button></span></div><div id="mb"></div><button class="nv" id="pv" onclick="step(-1)" aria-label="Pichla">&lsaquo;</button><button class="nv" id="nx" onclick="step(1)" aria-label="Agla">&rsaquo;</button><div id="ma"></div></div>
-<button class="totop" id="toTop" aria-label="Upar jao">&uarr;</button>
 <div id="toast"></div>
 
 <script>
@@ -165,8 +141,10 @@ const ITEMS = [
  {id:'news2',t:'image',c:'news',src:'auth/news2.jpg',title:'प्रजापति समन्वय समिति सम्मान',l:0,dl:'news_coverage_2.jpg'},
  {id:'news3',t:'image',c:'news',src:'auth/news3.jpg',title:'प्रतिभा सम्मान एवं कार्यालय उद्घाटन',l:0,dl:'news_coverage_3.jpg'}
 ];
-const LK = 'https://script.google.com/macros/s/AKfycbx3J-cD11nDcUjdunWCM4YQhG-WVCz5XnDRJ1rrm4qWXOxqydwG6vtJhQrGZcjhXAks/exec', cnt = {};   // Google Apps Script web app (Google Sheet me counts)
-const LK_OK = /^https:\/\/script\.google\.com\/macros\/s\/.+\/exec$/.test(LK);
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbzD-taCyEaPeVOPPgH9aq_4UH4_QwkFMJMnH6TsNq2DoYzWxQ3r4QynFppZ6CFnXiA4DQ/exec';   // <-- Google Apps Script Web App ka /exec link yahan paste karo (khaali ho to sirf likes Abacus se chalenge)
+const LK = 'https://abacus.jasoncameron.dev', NS = 'roitx-know-rohit', cnt = {};
+const c = (id, k) => ((cnt[id] || {})[k]) || 0;
+const fmt = n => n >= 1000 ? (n / 1000).toFixed(n >= 10000 ? 0 : 1).replace('.0', '') + 'k' : n;
 let liked = {}; try { liked = JSON.parse(localStorage.getItem('rk_likes2') || '{}'); } catch (e) {}
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const find = id => ITEMS.find(x => x.id === id);
@@ -176,44 +154,41 @@ const ic = {heart:S('<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.
  share:S('<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/>'),
  dl:S('<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>'),
  mute:S('<path d="M11 5 6 9H2v6h4l5 4zM23 9l-6 6M17 9l6 6"/>', 1), sound:S('<path d="M11 5 6 9H2v6h4l5 4zM19 4.9a10 10 0 0 1 0 14.2M15.5 8.5a5 5 0 0 1 0 7"/>', 1)};
-const likeBtn = (it, cls = '') => `<button class="ab like ${liked[it.id] ? 'liked' : ''}" data-lk="${it.id}" aria-pressed="${!!liked[it.id]}" aria-label="Like" onclick="toggleLike('${it.id}')">${ic.heart}<span>${cnt[it.id] || 0}</span></button>`;
-const acts = it => `<div class="acts">${likeBtn(it)}<button class="ab" onclick="viewMedia('${it.id}')" aria-label="Dekho">${ic.eye}</button><button class="ab" onclick="shareItem('${it.id}')" aria-label="Share">${ic.share}</button><button class="ab" onclick="dl('${it.id}')" aria-label="Download">${ic.dl}</button></div>`;
-document.getElementById('reelBox').innerHTML = ITEMS.filter(i => i.t === 'video').map(i => `<div class="rc" tabindex="0" role="button" aria-label="${esc(i.title)}" onclick="viewMedia('${i.id}')" onkeydown="if(event.key==='Enter')viewMedia('${i.id}')"><video src="${i.src}" muted loop playsinline preload="metadata"></video><button class="snd" onclick="toggleAudio(this,event)" aria-label="Sound">${ic.mute}</button><div class="cap">${esc(i.title)}</div></div>`).join('');
-const imgCard = i => `<article class="it" data-c="${i.c}" data-id="${i.id}"><div class="m" tabindex="0" role="button" aria-label="${esc(i.title)}" onclick="viewMedia('${i.id}')" onkeydown="if(event.key==='Enter')viewMedia('${i.id}')"><img src="${i.src}" alt="${esc(i.title)}" loading="lazy" onload="this.classList.add('ld')"></div><div class="cap2">${esc(i.title)}</div>${acts(i)}</article>`;
+const likeBtn = (it, cls = '') => `<button class="ab like ${liked[it.id] ? 'liked' : ''}" data-lk="${it.id}" onclick="toggleLike('${it.id}')">${ic.heart}<span data-ct="${it.id}:l">${fmt(c(it.id, 'l'))}</span></button>`;
+const ctn = (it, k) => SHEET_URL ? `<span data-ct="${it.id}:${k}">${fmt(c(it.id, k))}</span>` : '';
+const acts = it => `<div class="acts">${likeBtn(it)}<button class="ab" onclick="viewMedia('${it.id}')" aria-label="Dekho">${ic.eye}${ctn(it, 'v')}</button><button class="ab" onclick="shareItem('${it.id}')" aria-label="Share">${ic.share}${ctn(it, 's')}</button><button class="ab" onclick="dl('${it.id}')" aria-label="Download">${ic.dl}${ctn(it, 'd')}</button></div>`;
+document.getElementById('reelBox').innerHTML = ITEMS.filter(i => i.t === 'video').map(i => `<div class="rc" onclick="viewMedia('${i.id}')"><video src="${i.src}" muted loop playsinline preload="metadata"></video><button class="snd" onclick="toggleAudio(this,event)" aria-label="Sound">${ic.mute}</button><div class="cap">${esc(i.title)}</div></div>`).join('');
+const imgCard = i => `<article class="it" data-c="${i.c}"><div class="m" onclick="viewMedia('${i.id}')"><img src="${i.src}" alt="${esc(i.title)}" loading="lazy"></div><div class="cap2">${esc(i.title)}</div>${acts(i)}</article>`;
 document.getElementById('grid').innerHTML = ITEMS.filter(i => i.t === 'image' && i.c !== 'news').map(imgCard).join('');
 document.getElementById('newsGrid').innerHTML = ITEMS.filter(i => i.c === 'news').map(imgCard).join('');
 
 function toast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('on'); setTimeout(() => t.classList.remove('on'), 2200); }
-function paintLike(id) { document.querySelectorAll(`[data-lk="${id}"]`).forEach(b => { b.classList.toggle('liked', !!liked[id]); b.setAttribute('aria-pressed', !!liked[id]); b.setAttribute('aria-label', 'Like, ' + (cnt[id] || 0)); b.querySelector('span').textContent = cnt[id] || 0; }); }
+function paintAll(id) {
+  document.querySelectorAll(`[data-lk="${id}"]`).forEach(b => b.classList.toggle('liked', !!liked[id]));
+  ['l', 'v', 's', 'd'].forEach(k => document.querySelectorAll(`[data-ct="${id}:${k}"]`).forEach(e => { e.textContent = fmt(c(id, k)); }));
+}
+async function hit(id, k) {                    // server par +1; sahi se ho gaya to true
+  try {
+    if (SHEET_URL) { const r = await fetch(`${SHEET_URL}?a=hit&id=${id}&k=${k}`); const j = await r.json(); if (!j[id]) throw 0; cnt[id] = j[id]; }
+    else if (k === 'l') { const r = await fetch(`${LK}/hit/${NS}/${id}`); if (!r.ok) throw 0; (cnt[id] = cnt[id] || {}).l = (await r.json()).value; }
+    paintAll(id); return true;
+  } catch (e) { return false; }
+}
 async function toggleLike(id) {
   if (liked[id]) { toast('Aap ye pehle hi like kar chuke ho'); return; }      // ek device se ek like
-  if (!LK_OK) { toast('Likes abhi setup nahi hue'); return; }
-  liked[id] = true; cnt[id] = (cnt[id] || 0) + 1; paintLike(id);
+  liked[id] = true; (cnt[id] = cnt[id] || {}).l = c(id, 'l') + 1; paintAll(id);
   try { localStorage.setItem('rk_likes2', JSON.stringify(liked)); } catch (e) {}
-  try {
-    const r = await fetch(`${LK}?a=hit&id=${encodeURIComponent(id)}`); if (!r.ok) throw 0;
-    const j = await r.json(); if (typeof j.value !== 'number') throw 0; cnt[id] = j.value;
-  } catch (e) {
-    liked[id] = false; cnt[id] = Math.max(0, cnt[id] - 1);
-    try { localStorage.setItem('rk_likes2', JSON.stringify(liked)); } catch (_) {}
-    toast('Like save nahi hua, internet check karo');
-  }
-  paintLike(id);
+  if (!(await hit(id, 'l'))) { liked[id] = false; cnt[id].l = Math.max(0, c(id, 'l') - 1); try { localStorage.setItem('rk_likes2', JSON.stringify(liked)); } catch (e) {} paintAll(id); toast('Like save nahi hua, internet check karo'); }
 }
-/* Saare counts ek hi request me */
-async function loadCounts() {
-  if (!LK_OK) return;
-  try {
-    const r = await fetch(`${LK}?a=all`); if (!r.ok) throw 0; const o = await r.json();
-    ITEMS.forEach(it => { if (typeof o[it.id] === 'number') { cnt[it.id] = o[it.id]; paintLike(it.id); } });
-  } catch (e) {}
-}
-loadCounts();
-function dl(id) { const it = find(id), a = document.createElement('a'); a.href = it.src; a.download = it.dl; document.body.appendChild(a); a.click(); a.remove(); }
+(async function loadCounts() {
+  if (SHEET_URL) { try { const j = await (await fetch(`${SHEET_URL}?a=all`)).json(); ITEMS.forEach(it => { if (j[it.id]) { cnt[it.id] = j[it.id]; paintAll(it.id); } }); } catch (e) {} }
+  else ITEMS.forEach(async it => { try { const r = await fetch(`${LK}/get/${NS}/${it.id}`); if (r.ok) { (cnt[it.id] = cnt[it.id] || {}).l = (await r.json()).value || 0; paintAll(it.id); } } catch (e) {} });
+})();
+function dl(id) { const it = find(id), a = document.createElement('a'); a.href = it.src; a.download = it.dl; document.body.appendChild(a); a.click(); a.remove(); if (SHEET_URL) hit(id, 'd'); }
 async function shareItem(id) {
-  const it = find(id), url = new URL(it.src, location.href).href;
-  if (navigator.share) { try { await navigator.share({ title: it.title, url }); } catch (e) {} }
-  else { try { await navigator.clipboard.writeText(url); toast('Link copy ho gaya'); } catch (e) { toast('Link copy nahi hua'); } }
+  const it = find(id), url = location.origin + '/' + it.src;
+  if (navigator.share) { try { await navigator.share({ title: it.title, url }); if (SHEET_URL) hit(id, 's'); } catch (e) {} }
+  else { try { await navigator.clipboard.writeText(url); toast('Link copy ho gaya'); if (SHEET_URL) hit(id, 's'); } catch (e) { toast('Link copy nahi hua'); } }
 }
 function toggleAudio(btn, ev) { ev.stopPropagation(); const v = btn.parentElement.querySelector('video'); v.muted = !v.muted; btn.innerHTML = v.muted ? ic.mute : ic.sound; }
 document.getElementById('filters').addEventListener('click', e => {
@@ -224,32 +199,30 @@ document.getElementById('filters').addEventListener('click', e => {
 
 /* ---- Viewer: swipe / arrows, saare items ke beech ---- */
 let cur = 0, sx = null; const modal = document.getElementById('modal'), mb = document.getElementById('mb');
+const seenV = new Set();                       // ek item ka view ek baar hi ginna (page khulne par)
 function showAt(i) {
   cur = (i + ITEMS.length) % ITEMS.length; const it = ITEMS[cur];
+  if (SHEET_URL && !seenV.has(it.id)) { seenV.add(it.id); hit(it.id, 'v'); }
   document.getElementById('mt').textContent = it.title; document.getElementById('mn').textContent = (cur + 1) + ' / ' + ITEMS.length;
   mb.innerHTML = it.t === 'video' ? `<video src="${it.src}" controls autoplay playsinline></video>` : `<img src="${it.src}" alt="${esc(it.title)}">`;
   document.getElementById('ma').innerHTML = likeBtn(it) + `<button class="ab" onclick="shareItem('${it.id}')">${ic.share}Share</button><button class="ab" onclick="dl('${it.id}')">${ic.dl}Save</button>`;
 }
-let lastFocus = null;
-function viewMedia(id) { lastFocus = document.activeElement; showAt(ITEMS.findIndex(x => x.id === id)); modal.classList.add('on'); document.body.style.overflow = 'hidden'; rcs.forEach(c => c.querySelector('video').pause()); const cb = document.querySelector('#mh button'); if (cb) cb.focus(); }
+function viewMedia(id) { showAt(ITEMS.findIndex(x => x.id === id)); modal.classList.add('on'); }
 function step(d) { mb.style.transform = `translateX(${d * -30}px)`; setTimeout(() => { showAt(cur + d); mb.style.transform = ''; }, 120); }
-function closeViewer() { modal.classList.remove('on'); mb.innerHTML = ''; document.body.style.overflow = ''; if (lastFocus && lastFocus.focus) lastFocus.focus(); focusReel(); }
+function closeViewer() { modal.classList.remove('on'); mb.innerHTML = ''; }
 modal.addEventListener('pointerdown', e => { sx = e.clientX; });
 modal.addEventListener('pointerup', e => { if (sx !== null && Math.abs(e.clientX - sx) > 60) step(e.clientX < sx ? 1 : -1); sx = null; });
 modal.addEventListener('click', e => { if (e.target === modal || e.target === mb) closeViewer(); });
 
 /* ---- Reel: beech wala bada + sirf wahi chale ---- */
 const reel = document.getElementById('reelBox'), rcs = [...reel.children];
-let reelVis = true;
 function focusReel() {
   const mid = reel.scrollLeft + reel.clientWidth / 2; let best = null, bd = 1e9;
   rcs.forEach(c => { const d = Math.abs(c.offsetLeft + c.offsetWidth / 2 - mid); if (d < bd) { bd = d; best = c; } const k = Math.max(0, 1 - d / (reel.clientWidth * .6)); c.style.setProperty('--s', (.86 + .14 * k).toFixed(3)); c.style.setProperty('--o', (.5 + .5 * k).toFixed(3)); });
-  rcs.forEach(c => { const v = c.querySelector('video'); if (c === best && reelVis && !document.hidden && !modal.classList.contains('on')) v.play().catch(() => {}); else v.pause(); });
+  rcs.forEach(c => { const v = c.querySelector('video'); if (c === best) v.play().catch(() => {}); else v.pause(); });
 }
 let rraf = 0; reel.addEventListener('scroll', () => { cancelAnimationFrame(rraf); rraf = requestAnimationFrame(focusReel); }, { passive: true });
 addEventListener('load', focusReel); addEventListener('resize', focusReel);
-new IntersectionObserver(es => { reelVis = es[0].isIntersecting; focusReel(); }, { threshold: .25 }).observe(reel);
-document.addEventListener('visibilitychange', focusReel);
 
 /* ---- Hero: naam particles se bana hai, ungli se bikharta hai ---- */
 const cv = document.getElementById('pc'), cx = cv.getContext('2d'); let P = [], W = 0, H = 0, mx = -999, my = -999, live = true;
@@ -299,55 +272,6 @@ const rio = new IntersectionObserver(es => es.forEach(en => { if (!en.isIntersec
   en.target.querySelectorAll('[data-n]').forEach(el => { const n = +el.dataset.n; let c = 0; const s = setInterval(() => { c += Math.ceil(n / 30); if (c >= n) { c = n; clearInterval(s); } el.textContent = c; }, 30); }); }), { threshold: .12 });
 document.querySelectorAll('.rv').forEach(el => rio.observe(el));
 addEventListener('scroll', () => { const h = document.documentElement.scrollHeight - innerHeight; document.getElementById('bar').style.width = (h > 0 ? scrollY / h * 100 : 0) + '%'; }, { passive: true });
-/* ---- Upgrades ---- */
-/* Reel: arrows + dots */
-const dotsBox = document.getElementById('dots'); let reelIdx = 0;
-dotsBox.innerHTML = rcs.map((_, i) => `<i data-i="${i}" role="button" aria-label="Video ${i + 1}"></i>`).join('');
-const goReel = i => { const c = rcs[Math.max(0, Math.min(rcs.length - 1, i))]; reel.scrollTo({ left: c.offsetLeft + c.offsetWidth / 2 - reel.clientWidth / 2, behavior: 'smooth' }); };
-function markDots() {
-  const mid = reel.scrollLeft + reel.clientWidth / 2; let bi = 0, bd = 1e9;
-  rcs.forEach((c, i) => { const d = Math.abs(c.offsetLeft + c.offsetWidth / 2 - mid); if (d < bd) { bd = d; bi = i; } });
-  reelIdx = bi; [...dotsBox.children].forEach((d, i) => d.classList.toggle('on', i === bi));
-}
-reel.addEventListener('scroll', markDots, { passive: true }); addEventListener('load', markDots); markDots();
-document.getElementById('rprev').onclick = () => goReel(reelIdx - 1);
-document.getElementById('rnext').onclick = () => goReel(reelIdx + 1);
-dotsBox.addEventListener('click', e => { const d = e.target.closest('i'); if (d) goReel(+d.dataset.i); });
-
-/* Filters: counts + empty state */
-document.querySelectorAll('.f').forEach(b => {
-  const f = b.dataset.f, n = ITEMS.filter(i => i.t === 'image' && i.c !== 'news' && (f === 'all' || i.c === f)).length;
-  b.insertAdjacentHTML('beforeend', `<small>${n}</small>`);
-});
-document.getElementById('filters').addEventListener('click', () => {
-  const any = [...document.querySelectorAll('#grid .it')].some(c => !c.classList.contains('hide'));
-  document.getElementById('empty').classList.toggle('hide', any);
-});
-
-/* Sabse pasand kiya gaya badge (asli like counts se) */
-function markTop() {
-  document.querySelectorAll('.badge').forEach(b => b.remove());
-  let bid = null, bn = 2;
-  ITEMS.forEach(it => { if ((cnt[it.id] || 0) > bn) { bn = cnt[it.id]; bid = it.id; } });
-  if (!bid) return;
-  const card = document.querySelector(`.it[data-id="${bid}"]`);
-  if (card) card.insertAdjacentHTML('afterbegin', '<span class="badge">&#10084; Sabse pasand</span>');
-}
-const _paintLike = paintLike;
-paintLike = function (id) { _paintLike(id); markTop(); };
-markTop();
-
-/* Viewer: agli image pehle se load */
-const _showAt = showAt;
-showAt = function (i) { _showAt(i); const n = ITEMS[(cur + 1) % ITEMS.length]; if (n.t === 'image') new Image().src = n.src; };
-
-/* Back to top + nav highlight */
-const toTop = document.getElementById('toTop');
-toTop.onclick = () => scrollTo({ top: 0, behavior: 'smooth' });
-addEventListener('scroll', () => toTop.classList.toggle('on', scrollY > 700), { passive: true });
-const navLinks = [...document.querySelectorAll('.links a')];
-const spy = new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting) navLinks.forEach(a => a.classList.toggle('act', a.getAttribute('href') === '#' + en.target.id)); }), { rootMargin: '-45% 0px -50% 0px' });
-['reel', 'work', 'news', 'connect'].forEach(id => { const el = document.getElementById(id); if (el) spy.observe(el); });
 </script>
 </body>
 </html>
