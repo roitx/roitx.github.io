@@ -719,6 +719,14 @@
     </svg> Rate Us
   </a>
 
+  <a href="javascript:void(0);" onclick="shareApp()">
+    <svg class="menu-svg-icon" viewBox="0 0 24 24" fill="none" stroke="#86efac" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg> Share a Friend
+  </a>
+
+  <a href="about.html">
+    <svg class="menu-svg-icon" viewBox="0 0 24 24" fill="none" stroke="#93c5fd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg> About Us
+  </a>
+
   <a href="aboutus.html#privacy">
     <svg class="menu-svg-icon" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
@@ -733,6 +741,18 @@
       <polyline points="2 12 12 17 22 12"></polyline>
     </svg> Sitemap
   </a>
+
+  <hr class="menu-divider" />
+
+  <!-- Visible only when the user is logged in (toggled by renderSidebarProfile) -->
+  <a href="javascript:void(0);" id="logoutMenuBtn" class="menu-logout-link is-hidden" onclick="handleLogout()">
+    <svg class="menu-svg-icon" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg> Logout
+  </a>
+
+  <div class="menu-app-info">
+    <strong>App Version: <span id="appVersionLabel">1.0.0</span></strong><br>
+    Made with <span class="menu-heart" aria-label="love">&#10084;&#65039;</span> in Bihar (Ind)
+  </div>
 </aside>
 
 
@@ -1430,6 +1450,7 @@ document.addEventListener("DOMContentLoaded", () => {
               </div>
             </a>
           `;
+          setLogoutVisibility(true);
           return;
         }
       }
@@ -1450,7 +1471,37 @@ document.addEventListener("DOMContentLoaded", () => {
           <span class="label sidebar-login-label">Login</span>
         </a>
       `;
+      setLogoutVisibility(false);
     }
+
+    // Shows the Logout menu item only for logged-in users.
+    function setLogoutVisibility(isLoggedIn) {
+      const btn = document.getElementById("logoutMenuBtn");
+      if (btn) btn.classList.toggle("is-hidden", !isLoggedIn);
+    }
+
+    // Logout (same logic as profile.js -> logoutUser): signs out of Supabase, removes only
+    // auth/session keys (other preferences stay), clears sessionStorage, then reloads home.
+    async function handleLogout() {
+      if (!confirm("Kya aap logout karna chahte hain?")) return;
+
+      try {
+        if (window.supabaseClient && window.supabaseClient.auth) {
+          await window.supabaseClient.auth.signOut();
+        }
+      } catch (err) {
+        console.error("Logout error:", err);
+      }
+
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith("sb-") || key.includes("auth")) localStorage.removeItem(key);
+      });
+      sessionStorage.clear();
+
+      // replace() so the Back button does not return to a logged-in view
+      window.location.replace(window.getPageUrl ? window.getPageUrl("index.html") : "index.html");
+    }
+
     function toggleMenu() {
       const sideMenu = document.getElementById("sideMenu");
       const overlay = document.getElementById("overlay");
