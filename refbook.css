@@ -144,7 +144,7 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none}
 .cover .tx{position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(90deg,rgba(0,0,0,.28),transparent 18%,transparent 82%,rgba(0,0,0,.22)),repeating-linear-gradient(0deg,rgba(255,255,255,.05) 0 1px,transparent 1px 3px),repeating-linear-gradient(90deg,rgba(0,0,0,.08) 0 1px,transparent 1px 3px)}
 .cover::before{left:0;top:0;bottom:0;width:18px;border-radius:3px 0 0 3px;box-shadow:none;background:linear-gradient(90deg,transparent 14px,rgba(0,0,0,.4) 14px 15px,rgba(255,255,255,.16) 15px 16px,transparent 16px),linear-gradient(90deg,rgba(0,0,0,.45),rgba(255,255,255,.16) 40%,rgba(0,0,0,.2) 75%,transparent)}
 .cover::after{right:-5px;top:4px;bottom:4px;width:5px;border-radius:0 3px 3px 0;background:repeating-linear-gradient(#fffcf0 0 1.5px,#d6cbae 1.5px 3px);box-shadow:1px 0 0 rgba(0,0,0,.25),inset -1px 0 2px rgba(0,0,0,.18)}
-.cover i{top:auto;bottom:-11px;right:20px;width:9px;height:24px;border-radius:0;clip-path:polygon(0 0,100% 0,100% 100%,50% 80%,0 100%);box-shadow:none;background-image:linear-gradient(90deg,rgba(255,255,255,.22),transparent 50%,rgba(0,0,0,.2))}
+.cover i{top:-5px;bottom:auto;right:20px;width:9px;height:26px;border-radius:0;clip-path:polygon(0 0,100% 0,100% 100%,50% 82%,0 100%);z-index:2;box-shadow:none;background-image:linear-gradient(90deg,rgba(255,255,255,.22),transparent 50%,rgba(0,0,0,.2))}
 .cover b{font-size:27px;margin-top:-10px;letter-spacing:.02em;color:transparent;-webkit-text-fill-color:transparent;text-shadow:none;background:linear-gradient(180deg,#fff4c9,#e6bf62 55%,#b88728);-webkit-background-clip:text;background-clip:text;filter:drop-shadow(0 1px 0 rgba(0,0,0,.55))}
 .cover em{left:11px;right:9px;top:9px;bottom:9px;height:auto;border:1px solid rgba(247,230,184,.6);border-radius:2px;outline:1px solid rgba(247,230,184,.22);outline-offset:-4px}
 .cover .orn{position:absolute;left:calc(50% + 2px);top:calc(50% + 19px);width:32px;height:1px;transform:translateX(-50%);background:linear-gradient(90deg,transparent,#ecd18e,transparent)}
@@ -153,3 +153,14 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none}
 .cover s{opacity:.45}
 .book:hover .cover s{opacity:1}
 @media (min-width:760px){.cover b{font-size:31px}.cover .orn{top:calc(50% + 22px)}.cover .imp{font-size:11px;bottom:19px}}
+
+/* realism pass: ribbon weave + cast shadow + sway, corner wear, leather sheen, gilt corner studs, bottom lip */
+.cover{box-shadow:7px 10px 20px rgba(0,0,0,.4),inset -5px 0 9px rgba(0,0,0,.3),inset 0 0 0 1px rgba(255,255,255,.1),inset 0 1px 0 rgba(255,255,255,.22),inset 0 -2px 0 rgba(0,0,0,.25),inset 0 -3px 3px rgba(0,0,0,.12)}
+.cover i{transform-origin:50% 0;transform:rotate(-1.2deg);transition:transform .6s var(--ease)}
+.cover i::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(255,255,255,.22) 0 1px,rgba(0,0,0,.1) 1px 2px),linear-gradient(90deg,rgba(0,0,0,.28),transparent 22%,rgba(255,255,255,.28) 50%,transparent 78%,rgba(0,0,0,.28))}
+.cover i::after{content:'';position:absolute;left:0;right:0;top:0;height:5px;background:linear-gradient(rgba(0,0,0,.5),transparent)}
+.book:hover .cover i{transform:rotate(3.5deg)}
+.cover em::before{content:'';position:absolute;top:-9px;right:8px;width:9px;height:23px;background:rgba(0,0,0,.38);clip-path:polygon(0 0,100% 0,100% 100%,50% 82%,0 100%);transform:skewX(-6deg)}
+.cover em::after{content:'';position:absolute;inset:3px;pointer-events:none;background:radial-gradient(circle,#f6e0a0 0 1.4px,transparent 1.9px) 0 0/6px 6px no-repeat,radial-gradient(circle,#f6e0a0 0 1.4px,transparent 1.9px) 100% 0/6px 6px no-repeat,radial-gradient(circle,#f6e0a0 0 1.4px,transparent 1.9px) 0 100%/6px 6px no-repeat,radial-gradient(circle,#f6e0a0 0 1.4px,transparent 1.9px) 100% 100%/6px 6px no-repeat;opacity:.8}
+.cover .tx::before{content:'';position:absolute;inset:0;border-radius:inherit;background:radial-gradient(circle at 100% 0,rgba(255,255,255,.3),transparent 14px),radial-gradient(circle at 100% 100%,rgba(255,255,255,.24),transparent 14px),radial-gradient(circle at 0 100%,rgba(255,255,255,.12),transparent 9px),linear-gradient(90deg,transparent 94%,rgba(255,255,255,.1))}
+.cover .tx::after{content:'';position:absolute;inset:0;border-radius:inherit;background:radial-gradient(120% 80% at 30% 15%,rgba(255,255,255,.14),transparent 60%),linear-gradient(180deg,transparent 65%,rgba(0,0,0,.22))}
