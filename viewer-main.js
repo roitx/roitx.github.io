@@ -371,6 +371,8 @@ async function startEngine(blob) {
         slider.value = 1;
     }
 
+    isDualPage = wantAutoDual();
+    syncSpreadButton();
     await setupTurnJSStructure(maxAllowedPages, isPremiumNote, isPurchased);
     loadTOC();
     document.getElementById("master-loader").style.display = "none";
@@ -407,7 +409,21 @@ function freshBookContainer() {
     return $("#book-container");
 }
 
+/* AUTO DUAL MODE: computer par hamesha dual, phone landscape (rotate) par dual, portrait par single */
+function isDesktopDevice() { return window.matchMedia('(hover: hover) and (pointer: fine)').matches; }
+function isLandscapeNow() { return window.innerWidth > window.innerHeight; }
+function wantAutoDual() {
+    if (isPremiumDoc && !isPurchasedDoc) return false;   // locked premium me dual allowed nahi
+    return isDesktopDevice() || isLandscapeNow();
+}
+function syncSpreadButton() {
+    const btn = document.getElementById("btn-spread-toggle");
+    if (btn) btn.innerText = isDualPage ? "Single Page Mode" : "Dual Page Mode";
+}
+
+let bookBuildId = 0;
 async function setupTurnJSStructure(maxPages, isPremium, isPurchased) {
+    const buildId = ++bookBuildId;   // naya rebuild aaye to purana beech me ruk jaye (dual toggle + resize race)
     renderedPagesMap.clear();
     const bookContainer = freshBookContainer();
 
@@ -416,6 +432,7 @@ async function setupTurnJSStructure(maxPages, isPremium, isPurchased) {
     const containerHeight = vpElement.clientHeight || (window.innerHeight - 155);
 
     const firstPage = await pdfDoc.getPage(1);
+    if (buildId !== bookBuildId) return;
     const unscaledVp = firstPage.getViewport({ scale: 1.0 });
 
     const scaleY = (containerHeight * 0.92) / unscaledVp.height;
@@ -473,13 +490,14 @@ async function setupTurnJSStructure(maxPages, isPremium, isPurchased) {
         renderPromises.push(renderSingleCanvasPage(currentPage + 1));
     }
     await Promise.all(renderPromises);
+    if (buildId !== bookBuildId) return;
     lazyRenderPagesAround(currentPage, effectiveMaxPages);
 
     bookContainer.turn({
         width: isDualPage ? globalPageW * 2 : globalPageW,
         height: globalPageH,
         autoCenter: true,
-        elevation: 80,
+        elevation: isDualPage ? 25 : 80,   // dual me zyada elevation se leaf upar/niche uth ke overlap karta tha
         duration: 700,
         gradients: true,
         display: isDualPage ? 'double' : 'single',
@@ -517,6 +535,7 @@ async function setupTurnJSStructure(maxPages, isPremium, isPurchased) {
         }
     });
 
+    try { bookContainer.turn('disable', false); } catch (err) {}   // rebuild ke baad finger-drag ON pakka
     savePageProgress(currentPage);
     const slider = document.getElementById("page-slider");
     if (slider) {
@@ -1305,11 +1324,24 @@ function setupSwipeFlip() {
 }
 function setupResizeRebuild() {
     let lw = window.innerWidth, lh = window.innerHeight, t = null;
+    let lastLandscape = isLandscapeNow();
     const onResize = () => {
         clearTimeout(t);
         t = setTimeout(() => {
             if (Math.abs(window.innerWidth - lw) < 60 && Math.abs(window.innerHeight - lh) < 150) return;
             lw = window.innerWidth; lh = window.innerHeight;
+            const nowLandscape = isLandscapeNow();
+            if (nowLandscape !== lastLandscape) {   // phone rotate hua
+                lastLandscape = nowLandscape;
+                if (!isDesktopDevice()) {
+                    const want = wantAutoDual();
+                    if (want !== isDualPage) {
+                        isDualPage = want;
+                        syncSpreadButton();
+                        showToast(want ? "📖 Dual Page Mode (landscape)" : "📄 Single Page Mode (portrait)");
+                    }
+                }
+            }
             if (viewMode !== 'flip' || !pdfDoc) return;
             savePageProgress(currentPage);
             setupTurnJSStructure(allowedPages(), isPremiumDoc, isPurchasedDoc);
