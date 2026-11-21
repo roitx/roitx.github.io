@@ -231,12 +231,72 @@ const polyHTML = (co) => {
   return h ? h + " = 0" : "";
 };
 const eqHTML = (s) => { s = s.trim(); if (!s) return ""; const t = esc(s).replace(/\^\(?(-?[\w.]+)\)?/g, "<sup>$1</sup>").replace(/\*/g, "·").replace(/-/g, "−"); return /=/.test(s) ? t : t + " = 0"; };
+/* ---- tap-to-edit styles (Solve + Matrix) ---- */
+if (!document.getElementById("pl-style2")) {
+  const st = document.createElement("style"); st.id = "pl-style2";
+  st.textContent = `
+.pl-echo.pl-tap,.pl-ms.pl-tap{cursor:pointer;-webkit-tap-highlight-color:transparent}
+.pl-echo.pl-tap:active{filter:brightness(1.15)}
+.pl-echo .pl-hint{font-size:11px;opacity:.65;margin-top:7px;line-height:1.4}
+.pl-echo input.pl-edit{width:100%;box-sizing:border-box;font-family:"Times New Roman",Cambria,serif;font-size:22px;color:inherit;background:rgba(128,128,128,.13);border:1px solid rgba(var(--r),.45);border-radius:10px;padding:9px 11px;outline:none}
+.pl-echo input.pl-edit:focus{border-color:var(--a);box-shadow:0 0 0 3px rgba(var(--r),.2)}
+.pl-echo input.pl-edit.bad{border-color:#ff5252;box-shadow:0 0 0 3px rgba(255,82,82,.22)}
+.pl-ms{display:inline-block;vertical-align:top;margin:4px 16px 6px 0;white-space:normal}
+.pl-ms .pl-mn{white-space:nowrap;margin-right:6px}
+.pl-echo input.pl-cell{width:56px;box-sizing:border-box;text-align:center;font-family:inherit;font-size:18px;color:inherit;background:rgba(128,128,128,.15);border:1px solid rgba(var(--r),.4);border-radius:8px;padding:7px 2px;outline:none}
+.pl-echo input.pl-cell:focus{border-color:var(--a);box-shadow:0 0 0 2px rgba(var(--r),.25)}
+.pl-mtools{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 2px}
+.pl-mtools button{font:600 12px inherit;font-family:inherit;color:inherit;background:rgba(var(--r),.1);border:1px solid rgba(var(--r),.38);border-radius:999px;padding:6px 12px;cursor:pointer}
+.pl-mtools button[data-mt="done"]{background:var(--a);color:#04130c;border-color:transparent}
+.pl-add{display:inline-block;padding:10px 14px;border:1px dashed rgba(var(--r),.5);border-radius:12px;font-size:13px;cursor:pointer;opacity:.85}
+`;
+  document.head.append(st);
+}
+
+/* ================= SOLVE: tap the clean polynomial / equation to edit it ================= */
+const polyText = (co) => { const n = co.length - 1; let h = ""; co.forEach((c, i) => { if (!c) return; const q = n - i, a = Math.abs(c); let t = a === 1 && q > 0 ? "" : fmtN(a); t += q === 0 ? "" : q === 1 ? "x" : `x^${q}`; h += h ? ` ${c < 0 ? "-" : "+"} ${t}` : (c < 0 ? "-" : "") + t; }); return h; };
+function parsePoly(raw) {
+  let s = String(raw).replace(/[−–]/g, "-").replace(/\s*=\s*0\s*$/, "");
+  if (!/[xX]/.test(s)) { const c = nums(s); return c.length >= 2 ? c : null; }   // plain coefficients: 1 -3 2
+  s = s.replace(/\s+/g, "").replace(/[·*]/g, "").replace(/X/g, "x").replace(/²/g, "^2").replace(/³/g, "^3");
+  const terms = s.match(/[-+]?[^-+]+/g); if (!terms || terms.join("") !== s) return null;
+  const map = {}; let max = 0;
+  for (const t of terms) {
+    const m = /^([-+]?)(\d*\.?\d*)(?:(x)(?:\^(\d+))?)?$/.exec(t); if (!m) return null;
+    const hasX = !!m[3]; if ((!hasX && m[2] === "") || m[2] === ".") return null;
+    const c = (m[2] === "" ? 1 : +m[2]) * (m[1] === "-" ? -1 : 1), d = hasX ? (m[4] ? +m[4] : 1) : 0;
+    if (d > 12) return null; map[d] = (map[d] || 0) + c; max = Math.max(max, d);
+  }
+  const co = []; for (let d = max; d >= 0; d--) co.push(map[d] || 0);
+  while (co.length > 1 && co[0] === 0) co.shift();
+  return co.length >= 2 ? co : null;
+}
 const oSolve = R.solve;
 R.solve = (b) => {
   setAcc(b); oSolve(b);
   const q1 = document.createElement("div"), q2 = document.createElement("div"); q1.className = q2.className = "pl-echo";
   $("#so1", b).before(q1); $("#so2", b).before(q2);
-  const upd = () => { const co = nums($("#sp", b).value), h = co.length >= 2 ? polyHTML(co) : ""; q1.innerHTML = h ? `<small>Polynomial</small><div class="pl-f">${h}</div>` : ""; const e = eqHTML($("#se", b).value); q2.innerHTML = e ? `<small>Equation</small><div class="pl-f">${e}</div>` : ""; };
+  let ed1 = false, ed2 = false;
+  const ping = (el) => el.dispatchEvent(new Event("input", { bubbles: true }));
+  const r1 = () => { if (ed1) return; const co = nums($("#sp", b).value), h = co.length >= 2 ? polyHTML(co) : ""; q1.classList.toggle("pl-tap", !!h); q1.innerHTML = h ? `<small>Polynomial · tap to edit</small><div class="pl-f">${h}</div>` : ""; };
+  const r2 = () => { if (ed2) return; const e = eqHTML($("#se", b).value); q2.classList.toggle("pl-tap", !!e); q2.innerHTML = e ? `<small>Equation · tap to edit</small><div class="pl-f">${e}</div>` : ""; };
+  const upd = () => { r1(); r2(); };
+  q1.onclick = () => {
+    if (ed1 || !q1.querySelector(".pl-f")) return; ed1 = true;
+    q1.innerHTML = `<small>Polynomial · editing</small><input class="pl-edit" value="${esc(polyText(nums($("#sp", b).value)))}" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Edit polynomial"><div class="pl-hint">Write it like x^2 - 3x + 2, or only coefficients: 1 -3 2 · Enter = done</div>`;
+    const inp = $("input", q1); inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length);
+    inp.oninput = (e) => { e.stopPropagation(); const c = parsePoly(inp.value); inp.classList.toggle("bad", !c && inp.value.trim() !== ""); if (c) { $("#sp", b).value = c.join(", "); ping($("#sp", b)); } };
+    inp.onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); inp.blur(); } };
+    inp.onblur = () => { ed1 = false; r1(); };
+  };
+  q2.onclick = () => {
+    if (ed2 || !q2.querySelector(".pl-f")) return; ed2 = true;
+    q2.innerHTML = `<small>Equation · editing</small><input class="pl-edit" value="${esc($("#se", b).value)}" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Edit equation"><div class="pl-hint">e.g. x^2 - 5 = 0 · Enter = done</div>`;
+    const inp = $("input", q2); inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length);
+    inp.oninput = (e) => { e.stopPropagation(); $("#se", b).value = inp.value; ping($("#se", b)); };
+    inp.onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); inp.blur(); } };
+    inp.onblur = () => { ed2 = false; r2(); };
+  };
   b.addEventListener("input", upd); upd();
 };
 
@@ -248,8 +308,41 @@ const oMat = R.matrix;
 R.matrix = (b) => {
   setAcc(b); oMat(b);
   const pv = document.createElement("div"); pv.className = "pl-echo"; $(".tk-grid2", b).after(pv);
-  const upd = () => { const A = toM($("#ma", b).value), B = toM($("#mb", b).value); pv.innerHTML = A.length || B.length ? `<div class="pl-f" style="white-space:normal">${mHTML("A", A)} ${mHTML("B", B)}</div>` : ""; };
-  b.addEventListener("input", upd); upd();
+  const ta = (k) => $(k === "A" ? "#ma" : "#mb", b), ed = { A: false, B: false }, G = {}; let syncing = false;
+  pv.innerHTML = `<small>Matrices · tap one to edit</small><div class="pl-f pl-mrow" style="white-space:normal"><div class="pl-ms" data-m="A"></div><div class="pl-ms" data-m="B"></div></div>`;
+  const slot = (k) => $(`.pl-ms[data-m="${k}"]`, pv);
+  const rect = (m) => { const w = Math.max(0, ...m.map((r) => r.length)); return m.map((r) => r.concat(Array(w - r.length).fill(0))); };
+  const send = (k) => { syncing = true; const t = ta(k); t.value = G[k].map((r) => r.map((v) => (String(v).trim() !== "" && isFinite(+v) ? String(v).trim() : "0")).join(" ")).join("\n"); t.dispatchEvent(new Event("input", { bubbles: true })); syncing = false; };
+  const draw = (k) => {
+    const s = slot(k), m = toM(ta(k).value), o = toM(ta(k === "A" ? "B" : "A").value);
+    if (ed[k]) {
+      const g = G[k], tb = (a, t) => `<button type="button" data-mt="${a}" data-m="${k}">${t}</button>`;
+      s.classList.remove("pl-tap");
+      s.innerHTML = `<span class="pl-mn">${k} =</span><span class="pl-m"><table>${g.map((r, i) => `<tr>${r.map((v, j) => `<td><input class="pl-cell" data-m="${k}" data-r="${i}" data-c="${j}" value="${esc(v)}" autocomplete="off" spellcheck="false" aria-label="${k} row ${i + 1} column ${j + 1}"></td>`).join("")}</tr>`).join("")}</table></span><div class="pl-mtools">${tb("addr", "+ row")}${tb("addc", "+ col")}${tb("delr", "− row")}${tb("delc", "− col")}${tb("done", "Done")}</div>`;
+    } else if (m.length) { s.classList.add("pl-tap"); s.innerHTML = mHTML(k, m); }
+    else { s.classList.remove("pl-tap"); s.innerHTML = o.length ? `<span class="pl-add" data-add="${k}">+ add matrix ${k}</span>` : ""; }
+  };
+  const upd = () => { ["A", "B"].forEach((k) => { if (!ed[k]) draw(k); }); pv.style.display = toM(ta("A").value).length || toM(ta("B").value).length || ed.A || ed.B ? "" : "none"; };
+  pv.addEventListener("click", (e) => {
+    const bt = e.target.closest("[data-mt]");
+    if (bt) {
+      const k = bt.dataset.m, a = bt.dataset.mt, g = G[k];
+      if (a === "done") { ed[k] = false; draw(k); upd(); return; }
+      if (a === "addr") g.push(Array(g[0].length).fill("0")); else if (a === "addc") g.forEach((r) => r.push("0"));
+      else if (a === "delr" && g.length > 1) g.pop(); else if (a === "delc" && g[0].length > 1) g.forEach((r) => r.pop());
+      send(k); draw(k); return;
+    }
+    const ad = e.target.closest("[data-add]");
+    if (ad) { const k = ad.dataset.add; G[k] = [["0", "0"], ["0", "0"]]; ed[k] = true; send(k); draw(k); return; }
+    const s = e.target.closest(".pl-ms"); if (!s) return;
+    const k = s.dataset.m; if (ed[k]) return;
+    const m = toM(ta(k).value); if (!m.length) return;
+    G[k] = rect(m).map((r) => r.map(fmtN)); ed[k] = true; draw(k);
+    const c = $(".pl-cell", slot(k)); if (c) c.focus();
+  });
+  pv.addEventListener("input", (e) => { const c = e.target; if (!c.classList || !c.classList.contains("pl-cell")) return; e.stopPropagation(); G[c.dataset.m][+c.dataset.r][+c.dataset.c] = c.value; send(c.dataset.m); upd(); });
+  b.addEventListener("input", (e) => { if (!syncing && (e.target === ta("A") || e.target === ta("B"))) ed[e.target === ta("A") ? "A" : "B"] = false; upd(); });
+  upd();
   b.addEventListener("click", (e) => { const op = e.target.dataset && e.target.dataset.op, o = $("#mo", b); if (op && o && (o.querySelector(".tk-t") || o.querySelector(".tk-stat"))) o.insertAdjacentHTML("afterbegin", `<div class="pl-oplab">${OPL[op]}</div>`); });
 };
 
