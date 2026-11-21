@@ -29,7 +29,7 @@ function open(t) { if (!root) build(); root.classList.add("on"); document.body.s
 function close() { if (root) root.classList.remove("on"); document.body.style.overflow = ""; }
 function show(t) {
   cur = t; gdraw = null;
-  root.querySelectorAll(".tk-tabs button").forEach((b) => { const on = b.dataset.t === t; b.classList.toggle("on", on); if (on) b.scrollIntoView({ inline: "center", block: "nearest" }); });
+  root.querySelectorAll(".tk-tabs button").forEach((b) => { const on = b.dataset.t === t; b.classList.toggle("on", on); if (on) b.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" }); });
   const body = $(".tk-body", root), fresh = body.cloneNode(false); body.replaceWith(fresh); R[t](fresh);
 }
 addEventListener("keydown", (e) => { if (e.key !== "Escape") return; const g = $(".tk-gw.full"); if (g) { $("[data-a=gfs]", g).click(); return; } close(); });
@@ -37,12 +37,20 @@ addEventListener("resize", () => gdraw && gdraw());
 
 /* ---- History ---- */
 R.hist = (b) => {
-  const h = LS("calcHistory", []).slice().reverse();
-  if (!h.length) { b.innerHTML = `<div class="tk-empty">No calculations yet.<br>Your last 20 results will appear here.</div>`; return; }
-  b.innerHTML = `<div class="tk-row tk-end"><button class="tk-b" data-a="clr">Clear history</button></div>` + h.map((x) => { const i = x.lastIndexOf("="), e = x.slice(0, i), v = x.slice(i + 1); return `<div class="tk-item"><button class="e" data-e="${esc(e)}">${esc(e)}<small>= ${esc(v)}</small></button><button class="u" data-r="${esc(v)}">Use</button></div>`; }).join("");
+  const all = LS("calcHistory", []).slice().reverse(); let pins = LS("calcHistPins", []), q = "";
+  if (!all.length && !pins.length) { b.innerHTML = `<div class="tk-empty">No calculations yet.<br>Your last 20 results will appear here.</div>`; return; }
+  const row = (x, on) => { const i = x.lastIndexOf("="), e = x.slice(0, i), v = x.slice(i + 1); return `<div class="tk-item"><button class="e" data-e="${esc(e)}">${esc(e)}<small>= ${esc(v)}</small></button><button class="u" data-r="${esc(v)}">Use</button><button class="u" data-p="${esc(x)}" aria-label="${on ? "Unpin" : "Pin"}" style="font-size:17px">${on ? "★" : "☆"}</button></div>`; };
+  b.innerHTML = `<input id="hq" type="search" placeholder="Search history…" autocomplete="off"><div class="tk-row tk-end"><button class="tk-b" data-a="clr">Clear history</button></div><div id="hl"></div>`;
+  const draw = () => {
+    const m = (x) => !q || x.toLowerCase().includes(q), P = pins.filter(m), H = all.filter((x) => !pins.includes(x)).filter(m);
+    $("#hl", b).innerHTML = (P.length ? `<p class="tk-dim" style="margin:6px 0">★ Pinned</p>${P.map((x) => row(x, 1)).join("")}` : "") + (H.length ? (P.length ? `<p class="tk-dim" style="margin:10px 0 6px">Recent</p>` : "") + H.map((x) => row(x, 0)).join("") : "") + (!P.length && !H.length ? `<div class="tk-empty">Nothing matches "${esc(q)}".</div>` : "");
+  };
+  draw();
+  $("#hq", b).addEventListener("input", (ev) => { q = ev.target.value.trim().toLowerCase(); draw(); });
   b.onclick = (ev) => {
     const t = ev.target.closest("button"); if (!t) return;
     if (t.dataset.a) { SV("calcHistory", []); R.hist(b); }
+    else if (t.dataset.p !== undefined) { const x = t.dataset.p; pins = pins.includes(x) ? pins.filter((y) => y !== x) : [x, ...pins].slice(0, 30); SV("calcHistPins", pins); draw(); }
     else if (t.dataset.e !== undefined) { clearAll(); put(t.dataset.e); }
     else if (t.dataset.r !== undefined) put(t.dataset.r);
   };

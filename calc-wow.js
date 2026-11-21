@@ -52,6 +52,19 @@ body.theme-retro{background-repeat:repeat;background-image:repeating-linear-grad
 .rx-themes i{width:22px;height:22px;border-radius:50%;flex:none;border:1px solid rgba(255,255,255,.35)}
 .rx-themes b{margin-left:auto;color:var(--accent,#00e676);opacity:0}
 .rx-themes button[aria-checked=true] b{opacity:1}
+.rx-themes .rx-cols{margin-top:6px;padding:10px 8px 6px;border-top:1px solid rgba(255,255,255,.12)}
+.rx-cols-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:0 4px 8px;font:600 11px Poppins,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#9fb3a8}
+.rx-cols-h small{font:500 10.5px Poppins,sans-serif;letter-spacing:0;text-transform:none;opacity:.7}
+.rx-cols-r{display:flex;gap:6px}
+.rx-themes .rx-cols button{all:unset;box-sizing:border-box;flex:1;display:grid;place-items:center;gap:2px;padding:8px 0 7px;border-radius:10px;cursor:pointer;color:#e8f1ec;font:600 15px Poppins,sans-serif;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);-webkit-tap-highlight-color:transparent}
+.rx-themes .rx-cols button:hover,.rx-themes .rx-cols button:focus-visible{background:rgba(255,255,255,.1)}
+.rx-themes .rx-cols button[aria-pressed=true]{background:color-mix(in srgb,var(--accent,#00e676) 20%,transparent);border-color:var(--accent,#00e676);color:var(--accent,#00e676)}
+.button-grid[hidden]{display:none!important}
+.rx-flow{grid-template-columns:repeat(var(--rx-n,6),minmax(0,1fr))!important;column-gap:5px;row-gap:4px}
+.rx-flow .btn-wrapper{min-width:0}
+.rx-flow .shift-label{font-size:calc(8px*var(--rx-k,1));max-width:100%;overflow:hidden}
+.rx-flow button{font-size:calc(11px*var(--rx-k,1))!important;padding:calc(7px*var(--rx-k,1)) 0;letter-spacing:-.2px;white-space:nowrap;overflow:hidden}
+body.shift-mode-active .rx-flow .btn-wrapper.has-shift .shift-label{font-size:calc(9.5px*var(--rx-k,1))}
 
 
 /* thin theme-coloured light that circles the navigation pad (refresh-style) */
@@ -102,6 +115,42 @@ window.changeTheme = (t) => {
   if (saved && THEMES.some((x) => x[0] === saved)) { _changeTheme(saved); if (sel) sel.value = saved; }
 }
 
+/* ---------- 1b. Keypad columns: the 42 scientific keys re-flow into 6 (default), 7 or 8 per row ---------- */
+const COLS = [6, 7, 8];
+const gridApi = (() => {
+  const rows = [...document.querySelectorAll(".button-grid.scientific")];   // the 7 rows of 6 keys; the 5-column number pad is left alone
+  const DEF = 6;
+  if (!rows.length) return { has: false, def: DEF, get: () => DEF, set: () => DEF };
+  const cells = rows.map((r) => [...r.children]);                           // remember which row each key came from
+  let flow = null, cur = DEF;
+  const unflow = () => {
+    if (!flow) return;
+    rows.forEach((r, i) => { cells[i].forEach((c) => { c.style.removeProperty("grid-column"); r.append(c); }); r.hidden = false; });
+    flow.remove(); flow = null;
+  };
+  const apply = (n) => {
+    n = COLS.includes(n) ? n : DEF;
+    if (n === DEF) { unflow(); cur = DEF; store.set("calcCols", String(DEF)); return cur; }
+    if (!flow) {
+      flow = document.createElement("div"); flow.className = "button-grid scientific rx-flow";
+      rows[0].before(flow);
+      cells.forEach((row) => row.forEach((c) => flow.append(c)));
+      rows.forEach((r) => { r.hidden = true; });
+    }
+    const all = cells.flat(); all.forEach((c) => c.style.removeProperty("grid-column"));
+    const rem = all.length % n;                                            // keys left over in the last row stretch to fill it
+    if (rem) { const base = Math.floor(n / rem), extra = n % rem; all.slice(-rem).forEach((c, i) => { c.style.gridColumn = "span " + (base + (i < extra ? 1 : 0)); }); }
+    flow.style.setProperty("--rx-n", n);
+    flow.style.setProperty("--rx-k", (DEF / n).toFixed(3));
+    cur = n; store.set("calcCols", String(n));
+    return cur;
+  };
+  const saved = parseInt(store.get("calcCols"), 10);
+  if (COLS.includes(saved) && saved !== DEF) apply(saved);
+  return { has: true, def: DEF, get: () => cur, set: apply };
+})();
+window.ROITX_GRID = gridApi;
+
 /* ---------- 2. Theme picker popover (falls back to the native select if anything fails) ---------- */
 const pickBtn = $(".theme-pick"), pickSel = $(".theme-select");
 let pop = null;
@@ -109,6 +158,13 @@ if (pickBtn && pickSel) {
   pop = document.createElement("div");
   pop.className = "rx-themes"; pop.hidden = true; pop.setAttribute("role", "menu");
   pop.innerHTML = THEMES.map(([v, n, g]) => `<button type="button" role="menuitemradio" data-t="${v}"><i style="background:${g}"></i>${n}<b>✓</b></button>`).join("");
+  if (gridApi.has) {
+    const sec = document.createElement("div"); sec.className = "rx-cols"; sec.setAttribute("role", "group"); sec.setAttribute("aria-label", "Keys per row");
+    sec.innerHTML = `<div class="rx-cols-h">Keys per row<small>default ${gridApi.def}</small></div><div class="rx-cols-r">${COLS.map((n) => `<button type="button" data-n="${n}" aria-pressed="false">${n}</button>`).join("")}</div>`;
+    const sync = () => sec.querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", String(+x.dataset.n === gridApi.get())));
+    sec.addEventListener("click", (e) => { const x = e.target.closest("button"); if (!x) return; e.stopPropagation(); gridApi.set(+x.dataset.n); sync(); ring(); });
+    sync(); pop.append(sec);
+  }
   document.body.append(pop);
   pickBtn.classList.add("rx-pop"); pickBtn.setAttribute("role", "button"); pickBtn.setAttribute("aria-haspopup", "menu"); pickBtn.tabIndex = 0;
   const mark = () => pop.querySelectorAll("button").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.t === pickSel.value)));
@@ -122,7 +178,7 @@ if (pickBtn && pickSel) {
   const toggle = () => (pop.hidden ? open() : close());
   pickBtn.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); toggle(); });
   pickBtn.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); } });
-  pop.addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; window.changeTheme(b.dataset.t); close(); pickBtn.focus({ preventScroll: true }); });
+  pop.addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b || b.closest(".rx-cols")) return; window.changeTheme(b.dataset.t); close(); pickBtn.focus({ preventScroll: true }); });
   document.addEventListener("click", (e) => { if (!pop.hidden && !pop.contains(e.target)) close(); });
   addEventListener("keydown", (e) => { if (e.key === "Escape" && !pop.hidden) close(); });
   addEventListener("resize", () => { if (!pop.hidden) place(); });
