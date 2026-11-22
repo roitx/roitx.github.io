@@ -314,6 +314,48 @@ function scrollToBottom() {
   }
 }
 
+/* ---- Markdown + Math: marked.parse math ke andar ka backslash/underscore kha jaata hai ----
+   Jaise \[ ... \] -> [ ... ], \, -> ",", x_1 y_2 -> <em>. Isliye math ko pehle placeholder se
+   bacha lete hain, marked chalate hain, phir asli TeX wapas rakh dete hain (MathJax use render karta hai). */
+function renderMarkdownWithMath(text) {
+  let t = String(text || '');
+  const codes = [], maths = [];
+  const escTex = x => x.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  // 1) code ko alag rakho (andar ke $ ko math na samjhe)
+  t = t.replace(/```[\s\S]*?```|`[^`\n]+`/g, m => { codes.push(m); return 'ZZCODE' + (codes.length - 1) + 'ZZ'; });
+
+  // 2) math bachao
+  const keep = (tex, display) => {
+    maths.push({ tex: tex.trim(), display });
+    return (display ? '\n\nZZMATH' : 'ZZMATH') + (maths.length - 1) + (display ? 'ZZ\n\n' : 'ZZ');
+  };
+  t = t.replace(/\$\$([\s\S]+?)\$\$/g, (m, x) => keep(x, true));
+  t = t.replace(/\\\[([\s\S]+?)\\\]/g, (m, x) => keep(x, true));
+  t = t.replace(/\\\(([\s\S]+?)\\\)/g, (m, x) => keep(x, false));
+  // AI kabhi \[ ke bajay seedha [ ... ] likh deta hai (andar \text, \frac jaisa LaTeX ho to)
+  t = t.replace(/(^|\n)[ \t]*\[\s*([^\n\[\]]*\\[a-zA-Z][^\n\[\]]*?)\s*\][ \t]*(?=\n|$)/g, (m, pre, x) => pre + keep(x, true));
+  // inline $...$ (rupaye jaise "$5 aur $10" ko na chhede)
+  t = t.replace(/(?<!\\)\$(?!\s)([^$\n]+?)(?<!\s)\$(?!\d)/g, (m, x) => keep(x, false));
+
+  // 3) math ke bahar bhaTka hua LaTeX spacing (\, \; \!) hatao, warna marked use "," bana deta hai
+  t = t.replace(/\\[,;!]/g, ' ');
+
+  // 4) code wapas
+  t = t.replace(/ZZCODE(\d+)ZZ/g, (m, i) => codes[+i]);
+
+  // 5) markdown -> html
+  let html = (typeof marked !== 'undefined' && marked.parse) ? marked.parse(t) : t.replace(/\n/g, '<br>');
+
+  // 6) math wapas (MathJax delimiters ke saath)
+  html = html.replace(/ZZMATH(\d+)ZZ/g, (m, i) => {
+    const o = maths[+i];
+    if (!o) return m;
+    return o.display ? '$$' + escTex(o.tex) + '$$' : '\\(' + escTex(o.tex) + '\\)';
+  });
+  return html;
+}
+
 function cleanAIResponse(rawText) {
   let text = rawText || "";
   if (text.includes("Step 1") || text.includes("Step1") || text.includes("चरण 1")) {
@@ -406,7 +448,7 @@ async function solveWithAI(questionText, imageBase64 = null) {
 
     if (rawText) {
       const cleanContent = cleanAIResponse(rawText);
-      let formattedAnswer = typeof marked !== 'undefined' ? marked.parse(cleanContent) : cleanContent.replace(/\n/g, "<br>");
+      let formattedAnswer = renderMarkdownWithMath(cleanContent);
       
       appendChatMessage(`<b>💡 Solution / Answer:</b><br><br>${formattedAnswer}`, "ai", true, true);
     } else {
@@ -1371,7 +1413,7 @@ Solve in clean Hinglish (Roman Hindi + English). Use LaTeX for math ($...$ inlin
 
     if (rawText) {
       const cleanContent = cleanAIResponse(rawText);
-      let formattedAnswer = typeof marked !== 'undefined' ? marked.parse(cleanContent) : cleanContent.replace(/\n/g, "<br>");
+      let formattedAnswer = renderMarkdownWithMath(cleanContent);
       
       // Typewriter ke sath message append hoga
       appendChatMessage(`<b>💡 Solution / Answer:</b><br><br>${formattedAnswer}`, "ai", true, true);
@@ -2073,6 +2115,35 @@ function parseRoute(raw) {
   return null;
 }
 
+/* ---- AI ki yaaddaasht: pichhle sawal-jawab prompt me jodte hain ----
+   chatHistory (localStorage) me har AI jawab ke saath uska sawal (meta.q) saved hota hai.
+   Wahi se pichhle jode nikal ke AI ko bhejte hain, isliye refresh ke baad bhi yaad rehta hai.
+   "Nayi chat" dabane par chatHistory khali hoti hai, to yaaddaasht bhi saaf. */
+function buildChatMemory(maxPairs = 4) {
+  const MAX_Q = 300, MAX_A_NEW = 1500, MAX_A_OLD = 500, MAX_TOTAL = 4000;   // sabse naya jawab lamba, purane chhote
+  const pairs = [];
+  for (let i = chatHistory.length - 1; i >= 0 && pairs.length < maxPairs; i--) {
+    const r = chatHistory[i];
+    if (!r || r.type !== 'ai' || !r.meta || !r.meta.q) continue;   // menu/card/error messages chhod do
+    let a = htmlToPlainText(r.html).replace(/^\s*(?:💡\s*)?Solution\s*\/\s*Answer\s*:?\s*/i, '').replace(/\s+/g, ' ').trim();
+    if (!a) continue;
+    const cap = pairs.length === 0 ? MAX_A_NEW : MAX_A_OLD;      // pairs.length==0 => abhi tak sabse naya
+    if (a.length > cap) a = a.slice(0, cap).trim() + ' …';
+    const q = String(r.meta.q).replace(/\s+/g, ' ').trim().slice(0, MAX_Q);
+    pairs.unshift({ q, a });
+  }
+  // Limit se zyada ho to sabse purane jode hat jaate hain
+  const blocks = [];
+  let total = 0;
+  for (let i = pairs.length - 1; i >= 0; i--) {
+    const b = `Student: ${pairs[i].q}\nTutor: ${pairs[i].a}`;
+    if (total + b.length > MAX_TOTAL) break;
+    total += b.length;
+    blocks.unshift(b);
+  }
+  return blocks.join('\n\n');
+}
+
 /* ---- Main flow: chhota AI aage (direct jawab ya plan), bada AI peeche ---- */
 window.solveWithAI = async function (questionText, imageBase64 = null) {
   lastRequest = { q: questionText, img: imageBase64 };
@@ -2087,12 +2158,16 @@ window.solveWithAI = async function (questionText, imageBase64 = null) {
     hi: 'Solve in clear Hindi Devanagari script. Put English terms in brackets next to Hindi terms.',
     hinglish: 'Solve in clean Hinglish (Roman Hindi + English).'
   }[currentLanguage] || 'Solve in clean Hinglish.';
-  const MAIN = `You are an expert tutor for Class 9-12. Subject: ${selectedSubject}. ${styleLine} Use LaTeX for math ($...$ inline, $$...$$ display). Direct answer only, no meta chatter.\n\nQuery: ${q}`;
-  const ROUTER = `You are a fast front-desk assistant of a Class 9-12 tutor (subject: ${selectedSubject}). Write in ${langName}. Decide:\n- If the message is a greeting, small talk, or a short/simple question answerable in 1-3 lines, reply ONLY with JSON: {"mode":"direct","answer":"<final answer in markdown, LaTeX $...$ for math>"}\n- Otherwise (multi-step solving, derivation, calculation, long explanation, or an image), reply ONLY with JSON: {"mode":"deep","steps":["<title 1>","<title 2>","<title 3>"]} with exactly 3 to 5 SEPARATE strings, each a short title of at most 8 words specific to this question (example: "Define projectile motion", "Write the key formulas"). Titles only: no explanations, no formulas, no numbering, and never solve the question inside the steps.\nNo text outside the JSON.\n\nMessage: ${q}`;
+  const memory = buildChatMemory();
+  const memBlock = memory
+    ? `Earlier conversation with this student (oldest first). Use it ONLY if the new message is a follow-up (like "explain more", "why step 2?", "give an example", "isko hindi me batao"). A follow-up applies to the MOST RECENT Tutor answer below (translate / simplify / continue THAT answer, do not start a new topic). If the student asks for a specific language in the new message, answer in that language even if it differs from the default style. Otherwise ignore this history and never repeat old answers in full.\n${memory}\n\n---\n`
+    : '';
+  const MAIN = `You are an expert tutor for Class 9-12. Subject: ${selectedSubject}. ${styleLine} Use LaTeX for math ($...$ inline, $$...$$ display). Direct answer only, no meta chatter.\n\n${memBlock}Query: ${q}`;
+  const ROUTER = `You are a fast front-desk assistant of a Class 9-12 tutor (subject: ${selectedSubject}). Write in ${langName}. Decide:\n- If the message is a greeting, small talk, or a short/simple question answerable in 1-3 lines, reply ONLY with JSON: {"mode":"direct","answer":"<final answer in markdown, LaTeX $...$ for math>"}\n- Otherwise (multi-step solving, derivation, calculation, long explanation, or an image), reply ONLY with JSON: {"mode":"deep","steps":["<title 1>","<title 2>","<title 3>"]} with exactly 3 to 5 SEPARATE strings, each a short title of at most 8 words specific to this question (example: "Define projectile motion", "Write the key formulas"). Titles only: no explanations, no formulas, no numbering, and never solve the question inside the steps.\nNo text outside the JSON.\n\n${memBlock}Message: ${q}`;
 
   const show = (raw) => {
     const clean = cleanAIResponse(raw);
-    const html = typeof marked !== 'undefined' ? marked.parse(clean) : clean.replace(/\n/g, "<br>");
+    const html = renderMarkdownWithMath(clean);
     playChime();
     appendChatMessage(`<b>💡 Solution / Answer:</b><br><br>${html}`, "ai", true, true,
       { meta: { q: questionText || (imageBase64 ? '[photo question]' : ''), subject: selectedSubject, lang: currentLanguage } });

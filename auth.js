@@ -375,6 +375,51 @@ async function signInWithGoogle(forceConsent = false) {
   }
 }
 
+// 6. Email OTP / Magic Link (password ke bina login)
+async function sendLoginCode(email) {
+  email = (email || "").trim();
+  if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+    if (window.triggerErrorAnim) window.triggerErrorAnim();
+    alert("Kripya sahi email address daalein.");
+    return false;
+  }
+
+  const { error } = await window.supabaseClient.auth.signInWithOtp({
+    email,
+    options: {
+      shouldCreateUser: true,
+      emailRedirectTo: window.getPageUrl ? window.getPageUrl('login.html') : window.location.origin + '/login.html'
+    }
+  });
+
+  if (error) {
+    if (window.triggerErrorAnim) window.triggerErrorAnim();
+    alert(error.message);
+    return false;
+  }
+  return true;
+}
+
+async function verifyLoginCode(email, token) {
+  const { data, error } = await window.supabaseClient.auth.verifyOtp({
+    email,
+    token: (token || "").trim(),
+    type: 'email'
+  });
+
+  if (error) {
+    if (window.triggerErrorAnim) window.triggerErrorAnim();
+    alert("Code galat ya expire ho gaya hai. Naya code mangwa kar try karein.");
+    return false;
+  }
+
+  if (data?.user) {
+    await syncUserProfileFromAuth(data.user);
+    await autoSubscribeUserAfterAuth(data.user);
+  }
+  return true;
+}
+
 // Safe Initializer & Auth Change Listener
 function initAuthSystem() {
   if (window.supabaseClient && window.supabaseClient.auth) {
@@ -403,6 +448,8 @@ window.signUpUser = signUpUser;
 window.sendResetLink = sendResetLink;
 window.updatePassword = updatePassword;
 window.signInWithGoogle = signInWithGoogle;
+window.sendLoginCode = sendLoginCode;
+window.verifyLoginCode = verifyLoginCode;
 window.handlePostLoginRedirect = handlePostLoginRedirect;
 window.syncUserProfileFromAuth = syncUserProfileFromAuth;
 window.autoSubscribeUserAfterAuth = autoSubscribeUserAfterAuth;

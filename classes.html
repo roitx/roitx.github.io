@@ -65,6 +65,34 @@
     stroke-linejoin: round;
     filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.6));
   }
+
+  /* ---- Responsive class cards & top bar (mobile + desktop) ---- */
+  .container { padding-bottom: calc(90px + env(safe-area-inset-bottom)); }
+
+  .topbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+  .topbar .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .topbar .brand img { flex-shrink: 0; }
+  .topbar .brand h1 { font-size: clamp(18px, 5vw, 24px); line-height: 1.2; margin: 0; }
+  .topbar .btn { min-height: 44px; padding-left: 18px; padding-right: 18px; touch-action: manipulation; }
+
+  a.card {
+    display: block;
+    box-sizing: border-box;
+    min-height: 88px;
+    color: inherit;
+    text-decoration: none;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: transform .2s ease, box-shadow .2s ease;
+  }
+  a.card:active { transform: scale(0.97); }
+  a.card:focus-visible { outline: 3px solid #3d5afe; outline-offset: 3px; }
+  @media (hover: hover) { a.card:hover { transform: translateY(-4px); } }
+  @media (min-width: 720px) { a.card { min-height: 120px; } }
+  @media (prefers-reduced-motion: reduce) { a.card { transition: none; } a.card:hover, a.card:active { transform: none; } }
 </style>
 </head>
 <body>
@@ -77,21 +105,21 @@
 
   <h2>Choose Class</h2>
   <div class="grid">
-    <div class="card" onclick="goto('subjects-9.html')">
+    <a class="card" href="subjects-9.html">
       <h3>Class 9</h3><p>Important subjects for Class 9</p>
-    </div>
+    </a>
 
-    <div class="card" onclick="goto('subjects-10.html')">
+    <a class="card" href="subjects-10.html">
       <h3>Class 10</h3><p>Important subjects for Class 10</p>
-    </div>
+    </a>
 
-    <div class="card" onclick="goto('subjects-11.html')">
+    <a class="card" href="subjects-11.html">
       <h3>Class 11</h3><p>Science & other important subjects</p>
-    </div>
+    </a>
 
-    <div class="card" onclick="goto('subjects-12.html')">
+    <a class="card" href="subjects-12.html">
       <h3>Class 12</h3><p>Board exam focused materials</p>
-    </div>
+    </a>
   </div>
 </div>
 

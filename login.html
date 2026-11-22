@@ -589,6 +589,7 @@ button.primary-btn:active {
   .hand.right { right: 32px; }
 }
 </style>
+<style>#otpCode::placeholder{letter-spacing:1px;font-weight:500;font-size:15px;}</style>
 </head>
 
 <body>
@@ -681,6 +682,8 @@ button.primary-btn:active {
       <input id="pincode" type="text" placeholder="Area Pincode (e.g. 800001)" maxlength="6" style="display: none;" oninput="this.value=this.value.replace(/[^0-9]/g,'')" autocomplete="postal-code">
 
       <input id="email" type="email" placeholder="Email Address" autocomplete="email">
+      <!-- Email OTP code input (sirf otp_verify mode me dikhta hai) -->
+      <input id="otpCode" type="text" inputmode="numeric" maxlength="8" placeholder="Enter 6-digit code" style="display: none; text-align: center; letter-spacing: 6px; font-weight: 700; font-size: 20px;" oninput="this.value=this.value.replace(/[^0-9]/g,'')" autocomplete="one-time-code">
       
       <!-- Primary Password Input with Eye -->
       <div class="password-field-wrapper" id="mainPassWrapper">
@@ -718,6 +721,7 @@ button.primary-btn:active {
     <nav class="auth-links" id="linkBox" aria-label="Authentication Navigation">
       <a onclick="switchMode('forgot')" id="forgotLink">Forgot Password?</a>
       <span>New here? <a onclick="switchMode('signup')">Create Account</a></span>
+      <a onclick="switchMode('otp')">Login with Email Code</a>
     </nav>
   </section>
 </main>
@@ -743,6 +747,9 @@ const passwordInput = document.getElementById("password");
 const confirmPassInput = document.getElementById("confirmPassword");
 const confirmPassWrapper = document.getElementById("confirmPassWrapper");
 const emailInput = document.getElementById("email");
+const otpCodeInput = document.getElementById("otpCode");
+let otpEmail = "";
+let otpTimer = null;
 
 const char = document.getElementById("char");
 const card = document.getElementById("authCard");
@@ -999,6 +1006,9 @@ function handlePasswordTyping() {
 /* Mode Switcher */
 function switchMode(mode) {
   currentMode = mode;
+  clearInterval(otpTimer);
+  otpCodeInput.value = "";
+  otpCodeInput.style.display = "none";
   emailInput.value = "";
   passwordInput.value = "";
   confirmPassInput.value = "";
@@ -1030,6 +1040,7 @@ function switchMode(mode) {
     linkBox.innerHTML = `
       <a onclick="switchMode('forgot')">Forgot Password?</a>
       <span>New here? <a onclick="switchMode('signup')">Create Account</a></span>
+      <a onclick="switchMode('otp')">Login with Email Code</a>
     `;
   } else if (mode === "signup") {
     titleText.innerText = "Join Roitx";
@@ -1059,6 +1070,36 @@ function switchMode(mode) {
     linkBox.innerHTML = `
       <span>Remembered Password? <a onclick="switchMode('login')">Back to Login</a></span>
     `;
+  } else if (mode === "otp") {
+    titleText.innerText = "Login with Email Code";
+    subText.innerText = "NO PASSWORD NEEDED";
+    fullNameInput.style.display = "none";
+    phoneInput.style.display = "none";
+    pincodeInput.style.display = "none";
+    emailInput.style.display = "block";
+    document.getElementById("mainPassWrapper").style.display = "none";
+    googleBtn.style.display = "none";
+    mainBtn.innerText = "Send Code";
+    linkBox.innerHTML = `
+      <span>Prefer password? <a onclick="switchMode('login')">Back to Login</a></span>
+    `;
+  } else if (mode === "otp_verify") {
+    titleText.innerText = "Enter Code";
+    subText.innerText = "SENT TO " + maskEmail(otpEmail);
+    fullNameInput.style.display = "none";
+    phoneInput.style.display = "none";
+    pincodeInput.style.display = "none";
+    emailInput.style.display = "none";
+    otpCodeInput.style.display = "block";
+    document.getElementById("mainPassWrapper").style.display = "none";
+    googleBtn.style.display = "none";
+    mainBtn.innerText = "Verify & Login";
+    linkBox.innerHTML = `
+      <a id="resendOtpLink" onclick="resendOtp()">Resend code</a>
+      <a onclick="switchMode('otp')">Change email</a>
+    `;
+    startOtpCooldown(30);
+    setTimeout(() => otpCodeInput.focus(), 100);
   } else if (mode === "update_password") {
     titleText.innerText = "New Password";
     subText.innerText = "SET YOUR NEW PASSWORD";
@@ -1073,6 +1114,45 @@ function switchMode(mode) {
     linkBox.innerHTML = `<span><a onclick="switchMode('login')">Cancel & Login</a></span>`;
   }
 }
+
+function maskEmail(email) {
+  if (!email || !email.includes("@")) return "YOUR EMAIL";
+  const [name, domain] = email.split("@");
+  const shown = name.length <= 2 ? name[0] : name.slice(0, 2);
+  return (shown + "***@" + domain).toUpperCase();
+}
+
+function startOtpCooldown(seconds) {
+  const link = document.getElementById("resendOtpLink");
+  if (!link) return;
+  let left = seconds;
+  link.style.pointerEvents = "none";
+  link.style.opacity = "0.55";
+  link.innerText = "Resend code in " + left + "s";
+  clearInterval(otpTimer);
+  otpTimer = setInterval(() => {
+    left--;
+    if (left <= 0) {
+      clearInterval(otpTimer);
+      link.style.pointerEvents = "auto";
+      link.style.opacity = "1";
+      link.innerText = "Resend code";
+    } else {
+      link.innerText = "Resend code in " + left + "s";
+    }
+  }, 1000);
+}
+
+async function resendOtp() {
+  if (!otpEmail) return switchMode("otp");
+  const ok = await window.sendLoginCode(otpEmail);
+  if (ok) {
+    otpCodeInput.value = "";
+    startOtpCooldown(30);
+    alert("Naya code aapke email par bhej diya gaya hai.");
+  }
+}
+window.resendOtp = resendOtp;
 
 function triggerGoogleAuth() {
   const forceConsent = currentMode === "signup";
@@ -1186,6 +1266,22 @@ async function handleAuthSubmit() {
     await window.signUpUser();
   } else if (currentMode === "forgot") {
     window.sendResetLink();
+  } else if (currentMode === "otp") {
+    const email = emailInput.value.trim();
+    const ok = await window.sendLoginCode(email);
+    if (ok) {
+      otpEmail = email;
+      switchMode("otp_verify");
+    }
+  } else if (currentMode === "otp_verify") {
+    const code = otpCodeInput.value.trim();
+    if (code.length < 6) {
+      if (window.triggerErrorAnim) window.triggerErrorAnim();
+      alert("Kripya email me aaya poora code daalein.");
+      return;
+    }
+    const ok = await window.verifyLoginCode(otpEmail, code);
+    if (ok) await celebrateIfLoggedIn();
   } else if (currentMode === "update_password") {
     const p1 = passwordInput.value;
     const p2 = confirmPassInput.value;

@@ -37,7 +37,9 @@
     // HTML entities, attributes, links, markdown symbols (voice inhe na bole)
     clean = clean.replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, ' aur ').replace(/&(lt|gt|quot|#39);/gi, ' ');
     clean = clean.replace(/\b(href|src|class|style|target|rel)\s*=\s*\S+/gi, ' ');
-    clean = clean.replace(/https?:\/\/\S+/gi, ' link ');
+    clean = clean.replace(/\uE000+/g, ' ');                      // mute marker: link ka label bhi nahi bolna
+    clean = clean.replace(/(?:https?:\/\/|www\.)\S+/gi, ' ');     // URL bilkul nahi bolna
+    clean = clean.replace(/\(?[^\s()\[\]]*\.(?:html?|pdf|jpe?g|png|gif|webp|svg)\b(?:[?#][^\s()]*)?\)?/gi, ' '); // page/file links (solver.html, notes.pdf, a.jpg)
     clean = clean.replace(/^\s*[-–—•·*]+\s*$/, ' ');   // akela bullet "-" ya "*"
     clean = clean.replace(/[*`|>]+/g, ' ');
     clean = clean.replace(/²/g, ' squared ').replace(/³/g, ' cubed ').replace(/°/g, ' degree ')
@@ -576,7 +578,140 @@
     // 3. Convert Newlines to <br>
     text = text.replace(/\n/g, "<br>");
 
-    return text;
+    // 4. Links: blue underline ki jagah saaf pill, raw URL / file name nahi
+    return beautifyLinksHtml(text);
+  }
+
+  // =========================================================
+  // LINKS: AI ke jawab ke links ko saaf "pill" me dikhana
+  //  - raw https://... ya page.html / file.pdf / photo.jpg text ko chhota naam wala link bana deta hai
+  //  - [naam](url) markdown ko bhi link banata hai
+  //  - sirf http/https/relative links allowed (javascript: jaise links hat jaate hain)
+  //  - auto-bane naam par data-mute lagta hai, taaki voice use na bole
+  // =========================================================
+  const LINK_LABELS = {
+    'index': 'Home', 'classes': 'All Classes', 'premium-notes': 'Premium Notes', 'about': 'About Developer',
+    'aboutus': 'About Us', 'solver': 'Doubt Solver', 'formulas': 'Formulas', 'calculator': 'Calculator',
+    'calendar': 'Calendar', 'study-timer': 'Study Timer', 'pyq-list': 'PYQ Bank', 'pyq-anylizer': 'PYQ Analyzer',
+    'tests': 'Mock Tests', 'performance': 'Performance', 'library': 'Library', 'fun': 'Games', 'view': 'Notes',
+    'subjects-9': 'Class 9 Subjects', 'subjects-10': 'Class 10 Subjects', 'subjects-11': 'Class 11 Subjects',
+    'subjects-12': 'Class 12 Subjects', '11-science-subjects': '11th Science', '11-commerce-subjects': '11th Commerce',
+    '11-arts-subjects': '11th Arts', '12-science-subjects': '12th Science', '12-commerce-subjects': '12th Commerce',
+    '12-arts-subjects': '12th Arts'
+  };
+  const FILE_EXT = 'html?|pdf|jpe?g|png|gif|webp|svg';
+  const URL_LIKE_RE = new RegExp('^(?:https?:\\/\\/|www\\.)\\S+$|^\\S+\\.(?:' + FILE_EXT + ')(?:[?#]\\S*)?$', 'i');
+  const LINK_SCAN_RE = new RegExp(
+    '\\[([^\\]\\n]+)\\]\\(([^)\\s]+)\\)' +                                   // [naam](url)
+    '|((?:https?:\\/\\/|www\\.)[^\\s<>"\')\\]]+' +                            // https://...
+    '|(?:[\\w.\\-]+\\/)*[\\w\\-]+\\.(?:' + FILE_EXT + ')\\b(?:[?#][^\\s<>"\')\\]]*)?)',   // page.html / file.pdf / a.jpg
+    'gi'
+  );
+
+  function friendlyLinkLabel(href) {
+    const h = String(href || '').trim();
+    let host = '', path = h;
+    const m = h.match(/^(?:https?:)?\/\/([^\/?#]+)(.*)$/i);
+    if (m) { host = m[1].replace(/^www\./i, ''); path = m[2]; }
+    path = path.split(/[?#]/)[0];
+    let seg = path.split('/').filter(Boolean).pop() || '';
+    try { seg = decodeURIComponent(seg); } catch (e) {}
+    const base = seg.replace(new RegExp('\\.(?:' + FILE_EXT + ')$', 'i'), '');
+    if (!base) return host || 'Open';
+    if (LINK_LABELS[base.toLowerCase()]) return LINK_LABELS[base.toLowerCase()];
+    return base.replace(/[-_+]+/g, ' ').replace(/\s+/g, ' ').trim().replace(/\b([a-z])/g, c => c.toUpperCase());
+  }
+
+  function isSafeHref(href) {
+    const h = String(href || '').trim();
+    if (!h) return false;
+    const sc = h.match(/^([a-z][a-z0-9+.\-]*):/i);
+    return sc ? /^https?$/i.test(sc[1]) : true;      // scheme hai to sirf http/https
+  }
+
+  function styleAsChatLink(a, href) {
+    Array.from(a.attributes).forEach(at => a.removeAttribute(at.name));
+    const full = /^www\./i.test(href) ? 'https://' + href : href;
+    a.setAttribute('href', full);
+    a.className = 'chat-link';
+    if (/^(?:https?:)?\/\//i.test(full)) {
+      a.setAttribute('target', '_blank');
+      a.setAttribute('rel', 'noopener noreferrer');
+    }
+  }
+
+  function beautifyLinks(root) {
+    const doc = root.ownerDocument;
+
+    // 1) Pehle se bane <a> tags (jinme apna style nahi hai) saaf karo
+    root.querySelectorAll('a').forEach(a => {
+      if (a.hasAttribute('style')) return;                        // apne bane cards/buttons ko mat chhedo
+      const href = (a.getAttribute('href') || '').trim();
+      const txt = (a.textContent || '').trim();
+      if (!isSafeHref(href)) { a.replaceWith(doc.createTextNode(txt)); return; }
+      styleAsChatLink(a, href);
+      if (!txt || URL_LIKE_RE.test(txt)) {
+        a.textContent = friendlyLinkLabel(href);
+        a.setAttribute('data-mute', '1');
+      }
+    });
+
+    // 2) Text me likhe raw URL / file name / [naam](url) ko link banao
+    const walker = doc.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode(n) {
+        const p = n.parentElement;
+        return (p && p.closest('a, script, style')) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
+      }
+    });
+    const targets = [];
+    let n;
+    while ((n = walker.nextNode())) {
+      LINK_SCAN_RE.lastIndex = 0;
+      if (LINK_SCAN_RE.test(n.nodeValue)) targets.push(n);
+    }
+
+    targets.forEach(node => {
+      const text = node.nodeValue;
+      const frag = doc.createDocumentFragment();
+      let last = 0, m;
+      LINK_SCAN_RE.lastIndex = 0;
+      while ((m = LINK_SCAN_RE.exec(text))) {
+        let label, href, trail = '';
+        if (m[2]) { label = m[1]; href = m[2]; }
+        else {
+          href = m[3];
+          const t = href.match(/[.,;:!?]+$/);                     // vakya ka full-stop link me na jaye
+          if (t) { trail = t[0]; href = href.slice(0, -trail.length); }
+          label = null;
+        }
+        if (m.index > last) frag.appendChild(doc.createTextNode(text.slice(last, m.index)));
+        if (isSafeHref(href)) {
+          const a = doc.createElement('a');
+          styleAsChatLink(a, href);
+          if (label === null) { a.textContent = friendlyLinkLabel(href); a.setAttribute('data-mute', '1'); }
+          else a.textContent = label;
+          frag.appendChild(a);
+        } else {
+          frag.appendChild(doc.createTextNode(m[0]));
+        }
+        if (trail) frag.appendChild(doc.createTextNode(trail));
+        last = m.index + m[0].length;
+      }
+      if (last < text.length) frag.appendChild(doc.createTextNode(text.slice(last)));
+      node.parentNode.replaceChild(frag, node);
+    });
+    return root;
+  }
+
+  function beautifyLinksHtml(html) {
+    const src = String(html || '');
+    if (!/<a[\s>]|https?:|www\.|\]\(|\.(?:html?|pdf|jpe?g|png|gif|webp|svg)\b/i.test(src)) return src;
+    // DOMParser: inert document, isme images/scripts load ya chalte nahi
+    const doc = new DOMParser().parseFromString('<div id="r">' + src + '</div>', 'text/html');
+    const root = doc.getElementById('r');
+    if (!root) return src;
+    beautifyLinks(root);
+    return root.innerHTML;
   }
      
 // =========================================================
@@ -730,7 +865,9 @@ function addBotMsg(content, isHTML = false, silent = false) {
       const full = tn.nodeValue;
       if (!full || !full.trim()) continue;
       nodes.push({ kind: 'text', node: tn, full: full, start: vis.length, shown: -1 });
-      vis += full + ' ';
+      // Auto-bane link ka naam screen par dikhe, par voice use na bole (same length ka marker)
+      const muted = tn.parentElement && tn.parentElement.closest('a[data-mute]');
+      vis += (muted ? '\uE000'.repeat(full.length) : full) + ' ';
     }
   }
   replayText = vis;
@@ -1104,8 +1241,8 @@ function addBotMsg(content, isHTML = false, silent = false) {
             ${SVG.mail} Support Mail
           </div>
           <div style="font-size: 12px; color: #e0e7ff; margin: 6px 0;">Kisi bhi query ya help ke liye humein mail karein:</div>
-          <a href="mailto:legal@roitx.dpdns.org" style="color: #fff; background: #9333ea; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: bold; display: inline-flex; align-items: center; gap: 6px;">
-            ${SVG.mail} legal@roitx.dpdns.org
+          <a href="mailto:legal@roitx.qd.je" style="color: #fff; background: #9333ea; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: bold; display: inline-flex; align-items: center; gap: 6px;">
+            ${SVG.mail} legal@roitx.qd.je
           </a>
         </div>
       `);
@@ -1177,7 +1314,7 @@ if (cmd.startsWith('open link') || cmd.startsWith('open ')) {
   if (/^https?:\/\//i.test(input)) {
     finalUrl = input;
     // Agar link khud ki website ka hai toh internal treat karein
-    if (finalUrl.includes('roitx.dpdns.org')) {
+    if (finalUrl.includes('roitx.qd.je')) {
       isInternal = true;
     }
   } 
@@ -1187,7 +1324,7 @@ if (cmd.startsWith('open link') || cmd.startsWith('open ')) {
     if (!cleanName.endsWith('.html') && !cleanName.startsWith('http')) {
       cleanName += '.html';
     }
-    finalUrl = `https://roitx.dpdns.org/${cleanName}`;
+    finalUrl = `https://roitx.qd.je/${cleanName}`;
     isInternal = true;
   }
   // CASE 3: Agar normal domain jaisa hai - google.com, youtube.com
@@ -1197,7 +1334,7 @@ if (cmd.startsWith('open link') || cmd.startsWith('open ')) {
   // CASE 4: Baaki bache huye internal short names ke liye
   else {
     let cleanName = input.split(' ')[0].toLowerCase().replace(/[^a-z0-9-_.]/g, '');
-    finalUrl = `https://roitx.dpdns.org/${cleanName}.html`;
+    finalUrl = `https://roitx.qd.je/${cleanName}.html`;
     isInternal = true;
   }
 
@@ -1598,7 +1735,7 @@ if (cmd.startsWith('open link') || cmd.startsWith('open ')) {
 
   // ---- SYSTEM KNOWLEDGE & SAFETY RULES FOR GROQ AI ----
   const systemKnowledge = `
-You are 'Roitx AI', an advanced, highly intelligent study assistant built for Rohit's educational platform (roitx.dpdns.org).
+You are 'Roitx AI', an advanced, highly intelligent study assistant built for Rohit's educational platform (roitx.github.io).
 
 ### 🎯 CORE IDENTITY & TONE
 - REPETITION BAN: Never repeat words, phrases, or syllables endlessly (e.g., do not loop words like "kiya kiya kiya"). Keep responses concise, clean, and meaningful.
@@ -1658,6 +1795,7 @@ When a user asks for classes, study materials, subjects, tools, or website navig
 ### 🔊 VOICE-FRIENDLY OUTPUT RULES (jawab bolkar sunaya jata hai)
 - Math hamesha \\( ... \\) (inline) ya \\[ ... \\] (alag line) me likho. Plain text me x^2 ya raw HTML/markdown tables kabhi mat likho.
 - Sirf upar diye <a> links ke alawa koi HTML tag mat likho. Code blocks aur lambi tables avoid karo.
+- Kisi bhi page ya file ka link sirf <a href="...">chhota naam</a> format me do. Raw URL (https://...) ya file name (jaise subjects-9.html, notes.pdf, photo.jpg) kabhi seedha text me mat likho.
 - Simple greeting ("Hi", "Hello") ya aasan sawal par sirf 1-2 chhote vakya me jawab do.
 
 --- SECURITY GUARDRAILS ---
@@ -1666,10 +1804,39 @@ When a user asks for classes, study materials, subjects, tools, or website navig
 
 --- STRICT SAFETY, CREATOR & FALLBACK RULES ---
 1. CREATOR PRIVACY: Do NOT mention "Rohit" or "Created by Rohit" in normal academic answers. Include developer details ONLY if the user explicitly asks "who created this", "who built this", "developer info", or "Rohit kaun hai". When asked, direct them to <a href="about.html">About Developer</a>.
+- Do not use the name 'Rohit' until the user asks about the creator.
 2. UNCERTAINTY / FALLBACK: If you are unsure about a complex question or lack exact study material, answer to the best of your ability and suggest posting the query on <a href="solver.html">Doubt Solver</a>.
 3. OUT OF SCOPE: If a user asks a query completely unrelated to studies/learning or website navigation, politely redirect them back to study topics.
 4. FORMATTING: Use bold formatting (**like this**) for key terms, definitions, and mathematical formulas.
 `;
+
+  // ---- AI MEMORY: is chat ke pichhle sawal-jawab AI ko wapas bhejte hain ----
+  // Backend (smart-task) sirf ek `prompt` leta hai, isliye history usi prompt me
+  // chhote transcript ki tarah judti hai. Chat window ke saath hi reset hoti hai.
+  const ASK_MEMORY_MAX_TURNS = 6;      // kitne purane sawal-jawab yaad rakhne hain
+  const ASK_MEMORY_MAX_Q = 300;        // har sawal ke max characters
+  const ASK_MEMORY_MAX_A = 1200;       // jawab ke max characters (token bachane ke liye)
+  const ASK_MEMORY_OLD_A = 500;        // sabse naye ke alawa baaki jawab itne chhote karke bhejte hain
+  let askMemory = [];
+
+  function rememberAskTurn(q, a) {
+    const cut = (t, n) => { t = String(t || '').replace(/\s+/g, ' ').trim(); return t.length > n ? t.slice(0, n).trim() + ' …' : t; };
+    const qq = cut(q, ASK_MEMORY_MAX_Q), aa = cut(a, ASK_MEMORY_MAX_A);
+    if (!qq || !aa) return;
+    askMemory.push({ q: qq, a: aa });
+    if (askMemory.length > ASK_MEMORY_MAX_TURNS) askMemory.splice(0, askMemory.length - ASK_MEMORY_MAX_TURNS);
+  }
+
+  function buildAskMemory() {
+    if (!askMemory.length) return '';
+    const last = askMemory.length - 1;
+    return askMemory.map((t, i) => {
+      const a = (i === last || t.a.length <= ASK_MEMORY_OLD_A) ? t.a : t.a.slice(0, ASK_MEMORY_OLD_A).trim() + ' …';
+      return `Student: ${t.q}\nAI: ${a}`;
+    }).join('\n\n');
+  }
+
+  window.clearAskChatMemory = function () { askMemory = []; };
 
   // ---- GROQ AI API CALL ----
   async function askGroqAI(userQuery) {
@@ -1677,10 +1844,15 @@ When a user asks for classes, study materials, subjects, tools, or website navig
     const SUPABASE_FUNCTION_URL = "https://ktastwehnnqicriknewr.supabase.co/functions/v1/smart-task";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0YXN0d2Vobm5xaWNyaWtuZXdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyNTk5NTEsImV4cCI6MjA4MDgzNTk1MX0.5_UvwaG0X8k_Emj-cMC0KjEqlvU6hgAt5IsHJdgARvk"; 
 
+    const memory = buildAskMemory();
+    const memoryBlock = memory
+      ? `\n\nCONVERSATION SO FAR (oldest first). Use it to understand follow-up questions like "aur samjhao", "iska example do", "isko hindi me batao". Such follow-ups apply to the MOST RECENT AI answer below; if the student asks for a specific language, use that language. If the new question is unrelated, ignore this. Never repeat old answers unnecessarily.\n${memory}`
+      : '';
+
     const fullPrompt = `SYSTEM INSTRUCTIONS & KNOWLEDGE:
 ${systemKnowledge}
 
-PREFERRED LANGUAGE: ${selectedLanguage === 'en' ? 'English' : 'Hindi / Hinglish'}
+PREFERRED LANGUAGE: ${selectedLanguage === 'en' ? 'English' : 'Hindi / Hinglish'}${memoryBlock}
 
 USER QUESTION:
 ${userQuery}`;
@@ -1719,6 +1891,7 @@ ${userQuery}`;
         } else {
           const cleanFormatted = cleanAndFormatText(answerText);
           addBotMsg(cleanFormatted);
+          rememberAskTurn(userQuery, answerText);   // agle follow-up ke liye yaad rakho
         }
       } else {
         addBotMsg("Main isme madad karne me ashakam hu! Please try again.");
