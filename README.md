@@ -5,7 +5,7 @@ Welcome to the official repository of **PM Roitx Study Hub**! This platform prov
 ---
 
 ### 🌐 Official Website
-👉 **Visit Website:** [https://roitx.qd.je/](https://roitx.qd.je/)
+👉 **Visit Website:** [https://roitx.dpdns.org/](https://roitx.dpdns.org/)
 
 ---
 

@@ -1674,13 +1674,13 @@ function openStreakInfo() {
 
 function shareStreakAchievement() {
   const streakNum = document.getElementById('pmStreakNum')?.innerText || '1';
-  const shareText = `🔥 Mera PM Roitx Study Hub par ${streakNum} din ka continuous streak ho gaya hai! Aap bhi apni padhaai shuru karein: https://roitx.qd.je/`;
+  const shareText = `🔥 Mera PM Roitx Study Hub par ${streakNum} din ka continuous streak ho gaya hai! Aap bhi apni padhaai shuru karein: https://roitx.dpdns.org/`;
   
   if (navigator.share) {
     navigator.share({
       title: 'PM Roitx Streak Achievement',
       text: shareText,
-      url: 'https://roitx.qd.je/'
+      url: 'https://roitx.dpdns.org/'
     }).catch(err => console.log('Share canceled', err));
   } else {
     navigator.clipboard.writeText(shareText);

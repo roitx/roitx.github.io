@@ -8,14 +8,14 @@
 <meta name="description" content="Class 9th, 10th, 11th aur 12th (Science, Arts, Commerce) ke Bihar Board & CBSE chapterwise notes aur study materials free me access karein.">
 <meta name="keywords" content="Class 12 Science notes, Class 10 Bihar Board notes, NCERT Solutions, PM Roitx classes">
 <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
-<link rel="canonical" href="https://roitx.qd.je/classes.html">
+<link rel="canonical" href="https://roitx.dpdns.org/classes.html">
 
 <!-- Open Graph -->
 <meta property="og:type" content="website">
 <meta property="og:title" content="Classes & Subject Notes - PM Roitx">
 <meta property="og:description" content="Explore chapter-wise notes for Class 9, 10, 11, and 12.">
-<meta property="og:url" content="https://roitx.qd.je/classes.html">
-<meta property="og:image" content="https://roitx.qd.je/banner.png">
+<meta property="og:url" content="https://roitx.dpdns.org/classes.html">
+<meta property="og:image" content="https://roitx.dpdns.org/banner.png">
 
 <!-- JSON-LD Breadcrumb Schema -->
 <script type="application/ld+json">
@@ -23,8 +23,8 @@
   "@context": "https://schema.org",
   "@type": "BreadcrumbList",
   "itemListElement": [
-    { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://roitx.qd.je/" },
-    { "@type": "ListItem", "position": 2, "name": "Classes", "item": "https://roitx.qd.je/classes.html" }
+    { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://roitx.dpdns.org/" },
+    { "@type": "ListItem", "position": 2, "name": "Classes", "item": "https://roitx.dpdns.org/classes.html" }
   ]
 }
 </script>
@@ -65,34 +65,6 @@
     stroke-linejoin: round;
     filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.6));
   }
-
-  /* ---- Responsive class cards & top bar (mobile + desktop) ---- */
-  .container { padding-bottom: calc(90px + env(safe-area-inset-bottom)); }
-
-  .topbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
-  .topbar .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
-  .topbar .brand img { flex-shrink: 0; }
-  .topbar .brand h1 { font-size: clamp(18px, 5vw, 24px); line-height: 1.2; margin: 0; }
-  .topbar .btn { min-height: 44px; padding-left: 18px; padding-right: 18px; touch-action: manipulation; }
-
-  a.card {
-    display: block;
-    box-sizing: border-box;
-    min-height: 88px;
-    color: inherit;
-    text-decoration: none;
-    cursor: pointer;
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
-    user-select: none;
-    -webkit-user-select: none;
-    transition: transform .2s ease, box-shadow .2s ease;
-  }
-  a.card:active { transform: scale(0.97); }
-  a.card:focus-visible { outline: 3px solid #3d5afe; outline-offset: 3px; }
-  @media (hover: hover) { a.card:hover { transform: translateY(-4px); } }
-  @media (min-width: 720px) { a.card { min-height: 120px; } }
-  @media (prefers-reduced-motion: reduce) { a.card { transition: none; } a.card:hover, a.card:active { transform: none; } }
 </style>
 </head>
 <body>
@@ -105,21 +77,21 @@
 
   <h2>Choose Class</h2>
   <div class="grid">
-    <a class="card" href="subjects-9.html">
+    <div class="card" onclick="goto('subjects-9.html')">
       <h3>Class 9</h3><p>Important subjects for Class 9</p>
-    </a>
+    </div>
 
-    <a class="card" href="subjects-10.html">
+    <div class="card" onclick="goto('subjects-10.html')">
       <h3>Class 10</h3><p>Important subjects for Class 10</p>
-    </a>
+    </div>
 
-    <a class="card" href="subjects-11.html">
+    <div class="card" onclick="goto('subjects-11.html')">
       <h3>Class 11</h3><p>Science & other important subjects</p>
-    </a>
+    </div>
 
-    <a class="card" href="subjects-12.html">
+    <div class="card" onclick="goto('subjects-12.html')">
       <h3>Class 12</h3><p>Board exam focused materials</p>
-    </a>
+    </div>
   </div>
 </div>
 

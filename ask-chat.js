@@ -1104,8 +1104,8 @@ function addBotMsg(content, isHTML = false, silent = false) {
             ${SVG.mail} Support Mail
           </div>
           <div style="font-size: 12px; color: #e0e7ff; margin: 6px 0;">Kisi bhi query ya help ke liye humein mail karein:</div>
-          <a href="mailto:legal@roitx.qd.je" style="color: #fff; background: #9333ea; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: bold; display: inline-flex; align-items: center; gap: 6px;">
-            ${SVG.mail} legal@roitx.qd.je
+          <a href="mailto:legal@roitx.dpdns.org" style="color: #fff; background: #9333ea; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: bold; display: inline-flex; align-items: center; gap: 6px;">
+            ${SVG.mail} legal@roitx.dpdns.org
           </a>
         </div>
       `);
@@ -1177,7 +1177,7 @@ if (cmd.startsWith('open link') || cmd.startsWith('open ')) {
   if (/^https?:\/\//i.test(input)) {
     finalUrl = input;
     // Agar link khud ki website ka hai toh internal treat karein
-    if (finalUrl.includes('roitx.qd.je')) {
+    if (finalUrl.includes('roitx.dpdns.org')) {
       isInternal = true;
     }
   } 
@@ -1187,7 +1187,7 @@ if (cmd.startsWith('open link') || cmd.startsWith('open ')) {
     if (!cleanName.endsWith('.html') && !cleanName.startsWith('http')) {
       cleanName += '.html';
     }
-    finalUrl = `https://roitx.qd.je/${cleanName}`;
+    finalUrl = `https://roitx.dpdns.org/${cleanName}`;
     isInternal = true;
   }
   // CASE 3: Agar normal domain jaisa hai - google.com, youtube.com
@@ -1197,7 +1197,7 @@ if (cmd.startsWith('open link') || cmd.startsWith('open ')) {
   // CASE 4: Baaki bache huye internal short names ke liye
   else {
     let cleanName = input.split(' ')[0].toLowerCase().replace(/[^a-z0-9-_.]/g, '');
-    finalUrl = `https://roitx.qd.je/${cleanName}.html`;
+    finalUrl = `https://roitx.dpdns.org/${cleanName}.html`;
     isInternal = true;
   }
 
@@ -1598,7 +1598,7 @@ if (cmd.startsWith('open link') || cmd.startsWith('open ')) {
 
   // ---- SYSTEM KNOWLEDGE & SAFETY RULES FOR GROQ AI ----
   const systemKnowledge = `
-You are 'Roitx AI', an advanced, highly intelligent study assistant built for Rohit's educational platform (roitx.github.io).
+You are 'Roitx AI', an advanced, highly intelligent study assistant built for Rohit's educational platform (roitx.dpdns.org).
 
 ### 🎯 CORE IDENTITY & TONE
 - REPETITION BAN: Never repeat words, phrases, or syllables endlessly (e.g., do not loop words like "kiya kiya kiya"). Keep responses concise, clean, and meaningful.
@@ -1671,44 +1671,16 @@ When a user asks for classes, study materials, subjects, tools, or website navig
 4. FORMATTING: Use bold formatting (**like this**) for key terms, definitions, and mathematical formulas.
 `;
 
-  // ---- AI MEMORY: is chat ke pichhle sawal-jawab AI ko wapas bhejte hain ----
-  // Backend (smart-task) sirf ek `prompt` leta hai, isliye history usi prompt me
-  // chhote transcript ki tarah judti hai. Chat window ke saath hi reset hoti hai.
-  const ASK_MEMORY_MAX_TURNS = 6;      // kitne purane sawal-jawab yaad rakhne hain
-  const ASK_MEMORY_MAX_Q = 300;        // har sawal ke max characters
-  const ASK_MEMORY_MAX_A = 600;        // har jawab ke max characters (token bachane ke liye)
-  let askMemory = [];
-
-  function rememberAskTurn(q, a) {
-    const cut = (t, n) => { t = String(t || '').replace(/\s+/g, ' ').trim(); return t.length > n ? t.slice(0, n).trim() + ' …' : t; };
-    const qq = cut(q, ASK_MEMORY_MAX_Q), aa = cut(a, ASK_MEMORY_MAX_A);
-    if (!qq || !aa) return;
-    askMemory.push({ q: qq, a: aa });
-    if (askMemory.length > ASK_MEMORY_MAX_TURNS) askMemory.splice(0, askMemory.length - ASK_MEMORY_MAX_TURNS);
-  }
-
-  function buildAskMemory() {
-    if (!askMemory.length) return '';
-    return askMemory.map(t => `Student: ${t.q}\nAI: ${t.a}`).join('\n\n');
-  }
-
-  window.clearAskChatMemory = function () { askMemory = []; };
-
   // ---- GROQ AI API CALL ----
   async function askGroqAI(userQuery) {
     const typing = showTyping();
     const SUPABASE_FUNCTION_URL = "https://ktastwehnnqicriknewr.supabase.co/functions/v1/smart-task";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0YXN0d2Vobm5xaWNyaWtuZXdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyNTk5NTEsImV4cCI6MjA4MDgzNTk1MX0.5_UvwaG0X8k_Emj-cMC0KjEqlvU6hgAt5IsHJdgARvk"; 
 
-    const memory = buildAskMemory();
-    const memoryBlock = memory
-      ? `\n\nCONVERSATION SO FAR (oldest first). Use it to understand follow-up questions like "aur samjhao", "iska example do", "step 2 kyun?". If the new question is unrelated, ignore it. Never repeat old answers.\n${memory}`
-      : '';
-
     const fullPrompt = `SYSTEM INSTRUCTIONS & KNOWLEDGE:
 ${systemKnowledge}
 
-PREFERRED LANGUAGE: ${selectedLanguage === 'en' ? 'English' : 'Hindi / Hinglish'}${memoryBlock}
+PREFERRED LANGUAGE: ${selectedLanguage === 'en' ? 'English' : 'Hindi / Hinglish'}
 
 USER QUESTION:
 ${userQuery}`;
@@ -1747,7 +1719,6 @@ ${userQuery}`;
         } else {
           const cleanFormatted = cleanAndFormatText(answerText);
           addBotMsg(cleanFormatted);
-          rememberAskTurn(userQuery, answerText);   // agle follow-up ke liye yaad rakho
         }
       } else {
         addBotMsg("Main isme madad karne me ashakam hu! Please try again.");

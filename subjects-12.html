@@ -9,14 +9,14 @@
     <meta name="description" content="Select Class 12 Science, Arts, or Commerce streams. Access free topper notes, PYQs, and formula sheets for BSEB Board Exam.">
     <meta name="keywords" content="Class 12 Science Bihar Board, Class 12 Physics notes, Class 12 Chemistry solid state, Class 12 Arts subjects, PM Roitx 12th">
     <meta name="robots" content="index, follow">
-    <link rel="canonical" href="https://roitx.qd.je/subjects-12.html">
+    <link rel="canonical" href="https://roitx.dpdns.org/subjects-12.html">
 
     <!-- Open Graph -->
     <meta property="og:type" content="website">
     <meta property="og:title" content="Class 12 Streams - PM Roitx">
     <meta property="og:description" content="Target Class 12 Board exams with stream-wise study materials.">
-    <meta property="og:url" content="https://roitx.qd.je/subjects-12.html">
-    <meta property="og:image" content="https://roitx.qd.je/banner.png">
+    <meta property="og:url" content="https://roitx.dpdns.org/subjects-12.html">
+    <meta property="og:image" content="https://roitx.dpdns.org/banner.png">
 
     <!-- JSON-LD Breadcrumb Schema -->
     <script type="application/ld+json">
@@ -24,9 +24,9 @@
       "@context": "https://schema.org",
       "@type": "BreadcrumbList",
       "itemListElement": [
-        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://roitx.qd.je/" },
-        { "@type": "ListItem", "position": 2, "name": "Classes", "item": "https://roitx.qd.je/classes.html" },
-        { "@type": "ListItem", "position": 3, "name": "Class 12", "item": "https://roitx.qd.je/subjects-12.html" }
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://roitx.dpdns.org/" },
+        { "@type": "ListItem", "position": 2, "name": "Classes", "item": "https://roitx.dpdns.org/classes.html" },
+        { "@type": "ListItem", "position": 3, "name": "Class 12", "item": "https://roitx.dpdns.org/subjects-12.html" }
       ]
     }
     </script>
@@ -34,98 +34,46 @@
 
     <style>
         body {
-            font-family: Arial, Helvetica, sans-serif;
+            font-family: Arial, sans-serif;
             margin: 0;
-            padding: 20px 16px calc(100px + env(safe-area-inset-bottom));
+            padding: 20px;
             background: #f2f2f2;
-            -webkit-tap-highlight-color: transparent;
         }
 
         h1 {
             text-align: center;
-            font-size: clamp(22px, 5.5vw, 34px);
-            line-height: 1.25;
-            margin: 8px 0 24px;
-        }
-
-        /* Stream buttons: 1 column on phones, 3 cards on tablet/desktop */
-        .streams {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 14px;
-            max-width: 980px;
-            margin: 0 auto;
+            margin-bottom: 25px;
         }
 
         .stream-btn {
-            box-sizing: border-box;
             background: white;
-            color: #1a1a1a;
-            text-decoration: none;
-            padding: 18px 20px;
-            min-height: 68px;
-            border-radius: 14px;
-            font-size: clamp(19px, 4.8vw, 22px);
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 10px;
+            font-size: 22px;
             font-weight: bold;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 14px;
+            gap: 12px;
             cursor: pointer;
-            box-shadow: 0 3px 8px rgba(0,0,0,0.14);
-            transition: transform .2s ease, background .2s ease, box-shadow .2s ease;
-            touch-action: manipulation;
-            user-select: none;
-            -webkit-user-select: none;
+            box-shadow: 0px 3px 6px rgba(0,0,0,0.15);
+            transition: 0.3s;
         }
 
-        .stream-btn:active {
-            transform: scale(0.97);
-            background: #dff7df;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.18);
-        }
-
-        .stream-btn:focus-visible {
-            outline: 3px solid #3d5afe;
-            outline-offset: 3px;
-        }
-
-        /* Hover lift only on devices that really hover (no sticky hover on touch) */
-        @media (hover: hover) {
-            .stream-btn:hover {
-                transform: translateY(-4px);
-                background: #eaffea;
-                box-shadow: 0 8px 18px rgba(0,0,0,0.18);
-            }
+        .stream-btn:hover {
+            transform: translateY(-3px);
+            background: #eaffea;
         }
 
         .stream-svg-icon {
-            flex-shrink: 0;
-            width: 30px;
-            height: 30px;
+            width: 28px;
+            height: 28px;
             fill: none;
             stroke: #333;
             stroke-width: 2;
             stroke-linecap: round;
             stroke-linejoin: round;
-        }
-
-        @media (min-width: 720px) {
-            body { padding-top: 40px; }
-            .streams { grid-template-columns: repeat(3, 1fr); gap: 22px; }
-            .stream-btn {
-                flex-direction: column;
-                min-height: 190px;
-                gap: 16px;
-                font-size: 24px;
-                border-radius: 18px;
-            }
-            .stream-svg-icon { width: 52px; height: 52px; }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-            .stream-btn { transition: none; }
-            .stream-btn:hover, .stream-btn:active { transform: none; }
         }
 
         /* Movable Floating Action Container */
@@ -230,9 +178,7 @@
 
 <h1>Class 12 — Select Your Stream</h1>
 
-<main class="streams">
-
-<a class="stream-btn" href="12-science-subjects.html">
+<div class="stream-btn" onclick="goto('12-science-subjects.html')">
     <!-- Science SVG (Flask) -->
     <svg class="stream-svg-icon" viewBox="0 0 24 24">
         <path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55A2 2 0 0 0 6.508 23h10.984a2 2 0 0 0 1.788-2.45l-5.069-10.127A2 2 0 0 1 14 9.527V2"></path>
@@ -240,9 +186,9 @@
         <line x1="7" y1="16" x2="17" y2="16"></line>
     </svg>
     <span>Science</span>
-</a>
+</div>
 
-<a class="stream-btn" href="12-arts-subjects.html">
+<div class="stream-btn" onclick="goto('12-arts-subjects.html')">
     <!-- Arts SVG (Palette) -->
     <svg class="stream-svg-icon" viewBox="0 0 24 24">
         <path d="M12 2a10 10 0 1 0 10 10c0-2.5-2.5-3-2.5-3s-1.5 1-2.5 1-1.5-1-1.5-2 2-2 1-3.5S14.5 2 12 2z"></path>
@@ -252,18 +198,16 @@
         <circle cx="16.5" cy="9.5" r="1.5"></circle>
     </svg>
     <span>Arts</span>
-</a>
+</div>
 
-<a class="stream-btn" href="12-commerce-subjects.html">
+<div class="stream-btn" onclick="goto('12-commerce-subjects.html')">
     <!-- Commerce SVG (Briefcase) -->
     <svg class="stream-svg-icon" viewBox="0 0 24 24">
         <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
         <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
     </svg>
     <span>Commerce</span>
-</a>
-
-</main>
+</div>
 
 <script>
     function goto(page) {

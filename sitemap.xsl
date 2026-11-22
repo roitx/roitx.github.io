@@ -201,7 +201,7 @@
                     <td>
                       <a class="page-title" href="{sitemap:loc}" target="_blank">
                         <xsl:choose>
-                          <xsl:when test="sitemap:loc = 'https://roitx.qd.je/'">Home / Main Portal</xsl:when>
+                          <xsl:when test="sitemap:loc = 'https://roitx.dpdns.org/'">Home / Main Portal</xsl:when>
                           <xsl:when test="contains(sitemap:loc, 'classes.html')">Classes &amp; Courses</xsl:when>
                           <xsl:when test="contains(sitemap:loc, 'premium-notes.html')">Premium Notes</xsl:when>
                           <xsl:when test="contains(sitemap:loc, 'formulas.html')">Important Formulas</xsl:when>

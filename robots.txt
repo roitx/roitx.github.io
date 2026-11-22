@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 
 # Sitemap Location
-Sitemap: https://roitx.qd.je/sitemap.xml
+Sitemap: https://roitx.dpdns.org/sitemap.xml

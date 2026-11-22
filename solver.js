@@ -2073,34 +2073,6 @@ function parseRoute(raw) {
   return null;
 }
 
-/* ---- AI ki yaaddaasht: pichhle sawal-jawab prompt me jodte hain ----
-   chatHistory (localStorage) me har AI jawab ke saath uska sawal (meta.q) saved hota hai.
-   Wahi se pichhle jode nikal ke AI ko bhejte hain, isliye refresh ke baad bhi yaad rehta hai.
-   "Nayi chat" dabane par chatHistory khali hoti hai, to yaaddaasht bhi saaf. */
-function buildChatMemory(maxPairs = 4) {
-  const MAX_Q = 300, MAX_A = 600, MAX_TOTAL = 3200;
-  const pairs = [];
-  for (let i = chatHistory.length - 1; i >= 0 && pairs.length < maxPairs; i--) {
-    const r = chatHistory[i];
-    if (!r || r.type !== 'ai' || !r.meta || !r.meta.q) continue;   // menu/card/error messages chhod do
-    let a = htmlToPlainText(r.html).replace(/^\s*(?:💡\s*)?Solution\s*\/\s*Answer\s*:?\s*/i, '').replace(/\s+/g, ' ').trim();
-    if (!a) continue;
-    if (a.length > MAX_A) a = a.slice(0, MAX_A).trim() + ' …';
-    const q = String(r.meta.q).replace(/\s+/g, ' ').trim().slice(0, MAX_Q);
-    pairs.unshift({ q, a });
-  }
-  // Limit se zyada ho to sabse purane jode hat jaate hain
-  const blocks = [];
-  let total = 0;
-  for (let i = pairs.length - 1; i >= 0; i--) {
-    const b = `Student: ${pairs[i].q}\nTutor: ${pairs[i].a}`;
-    if (total + b.length > MAX_TOTAL) break;
-    total += b.length;
-    blocks.unshift(b);
-  }
-  return blocks.join('\n\n');
-}
-
 /* ---- Main flow: chhota AI aage (direct jawab ya plan), bada AI peeche ---- */
 window.solveWithAI = async function (questionText, imageBase64 = null) {
   lastRequest = { q: questionText, img: imageBase64 };
@@ -2115,12 +2087,8 @@ window.solveWithAI = async function (questionText, imageBase64 = null) {
     hi: 'Solve in clear Hindi Devanagari script. Put English terms in brackets next to Hindi terms.',
     hinglish: 'Solve in clean Hinglish (Roman Hindi + English).'
   }[currentLanguage] || 'Solve in clean Hinglish.';
-  const memory = buildChatMemory();
-  const memBlock = memory
-    ? `Earlier conversation with this student (oldest first). Use it ONLY if the new message is a follow-up (like "explain more", "why step 2?", "give an example"); otherwise ignore it. Never repeat old answers in full.\n${memory}\n\n---\n`
-    : '';
-  const MAIN = `You are an expert tutor for Class 9-12. Subject: ${selectedSubject}. ${styleLine} Use LaTeX for math ($...$ inline, $$...$$ display). Direct answer only, no meta chatter.\n\n${memBlock}Query: ${q}`;
-  const ROUTER = `You are a fast front-desk assistant of a Class 9-12 tutor (subject: ${selectedSubject}). Write in ${langName}. Decide:\n- If the message is a greeting, small talk, or a short/simple question answerable in 1-3 lines, reply ONLY with JSON: {"mode":"direct","answer":"<final answer in markdown, LaTeX $...$ for math>"}\n- Otherwise (multi-step solving, derivation, calculation, long explanation, or an image), reply ONLY with JSON: {"mode":"deep","steps":["<title 1>","<title 2>","<title 3>"]} with exactly 3 to 5 SEPARATE strings, each a short title of at most 8 words specific to this question (example: "Define projectile motion", "Write the key formulas"). Titles only: no explanations, no formulas, no numbering, and never solve the question inside the steps.\nNo text outside the JSON.\n\n${memBlock}Message: ${q}`;
+  const MAIN = `You are an expert tutor for Class 9-12. Subject: ${selectedSubject}. ${styleLine} Use LaTeX for math ($...$ inline, $$...$$ display). Direct answer only, no meta chatter.\n\nQuery: ${q}`;
+  const ROUTER = `You are a fast front-desk assistant of a Class 9-12 tutor (subject: ${selectedSubject}). Write in ${langName}. Decide:\n- If the message is a greeting, small talk, or a short/simple question answerable in 1-3 lines, reply ONLY with JSON: {"mode":"direct","answer":"<final answer in markdown, LaTeX $...$ for math>"}\n- Otherwise (multi-step solving, derivation, calculation, long explanation, or an image), reply ONLY with JSON: {"mode":"deep","steps":["<title 1>","<title 2>","<title 3>"]} with exactly 3 to 5 SEPARATE strings, each a short title of at most 8 words specific to this question (example: "Define projectile motion", "Write the key formulas"). Titles only: no explanations, no formulas, no numbering, and never solve the question inside the steps.\nNo text outside the JSON.\n\nMessage: ${q}`;
 
   const show = (raw) => {
     const clean = cleanAIResponse(raw);

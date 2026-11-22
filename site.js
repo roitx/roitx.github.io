@@ -6,7 +6,7 @@ function goto(page) {
 
 // UPDATE: Professional Legal & Support Email Handler
 function mailSupport(subject = "Support Query - Roitx Pro", body = "Hello Roitx Team,\n\nI need help regarding:") { 
-  const targetEmail = "legal@roitx.qd.je";
+  const targetEmail = "legal@roitx.dpdns.org";
   const mailtoUrl = `mailto:${targetEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   window.location.href = mailtoUrl; 
 }
