@@ -513,6 +513,52 @@ if (todayBtn) todayBtn.onclick = () => {
 // Auto Auth Sync
 document.addEventListener("DOMContentLoaded", async () => {
   await checkAuthUI();
+
+  /* ---------------------------------------------------------
+     MINI PREVIEW -> FULL SCREEN: month, selected date aur
+     adhoora bhara event form wahi se continue
+     --------------------------------------------------------- */
+  if (window.Mini) {
+    Mini.onSnapshot(() => {
+      const fields = document.getElementById("eventFormFields");
+      const dInp = document.getElementById("eventDate");
+      const nInp = document.getElementById("eventName");
+      const gInp = document.getElementById("gotoDate");
+      return {
+        y: cur.getFullYear(),
+        m: cur.getMonth(),
+        goto: selectedGotoDateKey,
+        gotoVal: gInp ? gInp.value : "",
+        formOpen: !!fields && fields.style.display !== "none",
+        evDate: dInp ? dInp.value : "",
+        evName: nInp ? nInp.value : ""
+      };
+    });
+
+    const saved = Mini.take();
+    if (saved) {
+      if (Number.isInteger(saved.y) && Number.isInteger(saved.m)) cur = new Date(saved.y, saved.m, 1);
+      selectedGotoDateKey = saved.goto || null;
+
+      const gInp = document.getElementById("gotoDate");
+      if (gInp && saved.gotoVal) gInp.value = saved.gotoVal;
+
+      // Form sirf logged-in user ko dikhta hai (checkAuthUI ne bana diya hoga)
+      const fields = document.getElementById("eventFormFields");
+      const toggleBtn = document.getElementById("toggleFormBtn");
+      if (fields) {
+        const dInp = document.getElementById("eventDate");
+        const nInp = document.getElementById("eventName");
+        if (dInp && saved.evDate) dInp.value = saved.evDate;
+        if (nInp && saved.evName) nInp.value = saved.evName;
+        if (saved.formOpen || saved.evName) {
+          fields.style.display = "block";
+          if (toggleBtn) toggleBtn.style.display = "none";
+        }
+      }
+    }
+  }
+
   render();
 
   if (window.supabaseClient) {

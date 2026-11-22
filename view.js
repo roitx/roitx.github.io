@@ -168,6 +168,42 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
+
+  /* ---------------------------------------------------------
+     MINI PREVIEW -> FULL SCREEN: selection wahi se continue
+     --------------------------------------------------------- */
+  if (window.Mini) {
+    Mini.onSnapshot(() => {
+      const modal = document.getElementById("previewModal");
+      return {
+        cls: classSelect ? classSelect.value : "",
+        sub: subjectSelect ? subjectSelect.value : "",
+        ch: chapterSelect ? chapterSelect.value : "",
+        preview: !!(modal && modal.classList.contains("active"))
+      };
+    });
+
+    const saved = Mini.take();
+    if (saved && saved.cls && classSelect) {
+      (async () => {
+        // Class -> Subject -> Chapter: har step ka dropdown async load hota hai
+        classSelect.value = saved.cls;
+        classSelect.dispatchEvent(new Event("change"));
+
+        if (saved.sub && await Mini.waitFor(() => !subjectSelect.disabled && subjectSelect.options.length > 1)) {
+          subjectSelect.value = saved.sub;
+          subjectSelect.dispatchEvent(new Event("change"));
+
+          if (saved.ch && await Mini.waitFor(() => !chapterSelect.disabled && chapterSelect.options.length > 1)) {
+            chapterSelect.value = saved.ch;
+            chapterSelect.dispatchEvent(new Event("change"));
+
+            if (saved.preview && chapterSelect.value === saved.ch) openPreviewModal();
+          }
+        }
+      })();
+    }
+  }
 });
 
 async function getNoteDetails() {

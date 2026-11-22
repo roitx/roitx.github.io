@@ -55,6 +55,40 @@ function goto(page) {
   window.location.href = page;
 }
 
+// Mini preview (iframe) se full screen kholna: user jis page/state par hai wahi se aage badhe.
+// - iframe ka current URL use hota hai (jaise classes.html -> subjects-10.html)
+// - iframe se uski state ka snapshot leke sessionStorage me rakhta hai
+function openFull(btn, fallback) {
+  const card = btn && btn.closest ? btn.closest('.slide-inner-card') : null;
+  const frame = card ? card.querySelector('.widget-mini-screen iframe') : null;
+  let target = fallback;
+
+  if (frame) {
+    try {
+      const w = frame.contentWindow;
+      const loc = w.location;
+      // sirf apni site ka page; about:blank ya error page par fallback
+      if (loc.origin === location.origin && loc.pathname && loc.pathname !== '/') {
+        const params = new URLSearchParams(loc.search);
+        // reattempt=true hota to full page par draft mit jata, isliye hata do
+        params.delete('reattempt');
+        const q = params.toString();
+        target = loc.pathname + (q ? '?' + q : '') + loc.hash;
+
+        // purana snapshot hatao, phir fresh snapshot lo
+        try { sessionStorage.removeItem('mini_state:' + loc.pathname); } catch (e) {}
+        if (typeof w.__miniSnapshot === 'function') w.__miniSnapshot();
+        // test chal raha ho to uska draft turant save karwa do
+        if (typeof w.saveLocalDraft === 'function') { try { w.saveLocalDraft(); } catch (e) {} }
+
+        sessionStorage.setItem('mini_handoff', JSON.stringify({ path: loc.pathname, t: Date.now() }));
+      }
+    } catch (e) { /* cross-origin ya koi dikkat: fallback page khulega */ }
+  }
+
+  goto(target);
+}
+
 function timeAgo(dateString) {
   if (!dateString) return '';
   const date = new Date(dateString);

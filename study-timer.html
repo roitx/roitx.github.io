@@ -702,6 +702,7 @@
   </div>
 
   <script src="https://www.youtube.com/iframe_api"></script>
+  <script src="mini-state.js"></script>
 
   <script>
     /* ========================================================= */
@@ -1815,6 +1816,84 @@
       const m = Math.floor(sec / 60), s = Math.floor(sec % 60);
       return `${m}:${s < 10 ? '0' : ''}${s}`;
     }
+
+    /* ========================================================= */
+    /* MINI PREVIEW -> FULL SCREEN: state handoff (mini-state.js) */
+    /* Timer/stopwatch end-time based hain, isliye full screen me  */
+    /* khulne par bhi time bilkul sahi chalta rahta hai.           */
+    /* ========================================================= */
+    Mini.onSnapshot(() => {
+      const activeTab = document.querySelector('.tab-content.active');
+      return {
+        tab: activeTab ? activeTab.id : 'clock-tab',
+        mode, style, is24,
+        pomo: { on: pomo.on, phase: pomo.phase, count: pomo.count },
+        presetIdx: Array.from(document.querySelectorAll('.preset-chip')).findIndex(c => c.classList.contains('active')),
+        tm: { running: tmRunning, total: tmTotalSec, rem: tmRemSec, end: tmEndTime },
+        sw: { running: swRunning, start: swStartTime, elapsed: swElapsedTime, lastSec: swLastSec, lapCount, lastLap: lastLapTime },
+        laps: Array.from($('laps-list').children).map(n => Array.from(n.children).map(c => c.textContent))
+      };
+    });
+
+    (function restoreFromMini() {
+      const s = Mini.take();
+      if (!s) return;
+      try {
+        // tab (YouTube tab auto-open nahi karte)
+        if (s.tab === 'tasks-tab') {
+          const btn = Array.from(document.querySelectorAll('.nav-tab-btn')).find(b => (b.getAttribute('onclick') || '').includes('tasks-tab'));
+          if (btn) switchTab('tasks-tab', btn);
+        }
+
+        is24 = s.is24 !== false;
+        pomo = { on: !!(s.pomo && s.pomo.on), phase: (s.pomo && s.pomo.phase) || 'focus', count: (s.pomo && s.pomo.count) || 0 };
+        $('pomo-chip').classList.toggle('active', pomo.on);
+
+        const chips = document.querySelectorAll('.preset-chip');
+        if (s.presetIdx >= 0) chips.forEach((c, i) => c.classList.toggle('active', i === s.presetIdx));
+
+        // laps
+        const lapsEl = $('laps-list');
+        lapsEl.textContent = '';
+        (s.laps || []).forEach(l => {
+          const item = el('div', 'lap-item');
+          item.append(el('span', 'lap-no', l[0] || ''), el('span', 'lap-split', l[1] || ''), el('span', 'lap-time', l[2] || ''));
+          lapsEl.appendChild(item);
+        });
+
+        // stopwatch (absolute start time se continue)
+        if (s.sw) {
+          lapCount = s.sw.lapCount || 0;
+          lastLapTime = s.sw.lastLap || 0;
+          swElapsedTime = s.sw.elapsed || 0;
+          swLastSec = s.sw.lastSec || 0;
+          if (s.sw.running) {
+            swRunning = true;
+            swStartTime = s.sw.start;
+            clearInterval(swInterval);
+            swInterval = setInterval(updateStopwatch, 40);
+          }
+        }
+
+        // timer (absolute end time se continue)
+        if (s.tm) {
+          tmTotalSec = s.tm.total || 1500;
+          tmRemSec = s.tm.rem;
+          if (s.tm.running) {
+            tmRunning = true;
+            tmEndTime = s.tm.end;
+            clearInterval(tmInterval);
+            tmInterval = setInterval(tmTick, 250);
+            tmTick();
+          }
+        }
+
+        if (s.style) setStyle(s.style);
+        setMode(s.mode || 'clock');
+        syncWakeLock();
+        updateTitle();
+      } catch (e) { console.warn('Mini restore failed:', e); }
+    })();
   </script>
 </body>
 </html>

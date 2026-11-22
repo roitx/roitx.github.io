@@ -134,6 +134,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     await fetchUserPreviousResults();
     await fetchStudentTests();
 
+    // Mini preview se aaye ho to filter/search/tab wahi se continue
+    initMiniStateForTests();
+
     // Catch Leaderboard Query Parameter from URL
     const urlParams = new URLSearchParams(window.location.search);
     const tabParam = urlParams.get('tab');
@@ -141,6 +144,47 @@ document.addEventListener("DOMContentLoaded", async () => {
         switchTab('leaderboard');
     }
 });
+
+/* ==========================================
+   MINI PREVIEW -> FULL SCREEN: filters, search, tab continue
+   (test attempt ka progress pehle se testscript.js ke draft me save hota hai)
+   ========================================== */
+function initMiniStateForTests() {
+    if (!window.Mini) return;
+
+    Mini.onSnapshot(function () {
+        var si = document.getElementById("searchInput");
+        var leaderSec = document.getElementById("leaderboardSection");
+        return {
+            board: selectedBoard,
+            cls: selectedClass,
+            sub: selectedSubject,
+            q: si ? si.value : "",
+            open: isExploreOpen,
+            tab: (leaderSec && leaderSec.style.display === "block") ? "leaderboard" : "tests",
+            count: visibleTestCount
+        };
+    });
+
+    var s = Mini.take();
+    if (!s) return;
+
+    try {
+        if (s.count && s.count > visibleTestCount) visibleTestCount = s.count;
+        if (s.open && !isExploreOpen) toggleExplorePage();
+        if (s.board && s.board !== "ALL") selectBoard(s.board);
+        if (s.cls && s.cls !== "ALL") selectClass(s.cls);
+        if (s.sub && s.sub !== "ALL") selectSubject(s.sub);
+
+        var si = document.getElementById("searchInput");
+        if (si && s.q) si.value = s.q;
+        filterStudentTests();
+
+        if (s.tab === "leaderboard") switchTab("leaderboard");
+    } catch (e) {
+        console.warn("Mini restore failed:", e);
+    }
+}
 
 function initDarkModeSupport() {
     const modeToggle = document.getElementById("modeToggle");
