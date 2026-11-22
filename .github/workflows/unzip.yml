@@ -1,0 +1,36 @@
+name: Unzip upload
+
+on:
+  push:
+    paths:
+      - 'upload.zip'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  unzip:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract and copy
+        run: |
+          if [ ! -f upload.zip ]; then echo "No upload.zip, skipping"; exit 0; fi
+          mkdir /tmp/x && unzip -q upload.zip -d /tmp/x
+          # zip ke andar ek folder ho to wahi source maano
+          SRC=/tmp/x
+          if [ "$(ls -A /tmp/x | wc -l)" = "1" ] && [ -d "/tmp/x/$(ls /tmp/x)" ]; then
+            SRC="/tmp/x/$(ls /tmp/x)"
+          fi
+          rsync -a --exclude '.git' --exclude '.github' --exclude 'upload.zip' "$SRC"/ ./
+          rm -f upload.zip
+
+      - name: Commit
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add -A
+          git diff --cached --quiet || git commit -m "Update site from zip"
+          git push
