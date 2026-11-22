@@ -5,6 +5,10 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      mode:
+        description: 'changed or all'
+        default: 'changed'
 
 jobs:
   indexing:
@@ -12,38 +16,19 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
-
-      - name: Create Key File
-        run: |
-          echo "${{ secrets.GCP_SA_KEY }}" > service_account.json
+          node-version: '20'
 
       - name: Install Google APIs
         run: npm install googleapis
 
-      - name: Run Indexing Script
-        run: |
-          node -e "
-          const {google} = require('googleapis');
-          const path = require('path');
-
-          const auth = new google.auth.GoogleAuth({
-            keyFile: path.join(__dirname, 'service_account.json'),
-            scopes: ['https://www.googleapis.com/auth/indexing'],
-          });
-
-          async function main() {
-            try {
-              const client = await auth.getClient();
-              console.log('Successfully authenticated with GCP Service Account!');
-            } catch (err) {
-              console.error('Authentication error:', err);
-              process.exit(1);
-            }
-          }
-          main();
-          "
+      - name: Submit URLs
+        env:
+          SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          MODE: ${{ github.event.inputs.mode }}
+        run: node .github/scripts/index-urls.js
