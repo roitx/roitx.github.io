@@ -1671,16 +1671,44 @@ When a user asks for classes, study materials, subjects, tools, or website navig
 4. FORMATTING: Use bold formatting (**like this**) for key terms, definitions, and mathematical formulas.
 `;
 
+  // ---- AI MEMORY: is chat ke pichhle sawal-jawab AI ko wapas bhejte hain ----
+  // Backend (smart-task) sirf ek `prompt` leta hai, isliye history usi prompt me
+  // chhote transcript ki tarah judti hai. Chat window ke saath hi reset hoti hai.
+  const ASK_MEMORY_MAX_TURNS = 6;      // kitne purane sawal-jawab yaad rakhne hain
+  const ASK_MEMORY_MAX_Q = 300;        // har sawal ke max characters
+  const ASK_MEMORY_MAX_A = 600;        // har jawab ke max characters (token bachane ke liye)
+  let askMemory = [];
+
+  function rememberAskTurn(q, a) {
+    const cut = (t, n) => { t = String(t || '').replace(/\s+/g, ' ').trim(); return t.length > n ? t.slice(0, n).trim() + ' …' : t; };
+    const qq = cut(q, ASK_MEMORY_MAX_Q), aa = cut(a, ASK_MEMORY_MAX_A);
+    if (!qq || !aa) return;
+    askMemory.push({ q: qq, a: aa });
+    if (askMemory.length > ASK_MEMORY_MAX_TURNS) askMemory.splice(0, askMemory.length - ASK_MEMORY_MAX_TURNS);
+  }
+
+  function buildAskMemory() {
+    if (!askMemory.length) return '';
+    return askMemory.map(t => `Student: ${t.q}\nAI: ${t.a}`).join('\n\n');
+  }
+
+  window.clearAskChatMemory = function () { askMemory = []; };
+
   // ---- GROQ AI API CALL ----
   async function askGroqAI(userQuery) {
     const typing = showTyping();
     const SUPABASE_FUNCTION_URL = "https://ktastwehnnqicriknewr.supabase.co/functions/v1/smart-task";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0YXN0d2Vobm5xaWNyaWtuZXdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyNTk5NTEsImV4cCI6MjA4MDgzNTk1MX0.5_UvwaG0X8k_Emj-cMC0KjEqlvU6hgAt5IsHJdgARvk"; 
 
+    const memory = buildAskMemory();
+    const memoryBlock = memory
+      ? `\n\nCONVERSATION SO FAR (oldest first). Use it to understand follow-up questions like "aur samjhao", "iska example do", "step 2 kyun?". If the new question is unrelated, ignore it. Never repeat old answers.\n${memory}`
+      : '';
+
     const fullPrompt = `SYSTEM INSTRUCTIONS & KNOWLEDGE:
 ${systemKnowledge}
 
-PREFERRED LANGUAGE: ${selectedLanguage === 'en' ? 'English' : 'Hindi / Hinglish'}
+PREFERRED LANGUAGE: ${selectedLanguage === 'en' ? 'English' : 'Hindi / Hinglish'}${memoryBlock}
 
 USER QUESTION:
 ${userQuery}`;
@@ -1719,6 +1747,7 @@ ${userQuery}`;
         } else {
           const cleanFormatted = cleanAndFormatText(answerText);
           addBotMsg(cleanFormatted);
+          rememberAskTurn(userQuery, answerText);   // agle follow-up ke liye yaad rakho
         }
       } else {
         addBotMsg("Main isme madad karne me ashakam hu! Please try again.");

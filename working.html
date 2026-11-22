@@ -1,215 +1,212 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-    <title>Working On It | Roitx</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Coming soon | Roitx</title>
+<meta name="description" content="This section of Roitx is being built. Check back soon.">
+<meta name="robots" content="noindex, follow">
+<meta name="theme-color" content="#0B0F19">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js" defer></script>
+<style>
+@property --ang{syntax:'<angle>';initial-value:0deg;inherits:false}
+:root{--bg:#0B0F19;--surface:rgba(255,255,255,.04);--line:rgba(255,255,255,.1);--text:#F8FAFC;--muted:#A3B0C2;--accent:#818CF8;--accent-2:#F472B6}
+*{margin:0;padding:0;box-sizing:border-box}
+body{min-height:100vh;display:grid;place-items:center;padding:24px;overflow:hidden;background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',sans-serif;-webkit-font-smoothing:antialiased}
+#fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none}
+.glow{position:fixed;width:440px;height:440px;border-radius:50%;filter:blur(100px);pointer-events:none;opacity:.5}
+.glow.a{top:-120px;left:-120px;background:radial-gradient(circle,rgba(99,102,241,.5),transparent 70%);animation:drift1 9s ease-in-out infinite alternate}
+.glow.b{bottom:-120px;right:-120px;background:radial-gradient(circle,rgba(236,72,153,.32),transparent 70%);animation:drift2 11s ease-in-out infinite alternate}
+@keyframes drift1{to{transform:translate(90px,70px) scale(1.15)}}
+@keyframes drift2{to{transform:translate(-90px,-70px) scale(1.15)}}
+.rise-heart{position:fixed;bottom:-40px;opacity:0;pointer-events:none;animation:floatUp linear forwards}
+@keyframes floatUp{0%{transform:translateY(0) rotate(0);opacity:0}10%{opacity:.6}100%{transform:translateY(-115vh) translateX(40px) rotate(24deg);opacity:0}}
 
-    <meta name="description" content="We are crafting something special for you. Stay tuned as Roitx updates this section.">
-    <meta name="keywords" content="Roitx, Under Construction, Coming Soon, Roitx AI">
-    <meta name="robots" content="index, follow">
-    <meta name="theme-color" content="#0B0F19">
+.card{position:relative;z-index:2;width:100%;max-width:440px;text-align:center;padding:40px 32px 28px;border-radius:28px;background:var(--surface);border:1px solid var(--line);-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);box-shadow:0 30px 80px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.12);transition:transform .25s ease-out;will-change:transform}
+.card::before{content:"";position:absolute;inset:-1px;border-radius:inherit;padding:1.5px;pointer-events:none;background:conic-gradient(from var(--ang),transparent 0 65%,var(--accent) 85%,var(--accent-2) 100%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:spin 6s linear infinite}
+@keyframes spin{to{--ang:360deg}}
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+.in{opacity:0;transform:translateY(16px);animation:enter .7s cubic-bezier(.2,.8,.2,1) forwards;animation-delay:var(--d,0s)}
+@keyframes enter{to{opacity:1;transform:none}}
 
-    <!-- Reliable Lottie Player Script -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
+.badge{display:inline-flex;align-items:center;gap:8px;margin-bottom:18px;padding:6px 14px;border-radius:999px;font-size:.8rem;font-weight:700;color:var(--accent);background:rgba(129,140,248,.12);border:1px solid rgba(129,140,248,.3)}
+.dot{position:relative;width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.dot::after{content:"";position:absolute;inset:0;border-radius:50%;background:var(--accent);animation:ping 1.6s ease-out infinite}
+@keyframes ping{to{transform:scale(3.2);opacity:0}}
 
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            user-select: none;
-        }
+.art{position:relative;width:200px;height:200px;margin:0 auto 8px;display:grid;place-items:center}
+.art::before,.art::after{content:"";position:absolute;inset:14%;border-radius:50%;border:1.5px solid rgba(129,140,248,.45);animation:ripple 3.2s ease-out infinite;pointer-events:none}
+.art::after{animation-delay:1.6s;border-color:rgba(244,114,182,.4)}
+@keyframes ripple{from{transform:scale(.6);opacity:.9}to{transform:scale(1.5);opacity:0}}
+@keyframes bob{to{transform:translateY(-8px)}}
+.art svg{max-width:100%;max-height:100%;position:relative}
 
-        body {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #0B0F19;
-            font-family: 'Plus Jakarta Sans', 'Poppins', sans-serif;
-            color: #FFFFFF;
-            overflow: hidden;
-            padding: 20px;
-            position: relative;
-        }
+h1{font-size:1.65rem;font-weight:800;letter-spacing:-.02em;line-height:1.2;margin-bottom:10px}
+.ttl{background:linear-gradient(100deg,#fff 30%,#C7D2FE 45%,#F9A8D4 55%,#fff 70%);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:shine 5s linear infinite}
+@keyframes shine{from{background-position:120% 0}to{background-position:-120% 0}}
+.lead{color:var(--muted);font-size:.95rem;line-height:1.6;max-width:34ch;margin:0 auto}
 
-        /* Animated Ambient Mesh Gradients */
-        .glow-1 {
-            position: absolute;
-            width: 350px;
-            height: 350px;
-            background: radial-gradient(circle, rgba(99, 102, 241, 0.25) 0%, transparent 70%);
-            top: -50px;
-            left: -50px;
-            filter: blur(90px);
-            animation: moveGlow1 8s infinite alternate ease-in-out;
-        }
+.actions{display:flex;gap:10px;margin-top:26px}
+.btn{flex:1;padding:13px 16px;border-radius:14px;font:inherit;font-size:.9rem;font-weight:700;text-decoration:none;text-align:center;cursor:pointer;border:1px solid var(--line);color:var(--text);background:var(--surface);transition:background .2s,transform .2s,box-shadow .2s}
+.btn:hover{background:rgba(255,255,255,.1);transform:translateY(-2px)}
+.btn.primary{border:0;color:#fff;background:linear-gradient(135deg,#6366F1,#8B5CF6);box-shadow:0 8px 24px rgba(99,102,241,.35)}
+.btn.primary:hover{box-shadow:0 12px 32px rgba(99,102,241,.55)}
+.btn:focus-visible,.stay:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 
-        .glow-2 {
-            position: absolute;
-            width: 350px;
-            height: 350px;
-            background: radial-gradient(circle, rgba(236, 72, 153, 0.2) 0%, transparent 70%);
-            bottom: -50px;
-            right: -50px;
-            filter: blur(90px);
-            animation: moveGlow2 10s infinite alternate ease-in-out;
-        }
+.redirect{margin-top:20px;padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid var(--line)}
+.rrow{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:.82rem;color:var(--muted)}
+.rrow b{color:var(--text);font-variant-numeric:tabular-nums}
+.stay{padding:7px 16px;border-radius:999px;font:inherit;font-size:.78rem;font-weight:700;cursor:pointer;color:#C7D2FE;background:rgba(129,140,248,.14);border:1px solid rgba(129,140,248,.4);transition:background .2s,transform .2s}
+.stay:hover{background:rgba(129,140,248,.28);transform:translateY(-1px)}
+.stay:active{transform:scale(.96)}
+.bar{height:3px;margin-top:10px;border-radius:3px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;transform-origin:left;background:linear-gradient(90deg,var(--accent),var(--accent-2))}
+.brand{margin-top:22px;font-size:.8rem;font-weight:800;letter-spacing:.2em;color:#64748B}
 
-        @keyframes moveGlow1 { 0% { transform: translate(0, 0); } 100% { transform: translate(60px, 60px); } }
-        @keyframes moveGlow2 { 0% { transform: translate(0, 0); } 100% { transform: translate(-60px, -60px); } }
 
-        /* Modern Glassmorphism Card */
-        .card {
-            position: relative;
-            z-index: 10;
-            text-align: center;
-            padding: 42px 30px 32px;
-            width: 100%;
-            max-width: 420px;
-            background: rgba(255, 255, 255, 0.035);
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            border-radius: 36px;
-            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.15);
-            animation: floatCard 4s ease-in-out infinite alternate;
-        }
-
-        @keyframes floatCard {
-            0% { transform: translateY(0px); }
-            100% { transform: translateY(-8px); }
-        }
-
-        /* Live Status Badge */
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: rgba(99, 102, 241, 0.12);
-            border: 1px solid rgba(99, 102, 241, 0.3);
-            padding: 6px 16px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            color: #818CF8;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            margin-bottom: 18px;
-        }
-
-        .dot {
-            width: 8px;
-            height: 8px;
-            background: #818CF8;
-            border-radius: 50%;
-            box-shadow: 0 0 10px #818CF8;
-            animation: pulseDot 1.5s infinite;
-        }
-
-        @keyframes pulseDot { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-
-        .character-3d {
-            width: 210px;
-            height: 210px;
-            margin: 0 auto 10px auto;
-            filter: drop-shadow(0 15px 25px rgba(0, 0, 0, 0.4));
-        }
-
-        h1 {
-            font-size: 25px;
-            font-weight: 800;
-            margin-bottom: 10px;
-            background: linear-gradient(180deg, #FFFFFF 0%, #CBD5E1 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            letter-spacing: -0.5px;
-        }
-
-        p {
-            font-size: 0.9rem;
-            color: #94A3B8;
-            line-height: 1.6;
-            font-weight: 500;
-        }
-
-        .small {
-            margin-top: 24px;
-            font-size: 0.75rem;
-            color: #64748B;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            font-weight: 700;
-        }
-    </style>
+.art>.fb,.art>.lt{display:grid;place-items:center;width:100%;height:100%}
+.art>.lt{position:absolute;inset:0;opacity:0;transition:opacity .5s}
+.art>.fb,.art>.lt{animation:bob 4s ease-in-out infinite alternate}
+.fbspin{transform-box:fill-box;transform-origin:center;animation:fbspin 8s linear infinite}
+.fbspinr{transform-box:fill-box;transform-origin:center;animation:fbspin 5.3s linear infinite reverse}
+.fbfloat{animation:fbfloat 3s ease-in-out infinite alternate}
+.fbblink{animation:fbblink 1.4s ease-in-out infinite}
+.fbflame{transform-box:fill-box;transform-origin:top center;animation:fbflame .35s ease-in-out infinite alternate}
+.fbbeam{animation:fbdash 1.2s linear infinite}
+@keyframes fbspin{to{transform:rotate(360deg)}}
+@keyframes fbfloat{to{transform:translateY(-5px)}}
+@keyframes fbblink{50%{opacity:.2}}
+@keyframes fbflame{to{transform:scaleY(1.35)}}
+@keyframes fbdash{to{stroke-dashoffset:-18}}
+@media (max-width:420px){.card{padding:32px 22px 24px}.actions{flex-direction:column}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.in{opacity:1;transform:none}}
+</style>
 </head>
 <body>
+<canvas id="fx" aria-hidden="true"></canvas>
+<div class="glow a" aria-hidden="true"></div>
+<div class="glow b" aria-hidden="true"></div>
 
-    <div class="glow-1"></div>
-    <div class="glow-2"></div>
+<main class="card" id="card">
+  <div class="in" style="--d:.05s"><div class="badge"><span class="dot" aria-hidden="true"></span>In progress</div></div>
 
-    <main class="card">
-        <div class="status-badge">
-            <span class="dot"></span> IN PROGRESS
-        </div>
+  <div id="art" class="art in" style="--d:.15s" aria-hidden="true">
+    <div class="fb"><svg viewBox="0 0 120 120" width="150" height="150" fill="none" stroke="#818CF8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><rect x="16" y="28" width="88" height="62" rx="10"/><path d="M40 52l-12 9 12 9M80 52l12 9-12 9"/><path class="fbblink" d="M66 48l-12 26" stroke="#F472B6"/><path d="M44 104h32"/></svg></div><div class="lt"></div>
+  </div>
 
-        <div id="lottie-dev" class="character-3d"></div>
+  <h1 class="in" style="--d:.3s" id="work-title"><span class="ttl">I am working on it</span> ❤️</h1>
+  <p class="lead in" style="--d:.4s" id="work-desc">Please give me a little time.<br>Something beautiful is coming for you ✨</p>
 
-        <h1 id="work-title">I am working on it ❤️</h1>
-        <p id="work-desc">
-            Please give me a little time.<br>
-            Something beautiful is coming for you ✨
-        </p>
+  <div class="actions in" style="--d:.5s">
+    <a class="btn" href="/">Go to homepage</a>
+    <button class="btn primary" type="button" id="back">Go back</button>
+  </div>
 
-        <div class="small">— ROITX —</div>
-    </main>
+  <div class="redirect in" style="--d:.6s" id="redirect">
+    <div class="rrow"><span id="rtext">Going back in <b id="count">7</b>s</span><button class="stay" type="button" id="stay">Stay here</button></div>
+    <div class="bar" aria-hidden="true"><i id="fill"></i></div>
+  </div>
 
-    <script>
-        // Random Heart Colors
-        const hearts = ['❤️', '💙', '💚', '💜', '🤎', '🤍'];
+  <div class="brand in" style="--d:.7s" aria-label="Roitx">ROITX</div>
+</main>
 
-        // Dynamic Text Messages
-        const messages = [
-            "Crafting something amazing for you ",
-            "Building next-gen experience ",
-            "Writing fine code with passion ",
-            "Upgrading system core features ",
-            "Almost ready, sit back and relax "
-        ];
+<script>
+(function () {
+  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-        // Total animations in assets/3d/ folder (working_1.json to working_5.json)
-        const totalAnimations = 5; 
+  // Random heart + message
+  var hearts = ['❤️','💙','💚','💜','🤎','🤍'];
+  var messages = ["Crafting something amazing for you ","Building next-gen experience ","Writing fine code with passion ","Upgrading system core features ","Almost ready, sit back and relax "];
+  var heart = hearts[Math.floor(Math.random() * hearts.length)];
+  var msg = messages[Math.floor(Math.random() * messages.length)];
+  document.getElementById('work-title').innerHTML = '<span class="ttl">I am working on it</span> ' + heart;
+  document.getElementById('work-desc').innerHTML = msg + heart + "<br>Something beautiful is coming for you ✨";
 
-        // Random Index Generator (1 to 5)
-        const randomAnimIndex = Math.floor(Math.random() * totalAnimations) + 1;
-        
-        // Random Selection for Hearts & Messages
-        const randomHeart = hearts[Math.floor(Math.random() * hearts.length)];
-        const msgIndex = Math.floor(Math.random() * messages.length);
-        const randomMsg = messages[msgIndex];
+  // Particle network background
+  var cv = document.getElementById('fx'), cx = cv.getContext('2d'), W, H, P = [], dpr = Math.min(devicePixelRatio || 1, 2);
+  function size() {
+    W = innerWidth; H = innerHeight; cv.width = W * dpr; cv.height = H * dpr; cx.setTransform(dpr,0,0,dpr,0,0);
+    var n = Math.min(70, Math.floor(W * H / 16000)); P = [];
+    for (var i = 0; i < n; i++) P.push({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.35,vy:(Math.random()-.5)*.35,r:Math.random()*1.6+.6});
+  }
+  function draw(move) {
+    cx.clearRect(0,0,W,H);
+    for (var i = 0; i < P.length; i++) {
+      var p = P[i];
+      if (move) { p.x += p.vx; p.y += p.vy; if (p.x<0||p.x>W) p.vx*=-1; if (p.y<0||p.y>H) p.vy*=-1; }
+      cx.fillStyle = 'rgba(165,180,252,.7)'; cx.beginPath(); cx.arc(p.x,p.y,p.r,0,6.283); cx.fill();
+      for (var j = i + 1; j < P.length; j++) {
+        var q = P[j], dx = p.x-q.x, dy = p.y-q.y, d = Math.sqrt(dx*dx+dy*dy);
+        if (d < 120) { cx.strokeStyle = 'rgba(165,180,252,' + (1-d/120)*.22 + ')'; cx.beginPath(); cx.moveTo(p.x,p.y); cx.lineTo(q.x,q.y); cx.stroke(); }
+      }
+    }
+  }
+  size(); addEventListener('resize', function(){ size(); if (reduce) draw(false); });
+  if (reduce) { draw(false); } else {
+    (function loop(){ if (!document.hidden) draw(true); requestAnimationFrame(loop); })();
+    // Rising hearts
+    setInterval(function () {
+      if (document.hidden || document.querySelectorAll('.rise-heart').length > 12) return;
+      var s = document.createElement('span'); s.className = 'rise-heart'; s.textContent = heart;
+      s.style.left = Math.random()*100 + 'vw'; s.style.fontSize = (14 + Math.random()*16) + 'px';
+      s.style.animationDuration = (8 + Math.random()*6) + 's';
+      s.addEventListener('animationend', function(){ s.remove(); }); document.body.appendChild(s);
+    }, 1000);
+    // Card tilt (mouse only)
+    var card = document.getElementById('card');
+    if (matchMedia('(pointer:fine)').matches) {
+      addEventListener('pointermove', function (e) {
+        var x = (e.clientX / innerWidth - .5), y = (e.clientY / innerHeight - .5);
+        card.style.transform = 'perspective(900px) rotateY(' + (x*7) + 'deg) rotateX(' + (-y*7) + 'deg)';
+      });
+      document.addEventListener('pointerleave', function(){ card.style.transform = ''; });
+    }
+  }
 
-        // Update Dynamic Heading & Description
-        document.getElementById('work-title').innerText = "I am working on it " + randomHeart;
-        document.getElementById('work-desc').innerHTML = randomMsg + randomHeart + "<br>Something beautiful is coming for you ✨";
+  // Offline fallback illustrations (random, built in) + Lottie swap-in
+  var FALLBACKS = [
+    `<svg viewBox="0 0 120 120" width="150" height="150" fill="none" stroke="#818CF8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><rect x="16" y="28" width="88" height="62" rx="10"/><path d="M40 52l-12 9 12 9M80 52l12 9-12 9"/><path class="fbblink" d="M66 48l-12 26" stroke="#F472B6"/><path d="M44 104h32"/></svg>`,
+    `<svg viewBox="0 0 120 120" width="150" height="150" fill="none" stroke="#818CF8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><g class="fbspin"><circle cx="42" cy="70" r="22" stroke-width="7" stroke-dasharray="5 4.87"/><circle cx="42" cy="70" r="15"/><circle cx="42" cy="70" r="4"/></g><g class="fbspinr" stroke="#F472B6"><circle cx="76" cy="40" r="14" stroke-width="6" stroke-dasharray="5 4.77"/><circle cx="76" cy="40" r="9"/><circle cx="76" cy="40" r="3"/></g></svg>`,
+    `<svg viewBox="0 0 120 120" width="150" height="150" fill="none" stroke="#818CF8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><g class="fbfloat"><path d="M60 14c14 12 18 30 18 48H42c0-18 4-36 18-48z"/><circle cx="60" cy="40" r="6"/><path d="M42 50l-14 18 14-2M78 50l14 18-14-2"/><path class="fbflame" d="M52 70q8 24 16 0" stroke="#F472B6"/></g><circle class="fbblink" cx="22" cy="30" r="2" fill="#818CF8"/><circle class="fbblink" cx="100" cy="20" r="2" fill="#F472B6" style="animation-delay:.5s"/><circle class="fbblink" cx="96" cy="92" r="2" fill="#818CF8" style="animation-delay:.9s"/></svg>`
+  ];
+  var artBox = document.getElementById('art'), fbBox = artBox.querySelector('.fb'), ltBox = artBox.querySelector('.lt');
+  fbBox.innerHTML = FALLBACKS[Math.floor(Math.random() * FALLBACKS.length)];
+  addEventListener('load', function () {
+    if (!window.lottie) { console.warn('[Roitx] Lottie library not loaded, using built-in fallback'); ltBox.remove(); return; }
+    var TOTAL = 9, n = Math.floor(Math.random() * TOTAL) + 1, shown = false;
+    var paths = ['/assets/3d/working_' + n + '.json', 'assets/3d/working_' + n + '.json'];
+    function show() { if (shown) return; shown = true; ltBox.style.opacity = 1; setTimeout(function () { fbBox.style.display = 'none'; }, 500); }
+    (function attempt(i) {
+      if (i >= paths.length) { console.warn('[Roitx] Animation JSON not found, using built-in fallback. Tried:', paths); ltBox.remove(); return; }
+      var anim;
+      try { anim = lottie.loadAnimation({container: ltBox, renderer: 'svg', loop: !reduce, autoplay: !reduce, path: paths[i]}); }
+      catch (e) { console.warn('[Roitx] Lottie error:', e); attempt(i + 1); return; }
+      anim.addEventListener('DOMLoaded', function () { console.info('[Roitx] Loaded', paths[i]); show(); });
+      anim.addEventListener('data_failed', function () { console.warn('[Roitx] Failed to load', paths[i]); anim.destroy(); attempt(i + 1); });
+    })(0);
+  });
 
-        // Load Local JSON File Dynamically (e.g., assets/3d/working_1.json)
-        lottie.loadAnimation({
-            container: document.getElementById('lottie-dev'),
-            renderer: 'svg',
-            loop: true,
-            autoplay: true,
-            path: `assets/3d/working_${randomAnimIndex}.json`
-        });
+  // Navigation + 7s auto-return
+  function goBack() { if (history.length > 1) history.back(); else location.href = '/'; }
+  document.getElementById('back').addEventListener('click', goBack);
 
-        // 15 Seconds ke baad bina countdown dikhaye purane page par bhej dega
-        setTimeout(() => {
-            window.history.back();
-        }, 15000);
-    </script>
+  var DURATION = 7000, start = performance.now(), raf, stopped = false;
+  var fill = document.getElementById('fill'), count = document.getElementById('count');
+  (function tick(now) {
+    var el = now - start, p = Math.min(el / DURATION, 1);
+    fill.style.transform = 'scaleX(' + (1 - p) + ')';
+    count.textContent = Math.max(1, Math.ceil((DURATION - el) / 1000));
+    if (p < 1) raf = requestAnimationFrame(tick); else goBack();
+  })(start);
+  document.getElementById('stay').addEventListener('click', function () {
+    stopped = true; cancelAnimationFrame(raf);
+    document.getElementById('rtext').textContent = 'Auto-return is off.';
+    this.remove(); fill.parentNode.remove();
+  });
+})();
+</script>
 </body>
 </html>
