@@ -123,6 +123,37 @@ h1{margin:14px 0 8px;font-family:'Orbitron',system-ui,sans-serif;font-size:.9rem
   var hb = document.getElementById('hearts'); hb.innerHTML = '';
   heartSets[r].forEach(function (h, i) { var s = document.createElement('span'); s.textContent = h; s.style.animationDelay = (i * .18) + 's'; hb.appendChild(s); });
 
+  // ---- Welcome listener: roitx.qd.je (Aasaan Hisaab) ke 404 se aane wale visitors ke liye pyara message ----
+  var cameFromOldSite = false, cleanSearch = location.search;
+  try {
+    var qs = new URLSearchParams(location.search);
+    if (qs.get('from') === 'roitx-qd') {
+      cameFromOldSite = true;
+      qs.delete('from');
+      cleanSearch = qs.toString() ? '?' + qs.toString() : '';
+    }
+  } catch (e) {}
+  try {
+    if (!cameFromOldSite && document.referrer && new URL(document.referrer).hostname === 'roitx.qd.je') cameFromOldSite = true;
+  } catch (e) {}
+
+  if (cameFromOldSite) {
+    try { history.replaceState(null, '', location.pathname + cleanSearch + location.hash); } catch (e) {}   // address bar saaf rakho
+    document.title = 'Welcome back | Roitx';
+    var ttl = document.getElementById('title');
+    ttl.textContent = 'WELCOME BACK';
+    ttl.style.color = 'var(--sky)';
+    document.getElementById('msg').innerHTML = 'Welcome to your previous site! \uD83D\uDC99<br>Is pareshani ke liye hame khed hai.<br>Hum naye address par aa gaye hain, chaliye aapko sahi jagah le chalte hain.';
+    document.getElementById('path').textContent = location.pathname + cleanSearch;
+    hb.innerHTML = '';
+    ['\uD83D\uDC99', '\uD83D\uDC9C', '\uD83D\uDC9A', '\uD83E\uDDE1', '\u2764\uFE0F'].forEach(function (h, i) {
+      var sp = document.createElement('span'); sp.textContent = h; sp.style.animationDelay = (i * .18) + 's'; hb.appendChild(sp);
+    });
+    var homeBtn = document.querySelector('.btn.primary');
+    if (homeBtn) { homeBtn.href = '/'; homeBtn.textContent = 'Take me to the homepage'; }
+    document.getElementById('back').hidden = true;   // back dabane par wapas redirect wale page par jaate, isliye hata diya
+  }
+
   // 404 count-up
   var code = document.getElementById('code');
   if (!reduce) {
