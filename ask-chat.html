@@ -11,20 +11,20 @@
 <meta name="keywords" content="Roitx Smart Assistant, Roitx AI Chat, Class 12 Math Solver, Bihar Board Study Bot, Study Notes Manager, Formula Generator">
 <meta name="robots" content="index, follow">
 <meta name="author" content="PM Roitx">
-<link rel="canonical" href="https://roitx.dpdns.org/ask-chat.html">
+<link rel="canonical" href="https://roitx.qd.je/ask-chat.html">
 
 <!-- OPEN GRAPH / FACEBOOK SOCIAL META -->
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://roitx.dpdns.org/ask-chat.html">
+<meta property="og:url" content="https://roitx.qd.je/ask-chat.html">
 <meta property="og:title" content="Roitx Smart AI Assistant — Instant Study & Math Solver">
 <meta property="og:description" content="Ask questions, manage local notes, view formula sheets, and use smart study commands with Roitx AI Assistant.">
-<meta property="og:image" content="https://roitx.dpdns.org/profile.png">
+<meta property="og:image" content="https://roitx.qd.je/profile.png">
 
 <!-- TWITTER CARDS -->
 <meta property="twitter:card" content="summary_large_image">
 <meta property="twitter:title" content="Roitx Smart AI Assistant">
 <meta property="twitter:description" content="Your personal AI study companion for notes, formulas, and instant doubt resolution.">
-<meta property="twitter:image" content="https://roitx.dpdns.org/profile.png">
+<meta property="twitter:image" content="https://roitx.qd.je/profile.png">
 
 
 <script>
@@ -53,7 +53,7 @@
   "@context": "https://schema.org",
   "@type": "WebApplication",
   "name": "Roitx Smart Assistant",
-  "url": "https://roitx.dpdns.org/ask-chat.html",
+  "url": "https://roitx.qd.je/ask-chat.html",
   "description": "An AI-powered educational chatbot and study assistant providing instant answers, note-taking, formula lookup, and study planning.",
   "applicationCategory": "EducationalApplication",
   "operatingSystem": "All",
@@ -61,7 +61,7 @@
   "publisher": {
     "@type": "Organization",
     "name": "PM Roitx Study Hub",
-    "logo": "https://roitx.dpdns.org/profile.png"
+    "logo": "https://roitx.qd.je/profile.png"
   }
 }
 </script>
@@ -156,6 +156,23 @@
 .md-controls { display: flex; justify-content: center; align-items: center; gap: 4px; flex-wrap: wrap; }
 .md-queue { max-height: 170px; overflow: auto; margin-top: 8px; border-top: 1px solid rgba(255, 255, 255, 0.06); padding-top: 6px; }
 .md-queue[hidden] { display: none; }
+.md-tools { display: flex; gap: 2px; }
+.md-mini-only { display: none; }
+
+/* ---------- Mini mode: video chhota (left), title + controls (right) ---------- */
+.mediaDock.mini { --md-mini-w: 160px; display: grid; grid-template-columns: var(--md-mini-w) minmax(0, 1fr);
+  grid-template-areas: "video meta" "video ctrl" "queue queue"; gap: 6px 10px; align-items: center; padding: 8px; }
+.mediaDock.mini .md-head { display: contents; }
+.mediaDock.mini .md-art, .mediaDock.mini .md-tools, .mediaDock.mini .md-progress, .mediaDock.mini .md-full-only { display: none; }
+.mediaDock.mini .md-meta { grid-area: meta; align-self: end; }
+.mediaDock.mini .md-title { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 12.5px; line-height: 1.3; }
+.mediaDock.mini .md-video { grid-area: video; width: var(--md-mini-w); margin: 0; }
+.mediaDock.mini .md-controls { grid-area: ctrl; justify-content: flex-start; gap: 2px; align-self: start; }
+.mediaDock.mini .md-mini-only { display: inline-flex; }
+.mediaDock.mini .md-btn { padding: 5px; }
+.mediaDock.mini .md-play { width: 34px; height: 34px; }
+.mediaDock.mini .md-queue { grid-area: queue; }
+.left.has-media.media-mini .chatWindow { height: 56vh; }
 .md-q-item { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; background: none; border: none; color: inherit; cursor: pointer; padding: 5px; border-radius: 8px; font: inherit; }
 .md-q-item:hover { background: rgba(255, 255, 255, 0.06); }
 .md-q-item.playing { background: rgba(6, 182, 212, 0.14); }
@@ -383,8 +400,11 @@
             <div id="mdTitle" class="md-title">Player</div>
             <div id="mdArtist" class="md-artist"></div>
           </div>
+          <div class="md-tools">
           <button id="mdList" class="md-btn" type="button" title="Queue" aria-label="Queue dikhayein"><svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+          <button id="mdMini" class="md-btn" type="button" title="Chhota karein" aria-label="Player chhota karein"><svg viewBox="0 0 24 24"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
           <button id="mdClose" class="md-btn" type="button" title="Band karein" aria-label="Player band karein"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+          </div>
         </div>
         <div class="md-video"><div id="mdPlayerHost"></div></div>
         <div class="md-progress">
@@ -393,13 +413,15 @@
           <span id="mdDur">0:00</span>
         </div>
         <div class="md-controls">
-          <button id="mdRepeat" class="md-btn" type="button" title="Repeat" aria-label="Repeat"><svg viewBox="0 0 24 24"><path d="M17 2l4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 0 1-3 3H3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-          <button id="mdPrev" class="md-btn" type="button" title="Previous" aria-label="Previous" disabled><svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zM20 5v14L9 12z" fill="currentColor"/></svg></button>
-          <button id="mdBack" class="md-btn" type="button" title="-10s" aria-label="10 second peeche"><svg viewBox="0 0 24 24"><path d="M12 5V2L7 6l5 4V7a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8z" fill="currentColor"/><text x="12" y="16.5" font-size="7" text-anchor="middle" fill="currentColor" font-weight="700">10</text></svg></button>
+          <button id="mdRepeat" class="md-btn md-full-only" type="button" title="Repeat" aria-label="Repeat"><svg viewBox="0 0 24 24"><path d="M17 2l4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 0 1-3 3H3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <button id="mdPrev" class="md-btn md-full-only" type="button" title="Previous" aria-label="Previous" disabled><svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zM20 5v14L9 12z" fill="currentColor"/></svg></button>
+          <button id="mdBack" class="md-btn md-full-only" type="button" title="-10s" aria-label="10 second peeche"><svg viewBox="0 0 24 24"><path d="M12 5V2L7 6l5 4V7a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8z" fill="currentColor"/><text x="12" y="16.5" font-size="7" text-anchor="middle" fill="currentColor" font-weight="700">10</text></svg></button>
           <button id="mdPlay" class="md-btn md-play" type="button" title="Play / Pause" aria-label="Play ya pause"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="currentColor"/></svg></button>
-          <button id="mdFwd" class="md-btn" type="button" title="+10s" aria-label="10 second aage"><svg viewBox="0 0 24 24" style="transform:scaleX(-1)"><path d="M12 5V2L7 6l5 4V7a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8z" fill="currentColor"/><text x="12" y="16.5" font-size="7" text-anchor="middle" fill="currentColor" font-weight="700" transform="translate(24,0) scale(-1,1)">10</text></svg></button>
+          <button id="mdFwd" class="md-btn md-full-only" type="button" title="+10s" aria-label="10 second aage"><svg viewBox="0 0 24 24" style="transform:scaleX(-1)"><path d="M12 5V2L7 6l5 4V7a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8z" fill="currentColor"/><text x="12" y="16.5" font-size="7" text-anchor="middle" fill="currentColor" font-weight="700" transform="translate(24,0) scale(-1,1)">10</text></svg></button>
           <button id="mdNext" class="md-btn" type="button" title="Next" aria-label="Next" disabled><svg viewBox="0 0 24 24"><path d="M16 5h2v14h-2zM4 5v14l11-7z" fill="currentColor"/></svg></button>
-          <button id="mdMute" class="md-btn" type="button" title="Mute" aria-label="Mute ya unmute"><svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5zM19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <button id="mdMute" class="md-btn md-full-only" type="button" title="Mute" aria-label="Mute ya unmute"><svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5zM19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <button id="mdExpand" class="md-btn md-mini-only" type="button" title="Bada karein" aria-label="Player bada karein"><svg viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <button id="mdCloseMini" class="md-btn md-mini-only" type="button" title="Band karein" aria-label="Player band karein"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
         </div>
         <div id="mdQueue" class="md-queue" hidden></div>
       </div>
@@ -417,7 +439,7 @@
     </svg>
   </button>
 
-  <button id="sendBtn" class="sendBtn" aria-label="Send message" style="display: flex; align-items: center; justify-content: center; padding: 10px 12px;">
+  <button id="sendBtn" class="sendBtn" aria-label="Send message" style="display: none; align-items: center; justify-content: center; padding: 10px 12px;">
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <line x1="22" y1="2" x2="11" y2="13"></line>
     <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
@@ -484,7 +506,7 @@
 
 <!-- MAIN CHAT SCRIPT -->
 <script src="calendar.js"></script>
-<script src="ask-chat.js?v=4"></script>
+<script src="ask-chat.js?v=5"></script>
 
 
 <!-- Floating Draggable Home Button with SVG Icon -->

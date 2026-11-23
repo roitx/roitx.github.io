@@ -1,4 +1,4 @@
- // =========================================================
+// =========================================================
 // ask-chat.js — FULL UPDATED WITH MATH EVALUATOR & FIXED TTS
 // =========================================================
 (function () {
@@ -520,7 +520,6 @@
 
     recognition.onstart = () => {
       micBtn.classList.add('listening');
-      input.placeholder = "🎤 Sun rahe hain, boliye...";
     };
 
     recognition.onresult = (event) => {
@@ -531,20 +530,20 @@
     recognition.onerror = (event) => {
       console.warn("Speech recognition error:", event.error);
       micBtn.classList.remove('listening');
-      input.placeholder = "Type a command or question...";
     };
 
     // Jaise hi user bolna band karega aur recognition end hoga, ye auto-send kar dega
     recognition.onend = () => {
       micBtn.classList.remove('listening');
-      input.placeholder = "Type a command or question...";
       
       const spokenText = input.value.trim();
       if (spokenText !== "") {
         addUserMsg(spokenText);
         input.value = '';
+        syncInputButtons();
         handleCommand(spokenText); // Automatic message send aur process ho jayega
       }
+      syncInputButtons();
     };
   } else if (micBtn) {
     micBtn.style.display = 'none';
@@ -569,6 +568,17 @@
   initUserGreeting();
 
   sendBtn && sendBtn.addEventListener('click', onSend);
+
+  // ---- Mic <-> Send: input khali ho to sirf mic dikhe, type karte hi send ----
+  const hasMicSupport = !!SpeechRecognition;
+  function syncInputButtons() {
+    if (!input) return;
+    const typing = input.value.trim().length > 0;
+    if (micBtn) micBtn.style.display = (hasMicSupport && !typing) ? 'flex' : 'none';
+    if (sendBtn) sendBtn.style.display = (typing || !hasMicSupport) ? 'flex' : 'none';   // mic na ho to send hamesha
+  }
+  input && input.addEventListener('input', syncInputButtons);
+  syncInputButtons();
   input && input.addEventListener('keydown', (e) => { if (e.key === 'Enter') onSend(); });
 
   window.runCommand = (text) => { if (!input) return; input.value = text; onSend(); };
@@ -1030,6 +1040,7 @@ function addBotMsg(content, isHTML = false, silent = false) {
     if (!raw) return;
     addUserMsg(raw);
     input.value = '';
+    syncInputButtons();
     handleCommand(raw);
   }
 
@@ -1106,6 +1117,8 @@ function addBotMsg(content, isHTML = false, silent = false) {
       if (/\b(?:band|bandh|stop|roko|rok\s*do|hata\s*do|close)\b/.test(cmd) && (hasNoun || words <= 2)) return { type: 'control', action: 'stop' };
       if (/\b(?:next|agla|agli|skip)\b/.test(cmd) && (hasNoun || words <= 2)) return { type: 'control', action: 'next' };
       if (/\b(?:previous|prev|pichla|pichhla|pehle\s*wala)\b/.test(cmd) && (hasNoun || words <= 2)) return { type: 'control', action: 'prev' };
+      if (/\b(?:mini|minimize|chhota|chota|chhoti|small)\b/.test(cmd) && words <= 4) return { type: 'control', action: 'mini' };
+      if (/\b(?:bada|badi|expand|maximize|maximise|full)\b/.test(cmd) && words <= 4) return { type: 'control', action: 'full' };
     }
 
     // Naya gana / video chalana
@@ -1220,6 +1233,18 @@ function addBotMsg(content, isHTML = false, silent = false) {
     playMediaIndex(media.idx + 1);
   }
 
+  // ---------- Mini mode (player chhota) ----------
+  // Video hamesha dikhta rehta hai (sirf chhota hota hai); poora chhupa kar sirf awaaz chalana YouTube ke rules ke khilaf hai.
+  try { media.mini = localStorage.getItem('roitx_player_mini') === '1'; } catch (e) { media.mini = false; }
+  function setMediaMini(on) {
+    media.mini = !!on;
+    try { localStorage.setItem('roitx_player_mini', media.mini ? '1' : '0'); } catch (e) {}
+    const d = md('mediaDock'); if (!d) return;
+    d.classList.toggle('mini', media.mini);
+    const left = d.closest('.left'); if (left) left.classList.toggle('media-mini', media.mini);
+    const q = md('mdQueue'); if (q && media.mini) q.hidden = true;
+  }
+
   // ---------- Dock UI ----------
   function fmtTime(sec) {
     sec = Math.max(0, Math.floor(sec || 0));
@@ -1230,13 +1255,14 @@ function addBotMsg(content, isHTML = false, silent = false) {
     const d = md('mediaDock'); if (!d) return;
     d.hidden = false;
     const left = d.closest('.left'); if (left) left.classList.add('has-media');
+    setMediaMini(media.mini);          // pichhli baar jo mode tha wahi
   }
   function closeMediaDock() {
     try { if (media.player && media.ready) { mediaDuck(false); media.player.stopVideo(); } } catch (e) {}
     stopMediaTick();
     media.playing = false; media.results = []; media.idx = -1; media.errStreak = 0;
     const d = md('mediaDock');
-    if (d) { d.hidden = true; const left = d.closest('.left'); if (left) left.classList.remove('has-media'); }
+    if (d) { d.hidden = true; const left = d.closest('.left'); if (left) left.classList.remove('has-media', 'media-mini'); }
     const q = md('mdQueue'); if (q) { q.hidden = true; q.textContent = ''; }
     setMediaPlayIcon(false);
     md('mdSeek').value = 0; md('mdCur').textContent = '0:00'; md('mdDur').textContent = '0:00';
@@ -1314,6 +1340,9 @@ function addBotMsg(content, isHTML = false, silent = false) {
     });
     md('mdList').addEventListener('click', () => { const q = md('mdQueue'); q.hidden = !q.hidden; });
     md('mdClose').addEventListener('click', closeMediaDock);
+    md('mdMini').addEventListener('click', () => setMediaMini(true));
+    md('mdExpand').addEventListener('click', () => setMediaMini(false));
+    md('mdCloseMini').addEventListener('click', closeMediaDock);
 
     const seek = md('mdSeek');
     ['pointerdown', 'touchstart'].forEach(ev => seek.addEventListener(ev, () => { media.seeking = true; }, { passive: true }));
@@ -1329,17 +1358,14 @@ function addBotMsg(content, isHTML = false, silent = false) {
   async function handleMediaIntent(intent) {
     if (intent.type === 'control') {
       const p = media.player;
-      if (intent.action === 'stop') { closeMediaDock(); botNote('⏹️ Player band kar diya.'); return; }
-      if (!p || !media.ready) { botNote('Player abhi taiyar nahi hai, thoda ruk kar try karein.'); return; }
-      if (intent.action === 'pause') { p.pauseVideo(); botNote('⏸️ Pause kar diya.'); }
-      else if (intent.action === 'play') { p.playVideo(); botNote('▶️ Phir se chala diya.'); }
-      else if (intent.action === 'next') {
-        if (media.idx + 1 < media.results.length) { playMediaIndex(media.idx + 1); botNote('⏭️ Agla chala raha hu.'); }
-        else botNote('Queue me ye aakhri hai. Naya gana bolein, jaise: "kesariya gana chalao".');
-      } else if (intent.action === 'prev') {
-        if (media.idx > 0) { playMediaIndex(media.idx - 1); botNote('⏮️ Pichla chala raha hu.'); }
-        else botNote('Ye queue ka pehla hai.');
-      }
+      if (intent.action === 'stop') { closeMediaDock(); return; }
+      if (intent.action === 'mini') { setMediaMini(true); return; }
+      if (intent.action === 'full') { setMediaMini(false); return; }
+      if (!p || !media.ready) return;
+      if (intent.action === 'pause') p.pauseVideo();
+      else if (intent.action === 'play') p.playVideo();
+      else if (intent.action === 'next') { if (media.idx + 1 < media.results.length) playMediaIndex(media.idx + 1); }
+      else if (intent.action === 'prev') { if (media.idx > 0) playMediaIndex(media.idx - 1); }
       return;
     }
 
@@ -1349,10 +1375,7 @@ function addBotMsg(content, isHTML = false, silent = false) {
       const list = await mediaSearch(intent.query);
       typing && typing.remove();
       media.results = list; media.idx = -1; media.errStreak = 0;
-      playMediaIndex(0);
-      const first = list[0];
-      botNote('▶️ Chala raha hu: <b>' + escapeHtml(first.title) + '</b><br><span style="color:#94a3b8;font-size:12px">'
-        + escapeHtml(first.artist) + ' · controls upar player me hain</span>');
+      playMediaIndex(0);               // player khud dikhata hai kya chal raha hai, chat me alag message nahi
     } catch (err) {
       typing && typing.remove();
       const link = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(intent.query);
@@ -1657,7 +1680,7 @@ if (cmd.startsWith('open link') || cmd.startsWith('open ')) {
     if (!cleanName.endsWith('.html') && !cleanName.startsWith('http')) {
       cleanName += '.html';
     }
-    finalUrl = `https://roitx.dpdns.org/${cleanName}`;
+    finalUrl = `https://roitx.qd.je/${cleanName}`;
     isInternal = true;
   }
   // CASE 3: Agar normal domain jaisa hai - google.com, youtube.com
@@ -1667,7 +1690,7 @@ if (cmd.startsWith('open link') || cmd.startsWith('open ')) {
   // CASE 4: Baaki bache huye internal short names ke liye
   else {
     let cleanName = input.split(' ')[0].toLowerCase().replace(/[^a-z0-9-_.]/g, '');
-    finalUrl = `https://roitx.dpdns.org/${cleanName}.html`;
+    finalUrl = `https://roitx.qd.je/${cleanName}.html`;
     isInternal = true;
   }
 
