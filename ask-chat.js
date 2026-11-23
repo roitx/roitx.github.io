@@ -1,4 +1,4 @@
-// =========================================================
+    let // =========================================================
 // ask-chat.js — FULL UPDATED WITH MATH EVALUATOR & FIXED TTS
 // =========================================================
 (function () {
@@ -1657,7 +1657,7 @@ if (cmd.startsWith('open link') || cmd.startsWith('open ')) {
     if (!cleanName.endsWith('.html') && !cleanName.startsWith('http')) {
       cleanName += '.html';
     }
-    finalUrl = `https://roitx.qd.je/${cleanName}`;
+    finalUrl = `https://roitx.dpdns.org/${cleanName}`;
     isInternal = true;
   }
   // CASE 3: Agar normal domain jaisa hai - google.com, youtube.com
@@ -1667,7 +1667,7 @@ if (cmd.startsWith('open link') || cmd.startsWith('open ')) {
   // CASE 4: Baaki bache huye internal short names ke liye
   else {
     let cleanName = input.split(' ')[0].toLowerCase().replace(/[^a-z0-9-_.]/g, '');
-    finalUrl = `https://roitx.qd.je/${cleanName}.html`;
+    finalUrl = `https://roitx.dpdns.org/${cleanName}.html`;
     isInternal = true;
   }
 
