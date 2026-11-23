@@ -50,17 +50,168 @@ window.addEventListener('click', unlockAudioEngine, { once: true });
 window.addEventListener('touchstart', unlockAudioEngine, { once: true });
 window.addEventListener('keydown', unlockAudioEngine, { once: true });
 
+/* =====================================================
+   VOICE: math ko bolne layak shabdon me badalna
+   "$$T=\frac{2u\sin\theta}{g}$$" -> "T barabar 2 u sine theta by g"
+   (bhasha ke hisaab se: Hinglish / Hindi / English)
+   ===================================================== */
+const SPEECH_WORDS = {
+  hinglish: { eq:'barabar', plus:'plus', minus:'minus', times:'guna', div:'bhag', by:'by', over:'over', sq:'square', cu:'cube',
+              pow:n=>`power ${n}`, inv:'inverse', sqrt:'square root', root:n=>`${n}th root`, deg:'degree', sub:'sub', vec:'vector',
+              lt:'chhota', gt:'bada', le:'chhota ya barabar', ge:'bada ya barabar', ne:'barabar nahi', approx:'lagbhag barabar', pm:'plus minus',
+              inf:'infinity', to:'tends to', imp:'isliye', sum:'summation', int:'integral', pct:'percent', fact:'factorial', dots:'aur aage', per:'per' },
+  en:       { eq:'equals', plus:'plus', minus:'minus', times:'times', div:'divided by', by:'by', over:'over', sq:'squared', cu:'cubed',
+              pow:n=>`to the power ${n}`, inv:'inverse', sqrt:'square root of', root:n=>`${n}th root of`, deg:'degrees', sub:'sub', vec:'vector',
+              lt:'less than', gt:'greater than', le:'less than or equal to', ge:'greater than or equal to', ne:'not equal to', approx:'approximately equal to', pm:'plus or minus',
+              inf:'infinity', to:'tends to', imp:'therefore', sum:'summation', int:'integral', pct:'percent', fact:'factorial', dots:'and so on', per:'per' },
+  hi:       { eq:'बराबर', plus:'जमा', minus:'घटा', times:'गुणा', div:'भाग', by:'बटा', over:'बटा', sq:'का वर्ग', cu:'का घन',
+              pow:n=>`घात ${n}`, inv:'इन्वर्स', sqrt:'वर्गमूल', root:n=>`${n} वाँ मूल`, deg:'डिग्री', sub:'सब', vec:'सदिश',
+              lt:'से छोटा', gt:'से बड़ा', le:'छोटा या बराबर', ge:'बड़ा या बराबर', ne:'बराबर नहीं', approx:'लगभग बराबर', pm:'प्लस माइनस',
+              inf:'अनंत', to:'की ओर जाता है', imp:'इसलिए', sum:'योग', int:'इंटीग्रल', pct:'प्रतिशत', fact:'फैक्टोरियल', dots:'और आगे', per:'प्रति' }
+};
+const GREEK_EN = { alpha:'alpha', beta:'beta', gamma:'gamma', delta:'delta', Delta:'delta', epsilon:'epsilon', varepsilon:'epsilon', theta:'theta', Theta:'theta',
+  lambda:'lambda', Lambda:'lambda', mu:'mu', nu:'nu', pi:'pi', rho:'rho', sigma:'sigma', Sigma:'sigma', tau:'tau', phi:'phi', varphi:'phi', Phi:'phi',
+  omega:'omega', Omega:'omega', eta:'eta', kappa:'kappa', zeta:'zeta', psi:'psi', chi:'chi', Gamma:'gamma', hbar:'h bar', ell:'l' };
+const GREEK_HI = { alpha:'अल्फा', beta:'बीटा', gamma:'गामा', Gamma:'गामा', delta:'डेल्टा', Delta:'डेल्टा', epsilon:'एप्सिलॉन', varepsilon:'एप्सिलॉन', theta:'थीटा', Theta:'थीटा',
+  lambda:'लैम्ब्डा', Lambda:'लैम्ब्डा', mu:'म्यू', nu:'न्यू', pi:'पाई', rho:'रो', sigma:'सिग्मा', Sigma:'सिग्मा', tau:'टाउ', phi:'फाई', varphi:'फाई', Phi:'फाई',
+  omega:'ओमेगा', Omega:'ओमेगा', eta:'ईटा', kappa:'कप्पा', zeta:'ज़ीटा', psi:'साई', chi:'काई', hbar:'एच बार', ell:'एल' };
+const TRIG_EN = { sin:'sine', cos:'cosine', tan:'tangent', cot:'cotangent', sec:'secant', csc:'cosecant', cosec:'cosecant',
+  sinh:'sinh', cosh:'cosh', tanh:'tanh', log:'log', ln:'natural log', exp:'exponential', lim:'limit', max:'maximum', min:'minimum' };
+const TRIG_HI = { sin:'साइन', cos:'कॉस', tan:'टैन', cot:'कॉट', sec:'सेक', csc:'कोसेक', cosec:'कोसेक',
+  sinh:'साइन एच', cosh:'कॉस एच', tanh:'टैन एच', log:'लॉग', ln:'नेचुरल लॉग', exp:'एक्सपोनेंशियल', lim:'लिमिट', max:'मैक्सिमम', min:'मिनिमम' };
+
+function texToSpeech(tex, lang) {
+  const W = SPEECH_WORDS[lang] || SPEECH_WORDS.hinglish;
+  const GREEK = lang === 'hi' ? GREEK_HI : GREEK_EN;
+  const TRIG = lang === 'hi' ? TRIG_HI : TRIG_EN;
+
+  const SYM = {
+    times: W.times, cdot: W.times, ast: W.times, div: W.div, pm: W.pm, mp: 'minus plus',
+    leq: W.le, le: W.le, geq: W.ge, ge: W.ge, neq: W.ne, ne: W.ne, approx: W.approx, sim: W.approx, equiv: W.eq, propto: lang === 'hi' ? 'समानुपाती' : 'proportional to',
+    infty: W.inf, rightarrow: W.to, to: W.to, Rightarrow: W.imp, implies: W.imp, leftrightarrow: W.eq, therefore: W.imp,
+    circ: W.deg, degree: W.deg, angle: lang === 'hi' ? 'कोण' : 'angle', perp: lang === 'hi' ? 'लंब' : 'perpendicular to', parallel: lang === 'hi' ? 'समानांतर' : 'parallel to',
+    partial: 'partial', nabla: 'nabla', sum: W.sum, int: W.int, prod: 'product', ldots: W.dots, cdots: W.dots, dots: W.dots, ldotp: ' ', prime: 'prime',
+    in: lang === 'hi' ? 'में' : 'in', lt: W.lt, gt: W.gt, '%': W.pct, 'neq': W.ne
+  };
+  const SPACE_CMDS = new Set([',', ';', ':', '!', ' ', 'quad', 'qquad', 'left', 'right', 'displaystyle', 'textstyle', 'big', 'Big', 'bigg', 'limits', 'nolimits', 'hspace', 'vspace', '|', '.', 'bigl', 'bigr', 'Bigl', 'Bigr']);
+  const TEXT_CMDS = new Set(['text', 'mathrm', 'mathbf', 'textbf', 'mathit', 'textit', 'operatorname', 'mbox', 'boldsymbol', 'mathcal', 'bf', 'rm']);
+  const ESCAPED = { '%': W.pct, '$': '', '&': '', '_': ' ', '{': ' ', '}': ' ', '#': ' ' };
+
+  function readGroup(str, pos) {
+    while (str[pos] === ' ') pos++;
+    if (str[pos] === '{') {
+      let depth = 1, j = pos + 1;
+      while (j < str.length && depth) { if (str[j] === '{') depth++; else if (str[j] === '}') depth--; j++; }
+      return [str.slice(pos + 1, depth ? j : j - 1), j];
+    }
+    if (str[pos] === '\\') { const m = str.slice(pos).match(/^\\([a-zA-Z]+|.)/); return m ? [m[0], pos + m[0].length] : ['', pos + 1]; }
+    return [str[pos] || '', pos + 1];
+  }
+  const simple = x => x.trim().split(/\s+/).filter(Boolean).length <= 2;
+  function fracSpeech(n, d) {
+    n = n.trim(); d = d.trim();
+    if (lang === 'hi') return `, ${n} ${W.by} ${d} ,`;
+    return simple(n) && simple(d) ? `${n} ${W.by} ${d}` : `, ${n} , ${W.over} , ${d} ,`;
+  }
+  function powSpeech(a) {
+    const t = a.trim();
+    if (t === '2') return W.sq;
+    if (t === '3') return W.cu;
+    if (t === '\\circ' || t === 'circ' || t === '∘' || t === '°') return W.deg;
+    if (t === '-1' || t === '−1') return W.inv;
+    if (t === '\\prime' || t === "'") return 'prime';
+    return W.pow(conv(t));
+  }
+
+  function conv(str) {
+    let out = '', p = 0;
+    while (p < str.length) {
+      const ch = str[p];
+      if (ch === '\\') {
+        const m = str.slice(p).match(/^\\([a-zA-Z]+|.)/);
+        if (!m) { p++; continue; }
+        const cmd = m[1]; p += m[0].length;
+        if (/^(?:d|t)?frac$/.test(cmd)) {
+          const [a, p1] = readGroup(str, p); const [b, p2] = readGroup(str, p1); p = p2;
+          out += ' ' + fracSpeech(conv(a), conv(b)) + ' '; continue;
+        }
+        if (cmd === 'sqrt') {
+          let idx = '';
+          if (str[p] === '[') { const e = str.indexOf(']', p); if (e > -1) { idx = str.slice(p + 1, e); p = e + 1; } }
+          const [a, p1] = readGroup(str, p); p = p1;
+          const body = conv(a).trim();
+          const head = idx ? (idx.trim() === '3' ? (lang === 'hi' ? 'घनमूल' : 'cube root of') : W.root(conv(idx).trim())) : W.sqrt;
+          out += ' ' + head + ' ' + (simple(body) ? body : `, ${body} ,`) + ' '; continue;
+        }
+        if (TEXT_CMDS.has(cmd)) { const [a, p1] = readGroup(str, p); p = p1; out += ' ' + conv(a) + ' '; continue; }
+        if (cmd === 'vec' || cmd === 'overrightarrow' || cmd === 'mathbf' || cmd === 'hat' || cmd === 'bar' || cmd === 'overline') {
+          const [a, p1] = readGroup(str, p); p = p1;
+          out += ' ' + (cmd === 'hat' ? (lang === 'hi' ? 'हैट' : 'hat') : (cmd === 'bar' || cmd === 'overline') ? (lang === 'hi' ? 'बार' : 'bar') : W.vec) + ' ' + conv(a) + ' '; continue;
+        }
+        if (cmd === 'binom') { const [a, p1] = readGroup(str, p); const [b, p2] = readGroup(str, p1); p = p2; out += ` ${conv(a)} choose ${conv(b)} `; continue; }
+        if (SPACE_CMDS.has(cmd)) { out += ' '; continue; }
+        if (cmd === '\\') { out += ' , '; continue; }
+        if (Object.prototype.hasOwnProperty.call(ESCAPED, cmd)) { out += ' ' + ESCAPED[cmd] + ' '; continue; }
+        if (GREEK[cmd] !== undefined) { out += ' ' + GREEK[cmd] + ' '; continue; }
+        if (TRIG[cmd] !== undefined) { out += ' ' + TRIG[cmd] + ' '; continue; }
+        if (SYM[cmd] !== undefined) { out += ' ' + SYM[cmd] + ' '; continue; }
+        out += ' ' + cmd + ' '; continue;          // unknown command: uska naam hi bol do
+      }
+      if (ch === '^') { p++; const [a, p1] = readGroup(str, p); p = p1; out += ' ' + powSpeech(a) + ' '; continue; }
+      if (ch === '_') { p++; const [a, p1] = readGroup(str, p); p = p1; out += ' ' + W.sub + ' ' + conv(a) + ' '; continue; }
+      if (ch === '{' || ch === '}') { p++; continue; }
+      if (ch === '=') { out += ' ' + W.eq + ' '; p++; continue; }
+      if (ch === '+') { out += ' ' + W.plus + ' '; p++; continue; }
+      if (ch === '-' || ch === '−') { out += ' ' + W.minus + ' '; p++; continue; }
+      if (ch === '*') { out += ' ' + W.times + ' '; p++; continue; }
+      if (ch === '/') { out += ' ' + W.by + ' '; p++; continue; }
+      if (ch === '<') { out += ' ' + W.lt + ' '; p++; continue; }
+      if (ch === '>') { out += ' ' + W.gt + ' '; p++; continue; }
+      if (ch === '!') { out += ' ' + W.fact + ' '; p++; continue; }
+      if (ch === '%') { out += ' ' + W.pct + ' '; p++; continue; }
+      if (ch === '(' || ch === ')' || ch === '[' || ch === ']' || ch === '|') { out += ' '; p++; continue; }
+      if (ch === ',') { out += ' , '; p++; continue; }
+      out += ch; p++;
+    }
+    return out;
+  }
+  return conv(String(tex || '')).replace(/\s+/g, ' ').replace(/\s+,/g, ',').trim();
+}
+
 function cleanTextForNaturalSpeech(text) {
   if (!text) return "";
   let clean = String(text);
+  const lang = (typeof currentLanguage !== 'undefined' && SPEECH_WORDS[currentLanguage]) ? currentLanguage : 'hinglish';
+
+  // 1) Math: $$..$$, \[..\], \(..\), $..$ ko bolne layak shabdon me badlo (HTML tags hatane se PEHLE, kyunki math me < > ho sakta hai)
+  const say = (m, x) => ' , ' + texToSpeech(x, lang) + ' , ';
+  clean = clean
+    .replace(/\$\$([\s\S]+?)\$\$/g, say)
+    .replace(/\\\[([\s\S]+?)\\\]/g, say)
+    .replace(/\\\(([\s\S]+?)\\\)/g, say)
+    .replace(/(?<!\\)\$(?!\s)([^$\n]+?)(?<!\s)\$(?!\d)/g, say);
+
+  // 2) HTML tags
   clean = clean.replace(/<[^>]*>?/gm, '');
-  clean = clean.replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '$1 batte $2');
-  clean = clean.replace(/\\sqrt\{([^}]+)\}/g, 'square root $1');
-  clean = clean.replace(/[\$\#\&\_\{\}\[\]\\\^\%\~]/g, ' '); 
-  clean = clean.replace(/\\alpha/g, 'alpha');
-  clean = clean.replace(/\\beta/g, 'beta');
-  clean = clean.replace(/\\times/g, 'guna');
-  clean = clean.replace(/\\div/g, 'bhag');
+
+  // 3) Jawab ka header ("💡 Solution / Answer:") aur emoji nahi bolne
+  clean = clean.replace(/^\s*(?:\p{Extended_Pictographic}\uFE0F?\s*)?Solution\s*\/\s*Answer\s*:?\s*/iu, '');
+  clean = clean.replace(/[\p{Extended_Pictographic}\uFE0F\u200D]/gu, ' ');
+
+  // 4) Render ho chuke math ke unicode symbols (MathJax text copy hone par) bhi bolne layak karo
+  const W = SPEECH_WORDS[lang];
+  const U = { '²': ' ' + W.sq + ' ', '³': ' ' + W.cu + ' ', '×': ' ' + W.times + ' ', '÷': ' ' + W.div + ' ', '√': ' ' + W.sqrt + ' ', '°': ' ' + W.deg + ' ',
+    '≤': ' ' + W.le + ' ', '≥': ' ' + W.ge + ' ', '≠': ' ' + W.ne + ' ', '≈': ' ' + W.approx + ' ', '→': ' ' + W.to + ' ', '∞': ' ' + W.inf + ' ', '±': ' ' + W.pm + ' ',
+    'θ': ' ' + (lang === 'hi' ? 'थीटा' : 'theta') + ' ', 'π': ' ' + (lang === 'hi' ? 'पाई' : 'pi') + ' ', 'Δ': ' ' + (lang === 'hi' ? 'डेल्टा' : 'delta') + ' ',
+    'α': ' ' + (lang === 'hi' ? 'अल्फा' : 'alpha') + ' ', 'β': ' ' + (lang === 'hi' ? 'बीटा' : 'beta') + ' ', 'λ': ' ' + (lang === 'hi' ? 'लैम्ब्डा' : 'lambda') + ' ',
+    'μ': ' ' + (lang === 'hi' ? 'म्यू' : 'mu') + ' ', 'ω': ' ' + (lang === 'hi' ? 'ओमेगा' : 'omega') + ' ', 'Ω': ' ' + (lang === 'hi' ? 'ओमेगा' : 'omega') + ' ',
+    'φ': ' ' + (lang === 'hi' ? 'फाई' : 'phi') + ' ', 'σ': ' ' + (lang === 'hi' ? 'सिग्मा' : 'sigma') + ' ', 'ρ': ' ' + (lang === 'hi' ? 'रो' : 'rho') + ' ',
+    '=': ' ' + W.eq + ' ', '+': ' ' + W.plus + ' ', '−': ' ' + W.minus + ' ' };
+  clean = clean.replace(/[²³×÷√°≤≥≠≈→∞±θπΔαβλμωΩφσρ=+−]/g, ch => U[ch] || ch);
+  clean = clean.replace(/(\s)-(\s)/g, '$1' + W.minus + '$2');      // "a - b" -> "a minus b" (words ke beech ka hyphen nahi)
+
+  // 5) Bachi hui markdown / symbols
+  clean = clean.replace(/[\*\$\#\&\_\{\}\[\]\\\^\%\~`]/g, ' ');
   return clean.replace(/\s+/g, ' ').trim();
 }
 
@@ -314,6 +465,60 @@ function scrollToBottom() {
   }
 }
 
+/* ---- AI ka andar ka "plan / reasoning" jawab me aa jaye to hata do ----
+   Kabhi kabhi bada AI jawab se pehle apna analysis likh deta hai, jaise:
+     * User Query: "..."   * Context: ...   * Target Audience: ...   * Language: ...   * Format: ...
+   Ye student ko nahi dikhna chahiye. Ye function shuru ke aise "label: value" lines hata deta hai
+   (kam se kam 2 aise lines hon, ya pehli line "User Query" ho, tabhi) aur bacha hua jawab dedent kar deta hai. */
+const LEAK_LABEL_RE = /^[\s>*+\-•◦▪●‣]*(?:\*\*|__)?\s*(?:user\s*(?:query|request|input|message|question)|query|request|question|context|target\s*audience|audience|language|output\s*format|format|constraints?|tone|style|task|goal|objective|plan|strategy|analysis|approach|instructions?|requirements?|role|persona|input|draft(?:ing)?(?:\s*\d+)?|thinking|thoughts?|reasoning|system\s*prompt|level)\s*(?:\*\*|__)?\s*[:：]/i;
+
+function stripLeakedReasoning(raw) {
+  let text = String(raw || '').replace(/\r\n?/g, '\n');
+
+  // <think>...</think> (reasoning models): poora block, ya sirf band hone wala tag aaye to uske pehle ka sab
+  text = text.replace(/<(think|thinking|reasoning)>[\s\S]*?<\/\1>/gi, '').replace(/^[\s\S]*?<\/(?:think|thinking|reasoning)>/i, '');
+
+  const lines = text.split('\n');
+  const indentOf = (l) => (l.match(/^[ \t]*/)[0].replace(/\t/g, '    ')).length;
+
+  let i = 0;
+  while (i < lines.length && !lines[i].trim()) i++;
+
+  let j = i, metaCount = 0, lastMeta = -1, startsWithUser = false;
+  while (j < lines.length) {
+    const ln = lines[j];
+    if (!ln.trim()) { j++; continue; }
+    if (LEAK_LABEL_RE.test(ln)) {
+      if (metaCount === 0 && /user\s*(?:query|request|input|message|question)/i.test(ln)) startsWithUser = true;
+      metaCount++; lastMeta = j; j++; continue;
+    }
+    // label ki value agli line me wrap ho gayi ho (zyada indent, bullet/number nahi)
+    if (lastMeta >= 0 && !lines.slice(lastMeta + 1, j).some(x => x.trim())) {
+      if (indentOf(ln) > indentOf(lines[lastMeta]) && !/^\s*(?:[*+\-•◦▪●‣]|\d+[.)])\s/.test(ln)) { lastMeta = j; j++; continue; }
+    }
+    break;
+  }
+
+  if (metaCount < 2 && !(metaCount >= 1 && startsWithUser)) return text.trim();
+
+  let rest = lines.slice(lastMeta + 1);
+  while (rest.length && !rest[0].trim()) rest.shift();
+  if (!rest.length) return text.trim();     // sirf plan nikla, jawab hi nahi: kuch mat kaato
+
+  // Dedent: jawab plan ke nested bullet ke andar likha tha, use bahar nikaalo
+  const base = indentOf(rest[0]);
+  const bullet = rest[0].trim().match(/^([*+\-•◦▪●‣])\s+/);
+  const childShift = base + (bullet ? 2 : 0);
+  rest = rest.map((l, k) => {
+    const ind = indentOf(l);
+    const cut = k === 0 ? base : Math.min(ind, childShift);
+    return l.replace(/\t/g, '    ').slice(Math.min(cut, ind));
+  });
+  if (bullet) rest[0] = rest[0].replace(/^([*+\-•◦▪●‣])\s+/, '');
+
+  return rest.join('\n').trim();
+}
+
 /* ---- Markdown + Math: marked.parse math ke andar ka backslash/underscore kha jaata hai ----
    Jaise \[ ... \] -> [ ... ], \, -> ",", x_1 y_2 -> <em>. Isliye math ko pehle placeholder se
    bacha lete hain, marked chalate hain, phir asli TeX wapas rakh dete hain (MathJax use render karta hai). */
@@ -358,9 +563,12 @@ function renderMarkdownWithMath(text) {
 
 function cleanAIResponse(rawText) {
   let text = rawText || "";
-  if (text.includes("Step 1") || text.includes("Step1") || text.includes("चरण 1")) {
-    const matchIdx = text.search(/(Step 1|Step1|चरण 1|Given|दिया गया)/i);
-    if (matchIdx !== -1) text = text.substring(matchIdx);
+  // Asli solution "Step 1" / "Given" se shuru hota hai; usse pehle ka (soch-vichar wala) hissa hata do.
+  // Sirf LINE ki shuruaat wale match maane jaate hain (vakya ke beech ka "given" nahi), aur
+  // **, # jaise markdown markers saath rakhe jaate hain, taaki "**Step 1:**" toote nahi.
+  if (/Step\s*1\b|चरण\s*1/i.test(text)) {
+    const m = text.match(/^[ \t>*_#\-]*(?:Step\s*1\b|चरण\s*1|Given\b|दिया\s*गया)/im);
+    if (m && m.index > 0) text = text.substring(m.index);
   }
   return text
     .replace(/I need to follow.*?\n/gi, "")
@@ -1026,9 +1234,12 @@ function scrollToBottom() {
 
 function cleanAIResponse(rawText) {
   let text = rawText || "";
-  if (text.includes("Step 1") || text.includes("Step1") || text.includes("चरण 1")) {
-    const matchIdx = text.search(/(Step 1|Step1|चरण 1|Given|दिया गया)/i);
-    if (matchIdx !== -1) text = text.substring(matchIdx);
+  // Asli solution "Step 1" / "Given" se shuru hota hai; usse pehle ka (soch-vichar wala) hissa hata do.
+  // Sirf LINE ki shuruaat wale match maane jaate hain (vakya ke beech ka "given" nahi), aur
+  // **, # jaise markdown markers saath rakhe jaate hain, taaki "**Step 1:**" toote nahi.
+  if (/Step\s*1\b|चरण\s*1/i.test(text)) {
+    const m = text.match(/^[ \t>*_#\-]*(?:Step\s*1\b|चरण\s*1|Given\b|दिया\s*गया)/im);
+    if (m && m.index > 0) text = text.substring(m.index);
   }
   return text
     .replace(/I need to follow.*?\n/gi, "")
@@ -1647,6 +1858,7 @@ const ACT_ICONS = {
   check: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`,
   up:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>`,
   down:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"></path></svg>`,
+  regen: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.5 15a9 9 0 1 1-2.1-9.4L23 10"></path></svg>`,
   share: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"></line><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"></line></svg>`
 };
 
@@ -1717,6 +1929,29 @@ async function shareMessage(text) {
   }
   const ok = await copyTextToClipboard(`${text}\n\n— ROITX AI Tutor\n${url}`);
   showToast(ok ? 'Share ke liye text copy ho gaya 📋' : 'Share nahi ho paya');
+}
+
+/* ---- Regenerate: wahi sawaal dobara, naya jawab (purana jawab hat jata hai) ---- */
+async function regenerateAnswer(record, msgDiv) {
+  const sendBtn = document.getElementById('solveBtn');
+  if (sendBtn && sendBtn.disabled) return;                     // koi jawab pehle se ban raha hai
+  const meta = record && record.meta;
+  if (!meta || !meta.q) return;
+
+  let question = meta.q, img = null;
+  if (meta.hasImg) {                                           // photo wale sawaal ki photo history me save nahi hoti
+    if (lastRequest && lastRequest.img) { img = lastRequest.img; question = lastRequest.q || ''; }
+    else { showToast(t('regenPhoto')); return; }
+  } else if (meta.q === '[photo question]') {
+    showToast(t('regenPhoto')); return;
+  }
+
+  // Purana jawab chat aur yaaddaasht dono se hatao, naya usi jagah aayega
+  const i = chatHistory.indexOf(record);
+  if (i > -1) { chatHistory.splice(i, 1); persistChat(); }
+  stopCurrentSpeech();
+  if (msgDiv && msgDiv.remove) msgDiv.remove();
+  await window.solveWithAI(question, img);
 }
 
 function makeActBtn(extraClass, title, svg) {
@@ -1834,7 +2069,19 @@ window.appendChatMessage = function (htmlContent, type = "ai", showTime = true, 
       }
     };
 
-    [copyBtn, upBtn, downBtn, shareBtn, speakerBtn].forEach(b => actionBar.appendChild(b));
+    // Regenerate: sirf solve hue jawab par, aur sirf sabse naye jawab par (purane jawabo se hat jata hai)
+    let regenBtn = null;
+    if (record && record.meta && record.meta.q) {
+      container.querySelectorAll('.msg-act-btn.regen').forEach(b => b.remove());
+      // NOTE: chat restore page load par chalta hai, jab I18N abhi bana nahi hota, isliye label safe tarike se lo
+      let regenLabel = 'Regenerate';
+      try { regenLabel = t('regen') || regenLabel; } catch (e) {}
+      regenBtn = makeActBtn("regen", regenLabel, ACT_ICONS.regen);
+      regenBtn.setAttribute('aria-label', regenLabel);
+      regenBtn.onclick = () => regenerateAnswer(record, msgDiv);
+    }
+
+    [copyBtn, upBtn, downBtn, regenBtn, shareBtn, speakerBtn].filter(Boolean).forEach(b => actionBar.appendChild(b));
     msgDiv.appendChild(actionBar);
   }
 
@@ -2040,6 +2287,7 @@ function buildWorkCard(img) {
 
 /* ---- Error card (high demand) + Retry ---- */
 function showErrorCard(kind, detail) {
+  if (detail) console.warn('AI error (' + kind + '):', detail);   // technical detail sirf console me
   const M = { demand: [t('errDemandT'), t('errDemandM')], network: [t('errNetT'), t('errNetM')], generic: [t('errGenT'), t('errGenM')] };
   const [tt, m] = M[kind] || M.generic;
   const box = document.getElementById('answerHistory');
@@ -2051,7 +2299,7 @@ function showErrorCard(kind, detail) {
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
         ${tt}
       </div>
-      <div class="err-msg">${m}${kind === 'generic' && detail ? `<br><small>${escapeHtml(String(detail).slice(0, 140))}</small>` : ''}</div>
+      <div class="err-msg">${m}</div>
       <button type="button" class="retry-btn">
         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.5 15a9 9 0 1 1-2.1-9.4L23 10"></path></svg>
         ${t('retry')}
@@ -2125,7 +2373,8 @@ function buildChatMemory(maxPairs = 4) {
   for (let i = chatHistory.length - 1; i >= 0 && pairs.length < maxPairs; i--) {
     const r = chatHistory[i];
     if (!r || r.type !== 'ai' || !r.meta || !r.meta.q) continue;   // menu/card/error messages chhod do
-    let a = htmlToPlainText(r.html).replace(/^\s*(?:💡\s*)?Solution\s*\/\s*Answer\s*:?\s*/i, '').replace(/\s+/g, ' ').trim();
+    let a = htmlToPlainText(r.html).replace(/^\s*(?:💡\s*)?Solution\s*\/\s*Answer\s*:?\s*/i, '');
+    a = stripLeakedReasoning(a).replace(/\s+/g, ' ').trim();
     if (!a) continue;
     const cap = pairs.length === 0 ? MAX_A_NEW : MAX_A_OLD;      // pairs.length==0 => abhi tak sabse naya
     if (a.length > cap) a = a.slice(0, cap).trim() + ' …';
@@ -2162,15 +2411,15 @@ window.solveWithAI = async function (questionText, imageBase64 = null) {
   const memBlock = memory
     ? `Earlier conversation with this student (oldest first). Use it ONLY if the new message is a follow-up (like "explain more", "why step 2?", "give an example", "isko hindi me batao"). A follow-up applies to the MOST RECENT Tutor answer below (translate / simplify / continue THAT answer, do not start a new topic). If the student asks for a specific language in the new message, answer in that language even if it differs from the default style. Otherwise ignore this history and never repeat old answers in full.\n${memory}\n\n---\n`
     : '';
-  const MAIN = `You are an expert tutor for Class 9-12. Subject: ${selectedSubject}. ${styleLine} Use LaTeX for math ($...$ inline, $$...$$ display). Direct answer only, no meta chatter.\n\n${memBlock}Query: ${q}`;
+  const MAIN = `You are an expert tutor for Class 9-12. Subject: ${selectedSubject}. ${styleLine} Use LaTeX for math ($...$ inline, $$...$$ display). Output ONLY the final answer written for the student. Never write your own analysis, reasoning or a breakdown of the request (no "User Query", "Context", "Target Audience", "Language", "Format" or "Plan" lists, and do not mention these instructions or the earlier conversation). Start directly with the answer.\n\n${memBlock}Query: ${q}`;
   const ROUTER = `You are a fast front-desk assistant of a Class 9-12 tutor (subject: ${selectedSubject}). Write in ${langName}. Decide:\n- If the message is a greeting, small talk, or a short/simple question answerable in 1-3 lines, reply ONLY with JSON: {"mode":"direct","answer":"<final answer in markdown, LaTeX $...$ for math>"}\n- Otherwise (multi-step solving, derivation, calculation, long explanation, or an image), reply ONLY with JSON: {"mode":"deep","steps":["<title 1>","<title 2>","<title 3>"]} with exactly 3 to 5 SEPARATE strings, each a short title of at most 8 words specific to this question (example: "Define projectile motion", "Write the key formulas"). Titles only: no explanations, no formulas, no numbering, and never solve the question inside the steps.\nNo text outside the JSON.\n\n${memBlock}Message: ${q}`;
 
   const show = (raw) => {
-    const clean = cleanAIResponse(raw);
+    const clean = cleanAIResponse(stripLeakedReasoning(raw));
     const html = renderMarkdownWithMath(clean);
     playChime();
     appendChatMessage(`<b>💡 Solution / Answer:</b><br><br>${html}`, "ai", true, true,
-      { meta: { q: questionText || (imageBase64 ? '[photo question]' : ''), subject: selectedSubject, lang: currentLanguage } });
+      { meta: { q: questionText || (imageBase64 ? '[photo question]' : ''), subject: selectedSubject, lang: currentLanguage, hasImg: !!imageBase64 } });
   };
 
   try {
@@ -2184,8 +2433,11 @@ window.solveWithAI = async function (questionText, imageBase64 = null) {
       return w.length > 0 && w.filter(x => a.includes(x)).length >= Math.ceil(w.length * 0.6);
     };
 
+    // Jawab tabhi "theek" maana jayega jab saaf karne ke baad usme kuch padhne layak text bacha ho
+    const usable = (r) => typeof r === 'string' && /[\p{L}\p{N}]/u.test(cleanAIResponse(stripLeakedReasoning(r)));
+
     let route = imageBase64 ? null : await callAI(ROUTER, null, true).then(parseRoute).catch(() => null);
-    if (route && route.mode === 'direct' && looped(route.answer)) route = null;
+    if (route && route.mode === 'direct' && (looped(route.answer) || !usable(route.answer))) route = null;
 
     if (route && route.mode === 'direct') {
       work.log(t('l_direct')); work.finish(); show(route.answer);
@@ -2219,7 +2471,7 @@ window.solveWithAI = async function (questionText, imageBase64 = null) {
       work.log(t('l_slow'));
       try {
         raw = await backupP;
-        if (looped(raw)) throw new Error('loop');
+        if (looped(raw) || !usable(raw)) throw new Error('loop-or-empty');
       } catch (e) {
         if (first.err) throw first.err;          // bada AI bhi fail tha
         raw = await mainP; work.log(t('l_got'));  // backup kharab nikla, bade AI ka intezaar
@@ -2228,6 +2480,7 @@ window.solveWithAI = async function (questionText, imageBase64 = null) {
       if (first.err) throw first.err;
       raw = await mainP; work.log(t('l_got'));
     }
+    if (!usable(raw)) { const e = new Error('Empty answer from AI'); e.kind = 'generic'; throw e; }   // khali jawab: "AI Tutor busy" card
     work.finish(); show(raw);
   } catch (err) {
     work.remove();
@@ -2282,8 +2535,8 @@ const I18N = {
     admin:'Admin ko doubt bhejein', change:'Subject badlein', qstat:'Queue status dekhein', qecho:'Queue Status', home:'Main Menu',
     qPend:n=>`🕒 Aapke abhi <b>${n}</b> doubt admin queue me pending hain.`, qNone:'✅ Aapka koi doubt pending nahi hai!', qErr:'⚠️ Queue status check karne me error aaya.',
     think:'Soch raha hoon…', s_img:'Photo se question padh raha hoon', s_read:'Sawaal samajh raha hoon', s_find:s=>`${s} ke concepts aur formulas dhoondh raha hoon`, s_solve:'Step-by-step solution bana raha hoon', s_verify:'Answer verify kar raha hoon', done:n=>`Soch kar ${n}s me jawab diya`,
-    errDemandT:'ROITX AI par abhi demand bahut zyada hai', errDemandM:'Is waqt bahut saare students sawaal puchh rahe hain. Thodi der baad dobara try karein.',
-    errNetT:'Internet connection me problem hai', errNetM:'Apna network check karke dobara try karein.', errGenT:'Kuch gadbad ho gayi', errGenM:'Answer nahi ban paya. Dobara try karein.', retry:'Retry',
+    errDemandT:'AI Tutor abhi busy hai', errDemandM:'Is waqt bahut saare students sawaal puchh rahe hain. Please thodi der baad dobara try karein.',
+    errNetT:'Internet connection me problem hai', errNetM:'Apna network check karke dobara try karein.', errGenT:'AI Tutor abhi busy hai', errGenM:'Please thodi der baad dobara try karein.', retry:'Retry', regen:'Naya jawab banayein', regenPhoto:'Photo wale sawaal ke liye photo dobara bhejein',
     toastCopy:'Copy ho gaya ✅', toastUp:'Shukriya! Feedback record ho gaya 👍', toastDown:'Feedback note kar liya, isme sudhar kiya jayega 👎', soundOn:'Sound on 🔊', soundOff:'Sound off 🔇',
     micDenied:'Mic ki permission dein', micNo:'Is browser me mic support nahi hai', micOn:'Sun raha hoon…'
   },
@@ -2294,8 +2547,8 @@ const I18N = {
     admin:'एडमिन को सवाल भेजें', change:'विषय बदलें', qstat:'कतार की स्थिति देखें', qecho:'कतार की स्थिति', home:'मुख्य मेनू',
     qPend:n=>`🕒 आपके अभी <b>${n}</b> सवाल एडमिन की कतार में लंबित हैं।`, qNone:'✅ आपका कोई भी सवाल लंबित नहीं है!', qErr:'⚠️ कतार की स्थिति जाँचने में त्रुटि हुई।',
     think:'सोच रहा हूँ…', s_img:'फोटो से सवाल पढ़ रहा हूँ', s_read:'सवाल समझ रहा हूँ', s_find:s=>`${s} की अवधारणाएँ और सूत्र खोज रहा हूँ`, s_solve:'चरण-दर-चरण हल तैयार कर रहा हूँ', s_verify:'उत्तर जाँच रहा हूँ', done:n=>`${n} सेकंड सोचकर उत्तर दिया`,
-    errDemandT:'ROITX AI पर अभी बहुत अधिक माँग है', errDemandM:'इस समय बहुत से विद्यार्थी सवाल पूछ रहे हैं। कुछ देर बाद फिर से प्रयास करें।',
-    errNetT:'इंटरनेट कनेक्शन में समस्या है', errNetM:'अपना नेटवर्क जाँचकर फिर से प्रयास करें।', errGenT:'कुछ गड़बड़ हो गई', errGenM:'उत्तर नहीं बन पाया। फिर से प्रयास करें।', retry:'फिर से प्रयास करें',
+    errDemandT:'AI ट्यूटर अभी व्यस्त है', errDemandM:'इस समय बहुत से विद्यार्थी सवाल पूछ रहे हैं। कृपया थोड़ी देर बाद फिर से प्रयास करें।',
+    errNetT:'इंटरनेट कनेक्शन में समस्या है', errNetM:'अपना नेटवर्क जाँचकर फिर से प्रयास करें।', errGenT:'AI ट्यूटर अभी व्यस्त है', errGenM:'कृपया थोड़ी देर बाद फिर से प्रयास करें।', retry:'फिर से प्रयास करें', regen:'नया उत्तर बनाएँ', regenPhoto:'फ़ोटो वाले सवाल के लिए फ़ोटो दोबारा भेजें',
     toastCopy:'कॉपी हो गया ✅', toastUp:'धन्यवाद! आपकी प्रतिक्रिया दर्ज हो गई 👍', toastDown:'प्रतिक्रिया दर्ज हो गई, इसमें सुधार किया जाएगा 👎', soundOn:'ध्वनि चालू 🔊', soundOff:'ध्वनि बंद 🔇',
     micDenied:'कृपया माइक की अनुमति दें', micNo:'इस ब्राउज़र में माइक समर्थित नहीं है', micOn:'सुन रहा हूँ…'
   },
@@ -2306,8 +2559,8 @@ const I18N = {
     admin:'Send doubt to admin', change:'Change subject', qstat:'Check queue status', qecho:'Queue Status', home:'Main Menu',
     qPend:n=>`🕒 You have <b>${n}</b> request(s) pending in the admin queue.`, qNone:'✅ You have no pending doubts in the queue!', qErr:'⚠️ Could not check the queue status.',
     think:'Thinking…', s_img:'Reading the question from the photo', s_read:'Understanding the question', s_find:s=>`Looking up ${s} concepts and formulas`, s_solve:'Building the step-by-step solution', s_verify:'Verifying the answer', done:n=>`Thought for ${n}s`,
-    errDemandT:'ROITX AI is experiencing high demand', errDemandM:'Many students are asking questions right now. Please try again in a little while.',
-    errNetT:'There is a problem with your internet connection', errNetM:'Check your network and try again.', errGenT:'Something went wrong', errGenM:'Could not generate an answer. Please try again.', retry:'Retry',
+    errDemandT:'AI Tutor is busy right now', errDemandM:'Many students are asking questions right now. Please try again after some time.',
+    errNetT:'There is a problem with your internet connection', errNetM:'Check your network and try again.', errGenT:'AI Tutor is busy right now', errGenM:'Please try again after some time.', retry:'Retry', regen:'Regenerate', regenPhoto:'Please upload the photo again to regenerate',
     toastCopy:'Copied ✅', toastUp:'Thanks! Your feedback was recorded 👍', toastDown:'Feedback noted, we will work on improving this 👎', soundOn:'Sound on 🔊', soundOff:'Sound off 🔇',
     micDenied:'Please allow microphone access', micNo:'Microphone is not supported in this browser', micOn:'Listening…'
   }
