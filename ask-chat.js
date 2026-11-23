@@ -25,6 +25,32 @@
     }
   };
 
+  // ---- MUSIC/VIDEO PLAYER STATE (poora player neeche "MUSIC / VIDEO PLAYER" section me hai) ----
+  const media = {
+    player: null, ready: false, readyCbs: [], apiPromise: null,
+    results: [], idx: -1, playing: false, loop: false, muted: false,
+    tick: null, errStreak: 0, ducked: false, userVol: 100, duckTimer: null, seeking: false
+  };
+
+  // Bot bolta hai to gaane ki awaaz kam (duck) ho jati hai, bolne ke baad wapas normal.
+  function mediaDuck(on) {
+    try {
+      const p = media.player;
+      if (!p || !media.ready || !p.setVolume) return;
+      clearTimeout(media.duckTimer);
+      if (on) {
+        if (!media.playing || media.ducked) return;
+        media.ducked = true;
+        media.userVol = p.getVolume ? p.getVolume() : 100;
+        p.setVolume(Math.max(8, Math.round(media.userVol * 0.2)));
+        media.duckTimer = setTimeout(() => mediaDuck(false), 90000);   // safety: kabhi atak na jaye
+      } else if (media.ducked) {
+        media.ducked = false;
+        p.setVolume(media.userVol);
+      }
+    } catch (e) {}
+  }
+
   // ---- TEXT CLEANING FOR TTS (Single Robust Function) ----
   function cleanTextForNaturalSpeech(text) {
     if (!text) return "";
@@ -155,8 +181,11 @@
   function speakSynced(visText, opts) {
     opts = opts || {};
     const reveal = opts.onReveal || function () {};
-    const onDone = opts.onDone || function () {};
-    const onFail = opts.onFail || function () {};
+    const userDone = opts.onDone || function () {};
+    const userFail = opts.onFail || function () {};
+    // speech khatam / fail ho to gaane ki awaaz wapas normal
+    const onDone = function () { mediaDuck(false); userDone.apply(this, arguments); };
+    const onFail = function () { mediaDuck(false); userFail.apply(this, arguments); };
     const btn = opts.btn || null;
 
     if (!('speechSynthesis' in window)) { onFail(); return; }
@@ -173,6 +202,7 @@
 
     stopCurrentSpeech();
     const token = speechToken;
+    mediaDuck(true);
 
     // ---- 1) Words banao (screen text ke har word ka bola jaane wala roop) ----
     const words = [];
@@ -1032,11 +1062,314 @@ function addBotMsg(content, isHTML = false, silent = false) {
     }
   }
 
+  // =========================================================
+  // MUSIC / VIDEO PLAYER — study-timer jaisa
+  //   "kesariya gana chalao", "play lofi music", "newton ka video dikhao"
+  //   -> YouTube par search, pehla result chalta hai; upar player me
+  //      play/pause, prev/next, -10s/+10s, seek, repeat, mute aur queue (results list).
+  //   "pause", "next gana", "pichla gana", "gana band karo" jaise commands bhi chalte hain.
+  // =========================================================
+  // NOTE: study-timer.html wali hi key. Ye browser me dikhti hai, isliye Google Cloud Console me
+  // ise HTTP referrer (apni site) aur "YouTube Data API v3" tak restrict rakho.
+  const YOUTUBE_API_KEY = 'AIzaSyDWIrD-DAAnwHx9VOPdBJ06QsDTEnBuAow';
+  const VIDEO_ID_RE = /^[\w-]{11}$/;
+  const md = id => document.getElementById(id);
+
+  const MEDIA_VERB_SRC = '(?:play|chalao|chala\\s*do|chalado|chalu\\s*kar(?:o|do)?|bajao|baja\\s*do|bajado|sunao|suna\\s*do|sunado|sunana|sunna|sunni|lagao|laga\\s*do|lagado|dikhao|dikha\\s*do|dikhado|dekhna|dekhni|dekhao)';
+  const MEDIA_NOUN_RE = /\b(?:gana|gaana|gane|gaane|song|songs|music|bhajan|video|videos|lofi|playlist|track|ghazal|qawwali|aarti|mantra|lecture)\b/i;
+  const DEV_VERB_SRC = '(?:चला\\s*दो|चलाओ|चला\\s*दीजिए|चालू\\s*करो|बजाओ|बजा\\s*दो|सुनाओ|सुना\\s*दो|दिखाओ|दिखा\\s*दो)';
+  const DEV_NOUN_SRC = '(?:गाना|गाने|गीत|संगीत|वीडियो|भजन)';
+
+  const ICON = {
+    play: '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>',
+    pause: '<svg viewBox="0 0 24 24"><path d="M6 5h4v14H6zM14 5h4v14h-4z" fill="currentColor"/></svg>',
+    vol: '<svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5zM19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    mute: '<svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5zM23 9l-6 6M17 9l6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+  };
+
+  function mediaDockVisible() {
+    const d = md('mediaDock');
+    return !!d && !d.hidden;
+  }
+  function botNote(html) { addBotMsg(html, true, true); }   // silent: gaane ke upar awaaz nahi
+
+  // ---------- Command samajhna ----------
+  function parseMediaIntent(cmd) {
+    if (!cmd || /^(?:open|create note)\b/.test(cmd)) return null;
+    const words = cmd.split(/\s+/).length;
+    const hasNoun = MEDIA_NOUN_RE.test(cmd) || new RegExp(DEV_NOUN_SRC).test(cmd);
+
+    // Player ke controls: sirf jab player khula ho
+    if (mediaDockVisible()) {
+      if (/^(?:pause|ruko|ruk\s*jao)\b/.test(cmd) || (/\b(?:pause|ruko)\b/.test(cmd) && hasNoun)) return { type: 'control', action: 'pause' };
+      if (/^(?:resume|continue|phir\s*se\s*chalao|fir\s*se\s*chalao)\b/.test(cmd) && words <= 4) return { type: 'control', action: 'play' };
+      if (/\b(?:band|bandh|stop|roko|rok\s*do|hata\s*do|close)\b/.test(cmd) && (hasNoun || words <= 2)) return { type: 'control', action: 'stop' };
+      if (/\b(?:next|agla|agli|skip)\b/.test(cmd) && (hasNoun || words <= 2)) return { type: 'control', action: 'next' };
+      if (/\b(?:previous|prev|pichla|pichhla|pehle\s*wala)\b/.test(cmd) && (hasNoun || words <= 2)) return { type: 'control', action: 'prev' };
+    }
+
+    // Naya gana / video chalana
+    const hasVerb = new RegExp('\\b' + MEDIA_VERB_SRC + '\\b', 'i').test(cmd) || new RegExp(DEV_VERB_SRC).test(cmd);
+    const startsPlay = /^(?:play|bajao)\s+\S+/.test(cmd) && !/^play\s+(?:store|game|games|quiz|test|mock)\b/.test(cmd);
+    // Verb ke bina bhi: chhota message jisme gana/song/music/video ho aur koi sawal/padhai ka shabd na ho
+    // (jaise "shakira ka gana", "सकितानी पर गाना", "newton ka video")
+    const askingSomething = /[?？]/.test(cmd)
+      || /\b(?:kya|kaise|kaun|kab|kyu|kyun|kahan|kitna|kitne|what|how|why|when|who|which|meaning|matlab|definition|explain|batao|bataiye|likho|essay|notes?|pdf|formula|difference|example|answer)\b/i.test(cmd)
+      || /क्या|कैसे|कौन|कब|क्यों|कहाँ|कितना|मतलब|बताओ|बताइए|लिखो|नोट्स/.test(cmd);
+    const bareMedia = !hasVerb && !askingSomething && words <= 6
+      && (/\b(?:gana|gaana|gane|gaane|songs?|music|bhajan|lofi|playlist|ghazal|qawwali|aarti|videos?)\b/i.test(cmd)
+          || new RegExp(DEV_NOUN_SRC).test(cmd));
+    if (!((hasVerb && hasNoun) || startsPlay || bareMedia)) return null;
+    return Object.assign({ type: 'play' }, buildMediaQuery(cmd));
+  }
+
+  function buildMediaQuery(cmd) {
+    const audio = /\b(?:gana|gaana|gane|gaane|songs?)\b/i.test(cmd) || /गाना|गाने|गीत|संगीत/.test(cmd);
+    const music = /\bmusic\b/i.test(cmd);
+    const video = /\bvideos?\b/i.test(cmd) || /वीडियो/.test(cmd);
+
+    let q = ' ' + cmd + ' ';
+    q = q.replace(new RegExp('\\b' + MEDIA_VERB_SRC + '\\b', 'gi'), ' ').replace(new RegExp(DEV_VERB_SRC, 'g'), ' ');
+    q = q.replace(/\b(?:gana|gaana|gane|gaane|songs?|music|videos?|track)\b/gi, ' ').replace(new RegExp(DEV_NOUN_SRC, 'g'), ' ');
+    q = q.replace(/\b(?:ka|ke|ki|ko|ek|koi|mujhe|mere|liye|please|plz|pls|zara|na|yaar|bhai|bro|ab|abhi|kar|karo|do|de|dena|dedo|hai|h|hi|wala|wali|wale|youtube|yt|par|pe|aur|phir|fir|me)\b/gi, ' ');
+    q = q.replace(/(?<![\p{L}\p{M}])(?:का|के|की|को|एक|कोई|मुझे|प्लीज़|यूट्यूब|पर|और)(?![\p{L}\p{M}])/gu, ' ');
+    q = q.replace(/[^\p{L}\p{M}\p{N}\s'&-]/gu, ' ').replace(/\s+/g, ' ').trim();
+
+    const hasSuffix = /\b(?:song|songs|music|lofi|bhajan|ghazal|qawwali|aarti|mantra|playlist|video|lecture)\b/i;
+    if (q && audio && !hasSuffix.test(q)) q += ' song';
+    else if (q && music && !hasSuffix.test(q)) q += ' music';
+    else if (q && video && !hasSuffix.test(q)) q += ' video';
+    if (!q) q = (video && !audio && !music) ? 'study motivation video' : 'lofi hip hop study music';
+    return { query: q.slice(0, 120) };
+  }
+
+  // ---------- YouTube search ----------
+  function decodeEntities(str) {
+    return new DOMParser().parseFromString(String(str || ''), 'text/html').documentElement.textContent || '';
+  }
+  async function mediaSearch(query) {
+    const url = 'https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=15&type=video&videoEmbeddable=true&safeSearch=moderate&q='
+      + encodeURIComponent(query) + '&key=' + YOUTUBE_API_KEY;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.error) throw new Error((data.error && data.error.message) || 'YouTube API error');
+    const list = (data.items || [])
+      .filter(it => it.id && VIDEO_ID_RE.test(it.id.videoId || ''))
+      .map(it => ({ id: it.id.videoId, title: decodeEntities(it.snippet.title), artist: decodeEntities(it.snippet.channelTitle) }));
+    if (!list.length) throw new Error('Koi result nahi mila');
+    return list;
+  }
+
+  // ---------- YouTube player (pehli baar chalne par hi load hota hai) ----------
+  function loadYouTubeApi() {
+    if (window.YT && window.YT.Player) return Promise.resolve();
+    if (media.apiPromise) return media.apiPromise;
+    media.apiPromise = new Promise((resolve, reject) => {
+      const prev = window.onYouTubeIframeAPIReady;
+      window.onYouTubeIframeAPIReady = function () { try { if (typeof prev === 'function') prev(); } catch (e) {} resolve(); };
+      const sc = document.createElement('script');
+      sc.src = 'https://www.youtube.com/iframe_api';
+      sc.onerror = () => { media.apiPromise = null; reject(new Error('YouTube player load nahi hua')); };
+      document.head.appendChild(sc);
+      setTimeout(() => {
+        if (!(window.YT && window.YT.Player)) { media.apiPromise = null; reject(new Error('YouTube player load nahi hua')); }
+      }, 12000);
+    });
+    return media.apiPromise;
+  }
+
+  function ensureMediaPlayer() {
+    if (media.player && media.ready) return Promise.resolve(media.player);
+    return loadYouTubeApi().then(() => new Promise((resolve) => {
+      if (media.ready) return resolve(media.player);
+      media.readyCbs.push(resolve);
+      if (!media.player) {
+        media.player = new window.YT.Player('mdPlayerHost', {
+          width: '100%', height: '100%',
+          playerVars: { autoplay: 1, controls: 1, modestbranding: 1, rel: 0, playsinline: 1 },
+          events: { onReady: onMediaReady, onStateChange: onMediaState, onError: onMediaError }
+        });
+      }
+    }));
+  }
+  function onMediaReady(e) {
+    media.player = media.player || (e && e.target);
+    media.ready = true;
+    if (media.player.setPlaybackQuality) media.player.setPlaybackQuality('medium');
+    media.readyCbs.splice(0).forEach(cb => cb(media.player));
+  }
+  function onMediaState(e) {
+    const S = window.YT.PlayerState;
+    if (e.data === S.PLAYING) {
+      media.playing = true; media.errStreak = 0; setMediaPlayIcon(true); startMediaTick();
+    } else if (e.data === S.PAUSED) {
+      media.playing = false; setMediaPlayIcon(false); stopMediaTick();
+    } else if (e.data === S.ENDED) {
+      if (media.loop) { media.player.seekTo(0); media.player.playVideo(); }
+      else if (media.idx + 1 < media.results.length) playMediaIndex(media.idx + 1);
+      else { media.playing = false; setMediaPlayIcon(false); stopMediaTick(); }
+    }
+  }
+  function onMediaError() {
+    // Video embed band / hata hua: agla try karo (max 3 baar), phir ruk jao
+    if (++media.errStreak > 3 || media.idx + 1 >= media.results.length) {
+      media.playing = false; setMediaPlayIcon(false);
+      botNote('⚠️ Ye video play nahi ho paya. Queue (☰) se koi doosra chunein.');
+      return;
+    }
+    playMediaIndex(media.idx + 1);
+  }
+
+  // ---------- Dock UI ----------
+  function fmtTime(sec) {
+    sec = Math.max(0, Math.floor(sec || 0));
+    return Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0');
+  }
+  function setMediaPlayIcon(playing) { const b = md('mdPlay'); if (b) b.innerHTML = playing ? ICON.pause : ICON.play; }
+  function showMediaDock() {
+    const d = md('mediaDock'); if (!d) return;
+    d.hidden = false;
+    const left = d.closest('.left'); if (left) left.classList.add('has-media');
+  }
+  function closeMediaDock() {
+    try { if (media.player && media.ready) { mediaDuck(false); media.player.stopVideo(); } } catch (e) {}
+    stopMediaTick();
+    media.playing = false; media.results = []; media.idx = -1; media.errStreak = 0;
+    const d = md('mediaDock');
+    if (d) { d.hidden = true; const left = d.closest('.left'); if (left) left.classList.remove('has-media'); }
+    const q = md('mdQueue'); if (q) { q.hidden = true; q.textContent = ''; }
+    setMediaPlayIcon(false);
+    md('mdSeek').value = 0; md('mdCur').textContent = '0:00'; md('mdDur').textContent = '0:00';
+  }
+  function updateMediaNav() {
+    md('mdPrev').disabled = media.idx <= 0;
+    md('mdNext').disabled = media.idx < 0 || media.idx >= media.results.length - 1;
+  }
+  function renderMediaQueue() {
+    const box = md('mdQueue'); if (!box) return;
+    box.textContent = '';
+    media.results.forEach((song, i) => {
+      const row = document.createElement('button');
+      row.type = 'button';
+      row.className = 'md-q-item' + (i === media.idx ? ' playing' : '');
+      const img = document.createElement('img');
+      img.src = 'https://img.youtube.com/vi/' + song.id + '/default.jpg'; img.alt = ''; img.loading = 'lazy';
+      const txt = document.createElement('div'); txt.className = 'md-q-text';
+      const t = document.createElement('div'); t.className = 'md-q-title'; t.textContent = song.title;
+      const a = document.createElement('div'); a.className = 'md-q-artist'; a.textContent = song.artist;
+      txt.append(t, a);
+      row.append(img, txt);
+      row.addEventListener('click', () => { playMediaIndex(i); box.hidden = true; });
+      box.appendChild(row);
+    });
+  }
+  function startMediaTick() { stopMediaTick(); media.tick = setInterval(updateMediaProgress, 500); updateMediaProgress(); }
+  function stopMediaTick() { clearInterval(media.tick); media.tick = null; }
+  function updateMediaProgress() {
+    const p = media.player;
+    if (!p || !p.getCurrentTime || media.seeking) return;
+    const cur = p.getCurrentTime() || 0, dur = p.getDuration() || 0;
+    if (dur > 0) {
+      md('mdSeek').value = (cur / dur) * 100;
+      md('mdCur').textContent = fmtTime(cur);
+      md('mdDur').textContent = fmtTime(dur);
+    }
+  }
+
+  function playMediaIndex(i) {
+    if (i < 0 || i >= media.results.length) return;
+    media.idx = i;
+    const song = media.results[i];
+    showMediaDock();
+    md('mdTitle').textContent = song.title;
+    md('mdArtist').textContent = song.artist;
+    const art = md('mdArt'); art.src = 'https://img.youtube.com/vi/' + song.id + '/hqdefault.jpg'; art.hidden = false;
+    renderMediaQueue();
+    updateMediaNav();
+    ensureMediaPlayer()
+      .then(p => { p.loadVideoById({ videoId: song.id, suggestedQuality: 'medium' }); if (media.muted && p.mute) p.mute(); })
+      .catch(() => botNote('⚠️ YouTube player load nahi ho paya. Internet check karke dobara try karein.'));
+  }
+
+  function bindMediaDock() {
+    if (!md('mediaDock')) return;
+    md('mdPlay').addEventListener('click', () => {
+      const p = media.player; if (!p || !media.ready) return;
+      if (media.playing) p.pauseVideo(); else p.playVideo();
+    });
+    md('mdPrev').addEventListener('click', () => {
+      const p = media.player;
+      if (p && media.ready && p.getCurrentTime && p.getCurrentTime() > 3) p.seekTo(0, true);   // 3 sec se zyada chala ho to restart
+      else playMediaIndex(media.idx - 1);
+    });
+    md('mdNext').addEventListener('click', () => playMediaIndex(media.idx + 1));
+    md('mdBack').addEventListener('click', () => { const p = media.player; if (p && media.ready) p.seekTo(Math.max(0, p.getCurrentTime() - 10), true); });
+    md('mdFwd').addEventListener('click', () => { const p = media.player; if (p && media.ready) p.seekTo(p.getCurrentTime() + 10, true); });
+    md('mdRepeat').addEventListener('click', () => { media.loop = !media.loop; md('mdRepeat').classList.toggle('active', media.loop); });
+    md('mdMute').addEventListener('click', () => {
+      const p = media.player; if (!p || !media.ready) return;
+      media.muted = !media.muted;
+      if (media.muted) p.mute(); else p.unMute();
+      md('mdMute').innerHTML = media.muted ? ICON.mute : ICON.vol;
+    });
+    md('mdList').addEventListener('click', () => { const q = md('mdQueue'); q.hidden = !q.hidden; });
+    md('mdClose').addEventListener('click', closeMediaDock);
+
+    const seek = md('mdSeek');
+    ['pointerdown', 'touchstart'].forEach(ev => seek.addEventListener(ev, () => { media.seeking = true; }, { passive: true }));
+    ['pointerup', 'touchend', 'change'].forEach(ev => seek.addEventListener(ev, () => { media.seeking = false; }, { passive: true }));
+    seek.addEventListener('input', (e) => {
+      const p = media.player;
+      if (p && media.ready && p.getDuration) p.seekTo((e.target.value / 100) * p.getDuration(), true);
+    });
+  }
+  bindMediaDock();
+
+  // ---------- Chat se aaye command ko chalana ----------
+  async function handleMediaIntent(intent) {
+    if (intent.type === 'control') {
+      const p = media.player;
+      if (intent.action === 'stop') { closeMediaDock(); botNote('⏹️ Player band kar diya.'); return; }
+      if (!p || !media.ready) { botNote('Player abhi taiyar nahi hai, thoda ruk kar try karein.'); return; }
+      if (intent.action === 'pause') { p.pauseVideo(); botNote('⏸️ Pause kar diya.'); }
+      else if (intent.action === 'play') { p.playVideo(); botNote('▶️ Phir se chala diya.'); }
+      else if (intent.action === 'next') {
+        if (media.idx + 1 < media.results.length) { playMediaIndex(media.idx + 1); botNote('⏭️ Agla chala raha hu.'); }
+        else botNote('Queue me ye aakhri hai. Naya gana bolein, jaise: "kesariya gana chalao".');
+      } else if (intent.action === 'prev') {
+        if (media.idx > 0) { playMediaIndex(media.idx - 1); botNote('⏮️ Pichla chala raha hu.'); }
+        else botNote('Ye queue ka pehla hai.');
+      }
+      return;
+    }
+
+    stopCurrentSpeech();                    // pehle ki bot awaaz gaane ke upar na aaye
+    const typing = showTyping();
+    try {
+      const list = await mediaSearch(intent.query);
+      typing && typing.remove();
+      media.results = list; media.idx = -1; media.errStreak = 0;
+      playMediaIndex(0);
+      const first = list[0];
+      botNote('▶️ Chala raha hu: <b>' + escapeHtml(first.title) + '</b><br><span style="color:#94a3b8;font-size:12px">'
+        + escapeHtml(first.artist) + ' · controls upar player me hain</span>');
+    } catch (err) {
+      typing && typing.remove();
+      const link = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(intent.query);
+      botNote('⚠️ Abhi player me chala nahi paya (' + escapeHtml(err && err.message ? err.message : 'error') + ').<br>YouTube par seedha dekhein: '
+        + '<a class="chat-link" href="' + link + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(intent.query) + '</a>');
+    }
+  }
+
   // ---- SMART COMMAND DISPATCHER ----
   async function handleCommand(raw) {
     const cmd = normalize(raw);
 
     if (cmd === 'voice' || cmd === 'voices' || cmd === 'awaaz' || cmd === 'change voice') { showVoicePicker(); return; }
+
+    // 0. MUSIC / VIDEO: "gana chalao", "play ...", "... ka video dikhao" -> study-timer jaisa player
+    const mediaIntent = parseMediaIntent(cmd);
+    if (mediaIntent) { await handleMediaIntent(mediaIntent); return; }
 
         // 1. CREATOR DETAILS
     if (cmd.includes('kiske dwara') || cmd.includes('kisne banaya') || cmd.includes('who made') || cmd.includes('who created') || cmd.includes('developer') || cmd.includes('creator') || cmd.includes('owner') || cmd === 'rohit' || cmd.includes('rohit kaun')) {
@@ -1804,7 +2137,6 @@ When a user asks for classes, study materials, subjects, tools, or website navig
 
 --- STRICT SAFETY, CREATOR & FALLBACK RULES ---
 1. CREATOR PRIVACY: Do NOT mention "Rohit" or "Created by Rohit" in normal academic answers. Include developer details ONLY if the user explicitly asks "who created this", "who built this", "developer info", or "Rohit kaun hai". When asked, direct them to <a href="about.html">About Developer</a>.
-- Do not use the name 'Rohit' until the user asks about the creator.
 2. UNCERTAINTY / FALLBACK: If you are unsure about a complex question or lack exact study material, answer to the best of your ability and suggest posting the query on <a href="solver.html">Doubt Solver</a>.
 3. OUT OF SCOPE: If a user asks a query completely unrelated to studies/learning or website navigation, politely redirect them back to study topics.
 4. FORMATTING: Use bold formatting (**like this**) for key terms, definitions, and mathematical formulas.
@@ -2104,6 +2436,26 @@ ${userQuery}`;
     // 3. Agar koi word 5 baar se zyada consecutive repeat ho raha ho
     const repeatingPattern = /(\b\w+\b)(?:\s+\1){4,}/i;
     if (repeatingPattern.test(text)) return true;
+
+    // 3b. Kisi bhi bhasha (Hindi/Devanagari bhi) me 1-8 shabdon ka phrase lagatar dohrane lage
+    //     (jaise "सकितानी पर गाना सकितानी पर गाना ..."). \w sirf English pakadta hai, isliye words se compare.
+    const toks = text.toLowerCase().split(/\s+/).filter(Boolean);
+    if (toks.length >= 8) {
+      for (let n = 1; n <= 8; n++) {
+        const need = n === 1 ? 5 : 4;                       // kam se kam itni baar lagatar repeat
+        if (toks.length < n * need) break;
+        for (let i = 0; i + n * need <= toks.length; i++) {
+          let reps = 1;
+          for (let j = i + n; j + n <= toks.length; j += n) {
+            let same = true;
+            for (let k = 0; k < n; k++) { if (toks[j + k] !== toks[i + k]) { same = false; break; } }
+            if (!same) break;
+            reps++;
+            if (reps >= need) return true;
+          }
+        }
+      }
+    }
 
     // 4. Agar text ki length lambi hai aur same words baar-baar loop me aa rahe hain
     const words = text.split(/\s+/);
