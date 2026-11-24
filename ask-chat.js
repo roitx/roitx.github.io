@@ -11,10 +11,10 @@
   let miniCalCurDate = new Date();
   let currentUtterance = null;
   
-  // Speaker har naye visit par ON rehta hai. Mute sirf usi session tak yaad rehta hai.
-  try { localStorage.removeItem('roitx_speech_pref'); } catch (e) {}
+  // Speaker har naye visit / page load par ON rehta hai (greeting hamesha bolegi).
+  // Mute sirf usi page-view tak chalta hai; pehle ye sessionStorage me atak jata tha aur agli baar greeting chup rehti thi.
+  try { localStorage.removeItem('roitx_speech_pref'); sessionStorage.removeItem('roitx_speech_pref'); } catch (e) {}
   let isSpeechEnabledGlobally = true;
-  try { isSpeechEnabledGlobally = sessionStorage.getItem('roitx_speech_pref') !== 'false'; } catch (e) {}
 
   window.activeSpeakerBtn = null;
 
@@ -151,11 +151,12 @@
   let pendingSpeech = null;
   ['pointerup', 'touchend', 'click', 'keydown'].forEach(ev => {
     document.addEventListener(ev, function () {
-      if (userGestureSeen) return;
       userGestureSeen = true;
       const p = pendingSpeech;
+      if (!p) return;
       pendingSpeech = null;
-      if (p && isSpeechEnabledGlobally) speakSynced(p.text, { btn: p.btn });
+      // 5 min se purani rukhi hui awaaz ab nahi bolni
+      if (isSpeechEnabledGlobally && Date.now() - p.at < 5 * 60 * 1000) speakSynced(p.text, { btn: p.btn, _retry: (p.tries || 0) + 1 });
     }, { capture: true, passive: true });
   });
 
@@ -195,8 +196,10 @@
 
     // Browser bina tap ke awaaz block kare to yeh text pehle tap par bola jayega
     function markBlocked() {
-      if (userGestureSeen) return;
-      pendingSpeech = { text: visText, btn: btn };
+      // Chahe pehle koi tap ho chuka ho, agar browser ne roka to agle tap par dobara try karo (max 2 baar)
+      const tries = opts._retry || 0;
+      if (tries >= 2) return;
+      pendingSpeech = { text: visText, btn: btn, at: Date.now(), tries: tries };
       if (btn) btn.style.animation = 'pulseAi 1.2s infinite'; // speaker halka blink karega
     }
 
@@ -567,6 +570,19 @@
   updateNotesCount();
   initUserGreeting();
 
+  // Browser ke Back/Forward se isi page par wapas aane par (page cache se aata hai, naya load nahi hota) greeting phir bolo
+  window.addEventListener('pageshow', (e) => {
+    if (!e.persisted || !isSpeechEnabledGlobally) return;
+    try {
+      const first = chatWindow && chatWindow.querySelector('.msg.bot');
+      if (!first) return;
+      const clone = first.cloneNode(true);
+      clone.querySelectorAll('button').forEach(b => b.remove());
+      const txt = (clone.textContent || '').replace(/\s+/g, ' ').trim();
+      if (txt) speakSynced(txt, { btn: first.querySelector('.msg-speaker-btn') });
+    } catch (err) {}
+  });
+
   sendBtn && sendBtn.addEventListener('click', onSend);
 
   // ---- Mic <-> Send: input khali ho to sirf mic dikhe, type karte hi send ----
@@ -855,11 +871,9 @@ function addBotMsg(content, isHTML = false, silent = false) {
     if (window.activeSpeakerBtn === speakerBtn) {
       stopCurrentSpeech();
       isSpeechEnabledGlobally = false;
-      sessionStorage.setItem('roitx_speech_pref', 'false');
       speakerBtn.innerHTML = speakerOffSvg;
     } else {
       isSpeechEnabledGlobally = true;
-      sessionStorage.setItem('roitx_speech_pref', 'true');
       speakerBtn.innerHTML = speakerOnSvg;
       speakSynced(getPlain(), { btn: speakerBtn });
     }
