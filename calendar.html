@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#04101a" />
   
   <!-- SEO Meta Tags -->
   <title>Roitx Calendar — Smart Schedule & Indian Holiday Tracker</title>
@@ -44,6 +45,7 @@
 <header>
   <img src="calendar.png" alt="Roitx Calendar">
   <h1>Roitx — Calendar</h1>
+  <button class="icon-btn header-export" id="exportBtn" onclick="confirmExport()" title="Export month" aria-label="Export month"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
 </header>
 
 <!-- HOLIDAY WISH BANNER -->
@@ -59,8 +61,8 @@
       </div>
 
       <div class="cal-nav">
-        <button class="cal-btn" id="prevBtn">◀</button>
-        <button class="cal-btn" id="nextBtn">▶</button>
+        <button class="cal-btn" id="prevBtn" aria-label="Previous month"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg></button>
+        <button class="cal-btn" id="nextBtn" aria-label="Next month"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg></button>
         <input type="date" id="gotoDate" title="Go to date">
       </div>
     </div>
@@ -77,14 +79,16 @@
   <!-- SIDE PANEL -->
   <aside class="side">
     <div class="mini" id="eventFormSection">
-      <h3 style="margin:0 0 8px 0; color:#3aa0ff;">📌 Create Personal Event</h3>
+      <h3 style="margin:0 0 8px 0; color:#3aa0ff;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> Create Personal Event</h3>
       <input type="date" id="eventDate" class="event-input">
       <input type="text" id="eventName" class="event-input" placeholder="Event Name">
       <button class="cal-btn" onclick="addEvent()" style="width:100%; background:var(--accent); color:#fff;">Save Event</button>
       <div id="eventMsg" style="margin-top:6px; font-size:12px;"></div>
     </div>
 
-    <div class="mini">
+    <div id="eventList"></div>
+
+    <div class="mini" id="legendBox">
       <h4 style="margin:0 0 8px 0; color:#e9f5ff;">Legend</h4>
       <div class="legend">
         <div style="display:flex;gap:8px;align-items:center"><span class="dot" style="background:#3aa0ff"></span> Today</div>
@@ -95,10 +99,8 @@
       </div>    
     </div>
 
-    <div id="eventList"></div>
-
     <div class="mini">
-      <a href="/" style="color:#9fcfff; text-decoration:none;">⬅ Back to Home</a>
+      <a href="/" style="color:#9fcfff; text-decoration:none; display:inline-flex; align-items:center; gap:6px;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> Back to Home</a>
     </div>
   </aside>
 

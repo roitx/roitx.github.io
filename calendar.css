@@ -486,3 +486,252 @@ header h1 {
     padding: 12px;
   }
 }
+
+/* ===== NEW: SIDE CARDS, COUNTDOWN, STATS, UPCOMING ===== */
+.side-card {
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--card-border);
+  backdrop-filter: blur(10px);
+  margin-bottom: 16px;
+}
+.side-card h4 { margin: 0 0 10px; color: var(--text-main); font-size: 14px; }
+
+.countdown-card {
+  background: linear-gradient(135deg, rgba(58,160,255,0.22), rgba(123,107,255,0.22));
+  border-color: rgba(58,160,255,0.5);
+  text-align: center;
+  cursor: pointer;
+  transition: transform .2s, box-shadow .2s;
+}
+.countdown-card:hover { transform: translateY(-3px); box-shadow: 0 10px 28px rgba(58,160,255,0.35); }
+.cd-label { font-size: 12px; color: var(--muted); font-weight: 700; letter-spacing: .5px; }
+.cd-name { font-size: 15px; font-weight: 800; margin: 6px 0 4px; color: #fff; }
+.cd-days {
+  font-size: 26px; font-weight: 900;
+  background: linear-gradient(90deg, #3aa0ff, #00f2fe);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+
+.stat-row { display: flex; gap: 8px; }
+.stat {
+  flex: 1; text-align: center; padding: 8px 4px; border-radius: 10px;
+  background: rgba(255,255,255,0.04); display: flex; flex-direction: column;
+}
+.stat b { font-size: 20px; }
+.stat span { font-size: 11px; color: var(--muted); }
+
+.lw-list { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; font-size: 12px; }
+.lw-list .up-item { color: #ffd27a; }
+
+.up-item { cursor: pointer; }
+.up-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 6px; border-radius: 8px; font-size: 13px;
+  transition: background .2s;
+}
+.up-row:hover, .lw-list .up-item:hover { background: rgba(255,255,255,0.06); }
+.up-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.up-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-main); }
+.up-when { font-size: 11px; font-weight: 700; color: var(--accent); }
+
+.lw-badge { position: absolute; top: 8px; right: 8px; font-size: 13px; pointer-events: none; }
+
+.kbd-hint { margin-top: 10px; font-size: 11px; color: var(--muted); text-align: center; }
+kbd {
+  background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 4px; padding: 0 5px; font-size: 11px;
+}
+@media (max-width: 768px) { .kbd-hint { display: none; } }
+
+/* ===== SVG ICONS ===== */
+.ico { width: 1.1em; height: 1.1em; vertical-align: -0.18em; flex-shrink: 0; }
+.cal-btn .ico { width: 18px; height: 18px; vertical-align: middle; }
+.cal-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.holiday-wish-banner .ico { vertical-align: -3px; }
+.lw-badge { color: #ffd27a; display: flex; }
+.cd-label { display: flex; align-items: center; justify-content: center; gap: 6px; }
+.side-card h4 { display: flex; align-items: center; gap: 8px; }
+.kbd-hint { display: flex; align-items: center; justify-content: center; gap: 6px; flex-wrap: wrap; }
+.popup-box h3 { display: flex; align-items: center; justify-content: center; gap: 8px; }
+
+/* ===== ROUND EXPORT BUTTON (icon only) ===== */
+.icon-btn {
+  width: 40px; height: 40px; padding: 0; flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  border: 1px solid rgba(58,160,255,0.5);
+  background: rgba(58,160,255,0.15);
+  color: #9fd0ff; cursor: pointer;
+  transition: all .25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.icon-btn:hover {
+  background: var(--accent); color: #fff;
+  box-shadow: 0 0 16px rgba(58,160,255,0.6);
+  transform: translateY(-2px);
+}
+
+/* Popup secondary (No) button */
+.popup-box button.secondary {
+  background: rgba(255,255,255,0.1);
+  box-shadow: none;
+  margin-left: 8px;
+}
+.popup-box button.secondary:hover { background: rgba(255,255,255,0.18); box-shadow: none; }
+
+@media (max-width: 768px) { #gotoDate { width: auto; } }
+
+/* =====================================================
+   FULL RESPONSIVE SYSTEM  (320px phones -> 4K screens)
+   ===================================================== */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body {
+  overflow-x: hidden;
+  padding-left: max(20px, env(safe-area-inset-left));
+  padding-right: max(20px, env(safe-area-inset-right));
+  padding-bottom: max(20px, env(safe-area-inset-bottom));
+}
+.container > * { min-width: 0; }               /* grid children never overflow */
+.cal-title { font-size: clamp(18px, 2.6vw, 24px); }
+header h1 { font-size: clamp(16px, 2.4vw, 22px); }
+.popup-box { max-height: 85vh; overflow-y: auto; }
+.popup-box button { min-height: 40px; }
+
+/* ---------- Extra-large screens (>=1600px) ---------- */
+@media (min-width: 1600px) {
+  .container { max-width: 1500px; grid-template-columns: 1fr 380px; gap: 28px; }
+  .day { min-height: 130px; padding: 12px; }
+  .day .date { font-size: 16px; }
+  .event-tag { font-size: 11px; }
+  .weekdays { font-size: 14px; }
+}
+
+/* ---------- Laptops / small desktops (1025-1366px) ---------- */
+@media (min-width: 1025px) and (max-width: 1366px) {
+  .container { grid-template-columns: 1fr 310px; gap: 18px; }
+  .day { min-height: 100px; }
+}
+
+/* ---------- Tablets (<=1024px): side panel becomes 2-column grid ---------- */
+@media (max-width: 1024px) {
+  .side { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  #eventList {
+    grid-column: 1 / -1; order: 3;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;
+  }
+  #eventList .side-card { margin-bottom: 0; }
+  .side > .mini:last-child { order: 4; grid-column: 1 / -1; }
+}
+
+/* ---------- Large phones / small tablets (<=768px) ---------- */
+@media (max-width: 768px) {
+  body { padding-top: 12px; padding-left: max(12px, env(safe-area-inset-left)); padding-right: max(12px, env(safe-area-inset-right)); }
+  header { padding: 10px 14px; margin-bottom: 16px; gap: 10px; }
+  header img { width: 44px; height: 44px; }
+  .holiday-wish-banner { font-size: 13px; padding: 12px 14px; margin-bottom: 16px; }
+  .container { gap: 16px; }
+  .weekdays, .days { gap: 5px; }
+  .day { border-radius: 10px; min-height: 80px; }
+  .day:hover { transform: none; }
+  .day.goto { transform: none; }
+  .day.holiday::after, .day.observance-day::after { display: none; }  /* tooltip off; tap opens popup */
+  .roitx-center-badge { font-size: 8px; padding: 1px 6px; }
+  .cal-nav { gap: 8px; }
+  .cal-btn { padding: 8px 14px; }
+  .lw-badge { top: 5px; right: 5px; }
+  .lw-badge .ico { width: 12px; height: 12px; }
+}
+
+/* ---------- Phones (<=600px): events become dots, side panel single column ---------- */
+@media (max-width: 600px) {
+  .side { grid-template-columns: 1fr; }
+  #eventList { grid-template-columns: 1fr; }
+  .day { min-height: 68px; padding: 5px; }
+  .day .date { font-size: 12px; }
+  .event-tag {                       /* text hidden, shown as small dot */
+    font-size: 0; width: 7px; height: 7px; padding: 0;
+    border-radius: 50%; display: inline-block; margin: 4px 2px 0 0;
+    background: #a48aff; border: 0;
+  }
+  .roitx-center-badge { font-size: 8px; padding: 1px 5px; bottom: 4px; }
+  .cal-header { padding: 12px; gap: 10px; border-radius: 14px; }
+  .mini, .side-card { padding: 12px 14px; }
+  .stat b { font-size: 18px; }
+}
+
+/* ---------- Small phones (<=400px) ---------- */
+@media (max-width: 400px) {
+  body { padding-top: 8px; }
+  header h1 { letter-spacing: 0; }
+  .weekdays { font-size: 10.5px; gap: 3px; }
+  .days { gap: 3px; }
+  .day { min-height: 58px; padding: 4px; border-radius: 8px; }
+  .day .date { font-size: 11px; }
+  .cal-btn { padding: 8px 10px; font-size: 13px; }
+  #gotoDate { min-width: 0; padding: 6px 8px; font-size: 13px; }
+  .popup-box { width: 92%; padding: 18px; }
+  .cd-days { font-size: 22px; }
+}
+
+/* ---------- Tiny phones (<=340px) ---------- */
+@media (max-width: 340px) {
+  .day { min-height: 52px; }
+  .stat span { font-size: 10px; }
+  .cal-title { font-size: 16px; }
+}
+
+/* ---------- Landscape phones (short screens) ---------- */
+@media (max-height: 500px) and (orientation: landscape) {
+  .day { min-height: 56px; }
+  header { margin-bottom: 10px; }
+  .popup-box { max-height: 90vh; }
+}
+
+/* ---------- Touch devices: no sticky hover, bigger tap targets ---------- */
+@media (hover: none) and (pointer: coarse) {
+  .day:hover, .cal-btn:hover, .icon-btn:hover, .countdown-card:hover { transform: none; }
+  .cal-btn, .icon-btn { min-height: 44px; }
+  .icon-btn { width: 44px; height: 44px; }
+  #gotoDate { height: 44px; }
+  .up-row { padding: 11px 6px; }
+  .day.holiday::after, .day.observance-day::after { display: none; }
+}
+
+/* ---------- Accessibility: reduce motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+/* Grid columns must be allowed to shrink (prevents overflow on narrow screens) */
+.weekdays, .days { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.day { min-width: 0; }
+
+@media (max-width: 600px) {
+  .side, #eventList { grid-template-columns: minmax(0, 1fr); }
+  .side > *, #eventList > * { min-width: 0; max-width: 100%; }
+}
+
+/* ===== Title row: Export (top) + Today (below) ===== */
+.title-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* ===== Export button lives in header (right side) ===== */
+.header-export { margin-left: auto; }
+
+@media (max-width: 400px) {
+  .roitx-center-badge { font-size: 7px; padding: 1px 4px; letter-spacing: 0.2px; }
+}
+
+/* ===== Legend sits below the navigation-tips card ===== */
+@media (max-width: 1024px) {
+  #eventFormSection { grid-column: 1 / -1; }
+  #eventList { order: 3; }
+  #legendBox { order: 4; grid-column: 1 / -1; }
+  .side > .mini:last-child { order: 5; }
+}

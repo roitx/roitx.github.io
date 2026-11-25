@@ -1,3 +1,9 @@
+const ICONS = {"pin": "<path d=\"M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z\"/><circle cx=\"12\" cy=\"10\" r=\"3\"/>", "megaphone": "<polygon points=\"11 5 6 9 2 9 2 15 6 15 11 19 11 5\"/><path d=\"M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07\"/>", "clock": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><polyline points=\"12 6 12 12 16 14\"/>", "bar": "<line x1=\"18\" y1=\"20\" x2=\"18\" y2=\"10\"/><line x1=\"12\" y1=\"20\" x2=\"12\" y2=\"4\"/><line x1=\"6\" y1=\"20\" x2=\"6\" y2=\"14\"/>", "sun": "<circle cx=\"12\" cy=\"12\" r=\"5\"/><line x1=\"12\" y1=\"1\" x2=\"12\" y2=\"3\"/><line x1=\"12\" y1=\"21\" x2=\"12\" y2=\"23\"/><line x1=\"4.22\" y1=\"4.22\" x2=\"5.64\" y2=\"5.64\"/><line x1=\"18.36\" y1=\"18.36\" x2=\"19.78\" y2=\"19.78\"/><line x1=\"1\" y1=\"12\" x2=\"3\" y2=\"12\"/><line x1=\"21\" y1=\"12\" x2=\"23\" y2=\"12\"/><line x1=\"4.22\" y1=\"19.78\" x2=\"5.64\" y2=\"18.36\"/><line x1=\"18.36\" y1=\"5.64\" x2=\"19.78\" y2=\"4.22\"/>", "calendar": "<rect x=\"3\" y=\"4\" width=\"18\" height=\"18\" rx=\"2\" ry=\"2\"/><line x1=\"16\" y1=\"2\" x2=\"16\" y2=\"6\"/><line x1=\"8\" y1=\"2\" x2=\"8\" y2=\"6\"/><line x1=\"3\" y1=\"10\" x2=\"21\" y2=\"10\"/>", "download": "<path d=\"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\"/><polyline points=\"7 10 12 15 17 10\"/><line x1=\"12\" y1=\"15\" x2=\"12\" y2=\"3\"/>", "keyboard": "<rect x=\"2\" y=\"6\" width=\"20\" height=\"12\" rx=\"2\"/><path d=\"M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10\"/>", "lock": "<rect x=\"3\" y=\"11\" width=\"18\" height=\"11\" rx=\"2\" ry=\"2\"/><path d=\"M7 11V7a5 5 0 0 1 10 0v4\"/>", "check": "<polyline points=\"20 6 9 17 4 12\"/>", "x": "<line x1=\"18\" y1=\"6\" x2=\"6\" y2=\"18\"/><line x1=\"6\" y1=\"6\" x2=\"18\" y2=\"18\"/>", "star": "<polygon points=\"12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2\"/>", "gift": "<polyline points=\"20 12 20 22 4 22 4 12\"/><rect x=\"2\" y=\"7\" width=\"20\" height=\"5\"/><line x1=\"12\" y1=\"22\" x2=\"12\" y2=\"7\"/><path d=\"M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z\"/><path d=\"M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z\"/>", "flag": "<path d=\"M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z\"/><line x1=\"4\" y1=\"22\" x2=\"4\" y2=\"15\"/>", "bell": "<path d=\"M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9\"/><path d=\"M13.73 21a2 2 0 0 1-3.46 0\"/>", "left": "<polyline points=\"15 18 9 12 15 6\"/>", "right": "<polyline points=\"9 18 15 12 9 6\"/>", "back": "<line x1=\"19\" y1=\"12\" x2=\"5\" y2=\"12\"/><polyline points=\"12 19 5 12 12 5\"/>", "help": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3\"/><line x1=\"12\" y1=\"17\" x2=\"12.01\" y2=\"17\"/>", "plus": "<line x1=\"12\" y1=\"5\" x2=\"12\" y2=\"19\"/><line x1=\"5\" y1=\"12\" x2=\"19\" y2=\"12\"/>", "trash": "<polyline points=\"3 6 5 6 21 6\"/><path d=\"M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6\"/><path d=\"M10 11v6M14 11v6\"/><path d=\"M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2\"/>"};
+function ico(name, size) {
+  const s = size ? ` style="width:${size}px;height:${size}px"` : '';
+  return `<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"${s} aria-hidden="true">${ICONS[name] || ''}</svg>`;
+}
+
 window.fetchedHolidays = {};
 let fetchedHolidays = window.fetchedHolidays;
 
@@ -66,22 +72,22 @@ async function checkAuthUI() {
 
   if (!user) {
     formSection.innerHTML = `
-      <h3 style="margin:0 0 8px 0; color:#3aa0ff;">📌 Personal Events</h3>
+      <h3 style="margin:0 0 8px 0; color:#3aa0ff;">${ico('pin')} Personal Events</h3>
       <p style="font-size:12px; margin-bottom:10px;">Login to create & save your personal schedule.</p>
       <button class="cal-btn" onclick="showLoginPopup()" style="width:100%; background:#7b6bff; color:#fff;">Login Required</button>
     `;
   } else {
     formSection.innerHTML = `
-      <button id="toggleFormBtn" class="cal-btn" onclick="toggleEventForm()" style="width:100%; background:var(--accent); color:#fff; font-weight:bold;">+ Add Personal Event</button>
+      <button id="toggleFormBtn" class="cal-btn" onclick="toggleEventForm()" style="width:100%; background:var(--accent); color:#fff; font-weight:bold;">${ico('plus')} Add Personal Event</button>
       
       <div id="eventFormFields" style="display:none; margin-top:12px;">
-        <h3 style="margin:0 0 8px 0; color:#3aa0ff;">📌 Create Personal Event</h3>
+        <h3 style="margin:0 0 8px 0; color:#3aa0ff;">${ico('pin')} Create Personal Event</h3>
         <input type="date" id="eventDate" class="event-input" style="width:100%; margin-bottom:6px;">
         <input type="text" id="eventName" class="event-input" placeholder="Event Name" style="width:100%; margin-bottom:6px;">
         
         <div style="display:flex; gap:6px;">
-          <button class="cal-btn" onclick="addEvent()" style="flex:1; background:var(--accent); color:#fff;">Save Event</button>
-          <button class="cal-btn" onclick="toggleEventForm()" style="background:#ff4d4d; color:#fff;">Cancel</button>
+          <button class="cal-btn" onclick="addEvent()" style="flex:1; background:var(--accent); color:#fff;">${ico('check')} Save Event</button>
+          <button class="cal-btn" onclick="toggleEventForm()" style="background:#ff4d4d; color:#fff;">${ico('x')} Cancel</button>
         </div>
         <div id="eventMsg" style="margin-top:6px; font-size:12px;"></div>
       </div>
@@ -108,7 +114,7 @@ function toggleEventForm() {
 
 function showLoginPopup() {
   sessionStorage.setItem("redirect_after_login", window.location.href);
-  showPopup("🔒 Login Required!\n\nPlease login to your account first to add personal events.", "login.html");
+  showPopup("Login Required!\n\nPlease login to your account first to add personal events.", "login.html", "lock");
 }
 
 // Google Calendar API Integration
@@ -156,7 +162,7 @@ function checkTodayWishBanner() {
   const banner = document.getElementById('holidayWishBanner');
   if (banner) {
     if (fetchedHolidays[todayKey]) {
-      banner.textContent = `🎉 Happy ${fetchedHolidays[todayKey]}! Wishing you a fantastic day ahead! ✨`;
+      banner.innerHTML = `${ico('gift', 18)} Happy ${esc(fetchedHolidays[todayKey])}! Wishing you a fantastic day ahead! ${ico('star', 16)}`;
       banner.style.display = 'block';
     } else {
       banner.style.display = 'none';
@@ -289,12 +295,21 @@ function createDayElement(dateObj, displayDate, todayKey, isOtherMonth) {
     popupInfoList.push({ type: 'observance', text: observanceDays[monthDayKey] });
   }
 
+  if (!isOtherMonth && fetchedHolidays[dateKey] && [1, 5].includes(dateObj.getDay())) {
+    const lwb = document.createElement('span');
+    lwb.className = 'lw-badge';
+    lwb.title = 'Long weekend';
+    lwb.innerHTML = ico('sun', 14);
+    el.appendChild(lwb);
+  }
+
   if (dbEvents[dateKey]) {
     el.classList.add('event-glow');
     dbEvents[dateKey].forEach(ev => {
       popupInfoList.push({ 
         type: 'event', 
-        text: (ev.is_global ? '📢 ' : '📌 ') + ev.event_name,
+        text: ev.event_name,
+        icon: ev.is_global ? 'megaphone' : 'pin',
         id: ev.id,
         is_global: ev.is_global,
         user_id: ev.user_id
@@ -313,10 +328,175 @@ function createDayElement(dateObj, displayDate, todayKey, isOtherMonth) {
   return el;
 }
 
+/* ===================== NEW FEATURES ===================== */
+const pad2 = n => String(n).padStart(2, '0');
+const keyOf = d => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+const fromKey = k => { const [y, m, d] = k.split('-').map(Number); return new Date(y, m - 1, d); };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+function daysLabel(n) {
+  if (n === 0) return 'Today';
+  if (n === 1) return 'Tomorrow';
+  return `${n} days`;
+}
+
+// Aaj se aage ke holidays + observances (400 din tak)
+function getUpcomingSpecial() {
+  const now = new Date();
+  const out = [];
+  for (let i = 0; i <= 400; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i);
+    const k = keyOf(d);
+    const official = fetchedHolidays[k];
+    const name = official || observanceDays[`${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`];
+    if (name) out.push({ key: k, date: d, name, official: !!official, days: i });
+  }
+  return out;
+}
+
+function getLongWeekends(year, month) {
+  const res = [];
+  Object.keys(fetchedHolidays).forEach(k => {
+    const d = fromKey(k);
+    if (d.getFullYear() === year && d.getMonth() === month && [1, 5].includes(d.getDay())) {
+      res.push({ key: k, name: fetchedHolidays[k], day: d.getDay() === 5 ? 'Fri–Sun' : 'Sat–Mon' });
+    }
+  });
+  return res.sort((a, b) => a.key.localeCompare(b.key));
+}
+
 function renderSideEventList() {
   const list = document.getElementById("eventList");
-  if (list) list.innerHTML = "";
+  if (!list) return;
+
+  const year = cur.getFullYear();
+  const month = cur.getMonth();
+  const upcoming = getUpcomingSpecial();
+  const nextOfficial = upcoming.find(u => u.official && u.days >= 0);
+  let html = '';
+
+  // 1. Next holiday countdown
+  if (nextOfficial) {
+    html += `<div class="side-card countdown-card up-item" data-key="${nextOfficial.key}">
+      <div class="cd-label">${ico('clock', 14)} Next Holiday</div>
+      <div class="cd-name">${esc(nextOfficial.name)}</div>
+      <div class="cd-days">${daysLabel(nextOfficial.days)}</div>
+    </div>`;
+  }
+
+  // 2. Month overview
+  const prefix = `${year}-${pad2(month + 1)}-`;
+  const holidayCount = Object.keys(fetchedHolidays).filter(k => k.startsWith(prefix)).length;
+  const eventCount = Object.keys(dbEvents).filter(k => k.startsWith(prefix)).reduce((n, k) => n + dbEvents[k].length, 0);
+  let sundays = 0;
+  for (let d = 1; d <= new Date(year, month + 1, 0).getDate(); d++) if (new Date(year, month, d).getDay() === 0) sundays++;
+  const lw = getLongWeekends(year, month);
+
+  html += `<div class="side-card">
+    <h4>${ico('bar')} This Month</h4>
+    <div class="stat-row">
+      <div class="stat"><b style="color:#ff6b6b">${holidayCount}</b><span>Holidays</span></div>
+      <div class="stat"><b style="color:#ffc107">${sundays}</b><span>Sundays</span></div>
+      <div class="stat"><b style="color:#a48aff">${eventCount}</b><span>Events</span></div>
+    </div>
+    ${lw.length ? `<div class="lw-list">${lw.map(l => `<div class="up-item" data-key="${l.key}">${ico('sun', 14)} <b>${l.day}</b> long weekend · ${esc(l.name)}</div>`).join('')}</div>` : ''}
+  </div>`;
+
+  // 3. Upcoming list
+  const next5 = upcoming.filter(u => u.days > 0 || !nextOfficial || u.key !== nextOfficial.key).slice(0, 5);
+  if (next5.length) {
+    html += `<div class="side-card"><h4>${ico('calendar')} Upcoming</h4>${next5.map(u => `
+      <div class="up-item up-row" data-key="${u.key}">
+        <span class="up-dot" style="background:${u.official ? '#ff4d4d' : '#00f2fe'}"></span>
+        <span class="up-name">${esc(u.name)}</span>
+        <span class="up-when">${u.days === 0 ? 'Today' : u.days === 1 ? 'Tmrw' : u.days + 'd'}</span>
+      </div>`).join('')}</div>`;
+  }
+
+  // 4. Tools
+  html += `<div class="side-card"><div class="kbd-hint">${ico('keyboard', 14)} <kbd>←</kbd> <kbd>→</kbd> month · <kbd>T</kbd> today · swipe on mobile</div></div>`;
+
+  list.innerHTML = html;
 }
+
+// Upcoming / countdown item par click -> us date par jump + popup (existing gotoDate handler reuse)
+document.getElementById('eventList')?.addEventListener('click', e => {
+  const item = e.target.closest('.up-item');
+  if (!item) return;
+  const g = document.getElementById('gotoDate');
+  if (!g) return;
+  g.value = item.dataset.key;
+  g.dispatchEvent(new Event('change'));
+});
+
+// Export current month as .ics (Google/Apple Calendar mein import hota hai)
+function exportMonthICS() {
+  const y = cur.getFullYear(), m = cur.getMonth();
+  const last = new Date(y, m + 1, 0).getDate();
+  const ics = s => String(s).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n');
+  const stamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+  const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Roitx Calendar//EN', 'CALSCALE:GREGORIAN'];
+  let n = 0;
+
+  for (let d = 1; d <= last; d++) {
+    const k = keyOf(new Date(y, m, d));
+    const names = [];
+    if (fetchedHolidays[k]) names.push(fetchedHolidays[k]);
+    else if (observanceDays[`${pad2(m + 1)}-${pad2(d)}`]) names.push(observanceDays[`${pad2(m + 1)}-${pad2(d)}`]);
+    (dbEvents[k] || []).forEach(ev => names.push(ev.event_name));
+
+    names.forEach(name => {
+      lines.push('BEGIN:VEVENT',
+        `UID:roitx-${k}-${n++}@roitx.dpdns.org`,
+        `DTSTAMP:${stamp}`,
+        `DTSTART;VALUE=DATE:${k.replace(/-/g, '')}`,
+        `DTEND;VALUE=DATE:${keyOf(new Date(y, m, d + 1)).replace(/-/g, '')}`,
+        `SUMMARY:${ics(name)}`,
+        'END:VEVENT');
+    });
+  }
+  lines.push('END:VCALENDAR');
+
+  if (!n) { showPopup('Is mahine mein export karne ke liye koi holiday ya event nahi hai.'); return; }
+
+  const blob = new Blob([lines.join('\r\n')], { type: 'text/calendar;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `roitx-calendar-${y}-${pad2(m + 1)}.ics`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+window.exportMonthICS = exportMonthICS;
+
+// Keyboard shortcuts
+document.addEventListener('keydown', e => {
+  const tag = (e.target.tagName || '').toLowerCase();
+  if (['input', 'textarea', 'select'].includes(tag) || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (document.getElementById('holidayPopup')?.style.display === 'flex') {
+    if (e.key === 'Escape') closePopup();
+    return;
+  }
+  if (e.key === 'ArrowLeft') document.getElementById('prevBtn')?.click();
+  else if (e.key === 'ArrowRight') document.getElementById('nextBtn')?.click();
+  else if (e.key === 't' || e.key === 'T') document.getElementById('todayBtn')?.click();
+});
+
+// Swipe left/right on mobile to change month
+(function () {
+  const grid = document.getElementById('daysGrid');
+  if (!grid) return;
+  let sx = 0, sy = 0;
+  grid.addEventListener('touchstart', e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
+  grid.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - sx;
+    const dy = e.changedTouches[0].clientY - sy;
+    if (Math.abs(dx) > 60 && Math.abs(dy) < 40) {
+      document.getElementById(dx < 0 ? 'nextBtn' : 'prevBtn')?.click();
+    }
+  }, { passive: true });
+})();
 
 async function addEvent() {
   const user = await getCurrentUser();
@@ -336,7 +516,7 @@ async function addEvent() {
 
   if (!date || !name) {
     if (msg) {
-      msg.textContent = "❌ Fill date & name";
+      msg.innerHTML = ico("x", 14) + " Fill date & name";
       msg.style.color = "#ff6464";
     }
     return;
@@ -351,12 +531,12 @@ async function addEvent() {
 
   if (error) {
     if (msg) {
-      msg.textContent = "❌ " + error.message;
+      msg.innerHTML = ico("x", 14) + " " + esc(error.message);
       msg.style.color = "#ff6464";
     }
   } else {
     if (msg) {
-      msg.textContent = "✅ Event added!";
+      msg.innerHTML = ico("check", 14) + " Event added!";
       msg.style.color = "#00ffe4";
     }
     nameInp.value = "";
@@ -385,18 +565,22 @@ async function showInteractivePopup(infoList, dateKey) {
 
   if (!popupText || !popup || !btn) return;
 
-  popupText.innerHTML = `<b style="color:#3aa0ff; font-size:16px;">Date: ${dateKey}</b><br><br>`;
+  clearPopupExtras();
+  const ttl = document.getElementById('popupTitle');
+  if (ttl) ttl.innerHTML = ico('calendar') + ' Day Details';
+  popupText.innerHTML = `<b style="color:#3aa0ff; font-size:16px;">Date: ${esc(dateKey)}</b><br><br>`;
 
   infoList.forEach(info => {
     const item = document.createElement("div");
     item.style.cssText = "margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;";
 
-    item.innerHTML = `<span style="font-size:14px;">${info.text}</span>`;
+    const iName = info.icon || (info.type === 'holiday' ? 'flag' : info.type === 'observance' ? 'star' : 'pin');
+    item.innerHTML = `<span style="font-size:14px; display:flex; gap:8px; align-items:center; text-align:left;">${ico(iName, 16)}<span>${esc(info.text)}</span></span>`;
 
     if (info.type === 'event' && user && info.user_id === user.id && !info.is_global) {
       const delBtn = document.createElement("button");
-      delBtn.innerText = "Delete";
-      delBtn.style.cssText = "background:#ff4d4d; color:#fff; border:none; padding:3px 8px; border-radius:4px; cursor:pointer; font-size:12px;";
+      delBtn.innerHTML = ico("trash", 13) + " Delete";
+      delBtn.style.cssText = "display:inline-flex; gap:4px; align-items:center; flex-shrink:0; margin-left:8px; background:#ff4d4d; color:#fff; border:none; padding:3px 8px; border-radius:4px; cursor:pointer; font-size:12px;";
       delBtn.onclick = () => deleteEvent(info.id);
       item.appendChild(delBtn);
     }
@@ -410,13 +594,16 @@ async function showInteractivePopup(infoList, dateKey) {
   popup.style.display = 'flex';
 }
 
-function showPopup(text, redirectUrl = null) {
+function showPopup(text, redirectUrl = null, icon = 'bell') {
   const popupText = document.getElementById('popupText');
   const popup = document.getElementById('holidayPopup');
   const btn = document.getElementById('popupButton');
 
   if (!popupText || !popup || !btn) return;
 
+  clearPopupExtras();
+  const ttl = document.getElementById('popupTitle');
+  if (ttl) ttl.innerHTML = ico(icon) + ' Notification';
   popupText.innerText = text;
 
   if (redirectUrl) {
@@ -430,7 +617,41 @@ function showPopup(text, redirectUrl = null) {
   popup.style.display = 'flex';
 }
 
+function clearPopupExtras() {
+  document.getElementById('popupCancel')?.remove();
+}
+
+function showConfirm(text, onYes, icon = 'help', yesLabel = 'Haan') {
+  const popupText = document.getElementById('popupText');
+  const popup = document.getElementById('holidayPopup');
+  const btn = document.getElementById('popupButton');
+  const ttl = document.getElementById('popupTitle');
+  if (!popupText || !popup || !btn) return;
+
+  clearPopupExtras();
+  if (ttl) ttl.innerHTML = ico(icon) + ' Confirm';
+  popupText.innerText = text;
+
+  btn.innerText = yesLabel;
+  btn.onclick = () => { closePopup(); onYes(); };
+
+  const no = document.createElement('button');
+  no.id = 'popupCancel';
+  no.className = 'secondary';
+  no.textContent = 'Nahi';
+  no.onclick = closePopup;
+  btn.insertAdjacentElement('afterend', no);
+
+  popup.style.display = 'flex';
+}
+
+function confirmExport() {
+  showConfirm('Kya aap export krna chahte hain?\n\nIs mahine ke holidays aur events .ics file mein download honge.', exportMonthICS, 'download', 'Haan, export karo');
+}
+window.confirmExport = confirmExport;
+
 function closePopup() {
+  clearPopupExtras();
   const popup = document.getElementById('holidayPopup');
   if (popup) popup.style.display = 'none';
 }
@@ -481,7 +702,8 @@ document.getElementById('gotoDate')?.addEventListener('change', function() {
       dbEvents[dateVal].forEach(ev => {
         popupInfoList.push({ 
           type: 'event', 
-          text: (ev.is_global ? '📢 ' : '📌 ') + ev.event_name,
+          text: ev.event_name,
+        icon: ev.is_global ? 'megaphone' : 'pin',
           id: ev.id,
           is_global: ev.is_global,
           user_id: ev.user_id
