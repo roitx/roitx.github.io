@@ -735,3 +735,160 @@ header h1 { font-size: clamp(16px, 2.4vw, 22px); }
   #legendBox { order: 4; grid-column: 1 / -1; }
   .side > .mini:last-child { order: 5; }
 }
+
+/* =====================================================
+   v3 FEATURES: form, search, strip, year view, popup, theme
+   ===================================================== */
+.title-actions { flex-direction: row; align-items: center; gap: 8px; }
+.header-actions { margin-left: auto; display: flex; gap: 8px; }
+.header-export { margin-left: 0; }
+
+/* form */
+select.event-input, textarea.event-input, input[type="time"].event-input { color-scheme: dark; font-family: inherit; }
+select.event-input option { background: #0b1724; color: #e9f5ff; }
+textarea.event-input { height: auto; min-height: 60px; resize: vertical; }
+.form-row { display: flex; gap: 8px; }
+.form-row .event-input { flex: 1; min-width: 0; }
+
+/* today card */
+.tc-date { display: flex; align-items: center; gap: 8px; font-weight: 800; color: var(--text-main); }
+.tc-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+/* search */
+.search-wrap { position: relative; width: 100%; }
+.search-wrap .s-ico { position: absolute; left: 12px; top: 11px; color: var(--muted); display: flex; pointer-events: none; }
+#searchInput {
+  width: 100%; height: 40px; padding: 8px 12px 8px 38px; border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.06);
+  color: #e9f5ff; font-weight: 600; font-family: inherit; transition: all .2s;
+}
+#searchInput:focus { border-color: var(--accent); box-shadow: 0 0 12px rgba(58,160,255,0.4); outline: none; }
+.search-results {
+  display: none; position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 60;
+  background: #0b1724; border: 1px solid rgba(255,255,255,0.15); border-radius: 12px;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.6); max-height: 320px; overflow-y: auto;
+}
+.sr-item { display: flex; align-items: center; gap: 10px; padding: 11px 14px; cursor: pointer; font-size: 13px; color: #e9f5ff; }
+.sr-item:hover { background: rgba(58,160,255,0.15); }
+.sr-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sr-date { font-size: 11px; color: var(--muted); white-space: nowrap; }
+.sr-empty { padding: 14px; text-align: center; font-size: 13px; color: var(--muted); }
+
+/* festival strip */
+.fest-strip { display: none; gap: 10px; overflow-x: auto; padding: 2px 2px 12px; margin-bottom: 4px; scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; }
+.fest-strip::-webkit-scrollbar { height: 4px; }
+.fest-strip::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+.fest-chip {
+  flex: 0 0 auto; scroll-snap-align: start; display: flex; flex-direction: column; gap: 2px; text-align: left;
+  min-width: 130px; max-width: 200px; padding: 10px 14px; border-radius: 12px; cursor: pointer; font-family: inherit;
+  border: 1px solid rgba(255,77,77,0.4); color: var(--text-main);
+  background: linear-gradient(135deg, rgba(255,77,77,0.14), rgba(255,183,3,0.1));
+  transition: transform .2s, box-shadow .2s;
+}
+.fest-chip:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(255,77,77,0.25); }
+.fest-chip b { font-size: 12px; color: #ffb703; }
+.fest-chip span { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* +N badge */
+.event-more { display: inline-block; margin-top: 3px; font-size: 10px; font-weight: 700; color: var(--muted); }
+
+/* year view */
+.year-grid { display: none; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-top: 14px; }
+body.year-mode .year-grid { display: grid; }
+body.year-mode .weekdays, body.year-mode #daysGrid { display: none; }
+.ym { padding: 10px; border-radius: 14px; background: rgba(255,255,255,0.03); border: 1px solid var(--card-border); }
+.ym-title { font-weight: 800; font-size: 13px; margin-bottom: 6px; color: var(--accent); cursor: pointer; }
+.ym-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; text-align: center; font-size: 10px; }
+.ym-grid .wd { color: var(--muted); font-weight: 700; font-size: 9px; }
+.yd { position: relative; padding: 3px 0; border-radius: 6px; cursor: pointer; color: #8bb1e5; }
+.yd.empty { cursor: default; }
+.yd.sun { color: #ffc107; }
+.yd.o { color: #00f2fe; font-weight: 700; }
+.yd.h { color: #fff; background: rgba(255,77,77,0.7); font-weight: 700; }
+.yd.ev::after { content: ""; position: absolute; left: 50%; bottom: 0; width: 4px; height: 4px; border-radius: 50%; background: #a48aff; transform: translateX(-50%); }
+.yd.td { outline: 2px solid var(--accent); }
+.yd:not(.empty):hover { background: rgba(58,160,255,0.25); }
+
+/* popup details */
+.popup-box { max-width: 380px; }
+.pop-date { color: #3aa0ff; font-size: 16px; }
+.pop-sub { font-size: 12px; color: var(--muted); margin: 2px 0 12px; }
+.pop-row { text-align: left; padding: 9px 10px; margin-bottom: 8px; border-radius: 10px; background: rgba(255,255,255,0.04); border-left: 3px solid var(--rc, transparent); }
+.pop-main { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; }
+.pop-main .ico { margin-top: 2px; }
+.pop-meta { display: flex; flex-wrap: wrap; gap: 6px 12px; margin-top: 6px; font-size: 11px; color: var(--muted); }
+.pop-meta > span { display: inline-flex; align-items: center; gap: 4px; }
+.cat-chip { padding: 1px 8px; border-radius: 20px; font-weight: 700; color: var(--rc); background: rgba(255,255,255,0.08); }
+.pop-notes { margin-top: 6px; font-size: 12px; color: var(--muted); white-space: pre-line; }
+.pop-acts { display: flex; gap: 8px; margin-top: 8px; }
+.popup-box button.pop-act {
+  margin-top: 0; min-height: 0; padding: 5px 10px; font-size: 12px; display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(255,255,255,0.1); color: inherit; box-shadow: none;
+}
+.popup-box button.pop-act.del { background: #ff4d4d; color: #fff; }
+.popup-box button.pop-act:hover { transform: none; box-shadow: none; filter: brightness(1.2); }
+.pop-share { margin-top: 4px; }
+
+/* responsive additions */
+@media (max-width: 1024px) { .year-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 600px) {
+  .year-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .event-tag { background: var(--cat, #a48aff) !important; }
+  .fest-chip { min-width: 120px; padding: 8px 12px; }
+}
+@media (max-width: 400px) { .form-row { flex-direction: column; gap: 0; } }
+
+/* =====================================================
+   LIGHT THEME
+   ===================================================== */
+html[data-theme="light"] {
+  --bg-gradient: linear-gradient(135deg, #eef4fb 0%, #dfeaf7 100%);
+  --card-bg: rgba(255,255,255,0.7);
+  --card-border: rgba(20,50,90,0.12);
+  --accent: #1f7ae0;
+  --muted: #4d6482;
+  --text-main: #13243a;
+}
+html[data-theme="light"] body { color-scheme: light; }
+html[data-theme="light"] header,
+html[data-theme="light"] .cal-header,
+html[data-theme="light"] .mini,
+html[data-theme="light"] .side-card,
+html[data-theme="light"] .ym {
+  background: rgba(255,255,255,0.78); border-color: rgba(20,50,90,0.12); box-shadow: 0 6px 20px rgba(20,50,90,0.07);
+}
+html[data-theme="light"] .mini h4 { color: #13243a !important; }
+html[data-theme="light"] .cal-title { color: #13243a; }
+html[data-theme="light"] .cal-btn { background: rgba(20,50,90,0.06); color: #13243a; border-color: rgba(20,50,90,0.16); }
+html[data-theme="light"] .cal-btn:hover { background: rgba(31,122,224,0.16); }
+html[data-theme="light"] #gotoDate,
+html[data-theme="light"] .event-input,
+html[data-theme="light"] #searchInput { background: #fff; color: #13243a; border-color: rgba(20,50,90,0.2); color-scheme: light; }
+html[data-theme="light"] select.event-input option { background: #fff; color: #13243a; }
+html[data-theme="light"] #gotoDate::-webkit-calendar-picker-indicator { filter: none; }
+html[data-theme="light"] .icon-btn { background: rgba(31,122,224,0.12); color: #1f7ae0; border-color: rgba(31,122,224,0.4); }
+html[data-theme="light"] .icon-btn:hover { background: #1f7ae0; color: #fff; }
+html[data-theme="light"] .day { background: rgba(255,255,255,0.75); border-color: rgba(20,50,90,0.1); }
+html[data-theme="light"] .day:hover { background: #fff; box-shadow: 0 10px 25px rgba(20,50,90,0.15); }
+html[data-theme="light"] .day .date { color: #2c4a73; }
+html[data-theme="light"] .day.holiday[data-holiday="Sunday"]:not(.observance-day):not(.goto) .date { color: #b7791f !important; }
+html[data-theme="light"] .day.holiday:not([data-holiday="Sunday"]):not(.observance-day):not(.goto) .date { color: #d62f2f !important; }
+html[data-theme="light"] .day.observance-day:not(.goto) .date { color: #0b8aa3 !important; }
+html[data-theme="light"] .day.goto .date { color: #0f9d58 !important; }
+html[data-theme="light"] .event-tag { color: #13243a; }
+html[data-theme="light"] .popup-box { background: #fff; color: #13243a; border-color: rgba(20,50,90,0.15); box-shadow: 0 10px 40px rgba(20,50,90,0.25); }
+html[data-theme="light"] .pop-row { background: rgba(20,50,90,0.05); }
+html[data-theme="light"] .popup-box button.pop-act { background: rgba(20,50,90,0.1); }
+html[data-theme="light"] .popup-box button.pop-act.del { background: #ff4d4d; }
+html[data-theme="light"] .popup-box button.secondary { background: rgba(20,50,90,0.1); color: #13243a; }
+html[data-theme="light"] .search-results { background: #fff; border-color: rgba(20,50,90,0.15); box-shadow: 0 12px 30px rgba(20,50,90,0.2); }
+html[data-theme="light"] .sr-item { color: #13243a; }
+html[data-theme="light"] .cd-name { color: #13243a; }
+html[data-theme="light"] .stat { background: rgba(20,50,90,0.05); }
+html[data-theme="light"] .lw-list .up-item { color: #a86a00; }
+html[data-theme="light"] .up-row:hover, html[data-theme="light"] .lw-list .up-item:hover { background: rgba(20,50,90,0.06); }
+html[data-theme="light"] kbd { background: rgba(20,50,90,0.08); border-color: rgba(20,50,90,0.2); }
+html[data-theme="light"] .yd { color: #2c4a73; }
+html[data-theme="light"] .yd.sun { color: #b7791f; }
+html[data-theme="light"] .yd.o { color: #0b8aa3; }
+html[data-theme="light"] .mini a { color: #1f7ae0 !important; }

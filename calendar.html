@@ -36,6 +36,7 @@
 
 <link rel="icon" href="calendar.png" type="image/png">
 
+  <script>try{var t=localStorage.getItem("roitx_theme");if(t)document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
   <link rel="stylesheet" href="calendar.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase.js"></script>
@@ -45,7 +46,10 @@
 <header>
   <img src="calendar.png" alt="Roitx Calendar">
   <h1>Roitx — Calendar</h1>
-  <button class="icon-btn header-export" id="exportBtn" onclick="confirmExport()" title="Export month" aria-label="Export month"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+  <div class="header-actions">
+    <button class="icon-btn" id="themeBtn" title="Light theme" aria-label="Light theme"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg></button>
+    <button class="icon-btn header-export" id="exportBtn" onclick="confirmExport()" title="Export month" aria-label="Export month"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+  </div>
 </header>
 
 <!-- HOLIDAY WISH BANNER -->
@@ -53,17 +57,29 @@
 
 <div class="container">
   <div>
+    <!-- UPCOMING FESTIVALS STRIP -->
+    <div id="festStrip" class="fest-strip"></div>
+
     <!-- CALENDAR HEADER -->
     <div class="cal-header">
       <div class="cal-title-row">
         <div class="cal-title" id="calTitle">Month Year</div>
-        <button class="cal-btn" id="todayBtn">Today</button>
+        <div class="title-actions">
+          <button class="icon-btn" id="viewBtn" title="Year view" aria-label="Year view"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></button>
+          <button class="cal-btn" id="todayBtn">Today</button>
+        </div>
       </div>
 
       <div class="cal-nav">
         <button class="cal-btn" id="prevBtn" aria-label="Previous month"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg></button>
         <button class="cal-btn" id="nextBtn" aria-label="Next month"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg></button>
         <input type="date" id="gotoDate" title="Go to date">
+      </div>
+
+      <div class="search-wrap">
+        <span class="s-ico"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+        <input type="search" id="searchInput" placeholder="Search holidays or events…" autocomplete="off" aria-label="Search">
+        <div id="searchResults" class="search-results"></div>
       </div>
     </div>
 
@@ -74,6 +90,9 @@
 
     <!-- DAYS GRID -->
     <div class="days" id="daysGrid"></div>
+
+    <!-- YEAR VIEW -->
+    <div class="year-grid" id="yearGrid"></div>
   </div>
 
   <!-- SIDE PANEL -->

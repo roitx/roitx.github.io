@@ -67,7 +67,6 @@ async function getCurrentUser() {
 async function checkAuthUI() {
   const user = await getCurrentUser();
   const formSection = document.getElementById("eventFormSection");
-
   if (!formSection) return;
 
   if (!user) {
@@ -76,40 +75,46 @@ async function checkAuthUI() {
       <p style="font-size:12px; margin-bottom:10px;">Login to create & save your personal schedule.</p>
       <button class="cal-btn" onclick="showLoginPopup()" style="width:100%; background:#7b6bff; color:#fff;">Login Required</button>
     `;
-  } else {
-    formSection.innerHTML = `
-      <button id="toggleFormBtn" class="cal-btn" onclick="toggleEventForm()" style="width:100%; background:var(--accent); color:#fff; font-weight:bold;">${ico('plus')} Add Personal Event</button>
-      
-      <div id="eventFormFields" style="display:none; margin-top:12px;">
-        <h3 style="margin:0 0 8px 0; color:#3aa0ff;">${ico('pin')} Create Personal Event</h3>
-        <input type="date" id="eventDate" class="event-input" style="width:100%; margin-bottom:6px;">
-        <input type="text" id="eventName" class="event-input" placeholder="Event Name" style="width:100%; margin-bottom:6px;">
-        
-        <div style="display:flex; gap:6px;">
-          <button class="cal-btn" onclick="addEvent()" style="flex:1; background:var(--accent); color:#fff;">${ico('check')} Save Event</button>
-          <button class="cal-btn" onclick="toggleEventForm()" style="background:#ff4d4d; color:#fff;">${ico('x')} Cancel</button>
-        </div>
-        <div id="eventMsg" style="margin-top:6px; font-size:12px;"></div>
-      </div>
-    `;
-    const today = new Date().toISOString().split("T")[0];
-    const dateInp = document.getElementById("eventDate");
-    if (dateInp) dateInp.value = today;
+    return;
   }
+
+  const catOpts = Object.entries(CATS).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join('');
+  formSection.innerHTML = `
+    <button id="toggleFormBtn" class="cal-btn" onclick="toggleEventForm()" style="width:100%; background:var(--accent); color:#fff; font-weight:bold;">${ico('plus')} Add Personal Event</button>
+    <div id="eventFormFields" style="display:none; margin-top:12px;">
+      <h3 id="formTitle" style="margin:0 0 8px 0; color:#3aa0ff;">${ico('pin')} Create Personal Event</h3>
+      <input type="date" id="eventDate" class="event-input">
+      <input type="text" id="eventName" class="event-input" placeholder="Event Name" maxlength="80">
+      <div class="form-row">
+        <input type="time" id="eventTime" class="event-input" title="Time (optional)">
+        <select id="eventCat" class="event-input" title="Category">${catOpts}</select>
+      </div>
+      <div class="form-row">
+        <select id="eventRepeat" class="event-input" title="Repeat">
+          <option value="none">No repeat</option><option value="weekly">Every week</option><option value="monthly">Every month</option><option value="yearly">Every year</option>
+        </select>
+        <select id="eventRemind" class="event-input" title="Reminder (needs time)">
+          <option value="">No reminder</option><option value="0">At time</option><option value="10">10 min before</option><option value="30">30 min before</option><option value="60">1 hour before</option><option value="1440">1 day before</option>
+        </select>
+      </div>
+      <textarea id="eventNotes" class="event-input" placeholder="Notes (optional)" rows="2" maxlength="300"></textarea>
+      <div style="display:flex; gap:6px;">
+        <button class="cal-btn" onclick="saveEvent()" style="flex:1; background:var(--accent); color:#fff;">${ico('check')} Save Event</button>
+        <button class="cal-btn" onclick="toggleEventForm()" style="background:#ff4d4d; color:#fff;">${ico('x')} Cancel</button>
+      </div>
+      <div id="eventMsg" style="margin-top:6px; font-size:12px;"></div>
+    </div>`;
+  resetEventForm();
 }
 
 function toggleEventForm() {
   const fields = document.getElementById("eventFormFields");
   const btn = document.getElementById("toggleFormBtn");
   if (!fields || !btn) return;
-
-  if (fields.style.display === "none") {
-    fields.style.display = "block";
-    btn.style.display = "none";
-  } else {
-    fields.style.display = "none";
-    btn.style.display = "block";
-  }
+  const opening = fields.style.display === "none";
+  fields.style.display = opening ? "block" : "none";
+  btn.style.display = opening ? "none" : "block";
+  if (!opening) resetEventForm();
 }
 
 function showLoginPopup() {
@@ -176,23 +181,31 @@ async function fetchEventsForRange(startDate, endDate) {
 
   try {
     const user = await getCurrentUser();
-    let query = window.supabaseClient.from("events").select("*")
-      .gte("event_date", startDate)
-      .lte("event_date", endDate);
+    const scope = q => user ? q.or(`user_id.eq.${user.id},is_global.eq.true`) : q.eq("is_global", true);
+    const sb = window.supabaseClient;
 
-    if (user) {
-      query = query.or(`user_id.eq.${user.id},is_global.eq.true`);
-    } else {
-      query = query.eq("is_global", true);
-    }
+    const [inRange, repeating] = await Promise.all([
+      scope(sb.from("events").select("*").gte("event_date", startDate).lte("event_date", endDate)),
+      scope(sb.from("events").select("*").neq("repeat", "none").lte("event_date", endDate))
+    ]);
 
-    const { data, error } = await query;
-    if (!error && data) {
-      data.forEach(ev => {
-        if (!dbEvents[ev.event_date]) dbEvents[ev.event_date] = [];
-        dbEvents[ev.event_date].push(ev);
+    const add = (k, ev) => {
+      if (ev.event_time) ev.event_time = String(ev.event_time).slice(0, 5);
+      if (!dbEvents[k]) dbEvents[k] = [];
+      dbEvents[k].push(ev);
+    };
+
+    (inRange.data || []).forEach(ev => {
+      if (!ev.repeat || ev.repeat === "none" || repeating.error) add(ev.event_date, ev);
+    });
+
+    if (!repeating.error) {
+      (repeating.data || []).forEach(ev => {
+        expandRepeat(ev, startDate, endDate).forEach(k => add(k, Object.assign({}, ev, { event_date: k, _series: ev.event_date })));
       });
     }
+
+    Object.keys(dbEvents).forEach(k => dbEvents[k].sort((a, b) => String(a.event_time || "99").localeCompare(String(b.event_time || "99"))));
   } catch (e) {
     console.error("DB Event Error:", e);
   }
@@ -203,6 +216,7 @@ async function render() {
   const title = document.getElementById('calTitle');
 
   if (!daysGrid || !title) return;
+  if (yearMode) { await renderYear(); return; }
 
   const year = cur.getFullYear();
   const month = cur.getMonth();
@@ -249,6 +263,8 @@ async function render() {
   }
 
   renderSideEventList();
+  renderFestStrip();
+  scheduleReminders();
 }
 
 function createDayElement(dateObj, displayDate, todayKey, isOtherMonth) {
@@ -305,19 +321,28 @@ function createDayElement(dateObj, displayDate, todayKey, isOtherMonth) {
 
   if (dbEvents[dateKey]) {
     el.classList.add('event-glow');
-    dbEvents[dateKey].forEach(ev => {
+    dbEvents[dateKey].forEach((ev, evIdx) => {
       popupInfoList.push({ 
         type: 'event', 
         text: ev.event_name,
         icon: ev.is_global ? 'megaphone' : 'pin',
         id: ev.id,
         is_global: ev.is_global,
-        user_id: ev.user_id
+        user_id: ev.user_id, ev: ev
       });
-      const tag = document.createElement('span');
-      tag.className = 'event-tag';
-      tag.innerText = ev.event_name;
-      el.appendChild(tag);
+      if (evIdx < 2) {
+        const c = catColor(ev.is_global ? 'personal' : ev.category);
+        const tag = document.createElement('span');
+        tag.className = 'event-tag';
+        tag.style.cssText = `--cat:${c};background:${c}59;border-color:${c}66;`;
+        tag.textContent = (ev.event_time ? String(ev.event_time).slice(0, 5) + ' ' : '') + ev.event_name;
+        el.appendChild(tag);
+      } else if (evIdx === 2) {
+        const more = document.createElement('span');
+        more.className = 'event-more';
+        more.textContent = '+' + (dbEvents[dateKey].length - 2);
+        el.appendChild(more);
+      }
     });
   }
 
@@ -373,7 +398,7 @@ function renderSideEventList() {
   const month = cur.getMonth();
   const upcoming = getUpcomingSpecial();
   const nextOfficial = upcoming.find(u => u.official && u.days >= 0);
-  let html = '';
+  let html = todayCardHTML();
 
   // 1. Next holiday countdown
   if (nextOfficial) {
@@ -414,7 +439,7 @@ function renderSideEventList() {
   }
 
   // 4. Tools
-  html += `<div class="side-card"><div class="kbd-hint">${ico('keyboard', 14)} <kbd>←</kbd> <kbd>→</kbd> month · <kbd>T</kbd> today · swipe on mobile</div></div>`;
+  html += `<div class="side-card"><div class="kbd-hint">${ico('keyboard', 14)} <kbd>←</kbd> <kbd>→</kbd> month · <kbd>T</kbd> today · <kbd>Y</kbd> year · <kbd>/</kbd> search · swipe</div></div>`;
 
   list.innerHTML = html;
 }
@@ -481,6 +506,8 @@ document.addEventListener('keydown', e => {
   if (e.key === 'ArrowLeft') document.getElementById('prevBtn')?.click();
   else if (e.key === 'ArrowRight') document.getElementById('nextBtn')?.click();
   else if (e.key === 't' || e.key === 'T') document.getElementById('todayBtn')?.click();
+  else if (e.key === 'y' || e.key === 'Y') document.getElementById('viewBtn')?.click();
+  else if (e.key === '/') { e.preventDefault(); document.getElementById('searchInput')?.focus(); }
 });
 
 // Swipe left/right on mobile to change month
@@ -498,56 +525,50 @@ document.addEventListener('keydown', e => {
   }, { passive: true });
 })();
 
-async function addEvent() {
-  const user = await getCurrentUser();
-  if (!user) {
-    showLoginPopup();
-    return;
-  }
-
-  const dateInp = document.getElementById("eventDate");
-  const nameInp = document.getElementById("eventName");
+async function saveEvent() {
+  const val = id => (document.getElementById(id)?.value ?? "");
+  const date = val("eventDate"), name = val("eventName").trim();
+  const time = val("eventTime"), cat = val("eventCat") || "personal";
+  const repeat = val("eventRepeat") || "none", remind = val("eventRemind"), notes = val("eventNotes").trim();
   const msg = document.getElementById("eventMsg");
+  const fail = t => { if (msg) { msg.innerHTML = ico("x", 14) + " " + esc(t); msg.style.color = "#ff6464"; } };
 
-  if (!dateInp || !nameInp) return;
-
-  const date = dateInp.value;
-  const name = nameInp.value.trim();
-
-  if (!date || !name) {
-    if (msg) {
-      msg.innerHTML = ico("x", 14) + " Fill date & name";
-      msg.style.color = "#ff6464";
-    }
-    return;
+  if (remind !== "") {
+    try { if ("Notification" in window && Notification.permission === "default") Notification.requestPermission(); } catch (e) {}
   }
 
-  const { error } = await window.supabaseClient.from("events").insert([{
-    user_id: user.id,
-    event_date: date,
-    event_name: name,
-    is_global: false
-  }]);
+  const user = await getCurrentUser();
+  if (!user) { showLoginPopup(); return; }
+  if (!date || !name) return fail("Fill date & name");
+  if (remind !== "" && !time) return fail("Reminder ke liye time bhi chuniye");
 
-  if (error) {
-    if (msg) {
-      msg.innerHTML = ico("x", 14) + " " + esc(error.message);
-      msg.style.color = "#ff6464";
-    }
-  } else {
-    if (msg) {
-      msg.innerHTML = ico("check", 14) + " Event added!";
-      msg.style.color = "#00ffe4";
-    }
-    nameInp.value = "";
-    toggleEventForm();
-    render();
+  const full = { event_date: date, event_name: name, event_time: time || null, category: cat, repeat: repeat, notes: notes || null, remind_min: remind === "" ? null : Number(remind) };
+  const base = { event_date: date, event_name: name };
+  const isEdit = !!editingEventId;
+  const run = payload => isEdit
+    ? window.supabaseClient.from("events").update(payload).eq("id", editingEventId).eq("user_id", user.id).select()
+    : window.supabaseClient.from("events").insert([Object.assign({ user_id: user.id, is_global: false }, payload)]);
+
+  let { data, error } = await run(full);
+  let legacy = false;
+  if (error && /column|schema cache/i.test(error.message || "")) {
+    legacy = true;
+    ({ data, error } = await run(base));
   }
+  if (error) return fail(error.message);
+  if (isEdit && data && data.length === 0) return fail("Update nahi hua (Supabase UPDATE policy check kijiye)");
+
+  if (legacy) {
+    showPopup("Event save ho gaya, par time / category / repeat / reminder / notes ke liye Supabase table mein naye columns chahiye.\n\nevents_upgrade.sql chalaiye, phir ye sab kaam karenge.", null, "bell");
+  }
+  toggleEventForm();
+  render();
 }
 
-async function deleteEvent(eventId) {
-  if (!confirm("Kya aap is personal event ko delete karna chahte hain?")) return;
-  
+async function deleteEvent(eventId, isSeries) {
+  const q = isSeries ? "Ye repeat hone wala event hai. Poori series delete ho jayegi. Continue?" : "Kya aap is personal event ko delete karna chahte hain?";
+  if (!confirm(q)) return;
+
   const { error } = await window.supabaseClient.from("events").delete().eq("id", eventId);
   if (error) {
     alert("Delete failed: " + error.message);
@@ -561,36 +582,76 @@ async function showInteractivePopup(infoList, dateKey) {
   const popupText = document.getElementById('popupText');
   const popup = document.getElementById('holidayPopup');
   const btn = document.getElementById('popupButton');
-  const user = await getCurrentUser();
-
   if (!popupText || !popup || !btn) return;
+  const user = await getCurrentUser();
 
   clearPopupExtras();
   const ttl = document.getElementById('popupTitle');
   if (ttl) ttl.innerHTML = ico('calendar') + ' Day Details';
-  popupText.innerHTML = `<b style="color:#3aa0ff; font-size:16px;">Date: ${esc(dateKey)}</b><br><br>`;
+
+  const d = fromKey(dateKey);
+  popupText.innerHTML = `<b class="pop-date">${esc(d.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }))}</b><div class="pop-sub">Week ${isoWeek(d)} · Day ${dayOfYear(d)}</div>`;
 
   infoList.forEach(info => {
-    const item = document.createElement("div");
-    item.style.cssText = "margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;";
+    const ev = info.ev;
+    const row = document.createElement('div');
+    row.className = 'pop-row';
+    if (ev) row.style.setProperty('--rc', catColor(ev.is_global ? 'personal' : ev.category));
 
     const iName = info.icon || (info.type === 'holiday' ? 'flag' : info.type === 'observance' ? 'star' : 'pin');
-    item.innerHTML = `<span style="font-size:14px; display:flex; gap:8px; align-items:center; text-align:left;">${ico(iName, 16)}<span>${esc(info.text)}</span></span>`;
+    const main = document.createElement('div');
+    main.className = 'pop-main';
+    main.innerHTML = `${ico(iName, 16)}<span>${esc(info.text)}</span>`;
+    row.appendChild(main);
 
-    if (info.type === 'event' && user && info.user_id === user.id && !info.is_global) {
-      const delBtn = document.createElement("button");
-      delBtn.innerHTML = ico("trash", 13) + " Delete";
-      delBtn.style.cssText = "display:inline-flex; gap:4px; align-items:center; flex-shrink:0; margin-left:8px; background:#ff4d4d; color:#fff; border:none; padding:3px 8px; border-radius:4px; cursor:pointer; font-size:12px;";
-      delBtn.onclick = () => deleteEvent(info.id);
-      item.appendChild(delBtn);
+    if (ev) {
+      const bits = [];
+      if (ev.event_time) bits.push(`${ico('clock', 12)} ${esc(String(ev.event_time).slice(0, 5))}`);
+      if (ev.category && !ev.is_global) bits.push(`<span class="cat-chip" style="--rc:${catColor(ev.category)}">${esc(catLabel(ev.category))}</span>`);
+      if (ev.repeat && ev.repeat !== 'none') bits.push(`${ico('repeat', 12)} ${esc(REPEAT_LABEL[ev.repeat] || ev.repeat)}`);
+      if (ev.remind_min != null && ev.event_time) bits.push(`${ico('bell', 12)} ${esc(remindLabel(ev.remind_min))}`);
+      if (bits.length) {
+        const meta = document.createElement('div');
+        meta.className = 'pop-meta';
+        meta.innerHTML = bits.map(b => `<span>${b}</span>`).join('');
+        row.appendChild(meta);
+      }
+      if (ev.notes) {
+        const n = document.createElement('div');
+        n.className = 'pop-notes';
+        n.textContent = ev.notes;
+        row.appendChild(n);
+      }
+      if (user && ev.user_id === user.id && !ev.is_global) {
+        const acts = document.createElement('div');
+        acts.className = 'pop-acts';
+        const edit = document.createElement('button');
+        edit.className = 'pop-act';
+        edit.innerHTML = ico('edit', 14) + ' Edit';
+        edit.onclick = () => { closePopup(); openEventForm(ev); };
+        const del = document.createElement('button');
+        del.className = 'pop-act del';
+        del.innerHTML = ico('trash', 14) + ' Delete';
+        del.onclick = () => deleteEvent(ev.id, !!(ev.repeat && ev.repeat !== 'none'));
+        acts.appendChild(edit);
+        acts.appendChild(del);
+        row.appendChild(acts);
+      }
     }
-
-    popupText.appendChild(item);
+    popupText.appendChild(row);
   });
+
+  const wrap = document.createElement('div');
+  wrap.className = 'pop-share';
+  const share = document.createElement('button');
+  share.className = 'pop-act';
+  share.innerHTML = ico('share', 14) + ' Share';
+  share.onclick = () => shareDay(dateKey, infoList);
+  wrap.appendChild(share);
+  popupText.appendChild(wrap);
 
   btn.innerText = "Close";
   btn.onclick = () => closePopup();
-
   popup.style.display = 'flex';
 }
 
@@ -666,6 +727,7 @@ document.getElementById('gotoDate')?.addEventListener('change', function() {
   const dd = parseInt(parts[2], 10);
 
   selectedGotoDateKey = dateVal;
+  setView(false);
   cur = new Date(yyyy, mm, 1);
 
   render().then(() => {
@@ -706,7 +768,7 @@ document.getElementById('gotoDate')?.addEventListener('change', function() {
         icon: ev.is_global ? 'megaphone' : 'pin',
           id: ev.id,
           is_global: ev.is_global,
-          user_id: ev.user_id
+          user_id: ev.user_id, ev: ev
         });
       });
     }
@@ -723,8 +785,8 @@ const prevBtn = document.getElementById('prevBtn');
 const nextBtn = document.getElementById('nextBtn');
 const todayBtn = document.getElementById('todayBtn');
 
-if (prevBtn) prevBtn.onclick = () => { cur.setMonth(cur.getMonth() - 1); render(); };
-if (nextBtn) nextBtn.onclick = () => { cur.setMonth(cur.getMonth() + 1); render(); };
+if (prevBtn) prevBtn.onclick = () => { if (yearMode) cur.setFullYear(cur.getFullYear() - 1); else cur.setMonth(cur.getMonth() - 1); render(); };
+if (nextBtn) nextBtn.onclick = () => { if (yearMode) cur.setFullYear(cur.getFullYear() + 1); else cur.setMonth(cur.getMonth() + 1); render(); };
 if (todayBtn) todayBtn.onclick = () => { 
   selectedGotoDateKey = null;
   cur = new Date(); 
@@ -792,3 +854,322 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 });
+
+/* =====================================================================
+   v3 FEATURES: theme, search, festival strip, year view, categories,
+   repeat, reminders, edit, notes, share, week/day number, +N badge
+   ===================================================================== */
+const CATS = {
+  personal: { label: 'Personal', color: '#a48aff' },
+  study:    { label: 'Study',    color: '#3aa0ff' },
+  exam:     { label: 'Exam',     color: '#ff5c7a' },
+  work:     { label: 'Work',     color: '#ffa94d' },
+  birthday: { label: 'Birthday', color: '#ff7ac8' },
+  health:   { label: 'Health',   color: '#34d399' }
+};
+const catColor = c => (CATS[c] || CATS.personal).color;
+const catLabel = c => (CATS[c] || CATS.personal).label;
+const REPEAT_LABEL = { weekly: 'Every week', monthly: 'Every month', yearly: 'Every year' };
+let yearMode = false;
+let editingEventId = null;
+
+Object.assign(ICONS, {
+  moon: '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>',
+  grid: '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>',
+  search: '<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
+  share: '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>',
+  edit: '<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>',
+  repeat: '<polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>'
+});
+
+/* ---------- date helpers ---------- */
+function isoWeek(d) {
+  const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const day = t.getUTCDay() || 7;
+  t.setUTCDate(t.getUTCDate() + 4 - day);
+  const y0 = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+  return Math.ceil(((t - y0) / 864e5 + 1) / 7);
+}
+function dayOfYear(d) {
+  return Math.round((new Date(d.getFullYear(), d.getMonth(), d.getDate()) - new Date(d.getFullYear(), 0, 0)) / 864e5);
+}
+function remindLabel(m) {
+  m = Number(m);
+  if (m === 0) return 'At time';
+  if (m === 60) return '1 hour before';
+  if (m === 1440) return '1 day before';
+  return m + ' min before';
+}
+function todayCardHTML() {
+  const n = new Date();
+  const total = Math.round((new Date(n.getFullYear() + 1, 0, 1) - new Date(n.getFullYear(), 0, 1)) / 864e5);
+  const doy = dayOfYear(n);
+  return `<div class="side-card today-card"><div class="tc-date">${ico('calendar', 16)} ${esc(n.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' }))}</div><div class="tc-sub">Week ${isoWeek(n)} · Day ${doy}/${total} · ${total - doy} days left</div></div>`;
+}
+
+/* ---------- repeat events ---------- */
+function expandRepeat(ev, startKey, endKey) {
+  const out = [];
+  const o = fromKey(ev.event_date), s = fromKey(startKey), e = fromKey(endKey);
+  let n = 0;
+  if (ev.repeat === 'weekly') {
+    let d = new Date(o);
+    if (d < s) {
+      const weeks = Math.ceil(Math.round((s - d) / 864e5) / 7);
+      d = new Date(o.getFullYear(), o.getMonth(), o.getDate() + weeks * 7);
+    }
+    for (; d <= e && n++ < 400; d = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 7)) out.push(keyOf(d));
+  } else if (ev.repeat === 'monthly') {
+    let c = new Date(s.getFullYear(), s.getMonth(), 1);
+    while (c <= e && n++ < 60) {
+      const cand = new Date(c.getFullYear(), c.getMonth(), o.getDate());
+      if (cand.getMonth() === c.getMonth() && cand >= o && cand >= s && cand <= e) out.push(keyOf(cand));
+      c = new Date(c.getFullYear(), c.getMonth() + 1, 1);
+    }
+  } else if (ev.repeat === 'yearly') {
+    for (let y = s.getFullYear(); y <= e.getFullYear() && n++ < 20; y++) {
+      const cand = new Date(y, o.getMonth(), o.getDate());
+      if (cand.getMonth() === o.getMonth() && cand >= o && cand >= s && cand <= e) out.push(keyOf(cand));
+    }
+  }
+  return out;
+}
+
+/* ---------- event form helpers ---------- */
+const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
+
+function resetEventForm() {
+  editingEventId = null;
+  setVal('eventName', ''); setVal('eventTime', ''); setVal('eventCat', 'personal');
+  setVal('eventRepeat', 'none'); setVal('eventRemind', ''); setVal('eventNotes', '');
+  setVal('eventDate', keyOf(new Date()));
+  const t = document.getElementById('formTitle');
+  if (t) t.innerHTML = ico('pin') + ' Create Personal Event';
+  const m = document.getElementById('eventMsg');
+  if (m) m.innerHTML = '';
+}
+
+function openEventForm(ev) {
+  const fields = document.getElementById('eventFormFields');
+  const btn = document.getElementById('toggleFormBtn');
+  if (!fields || !btn) return;
+  fields.style.display = 'block';
+  btn.style.display = 'none';
+  resetEventForm();
+  if (ev) {
+    editingEventId = ev.id;
+    setVal('eventDate', ev._series || ev.event_date);
+    setVal('eventName', ev.event_name || '');
+    setVal('eventTime', ev.event_time ? String(ev.event_time).slice(0, 5) : '');
+    setVal('eventCat', ev.category || 'personal');
+    setVal('eventRepeat', ev.repeat || 'none');
+    setVal('eventRemind', ev.remind_min == null ? '' : String(ev.remind_min));
+    setVal('eventNotes', ev.notes || '');
+    const t = document.getElementById('formTitle');
+    if (t) t.innerHTML = ico('edit') + ' Edit Event';
+  }
+  document.getElementById('eventFormSection')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+window.addEvent = saveEvent;   // purana HTML onclick="addEvent()" bhi chalta rahe
+
+/* ---------- reminders (page khula ho tab tak) ---------- */
+const _scheduled = new Set();
+function notifyUser(title, body) {
+  try {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification(title, { body: body, icon: 'calendar.png' });
+    }
+  } catch (e) {}
+  showPopup(title + '\n\n' + body, null, 'bell');
+}
+function scheduleReminders() {
+  const now = Date.now();
+  Object.keys(dbEvents).forEach(k => dbEvents[k].forEach(ev => {
+    if (ev.is_global || !ev.event_time || ev.remind_min == null) return;
+    const parts = String(ev.event_time).split(':').map(Number);
+    const at = fromKey(k);
+    at.setHours(parts[0] || 0, parts[1] || 0, 0, 0);
+    const fire = at.getTime() - Number(ev.remind_min) * 60000;
+    const id = `${ev.id}|${k}|${ev.event_time}|${ev.remind_min}`;
+    if (fire <= now || fire - now > 36 * 3600e3 || _scheduled.has(id)) return;
+    _scheduled.add(id);
+    setTimeout(() => {
+      const still = (dbEvents[k] || []).some(e => e.id === ev.id && e.event_time === ev.event_time);
+      if (still) notifyUser('Reminder: ' + ev.event_name, `${remindLabel(ev.remind_min)} · ${String(ev.event_time).slice(0, 5)}`);
+    }, fire - now);
+  }));
+}
+
+/* ---------- share ---------- */
+function shareDay(dateKey, infoList) {
+  const d = fromKey(dateKey);
+  const head = d.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  const lines = infoList.map(i => '• ' + i.text + (i.ev && i.ev.event_time ? ' (' + String(i.ev.event_time).slice(0, 5) + ')' : ''));
+  const text = `${head}\n${lines.join('\n')}\n\nRoitx Calendar\nhttps://roitx.dpdns.org/calendar.html`;
+  if (navigator.share) {
+    navigator.share({ title: 'Roitx Calendar', text: text }).catch(() => {});
+  } else {
+    window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
+  }
+}
+
+/* ---------- jump helper ---------- */
+function goToDate(key) {
+  const g = document.getElementById('gotoDate');
+  if (!g) return;
+  g.value = key;
+  g.dispatchEvent(new Event('change'));
+}
+
+/* ---------- festival strip ---------- */
+function renderFestStrip() {
+  const strip = document.getElementById('festStrip');
+  if (!strip) return;
+  const items = getUpcomingSpecial().filter(u => u.official).slice(0, 8);
+  strip.innerHTML = items.map(u =>
+    `<button type="button" class="fest-chip" data-key="${u.key}"><b>${u.days === 0 ? 'Today' : u.days === 1 ? 'Tomorrow' : 'in ' + u.days + ' days'}</b><span>${esc(u.name)}</span></button>`
+  ).join('');
+  strip.style.display = items.length ? 'flex' : 'none';
+}
+document.getElementById('festStrip')?.addEventListener('click', e => {
+  const c = e.target.closest('.fest-chip');
+  if (c) goToDate(c.dataset.key);
+});
+
+/* ---------- year view ---------- */
+function setView(year) {
+  yearMode = !!year;
+  document.body.classList.toggle('year-mode', yearMode);
+  const b = document.getElementById('viewBtn');
+  if (b) {
+    b.innerHTML = ico(yearMode ? 'calendar' : 'grid', 18);
+    b.title = yearMode ? 'Month view' : 'Year view';
+    b.setAttribute('aria-label', b.title);
+  }
+}
+
+async function renderYear() {
+  const y = cur.getFullYear();
+  const title = document.getElementById('calTitle');
+  if (title) title.textContent = String(y);
+  await Promise.all([fetchHolidays(y), fetchEventsForRange(`${y}-01-01`, `${y}-12-31`)]);
+  checkTodayWishBanner();
+
+  const grid = document.getElementById('yearGrid');
+  if (!grid) return;
+  const todayKey = keyOf(new Date());
+  const wd = ['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(c => `<span class="wd">${c}</span>`).join('');
+  let html = '';
+  for (let m = 0; m < 12; m++) {
+    const first = new Date(y, m, 1).getDay();
+    const dim = new Date(y, m + 1, 0).getDate();
+    let cells = '';
+    for (let i = 0; i < first; i++) cells += '<span class="yd empty"></span>';
+    for (let d = 1; d <= dim; d++) {
+      const k = `${y}-${pad2(m + 1)}-${pad2(d)}`;
+      let cls = 'yd';
+      if ((first + d - 1) % 7 === 0) cls += ' sun';
+      if (fetchedHolidays[k]) cls += ' h';
+      else if (observanceDays[`${pad2(m + 1)}-${pad2(d)}`]) cls += ' o';
+      if (dbEvents[k]) cls += ' ev';
+      if (k === todayKey) cls += ' td';
+      cells += `<span class="${cls}" data-key="${k}">${d}</span>`;
+    }
+    const mName = new Date(y, m, 1).toLocaleString('default', { month: 'long' });
+    html += `<div class="ym"><div class="ym-title" data-month="${m}">${mName}</div><div class="ym-grid">${wd}${cells}</div></div>`;
+  }
+  grid.innerHTML = html;
+  renderSideEventList();
+  renderFestStrip();
+  scheduleReminders();
+}
+
+document.getElementById('yearGrid')?.addEventListener('click', e => {
+  const day = e.target.closest('.yd[data-key]');
+  if (day) { goToDate(day.dataset.key); return; }
+  const mt = e.target.closest('.ym-title');
+  if (mt) {
+    cur = new Date(cur.getFullYear(), Number(mt.dataset.month), 1);
+    selectedGotoDateKey = null;
+    setView(false);
+    render();
+  }
+});
+
+document.getElementById('viewBtn')?.addEventListener('click', () => { setView(!yearMode); render(); });
+
+/* ---------- search ---------- */
+let _searchTimer = null;
+async function runSearch(q) {
+  const inp = document.getElementById('searchInput');
+  const box = document.getElementById('searchResults');
+  if (!inp || !box) return;
+  if (q.length < 2) { box.innerHTML = ''; box.style.display = 'none'; return; }
+
+  const ql = q.toLowerCase();
+  const res = [];
+  Object.entries(fetchedHolidays).forEach(([k, n]) => { if (String(n).toLowerCase().includes(ql)) res.push({ key: k, name: n, color: '#ff4d4d' }); });
+  const y = cur.getFullYear();
+  Object.entries(observanceDays).forEach(([md, n]) => {
+    const key = `${y}-${md}`;
+    if (n.toLowerCase().includes(ql) && !fetchedHolidays[key]) res.push({ key: key, name: n, color: '#00f2fe' });
+  });
+
+  if (window.supabaseClient) {
+    try {
+      const user = await getCurrentUser();
+      let qy = window.supabaseClient.from('events').select('*').ilike('event_name', `%${q}%`).order('event_date').limit(8);
+      qy = user ? qy.or(`user_id.eq.${user.id},is_global.eq.true`) : qy.eq('is_global', true);
+      const { data } = await qy;
+      (data || []).forEach(ev => res.push({ key: ev.event_date, name: ev.event_name, color: catColor(ev.is_global ? 'personal' : ev.category) }));
+    } catch (e) { /* search sirf local data par chalega */ }
+  }
+  if (inp.value.trim() !== q) return;   // user ne aur type kar diya
+
+  const t = keyOf(new Date());
+  res.sort((a, b) => ((a.key >= t ? 0 : 1) - (b.key >= t ? 0 : 1)) || a.key.localeCompare(b.key));
+  box.innerHTML = res.slice(0, 8).map(r =>
+    `<div class="sr-item" data-key="${r.key}"><span class="up-dot" style="background:${r.color}"></span><span class="sr-name">${esc(r.name)}</span><span class="sr-date">${esc(fromKey(r.key).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }))}</span></div>`
+  ).join('') || '<div class="sr-empty">Kuch nahi mila</div>';
+  box.style.display = 'block';
+}
+
+(function initSearch() {
+  const inp = document.getElementById('searchInput');
+  const box = document.getElementById('searchResults');
+  if (!inp || !box) return;
+  inp.addEventListener('input', () => { clearTimeout(_searchTimer); _searchTimer = setTimeout(() => runSearch(inp.value.trim()), 250); });
+  inp.addEventListener('focus', () => { if (box.innerHTML) box.style.display = 'block'; });
+  inp.addEventListener('keydown', e => { if (e.key === 'Escape') { inp.value = ''; box.innerHTML = ''; box.style.display = 'none'; inp.blur(); } });
+  document.addEventListener('click', e => { if (!e.target.closest('.search-wrap')) box.style.display = 'none'; });
+  box.addEventListener('click', e => {
+    const it = e.target.closest('.sr-item');
+    if (!it) return;
+    box.style.display = 'none';
+    inp.blur();
+    goToDate(it.dataset.key);
+  });
+})();
+
+/* ---------- theme ---------- */
+function applyTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  try { localStorage.setItem('roitx_theme', t); } catch (e) {}
+  const b = document.getElementById('themeBtn');
+  if (b) {
+    b.innerHTML = ico(t === 'light' ? 'moon' : 'sun', 18);
+    b.title = t === 'light' ? 'Dark theme' : 'Light theme';
+    b.setAttribute('aria-label', b.title);
+  }
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', t === 'light' ? '#eef4fb' : '#04101a');
+}
+document.getElementById('themeBtn')?.addEventListener('click', () => {
+  applyTheme(document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light');
+});
+(function () {
+  let t = 'dark';
+  try { t = localStorage.getItem('roitx_theme') || 'dark'; } catch (e) {}
+  applyTheme(t);
+  setView(false);
+})();

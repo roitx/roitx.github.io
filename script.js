@@ -225,6 +225,23 @@ function escapeHtml(str) {
     .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
 
+// Repeat wale event (weekly / monthly / yearly) kisi din par aata hai ya nahi
+function eventOccursOn(ev, key) {
+  const parse = k => { const p = String(k).split("-").map(Number); return new Date(p[0], p[1] - 1, p[2]); };
+  const o = parse(ev.event_date), d = parse(key);
+  if (d < o) return false;
+  if (ev.repeat === "weekly") {
+    return Math.round((d - o) / 864e5) % 7 === 0;
+  }
+  if (ev.repeat === "monthly") {
+    return d.getDate() === o.getDate();
+  }
+  if (ev.repeat === "yearly") {
+    return d.getDate() === o.getDate() && d.getMonth() === o.getMonth();
+  }
+  return false;
+}
+
 // Har calendar event ab apni alag notification banta hai (aaj + kal ke events).
 // Notification har page-load par drawer me add hoti hai (delete na ki ho to),
 // lekin toast sirf pehli baar dikhta hai.
@@ -261,15 +278,26 @@ async function checkTodayCalendarNotifications() {
         const user = await window.getCurrentUser();
         if (user) currentUserId = user.id;
       }
-      let query = window.supabaseClient.from("events").select("*")
-        .in("event_date", [todayKey, tomorrowKey]);
-      if (currentUserId) {
-        query = query.or(`user_id.eq.${currentUserId},is_global.eq.true`);
-      } else {
-        query = query.eq("is_global", true);
+      const scope = q => currentUserId
+        ? q.or(`user_id.eq.${currentUserId},is_global.eq.true`)
+        : q.eq("is_global", true);
+
+      const [{ data: evData, error: evErr }, { data: repData, error: repErr }] = await Promise.all([
+        scope(window.supabaseClient.from("events").select("*").in("event_date", [todayKey, tomorrowKey])),
+        // repeat wale events (column na ho to ye query error degi, jise ignore kiya jata hai)
+        scope(window.supabaseClient.from("events").select("*").neq("repeat", "none").lte("event_date", tomorrowKey))
+      ]);
+
+      if (!evErr && evData) {
+        dbEventsList = evData.filter(ev => !ev.repeat || ev.repeat === "none" || repErr);
       }
-      const { data: evData, error: evErr } = await query;
-      if (!evErr && evData) dbEventsList = evData;
+      if (!repErr && repData) {
+        repData.forEach(ev => {
+          [todayKey, tomorrowKey].forEach(k => {
+            if (eventOccursOn(ev, k)) dbEventsList.push(Object.assign({}, ev, { event_date: k }));
+          });
+        });
+      }
     } catch (err) {
       console.warn("DB events fetch error:", err);
     }
@@ -295,7 +323,7 @@ async function checkTodayCalendarNotifications() {
       items.push({
         id: `${idBase}-ev-${ev.id}`,
         title: ev.is_global ? `📢 ${prefix}Announcement` : `📌 ${prefix}Your Event`,
-        message: ev.event_name
+        message: ev.event_name + (ev.event_time ? " • " + String(ev.event_time).slice(0, 5) : "")
       });
     });
   };
