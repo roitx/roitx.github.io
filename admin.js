@@ -301,76 +301,117 @@ async function addEvent() {
   await updateStats();
 }
 
-async function loadEvents() {
+// ---- Events list: default = Global (admin) events, "Users" = paginated ----
+const EVENT_PAGE_SIZE = 20;
+let eventUserPage = 0;     // Users filter ke liye current page
+let eventUserRows = [];    // Users filter ke abhi tak load hue rows
+
+function buildEventRow(ev) {
+  const row = document.createElement("div");
+  row.className = "note-list-card";
+  const escapedEvName = escapeQuotes(ev.event_name || "");
+  const tag = ev.is_global === true ? "🌐" : "👤";
+
+  row.innerHTML = `
+    <div class="note-info-text">
+      ${tag} ${ev.event_date} • ${ev.event_name}
+    </div>
+
+    <div class="note-action-buttons">
+      <button class="btn-edit-note" onclick="openEventEditModal('${ev.id}', '${ev.event_date}', '${escapedEvName}')" title="Edit">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg> Edit
+      </button>
+      <button class="btn-delete-note" onclick="deleteEvent('${ev.id}')" title="Delete">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg> Delete
+      </button>
+    </div>
+  `;
+  return row;
+}
+
+// arg === "more"  -> Show more click (Users list me agla page jodo)
+// koi aur arg (event/undefined) -> fresh load
+async function loadEvents(arg) {
   const list = document.getElementById("eventList");
   if (!list) return;
 
-  list.innerHTML = "<em style='color:#b9c9e0; font-size:13px;'>⏳ Loading events...</em>";
-
-  const { data, error } = await window.supabaseClient
-    .from("events")
-    .select("*")
-    .order("event_date", { ascending: true });
-
-  if (error) {
-    console.error("Events Load Error:", error);
-    list.innerHTML = "<em style='color:#b9c9e0; font-size:13px;'>Error loading events</em>";
-    updateStats();
-    return;
-  }
-
-  if (!data || data.length === 0) {
-    list.innerHTML = "<em style='color:#b9c9e0; font-size:13px;'>No events found</em>";
-    updateStats();
-    return;
-  }
-
+  const isMore = arg === "more";
+  const typeFilter = document.getElementById("filterEventType")?.value || "global";
   const search = document.getElementById("searchEvent")?.value.toLowerCase().trim() || "";
   const monthFilter = document.getElementById("filterEventMonth")?.value || "";
   const yearFilter = document.getElementById("filterEventYear")?.value || "";
-  const typeFilter = document.getElementById("filterEventType")?.value || "all";
 
-  const filtered = data.filter(ev => {
+  const matches = ev => {
     const [year, month] = (ev.event_date || "").split("-");
-    const matchSearch = (ev.event_name || "").toLowerCase().includes(search);
-    const matchMonth = monthFilter ? month === monthFilter : true;
-    const matchYear  = yearFilter ? year === yearFilter : true;
-    
-    let matchType = true;
-    if (typeFilter === "global") matchType = ev.is_global === true;
-    if (typeFilter === "user") matchType = ev.is_global !== true;
+    return (ev.event_name || "").toLowerCase().includes(search) &&
+           (monthFilter ? month === monthFilter : true) &&
+           (yearFilter ? year === yearFilter : true);
+  };
 
-    return matchSearch && matchMonth && matchYear && matchType;
-  });
+  // Query banao: type ke hisaab se server-side filter
+  let query = window.supabaseClient
+    .from("events")
+    .select("*")
+    .order("event_date", { ascending: true })
+    .order("id", { ascending: true });
 
-  if (filtered.length === 0) {
-    list.innerHTML = "<em style='color:#b9c9e0; font-size:13px;'>No matching events found</em>";
+  if (typeFilter === "global") {
+    query = query.eq("is_global", true);
+  } else if (typeFilter === "user") {
+    query = query.or("is_global.is.null,is_global.eq.false");
+    if (!isMore) eventUserPage = 0; else eventUserPage++;
+    const from = eventUserPage * EVENT_PAGE_SIZE;
+    query = query.range(from, from + EVENT_PAGE_SIZE - 1);
+    if (search) query = query.ilike("event_name", `%${search}%`);
+    if (yearFilter) query = query.gte("event_date", `${yearFilter}-01-01`).lte("event_date", `${yearFilter}-12-31`);
+  }
+  // "all" -> koi extra filter nahi (purana behaviour)
+
+  if (!isMore) {
+    list.innerHTML = "<em style='color:#b9c9e0; font-size:13px;'>⏳ Loading events...</em>";
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error("Events Load Error:", error);
+    if (isMore) eventUserPage--;
+    if (!isMore) list.innerHTML = "<em style='color:#b9c9e0; font-size:13px;'>Error loading events</em>";
     updateStats();
     return;
   }
 
+  const rows = data || [];
+
+  // Users filter: rows accumulate hote hain (Show more)
+  if (typeFilter === "user") {
+    eventUserRows = isMore ? eventUserRows.concat(rows) : rows;
+  }
+
+  const source = typeFilter === "user" ? eventUserRows : rows;
+  const filtered = source.filter(matches);
+
   list.innerHTML = "";
-  filtered.forEach(ev => {
-    const row = document.createElement("div");
-    row.className = "note-list-card";
-    const escapedEvName = escapeQuotes(ev.event_name || "");
 
-    row.innerHTML = `
-      <div class="note-info-text">
-        📅 ${ev.event_date} • ${ev.event_name}
-      </div>
+  if (filtered.length === 0) {
+    list.innerHTML = "<em style='color:#b9c9e0; font-size:13px;'>No matching events found</em>";
+  } else {
+    filtered.forEach(ev => list.appendChild(buildEventRow(ev)));
+  }
 
-      <div class="note-action-buttons">
-        <button class="btn-edit-note" onclick="openEventEditModal('${ev.id}', '${ev.event_date}', '${escapedEvName}')" title="Edit">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg> Edit
-        </button>
-        <button class="btn-delete-note" onclick="deleteEvent('${ev.id}')" title="Delete">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg> Delete
-        </button>
-      </div>
-    `;
-    list.appendChild(row);
-  });
+  // Show more button sirf Users list me, jab poora page bhar ke aaya ho
+  if (typeFilter === "user" && rows.length === EVENT_PAGE_SIZE) {
+    const btn = document.createElement("button");
+    btn.className = "btn-edit-note";
+    btn.style.cssText = "width:100%; justify-content:center; margin-top:10px; padding:10px;";
+    btn.textContent = "⬇ Show more";
+    btn.onclick = async () => {
+      btn.disabled = true;
+      btn.textContent = "⏳ Loading...";
+      await loadEvents("more");
+    };
+    list.appendChild(btn);
+  }
 
   updateStats();
 }
@@ -500,6 +541,10 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("filterFClass")?.addEventListener("change", loadFormulas);
   document.getElementById("filterFSubject")?.addEventListener("change", loadFormulas);
   document.getElementById("filterFCategory")?.addEventListener("change", loadFormulas);
+
+  // Events list default: Global (admin) events
+  const evTypeSel = document.getElementById("filterEventType");
+  if (evTypeSel) evTypeSel.value = "global";
 
   // Initial Loaders
   loadFiles();
