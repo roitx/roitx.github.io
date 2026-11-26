@@ -892,3 +892,47 @@ html[data-theme="light"] .yd { color: #2c4a73; }
 html[data-theme="light"] .yd.sun { color: #b7791f; }
 html[data-theme="light"] .yd.o { color: #0b8aa3; }
 html[data-theme="light"] .mini a { color: #1f7ae0 !important; }
+
+
+/* =====================================================================
+   PRIORITY OVERRIDES (sabse last me, taaki sab par bhaari rahe)
+   Order: GOTO (emerald)  >  TODAY (solid blue)  >  holiday / sunday /
+   observance / event glow
+   ===================================================================== */
+
+/* TODAY: poora cell Legend wale blue (#3aa0ff) se full colour */
+#daysGrid .day.today:not(.goto) {
+  background: #3aa0ff !important;
+  border: 1px solid #3aa0ff !important;
+  box-shadow: 0 0 22px rgba(58, 160, 255, .85) !important;
+  animation: pulseTodaySolid 2s infinite alternate;
+}
+@keyframes pulseTodaySolid {
+  from { box-shadow: 0 0 12px rgba(58, 160, 255, .55); }
+  to   { box-shadow: 0 0 26px rgba(58, 160, 255, .95); }
+}
+#daysGrid .day.today:not(.goto) .date { color: #fff !important; }
+#daysGrid .day.today:not(.goto) .lw-badge { color: #fff; }
+#daysGrid .day.today:not(.goto) .event-tag {
+  background: rgba(0, 0, 0, .3) !important;
+  border-color: rgba(255, 255, 255, .45) !important;
+  color: #fff !important;
+}
+#daysGrid .day.today:not(.goto) .event-more { color: #fff; }
+
+/* GO TO DATE: emerald green, holiday/event ke saath aaj (today) ko bhi override karta hai */
+#daysGrid .day.goto,
+#daysGrid .day.goto.today {
+  background: rgba(0, 230, 118, 0.08) !important;
+  border: 2px solid #00E676 !important;
+  box-shadow: 0 0 25px rgba(0, 230, 118, 0.95), inset 0 0 12px rgba(0, 230, 118, 0.5) !important;
+  animation: none !important;
+  transform: scale(1.04);
+  z-index: 20;
+}
+#daysGrid .day.goto .date,
+#daysGrid .day.goto.today .date { color: #69f0ae !important; }
+html[data-theme="light"] #daysGrid .day.goto .date { color: #0f9d58 !important; }
+
+/* Year view: aaj ka din bhi solid blue */
+.yd.td { background: #3aa0ff !important; color: #fff !important; outline: none; font-weight: 800; }
