@@ -1,4 +1,22 @@
-const CACHE_NAME = 'roitx-study-cache-v3';
+/* =====================================================================
+   VERSION GUIDE  ->  v MAJOR . MINOR . PATCH . BUILD   (abhi: 3.1.0.1)
+
+   Koi bhi file badlo (index.html, calendar.js, calendar.css, ...) to
+   neeche CACHE_NAME me version badhana ZAROORI hai, warna purane users
+   ko purani cached files hi dikhti rahengi.
+
+   Kab kya badhao (jo hissa badhao, uske baad wale ko reset karo):
+
+   - Chhota fix kiya            ->  3.1.1.1   (PATCH badhao)
+   - Naya feature joda          ->  3.2.0.1   (MINOR badhao)
+   - Poora naya design aaya     ->  4.0.0.1   (MAJOR badhao)
+   - Sirf dobara deploy kiya,
+     koi badlav nahi            ->  3.1.0.2   (sirf BUILD badhao)
+
+   Format hamesha 'roitx-study-cache-v' ke baad sirf numbers aur dots
+   rakho. Index ke menu me "App Version" yahi se apne aap dikhta hai.
+   ===================================================================== */
+const CACHE_NAME = 'roitx-study-cache-v3.1.0.1';
 const ASSETS = [
   './',
   './index.html',
@@ -98,6 +116,13 @@ self.addEventListener('fetch', event => {
         });
       })
   );
+});
+
+// --- VERSION: page poochhe to CACHE_NAME bata do (index ke App Version label ke liye) ---
+self.addEventListener('message', event => {
+  if (event.data && event.data.type === 'GET_VERSION' && event.ports && event.ports[0]) {
+    event.ports[0].postMessage({ version: CACHE_NAME });
+  }
 });
 
 // --- PUSH NOTIFICATION & BADGE HANDLER ---

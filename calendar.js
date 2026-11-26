@@ -282,6 +282,14 @@ function createDayElement(dateObj, displayDate, todayKey, isOtherMonth) {
 
   if (selectedGotoDateKey && selectedGotoDateKey === dateKey && !isOtherMonth) {
     el.classList.add('goto');
+    // Aaj se kitne din baad / pehle
+    const diff = Math.round((fromKey(dateKey) - fromKey(todayKey)) / 864e5);
+    const full  = diff === 0 ? 'Aaj' : diff > 0 ? `${diff} din baad` : `${-diff} din pehle`;
+    const short = diff === 0 ? 'Aaj' : diff > 0 ? `+${diff}d` : `\u2212${-diff}d`;
+    const gd = document.createElement('div');
+    gd.className = 'goto-diff';
+    gd.innerHTML = `<span class="gd-full">${full}</span><span class="gd-short">${short}</span>`;
+    el.appendChild(gd);
   }
 
   if (dateKey === todayKey && !isOtherMonth) {
@@ -290,6 +298,24 @@ function createDayElement(dateObj, displayDate, todayKey, isOtherMonth) {
     badge.className = 'roitx-center-badge';
     badge.innerText = 'roitx';
     el.appendChild(badge);
+
+    // Today blue hai, isliye holiday / sunday / observance ki jaankari chhoti dots me
+    const isOfficial = !!fetchedHolidays[dateKey];
+    const dots = [];
+    if (isOfficial) dots.push({ c: 'red', t: fetchedHolidays[dateKey] });
+    if (dateObj.getDay() === 0) dots.push({ c: 'gold', t: 'Sunday (Weekly Off)' });
+    if (!isOfficial && observanceDays[monthDayKey]) dots.push({ c: 'cyan', t: observanceDays[monthDayKey] });
+    if (dots.length) {
+      const wrap = document.createElement('div');
+      wrap.className = 'today-dots' + (isOfficial && [1, 5].includes(dateObj.getDay()) ? ' has-lw' : '');
+      dots.forEach(d => {
+        const dot = document.createElement('span');
+        dot.className = 'today-dot ' + d.c;
+        dot.title = d.t;
+        wrap.appendChild(dot);
+      });
+      el.appendChild(wrap);
+    }
   }
 
   let popupInfoList = [];

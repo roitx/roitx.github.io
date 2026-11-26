@@ -148,9 +148,26 @@
     .rm-chip { font: inherit; font-size: 12px; font-weight: 600; padding: 6px 11px; border-radius: 999px; cursor: pointer; background: var(--rm-soft); color: var(--rm-text); border: 1px solid var(--rm-line); transition: background .15s, border-color .15s, transform .15s; animation: rmChipIn .25s ease both; }
     .rm-chip:hover { border-color: var(--rm-accent); }
     .rm-chip:active { transform: scale(.96); }
-    .rm-chip.on { background: var(--rm-accent); border-color: var(--rm-accent); color: #04101a; }
+    .rm-chip.on { background: var(--rm-accent); border-color: var(--rm-accent); color: #04101a; font-weight: 800; }
     .rm-chip.neg.on { background: #ef4444; border-color: #ef4444; color: #fff; }
+    .rm-chip.top.on { background: linear-gradient(135deg, #ffe08a, #ffb703 55%, #e69500); border-color: #ffcf4d; color: #3a2600; box-shadow: 0 0 0 1px rgba(255,207,77,.35), 0 4px 14px rgba(255,183,3,.45); }
+    .rm-chip.on::before { content: '✓ '; }
+    .rm-comment { white-space: pre-line; }
     @keyframes rmChipIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+    .rm-tag { font-size: 11.5px; padding: 5px 12px; }
+    .rm-hint { display: none; font-size: 11.5px; font-weight: 700; color: #f87171; margin-top: 10px; animation: rmChipIn .25s ease both; }
+    .rm-hint.show { display: block; }
+    .rm-submit.top { background: linear-gradient(135deg, #ffe08a, #ffb703 55%, #e69500); color: #3a2600; box-shadow: 0 8px 22px rgba(255,183,3,.4); }
+    .rm-submit.top:hover { box-shadow: 0 12px 30px rgba(255,183,3,.6); }
+    .rm-tagrow { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 4px; }
+    .rm-tagpill { font-size: 10px; font-weight: 800; padding: 1px 8px; border-radius: 999px; background: rgba(0,210,255,.14); color: var(--rm-accent); }
+    .rm-confetti { position: fixed; inset: 0; pointer-events: none; z-index: 99999; overflow: hidden; }
+    .rm-conf { position: absolute; border-radius: 2px; opacity: 0; animation: rmConf var(--dur) cubic-bezier(.22,.7,.35,1) var(--del) forwards; }
+    @keyframes rmConf {
+      0%   { opacity: 1; transform: translate(0, 0) rotate(0); }
+      40%  { opacity: 1; transform: translate(calc(var(--dx) * .7), var(--dy)) rotate(calc(var(--rot) * .5)); }
+      100% { opacity: 0; transform: translate(var(--dx), calc(var(--dy) + 240px)) rotate(var(--rot)); }
+    }
     .rm-mood { font-size: 11.5px; font-weight: 700; margin-top: 2px; color: var(--rm-accent); transition: opacity .2s; }
     .rm-mood.swap { opacity: 0; }
     .rm-score-label { font-size: 10px; color: var(--rm-muted); text-transform: uppercase; font-weight: 800; letter-spacing: .8px; }
@@ -1319,12 +1336,15 @@
         </div>
 
         <div id="ratingChipsWrap">
+          <div class="rm-chips-label">Kis baare mein? (optional)</div>
+          <div id="ratingTags" class="rm-chips" style="margin-bottom:12px"></div>
           <div class="rm-chips-label">Quick feedback chuniye (optional)</div>
           <div id="ratingChips" class="rm-chips"></div>
+          <div id="ratingHint" class="rm-hint">Kya problem aayi, thoda detail mein likhiye ✍️</div>
         </div>
 
         <input type="text" id="reviewerName" class="rm-field" placeholder="Aapka Naam" readonly />
-        <textarea id="reviewText" class="rm-field" placeholder="Apna feedback ya suggestion yahan likhein..." rows="3" maxlength="300" oninput="document.getElementById('reviewCharCount').textContent=this.value.length"></textarea>
+        <textarea id="reviewText" class="rm-field" placeholder="Apna feedback ya suggestion yahan likhein..." rows="5" maxlength="300" oninput="document.getElementById('reviewCharCount').textContent=this.value.length"></textarea>
         <div class="rm-counter"><span id="reviewCharCount">0</span> / 300</div>
 
         <div id="guestLoginNotice" class="rm-guest">
@@ -1635,10 +1655,38 @@ document.addEventListener("DOMContentLoaded", () => {
       deferredPrompt = null;
     });
 
+    /* ---------- App Version = sw.js ka CACHE_NAME (ek hi jagah badalna padega) ---------- */
+    async function showAppVersion() {
+      const el = document.getElementById('appVersionLabel');
+      if (!el) return;
+      const set = n => { const m = String(n).match(/v?(\d[\d.]*)$/); el.textContent = m ? m[1] : n; };   // 'roitx-study-cache-v3.1.0.1' -> '3.1.0.1'
+      try {
+        if ('serviceWorker' in navigator) {
+          const reg = await navigator.serviceWorker.ready;
+          const sw = navigator.serviceWorker.controller || reg.active;
+          if (sw) {
+            const v = await new Promise((res, rej) => {
+              const ch = new MessageChannel();
+              ch.port1.onmessage = e => res(e.data && e.data.version);
+              setTimeout(rej, 2000);
+              sw.postMessage({ type: 'GET_VERSION' }, [ch.port2]);
+            });
+            if (v) return set(v);
+          }
+        }
+      } catch (e) { /* purana SW (message handler nahi) -> neeche fallback */ }
+      try {
+        const k = (await caches.keys()).filter(x => x.startsWith('roitx-study-cache-')).sort().pop();
+        if (k) set(k);
+      } catch (e) {}
+    }
+
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js').catch(err => console.error('SW Registration Failed:', err));
+        showAppVersion();
       });
+      navigator.serviceWorker.addEventListener('controllerchange', showAppVersion);   // naya SW active hote hi label update
     }
 
     document.addEventListener("DOMContentLoaded", () => {
@@ -1911,11 +1959,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function getRatingBand(r) { return RATING_OPTIONS.find(b => r >= b.min) || RATING_OPTIONS[RATING_OPTIONS.length - 1]; }
 
-    function setReviewText(arr) {
+    const chipLine = t => '• ' + t;
+    function syncReviewCount() {
       const ta = document.getElementById('reviewText');
-      if (!ta) return;
-      ta.value = arr.join('. ').slice(0, 300);
-      const cc = document.getElementById('reviewCharCount'); if (cc) cc.textContent = ta.value.length;
+      const cc = document.getElementById('reviewCharCount');
+      if (ta && cc) cc.textContent = ta.value.length;
+    }
+    function removeChipLines(arr) {
+      const ta = document.getElementById('reviewText');
+      if (!ta || !arr.length) return;
+      const drop = new Set(arr.map(chipLine));
+      ta.value = ta.value.split('\n').filter(l => !drop.has(l.trim())).join('\n').replace(/\n{3,}/g, '\n\n').trim();
+      syncReviewCount();
     }
 
     function renderRatingChips(force) {
@@ -1925,42 +1980,86 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!force && box.dataset.band === String(band.min)) return;   // band same hai to dobara mat banao
       box.dataset.band = String(band.min);
 
-      // purane band ke chips ka text textarea se hata do (user ka apna likha rehne do)
-      const ta = document.getElementById('reviewText');
-      if (ta && ratingChipPicked.length) {
-        let t = ta.value;
-        ratingChipPicked.forEach(x => { t = t.replace(x, ''); });
-        ta.value = t.replace(/^[\s.]+|[\s.]+$/g, '').replace(/(\.\s*){2,}/g, '. ');
-        const cc = document.getElementById('reviewCharCount'); if (cc) cc.textContent = ta.value.length;
-      }
+      // band ke hisaab se: tags ka colour, kam rating par hint, best par golden submit
+      const isTop = !band.neg && band.min >= 4.5;
+      document.querySelectorAll('#ratingTags .rm-tag').forEach(t => { t.classList.toggle('neg', band.neg); t.classList.toggle('top', isTop); });
+      document.getElementById('ratingHint')?.classList.toggle('show', band.neg);
+      document.getElementById('reviewSubmitBtn')?.classList.toggle('top', isTop);
+
+      // purane band ke chips ki bullet lines hata do (user ka apna likha rehne do)
+      removeChipLines(ratingChipPicked);
       ratingChipPicked = [];
 
       box.replaceChildren();
       band.items.forEach(txt => {
         const b = document.createElement('button');
         b.type = 'button';
-        b.className = 'rm-chip' + (band.neg ? ' neg' : '');
+        b.className = 'rm-chip' + (band.neg ? ' neg' : isTop ? ' top' : '');
         b.textContent = txt;
         b.onclick = () => {
-          const ta2 = document.getElementById('reviewText');
-          if (!ta2) return;
+          const ta = document.getElementById('reviewText');
+          if (!ta) return;
           if (ratingChipPicked.includes(txt)) {
             ratingChipPicked = ratingChipPicked.filter(x => x !== txt);
-            ta2.value = ta2.value.replace(txt, '').replace(/^[\s.]+|[\s.]+$/g, '').replace(/(\.\s*){2,}/g, '. ');
+            removeChipLines([txt]);
             b.classList.remove('on');
           } else {
-            const next = (ta2.value.trim() ? ta2.value.trim().replace(/\.$/, '') + '. ' : '') + txt;
+            const base = ta.value.replace(/\s+$/, '');
+            const next = (base ? base + '\n' : '') + chipLine(txt);
             if (next.length > 300) return;
-            ta2.value = next;
+            ta.value = next;
             ratingChipPicked.push(txt);
             b.classList.add('on');
+            syncReviewCount();
           }
-          const cc = document.getElementById('reviewCharCount'); if (cc) cc.textContent = ta2.value.length;
+          ta.scrollTop = ta.scrollHeight;
         };
         box.appendChild(b);
       });
     }
-    document.addEventListener('DOMContentLoaded', () => renderRatingChips(true));
+    /* ---------- Tags: Books / Site / App / Other (comment ke shuru me [Tag] ban kar save hote hain) ---------- */
+    const RATING_TAGS = ['Books', 'Site', 'App', 'Other'];
+    let ratingTagPicked = [];
+    function renderRatingTags() {
+      const box = document.getElementById('ratingTags');
+      if (!box) return;
+      box.replaceChildren();
+      RATING_TAGS.forEach(t => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'rm-chip rm-tag' + (ratingTagPicked.includes(t) ? ' on' : '');
+        b.textContent = t;
+        b.onclick = () => {
+          ratingTagPicked = ratingTagPicked.includes(t) ? ratingTagPicked.filter(x => x !== t) : ratingTagPicked.concat(t);
+          b.classList.toggle('on');
+        };
+        box.appendChild(b);
+      });
+    }
+    function resetRatingTags() { ratingTagPicked = []; renderRatingTags(); renderRatingChips(true); }
+    document.addEventListener('DOMContentLoaded', () => { renderRatingTags(); renderRatingChips(true); });
+
+    /* ---------- Best rating par chhota golden confetti ---------- */
+    function launchConfetti() {
+      if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      const modal = document.getElementById('rateModal'), btn = document.getElementById('reviewSubmitBtn');
+      if (!modal || !btn) return;
+      const r = btn.getBoundingClientRect();
+      const layer = document.createElement('div');
+      layer.className = 'rm-confetti';
+      const colors = ['#ffd43b', '#ffb703', '#ffe08a', '#fff3c4', '#e69500', '#00d2ff'];
+      const rnd = (a, b) => a + Math.random() * (b - a);
+      for (let i = 0; i < 34; i++) {
+        const p = document.createElement('i');
+        p.className = 'rm-conf';
+        p.style.cssText = `left:${r.left + r.width / 2}px;top:${r.top + r.height / 2}px;width:${rnd(6, 9).toFixed(1)}px;height:${rnd(8, 12).toFixed(1)}px;background:${colors[i % colors.length]};` +
+          `--dx:${rnd(-150, 150).toFixed(0)}px;--dy:${rnd(-210, -70).toFixed(0)}px;--rot:${rnd(-540, 540).toFixed(0)}deg;--dur:${rnd(1000, 1500).toFixed(0)}ms;--del:${rnd(0, 140).toFixed(0)}ms`;
+        layer.appendChild(p);
+      }
+      modal.appendChild(layer);   // modal ke andar, taaki fullscreen me bhi dikhe
+      setTimeout(() => layer.remove(), 1800);
+    }
+
 
     let rfMoodCur = '';
     function updateRatingFromSlider(val) {
@@ -2006,7 +2105,9 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       const textInput = document.getElementById('reviewText');
-      const comment = textInput ? textInput.value.trim().slice(0, 300) : '';
+      const userText = textInput ? textInput.value.trim() : '';
+      const tagPrefix = ratingTagPicked.length ? ratingTagPicked.map(t => '[' + t + ']').join(' ') + '\n' : '';
+      const comment = userText ? (tagPrefix + userText).slice(0, 300) : '';
 
       if (!comment) {
         alert('Kripya apna feedback ya suggestion zaroor likhein!');
@@ -2031,10 +2132,11 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
+      if (currentSelectedRating >= 4.5) { launchConfetti(); await new Promise(r => setTimeout(r, 1200)); }
       alert('Aapka review successfully publish ho gaya hai!');
       if (textInput) textInput.value = '';
       const cc = document.getElementById('reviewCharCount'); if (cc) cc.textContent = '0';
-      ratingChipPicked = []; renderRatingChips(true);
+      ratingChipPicked = []; resetRatingTags();
       fetchAndRenderSupabaseReviews();
     }
 
@@ -2103,9 +2205,14 @@ document.addEventListener("DOMContentLoaded", () => {
         const nm = document.createElement('span'); nm.className = 'rm-name'; nm.textContent = name;
         const rt = document.createElement('span'); rt.className = 'rm-rate'; rt.textContent = '★ ' + Number(rev.rating).toFixed(1);
         top.append(nm, rt);
-        const cm = document.createElement('p'); cm.className = 'rm-comment'; cm.textContent = '\u201C' + String(rev.comment || '') + '\u201D';
+        let cText = String(rev.comment || ''); const tagList = [];
+        const tm = cText.match(/^((?:\[(?:Books|Site|App|Other)\]\s*)+)\n?/);
+        if (tm) { tm[1].replace(/\[(\w+)\]/g, (_, t) => { tagList.push(t); return ''; }); cText = cText.slice(tm[0].length); }
+        const cm = document.createElement('p'); cm.className = 'rm-comment'; cm.textContent = '\u201C' + cText + '\u201D';
+        let tagRow = null;
+        if (tagList.length) { tagRow = document.createElement('div'); tagRow.className = 'rm-tagrow'; tagList.forEach(t => { const sp = document.createElement('span'); sp.className = 'rm-tagpill'; sp.textContent = t; tagRow.appendChild(sp); }); }
         const dt = document.createElement('div'); dt.className = 'rm-date'; dt.textContent = new Date(rev.created_at).toLocaleDateString();
-        body.append(top, cm, dt);
+        if (tagRow) body.append(top, tagRow, cm, dt); else body.append(top, cm, dt);
 
         row.append(avatar, body);
         frag.appendChild(row);
