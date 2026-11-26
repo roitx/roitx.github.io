@@ -418,6 +418,20 @@
 
 .menu-section-label{display:flex;align-items:center;gap:10px;margin:16px 18px 4px;font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#94a3b8}
 .menu-section-label::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(148,163,184,.35),transparent)}
+
+.continue-card{max-width:1000px;width:calc(100% - 32px);margin:18px auto 0}
+.continue-card a{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:18px;text-decoration:none;color:var(--text);background:var(--glass);border:1px solid var(--glass-border);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 8px 24px rgba(0,0,0,.18);transition:transform .2s,border-color .2s}
+.continue-card a:hover{transform:translateY(-2px);border-color:var(--accent)}
+.cc-ic{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;flex-shrink:0;color:#fff;background:linear-gradient(135deg,#3aa0ff,#6366f1);box-shadow:0 6px 16px rgba(58,160,255,.35)}
+.cc-ic svg{width:22px;height:22px}
+.cc-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;text-align:left}
+.cc-kicker{font-size:10.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--accent)}
+.cc-title{font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cc-sub{font-size:12px;color:var(--muted)}
+.cc-go{flex-shrink:0;font-size:12px;font-weight:700;color:var(--accent);white-space:nowrap}
+
+/* Auto mode: knob ke andar "A" (toggle ki original size wahi) */
+.switch.auto-on .slider::before{content:"A";color:#fff;font-size:10px;font-weight:800;line-height:18px;text-align:center}
   </style>
   <link rel="stylesheet" href="style.css" />
 
@@ -800,6 +814,8 @@
       <button onclick="goto('classes.html')" class="btn primary">Start Learning</button>
       <button onclick="goto('study-timer.html')" class="btn">Study Timer</button>
     </div>
+
+    <div id="continueCard" class="continue-card" hidden></div>
 
     <div class="card-container">
       <!-- Card 1: PM Roitx Notes (Classes Icon - Blue) -->
@@ -1378,6 +1394,7 @@
 <script defer src="quotes.js"></script>
 <script defer src="activity-log.js"></script>
 <script defer src="script.js"></script>
+<script defer src="continue.js"></script>
 <script>
   const myMoreAppsList = [
   {

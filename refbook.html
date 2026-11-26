@@ -31,7 +31,8 @@
   </script>
 
   <meta name="theme-color" content="#080f19">
-  <script>(function(){try{var t=localStorage.getItem('roitx_theme')||(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark');document.documentElement.setAttribute('data-theme',t);var m=document.querySelector('meta[name=theme-color]');if(m)m.content=t==='dark'?'#080f19':'#f5f8fd';}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+  <script>(function(){try{var t=localStorage.getItem('roitx_theme')||((new Date().getHours()>=6&&new Date().getHours()<18)?'light':'dark');document.documentElement.setAttribute('data-theme',t);var m=document.querySelector('meta[name=theme-color]');if(m)m.content=t==='dark'?'#080f19':'#f5f8fd';}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+  <script>(function(){try{var K='roitx_theme';setInterval(function(){if(localStorage.getItem(K))return;var h=new Date().getHours(),t=(h>=6&&h<18)?'light':'dark';if(document.documentElement.getAttribute('data-theme')!==t){document.documentElement.setAttribute('data-theme',t);var m=document.querySelector('meta[name=theme-color]');if(m)m.content=t==='dark'?'#080f19':'#f5f8fd';}},60000);}catch(e){}})();</script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500..700&family=Figtree:wght@400..700&display=swap" rel="stylesheet">

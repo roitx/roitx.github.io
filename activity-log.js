@@ -55,7 +55,7 @@
     _set.call(localStorage, 'downloadedFiles', JSON.stringify(d.slice(0, 200)));
   }
   function onStore(k, v) {
-    if (k !== 'recentFiles') return;
+    if (k !== 'recentFiles' || window.__pmSilent) return;   // __pmSilent: hum khud (remove) likhen to log mat karo
     var arr = JSON.parse(v), f = Array.isArray(arr) && arr[0];
     if (!f || !f.title) return;
     if (f.downloaded) saveDownload(f);

@@ -188,24 +188,31 @@ function initMiniStateForTests() {
 
 function initDarkModeSupport() {
     const modeToggle = document.getElementById("modeToggle");
-    const isDarkStored = localStorage.getItem("theme") === "dark";
-
-    if (isDarkStored) {
-        document.body.classList.add("dark", "dark-mode");
-        if (modeToggle) modeToggle.checked = true;
-    }
+    // Auto theme: din (6am-6pm) light, raat dark. User toggle dabaye to wahi (localStorage "theme") chalega;
+    // cache clear hone par auto wapas.
+    const manual = () => { const v = localStorage.getItem("theme"); return v === "dark" || v === "light" ? v : null; };
+    const wantDark = () => {
+        const m = manual();
+        if (m) return m === "dark";
+        const h = new Date().getHours();
+        return !(h >= 6 && h < 18);
+    };
+    const apply = () => {
+        const dark = wantDark();
+        document.body.classList.toggle("dark", dark);
+        document.body.classList.toggle("dark-mode", dark);
+        if (modeToggle) modeToggle.checked = dark;
+    };
+    apply();
 
     if (modeToggle) {
         modeToggle.addEventListener("change", function () {
-            if (this.checked) {
-                document.body.classList.add("dark", "dark-mode");
-                localStorage.setItem("theme", "dark");
-            } else {
-                document.body.classList.remove("dark", "dark-mode");
-                localStorage.setItem("theme", "light");
-            }
+            localStorage.setItem("theme", this.checked ? "dark" : "light");
+            apply();
         });
     }
+    setInterval(() => { if (!manual()) apply(); }, 60000);
+    window.addEventListener("storage", (e) => { if (e.key === "theme") apply(); });
 }
 
 /* ==========================================

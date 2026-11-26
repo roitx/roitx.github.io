@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="theme-color" content="#080f19">
-  <script>(function(){try{var t=localStorage.getItem('roitx_theme')||(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark');document.documentElement.setAttribute('data-theme',t);var m=document.querySelector('meta[name=theme-color]');if(m)m.content=t==='dark'?'#080f19':'#f5f8fd';}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+  <script>(function(){try{var t=localStorage.getItem('roitx_theme')||((new Date().getHours()>=6&&new Date().getHours()<18)?'light':'dark');document.documentElement.setAttribute('data-theme',t);var m=document.querySelector('meta[name=theme-color]');if(m)m.content=t==='dark'?'#080f19':'#f5f8fd';}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+  <script>(function(){try{var K='roitx_theme';setInterval(function(){if(localStorage.getItem(K))return;var h=new Date().getHours(),t=(h>=6&&h<18)?'light':'dark';if(document.documentElement.getAttribute('data-theme')!==t){document.documentElement.setAttribute('data-theme',t);var m=document.querySelector('meta[name=theme-color]');if(m)m.content=t==='dark'?'#080f19':'#f5f8fd';}},60000);}catch(e){}})();</script>
   <title>ROITX AI Tutor & Instant Math Doubt Solver</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 

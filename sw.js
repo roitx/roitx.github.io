@@ -15,6 +15,7 @@ const ASSETS = [
   './library.js',
   './activity-log.js',
   './activity-ui.js',
+  './continue.js',
   './downloads.html',
   './downloads.js',
   './refbook.html',

@@ -13,6 +13,8 @@ const ICONS = {
     flash:   '<polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>',
     premium: '<path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/>',
     download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+    x:       '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+    search:  '<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
     activity:'<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>',
     empty:   '<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>'
 };
@@ -54,6 +56,16 @@ window.addEventListener("storage", (event) => {
 function esc(s) {
     return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
+
+// javascript:/data: jaise links ko rok do (title/url localStorage me kisi link se aa sakte hain)
+function safeHref(u) {
+    u = String(u == null ? "" : u);
+    return /^\s*(javascript|data|vbscript):/i.test(u) ? "#" : u;
+}
+function rmBtn(e) {
+    return e && e.ts ? `<button class="rm-x" onclick="removeActivity(${Number(e.ts)})" title="Remove from activity">${svgIcon("x")}Remove</button>` : "";
+}
+let searchQuery = "";
 
 // ---- Context: downloads + purchases (Supabase approved orders ke saath) ----
 async function buildCtx() {
@@ -185,7 +197,7 @@ function resolveFile(f, ctx) {
 }
 
 let detailCounter = 0;
-function buildFileCard(f, ctx) {
+function buildFileCard(f, ctx, entry) {
     const index = detailCounter++;
     const r = resolveFile(f, ctx);
     const { viewTargetUrl, isPyqItem, isTestItem, isFlashcardItem, isPurchased, isDownloaded, isFilePremium } = r;
@@ -246,17 +258,18 @@ function buildFileCard(f, ctx) {
             ${iconTile(fileKind(f, r))}
             <div class="file-info">
                 <div class="title-row">
-                    <a href="${viewTargetUrl}" title="${f.title}">${f.title}</a>
+                    <a href="${esc(safeHref(viewTargetUrl))}" title="${esc(f.title)}">${esc(f.title)}</a>
                     <div class="right-actions">
                         ${accessTagHtml}
                         <button class="info-btn" onclick="openInfoModal(${index})" title="View Details">i</button>
                     </div>
                 </div>
-                <span>${isTestItem ? 'Attempted' : (isPyqOrFlashcard ? 'Read' : 'Viewed')} at ${f.time} • ${f.meta}</span>
+                <span>${isTestItem ? 'Attempted' : (isPyqOrFlashcard ? 'Read' : 'Viewed')} at ${esc(f.time)} • ${esc(f.meta)}</span>
             </div>
             <div class="badges-group">
                 ${badgeHtml}
-                <a href="${viewTargetUrl}" class="view-btn">${actionBtnText}</a>
+                <a href="${esc(safeHref(viewTargetUrl))}" class="view-btn">${actionBtnText}</a>
+                ${rmBtn(entry)}
             </div>
         `;
 
@@ -276,6 +289,34 @@ function categoryOf(e) {
 function setFilter(cat) {
     activeFilter = cat;
     document.querySelectorAll(".chip").forEach(c => c.classList.toggle("active", c.dataset.cat === cat));
+    renderActivityFeed();
+}
+
+function setSearch(v) {
+    searchQuery = String(v || "").trim().toLowerCase();
+    renderActivityFeed();
+}
+
+// Ek activity hatao (file ho to recentFiles se bhi, taaki home ka "Continue" card purani cheez na dikhaye)
+function removeActivity(ts) {
+    if (!window.ActivityLog) return;
+    const log = ActivityLog.read();
+    const i = log.findIndex(x => x.ts === ts);
+    if (i < 0) return;
+    const e = log.splice(i, 1)[0];
+    ActivityLog.write(log);
+    if (e.type === "file") {
+        const base = x => String(x || "").split("?")[0];
+        const stillThere = log.some(x => x.type === "file" && base(x.url) === base(e.url));
+        if (!stillThere) {
+            window.__pmSilent = true;
+            try {
+                const rf = getData("recentFiles").filter(f => base(f.url) !== base(e.url));
+                localStorage.setItem("recentFiles", JSON.stringify(rf));
+            } catch (err) {}
+            window.__pmSilent = false;
+        }
+    }
     renderActivityFeed();
 }
 
@@ -315,7 +356,7 @@ function buildEventItem(e) {
     const div = document.createElement("div");
     div.className = "activity-item";
     const titleHtml = e.url
-        ? `<a href="${esc(e.url)}" title="${esc(e.title)}">${esc(e.title)}</a>`
+        ? `<a href="${esc(safeHref(e.url))}" title="${esc(e.title)}">${esc(e.title)}</a>`
         : `<a class="nolink">${esc(e.title)}</a>`;
     const sub = isNotif
         ? `Read at ${time}${e.meta ? " \u2022 " + esc(e.meta) : ""}`
@@ -326,7 +367,7 @@ function buildEventItem(e) {
             <div class="title-row">${titleHtml}</div>
             <span>${sub}</span>
         </div>
-        ${e.url ? `<div class="badges-group"><a href="${esc(e.url)}" class="view-btn">Open \u2192</a></div>` : ""}
+        <div class="badges-group">${e.url ? `<a href="${esc(safeHref(e.url))}" class="view-btn">Open \u2192</a>` : ""}${rmBtn(e)}</div>
     `;
     return div;
 }
@@ -340,9 +381,12 @@ async function renderActivityFeed() {
     renderStats(full);
     let log = full;
     if (activeFilter !== "all") log = log.filter(e => categoryOf(e) === activeFilter);
+    if (searchQuery) {
+        log = log.filter(e => ((e.title || "") + " " + (e.meta || "") + " " + ((e.file && e.file.title) || "") + " " + ((e.file && e.file.meta) || "")).toLowerCase().includes(searchQuery));
+    }
 
     if (!log.length) {
-        list.innerHTML = emptyState("No activity recorded yet. Kuch padhna ya khelna shuru karo!");
+        list.innerHTML = emptyState(full.length ? "Kuch nahi mila. Doosra shabd try karo." : "No activity recorded yet. Kuch padhna ya khelna shuru karo!");
         return;
     }
 
@@ -361,7 +405,7 @@ async function renderActivityFeed() {
             list.appendChild(h);
             lastDay = day;
         }
-        if (e.type === "file" && e.file) list.appendChild(buildFileCard(e.file, ctx));
+        if (e.type === "file" && e.file) list.appendChild(buildFileCard(e.file, ctx, e));
         else list.appendChild(buildEventItem(e));
     });
 }
@@ -372,12 +416,12 @@ function openInfoModal(index) {
 
     const modalContent = document.getElementById("modalContent");
     modalContent.innerHTML = `
-        <div class="modal-row"><span>File Name:</span> <span>${data.title}</span></div>
-        <div class="modal-row"><span>Item Type:</span> <span>${data.type}</span></div>
-        <div class="modal-row"><span>Last Time:</span> <span>${data.time}</span></div>
-        <div class="modal-row"><span>Total Reads/Opens:</span> <span>${data.views} times</span></div>
-        <div class="modal-row"><span>Download Status:</span> <span>${data.downloaded}</span></div>
-        <div class="modal-row"><span>Access Type:</span> <span>${data.access}</span></div>
+        <div class="modal-row"><span>File Name:</span> <span>${esc(data.title)}</span></div>
+        <div class="modal-row"><span>Item Type:</span> <span>${esc(data.type)}</span></div>
+        <div class="modal-row"><span>Last Time:</span> <span>${esc(data.time)}</span></div>
+        <div class="modal-row"><span>Total Reads/Opens:</span> <span>${esc(data.views)} times</span></div>
+        <div class="modal-row"><span>Download Status:</span> <span>${esc(data.downloaded)}</span></div>
+        <div class="modal-row"><span>Access Type:</span> <span>${esc(data.access)}</span></div>
     `;
 
     document.getElementById("infoModal").style.display = "flex";
@@ -390,6 +434,8 @@ function closeInfoModal() {
 // inline onclick ke liye + downloads page ke liye
 window.setFilter = setFilter;
 window.clearActivity = clearActivity;
+window.setSearch = setSearch;
+window.removeActivity = removeActivity;
 window.openInfoModal = openInfoModal;
 window.closeInfoModal = closeInfoModal;
 window.PMUI = { buildCtx: buildCtx, resolveFile: resolveFile, esc: esc, iconTile: iconTile, fileKind: fileKind, emptyState: emptyState };

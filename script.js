@@ -1013,11 +1013,64 @@ await checkAndSyncSecureStreak();
       document.body.classList.toggle("light", isLight);
       modeToggle.checked = isLight;
       updateThemeIcon(isLight);
+      // Auto mode me knob ke andar "A" dikhta hai (manual me nahi)
+      const swEl = modeToggle.closest(".switch");
+      if (swEl) swEl.classList.toggle("auto-on", !manualTheme());
       const meta = document.querySelector('meta[name="theme-color"]');
       if (meta) meta.setAttribute("content", isLight ? "#f4f7fc" : "#0a1b3d");
     };
 
     applyTheme();
+
+    // Auto mode user ne khud on kiya to chhota message aaye aur 2 sec me khud chala jaye
+    let themeToastEl = null, themeToastTimer = null;
+    const showAutoToast = () => {
+      if (themeToastEl) themeToastEl.remove();
+      clearTimeout(themeToastTimer);
+      const el = document.createElement("div");
+      el.setAttribute("role", "status");
+      el.innerHTML = '<b style="display:block;font-size:13px">Auto theme on</b>' +
+        '<span style="font-size:11px;opacity:.8">Din me light, raat me dark</span>';
+      el.style.cssText = "position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 70px);" +
+        "transform:translate(-50%,-8px);opacity:0;z-index:99999;padding:10px 18px;border-radius:14px;" +
+        "text-align:center;pointer-events:none;color:var(--text);background:var(--glass);" +
+        "border:1px solid var(--glass-border);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);" +
+        "box-shadow:0 10px 30px rgba(0,0,0,.28);transition:opacity .25s,transform .25s;";
+      document.body.appendChild(el);
+      themeToastEl = el;
+      requestAnimationFrame(() => { el.style.opacity = "1"; el.style.transform = "translate(-50%,0)"; });
+      themeToastTimer = setTimeout(() => {
+        el.style.opacity = "0"; el.style.transform = "translate(-50%,-8px)";
+        setTimeout(() => { el.remove(); if (themeToastEl === el) themeToastEl = null; }, 300);
+      }, 2200);
+    };
+
+    // Toggle ko long press (0.6s) karne par Auto mode wapas on: manual choice hat jata hai
+    const sw = modeToggle.closest(".switch") || modeToggle.parentElement;
+    if (sw) {
+      let pressTimer = null, longPressed = false, sx = 0, sy = 0;
+      const cancel = () => { clearTimeout(pressTimer); pressTimer = null; };
+      sw.title = "Long press: Auto theme (din me light, raat me dark)";
+      sw.addEventListener("pointerdown", (e) => {
+        longPressed = false; sx = e.clientX; sy = e.clientY; cancel();
+        pressTimer = setTimeout(() => {
+          longPressed = true;
+          localStorage.removeItem("theme");
+          applyTheme();
+          showAutoToast();
+          if (navigator.vibrate) { try { navigator.vibrate(35); } catch (_) {} }
+        }, 600);
+      });
+      sw.addEventListener("pointermove", (e) => {
+        if (pressTimer && (Math.abs(e.clientX - sx) > 10 || Math.abs(e.clientY - sy) > 10)) cancel();
+      });
+      ["pointerup", "pointercancel", "pointerleave"].forEach((ev) => sw.addEventListener(ev, cancel));
+      // long press ke baad aane wala click toggle na palte
+      sw.addEventListener("click", (e) => {
+        if (longPressed) { e.preventDefault(); e.stopPropagation(); longPressed = false; }
+      }, true);
+      sw.addEventListener("contextmenu", (e) => e.preventDefault());
+    }
 
     modeToggle.addEventListener("change", () => {
       localStorage.setItem("theme", modeToggle.checked ? "light" : "dark"); // manual choice
