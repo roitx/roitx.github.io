@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Downloads | PM Roitx</title>
+    <meta name="robots" content="noindex, nofollow">
+    <style>
+        :root { --bg-color:#0b0f19; --panel-bg:#131b2e; --card-bg:#1e293b; --accent-color:#6366f1; --text-color:#f8fafc; --text-secondary:#94a3b8; --border-color:#334155; --success-color:#10b981; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background: var(--bg-color); color: var(--text-color); padding: 20px; display: flex; justify-content: center; }
+        .widget { width: 100%; max-width: 600px; background: var(--panel-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,.4); }
+        .widget-title { font-size: 18px; font-weight: 600; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+        .widget-title small { font-size: 12px; color: var(--text-secondary); font-weight: 500; }
+        .back-btn { background: linear-gradient(135deg,#6366f1,#4f46e5); color: #fff; text-decoration: none; padding: 6px 12px; font-size: 11px; font-weight: 600; border-radius: 20px; white-space: nowrap; }
+        .list { display: flex; flex-direction: column; gap: 12px; }
+        .item { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 14px; }
+        .item:hover { border-color: var(--accent-color); }
+        .info { flex: 1; min-width: 0; }
+        .info a { font-size: 14px; font-weight: 600; color: var(--text-color); text-decoration: none; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word; line-height: 1.4; }
+        .info a:hover { color: var(--accent-color); text-decoration: underline; }
+        .info span { display: block; font-size: 11px; color: var(--text-secondary); margin-top: 4px; }
+        .actions { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
+        .open-btn { font-size: 11px; color: var(--accent-color); text-decoration: underline; }
+        .rm-btn { background: none; border: 1px solid var(--border-color); color: var(--text-secondary); font-size: 10px; border-radius: 12px; padding: 3px 8px; cursor: pointer; }
+        .rm-btn:hover { color: #f87171; border-color: #f87171; }
+        .empty { color: var(--text-secondary); text-align: center; font-style: italic; padding: 20px; }
+
+        body { background: radial-gradient(700px 380px at 90% -5%, rgba(16,185,129,.16), transparent 60%), radial-gradient(700px 400px at 0% 0%, rgba(99,102,241,.14), transparent 60%), var(--bg-color); min-height: 100vh; align-items: flex-start; }
+        .widget { background: linear-gradient(160deg, rgba(20,60,60,.35), var(--panel-bg) 40%); border-color: rgba(16,185,129,.25); }
+        .title-wrap { display: flex; align-items: center; gap: 10px; }
+        .title-ic { width: 34px; height: 34px; padding: 7px; border-radius: 11px; color: #fff; background: linear-gradient(135deg,#10b981,#06b6d4); box-shadow: 0 6px 16px rgba(16,185,129,.4); }
+        .back-btn { display: inline-flex; align-items: center; gap: 4px; }
+        .back-btn svg, .rm-btn svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+        .rm-btn { display: inline-flex; align-items: center; gap: 4px; }
+        .item { transition: transform .18s, border-color .2s, box-shadow .2s; }
+        .item:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,.35); }
+        .ev-icon { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; flex-shrink: 0; }
+        .ev-icon svg { width: 19px; height: 19px; }
+        .t-file    { color:#38bdf8; background: rgba(56,189,248,.16); }
+        .t-image   { color:#2dd4bf; background: rgba(45,212,191,.16); }
+        .t-premium { color:#facc15; background: rgba(250,204,21,.16); }
+        .open-btn { text-decoration: none; font-weight: 600; }
+        .empty { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 36px 20px; font-style: normal; }
+        .empty-svg { width: 54px; height: 54px; color: #475569; fill: none; }
+    </style>
+</head>
+<body>
+    <div class="widget">
+        <div class="widget-title">
+            <div class="title-wrap"><svg class="title-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Downloads <small id="dlCount"></small></span></div>
+            <a class="back-btn" href="library.html"><svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>Activities</a>
+        </div>
+        <div id="downloadList" class="list"></div>
+    </div>
+
+    <script src="activity-log.js"></script>
+    <script src="library.js"></script>
+    <script src="downloads.js"></script>
+</body>
+</html>

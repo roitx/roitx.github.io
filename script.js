@@ -545,6 +545,12 @@ function openNotifModal(id, title, message, link, timestamp) {
 
   if (!modal) return;
 
+  // Activity log: kaun sa notification padha
+  if (window.ActivityLog) {
+    ActivityLog.add({ type: "notification", title: title || "Notification", refId: String(id),
+      url: (link && link !== "#" && link !== "null") ? link : "", meta: String(message || "").slice(0, 70) });
+  }
+
   if (modalTitle) modalTitle.textContent = title;
   if (modalMsg) modalMsg.textContent = message;
   if (modalTime) modalTime.textContent = timestamp ? `Received: ${timeAgo(timestamp)} (${new Date(timestamp).toLocaleString()})` : "";

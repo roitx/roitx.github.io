@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recent Activity | PM Roitx</title>
+    <title>Recent Activities | PM Roitx</title>
     <meta name="robots" content="noindex, nofollow">
     <style>
         :root {
@@ -64,7 +64,7 @@
             display: flex;
             flex-direction: column;
             gap: 12px;
-            max-height: 450px;
+            max-height: none;
             overflow-y: auto;
         }
 
@@ -237,16 +237,82 @@
         .modal-body { display: flex; flex-direction: column; gap: 10px; font-size: 13px; }
         .modal-row { display: flex; justify-content: space-between; background: var(--card-bg); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color); }
         .modal-row span:last-child { font-weight: 600; color: var(--text-color); }
+
+        .top-actions { display: flex; gap: 8px; align-items: center; }
+        a.filter-btn { text-decoration: none; display: inline-block; }
+        .filter-btn.ghost { background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); box-shadow: none; }
+        .chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 12px; margin-bottom: 4px; scrollbar-width: none; }
+        .chips::-webkit-scrollbar { display: none; }
+        .chip { flex-shrink: 0; background: var(--card-bg); color: var(--text-secondary); border: 1px solid var(--border-color); padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; }
+        .chip.active { background: var(--accent-color); color: #fff; border-color: var(--accent-color); }
+        .day-head { font-size: 11px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; color: var(--text-secondary); margin-top: 8px; }
+        .day-head:first-child { margin-top: 0; }
+        .file-info a.nolink { pointer-events: none; cursor: default; }
+
+        /* ===== Look & feel upgrade ===== */
+        body { background: radial-gradient(800px 400px at 10% -5%, rgba(99,102,241,.18), transparent 60%), radial-gradient(700px 400px at 100% 0%, rgba(236,72,153,.10), transparent 60%), var(--bg-color); min-height: 100vh; align-items: flex-start; }
+        .activity-widget { background: linear-gradient(160deg, rgba(30,41,75,.55), var(--panel-bg) 40%); border-color: rgba(99,102,241,.25); }
+        .widget-title { font-size: 19px; font-weight: 700; letter-spacing: -.2px; }
+        .title-wrap { display: flex; align-items: center; gap: 10px; }
+        .title-ic { width: 34px; height: 34px; padding: 7px; border-radius: 11px; color: #fff; background: linear-gradient(135deg,#6366f1,#ec4899); box-shadow: 0 6px 16px rgba(99,102,241,.4); }
+        .btn-ic { width: 13px; height: 13px; vertical-align: -2px; margin-right: 4px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+        .filter-btn { display: inline-flex; align-items: center; }
+        .chips { position: sticky; top: 0; z-index: 5; background: var(--panel-bg); padding-top: 4px; }
+        .chip { display: inline-flex; align-items: center; gap: 6px; transition: all .2s; }
+        .chip svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+        .chip:hover { border-color: var(--accent-color); color: var(--text-color); }
+        .chip.active { background: linear-gradient(135deg,#6366f1,#8b5cf6); box-shadow: 0 4px 14px rgba(99,102,241,.4); }
+        .stat-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+        .stat { position: relative; overflow: hidden; border-radius: 12px; padding: 10px 12px; border: 1px solid var(--border-color); background: var(--card-bg); display: flex; flex-direction: column; gap: 2px; }
+        .stat svg { position: absolute; right: 8px; top: 8px; width: 22px; height: 22px; opacity: .35; }
+        .stat b { font-size: 22px; line-height: 1.1; }
+        .stat span { font-size: 10.5px; color: var(--text-secondary); font-weight: 600; }
+        .stat.s1 { background: linear-gradient(135deg, rgba(99,102,241,.22), var(--card-bg)); } .stat.s1 svg { color: #818cf8; }
+        .stat.s2 { background: linear-gradient(135deg, rgba(56,189,248,.20), var(--card-bg)); } .stat.s2 svg { color: #38bdf8; }
+        .stat.s3 { background: linear-gradient(135deg, rgba(16,185,129,.20), var(--card-bg)); } .stat.s3 svg { color: #34d399; }
+        .day-head { display: flex; align-items: center; gap: 10px; }
+        .day-head::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, var(--border-color), transparent); }
+        .activity-item { transition: transform .18s, border-color .2s, box-shadow .2s; }
+        .activity-item:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,.35); }
+        .ev-icon { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; flex-shrink: 0; }
+        .ev-icon svg { width: 19px; height: 19px; }
+        .t-page    { color:#818cf8; background: rgba(99,102,241,.16); }
+        .t-notif   { color:#fbbf24; background: rgba(245,158,11,.16); }
+        .t-file    { color:#38bdf8; background: rgba(56,189,248,.16); }
+        .t-image   { color:#2dd4bf; background: rgba(45,212,191,.16); }
+        .t-pyq     { color:#fb7185; background: rgba(251,113,133,.16); }
+        .t-test    { color:#4ade80; background: rgba(74,222,128,.16); }
+        .t-flash   { color:#c084fc; background: rgba(192,132,252,.16); }
+        .t-premium { color:#facc15; background: rgba(250,204,21,.16); }
+        .view-btn { text-decoration: none; font-weight: 600; }
+        .empty { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 36px 20px; font-style: normal; }
+        .empty-svg { width: 54px; height: 54px; color: #475569; }
     </style>
 </head>
 <body>
 
     <div class="activity-widget">
         <div class="widget-title">
-            Recent Activity 
-            <button id="filterToggle" class="filter-btn" onclick="toggleFilter()">✨ Downloaded Only</button>
+            <div class="title-wrap">
+                <svg class="title-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                Recent Activities
+            </div>
+            <div class="top-actions">
+                <a class="filter-btn" href="downloads.html"><svg class="btn-ic" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Downloads</a>
+                <button class="filter-btn ghost" onclick="clearActivity()"><svg class="btn-ic" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>Clear</button>
+            </div>
         </div>
-        
+
+        <div id="statStrip" class="stat-strip"></div>
+
+        <div class="chips">
+            <button class="chip active" data-cat="all" onclick="setFilter('all')"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>All</button>
+            <button class="chip" data-cat="file" onclick="setFilter('file')"><svg viewBox="0 0 24 24"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5z"/><polyline points="14 2 14 8 20 8"/></svg>Files</button>
+            <button class="chip" data-cat="practice" onclick="setFilter('practice')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>Practice</button>
+            <button class="chip" data-cat="page" onclick="setFilter('page')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>Pages</button>
+            <button class="chip" data-cat="notification" onclick="setFilter('notification')"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>Alerts</button>
+        </div>
+
         <div id="recentList" class="activity-list"></div>
     </div>
 
@@ -263,6 +329,7 @@
         </div>
     </div>
 
+    <script src="activity-log.js"></script>
     <script src="library.js"></script>
 </body>
 </html>
