@@ -477,6 +477,7 @@
 </head>
 
 <body class="app-body">
+<script id="pm-early-theme">(function(){try{var t=localStorage.getItem("theme"),h=new Date().getHours(),l=(t==="light"||t==="dark")?t==="light":(h>=6&&h<18);if(l)document.body.classList.add("light");}catch(e){}})();</script>
 
 
 <div id="splashScreen">
@@ -583,6 +584,31 @@
     
   </div>
 
+  <div class="menu-section-label">My Space</div>
+
+  <a href="performance.html">
+    <svg class="menu-svg-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M18 20V10" stroke="#38bdf8"></path>
+      <path d="M12 20V4" stroke="#34d399"></path>
+      <path d="M6 20v-6" stroke="#facc15"></path>
+    </svg> Performance
+  </a>
+
+  <a href="library.html">
+    <svg class="menu-svg-icon" viewBox="0 0 24 24" fill="none" stroke="#fda4af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+    </svg> Recent Activities
+  </a>
+
+  <a href="downloads.html">
+    <svg class="menu-svg-icon" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+      <polyline points="7 10 12 15 17 10"></polyline>
+      <line x1="12" y1="15" x2="12" y2="3"></line>
+    </svg> Downloads
+  </a>
+
+
   <div class="menu-section-label">Learn</div>
 
   <a href="classes.html">
@@ -686,30 +712,6 @@
 
   <a href="fun.html">
     <svg class="menu-svg-icon" viewBox="0 0 24 24" fill="none" stroke="#f472b6" stroke-width="2"><line x1="6" y1="12" x2="10" y2="12"></line><line x1="8" y1="10" x2="8" y2="14"></line><circle cx="15" cy="13" r="1"></circle><circle cx="18" cy="11" r="1"></circle><rect x="2" y="6" width="20" height="12" rx="6"></rect></svg> Game
-  </a>
-
-  <div class="menu-section-label">My Space</div>
-
-  <a href="performance.html">
-    <svg class="menu-svg-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M18 20V10" stroke="#38bdf8"></path>
-      <path d="M12 20V4" stroke="#34d399"></path>
-      <path d="M6 20v-6" stroke="#facc15"></path>
-    </svg> Performance
-  </a>
-
-  <a href="library.html">
-    <svg class="menu-svg-icon" viewBox="0 0 24 24" fill="none" stroke="#fda4af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-    </svg> Recent Activities
-  </a>
-
-  <a href="downloads.html">
-    <svg class="menu-svg-icon" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-      <polyline points="7 10 12 15 17 10"></polyline>
-      <line x1="12" y1="15" x2="12" y2="3"></line>
-    </svg> Downloads
   </a>
 
   <hr class="menu-divider" />

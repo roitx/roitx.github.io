@@ -1,5 +1,24 @@
+(function () {
+var U = window.PMUI, esc = U.esc, iconTile = U.iconTile, fileKind = U.fileKind, emptyState = U.emptyState, buildCtx = U.buildCtx, resolveFile = U.resolveFile;
 // downloads.js – sirf downloaded files ki chhoti list (library.js ke helpers use karta hai)
+
+// Purane downloads jo sirf recentFiles ke "downloaded" flag me the, unhe list me jod do (ek baar, permanent)
+function mergeOldDownloads() {
+    try {
+        var d = getData("downloadedFiles"), r = getData("recentFiles"), changed = false;
+        var base = function (u) { return String(u || "").split("?")[0]; };
+        r.forEach(function (f) {
+            if (!f || !f.downloaded || !f.title) return;
+            if (/pyq|flashcard|take-test/i.test(f.url || "") || f.isTest || f.isPyq || f.isFlashcard) return;
+            if (d.some(function (x) { return x && base(x.url) === base(f.url); })) return;
+            d.push({ title: f.title, url: f.url, meta: f.meta, isPremium: !!f.isPremium, isPurchased: !!f.isPurchased, timeDownloaded: f.time || "" });
+            changed = true;
+        });
+        if (changed) localStorage.setItem("downloadedFiles", JSON.stringify(d));
+    } catch (e) {}
+}
 async function renderDownloads() {
+    mergeOldDownloads();
     const list = document.getElementById("downloadList");
     const countTag = document.getElementById("dlCount");
     if (!list) return;
@@ -47,3 +66,5 @@ function removeDownload(i) {
 
 document.addEventListener("DOMContentLoaded", renderDownloads);
 window.addEventListener("pageshow", renderDownloads);
+window.removeDownload = removeDownload;
+})();

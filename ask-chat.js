@@ -11,10 +11,10 @@
   let miniCalCurDate = new Date();
   let currentUtterance = null;
   
-  // Speaker har naye visit / page load par ON rehta hai (greeting hamesha bolegi).
-  // Mute sirf usi page-view tak chalta hai; pehle ye sessionStorage me atak jata tha aur agli baar greeting chup rehti thi.
-  try { localStorage.removeItem('roitx_speech_pref'); sessionStorage.removeItem('roitx_speech_pref'); } catch (e) {}
+  // Speaker har naye visit par ON rehta hai. Mute sirf usi session tak yaad rehta hai.
+  try { localStorage.removeItem('roitx_speech_pref'); } catch (e) {}
   let isSpeechEnabledGlobally = true;
+  try { isSpeechEnabledGlobally = sessionStorage.getItem('roitx_speech_pref') !== 'false'; } catch (e) {}
 
   window.activeSpeakerBtn = null;
 
@@ -151,12 +151,11 @@
   let pendingSpeech = null;
   ['pointerup', 'touchend', 'click', 'keydown'].forEach(ev => {
     document.addEventListener(ev, function () {
+      if (userGestureSeen) return;
       userGestureSeen = true;
       const p = pendingSpeech;
-      if (!p) return;
       pendingSpeech = null;
-      // 5 min se purani rukhi hui awaaz ab nahi bolni
-      if (isSpeechEnabledGlobally && Date.now() - p.at < 5 * 60 * 1000) speakSynced(p.text, { btn: p.btn, _retry: (p.tries || 0) + 1 });
+      if (p && isSpeechEnabledGlobally) speakSynced(p.text, { btn: p.btn });
     }, { capture: true, passive: true });
   });
 
@@ -196,10 +195,8 @@
 
     // Browser bina tap ke awaaz block kare to yeh text pehle tap par bola jayega
     function markBlocked() {
-      // Chahe pehle koi tap ho chuka ho, agar browser ne roka to agle tap par dobara try karo (max 2 baar)
-      const tries = opts._retry || 0;
-      if (tries >= 2) return;
-      pendingSpeech = { text: visText, btn: btn, at: Date.now(), tries: tries };
+      if (userGestureSeen) return;
+      pendingSpeech = { text: visText, btn: btn };
       if (btn) btn.style.animation = 'pulseAi 1.2s infinite'; // speaker halka blink karega
     }
 
@@ -570,19 +567,6 @@
   updateNotesCount();
   initUserGreeting();
 
-  // Browser ke Back/Forward se isi page par wapas aane par (page cache se aata hai, naya load nahi hota) greeting phir bolo
-  window.addEventListener('pageshow', (e) => {
-    if (!e.persisted || !isSpeechEnabledGlobally) return;
-    try {
-      const first = chatWindow && chatWindow.querySelector('.msg.bot');
-      if (!first) return;
-      const clone = first.cloneNode(true);
-      clone.querySelectorAll('button').forEach(b => b.remove());
-      const txt = (clone.textContent || '').replace(/\s+/g, ' ').trim();
-      if (txt) speakSynced(txt, { btn: first.querySelector('.msg-speaker-btn') });
-    } catch (err) {}
-  });
-
   sendBtn && sendBtn.addEventListener('click', onSend);
 
   // ---- Mic <-> Send: input khali ho to sirf mic dikhe, type karte hi send ----
@@ -804,36 +788,29 @@ function unlockAudioEngine() {
 
   // ---- USER WELCOME GREETING ----
   async function initUserGreeting() {
-      // Naam dhoondhne (login check) me 2 sec se zyada na lage: slow/atka internet ho tab bhi greeting turant aaye aur bole
-      async function fetchDisplayName() {
-        let name = "Student";
-        try {
-          if (window.supabaseClient) {
-            const { data: { session }, error } = await window.supabaseClient.auth.getSession();
-            if (session && session.user && !error) {
-              const user = session.user;
-              const { data: profile } = await window.supabaseClient
-                .from('profiles')
-                .select('full_name')
-                .eq('id', user.id)
-                .maybeSingle();
+      let displayName = "Student";
 
-              if (profile && profile.full_name && profile.full_name.trim() !== "") {
-                name = profile.full_name.trim();
-              } else if (user.email) {
-                name = user.email.split('@')[0];
-              }
+      try {
+        if (window.supabaseClient) {
+          const { data: { session }, error } = await window.supabaseClient.auth.getSession();
+          if (session && session.user && !error) {
+            const user = session.user;
+            const { data: profile } = await window.supabaseClient
+              .from('profiles')
+              .select('full_name')
+              .eq('id', user.id)
+              .maybeSingle();
+
+            if (profile && profile.full_name && profile.full_name.trim() !== "") {
+              displayName = profile.full_name.trim();
+            } else if (user.email) {
+              displayName = user.email.split('@')[0];
             }
           }
-        } catch (err) {
-          console.warn("User session greeting error:", err);
         }
-        return name;
+      } catch (err) {
+        console.warn("User session greeting error:", err);
       }
-      const displayName = await Promise.race([
-        fetchDisplayName(),
-        new Promise(resolve => setTimeout(() => resolve("Student"), 2000))
-      ]);
 
       const greetingHTML = `
         <div style="background: linear-gradient(135deg, rgba(6,182,212,0.1), rgba(59,130,246,0.1)); border: 1px solid rgba(6,182,212,0.3); border-radius: 10px; padding: 12px;">
@@ -878,9 +855,11 @@ function addBotMsg(content, isHTML = false, silent = false) {
     if (window.activeSpeakerBtn === speakerBtn) {
       stopCurrentSpeech();
       isSpeechEnabledGlobally = false;
+      sessionStorage.setItem('roitx_speech_pref', 'false');
       speakerBtn.innerHTML = speakerOffSvg;
     } else {
       isSpeechEnabledGlobally = true;
+      sessionStorage.setItem('roitx_speech_pref', 'true');
       speakerBtn.innerHTML = speakerOnSvg;
       speakSynced(getPlain(), { btn: speakerBtn });
     }
@@ -1618,8 +1597,8 @@ function addBotMsg(content, isHTML = false, silent = false) {
             ${SVG.mail} Support Mail
           </div>
           <div style="font-size: 12px; color: #e0e7ff; margin: 6px 0;">Kisi bhi query ya help ke liye humein mail karein:</div>
-          <a href="mailto:legal@roitx.dpdns.org" style="color: #fff; background: #9333ea; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: bold; display: inline-flex; align-items: center; gap: 6px;">
-            ${SVG.mail} legal@roitx.dpdns.org
+          <a href="mailto:legal@roitx.qd.je" style="color: #fff; background: #9333ea; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: bold; display: inline-flex; align-items: center; gap: 6px;">
+            ${SVG.mail} legal@roitx.qd.je
           </a>
         </div>
       `);
@@ -1691,7 +1670,7 @@ if (cmd.startsWith('open link') || cmd.startsWith('open ')) {
   if (/^https?:\/\//i.test(input)) {
     finalUrl = input;
     // Agar link khud ki website ka hai toh internal treat karein
-    if (finalUrl.includes('roitx.dpdns.org')) {
+    if (finalUrl.includes('roitx.qd.je')) {
       isInternal = true;
     }
   } 
@@ -1701,7 +1680,7 @@ if (cmd.startsWith('open link') || cmd.startsWith('open ')) {
     if (!cleanName.endsWith('.html') && !cleanName.startsWith('http')) {
       cleanName += '.html';
     }
-    finalUrl = `https://roitx.dpdns.org/${cleanName}`;
+    finalUrl = `https://roitx.qd.je/${cleanName}`;
     isInternal = true;
   }
   // CASE 3: Agar normal domain jaisa hai - google.com, youtube.com
@@ -1711,7 +1690,7 @@ if (cmd.startsWith('open link') || cmd.startsWith('open ')) {
   // CASE 4: Baaki bache huye internal short names ke liye
   else {
     let cleanName = input.split(' ')[0].toLowerCase().replace(/[^a-z0-9-_.]/g, '');
-    finalUrl = `https://roitx.dpdns.org/${cleanName}.html`;
+    finalUrl = `https://roitx.qd.je/${cleanName}.html`;
     isInternal = true;
   }
 

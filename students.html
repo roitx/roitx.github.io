@@ -1,199 +1,113 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PM-Roit | Student Management</title>
-<link rel="stylesheet" href="ststyle.css">
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js"></script>
-<script src="auth.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PM-Roit | Professional Coaching ERP</title>
+    <link rel="stylesheet" href="ststyle.css">
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+<script src="activity-log.js"></script>
 </head>
-<body class="locked" oncontextmenu="return false;">
+<body oncontextmenu="return false;">
 
-<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
-<symbol id="i-grad" viewBox="0 0 24 24"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c3 2 9 2 12 0v-5"/></symbol>
-<symbol id="i-building" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M10 21v-4h4v4"/></symbol>
-<symbol id="i-gem" viewBox="0 0 24 24"><path d="M6 3h12l4 6-10 12L2 9z"/><path d="M2 9h20M10 3 8 9l4 12 4-12-2-6"/></symbol>
-<symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 3-6 6.5-6s6.5 2.4 6.5 6M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.3c2.2.7 3.5 2.6 3.5 5.7"/></symbol>
-<symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
-<symbol id="i-edit" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></symbol>
-<symbol id="i-receipt" viewBox="0 0 24 24"><path d="M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2z"/><path d="M9 8h6M9 12h6"/></symbol>
-<symbol id="i-rupee" viewBox="0 0 24 24"><path d="M6 4h12M6 9h12M6 4c5 0 7 2 7 5s-2 5-7 5l8 6"/></symbol>
-<symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v5M14 11v5"/></symbol>
-<symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
-<symbol id="i-print" viewBox="0 0 24 24"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 14h10v7H7z"/></symbol>
-<symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></symbol>
-<symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></symbol>
-<symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3 2 20h20z"/><path d="M12 10v5M12 18v.5"/></symbol>
-<symbol id="i-save" viewBox="0 0 24 24"><path d="M5 3h11l4 4v14H5z"/><path d="M8 3v6h8V3M8 21v-7h8v7"/></symbol>
-<symbol id="i-wallet" viewBox="0 0 24 24"><path d="M3 7h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M3 7l12-4v4M17 14h2"/></symbol>
-<symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
-<symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 1-1 1.7M12 17v.5"/></symbol>
-<symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v12M7 11l5 5 5-5M4 20h16"/></symbol>
-<symbol id="i-qr" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v.5M14 20h3M20 18v3"/></symbol>
-<symbol id="i-pen" viewBox="0 0 24 24"><path d="m15 5 4 4L8 20l-5 1 1-5z"/><path d="M3 21c4 0 5-2 7-2"/></symbol>
-<symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></symbol>
-<symbol id="i-history" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></symbol>
-<symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.5"/></symbol>
-</defs></svg>
+    <div class="admin-container">
+        <header>
+            <h1>PM-Roit <span style="font-weight: 200;">Pro Admin</span></h1>
+            <p>Smart Coaching Management System</p>
+        </header>
 
-<nav class="nav">
-  <div class="brand"><div class="logo"><svg class="ic"><use href="#i-grad"/></svg></div><div><b>PM-Roit</b><small>Student Management</small></div></div>
-  <div class="tabs">
-    <button class="tab active" data-t="students"><svg class="ic"><use href="#i-users"/></svg><span>Students</span></button>
-    <button class="tab admin-only" data-t="plans"><svg class="ic"><use href="#i-gem"/></svg><span>Plans</span></button>
-    <button class="tab admin-only" data-t="branding"><svg class="ic"><use href="#i-building"/></svg><span>Branding</span></button>
-    <button class="tab" data-t="help"><svg class="ic"><use href="#i-help"/></svg><span>Help</span></button>
-  </div>
-  <a class="nav-link" href="manage-team.html" title="Back to Team Manager"><svg class="ic"><use href="#i-arrow-left"/></svg><span>Team</span></a>
-</nav>
+        <section class="card">
+            <h2>🏢 Coaching Branding & Settings</h2>
+            <div class="grid">
+                <div class="input-group"><label>Coaching Name</label><input type="text" id="cName"></div>
+                <div class="input-group"><label>Phone</label><input type="tel" id="cPhone"></div>
+                <div class="input-group"><label>Address</label><input type="text" id="cAddr"></div>
+            </div>
+            <div class="grid" style="margin-top: 15px;">
+                <div class="input-group">
+                    <label>Payment QR Code</label>
+                    <input type="file" accept="image/*" onchange="previewImg(this, 'qrPreview')">
+                    <img id="qrPreview" class="preview-box">
+                </div>
+                <div class="input-group">
+                    <label>Owner Signature (PNG)</label>
+                    <input type="file" accept="image/png" onchange="previewImg(this, 'sigPreview')">
+                    <img id="sigPreview" class="preview-box signature">
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="saveSettings()">Save Branding Settings</button>
+        </section>
 
-<div class="admin-container">
+        <section class="card">
+            <h2>➕ Register New Student</h2>
+            <div class="grid">
+                <input type="text" id="sName" placeholder="Student Name">
+                <select id="sClass">
+                    <option value="9th">9th</option><option value="10th">10th</option>
+                    <option value="11th">11th</option><option value="12th">12th</option>
+                </select>
+                <input type="number" id="sTotal" placeholder="Total Fees (₹)">
+                <input type="file" id="sPhoto" accept="image/*" onchange="previewImg(this, 'sPreview')">
+            </div>
+            <img id="sPreview" class="std-preview-circle">
+            <button class="btn btn-primary" onclick="registerStudent()">Add Student to Database</button>
+        </section>
 
-<!-- STUDENTS -->
-<section class="panel" id="p-students">
-  <div id="setupBanner"></div>
-  <div class="stats">
-    <div class="stat"><svg class="ic"><use href="#i-users"/></svg><div><b id="stTotal">0</b><span>Students</span></div></div>
-    <div class="stat"><svg class="ic"><use href="#i-wallet"/></svg><div><b id="stPaid">₹0</b><span>Collected</span></div></div>
-    <div class="stat warn"><svg class="ic"><use href="#i-alert"/></svg><div><b id="stDue">₹0</b><span>Pending</span></div></div>
-    <div class="stat"><svg class="ic"><use href="#i-gem"/></svg><div><b id="stPlans">0</b><span>Active plans</span></div></div>
-  </div>
+        <div id="bulkBar" class="bulk-bar">
+            <span id="selCount">0 Selected</span>
+            <div class="bulk-actions">
+                <input type="number" id="bulkAmt" placeholder="Amt ₹">
+                <button class="btn btn-dark" onclick="bulkFeeUpdate()">Update Fees</button>
+                <button class="btn btn-danger" onclick="deleteSelected()">Delete</button>
+            </div>
+        </div>
 
-  <div id="bulkBar" class="bulk-bar">
-    <span id="selCount">0 selected</span>
-    <div class="bulk-actions">
-      <input type="number" id="bulkAmt" placeholder="Amount ₹">
-      <button class="btn btn-light" onclick="bulkFeeUpdate()"><svg class="ic"><use href="#i-rupee"/></svg>Add payment</button>
-      <select id="bulkPlan" class="admin-only"></select>
-      <button class="btn btn-light admin-only" onclick="bulkAssignPlan()"><svg class="ic"><use href="#i-gem"/></svg>Assign</button>
-      <button class="btn btn-danger" onclick="clearSelected()"><svg class="ic"><use href="#i-trash"/></svg>Clear</button>
+        <section class="card">
+            <div class="filter-header">
+                <h2>👥 Student Database</h2>
+                <select id="filterCls" onchange="loadStudents()">
+                    <option value="All">All Classes</option>
+                    <option value="9th">9th</option><option value="10th">10th</option>
+                    <option value="11th">11th</option><option value="12th">12th</option>
+                </select>
+            </div>
+            <div id="studentList"></div>
+        </section>
     </div>
-  </div>
 
-  <div class="card">
-    <div class="filter-header">
-      <h2><svg class="ic"><use href="#i-users"/></svg>Students</h2>
-      <div class="filters">
-        <div class="search"><svg class="ic"><use href="#i-search"/></svg><input id="searchBox" placeholder="Search name or email" oninput="render()"></div>
-        <select id="filterCls" onchange="render()"><option value="All">All classes</option><option>9th</option><option>10th</option><option>11th</option><option>12th</option></select>
-        <select id="filterSt" onchange="render()"><option value="all">All status</option><option value="paid">Fully paid</option><option value="partial">Partial</option><option value="due">Not paid</option></select>
-        <button class="btn btn-ghost" onclick="exportCSV()" title="Download list as CSV"><svg class="ic"><use href="#i-download"/></svg>CSV</button>
-      </div>
+    <div id="receiptModal">
+        <div class="receipt-paper" id="printArea">
+            <div class="receipt-header">
+                <h2 id="rCoachingName">Coaching Name</h2>
+                <p id="rCoachingAddr">Address</p>
+                <p id="rCoachingPhone">Phone</p>
+            </div>
+            <div class="receipt-body">
+                <div class="receipt-row-main">
+                    <div>
+                        <p><strong>Name:</strong> <span id="rStdName"></span></p>
+                        <p><strong>Class:</strong> <span id="rStdClass"></span></p>
+                    </div>
+                    <img id="rStdPhoto" class="receipt-std-img">
+                </div>
+                <hr>
+                <div class="fee-info">
+                    <p>Fees Paid: <strong id="rAmount"></strong></p>
+                    <p>Balance Due: <strong id="rBalance"></strong></p>
+                </div>
+            </div>
+            <div class="receipt-footer">
+                <div class="qr-sec"><img id="rQR"><span>Scan to Pay</span></div>
+                <div class="sig-sec"><img id="rSig"><span>Auth. Sign</span></div>
+            </div>
+            <div class="modal-btns">
+                <button class="btn btn-primary no-print" onclick="window.print()">Print Receipt</button>
+                <button class="btn btn-danger no-print" onclick="closeReceipt()">Close</button>
+            </div>
+        </div>
     </div>
-    <div class="list-head"><span>Student</span><span>Class</span><span>Fees</span><span>Actions</span></div>
-    <div id="studentList"><div class="empty">Loading students…</div></div>
-  </div>
-</section>
 
-<!-- PLANS -->
-<section class="panel" id="p-plans" hidden>
-  <div class="card">
-    <h2><svg class="ic"><use href="#i-gem"/></svg>Plans &amp; Subscriptions</h2>
-    <p class="hint">Define plans and the features each one unlocks. Assign plans from the student list. Features stay open for everyone until <code>ENFORCE</code> is set to <code>true</code> in <code>stscript.js</code>.</p>
-    <div id="plansList"></div>
-    <button class="btn btn-primary" onclick="savePlans()"><svg class="ic"><use href="#i-save"/></svg>Save plans</button>
-  </div>
-</section>
-
-<!-- BRANDING -->
-<section class="panel" id="p-branding" hidden>
-  <div class="card">
-    <h2><svg class="ic"><use href="#i-building"/></svg>Coaching details</h2>
-    <div class="grid">
-      <div class="input-group"><label>Coaching name</label><input id="cName"></div>
-      <div class="input-group"><label>Phone</label><input id="cPhone" type="tel"></div>
-      <div class="input-group"><label>Address</label><input id="cAddr"></div>
-    </div>
-  </div>
-  <div class="card">
-    <h2><svg class="ic"><use href="#i-qr"/></svg>Payment QR &amp; signature</h2>
-    <p class="hint">Images are auto-resized. Use a clear square QR and a PNG signature with transparent background. Click <b>Save branding</b> after changes.</p>
-    <div class="grid">
-      <div class="asset">
-        <div class="asset-img"><img id="qrPreview" alt=""><span class="ph" id="qrPh"><svg class="ic"><use href="#i-qr"/></svg>No QR</span></div>
-        <div class="asset-info"><b>Payment QR</b><small id="qrState">Missing</small>
-          <div class="asset-btns">
-            <label class="btn btn-ghost sm"><svg class="ic"><use href="#i-upload"/></svg>Upload<input type="file" accept="image/*" hidden onchange="previewImg(this,'qrPreview')"></label>
-            <button class="btn btn-ghost sm" onclick="viewAsset('qrPreview','Payment QR')"><svg class="ic"><use href="#i-eye"/></svg>View</button>
-            <button class="btn btn-ghost sm" onclick="removeAsset('qrPreview')"><svg class="ic"><use href="#i-trash"/></svg></button>
-          </div></div>
-      </div>
-      <div class="asset">
-        <div class="asset-img"><img id="sigPreview" alt=""><span class="ph" id="sigPh"><svg class="ic"><use href="#i-pen"/></svg>No signature</span></div>
-        <div class="asset-info"><b>Owner signature</b><small id="sigState">Missing</small>
-          <div class="asset-btns">
-            <button class="btn btn-ghost sm" onclick="openSigPad()"><svg class="ic"><use href="#i-pen"/></svg>Draw</button>
-            <label class="btn btn-ghost sm"><svg class="ic"><use href="#i-upload"/></svg>Upload<input type="file" accept="image/png" hidden onchange="previewImg(this,'sigPreview')"></label>
-            <button class="btn btn-ghost sm" onclick="viewAsset('sigPreview','Owner signature')"><svg class="ic"><use href="#i-eye"/></svg>View</button>
-            <button class="btn btn-ghost sm" onclick="removeAsset('sigPreview')"><svg class="ic"><use href="#i-trash"/></svg></button>
-          </div></div>
-      </div>
-    </div>
-    <button class="btn btn-primary" onclick="saveSettings()"><svg class="ic"><use href="#i-save"/></svg>Save branding</button>
-  </div>
-</section>
-
-<!-- HELP -->
-<section class="panel" id="p-help" hidden>
-  <div class="card"><h2><svg class="ic"><use href="#i-check"/></svg>Setup checklist</h2><div id="checklist"></div></div>
-  <div class="card">
-    <h2><svg class="ic"><use href="#i-help"/></svg>How it works</h2>
-    <details open><summary>Where do students come from?</summary><p>The list is synced with the Team Manager: every account with the <b>Student</b> role appears here. Change roles in Team Manager, not here.</p></details>
-    <details><summary>How do I record a fee payment?</summary><p>Click the <b>₹</b> icon on a student, enter amount, mode and note. Each payment is saved in history and appears on the bill. Use checkboxes for bulk payments.</p></details>
-    <details><summary>How do I print or save a bill?</summary><p>Click the receipt icon, then <b>Print / Save PDF</b> and choose "Save as PDF" as the printer.</p></details>
-    <details><summary>Why is the QR missing on a bill?</summary><p>The QR shows only when a balance is pending and a QR is uploaded in Branding. Fully paid bills get a PAID stamp instead.</p></details>
-    <details><summary>What does "Clear" do?</summary><p>It removes only the fee, class and plan record from this page. The student's account is never touched.</p></details>
-    <details><summary>How do plans work?</summary><p>Create plans under Plans, assign them per student. Premium locks stay off until <code>ENFORCE = true</code> in <code>stscript.js</code>; wrap any feature in <code>can('feature', record)</code>.</p></details>
-    <details><summary>Shortcuts</summary><p><b>Esc</b> closes any popup. Links like <code>students.html#help</code> open a tab directly.</p></details>
-  </div>
-</section>
-</div>
-
-<!-- MODALS -->
-<div id="editModal" class="overlay"><div class="modal">
-  <div class="modal-head"><h3 id="editName">Student</h3><button class="x" onclick="closeModal('editModal')"><svg class="ic"><use href="#i-close"/></svg></button></div>
-  <div class="input-group"><label>Class</label><div class="radios sm"><label class="radio"><input type="radio" name="eClass" value="" checked><span>None</span></label><label class="radio"><input type="radio" name="eClass" value="9th"><span>9th</span></label><label class="radio"><input type="radio" name="eClass" value="10th"><span>10th</span></label><label class="radio"><input type="radio" name="eClass" value="11th"><span>11th</span></label><label class="radio"><input type="radio" name="eClass" value="12th"><span>12th</span></label></div></div>
-  <div class="input-group"><label>Total fees (₹)</label><input id="eTotal" type="number"></div>
-  <div class="input-group"><label>Plan</label><div class="radios plans" id="ePlanRadios"></div></div>
-  <button class="btn btn-primary" onclick="saveEdit()"><svg class="ic"><use href="#i-check"/></svg>Save</button>
-</div></div>
-
-<div id="payModal" class="overlay"><div class="modal">
-  <div class="modal-head"><h3 id="payName">Add payment</h3><button class="x" onclick="closeModal('payModal')"><svg class="ic"><use href="#i-close"/></svg></button></div>
-  <p class="hint" id="payInfo"></p>
-  <div class="input-group"><label>Amount (₹)</label><input id="pAmt" type="number" inputmode="numeric" oninput="payPreview()">
-    <div class="chips"><button type="button" onclick="setAmt('full')">Full balance</button><button type="button" onclick="setAmt(500)">+500</button><button type="button" onclick="setAmt(1000)">+1000</button><button type="button" onclick="setAmt(2000)">+2000</button></div>
-    <small class="after" id="payAfter"></small></div>
-  <div class="input-group"><label>Payment mode</label><div class="radios "><label class="radio"><input type="radio" name="pMode" value="Cash" checked><span><svg class="ic"><use href="#i-rupee"/></svg>Cash</span></label><label class="radio"><input type="radio" name="pMode" value="UPI"><span><svg class="ic"><use href="#i-qr"/></svg>UPI</span></label><label class="radio"><input type="radio" name="pMode" value="Bank transfer"><span><svg class="ic"><use href="#i-building"/></svg>Bank</span></label><label class="radio"><input type="radio" name="pMode" value="Cheque"><span><svg class="ic"><use href="#i-receipt"/></svg>Cheque</span></label></div></div>
-  <div class="input-group"><label>Note (optional)</label><input id="pNote" placeholder="e.g. March installment"></div>
-  <button class="btn btn-primary" onclick="savePayment()"><svg class="ic"><use href="#i-rupee"/></svg>Record payment</button>
-</div></div>
-
-<div id="viewModal" class="overlay" onclick="closeModal('viewModal')"><div class="modal view"><div class="modal-head"><h3 id="viewTitle"></h3><button class="x"><svg class="ic"><use href="#i-close"/></svg></button></div><img id="viewImg" alt=""></div></div>
-
-<div id="receiptModal" class="overlay"><div class="receipt-paper" id="printArea"></div></div>
-<button class="fab" onclick="openQuickHelp()" aria-label="Quick help"><svg class="ic"><use href="#i-help"/></svg><span>Help</span></button>
-<div id="quickHelp" class="overlay" onclick="if(event.target===this)closeModal('quickHelp')"><div class="modal">
-  <div class="modal-head"><h3><span id="qhTitle">Quick help</span></h3><button class="x" onclick="closeModal('quickHelp')"><svg class="ic"><use href="#i-close"/></svg></button></div>
-  <div id="qhBody"></div>
-  <button class="btn btn-ghost" style="width:100%;margin-top:8px" onclick="closeModal('quickHelp');openTab('help')"><svg class="ic"><use href="#i-info"/></svg>Open full help &amp; checklist</button>
-</div></div>
-<div id="sigModal" class="overlay"><div class="modal sig">
-  <div class="modal-head"><h3>Draw your signature</h3><button class="x" onclick="closeModal('sigModal')"><svg class="ic"><use href="#i-close"/></svg></button></div>
-  <p class="hint">Sign with your finger or mouse inside the box. Background stays transparent on the bill.</p>
-  <canvas id="sigCanvas"></canvas>
-  <div class="input-group" style="margin-top:12px"><label>Ink colour</label><div class="radios sm"><label class="radio"><input type="radio" name="sigColor" value="#111827" checked><span>Black</span></label><label class="radio"><input type="radio" name="sigColor" value="#1d4ed8"><span>Blue</span></label></div></div>
-  <div class="sig-btns">
-    <button class="btn btn-ghost" onclick="sigUndo()"><svg class="ic"><use href="#i-history"/></svg>Undo</button>
-    <button class="btn btn-ghost" onclick="sigClear()"><svg class="ic"><use href="#i-trash"/></svg>Clear</button>
-    <button class="btn btn-primary" style="margin:0" onclick="sigUse()"><svg class="ic"><use href="#i-check"/></svg>Use signature</button>
-  </div>
-</div></div>
-<div id="toast"></div>
-<script src="stscript.js"></script>
+    <script src="stscript.js"></script>
 </body>
 </html>

@@ -993,19 +993,41 @@ await checkAndSyncSecureStreak();
       }
     };
 
-    const savedTheme = localStorage.getItem("theme");
-    if (savedTheme === "light") {
-      document.body.classList.add("light");
-      modeToggle.checked = true;
-      updateThemeIcon(true);
-    }
+    // ---- Auto theme: din (DAY_START se NIGHT_START tak) = light, raat = dark.
+    //      User ne toggle dabaya (localStorage "theme" set) to wahi chalega.
+    //      Cache / site data clear hone par "theme" hat jata hai aur auto mode wapas shuru. ----
+    const DAY_START = 6;    // subah 6 baje se light
+    const NIGHT_START = 18; // shaam 6 baje se dark
+    const manualTheme = () => {
+      const v = localStorage.getItem("theme");
+      return v === "light" || v === "dark" ? v : null;
+    };
+    const wantLight = () => {
+      const m = manualTheme();
+      if (m) return m === "light";
+      const h = new Date().getHours();
+      return h >= DAY_START && h < NIGHT_START;
+    };
+    const applyTheme = () => {
+      const isLight = wantLight();
+      document.body.classList.toggle("light", isLight);
+      modeToggle.checked = isLight;
+      updateThemeIcon(isLight);
+      const meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) meta.setAttribute("content", isLight ? "#f4f7fc" : "#0a1b3d");
+    };
+
+    applyTheme();
 
     modeToggle.addEventListener("change", () => {
-      const isLight = modeToggle.checked;
-      document.body.classList.toggle("light", isLight);
-      localStorage.setItem("theme", isLight ? "light" : "dark");
-      updateThemeIcon(isLight);
+      localStorage.setItem("theme", modeToggle.checked ? "light" : "dark"); // manual choice
+      applyTheme();
     });
+
+    // Auto mode me hon to din/raat badalte hi theme khud badle
+    setInterval(() => { if (!manualTheme()) applyTheme(); }, 60000);
+    document.addEventListener("visibilitychange", () => { if (!document.hidden && !manualTheme()) applyTheme(); });
+    window.addEventListener("storage", (e) => { if (e.key === "theme") applyTheme(); });
   }
 
   // Active Menu Link Highlight

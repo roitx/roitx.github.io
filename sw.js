@@ -1,4 +1,4 @@
-const CACHE_NAME = 'roitx-study-cache-v11';
+const CACHE_NAME = 'roitx-study-cache-v3';
 const ASSETS = [
   './',
   './index.html',
@@ -13,6 +13,10 @@ const ASSETS = [
   './tests.html',
   './library.html',
   './library.js',
+  './activity-log.js',
+  './activity-ui.js',
+  './downloads.html',
+  './downloads.js',
   './refbook.html',
   './refbook.css',
   './refbook.js',
