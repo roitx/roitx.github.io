@@ -483,6 +483,7 @@
     <button class="tab-btn" onclick="scrollToSec('terms')">Terms</button>
     <button class="tab-btn" onclick="scrollToSec('dmca')">DMCA</button>
     <button class="tab-btn" onclick="scrollToSec('architecture')">Architecture</button>
+    <button class="tab-btn" onclick="scrollToSec('cookies')">Cookies</button>
   </nav>
 
   <main id="legalContent">
@@ -582,7 +583,7 @@
         </table>
 
         <h3>2.3 Cookies & Local Storage</h3>
-        <p>We use browser storage (such as your cookie choice, streak and preferences) to make the site work. Analytics runs only if you click "Accept All" on the cookie banner. If you click "Decline", no analytics data is sent.</p>
+        <p>We use browser storage (such as your cookie choice, streak and preferences) to make the site work. Analytics runs only if you click "Accept All" on the cookie banner. If you click "Decline", no analytics data is sent. Full details are in <a href="#cookies" onclick="scrollToSec('cookies');return false;" style="color: var(--accent-blue);">Section 6: Cookies</a>.</p>
 
         <h3>2.4 Students & Minors</h3>
         <p>Many of our users are school students. If you are under 18, please use PM Roitx with the knowledge of a parent or guardian.</p>
@@ -690,6 +691,65 @@
       </div>
     </article>
 
+    <article id="cookies" class="legal-card open">
+      <div class="card-header" onclick="toggleCard(this)">
+        <h2><span>🍪</span> 6. Cookies & Local Storage</h2>
+        <span class="accordion-icon">▼</span>
+      </div>
+      <div class="card-body">
+        <div class="highlight-box">
+          <strong>In short:</strong> PM Roitx uses cookies and browser storage to keep the site working and remember your choices. Analytics is optional and runs only if you click "Accept All". We do not use advertising cookies and we do not sell your data.
+        </div>
+
+        <h3>6.1 What We Store</h3>
+        <table class="providers-table">
+          <thead>
+            <tr><th>Type</th><th>Examples</th><th>Purpose</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td data-label="Type">Essential</td>
+              <td data-label="Examples">Login session (Supabase), service worker cache for offline use</td>
+              <td data-label="Purpose">Keeps you signed in and lets the site load fast and work offline. Required for the site to function.</td>
+            </tr>
+            <tr>
+              <td data-label="Type">Preferences</td>
+              <td data-label="Examples">Theme (light / dark / auto), motivation language, install prompt dismissed, first-visit flag</td>
+              <td data-label="Purpose">Remembers your settings so you do not have to set them again.</td>
+            </tr>
+            <tr>
+              <td data-label="Type">Features</td>
+              <td data-label="Examples">Study streak, read and deleted notifications, calendar alerts already shown</td>
+              <td data-label="Purpose">Makes streaks and notifications work correctly on your device.</td>
+            </tr>
+            <tr>
+              <td data-label="Type">Consent</td>
+              <td data-label="Examples">Your cookie choice (accepted / declined)</td>
+              <td data-label="Purpose">Remembers your decision so the banner is not shown again.</td>
+            </tr>
+            <tr>
+              <td data-label="Type">Analytics (optional)</td>
+              <td data-label="Examples">Page-view event sent to DigitalPlat Analytics</td>
+              <td data-label="Purpose">Helps us understand which pages are useful. Sent only after you click "Accept All".</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>6.2 Your Choices</h3>
+        <ul>
+          <li><strong>Accept All:</strong> Page-view analytics is turned on.</li>
+          <li><strong>Decline:</strong> No analytics data is sent. Essential storage still works because the site cannot run without it.</li>
+          <li><strong>Change your mind:</strong> Clear this site's data in your browser settings; the banner will appear again on your next visit.</li>
+        </ul>
+
+        <h3>6.3 Third Parties</h3>
+        <p>We do not use advertising or tracking cookies. Third-party services we rely on (such as Supabase, Google and DigitalPlat Analytics) are listed in <a href="#privacy" onclick="scrollToSec('privacy');return false;" style="color: var(--accent-blue);">Section 2.2</a>.</p>
+
+        <h3>6.4 Questions</h3>
+        <p>Write to <a href="mailto:legal@roitx.dpdns.org" style="color: var(--accent-blue);">legal@roitx.dpdns.org</a> for any cookie or privacy question.</p>
+      </div>
+    </article>
+
   </main>
 
   <footer>
@@ -701,7 +761,7 @@
 
 <script>
   /* ---------- Scroll-spy: jis section par ho, upar ka tab bhi wahi highlight ---------- */
-  const SECTION_IDS = ['about', 'privacy', 'terms', 'dmca', 'architecture'];
+  const SECTION_IDS = ['about', 'privacy', 'terms', 'dmca', 'architecture', 'cookies'];
   let navLock = 0, activeSec = '';
 
   function setActiveTab(id) {

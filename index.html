@@ -456,8 +456,33 @@
 .cc-sub{font-size:12px;color:var(--muted)}
 .cc-go{flex-shrink:0;font-size:12px;font-weight:700;color:var(--accent);white-space:nowrap}
 
+
+/* ===== Cookie banner: slim, works in dark + light ===== */
+#cookieBanner.cookie-banner{max-width:440px;padding:12px 14px;border-radius:18px;background:rgba(10,27,61,.94);border:1px solid rgba(120,170,255,.3);color:#e9f2ff;box-shadow:0 12px 30px rgba(0,0,0,.45)}
+body.light #cookieBanner.cookie-banner{background:rgba(255,255,255,.97);border-color:rgba(37,99,235,.22);color:#0f172a;box-shadow:0 12px 30px rgba(15,23,42,.18)}
+#cookieBanner .cookie-content{gap:10px}
+#cookieBanner .flex-row-gap-8{display:flex;align-items:flex-start;gap:10px}
+#cookieBanner .ck-icon{flex:0 0 auto;width:36px;height:36px;display:block;color:var(--accent,#3aa0ff)}
+#cookieBanner .ck-title{margin:0 0 2px;font-size:14px;font-weight:800;line-height:1.25;color:inherit}
+#cookieBanner .ck-desc{margin:0;font-size:12px;line-height:1.4;opacity:.85}
+#cookieBanner .ck-desc a{font-weight:800;color:var(--accent,#3aa0ff);text-decoration:underline;white-space:nowrap}
+#cookieBanner .cookie-buttons{display:flex;gap:6px;justify-content:stretch}
+#cookieBanner .cookie-btn{flex:1 1 0;min-width:0;padding:9px 6px;font-size:12px;font-weight:700;border-radius:11px;text-align:center;white-space:nowrap}
+#cookieBanner .cookie-btn.decline{color:inherit;background:rgba(127,150,190,.16);border:1px solid rgba(127,150,190,.35)}
+#cookieBanner .cookie-btn.decline:hover{color:inherit}
+#cookieBanner .cookie-btn.customise{background:transparent;color:inherit;border:1px solid rgba(127,150,190,.5);cursor:pointer}
+#cookieBanner .cookie-btn.customise:hover{border-color:var(--accent,#3aa0ff);color:var(--accent,#3aa0ff)}
+#cookieBanner .ck-panel{display:flex;flex-direction:column;gap:6px}
+#cookieBanner .ck-panel[hidden]{display:none}
+#cookieBanner .ck-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 10px;border-radius:10px;background:rgba(127,150,190,.14);font-size:12px;font-weight:700;text-align:left}
+#cookieBanner .ck-row small{display:block;font-weight:500;opacity:.75;font-size:10.5px;margin-top:1px}
+#cookieBanner .ck-row input{width:17px;height:17px;flex:none;accent-color:#3aa0ff}
+
 /* Auto mode: knob ke andar "A" (toggle ki original size wahi) */
 .switch.auto-on .slider::before{content:"A";color:#fff;font-size:10px;font-weight:800;line-height:18px;text-align:center}
+/* Auto off hone par toggle ke niche hint */
+.switch{position:relative}
+.switch .auto-hint{display:none;position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:4px;white-space:nowrap;font-size:9px;font-weight:600;line-height:1.2;color:var(--muted,#8a99ad);pointer-events:none}
   </style>
   <link rel="stylesheet" href="style.css" />
 
@@ -1141,17 +1166,50 @@
   <div id="cookieBanner" class="cookie-banner is-hidden">
     <div class="cookie-content">
       <div class="flex-row-gap-8">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3aa0ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5zm-2 7a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm5 5a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm-8 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"></path>
+        <svg class="ck-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 12.5A9 9 0 1 1 11.5 3a3.5 3.5 0 0 0 4 4 3 3 0 0 0 4 4 2.5 2.5 0 0 0 1.5 1.5z"></path>
+          <circle cx="8.5" cy="11" r="1" fill="currentColor"></circle>
+          <circle cx="12.5" cy="15.5" r="1" fill="currentColor"></circle>
+          <circle cx="15.5" cy="11.5" r=".8" fill="currentColor"></circle>
         </svg>
-        <p class="no-margin">Hum aapke study session ko behtar banane ke liye cookies ka istemal karte hain.</p>
+        <div>
+          <h4 class="ck-title">We rely on cookies</h4>
+          <p class="no-margin ck-desc">We use cookies to keep the site working and remember your preferences. Analytics runs only if you accept. See our <a href="aboutus.html#cookies">Cookie policy</a>.</p>
+        </div>
+      </div>
+      <div class="ck-panel" id="ckPanel" hidden>
+        <label class="ck-row"><span>Essential<small>Login, theme, streak, offline. Always on.</small></span><input type="checkbox" checked disabled></label>
+        <label class="ck-row"><span>Analytics<small>Anonymous page-view stats to improve the site.</small></span><input type="checkbox" id="ckAnalytics"></label>
       </div>
       <div class="cookie-buttons">
-        <button id="acceptCookies" class="cookie-btn accept">Accept All</button>
-        <button id="declineCookies" class="cookie-btn decline">Decline</button>
+        <button id="acceptCookies" class="cookie-btn accept">Accept all</button>
+        <button id="declineCookies" class="cookie-btn decline">Decline cookies</button>
+        <button id="customiseCookies" class="cookie-btn customise" type="button">Customise</button>
       </div>
     </div>
   </div>
+<script>
+  (function () {
+    function init() {
+      var banner = document.getElementById('cookieBanner'), btn = document.getElementById('customiseCookies'),
+          panel = document.getElementById('ckPanel'), box = document.getElementById('ckAnalytics');
+      if (!banner || !btn || !panel || !box) return;
+      btn.addEventListener('click', function () {
+        if (panel.hidden) {                       // pehla click: options kholo
+          box.checked = localStorage.getItem('cookieConsent') === 'accepted';
+          panel.hidden = false;
+          btn.textContent = 'Save choices';
+          return;
+        }
+        var on = box.checked;                     // dusra click: save
+        localStorage.setItem('cookieConsent', on ? 'accepted' : 'declined');
+        banner.style.display = 'none';
+        if (on && typeof sendPageView === 'function') sendPageView();
+      });
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+  })();
+</script>
 <!-- PM Style Premium Streak Modal -->
 <div id="pmStreakModal" class="pm-modal-overlay is-hidden">
   <div class="pm-streak-card">

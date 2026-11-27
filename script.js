@@ -996,6 +996,7 @@ await checkAndSyncSecureStreak();
     // ---- Auto theme: din (DAY_START se NIGHT_START tak) = light, raat = dark.
     //      User ne toggle dabaya (localStorage "theme" set) to wahi chalega.
     //      Cache / site data clear hone par "theme" hat jata hai aur auto mode wapas shuru. ----
+    const HINT_MS = 3 * 60 * 1000; // "Auto on: long tap" hint 3 minute tak
     const DAY_START = 6;    // subah 6 baje se light
     const NIGHT_START = 18; // shaam 6 baje se dark
     const manualTheme = () => {
@@ -1016,6 +1017,26 @@ await checkAndSyncSecureStreak();
       // Auto mode me knob ke andar "A" dikhta hai (manual me nahi)
       const swEl = modeToggle.closest(".switch");
       if (swEl) swEl.classList.toggle("auto-on", !manualTheme());
+      // Auto mode off hone par toggle ke niche hint dikhao
+      if (swEl) {
+        let hint = swEl.querySelector(".auto-hint");
+        if (!hint) {
+          hint = document.createElement("span");
+          hint.className = "auto-hint";
+          hint.textContent = "Auto on: long tap";
+          swEl.appendChild(hint);
+        }
+        // Hint sirf kuchh minute (HINT_MS) dikhe: manual mode shuru hone ke baad
+        let until = parseInt(localStorage.getItem("theme_hint_until") || "0", 10);
+        if (manualTheme() && !until) {
+          until = Date.now() + HINT_MS;
+          localStorage.setItem("theme_hint_until", String(until));
+        }
+        const showHint = manualTheme() && Date.now() < until;
+        hint.style.display = showHint ? "block" : "none";
+        clearTimeout(window.__themeHintTimer);
+        if (showHint) window.__themeHintTimer = setTimeout(() => { hint.style.display = "none"; }, until - Date.now());
+      }
       const meta = document.querySelector('meta[name="theme-color"]');
       if (meta) meta.setAttribute("content", isLight ? "#f4f7fc" : "#0a1b3d");
     };
@@ -1055,6 +1076,7 @@ await checkAndSyncSecureStreak();
         pressTimer = setTimeout(() => {
           longPressed = true;
           localStorage.removeItem("theme");
+          localStorage.removeItem("theme_hint_until");
           applyTheme();
           showThemeToast("Auto theme mode on");
           if (navigator.vibrate) { try { navigator.vibrate(35); } catch (_) {} }
@@ -1075,6 +1097,7 @@ await checkAndSyncSecureStreak();
       const wasAuto = !manualTheme();
       if (wasAuto) showThemeToast("Auto theme mode off");
       localStorage.setItem("theme", modeToggle.checked ? "light" : "dark"); // manual choice
+      localStorage.setItem("theme_hint_until", String(Date.now() + HINT_MS));
       applyTheme();
     });
 
