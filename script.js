@@ -996,7 +996,7 @@ await checkAndSyncSecureStreak();
     // ---- Auto theme: din (DAY_START se NIGHT_START tak) = light, raat = dark.
     //      User ne toggle dabaya (localStorage "theme" set) to wahi chalega.
     //      Cache / site data clear hone par "theme" hat jata hai aur auto mode wapas shuru. ----
-    const HINT_MS = 3 * 60 * 1000; // "Auto on: long tap" hint 3 minute tak
+    const HINT_MS = 5 * 1000; // "Auto on: long tap" hint 3 minute tak
     const DAY_START = 6;    // subah 6 baje se light
     const NIGHT_START = 18; // shaam 6 baje se dark
     const manualTheme = () => {
