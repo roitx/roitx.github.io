@@ -81,6 +81,29 @@
         .btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,198,255,.45); }
         .btn-primary:disabled { opacity: .55; cursor: not-allowed; }
 
+        .redo-row { display: flex; gap: 8px; margin-top: 8px; }
+        .redo-row .btn-primary { flex: 1; background: rgba(255,255,255,.08); box-shadow: none; border: 1px solid rgba(255,255,255,.14); }
+        .force-chip {
+            flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; padding: 0 14px;
+            border-radius: 12px; font-family: inherit; font-size: .8rem; font-weight: 700; cursor: pointer;
+            background: rgba(255,255,255,.05); color: var(--text-muted); border: 1px solid rgba(255,255,255,.12);
+            transition: all .2s ease;
+        }
+        .force-chip.on { background: rgba(0,210,255,.16); color: var(--accent-cyan); border-color: rgba(0,210,255,.55); box-shadow: 0 0 14px rgba(0,210,255,.2); }
+        .wm-status {
+            display: flex; align-items: center; gap: 8px; margin-top: 10px; padding: 8px 12px;
+            border-radius: 10px; font-size: .76rem; font-weight: 600; line-height: 1.4;
+            background: rgba(255,255,255,.04); color: var(--text-muted);
+        }
+        .wm-status .dot { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 8px; background: var(--text-muted); }
+        .wm-status.ok { color: var(--ok); background: rgba(46,213,115,.08); }
+        .wm-status.ok .dot { background: var(--ok); }
+        .wm-status.warn { color: var(--warn); background: rgba(255,165,2,.1); }
+        .wm-status.warn .dot { background: var(--warn); animation: wmPulse 1.4s infinite; }
+        .wm-status.force { color: var(--accent-cyan); background: rgba(0,210,255,.1); }
+        .wm-status.force .dot { background: var(--accent-cyan); }
+        @keyframes wmPulse { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
+
         .progress { height: 8px; background: rgba(255,255,255,.08); border-radius: 8px; overflow: hidden; margin-top: 12px; display: none; }
         .progress > div { height: 100%; width: 0; background: linear-gradient(90deg, var(--accent-cyan), var(--accent-blue)); transition: width .3s ease; }
         .progress-text { font-size: .74rem; color: var(--text-muted); margin-top: 6px; display: none; }
@@ -164,10 +187,15 @@
                 <button class="btn-primary" id="allBtn" onclick="generateAllMissing()">
                     <i class="fa-solid fa-bolt"></i> Generate all missing
                 </button>
-                <button class="btn-primary" id="redoBtn" onclick="regenerateAll()"
-                        style="margin-top:8px; background: rgba(255,255,255,.08); box-shadow:none; border:1px solid rgba(255,255,255,.14);">
-                    <i class="fa-solid fa-rotate"></i> Regenerate all (naye watermark ke saath)
-                </button>
+                <div class="redo-row">
+                    <button class="btn-primary" id="redoBtn" onclick="regenerateAll()">
+                        <i class="fa-solid fa-rotate"></i> Regenerate all
+                    </button>
+                    <button class="force-chip" id="forceBtn" onclick="setForce(!forceRedo)" title="Force: sab notes dobara banao">
+                        <i class="fa-solid fa-bolt"></i> Force
+                    </button>
+                </div>
+                <div class="wm-status" id="wmInfo"><span class="dot"></span><span id="wmText"></span></div>
                 <div class="progress" id="progress"><div id="progressBar"></div></div>
                 <div class="progress-text" id="progressText"></div>
             </div>
@@ -188,6 +216,34 @@ const sb = () => window.supabaseClient;
 let notes = [];
 const state = {};          // id -> { busy: bool, error: string }
 let bulkRunning = false;
+
+// ---- Watermark change detection ----
+// premium-preview.js ka hash dekhte hain. Watermark badla to hash badlega aur purane previews "Purana" ho jayenge.
+// Har note ka kis hash se bana tha wo localStorage me yaad rehta hai.
+const BUILT_KEY = "pm_built_v1", FORCE_KEY = "pm_force_v1";
+let wmHash = null, builtMap = {}, forceRedo = false, redoArmed = false, redoArmTimer = null;
+try { builtMap = JSON.parse(localStorage.getItem(BUILT_KEY) || "{}") || {}; } catch (_) {}
+try { forceRedo = localStorage.getItem(FORCE_KEY) === "1"; } catch (_) {}
+
+function hashStr(str) {
+    let h = 5381;
+    for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0;
+    return (h >>> 0).toString(36);
+}
+async function detectWatermark() {
+    try {
+        const r = await fetch("premium-preview.js", { cache: "no-store" });
+        if (!r.ok) throw new Error("fetch fail");
+        wmHash = hashStr(await r.text());
+    } catch (_) { wmHash = null; }
+}
+function saveBuilt() { try { localStorage.setItem(BUILT_KEY, JSON.stringify(builtMap)); } catch (_) {} }
+function setForce(v) {
+    forceRedo = !!v;
+    try { localStorage.setItem(FORCE_KEY, v ? "1" : "0"); } catch (_) {}
+    render();
+}
+const isOutdated = n => !!n.preview_path && wmHash !== null && builtMap[n.id] !== wmHash;
 
 function el(tag, cls, text) {
     const e = document.createElement(tag);
@@ -213,6 +269,7 @@ window.addEventListener("load", async () => {
             return;
         }
         document.getElementById("app").style.display = "block";
+        await detectWatermark();
         await loadNotes();
     } catch (e) {
         document.getElementById("denied").style.display = "block";
@@ -235,7 +292,22 @@ function updateStats() {
     document.getElementById("statOk").textContent = ready;
     document.getElementById("statMissing").textContent = notes.length - ready;
     document.getElementById("allBtn").disabled = bulkRunning || (notes.length - ready) === 0;
-    document.getElementById("redoBtn").disabled = bulkRunning || notes.length === 0;
+
+    const outdated = notes.filter(isOutdated).length;
+    const redo = document.getElementById("redoBtn");
+    redo.disabled = bulkRunning || notes.length === 0 || (!forceRedo && outdated === 0);
+    if (!redoArmed) {
+        const cnt = forceRedo ? notes.length : outdated;
+        redo.innerHTML = '<i class="fa-solid fa-rotate"></i> Regenerate all' + (cnt ? " (" + cnt + ")" : "");
+    }
+    const info = document.getElementById("wmInfo"), txt = document.getElementById("wmText");
+    document.getElementById("forceBtn").classList.toggle("on", forceRedo);
+    let cls = "ok", msg = "Sab previews current watermark ke hain";
+    if (forceRedo) { cls = "force"; msg = "Force on — sab " + notes.length + " notes dobara banenge"; }
+    else if (wmHash === null) { cls = ""; msg = "Watermark check nahi ho paya — Force use karo"; }
+    else if (outdated > 0) { cls = "warn"; msg = "Naya watermark mila — " + outdated + " previews purane hain"; }
+    info.className = "wm-status " + cls;
+    txt.textContent = msg;
 }
 
 function render() {
@@ -263,6 +335,7 @@ function render() {
         let chipCls = "warn", chipTxt = "Missing";
         if (st.busy) { chipCls = "busy"; chipTxt = "Working..."; }
         else if (st.error) { chipCls = "bad"; chipTxt = "Failed"; }
+        else if (isOutdated(n)) { chipCls = "warn"; chipTxt = "Purana WM"; }
         else if (n.preview_path) { chipCls = "ok"; chipTxt = "Ready"; }
         top.appendChild(el("span", "chip " + chipCls, chipTxt));
         card.appendChild(top);
@@ -314,6 +387,7 @@ async function generatePreview(n) {
         if (upd.error) throw new Error("DB update fail: " + upd.error.message);
 
         n.preview_path = pv.path;
+        if (wmHash) { builtMap[n.id] = wmHash; saveBuilt(); }
         state[n.id] = {};
         return true;
     } catch (e) {
@@ -353,8 +427,18 @@ async function runBulk(todo) {
 function generateAllMissing() { return runBulk(notes.filter(n => !n.preview_path)); }
 
 function regenerateAll() {
-    if (!confirm("Saare previews dobara banenge (naye watermark ke saath). Continue?")) return;
-    return runBulk(notes.slice());
+    // confirm() mobile/PWA me block ho sakta hai (isi se button "kaam nahi" karta tha), isliye do-tap confirmation
+    const redo = document.getElementById("redoBtn");
+    if (!redoArmed) {
+        redoArmed = true;
+        redo.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Pakka? Dobara tap karo';
+        redoArmTimer = setTimeout(() => { redoArmed = false; render(); }, 4000);
+        return;
+    }
+    clearTimeout(redoArmTimer);
+    redoArmed = false;
+    const todo = forceRedo ? notes.slice() : notes.filter(isOutdated);
+    return runBulk(todo);
 }
 </script>
 </body>

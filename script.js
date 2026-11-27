@@ -1024,13 +1024,12 @@ await checkAndSyncSecureStreak();
 
     // Auto mode user ne khud on kiya to chhota message aaye aur 2 sec me khud chala jaye
     let themeToastEl = null, themeToastTimer = null;
-    const showAutoToast = () => {
+    const showThemeToast = (msg) => {
       if (themeToastEl) themeToastEl.remove();
       clearTimeout(themeToastTimer);
       const el = document.createElement("div");
       el.setAttribute("role", "status");
-      el.innerHTML = '<b style="display:block;font-size:13px">Auto theme on</b>' +
-        '<span style="font-size:11px;opacity:.8">Din me light, raat me dark</span>';
+      el.innerHTML = '<b style="display:block;font-size:13px">' + msg + '</b>';
       el.style.cssText = "position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 70px);" +
         "transform:translate(-50%,-8px);opacity:0;z-index:99999;padding:10px 18px;border-radius:14px;" +
         "text-align:center;pointer-events:none;color:var(--text);background:var(--glass);" +
@@ -1057,7 +1056,7 @@ await checkAndSyncSecureStreak();
           longPressed = true;
           localStorage.removeItem("theme");
           applyTheme();
-          showAutoToast();
+          showThemeToast("Auto theme mode on");
           if (navigator.vibrate) { try { navigator.vibrate(35); } catch (_) {} }
         }, 600);
       });
@@ -1073,6 +1072,8 @@ await checkAndSyncSecureStreak();
     }
 
     modeToggle.addEventListener("change", () => {
+      const wasAuto = !manualTheme();
+      if (wasAuto) showThemeToast("Auto theme mode off");
       localStorage.setItem("theme", modeToggle.checked ? "light" : "dark"); // manual choice
       applyTheme();
     });
