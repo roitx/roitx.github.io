@@ -3,7 +3,7 @@ name: Unzip upload
 on:
   push:
     paths:
-      - 'upload.zip'
+      - '*.zip'
   workflow_dispatch:
 
 permissions:
@@ -17,20 +17,30 @@ jobs:
 
       - name: Extract and copy
         run: |
-          if [ ! -f upload.zip ]; then echo "No upload.zip, skipping"; exit 0; fi
-          mkdir /tmp/x && unzip -q upload.zip -d /tmp/x
-          # zip ke andar ek folder ho to wahi source maano
-          SRC=/tmp/x
-          if [ "$(ls -A /tmp/x | wc -l)" = "1" ] && [ -d "/tmp/x/$(ls /tmp/x)" ]; then
-            SRC="/tmp/x/$(ls /tmp/x)"
-          fi
-          rsync -a --exclude '.git' --exclude '.github' --exclude 'upload.zip' "$SRC"/ ./
-          rm -f upload.zip
+          shopt -s nullglob
+          zips=(./*.zip)
+          if [ ${#zips[@]} -eq 0 ]; then echo "Koi zip nahi mili, skipping"; exit 0; fi
+
+          for z in "${zips[@]}"; do
+            echo "== $z =="
+            X=$(mktemp -d)
+            unzip -q -o "$z" -d "$X" || { echo "Is zip me dikkat hai: $z"; rm -rf "$X"; continue; }
+
+            # zip ke andar sirf ek folder ho to wahi source maano
+            SRC="$X"
+            if [ "$(ls -A "$X" | wc -l)" = "1" ] && [ -d "$X/$(ls -A "$X")" ]; then
+              SRC="$X/$(ls -A "$X")"
+            fi
+
+            tar -C "$SRC" --exclude='./.git' --exclude='./.github' --exclude='./__MACOSX' --exclude='.DS_Store' --exclude='*.zip' -cf - . | tar -xf -
+            rm -f "$z"
+            rm -rf "$X"
+          done
 
       - name: Commit
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
           git add -A
-          git diff --cached --quiet || git commit -m "Update site from zip"
+          git diff --cached --quiet || git commit -m "Update site from zip [skip ci]"
           git push
