@@ -73,7 +73,11 @@
   .cx-btn.sec{background:#262d4a}.cx-btn.full{width:100%}.cx-btn:disabled{opacity:.5}
   .cx-actions{display:flex;gap:10px;margin-top:6px}.cx-actions .cx-btn{flex:1}
   .cx-msg{margin-top:10px;font-size:13px;min-height:18px;color:#ffb4b4}.cx-msg.ok{color:#8ff0b0}
-  .cx-fab{display:inline-flex;align-items:center;gap:6px;position:fixed;right:25px;bottom:25px;z-index:9999;height:52px;padding:0 18px;border-radius:26px;border:1px solid rgba(255,255,255,.3);background:linear-gradient(135deg,#7c4dff,#3d5afe);color:#fff;font-weight:600;font-size:14px;box-shadow:0 0 18px rgba(61,90,254,.6),0 6px 15px rgba(0,0,0,.4);cursor:pointer}
+  .cx-fab{display:inline-flex;align-items:center;position:fixed;right:16px;bottom:16px;z-index:9999;height:46px;min-width:46px;padding:0 13px;box-sizing:border-box;border-radius:23px;border:1px solid rgba(255,255,255,.3);background:linear-gradient(135deg,#7c4dff,#3d5afe);color:#fff;font-weight:600;font-size:14px;white-space:nowrap;box-shadow:0 0 14px rgba(61,90,254,.55),0 5px 12px rgba(0,0,0,.4);cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+  .cx-fab.drag{cursor:grabbing;transition:none;box-shadow:0 0 22px rgba(61,90,254,.8),0 10px 22px rgba(0,0,0,.5)}
+  .cx-fab.snap{transition:left .22s ease,top .22s ease}
+  .cx-fab .cx-fl{max-width:0;opacity:0;overflow:hidden;margin-left:0;transition:max-width .22s ease,opacity .18s ease,margin-left .22s ease}
+  @media (hover:hover){.cx-fab:hover:not(.drag) .cx-fl{max-width:110px;opacity:1;margin-left:7px}}
   /* scanner */
   .cx-fab svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
   #cx-scan{position:fixed;inset:0;z-index:10100;background:#0b0e18;color:#fff;display:flex;flex-direction:column;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
@@ -1025,6 +1029,60 @@
      MOUNT - menu me "Add Notes" jodo (ya formulas page par button)
      ===================================================================== */
   const plus = '<svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>';
+  /* Floating icon: chhota gol icon, hover par label; drag karke kisi bhi corner me chhodo (corner yaad rehta hai) */
+  function initFabDrag(b, onTap) {
+    const KEY = 'cx_fab_corner', M = 16;
+    let corner = 'br';
+    try { const v = localStorage.getItem(KEY); if (/^(tl|tr|bl|br)$/.test(v)) corner = v; } catch (e) {}
+    function anchor(c) {
+      const st = b.style;
+      st.left = st.right = st.top = st.bottom = 'auto';
+      if (c[0] === 't') st.top = M + 'px'; else st.bottom = M + 'px';
+      if (c[1] === 'l') st.left = M + 'px'; else st.right = M + 'px';
+    }
+    anchor(corner);
+    let sx = 0, sy = 0, ox = 0, oy = 0, down = false, moved = false, pid = null;
+    b.addEventListener('pointerdown', e => {
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      const r = b.getBoundingClientRect();
+      down = true; moved = false; pid = e.pointerId; sx = e.clientX; sy = e.clientY; ox = r.left; oy = r.top;
+      try { b.setPointerCapture(pid); } catch (er) {}
+    });
+    b.addEventListener('pointermove', e => {
+      if (!down || e.pointerId !== pid) return;
+      const dx = e.clientX - sx, dy = e.clientY - sy;
+      if (!moved && Math.hypot(dx, dy) < 6) return;       // chhota hilna = tap
+      if (!moved) { moved = true; b.classList.remove('snap'); b.classList.add('drag'); }
+      const w = b.offsetWidth, h = b.offsetHeight;
+      const x = Math.min(Math.max(ox + dx, 0), window.innerWidth - w);
+      const y = Math.min(Math.max(oy + dy, 0), window.innerHeight - h);
+      const st = b.style; st.right = st.bottom = 'auto'; st.left = x + 'px'; st.top = y + 'px';
+      e.preventDefault();
+    });
+    function end(e) {
+      if (!down || e.pointerId !== pid) return;
+      down = false;
+      try { b.releasePointerCapture(pid); } catch (er) {}
+      if (!moved) return;
+      b.classList.remove('drag');
+      const r = b.getBoundingClientRect(), w = b.offsetWidth, h = b.offsetHeight;
+      const cx = r.left + w / 2, cy = r.top + h / 2;
+      corner = (cy < window.innerHeight / 2 ? 't' : 'b') + (cx < window.innerWidth / 2 ? 'l' : 'r');
+      try { localStorage.setItem(KEY, corner); } catch (er) {}
+      // corner tak smooth slide, phir edge se anchor (taaki label sahi taraf khule aur resize par bhi corner me rahe)
+      const tx = corner[1] === 'l' ? M : window.innerWidth - w - M;
+      const ty = corner[0] === 't' ? M : window.innerHeight - h - M;
+      b.classList.add('snap');
+      b.style.left = tx + 'px'; b.style.top = ty + 'px';
+      setTimeout(() => { b.classList.remove('snap'); anchor(corner); }, 240);
+    }
+    b.addEventListener('pointerup', end);
+    b.addEventListener('pointercancel', end);
+    b.addEventListener('click', e => {
+      if (moved) { e.preventDefault(); e.stopPropagation(); moved = false; return; }
+      onTap(e);
+    });
+  }
   function mount() {
     const label = IS_FORMULAS ? 'Add Formula' : 'Add Notes';
     const menu = $('#floatingContainer .floating-menu');
@@ -1033,8 +1091,11 @@
       a.onclick = e => { e.preventDefault(); const c = $('#floatingContainer'); if (c) c.classList.remove('active'); start(); };
       menu.insertBefore(a, menu.firstChild);
     } else {
-      const b = document.createElement('button'); b.className = 'cx-fab'; b.innerHTML = plus + ' ' + label; b.onclick = start;
+      const b = document.createElement('button'); b.className = 'cx-fab'; b.type = 'button';
+      b.title = label; b.setAttribute('aria-label', label);
+      b.innerHTML = plus + '<span class="cx-fl">' + label + '</span>';
       document.body.appendChild(b);
+      initFabDrag(b, start);
     }
     if (typeof window.openSubject === 'function') {         // kaun sa subject khula hai, yaad rakho
       const orig = window.openSubject;
