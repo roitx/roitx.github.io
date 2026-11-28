@@ -1,0 +1,28 @@
+name: Board Updates Scraper
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"      # har 5 minute (GitHub kabhi kabhi kuch minute late chalata hai)
+  workflow_dispatch:            # Actions tab se haath se bhi chala sakte ho
+
+concurrency:
+  group: board-updates
+  cancel-in-progress: false
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Run scraper
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          # Optional: BSEB ke notice page(s), comma se alag. Na do to default use hoga.
+          BSEB_URLS: ${{ vars.BSEB_URLS }}
+        run: node scraper/scrape.mjs
+        
