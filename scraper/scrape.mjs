@@ -15,7 +15,7 @@ const NOTIFY_MAX_DAYS   = 3;   // isse purane items ki notification nahi
 const NEWS_PER_GROUP    = 6;   // ek (category + class) ki max itni news
 const MAX_NOTIFS_PER_RUN = 5;  // ek run me zyada notification nahi (spam rokne ke liye)
 
-const BSEB_URLS = (process.env.BSEB_URLS || 'https://secondary.biharboardonline.com/,https://biharboardonline.bihar.gov.in/')
+const BSEB_URLS = (process.env.BSEB_URLS || '')
   .split(',').map(s => s.trim()).filter(Boolean);
 const CBSE_URL = 'https://www.cbse.gov.in/cbsenew/examination_Circular.html';
 const NEWS_QUERIES = ['BSEB', 'Bihar Board 10th 12th', 'बिहार बोर्ड मैट्रिक इंटर', 'बिहार बोर्ड एडमिट कार्ड', 'बिहार बोर्ड डमी एडमिट कार्ड', 'बिहार बोर्ड परीक्षा 2027'];
@@ -53,10 +53,10 @@ async function getHtml(url) {
 /* Category: English + Hindi keywords. Order matter karta hai. */
 function categoryOf(title) {
   const t = title.toLowerCase();
-  if (/model\s*(paper|question)|मॉडल\s*(पेपर|प्रश्न)|मॉडल\s*सेट|sample\s*paper/.test(t)) return 'model';
+  if (/set[\s-]*up|sent[\s-]*up|सेट\s*अप|सेंट\s*अप|सेंटअप|सेटअप|प्रश्न\s*पत्र|question\s*paper|model\s*(paper|question)|मॉडल\s*(पेपर|प्रश्न)|मॉडल\s*सेट|sample\s*paper/.test(t)) return 'model';
   if (/admit\s*card|hall\s*ticket|एडमिट\s*कार्ड|प्रवेश\s*पत्र|डमी\s*(एडमिट|रजिस्ट्रेशन|पंजीयन)|dummy\s*(admit|registration)/.test(t)) return 'admit';
   if (/date\s*sheet|datesheet|time\s*table|timetable|exam\s*schedule|टाइम\s*टेबल|टाइम-टेबल|डेटशीट|डेट\s*शीट|परीक्षा\s*(तिथि|कार्यक्रम)/.test(t)) return 'date';
-  if (/\bresult|रिजल्ट|परिणाम/.test(t)) return 'result';
+  if (/\bresult|रिजल्ट|परिणाम|मार्कशीट|marksheet|सर्टिफिकेट|certificate|टॉपर|topper/.test(t)) return 'result';
   if (/syllabus|curriculum|marking scheme|सिलेबस|पाठ्यक्रम/.test(t)) return 'syllabus';
   if (/registration|online\s*form|application\s*form|आवेदन|पंजीयन|रजिस्ट्रेशन|फॉर्म|last\s*date/.test(t)) return 'form';
   return 'other';
@@ -191,7 +191,11 @@ async function main() {
   const newsCount = {};
 
   const found = (await collect()).sort((a, b) => (b.date || 0) - (a.date || 0));
+  const seenTitle = new Set();
   for (const it of found) {
+    const tkey = it.title.replace(/[^\p{L}\p{N}]+/gu, '').toLowerCase().slice(0, 60);
+    if (seenTitle.has(tkey)) continue;          // same khabar alag publisher se, dobara nahi
+    seenTitle.add(tkey);
     const category = categoryOf(it.title);
     if (category === 'other') { if (DRY_RUN) console.log('   skip (category other):', it.title.slice(0, 80)); continue; }
     const cls = classOf(it.title);
