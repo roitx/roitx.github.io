@@ -514,6 +514,7 @@
           <li><strong>Assessment Engine:</strong> Quick revision MCQs and dynamic chapter test series.</li>
           <li><strong>PWA Offline Capability:</strong> Fast loading speed with offline cache storage.</li>
           <li><strong>Community Contributions:</strong> Logged-in students can share their own notes and formula sheets (PDF, photo or phone scan) to help other students. Every upload is reviewed by our team before it appears on the site (see Sections 2.5 and 3.4).</li>
+          <li><strong>Board Updates:</strong> Latest BSEB and CBSE date sheet, admit card, result and syllabus updates in one place, with links to the official source or to the original news article (see Sections 2.2 and 3.5).</li>
         </ul>
       </div>
     </article>
@@ -579,6 +580,21 @@
               <td data-label="Purpose">Forwarding emails sent to our support and legal addresses</td>
               <td data-label="Data Processed">Your email address and the message you send to us</td>
             </tr>
+            <tr>
+              <td data-label="Provider">Official board websites (CBSE, BSEB)</td>
+              <td data-label="Purpose">Source of public notices shown on the Board Updates page</td>
+              <td data-label="Data Processed">Our automated updater reads their public notice pages; no user data is sent. If you open an "Official Link", that website's own policies apply</td>
+            </tr>
+            <tr>
+              <td data-label="Provider">Google News (RSS) and news publishers</td>
+              <td data-label="Purpose">Source of BSEB news headlines labelled "Khabar" on the Board Updates page</td>
+              <td data-label="Data Processed">Only public headlines and links are read by our updater; no user data is sent. If you open a news link, the publisher's own policies apply</td>
+            </tr>
+            <tr>
+              <td data-label="Provider">GitHub (GitHub Actions)</td>
+              <td data-label="Purpose">Runs the scheduled updater that collects board notices every few minutes</td>
+              <td data-label="Data Processed">Public notice titles and links only; no student or account data</td>
+            </tr>
           </tbody>
         </table>
 
@@ -635,6 +651,10 @@
         <p>Some notes are paid ("Premium Notes"). Payment is made by UPI, and access is unlocked after manual verification of your UTR number, which usually takes 1-2 days. Unlocked digital content is non-refundable, except if you paid but did not receive access. In that case, email <a href="mailto:legal@roitx.dpdns.org" style="color: var(--accent-blue);">legal@roitx.dpdns.org</a> with your UTR number within 7 days. Sharing or reselling premium notes is not allowed.</p>
         <h3>3.4 Community Contributions</h3>
         <p>By uploading a note or formula sheet you confirm that it is your own work (or that you have the right to share it) and you allow PM Roitx to display it to students on this platform. Our team may correct the class, subject, chapter or title, approve the upload, or reject and remove it at any time. Uploads that break these rules will be rejected or removed. Limits: PDF up to 15 MB, photo up to 10 MB, and one note per chapter for each user.</p>
+        <h3>3.5 Board Updates Disclaimer</h3>
+        <div class="highlight-box">
+          <strong>Always confirm officially:</strong> Board Updates are for information only. Date sheets, admit cards, results and other notices are collected automatically from official board websites and from news sources, so an update may be late, incomplete or wrong. Always confirm the final details on the official CBSE or BSEB website. Items marked "Khabar" come from news publishers, are not official, and PM Roitx is not responsible for their content. PM Roitx is not liable for any loss caused by relying only on Board Updates.
+        </div>
       </div>
     </article>
 
@@ -714,7 +734,7 @@
             </tr>
             <tr>
               <td data-label="Type">Preferences</td>
-              <td data-label="Examples">Theme (light / dark / auto), motivation language, install prompt dismissed, first-visit flag</td>
+              <td data-label="Examples">Theme (light / dark / auto), motivation language, install prompt dismissed, first-visit flag, Board Updates filters (board, class, category) and alert on/off choices</td>
               <td data-label="Purpose">Remembers your settings so you do not have to set them again.</td>
             </tr>
             <tr>
