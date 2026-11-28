@@ -2,7 +2,7 @@ name: Board Updates Scraper
 
 on:
   schedule:
-    - cron: "*/15 * * * *"      # har 5 minute (GitHub kabhi kabhi kuch minute late chalata hai)
+    - cron: "*/15 * * * *"      # har 15 minute (GitHub kabhi kabhi kuch minute late chalata hai)
   workflow_dispatch:            # Actions tab se haath se bhi chala sakte ho
 
 concurrency:
@@ -13,16 +13,26 @@ jobs:
   scrape:
     runs-on: ubuntu-latest
     timeout-minutes: 3
+    permissions:
+      actions: write            # schedule ko zinda rakhne ke liye
+      contents: read
     steps:
       - uses: actions/checkout@v5
+
       - uses: actions/setup-node@v5
         with:
           node-version: 22
+
       - name: Run scraper
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-          # Optional: BSEB ke notice page(s), comma se alag. Na do to default use hoga.
+          # BSEB official sites GitHub se khulti nahi, isliye ise khaali rakhein
           BSEB_URLS: ${{ vars.BSEB_URLS }}
         run: node scraper/scrape.mjs
-        
+
+      - name: Keep schedule alive
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow enable "Board Updates Scraper" --repo ${{ github.repository }}
