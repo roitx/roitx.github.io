@@ -20,7 +20,6 @@ jobs:
           node-version: 22
       - name: Run scraper
         env:
-          DRY_RUN: "1"
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
           # Optional: BSEB ke notice page(s), comma se alag. Na do to default use hoga.
