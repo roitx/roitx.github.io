@@ -1851,3 +1851,17 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
+
+// Aasaan Hisaab ke "We have moved" popup se aane par (?from=rhisab) ek baar swagat dikhao.
+// Param turant URL se hata dete hain, taaki refresh par message dobara na aaye.
+document.addEventListener("DOMContentLoaded", () => {
+  try {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("from") !== "rhisab") return;
+    url.searchParams.delete("from");
+    history.replaceState(null, "", url.pathname + url.search + url.hash);
+    if (typeof showToastNotification === "function") {
+      showToastNotification("Swagat hai!", "Aasaan Hisaab se aane ke liye shukriya. PM Roitx par aapka swagat hai.", "#");
+    }
+  } catch (e) {}
+});
