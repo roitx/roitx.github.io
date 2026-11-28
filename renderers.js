@@ -174,7 +174,7 @@ function drawAsteroid(ctx, ast){
 
     // ROCK 3D ROTATION - AUR CHHOTA
     ctx.save();
-    const scale = 0.36; // 0.42 se 0.36 - AUR CHHOTA
+    const scale = 0.85; // visual ab hitbox se match karta hai
     ctx.translate(cx, cy);
     if(ast.isHit){ ast.hitRot+=0.3; ctx.rotate(ast.hitRot); }
     else { ast.zRot+=ast.zSpeed; ast.yRot+=ast.ySpeed; ctx.rotate(ast.zRot); }
@@ -192,17 +192,6 @@ function drawAsteroid(ctx, ast){
     });
     ctx.restore();
     ctx.restore();
-}
-
-// SPAWN - BILKUL KAM
-function spawnAsteroid(){
-    // SCREEN PAR MAX 4 SE JYADA NA HO
-    if(window.asteroids.length >= 4) return;
-
-    let rand = Math.random()*100; let type;
-    if(rand < 55) type = 2; else if(rand < 85) type = 1; else type = 0;
-    let ast = { x: Math.random()*(canvas.width-40), y: -60, w: 32, h: 32, type: type }; // FIXED CHHOTA SIZE 32
-    window.asteroids.push(ast);
 }
 
 // 🪙 5.  👛 COIN - REAL 3D GOLD + ROITX (Aapka manga hua renderer wala coin)

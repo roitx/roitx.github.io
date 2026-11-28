@@ -233,7 +233,7 @@ shipCards.forEach(card => {
             player.speed = ship.speed;
             addFloatingText(player.x, player.y, "SHIP CHANGED!", ship.color);
         }
-        if (currentUser) saveUserData();
+        queueSave();
     });
 });
 
@@ -278,6 +278,8 @@ function playSynthSound(type) {
     }
 }
 
+const escH = v => String(v == null ? "" : v).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+
 const svgIcons = {
     rocket: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle; display:inline-block;"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.71 1.1-1.35 1.32-1.92L14.4 12.1a12.98 12.98 0 0 0 5.1-6.1c.36-.91-.32-1.59-1.23-1.23a12.98 12.98 0 0 0-6.1 5.1l-5.48 5.58c-.57.22-1.21.61-1.92 1.32z"/><path d="m12 15 4 4"/><path d="m15 12 4 4"/></svg>`,
     calendar: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle; display:inline-block;"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>`,
@@ -299,6 +301,7 @@ const shipTypes = {
     phantom: { speed: 8.5, hp: 14, fireRate: 7, color: "#a855f7", coreColor: "#e9d5ff", triple: true }
 };
 let selectedShip = "pulse";
+let fireBonus = 0;   // shop upgrade, sirf is run ke liye
 
 for(let i = 0; i < 60; i++) {
     stars.push({ x: Math.random() * window.innerWidth, y: Math.random() * window.innerHeight, s: Math.random() * 2 + 1, speed: Math.random() * 2 + 0.5, opacity: Math.random() });
@@ -315,27 +318,49 @@ const keys = {};
 // ==========================================
 // 4. EXTERNAL API QUESTION FETCHER & TRANSLATOR
 // ==========================================
-async function fetchApiQuestions(category = 18, amount = 10) {
+// ---- NET se questions: OpenTDB (token = repeat nahi, 5s throttle = 429 nahi) ----
+const CAT_MAP = { science: 17, math: 19, reasoning: 18, currentAffairs: 9 };
+let _apiToken = null, _lastApi = 0;
+const apiSleep = ms => new Promise(r => setTimeout(r, ms));
+async function apiThrottle() { const w = 5300 - (Date.now() - _lastApi); if (w > 0) await apiSleep(w); _lastApi = Date.now(); }
+async function getApiToken(reset) {
     try {
-        let response = await fetch(`https://opentdb.com/api.php?amount=${amount}&category=${category}&type=multiple`);
-        let data = await response.json();
-        
-        if (data && data.results && data.results.length > 0) {
-            return data.results.map(item => {
-                let incorrects = item.incorrect_answers;
-                let randomIndex = Math.floor(Math.random() * (incorrects.length + 1));
-                let optionsList = [...incorrects];
-                optionsList.splice(randomIndex, 0, item.correct_answer);
-                
-                return {
-                    question: decodeHTML(item.question),
-                    options: optionsList.map(opt => decodeHTML(opt)),
-                    correctIndex: randomIndex
-                };
-            });
+        await apiThrottle();
+        const u = reset && _apiToken ? `https://opentdb.com/api_token.php?command=reset&token=${_apiToken}` : "https://opentdb.com/api_token.php?command=request";
+        const d = await (await fetch(u)).json();
+        if (d && d.token) _apiToken = d.token;
+        console.log("[Questions] 🔑 OpenTDB token " + (reset ? "reset" : "mila") + " (ab repeat nahi aayenge)");
+    } catch (e) { console.warn("[Questions] token nahi mila, bina token ke chalega", e); }
+}
+const seenStore = {
+    all() { try { return store.get("seenQ", []); } catch (e) { return []; } },
+    has(q) { return this.all().includes(q); },
+    add(q) { const a = this.all(); a.push(q); store.set("seenQ", a.slice(-400)); }
+};
+async function fetchApiQuestions(category = 18, amount = 10, retry = 0) {
+    try {
+        if (!_apiToken && retry === 0) await getApiToken(false);
+        await apiThrottle();
+        console.log(`[Questions] 🌐 Net se maang raha hoon (category ${category}, ${amount} questions)…`);
+        const r = await fetch(`https://opentdb.com/api.php?amount=${amount}&category=${category}&type=multiple${_apiToken ? "&token=" + _apiToken : ""}`);
+        if (r.status === 429 && retry < 2) { console.warn("[Questions] ⏳ Rate limit (429), 5s ruk kar dobara"); await apiSleep(5500); return fetchApiQuestions(category, amount, retry + 1); }
+        const data = await r.json();
+        const code = data && data.response_code;
+        if (code === 3 && retry < 2) { _apiToken = null; await getApiToken(false); return fetchApiQuestions(category, amount, retry + 1); }
+        if (code === 4 && retry < 2) { await getApiToken(true); return fetchApiQuestions(category, amount, retry + 1); }
+        if (code === 1 && amount > 3 && retry < 2) return fetchApiQuestions(category, Math.floor(amount / 2), retry + 1);
+        if (data && data.results && data.results.length) {
+            const list = data.results.map(item => {
+                const idx = Math.floor(Math.random() * (item.incorrect_answers.length + 1));
+                const opts = [...item.incorrect_answers]; opts.splice(idx, 0, item.correct_answer);
+                return { question: decodeHTML(item.question), options: opts.map(decodeHTML), correctIndex: idx };
+            }).filter(q => !seenStore.has(q.question));
+            console.log(`[Questions] ✅ Net se ${list.length} naye questions aaye`);
+            return list;
         }
+        console.error("[Questions] ❌ OpenTDB ne questions nahi diye, response_code=" + code);
     } catch (err) {
-        console.error("API fetch error:", err);
+        console.error("[Questions] ❌ Net/API error:", err);
     }
     return null;
 }
@@ -346,36 +371,59 @@ function decodeHTML(html) {
     return txt.value;
 }
 
-async function loadNextQuestion() {
-    let activeSubject = window.selectedSubject || selectedSubject || "math";
-    let activeMedium = window.selectedMedium || selectedMedium || "english";
-    
-    let cacheList = window.dynamicQuestionCache[activeSubject];
-    if (!cacheList || cacheList.length === 0) {
-        let catMap = { science: 17, math: 19, reasoning: 18, currentAffairs: 9 };
-        let catId = catMap[activeSubject] || 19;
-        let freshData = await fetchApiQuestions(catId, 10);
-        if (freshData && freshData.length > 0) {
-            window.dynamicQuestionCache[activeSubject] = freshData;
-            cacheList = freshData;
-        } else {
-            cacheList = window.dynamicQuestionCache['math'] || [];
-        }
-    }
-    
-    if (cacheList && cacheList.length > 0) {
-        let rawQ = cacheList[Math.floor(Math.random() * cacheList.length)];
-        
-        let translatedQ = await translateText(rawQ.question, activeMedium);
-        let translatedOptions = await Promise.all(rawQ.options.map(opt => translateText(opt, activeMedium)));
+// Study questions: pehle NET (OpenTDB), net na ho tabhi apna bank
+const usedBank = {};
+const _refilling = {};
+function shuffled(arr) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 
+function refillSubject(subj) {
+    if (_refilling[subj]) return _refilling[subj];
+    const c = window.dynamicQuestionCache;
+    c[subj] = c[subj] || [];
+    _refilling[subj] = (async () => {
+        const fresh = await fetchApiQuestions(CAT_MAP[subj] || 19, 10);
+        if (fresh && fresh.length) c[subj].push(...fresh);
+        _refilling[subj] = null;
+        return !!(fresh && fresh.length);
+    })();
+    return _refilling[subj];
+}
+
+async function loadNextQuestion() {
+    const subj = window.selectedSubject || selectedSubject || "math";
+    const med = window.selectedMedium || selectedMedium || "english";
+    const cache = (window.dynamicQuestionCache[subj] = window.dynamicQuestionCache[subj] || []);
+
+    if (cache.length < 3) refillSubject(subj);                          // background me naye mangwao
+    if (!cache.length) await Promise.race([refillSubject(subj), apiSleep(12000)]);
+
+    if (cache.length) {
+        const raw = cache.shift();                                       // use hote hi cache se hat jata hai
+        seenStore.add(raw.question);
+        console.log(`[Questions] 🌐 NET se load hua | subject=${subj} | medium=${med} | cache me bache=${cache.length}${med !== "english" ? " | Google Translate use hua" : ""}`);
         currentMathQuestion = {
-            question: translatedQ,
-            options: translatedOptions,
-            correctIndex: rawQ.correctIndex
+            question: await translateText(raw.question, med),
+            options: await Promise.all(raw.options.map(o => translateText(o, med))),
+            correctIndex: raw.correctIndex
         };
         setupMathDrones();
+        return;
     }
+
+    // Offline fallback: apna bank
+    const bank = (window.STUDY_BANK && window.STUDY_BANK[subj]) || [];
+    if (!bank.length) { console.error("[Questions] ❌ Net bhi nahi chala aur bank bhi nahi hai"); return; }
+    if (!usedBank[subj] || usedBank[subj].length >= bank.length) usedBank[subj] = [];
+    const left = bank.map((_, i) => i).filter(i => !usedBank[subj].includes(i));
+    const pick = left[Math.floor(Math.random() * left.length)];
+    usedBank[subj].push(pick);
+    const b = bank[pick], hi = med !== "english";
+    let text = (hi && b.h) ? b.h : b.q, opts = (hi && b.oh) ? b.oh : b.o;
+    if (med === "hinglish") { text = devanagariToRoman(text); opts = opts.map(devanagariToRoman); }
+    const items = shuffled(opts.map((t, i) => ({ t, ok: i === b.a })));
+    console.warn(`[Questions] 📦 Net nahi chala, OFFLINE BANK se load hua | subject=${subj} | #${pick + 1}/${bank.length}`);
+    currentMathQuestion = { question: text, options: items.map(x => x.t), correctIndex: items.findIndex(x => x.ok) };
+    setupMathDrones();
 }
 
 // ==========================================
@@ -473,7 +521,7 @@ async function fetchLeaderboard(shipMode) {
                 let pilotAvatar = freshProfile?.avatar_url || row.avatar_url;
 
                 let avatarHtml = pilotAvatar 
-                    ? `<img src="${pilotAvatar}" style="width:34px; height:34px; border-radius:50%; object-fit:cover; border: 1px solid #38bdf8;">` 
+                    ? `<img src="${escH(pilotAvatar)}" style="width:34px; height:34px; border-radius:50%; object-fit:cover; border: 1px solid #38bdf8;">` 
                     : `<div style="width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg, #0284c7, #0369a1); display:flex; align-items:center; justify-content:center;">${svgIcons.user}</div>`;
                 
                 html += `
@@ -482,8 +530,8 @@ async function fetchLeaderboard(shipMode) {
                             <span style="font-weight:bold; color:#38bdf8; width:22px; font-size:14px;">#${index + 1}</span>
                             ${avatarHtml}
                             <div style="display:flex; flex-direction:column;">
-                                <span style="font-size:13px; color:#fff; font-weight:600; max-width:110px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${pilotName}</span>
-                                <span style="font-size:10px; color:#38bdf8; display:flex; align-items:center; gap:3px;">${svgIcons.rocket} Mode: ${row.selected_ship}</span>
+                                <span style="font-size:13px; color:#fff; font-weight:600; max-width:110px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escH(pilotName)}</span>
+                                <span style="font-size:10px; color:#38bdf8; display:flex; align-items:center; gap:3px;">${svgIcons.rocket} Mode: ${escH(row.selected_ship)}</span>
                             </div>
                         </div>
                         <div style="text-align:right;">
@@ -509,10 +557,10 @@ const leftBtn = document.getElementById("leftBtn");
 const rightBtn = document.getElementById("rightBtn");
 
 if (leftBtn && rightBtn) {
-    leftBtn.ontouchstart = (e) => { e.preventDefault(); keys["ArrowLeft"] = true; };
-    leftBtn.ontouchend = (e) => { e.preventDefault(); keys["ArrowLeft"] = false; };
-    rightBtn.ontouchstart = (e) => { e.preventDefault(); keys["ArrowRight"] = true; };
-    rightBtn.ontouchend = (e) => { e.preventDefault(); keys["ArrowRight"] = false; };
+    leftBtn.ontouchstart = (e) => { if (e.cancelable) e.preventDefault(); keys["ArrowLeft"] = true; };
+    leftBtn.ontouchend = (e) => { if (e.cancelable) e.preventDefault(); keys["ArrowLeft"] = false; };
+    rightBtn.ontouchstart = (e) => { if (e.cancelable) e.preventDefault(); keys["ArrowRight"] = true; };
+    rightBtn.ontouchend = (e) => { if (e.cancelable) e.preventDefault(); keys["ArrowRight"] = false; };
 }
 
 if (ultiBtn) ultiBtn.onclick = triggerUltimate;
@@ -520,7 +568,7 @@ if (gravityBtn) gravityBtn.onclick = () => triggerGravity();
 
 if (canvas) {
     canvas.addEventListener("touchmove", (e) => {
-        e.preventDefault();
+        if (e.cancelable) e.preventDefault();
         if (!game || paused) return;
         let touch = e.touches[0];
         player.x = touch.clientX - player.w / 2;
@@ -572,12 +620,12 @@ if (closeShopBtn) {
 const buyFireRate = document.getElementById("buyFireRate");
 if (buyFireRate) {
     buyFireRate.onclick = () => {
-        if (coins >= 50) {
+        if (coins >= 50 && fireBonus < 6) {
             coins -= 50;
-            shipTypes[selectedShip].fireRate = Math.max(2, shipTypes[selectedShip].fireRate - 2);
+            fireBonus += 2;
             if(shopCoins) shopCoins.textContent = coins;
             updateHUD();
-            if (currentUser) saveUserData();
+            queueSave();
         }
     };
 }
@@ -590,7 +638,7 @@ if (buyShield) {
             player.shield = true;
             if(shopCoins) shopCoins.textContent = coins;
             updateHUD();
-            if (currentUser) saveUserData();
+            queueSave();
         }
     };
 }
@@ -603,7 +651,7 @@ if (buyHealth) {
             lives += 6;
             if(shopCoins) shopCoins.textContent = coins;
             updateHUD();
-            if (currentUser) saveUserData();
+            queueSave();
         }
     };
 }
@@ -639,6 +687,7 @@ if (homeBtn) {
     homeBtn.onclick = () => {
         paused = false;
         game = false;
+        stopMusic();
         if (pauseModal) pauseModal.classList.remove("show");
         if (startScreen) startScreen.classList.add("show");
     };
@@ -952,7 +1001,8 @@ function shoot() {
         } else {
             bullets.push({ x: player.x + player.w / 2, y: player.y, vx: 0, vy: -15, c: ship.color, size: 4 });
         }
-        player.cooldown = player.overdrive > 0 ? Math.max(2, Math.floor(ship.fireRate / 2)) : ship.fireRate;
+        const rate = Math.max(2, ship.fireRate - fireBonus);
+        player.cooldown = player.overdrive > 0 ? Math.max(2, Math.floor(rate / 2)) : rate;
     }
 
     if (player.missileCooldown <= 0) {
@@ -987,7 +1037,7 @@ function spawnEnemy() {
 
 function spawnAsteroid() {
     if (!canvas) return;
-    const size = Math.random() * 30 + 25;
+    const size = Math.random() * 14 + 26;
     asteroids.push({
         x: Math.random() * (canvas.width - size),
         y: -size, w: size, h: size,
@@ -1011,8 +1061,8 @@ function setupMathDrones() {
     mathDrones = [];
     if (!currentMathQuestion || !canvas) return;
 
-    const droneWidth = 90;
-    const spacing = (canvas.width - (4 * droneWidth)) / 5;
+    const droneWidth = Math.min(100, Math.floor((canvas.width - 30) / 4));
+    const spacing = Math.max(4, (canvas.width - (4 * droneWidth)) / 5);
 
     currentMathQuestion.options.forEach((optText, index) => {
         mathDrones.push({
@@ -1084,6 +1134,7 @@ function hitPlayer() {
 
 async function gameOver() {
     game = false;
+    stopMusic();
     onRunEnd();
     if (gameOverScreen) gameOverScreen.classList.add("show");
     
@@ -1112,20 +1163,8 @@ async function startGame() {
     // Yahan reset karein
     monsterSpawnCount = 0; 
     monsterSpawnedAt1000 = false;
-    // Game shuru hote hi turant active subject ke questions preload karwa lo taaki 2500 score par bina delay ke monster aaye
-    if (isMathMode) {
-        let activeSubject = window.selectedSubject || selectedSubject || "math";
-        let cacheList = window.dynamicQuestionCache[activeSubject];
-        if (!cacheList || cacheList.length === 0) {
-            let catMap = { science: 17, math: 19, reasoning: 18, currentAffairs: 9 };
-            let catId = catMap[activeSubject] || 19;
-            let freshData = await fetchApiQuestions(catId, 10);
-            if (freshData && freshData.length > 0) {
-                window.dynamicQuestionCache[activeSubject] = freshData;
-            }
-        }
-        await loadNextQuestion();
-    }
+    fireBonus = 0; combo = 1; comboTimer = 0; player.shield = false; player.triplePower = false;
+    if (isMathMode) refillSubject(window.selectedSubject || selectedSubject || "math");   // boss aane tak background me tayyar
 
           if (canvas) {
     player.x = canvas.width / 2 - player.w / 2;
@@ -1138,6 +1177,7 @@ async function startGame() {
 
 
     player.speed = shipTypes[selectedShip].speed;
+    startMusic();
     
     if (startScreen) startScreen.classList.remove("show");
     if (gameOverScreen) gameOverScreen.classList.remove("show");
@@ -1202,6 +1242,9 @@ async function loadUserData() {
     }
 }
 
+let _saveT = null;
+function queueSave() { if (!currentUser) return; clearTimeout(_saveT); _saveT = setTimeout(saveUserData, 4000); }
+
 async function saveUserData() {
     try {
         if (!window.supabaseClient || !currentUser) return;
@@ -1254,20 +1297,9 @@ window.addEventListener('DOMContentLoaded', async () => {
     resize();
     updateLaunchButtonState();
     
-    // Fetching questions for ALL subjects with respective OpenTDB categories
-    let scienceData = await fetchApiQuestions(17, 10); // Category 17: Science & Nature
-    if (scienceData) window.dynamicQuestionCache['science'] = scienceData;
-
-    let mathData = await fetchApiQuestions(19, 10); // Category 19: Mathematics
-    if (mathData) window.dynamicQuestionCache['math'] = mathData;
-
-    let reasoningData = await fetchApiQuestions(18, 10); // Category 18: Science: Computers (Logic/Reasoning fallback)
-    if (reasoningData) window.dynamicQuestionCache['reasoning'] = reasoningData;
-
-    let gkData = await fetchApiQuestions(9, 10); // Category 9: General Knowledge (Current Affairs fallback)
-    if (gkData) window.dynamicQuestionCache['currentAffairs'] = gkData;
-
-    console.log("All subjects API questions loaded into cache successfully!");
+    // Apna question bank hai to API ko call hi nahi karte (privacy + speed)
+    // Sirf chuna hua subject, aur sirf study mode on ho tab (ek saath 4 request = 429)
+    if (mathModeCheckbox && mathModeCheckbox.checked) refillSubject(window.selectedSubject || "math");
 
     setTimeout(async () => {
         await checkAuthStatus();
@@ -1290,6 +1322,74 @@ function isStudySlowMo() {
     return !!(isMathMode && currentMathQuestion && mathDrones.length > 0);
 }
 
+function rm(arr, o) { const k = arr.indexOf(o); if (k > -1) arr.splice(k, 1); }
+
+function measureLines(c, text, maxWidth) {
+    const words = String(text).split(' '); let line = '', n = 1;
+    for (let i = 0; i < words.length; i++) {
+        const t = line + words[i] + ' ';
+        if (c.measureText(t).width > maxWidth && i > 0) { n++; line = words[i] + ' '; } else line = t;
+    }
+    return n;
+}
+function fitText(c, text, maxWidth) {
+    let t = String(text);
+    if (c.measureText(t).width <= maxWidth) return t;
+    while (t.length > 1 && c.measureText(t + '…').width > maxWidth) t = t.slice(0, -1);
+    return t + '…';
+}
+
+// ---- Visuals: nebula + boss bar ----
+function drawNebula(t) {
+    const w = canvas.width, h = canvas.height;
+    const blobs = [[0.2, 0.25, 0.55, "rgba(56,189,248,0.10)"], [0.85, 0.6, 0.6, "rgba(124,58,237,0.10)"], [0.5, 0.95, 0.5, "rgba(244,63,94,0.06)"]];
+    blobs.forEach((b, i) => {
+        const x = w * b[0] + Math.sin(t * 0.0002 + i * 2) * 40, y = h * b[1] + Math.cos(t * 0.00017 + i) * 40, r = Math.max(w, h) * b[2];
+        const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+        g.addColorStop(0, b[3]); g.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+    });
+}
+function drawBossBar() {
+    if (!monster) return;
+    const w = Math.min(canvas.width - 40, 360), x = (canvas.width - w) / 2, y = 62;
+    const pct = Math.max(0, monster.hp / monster.maxHp);
+    const col = pct > 0.6 ? "#22c55e" : pct > 0.3 ? "#f59e0b" : "#ef4444";
+    ctx.save();
+    ctx.fillStyle = "rgba(2,6,23,0.75)"; ctx.fillRect(x - 2, y - 2, w + 4, 12);
+    ctx.fillStyle = col; ctx.shadowColor = col; ctx.shadowBlur = 8; ctx.fillRect(x, y, w * pct, 8);
+    ctx.shadowBlur = 0; ctx.strokeStyle = "rgba(255,255,255,0.35)"; ctx.strokeRect(x - 2, y - 2, w + 4, 12);
+    ctx.fillStyle = "#e2e8f0"; ctx.font = "bold 9px sans-serif"; ctx.textAlign = "center";
+    ctx.fillText("MOTHERSHIP", canvas.width / 2, y + 22); ctx.textAlign = "left";
+    ctx.restore();
+}
+
+// Level-up + monster spawn har frame check (pehle sirf enemy kill par hota tha)
+function checkProgress() {
+    if (!monsterActive && !monsterSpawnedAt1000 && score >= 1000 + monsterSpawnCount * 2500) {
+        monsterSpawnedAt1000 = true; monsterSpawnCount++; spawnMonster();
+    }
+    const nl = 1 + Math.floor(score / LEVEL_STEP);
+    if (nl > level) { level = nl; showLevelUp(level); }
+}
+
+// ---- Background music (halka, audio button se band hota hai) ----
+let musicTimer = null, musicStep = 0;
+const MUSIC_NOTES = [220, 261.63, 329.63, 392, 329.63, 261.63, 196, 246.94];
+function musicTick() {
+    if (!audioEnabled || !game || paused) return;
+    try {
+        if (audioCtx.state === "suspended") audioCtx.resume();
+        const now = audioCtx.currentTime, f = MUSIC_NOTES[musicStep++ % MUSIC_NOTES.length];
+        const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+        o.type = monsterActive ? "sawtooth" : "triangle"; o.frequency.value = monsterActive ? f / 2 : f;
+        g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.02, now + 0.03); g.gain.exponentialRampToValueAtTime(0.0001, now + 0.28);
+        o.connect(g); g.connect(audioCtx.destination); o.start(now); o.stop(now + 0.3);
+    } catch (e) {}
+}
+function startMusic() { stopMusic(); musicTimer = setInterval(musicTick, monsterActive ? 260 : 320); }
+function stopMusic() { clearInterval(musicTimer); musicTimer = null; }
+
 function update() {
     if (!game || paused || !ctx) return;
 
@@ -1301,6 +1401,9 @@ function update() {
     }
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawNebula(Date.now());
+    if (comboTimer > 0 && --comboTimer === 0 && combo > 1) { combo = 1; updateHUD(); }
+    checkProgress();
 
     ctx.strokeStyle = "rgba(14, 165, 233, 0.08)";
     ctx.lineWidth = 1;
@@ -1327,20 +1430,20 @@ function update() {
         if (scenarioTimer <= 0) scenarioEvent = null;
     }
 
-    shockwaves.forEach((sw, i) => {
+    shockwaves.slice().forEach((sw) => {
         sw.r += 4.5; sw.alpha -= 0.03;
         ctx.strokeStyle = sw.color; ctx.lineWidth = 3;
         ctx.globalAlpha = Math.max(0, sw.alpha);
         ctx.beginPath(); ctx.arc(sw.x, sw.y, sw.r, 0, Math.PI * 2); ctx.stroke();
-        if (sw.alpha <= 0) shockwaves.splice(i, 1);
+        if (sw.alpha <= 0) rm(shockwaves, sw);
     });
     ctx.globalAlpha = 1.0;
 
-    trails.forEach((t, i) => {
+    trails.slice().forEach((t) => {
         t.y += 2.5; t.alpha -= 0.04; t.size *= 0.91;
         ctx.fillStyle = t.color; ctx.globalAlpha = Math.max(0, t.alpha);
         ctx.beginPath(); ctx.arc(t.x, t.y, t.size, 0, Math.PI * 2); ctx.fill();
-        if (t.alpha <= 0) trails.splice(i, 1);
+        if (t.alpha <= 0) rm(trails, t);
     });
     ctx.globalAlpha = 1.0;
 
@@ -1371,7 +1474,7 @@ function update() {
     if (typeof drawOverdriveAura === "function") drawOverdriveAura(ctx, player, shipTypes[selectedShip]);
 
     const bulletSlow = isStudySlowMo() ? STUDY_BULLET_SLOW : 1;
-    bullets.forEach((b, i) => {
+    bullets.slice().forEach((b) => {
         b.y += b.vy * bulletSlow; b.x += (b.vx || 0) * bulletSlow;
         if (typeof drawLaser === "function") {
             drawLaser(ctx, { x: b.x - b.size/2, y: b.y, w: b.size, h: 16, isEnemy: false });
@@ -1379,10 +1482,10 @@ function update() {
             ctx.fillStyle = b.c;
             ctx.fillRect(b.x - b.size/2, b.y, b.size, 16);
         }
-        if (b.y < -20 || b.x < 0 || b.x > canvas.width) bullets.splice(i, 1);
+        if (b.y < -20 || b.x < 0 || b.x > canvas.width) rm(bullets, b);
     });
     
-    asteroids.forEach((a, i) => {
+    asteroids.slice().forEach((a) => {
         if (!timeFreeze) { a.y += a.speed; a.rot += a.vRot; }
         if (typeof drawAsteroid === "function") {
             drawAsteroid(ctx, a);
@@ -1394,13 +1497,13 @@ function update() {
             ctx.beginPath(); ctx.arc(0, 0, a.w/2, 0, Math.PI * 2); ctx.fill();
             ctx.restore();
         }
-        if (a.y > canvas.height) asteroids.splice(i, 1);
+        if (a.y > canvas.height) rm(asteroids, a);
         if (a.x < player.x + player.w && a.x + a.w > player.x && a.y < player.y + player.h && a.y + a.h > player.y) {
-            asteroids.splice(i, 1); hitPlayer();
+            rm(asteroids, a); hitPlayer();
         }
     });
 
-            coinDrops.forEach((c, i) => {
+            coinDrops.slice().forEach((c) => {
         c.y += 2.2;
         magnetPull(c, c.w || 28, c.h || 28, 5);
         
@@ -1422,15 +1525,15 @@ function update() {
         if (c.x < player.x + player.w && c.x + (c.w || 28) > player.x && c.y < player.y + player.h && c.y + (c.h || 28) > player.y) {
             coins += 10;
             addFloatingText(c.x, c.y, "+10 🪙", "#ffd600");
-            coinDrops.splice(i, 1); 
+            rm(coinDrops, c); 
             updateHUD();
-            if (currentUser) saveUserData();
+            queueSave();
         }
     });
 
 
 
-        powerups.forEach((p, i) => {
+        powerups.slice().forEach((p) => {
         p.y += 1.8;
         magnetPull(p, p.size || 24, p.size || 24, 4);
         if (typeof drawPowerup === "function") {
@@ -1450,12 +1553,12 @@ function update() {
                 player.triplePower = true;
                 setTimeout(() => player.triplePower = false, 7500);
             }
-            powerups.splice(i, 1); updateHUD();
+            rm(powerups, p); updateHUD();
         }
     });
 
     // 🎯 AYA A CODE-SNIPPET MUKVO (ENEMY & MONSTER BULLETS UPDATE):
-        enemyBullets.forEach((eb, i) => {
+        enemyBullets.slice().forEach((eb) => {
         eb.y += eb.vy;
         if (typeof drawLaser === "function") {
             drawLaser(ctx, eb);
@@ -1466,7 +1569,7 @@ function update() {
         
         // Player collision with enemy/monster bullet
         if (eb.x < player.x + player.w && eb.x + eb.w > player.x && eb.y < player.y + player.h && eb.y + eb.h > player.y) {
-            enemyBullets.splice(i, 1);
+            rm(enemyBullets, eb);
             if (eb.isYellowEnemy) {
                 // Yellow goli kam damage degi: Sirf shield ya choti life ghatayegi bina heavy screen shake ke
                 if (player.invuln <= 0) lives = Math.max(0, lives - 0.5); 
@@ -1476,7 +1579,7 @@ function update() {
                 hitPlayer(); // Monster ya heavy goli full damage
             }
         }
-        if (eb.y > canvas.height) enemyBullets.splice(i, 1);
+        if (eb.y > canvas.height) rm(enemyBullets, eb);
     });
 
 
@@ -1521,35 +1624,7 @@ function update() {
                 
 
 
-// Score check update for monster spawn intervals (Infinite Loop Fix)
-if (!monsterActive) {
-    // Pehla monster 1000 score par
-    if (monsterSpawnCount === 0 && score >= 1000 && !monsterSpawnedAt1000) {
-        monsterSpawnedAt1000 = true;
-        monsterSpawnCount = 1;
-        spawnMonster();
-    } 
-    // Doosra aur uske baad ke monsters tabhi aayenge jab score pichle milestone se 2500 zyada ho 
-    // AUR pichla monster puri tarah defeat ho chuka ho (!monsterActive zaroori hai)
-    else if (monsterSpawnCount > 0 && score >= (1000 + (monsterSpawnCount * 2500)) && !monsterSpawnedAt1000) {
-        monsterSpawnedAt1000 = true;
-        monsterSpawnCount++;
-        spawnMonster();
-    }
-}
 
-// Jab monster defeat ho jaye (HP khatam ho jaye), tabhi flag reset ho
-if (monster && monster.hp <= 0) {
-    monsterActive = false;
-    monster = null;
-    monsterSpawnedAt1000 = false; // Agle milestone ke liye flag reset
-    explode(canvas.width / 2, 100, "#facc15", 35);
-    addFloatingText(canvas.width / 2 - 50, 100, "MOTHERSHIP DEFEATED!", "#facc15");
-}
-
-
-const newLvl = 1 + Math.floor(score / LEVEL_STEP);
-if (newLvl > level) { level = newLvl; showLevelUp(level); }
 break;
 
             }
@@ -1590,6 +1665,7 @@ break;
         ctx.fillRect(monster.x, monster.y - 12, monster.w, 6);
         ctx.fillStyle = "#22c55e";
         ctx.fillRect(monster.x, monster.y - 12, (monster.hp / monster.maxHp) * monster.w, 6);
+        drawBossBar();
 
           // Direct bullets damage to Monster + Sound effect + Screen Shake & Particles
         for (let j = bullets.length - 1; j >= 0; j--) {
@@ -1620,12 +1696,14 @@ break;
             let qBoxY = 85;
 
             ctx.beginPath();
-            ctx.roundRect(qBoxX, qBoxY, qBoxWidth, 65, 10);
+            ctx.font = "bold 12px sans-serif";
+            const qLines = Math.min(4, measureLines(ctx, "❓ " + currentMathQuestion.question, qBoxWidth - 20));
+            ctx.roundRect(qBoxX, qBoxY, qBoxWidth, 16 + qLines * 16, 10);
             ctx.fill();
             ctx.stroke();
 
             ctx.fillStyle = "#ffffff";
-            ctx.font = "bold 11px sans-serif";
+            ctx.font = "bold 12px sans-serif";
             ctx.textAlign = "center";
             wrapText(ctx, "❓ " + currentMathQuestion.question, canvas.width / 2, qBoxY + 22, qBoxWidth - 20, 16);
             ctx.textAlign = "left";
@@ -1646,7 +1724,8 @@ break;
                 ctx.fillStyle = "#ffffff";
                 ctx.font = "bold 11px sans-serif";
                 ctx.textAlign = "center";
-                ctx.fillText(drone.text, drone.x + drone.w / 2, drone.y + 22);
+                ctx.font = "bold 10px sans-serif";
+                ctx.fillText(fitText(ctx, drone.text, drone.w - 10), drone.x + drone.w / 2, drone.y + 22);
                 ctx.textAlign = "left";
 
                 for (let j = bullets.length - 1; j >= 0; j--) {
@@ -1687,24 +1766,25 @@ break;
             monsterSpawnedAt1000 = false; 
             explode(canvas.width / 2, 100, "#facc15", 35);
             addFloatingText(canvas.width / 2 - 50, 100, "MOTHERSHIP DEFEATED!", "#facc15");
+            score += 500; coins += 30; addFloatingText(canvas.width / 2 - 50, 125, "+500  +30 coins", "#ffd600"); updateHUD(); queueSave();
         }
     }
 
-    particles.forEach((p, i) => {
+    particles.slice().forEach((p) => {
         const fxSlow = isStudySlowMo() ? STUDY_FX_SLOW : 1;
         p.x += p.vx * fxSlow; p.y += p.vy * fxSlow; p.l--;
         ctx.fillStyle = p.c;
         ctx.fillRect(p.x, p.y, p.s, p.s);
-        if (p.l <= 0) particles.splice(i, 1);
+        if (p.l <= 0) rm(particles, p);
     });
 
-    floatingTexts.forEach((ft, i) => {
+    floatingTexts.slice().forEach((ft) => {
         ft.y += ft.vy; ft.alpha -= 0.02;
         ctx.fillStyle = ft.color;
         ctx.globalAlpha = Math.max(0, ft.alpha);
         ctx.font = "bold 13px sans-serif";
         ctx.fillText(ft.text, ft.x, ft.y);
-        if (ft.alpha <= 0) floatingTexts.splice(i, 1);
+        if (ft.alpha <= 0) rm(floatingTexts, ft);
     });
     ctx.globalAlpha = 1.0;
 
@@ -1715,53 +1795,6 @@ break;
     ctx.restore();
     requestAnimationFrame(update);
 }
-
-// Global tracking array for used question indexes
-window.usedQuestionIndices = window.usedQuestionIndices || [];
-
-async function loadNextQuestion() {
-    let activeSubject = window.selectedSubject || selectedSubject || "math";
-    let activeMedium = window.selectedMedium || selectedMedium || "english";
-    
-    let cacheList = window.dynamicQuestionCache[activeSubject];
-    if (!cacheList || cacheList.length === 0) {
-        let catMap = { science: 17, math: 19, reasoning: 18, currentAffairs: 9 };
-        let catId = catMap[activeSubject] || 19;
-        let freshData = await fetchApiQuestions(catId, 10);
-        if (freshData && freshData.length > 0) {
-            window.dynamicQuestionCache[activeSubject] = freshData;
-            cacheList = freshData;
-        } else {
-            cacheList = window.dynamicQuestionCache['math'] || [];
-        }
-    }
-    
-    if (cacheList && cacheList.length > 0) {
-        let availableQuestions = cacheList.filter((_, idx) => !window.usedQuestionIndices.includes(idx));
-        
-        if (availableQuestions.length === 0) {
-            window.usedQuestionIndices = []; 
-            availableQuestions = cacheList;
-        }
-
-        let randomIndex = Math.floor(Math.random() * availableQuestions.length);
-        let originalIndex = cacheList.indexOf(availableQuestions[randomIndex]);
-        window.usedQuestionIndices.push(originalIndex);
-
-        let rawQ = availableQuestions[randomIndex];
-        
-        let translatedQ = await translateText(rawQ.question, activeMedium);
-        let translatedOptions = await Promise.all(rawQ.options.map(opt => translateText(opt, activeMedium)));
-
-        currentMathQuestion = {
-            question: translatedQ,
-            options: translatedOptions,
-            correctIndex: rawQ.correctIndex
-        };
-        setupMathDrones();
-    }
-}
-
 
 // ==========================================
 // 9. PRO LAYER: persistence, stats, auto-pause
@@ -1820,4 +1853,11 @@ document.addEventListener("visibilitychange", () => {
 // "NEW" badge jab tak user ne Gravity Well use nahi kiya
 (function markNewAbility() {
     if (gravityBtn && !store.get("gravitySeen", false)) gravityBtn.classList.add("is-new");
+})();
+
+// Subject badalne ya study mode on karne par naye questions background me mangwao
+(function prefetchOnChange() {
+    const go = () => { if (mathModeCheckbox && mathModeCheckbox.checked) refillSubject(window.selectedSubject || "math"); };
+    if (mathModeCheckbox) mathModeCheckbox.addEventListener("change", go);
+    document.querySelectorAll(".subject-card[data-subject]").forEach(c => c.addEventListener("click", go));
 })();

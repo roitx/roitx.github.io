@@ -515,6 +515,7 @@
           <li><strong>PWA Offline Capability:</strong> Fast loading speed with offline cache storage.</li>
           <li><strong>Community Contributions:</strong> Logged-in students can share their own notes and formula sheets (PDF, photo or phone scan) to help other students. Every upload is reviewed by our team before it appears on the site (see Sections 2.5 and 3.4).</li>
           <li><strong>Board Updates:</strong> Latest BSEB and CBSE date sheet, admit card, result and syllabus updates in one place, with links to the official source or to the original news article (see Sections 2.2 and 3.5).</li>
+          <li><strong>Cyber Overdrive Game:</strong> A space-shooter study game with optional Math, Science, Reasoning and GK quiz questions. Logged-in students can appear on a monthly leaderboard (see Section 2.7).</li>
         </ul>
       </div>
     </article>
@@ -595,6 +596,16 @@
               <td data-label="Purpose">Runs the scheduled updater that collects board notices every few minutes</td>
               <td data-label="Data Processed">Public notice titles and links only; no student or account data</td>
             </tr>
+            <tr>
+              <td data-label="Provider">jsDelivr (CDN)</td>
+              <td data-label="Purpose">Delivers the Supabase JavaScript library to your browser</td>
+              <td data-label="Data Processed">Standard request data such as IP address; no account data is shared</td>
+            </tr>
+            <tr>
+              <td data-label="Provider">OpenTDB and Google Translate (game questions)</td>
+              <td data-label="Purpose">Cyber Overdrive study mode fetches quiz questions from OpenTDB and, if you choose Hindi or Hinglish, translates the question text with Google Translate. If the internet is unavailable, it uses a small built-in question set instead</td>
+              <td data-label="Data Processed">Only the public question text and standard request data such as IP address (and a random OpenTDB session token); no account data is shared</td>
+            </tr>
           </tbody>
         </table>
 
@@ -624,6 +635,9 @@
           <li><strong>Right to Erasure:</strong> Request permanent removal of your registered account data anytime via <a href="mailto:legal@roitx.dpdns.org" style="color: var(--accent-blue);">legal@roitx.dpdns.org</a>.</li>
           <li><strong>Right to Rectification:</strong> Update inaccurate personal profiles easily.</li>
         </ul>
+
+        <h3>2.7 Game & Leaderboard</h3>
+        <p>If you are logged in and play Cyber Overdrive, we save your best score, coins, selected ship and last-played time in Supabase. The monthly leaderboard shows your name and profile photo (from your profile or Google account), your score and coins to other logged-in players. If you do not want this, do not log in while playing, or email <a href="mailto:legal@roitx.dpdns.org" style="color: var(--accent-blue);">legal@roitx.dpdns.org</a> to have your game profile removed. Without login, your best score stays only in your own browser.</p>
       </div>
     </article>
 
@@ -739,7 +753,7 @@
             </tr>
             <tr>
               <td data-label="Type">Features</td>
-              <td data-label="Examples">Study streak, read and deleted notifications, calendar alerts already shown</td>
+              <td data-label="Examples">Study streak, read and deleted notifications, calendar alerts already shown, game settings, best score and a list of recently shown quiz questions so they do not repeat (keys starting with "co_")</td>
               <td data-label="Purpose">Makes streaks and notifications work correctly on your device.</td>
             </tr>
             <tr>
