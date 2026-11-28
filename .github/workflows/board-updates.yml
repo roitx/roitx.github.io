@@ -2,7 +2,7 @@ name: Board Updates Scraper
 
 on:
   schedule:
-    - cron: "*/5 * * * *"      # har 5 minute (GitHub kabhi kabhi kuch minute late chalata hai)
+    - cron: "*/15 * * * *"      # har 5 minute (GitHub kabhi kabhi kuch minute late chalata hai)
   workflow_dispatch:            # Actions tab se haath se bhi chala sakte ho
 
 concurrency:
