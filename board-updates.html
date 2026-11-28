@@ -119,11 +119,14 @@ const ICON = {
   bell:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>',
   check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
 };
+ICON.model = ICON.syllabus; ICON.form = ICON.other;
 const CATS = {
   date:     { label: 'Date Sheet',  color: '#38bdf8' },
   admit:    { label: 'Admit Card',  color: '#f59e0b' },
   result:   { label: 'Result',      color: '#22c55e' },
   syllabus: { label: 'Syllabus',    color: '#a78bfa' },
+  model:    { label: 'Model Paper', color: '#ec4899' },
+  form:     { label: 'Form',        color: '#14b8a6' },
   other:    { label: 'Other',       color: '#94a3b8' }
 };
 
@@ -184,10 +187,10 @@ function card(it) {
         ${fresh ? '<span class="bu-tag bu-new">NEW</span>' : ''}
         <span class="bu-tag">${esc(it.board)}${it.class ? ' · ' + esc(it.class) : ''}</span>
         <span>${ago(it.published_at)}</span>
-        <span class="bu-ok">${ICON.check}Official Source</span>
+        ${it.is_official === false ? `<span class="bu-tag">Khabar · ${esc(it.source_name || 'News')}</span>` : `<span class="bu-ok">${ICON.check}Official Source</span>`}
       </div>
       <div class="bu-acts">
-        <a class="bu-open" href="${esc(it.source_url)}" target="_blank" rel="noopener noreferrer">Official Link kholein</a>
+        <a class="bu-open" href="${esc(it.source_url)}" target="_blank" rel="noopener noreferrer">${it.is_official === false ? 'Khabar padhein' : 'Official Link kholein'}</a>
         <button class="bu-bell ${m ? '' : 'on'}" data-cat="${esc(it.category)}" aria-label="${esc(c.label)} ka alert ${m ? 'on' : 'off'} karein" title="${esc(c.label)} alerts">${ICON.bell}</button>
       </div>
     </div></article>`;
