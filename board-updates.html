@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BSEB & CBSE Latest Updates – PM Roitx</title>
+<meta name="description" content="BSEB aur CBSE ke date sheet, admit card, result aur syllabus updates ek jagah. Official links ke saath, PM Roitx Study Hub.">
+<link rel="canonical" href="https://roitx.dpdns.org/board-updates.html">
+<meta name="theme-color" content="#0a1b3d">
+<link rel="stylesheet" href="style.css">
+
+<script>(function(){try{var t=localStorage.getItem("theme"),h=new Date().getHours(),l=(t==="light"||t==="dark")?t==="light":(h>=6&&h<18);document.addEventListener("DOMContentLoaded",function(){if(l)document.body.classList.add("light");});}catch(e){}})();</script>
+
+<script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script defer src="supabase.js"></script>
+
+<style>
+  /* Sirf is page ke liye (bu- prefix), baaki theme style.css ke variables se */
+  .bu-page{min-height:100vh;margin:0;background:linear-gradient(180deg,var(--bg-dark-2),var(--bg-dark-1) 60%);color:var(--text);
+    padding:0 0 calc(32px + env(safe-area-inset-bottom,0px));}
+  .bu-top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;
+    padding:calc(12px + env(safe-area-inset-top,0px)) 16px 12px;
+    background:var(--bg-dark-2);border-bottom:1px solid var(--glass-border);}
+  body.light .bu-top{background:#fff}
+  .bu-back{width:38px;height:38px;border-radius:12px;border:1px solid var(--glass-border);background:var(--glass);
+    color:var(--text);display:grid;place-items:center;cursor:pointer;flex:none;text-decoration:none}
+  .bu-back svg,.bu-ic svg{width:20px;height:20px;display:block}
+  .bu-title{font-size:18px;font-weight:800;margin:0;line-height:1.2}
+  .bu-live{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px;margin-top:2px}
+  .bu-dot{width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 0 rgba(34,197,94,.6);animation:bu-pulse 2s infinite}
+  .bu-dot.off{background:#f59e0b;animation:none}
+  @keyframes bu-pulse{70%{box-shadow:0 0 0 7px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
+  @media (prefers-reduced-motion:reduce){.bu-dot{animation:none}}
+
+  .bu-wrap{max-width:720px;margin:0 auto;padding:16px}
+  .bu-page [hidden]{display:none !important}
+  .bu-next{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;margin-bottom:14px;
+    background:linear-gradient(135deg,rgba(255,183,3,.16),rgba(249,115,22,.08));border:1px solid rgba(255,183,3,.4);font-size:13px}
+  .bu-next b{color:#f59e0b}
+  body.light .bu-next b{color:#b45309}
+
+  .bu-search{width:100%;box-sizing:border-box;padding:12px 14px;border-radius:12px;border:1px solid var(--glass-border);
+    background:var(--glass);color:var(--text);font:inherit;font-size:14px;margin-bottom:12px;outline:none}
+  .bu-search:focus-visible,.bu-chip:focus-visible,.bu-open:focus-visible,.bu-bell:focus-visible,.bu-back:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  .bu-row{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:8px;scrollbar-width:none}
+  .bu-row::-webkit-scrollbar{display:none}
+  .bu-chip{flex:none;padding:8px 14px;border-radius:999px;border:1px solid var(--glass-border);background:var(--glass);
+    color:var(--text);font:inherit;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px}
+  .bu-chip svg{width:15px;height:15px}
+  .bu-chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+
+  .bu-label{font-size:12px;color:var(--muted);margin:14px 2px 8px;font-weight:700}
+  .bu-card{display:flex;gap:12px;padding:14px;border-radius:16px;margin-bottom:10px;
+    background:var(--glass);border:1px solid var(--glass-border);backdrop-filter:blur(8px)}
+  .bu-card.pin{border-color:rgba(255,183,3,.7);box-shadow:0 0 0 1px rgba(255,183,3,.25),0 8px 24px rgba(255,183,3,.12)}
+  .bu-ic{flex:none;width:42px;height:42px;border-radius:12px;display:grid;place-items:center}
+  .bu-body{min-width:0;flex:1}
+  .bu-h{font-size:15px;font-weight:700;line-height:1.35;margin:0 0 6px}
+  .bu-meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12px;color:var(--muted)}
+  .bu-tag{padding:2px 8px;border-radius:6px;font-weight:700;font-size:11px;background:rgba(58,160,255,.18);color:var(--accent)}
+  .bu-new{background:#ef4444;color:#fff}
+  .bu-ok{display:inline-flex;align-items:center;gap:3px;color:#22c55e;font-weight:700}
+  .bu-ok svg{width:13px;height:13px}
+  .bu-acts{display:flex;gap:8px;margin-top:10px;align-items:center}
+  .bu-open{padding:8px 14px;border-radius:10px;background:var(--accent);color:#fff;font-weight:700;font-size:13px;text-decoration:none}
+  .bu-bell{width:36px;height:36px;border-radius:10px;border:1px solid var(--glass-border);background:transparent;color:var(--muted);
+    display:grid;place-items:center;cursor:pointer}
+  .bu-bell svg{width:17px;height:17px}
+  .bu-bell.on{color:#f59e0b;border-color:#f59e0b}
+
+  .bu-empty{text-align:center;color:var(--muted);padding:36px 12px;font-size:14px}
+  .bu-skel{height:92px;border-radius:16px;margin-bottom:10px;background:linear-gradient(90deg,var(--glass),rgba(255,255,255,.18),var(--glass));
+    background-size:200% 100%;animation:bu-sh 1.2s infinite}
+  @keyframes bu-sh{to{background-position:-200% 0}}
+  .bu-demo{font-size:12px;padding:8px 12px;border-radius:10px;margin-bottom:12px;background:rgba(245,158,11,.14);border:1px dashed #f59e0b}
+  .bu-note{font-size:12px;color:var(--muted);text-align:center;margin-top:22px;line-height:1.6}
+</style>
+</head>
+
+<body>
+<div class="bu-page">
+
+  <header class="bu-top">
+    <a class="bu-back" href="index.html" aria-label="Home par wapas jaayein">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </a>
+    <div>
+      <h1 class="bu-title">Board Updates</h1>
+      <div class="bu-live"><span class="bu-dot" id="buDot"></span><span id="buChecked">Load ho raha hai…</span></div>
+    </div>
+  </header>
+
+  <main class="bu-wrap">
+    <div class="bu-next" id="buNext" hidden></div>
+    <div class="bu-demo" id="buDemo" hidden>Abhi koi asli update nahi aaya, isliye ye <b>demo</b> cards hain. Pehli asli update aate hi ye hat jaayenge.</div>
+
+    <input class="bu-search" id="buSearch" type="search" placeholder="Search karein, jaise admit card" aria-label="Updates search karein">
+
+    <div class="bu-row" id="buBoard" role="tablist" aria-label="Board"></div>
+    <div class="bu-row" id="buClass" aria-label="Class"></div>
+    <div class="bu-row" id="buCat" aria-label="Category"></div>
+
+    <div id="buList"><div class="bu-skel"></div><div class="bu-skel"></div><div class="bu-skel"></div></div>
+
+    <p class="bu-note">Ye jaankari official websites se li gayi hai. Final confirmation ke liye hamesha Official Link kholkar dekhein.</p>
+  </main>
+</div>
+
+<script>
+/* ============ ICONS (sab SVG, Lucide style) ============ */
+const ICON = {
+  date:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
+  admit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z"/><line x1="13" y1="5" x2="13" y2="19" stroke-dasharray="2 2"/></svg>',
+  result:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0z"/></svg>',
+  syllabus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>',
+  other: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
+  all:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3.5" cy="6" r="1"/><circle cx="3.5" cy="12" r="1"/><circle cx="3.5" cy="18" r="1"/></svg>',
+  bell:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>',
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
+};
+const CATS = {
+  date:     { label: 'Date Sheet',  color: '#38bdf8' },
+  admit:    { label: 'Admit Card',  color: '#f59e0b' },
+  result:   { label: 'Result',      color: '#22c55e' },
+  syllabus: { label: 'Syllabus',    color: '#a78bfa' },
+  other:    { label: 'Other',       color: '#94a3b8' }
+};
+
+/* ============ DEMO DATA (jab tak table nahi banta) ============ */
+const H = 3600e3, now = Date.now();
+const DEMO = [
+  { id:'d1', board:'BSEB',  class:'12', category:'admit',    title:'Demo: BSEB Class 12 Admit Card', source_url:'https://secondary.biharboardonline.com/', published_at:new Date(now-2*H).toISOString(), is_pinned:true },
+  { id:'d2', board:'CBSE',  class:'10', category:'date',     title:'Demo: CBSE Class 10 Date Sheet',  source_url:'https://www.cbse.gov.in/', published_at:new Date(now-30*H).toISOString() },
+  { id:'d3', board:'CBSE',  class:'12', category:'syllabus', title:'Demo: CBSE Class 12 Syllabus Update', source_url:'https://www.cbse.gov.in/', published_at:new Date(now-80*H).toISOString() },
+  { id:'d4', board:'BSEB',  class:'10', category:'result',   title:'Demo: BSEB Class 10 Result', source_url:'https://secondary.biharboardonline.com/', published_at:new Date(now-200*H).toISOString() }
+];
+const EXAM_DATES = [ /* { board:'BSEB', class:'12', label:'BSEB 12th exam', date:'2027-02-01' } -- asli date daalein */ ];
+
+/* ============ STATE ============ */
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch (e) { return d; } };
+const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+
+let items = [];
+let isDemo = false;
+const f = load('bu_filters', { board:'ALL', cls:'ALL', cat:'ALL' });
+let q = '';
+let muted = load('bu_muted', []); // jin categories ka alert band hai
+
+function ago(iso) {
+  const m = Math.max(1, Math.round((Date.now() - new Date(iso)) / 60000));
+  if (m < 60) return m + ' min pehle';
+  if (m < 1440) return Math.round(m / 60) + ' ghante pehle';
+  return Math.round(m / 1440) + ' din pehle';
+}
+
+/* ============ FILTER BARS ============ */
+function chips(el, list, key, extra) {
+  el.innerHTML = list.map(([v, label, ic]) =>
+    `<button class="bu-chip ${f[key] === v ? 'on' : ''}" data-v="${v}" role="tab" aria-selected="${f[key] === v}">${ic || ''}${label}</button>`).join('');
+  el.onclick = e => {
+    const b = e.target.closest('.bu-chip'); if (!b) return;
+    f[key] = b.dataset.v; save('bu_filters', f); drawBars(); drawList();
+  };
+}
+function drawBars() {
+  chips($('buBoard'), [['ALL','Sab'],['BSEB','BSEB'],['CBSE','CBSE']], 'board');
+  chips($('buClass'), [['ALL','Sab class'],['9','Class 9'],['10','Class 10'],['11','Class 11'],['12','Class 12']], 'cls');
+  chips($('buCat'), [['ALL','Sab',ICON.all], ...Object.entries(CATS).map(([k, c]) => [k, c.label, ICON[k]])], 'cat');
+}
+
+/* ============ LIST ============ */
+function card(it) {
+  const c = CATS[it.category] || CATS.other;
+  const fresh = Date.now() - new Date(it.published_at) < 24 * 3600e3;
+  const m = muted.includes(it.category);
+  return `<article class="bu-card ${it.is_pinned ? 'pin' : ''}">
+    <div class="bu-ic" style="background:${c.color}22;color:${c.color}">${ICON[it.category] || ICON.other}</div>
+    <div class="bu-body">
+      <h3 class="bu-h">${esc(it.title)}</h3>
+      <div class="bu-meta">
+        ${fresh ? '<span class="bu-tag bu-new">NEW</span>' : ''}
+        <span class="bu-tag">${esc(it.board)}${it.class ? ' · ' + esc(it.class) : ''}</span>
+        <span>${ago(it.published_at)}</span>
+        <span class="bu-ok">${ICON.check}Official Source</span>
+      </div>
+      <div class="bu-acts">
+        <a class="bu-open" href="${esc(it.source_url)}" target="_blank" rel="noopener noreferrer">Official Link kholein</a>
+        <button class="bu-bell ${m ? '' : 'on'}" data-cat="${esc(it.category)}" aria-label="${esc(c.label)} ka alert ${m ? 'on' : 'off'} karein" title="${esc(c.label)} alerts">${ICON.bell}</button>
+      </div>
+    </div></article>`;
+}
+function drawList() {
+  const t = q.trim().toLowerCase();
+  const rows = items.filter(i =>
+    (f.board === 'ALL' || i.board === f.board) &&
+    (f.cls === 'ALL' || !i.class || String(i.class) === f.cls) &&
+    (f.cat === 'ALL' || i.category === f.cat) &&
+    (!t || (i.title + ' ' + (CATS[i.category] || {}).label).toLowerCase().includes(t)))
+    .sort((a, b) => (b.is_pinned - a.is_pinned) || (new Date(b.published_at) - new Date(a.published_at)));
+
+  const recent = rows.filter(r => Date.now() - new Date(r.published_at) < 30 * 864e5);
+  const old = rows.filter(r => Date.now() - new Date(r.published_at) >= 30 * 864e5);
+
+  if (!rows.length) {
+    $('buList').innerHTML = '<div class="bu-empty">Is filter me abhi koi update nahi hai. Filter badal kar dekhein, naya update aate hi yahan dikhega.</div>';
+    return;
+  }
+  $('buList').innerHTML = recent.map(card).join('') + (old.length ? '<div class="bu-label">Purane updates</div>' + old.map(card).join('') : '');
+}
+
+$('buSearch').addEventListener('input', e => { q = e.target.value; drawList(); });
+$('buList').addEventListener('click', e => {
+  const b = e.target.closest('.bu-bell'); if (!b) return;
+  const c = b.dataset.cat;
+  muted = muted.includes(c) ? muted.filter(x => x !== c) : muted.concat(c);
+  save('bu_muted', muted); drawList();
+});
+
+/* ============ COUNTDOWN ============ */
+function drawNext() {
+  const up = EXAM_DATES.map(x => ({ ...x, d: Math.ceil((new Date(x.date) - Date.now()) / 864e5) }))
+    .filter(x => x.d >= 0).sort((a, b) => a.d - b.d)[0];
+  if (!up) return;
+  $('buNext').hidden = false;
+  $('buNext').innerHTML = `Agla exam: <b>${esc(up.label)}</b> me ${up.d} din baaki`;
+}
+
+/* ============ DATA (Supabase -> fallback demo) ============ */
+function setChecked(ok) {
+  $('buDot').classList.toggle('off', !ok);
+  $('buChecked').textContent = ok ? 'Live · abhi update kiya gaya' : 'Offline · saved data dikh raha hai';
+}
+async function init() {
+  drawBars(); drawNext();
+  // supabase.js defer hai, thoda intezaar
+  for (let i = 0; i < 20 && !window.supabaseClient; i++) await new Promise(r => setTimeout(r, 150));
+  const sb = window.supabaseClient;
+  if (sb) {
+    try {
+      const { data, error } = await sb.from('board_updates').select('*').order('published_at', { ascending: false }).limit(100);
+      if (error) throw error;
+      items = data || [];
+      setChecked(true);
+      sb.channel('public:board_updates')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'board_updates' }, p => {
+          if (isDemo) { items = []; isDemo = false; $('buDemo').hidden = true; }
+          items.unshift(p.new); drawList(); setChecked(true);
+        }).subscribe();
+    } catch (e) { console.warn('board_updates:', e); items = []; setChecked(false); }
+  } else { setChecked(false); }
+
+  if (!items.length) { items = DEMO; isDemo = true; $('buDemo').hidden = false; }
+  drawList();
+}
+window.addEventListener('online', () => setChecked(true));
+window.addEventListener('offline', () => setChecked(false));
+init();
+</script>
+</body>
+</html>
